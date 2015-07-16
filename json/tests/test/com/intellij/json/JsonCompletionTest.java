@@ -37,6 +37,14 @@ public class JsonCompletionTest extends JsonTestCase {
     doTest(NOTHING);
   }
 
+  public void testInsideStringLiteral1() throws Exception {
+    doTest(NOTHING);
+  }
+
+  public void testInsideStringLiteral2() throws Exception {
+    doTest(NOTHING);
+  }
+
   public void testInsidePropertyValue() throws Exception {
     doTest(ALL_KEYWORDS);
   }

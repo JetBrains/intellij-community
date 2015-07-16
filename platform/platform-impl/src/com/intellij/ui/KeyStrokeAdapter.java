@@ -324,8 +324,8 @@ public class KeyStrokeAdapter implements KeyListener {
       mapNameToMask.put("control", InputEvent.CTRL_DOWN_MASK | InputEvent.CTRL_MASK);
       mapNameToMask.put("meta", InputEvent.META_DOWN_MASK | InputEvent.META_MASK);
       mapNameToMask.put("alt", InputEvent.ALT_DOWN_MASK | InputEvent.ALT_MASK);
-      mapNameToMask.put("altGr", InputEvent.ALT_GRAPH_DOWN_MASK | InputEvent.ALT_GRAPH_MASK); // duplicate
-      mapNameToMask.put("altGraph", InputEvent.ALT_GRAPH_DOWN_MASK | InputEvent.ALT_GRAPH_MASK);
+      mapNameToMask.put("altgr", InputEvent.ALT_GRAPH_DOWN_MASK | InputEvent.ALT_GRAPH_MASK); // duplicate
+      mapNameToMask.put("altgraph", InputEvent.ALT_GRAPH_DOWN_MASK | InputEvent.ALT_GRAPH_MASK);
       mapNameToMask.put("button1", InputEvent.BUTTON1_DOWN_MASK);
       mapNameToMask.put("button2", InputEvent.BUTTON2_DOWN_MASK);
       mapNameToMask.put("button3", InputEvent.BUTTON3_DOWN_MASK);

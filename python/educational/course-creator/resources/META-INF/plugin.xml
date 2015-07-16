@@ -88,6 +88,11 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </action>
+    <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse">
+      <add-to-group group-id="MainToolBar" anchor="last" />
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+    </action>
   </actions>
 
 </idea-plugin>

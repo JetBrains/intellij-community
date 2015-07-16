@@ -29,6 +29,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author dcheryasov
  */
@@ -562,17 +564,17 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.enableInspections(inspectionClass);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(quickFixName);
+    final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(quickFixName);
     if (available) {
-      assertNotNull(intentionAction);
+      assertOneElement(intentionActions);
       if (applyFix) {
-        myFixture.launchAction(intentionAction);
+        myFixture.launchAction(intentionActions.get(0));
 
         myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
       }
     }
     else {
-      assertNull(intentionAction);
+      assertEmpty("Quick fix \"" + quickFixName + "\" should not be available", intentionActions);
     }
   }
 

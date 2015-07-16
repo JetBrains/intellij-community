@@ -353,6 +353,12 @@ class RunConfigurable extends BaseConfigurable {
         myTreeModel.reload(node);
       }
     });
+    textField.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myTree.requestFocus();
+      }
+    });
     p.add(new JLabel("Folder name:"), "gapright 5");
     p.add(textField, "pushx, growx, wrap");
     p.add(new JLabel(ExecutionBundle.message("run.configuration.rename.folder.disclaimer")), "gaptop 5, spanx 2");

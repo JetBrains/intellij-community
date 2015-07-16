@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -32,7 +37,7 @@ import java.io.IOException;
 /**
  * User: cdr
  */
-public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
+public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase {
   private EditorSettingsExternalizable.OptionSet oldSettings;
 
   @Override
@@ -195,5 +200,32 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     type(' ');
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText("XXX <caret>\nYYY\n");
+  }
+
+  public void testModifySameLineInTwoFilesAndSaveAllShouldStripAtLeastOneFile() throws IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
+
+    Editor editor1 = createHeavyEditor("x1.txt", "x11 <caret>\nyyy\n");
+    Editor editor2 = createHeavyEditor("x2.txt", "x22 <caret>\nyyy\n");
+
+    type(' ', editor1, getProject());
+    type(' ', editor2, getProject());
+    FileDocumentManager.getInstance().saveAllDocuments();
+    assertEquals("x11\nyyy\n", editor1.getDocument().getText());
+    assertEquals("x22  \nyyy\n", editor2.getDocument().getText()); // caret in the way in second but not in the first
+  }
+
+  @NotNull
+  private static Editor createHeavyEditor(@NotNull String name, @NotNull String text) throws IOException {
+    VirtualFile myVFile = getSourceRoot().createChildData(null, name);
+    VfsUtil.saveText(myVFile, text);
+    final FileDocumentManager manager = FileDocumentManager.getInstance();
+    final Document document = manager.getDocument(myVFile);
+    manager.reloadFromDisk(document);
+    Editor editor = createEditor(myVFile);
+    EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+    EditorTestUtil.setCaretsAndSelection(editor, caretsState);
+    return editor;
   }
 }

@@ -47,6 +47,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jetbrains.annotations.NotNull;
@@ -350,9 +351,8 @@ public class IdeEventQueue extends EventQueue {
         }
         lastMouseWheel = System.currentTimeMillis();
 
-        MouseWheelEvent newMouseWheelEvent = new MouseWheelEvent(
-          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers(), mwe.getX(), mwe.getY(),
-          mwe.getClickCount(), mwe.isPopupTrigger(), mwe.getScrollType(), mwe.getScrollAmount(), mwe.getWheelRotation()
+        MouseWheelEvent newMouseWheelEvent = MouseEventAdapter.convert(mwe,
+          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers(), mwe.getX(), mwe.getY()
         );
         return newMouseWheelEvent;
       }

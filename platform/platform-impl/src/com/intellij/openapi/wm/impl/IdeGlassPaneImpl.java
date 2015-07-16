@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -405,20 +406,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private static MouseEvent convertEvent(final MouseEvent e, final Component target) {
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
-    if (e instanceof MouseWheelEvent) {
-      final MouseWheelEvent mwe = (MouseWheelEvent)e;
-      return new MouseWheelEvent(target, mwe.getID(), mwe.getWhen(), mwe.getModifiersEx(), point.x, point.y, mwe.getClickCount(),
-                                 mwe.isPopupTrigger(), mwe.getScrollType(), mwe.getScrollAmount(), mwe.getWheelRotation());
-    }
-    else if (e instanceof MenuDragMouseEvent) {
-      final MenuDragMouseEvent de = (MenuDragMouseEvent)e;
-      return new MenuDragMouseEvent(target, de.getID(), de.getWhen(), de.getModifiersEx(), point.x, point.y, e.getClickCount(),
-                                    e.isPopupTrigger(), de.getPath(), de.getMenuSelectionManager());
-    }
-    else {
-      return new MouseEvent(target, e.getID(), e.getWhen(), e.getModifiersEx(), point.x, point.y, e.getClickCount(), e.isPopupTrigger(),
-                            e.getButton());
-    }
+    return MouseEventAdapter.convert(e, target, e.getID(), e.getWhen(), e.getModifiersEx(), point.x, point.y);
   }
 
   private static void fireMouseEvent(final MouseListener listener, final MouseEvent event) {

@@ -41,6 +41,7 @@ import java.util.*;
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
 import static com.jetbrains.python.formatter.PythonFormattingModelBuilder.STATEMENT_OR_DECLARATION;
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -719,8 +720,15 @@ public class PyBlock implements ASTBlock {
       final IElementType childType2 = psi2.getNode().getElementType();
       //noinspection ConstantConditions
       child2 = getSubBlockByNode(node2);
-
       final CommonCodeStyleSettings settings = myContext.getSettings();
+
+      if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
+        final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
+        if (namedParameter != null && namedParameter.getAnnotation() != null) {
+          return Spacing.createSpacing(1, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
+      
       if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
         if (needLineBreakInStatement()) {
           return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);

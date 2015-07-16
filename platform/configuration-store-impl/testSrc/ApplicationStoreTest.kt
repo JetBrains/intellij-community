@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl
+package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.ApplicationPathMacroManager
 import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -183,10 +184,6 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
     }
 
     override fun dispose() {
-    }
-
-    override fun getPathMacroManagerForDefaults(): PathMacroManager? {
-      return null
     }
 
     override fun getMessageBus(): MessageBus {

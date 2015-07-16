@@ -22,10 +22,9 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
@@ -43,6 +42,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -50,9 +50,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
-import com.intellij.util.TextFieldCompletionProvider;
 import com.theoryinpractice.testng.MessageInfoException;
-import com.theoryinpractice.testng.configuration.browser.*;
+import com.theoryinpractice.testng.configuration.browser.GroupBrowser;
+import com.theoryinpractice.testng.configuration.browser.PackageBrowser;
+import com.theoryinpractice.testng.configuration.browser.SuiteBrowser;
+import com.theoryinpractice.testng.configuration.browser.TestClassBrowser;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +117,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   public TestNGConfigurationEditor(Project project) {
     this.project = project;
     BrowseModuleValueActionListener[] browseListeners = new BrowseModuleValueActionListener[]{new PackageBrowser(project),
-      new TestClassBrowser(project, this), new MethodBrowser(project, this), new GroupBrowser(project, this), new SuiteBrowser(project),
+      new TestClassBrowser(project, this), new TestNGMethodBrowser(project), new GroupBrowser(project, this), new SuiteBrowser(project),
       new TestClassBrowser(project, this) {
         @Override
         protected void onClassChoosen(PsiClass psiClass) {
@@ -208,6 +210,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }
 
       browseListeners[i].setField((ComponentWithBrowseButton)field);
+      if (browseListeners[i] instanceof MethodBrowser) {
+        ((MethodBrowser)browseListeners[i]).installCompletion((EditorTextField)((ComponentWithBrowseButton)field).getChildComponent());
+      }
     }
     model.setType(TestType.CLASS);
     propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
@@ -419,22 +424,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true, 
                                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
                                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
-    new TextFieldCompletionProvider() {
-      @Override
-      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-        final String className = getClassName();
-        if (className.trim().length() == 0) {
-          return;
-        }
-        final PsiClass testClass = getModuleSelector().findClass(className);
-        if (testClass == null) return;
-        for (PsiMethod psiMethod : testClass.getAllMethods()) {
-          if (TestNGUtil.hasTest(psiMethod)) {
-            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
-          }
-        }
-      }
-    }.apply(methodEditorTextField.getChildComponent());
     methodField.setComponent(methodEditorTextField);
 
     groupField.setComponent(new TextFieldWithBrowseButton.NoPathCompletion());
@@ -610,6 +599,31 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         listenerModel.addListener(className);
         LOGGER.info("Adding listener " + className + " to configuration.");
       }
+    }
+  }
+
+  private class TestNGMethodBrowser extends MethodBrowser {
+    public TestNGMethodBrowser(Project project) {
+      super(project);
+    }
+
+    protected Condition<PsiMethod> getFilter(PsiClass testClass) {
+      return new Condition<PsiMethod>() {
+        @Override
+        public boolean value(PsiMethod method) {
+          return TestNGUtil.hasTest(method);
+        }
+      };
+    }
+
+    @Override
+    protected String getClassName() {
+      return TestNGConfigurationEditor.this.getClassName();
+    }
+
+    @Override
+    protected ConfigurationModuleSelector getModuleSelector() {
+      return moduleSelector;
     }
   }
 }

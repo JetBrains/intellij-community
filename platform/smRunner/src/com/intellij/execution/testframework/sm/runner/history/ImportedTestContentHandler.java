@@ -43,17 +43,19 @@ public class ImportedTestContentHandler extends DefaultHandler {
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
     if (TestResultsXmlFormatter.ELEM_SUITE.equals(qName)) {
-      final String suiteName = attributes.getValue(TestResultsXmlFormatter.ATTR_NAME);
-      myProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION)));
+      final String suiteName = StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_NAME));
+      myProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, 
+                                                           StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION))));
       mySuites.push(suiteName);
     }
     else if (TestResultsXmlFormatter.ELEM_TEST.equals(qName)) {
-      final String name = attributes.getValue(TestResultsXmlFormatter.ATTR_NAME);
+      final String name = StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_NAME));
       myCurrentTest = name;
       myDuration = attributes.getValue(TestResultsXmlFormatter.ATTR_DURATION);
       myStatus = attributes.getValue(TestResultsXmlFormatter.ATTR_STATUS);
       final String isConfig = attributes.getValue(TestResultsXmlFormatter.ATTR_CONFIG);
-      final TestStartedEvent startedEvent = new TestStartedEvent(name, attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION));
+      final TestStartedEvent startedEvent = new TestStartedEvent(name, 
+                                                                 StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION)));
       if (isConfig != null && Boolean.valueOf(isConfig)) {
         startedEvent.setConfig(true);
       }
@@ -76,7 +78,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
 
   @Override
   public void endElement(String uri, String localName, String qName) throws SAXException {
-    final String currentText = currentValue.toString();
+    final String currentText = StringUtil.unescapeXml(currentValue.toString());
     final boolean isTestOutput = myCurrentTest == null || TestResultsXmlFormatter.STATUS_PASSED.equals(myStatus) || !myErrorOutput;
     if (isTestOutput) {
       currentValue.setLength(0);

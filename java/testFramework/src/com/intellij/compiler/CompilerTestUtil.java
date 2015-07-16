@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -75,7 +75,7 @@ public class CompilerTestUtil {
 
   private static void doSaveComponent(Object appComponent) {
     //noinspection TestOnlyProblems
-    ((ComponentStoreImpl)((ApplicationImpl)ApplicationManager.getApplication()).getStateStore()).saveApplicationComponent(appComponent);
+    ((ComponentStoreImpl)ComponentsPackage.getStateStore(ApplicationManager.getApplication())).saveApplicationComponent(appComponent);
   }
 
   public static void enableExternalCompiler() {

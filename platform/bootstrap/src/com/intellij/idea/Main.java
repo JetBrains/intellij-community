@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
 import com.intellij.util.ui.JBUI;
@@ -142,6 +143,55 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
+  private static boolean checkBundledJava(File java) throws IOException {
+    String[] command = new String[]{java.getPath(), "-version"};
+    try {
+      Process process = Runtime.getRuntime().exec(command);
+      String line = (new BufferedReader(new InputStreamReader(process.getErrorStream()))).readLine();
+      if (line != null && (line.startsWith("java version") || (line.startsWith("Openjdk version")))){
+        String[] javaVersion = line.split("\\.");
+        int i = 1;
+        if (javaVersion.length > i && Integer.parseInt(javaVersion[i]) > 5) {
+          return true;
+        }
+      }
+    } catch (IOException e) {
+      System.out.println("updater: the java: " + command[0] + " is invalid.");
+    }
+    return false;
+  }
+
+
+  private static String getBundledJava(String javaHome) throws IOException {
+    boolean clear = true;
+    String javaHomeCopy = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/jre";
+    File javaCopy = SystemInfoRt.isWindows ? new File(javaHomeCopy + "/bin/java.exe") : new File(javaHomeCopy + "/bin/java");
+    if (javaCopy != null && javaCopy.exists()) {
+      if (checkBundledJava(javaCopy)) {
+        javaHome = javaHomeCopy;
+      }
+    }
+    else {
+      clear = false;
+    }
+    if (javaHome != javaHomeCopy) {
+      if (clear) FileUtil.delete(new File(javaHomeCopy));
+      System.out.println("Updater: java copy: " + javaHome + " to " + javaHomeCopy);
+      FileUtil.copyDir(new File(javaHome), new File(javaHomeCopy));
+      javaHome = javaHomeCopy;
+    }
+    return javaHome;
+  }
+
+  private static String getJava() throws IOException {
+    String javaHome = System.getProperty("java.home");
+    if (javaHome.toLowerCase().startsWith(PathManager.getHomePath().toLowerCase())) {
+      System.out.println("bundled java.");
+      javaHome = getBundledJava(javaHome);
+    }
+    return javaHome + "/bin/java";
+  }
+
   private static void installPatch() throws IOException {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
@@ -180,11 +230,13 @@ public class Main {
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
+        Restarter.createTempExecutable(new File(PathManager.getBinPath(), "restarter.exe"));
       }
 
       //noinspection SpellCheckingInspection
+      String java = getJava();
       Collections.addAll(args,
-                         System.getProperty("java.home") + "/bin/java",
+                         java,
                          "-Xmx750m",
                          "-Djna.nosys=true",
                          "-Djna.boot.library.path=",

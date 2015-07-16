@@ -58,6 +58,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -190,7 +191,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myTree.setCellRenderer(new NodeRenderer());
 
     mySpeedSearch = new MyTreeSpeedSearch();
-    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
+    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true) {
+      @NotNull
+      @Override
+      protected MinusculeMatcher createMatcher(@NotNull String pattern) {
+        return FileStructureDialog.createFileStructureMatcher(pattern);
+      }
+    });
 
     final FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, ApplicationManager.getApplication().isUnitTestMode());

@@ -32,8 +32,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -87,9 +85,35 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     bootstrapPicoContainer(name);
   }
 
-  public void init() {
-    createComponents();
-    getComponents();
+  protected void init() {
+    init(null);
+  }
+
+  protected final void init(@Nullable Runnable classesLoaded) {
+    try {
+      myComponentsRegistry.loadClasses();
+
+      if (classesLoaded != null) {
+        classesLoaded.run();
+      }
+
+      ProgressManager progressManager = ProgressManager.getInstance();
+      for (Class componentInterface : myComponentsRegistry.getComponentInterfaces()) {
+        ProgressIndicator indicator = progressManager.getProgressIndicator();
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
+
+        getComponent(componentInterface);
+        componentCreatedDuringInit();
+      }
+    }
+    finally {
+      myComponentsCreated = true;
+    }
+  }
+
+  protected void componentCreatedDuringInit() {
   }
 
   @NotNull
@@ -105,30 +129,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public boolean isComponentsCreated() {
     return myComponentsCreated;
-  }
-
-  private void createComponents() {
-    try {
-      myComponentsRegistry.loadClasses();
-
-      Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
-      for (Class componentInterface : componentInterfaces) {
-        ProgressIndicator indicator = getProgressIndicator();
-        if (indicator != null) {
-          indicator.checkCanceled();
-        }
-        createComponent(componentInterface);
-      }
-    }
-    finally {
-      myComponentsCreated = true;
-    }
-  }
-
-  protected synchronized Object createComponent(@NotNull Class componentInterface) {
-    final Object component = getPicoContainer().getComponentInstance(componentInterface.getName());
-    LOG.assertTrue(component != null, "Can't instantiate component for: " + componentInterface);
-    return component;
   }
 
   protected synchronized void disposeComponents() {
@@ -154,31 +154,29 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @SuppressWarnings("unchecked")
   @Nullable
-  private <T> T getComponentFromContainer(@NotNull Class<T> interfaceClass) {
-    final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
-    if (initializedComponent != null) return initializedComponent;
+  private <T> T getComponentFromContainer(@NotNull Class<T> componentInterface) {
+    T component = (T)myInitializedComponents.get(componentInterface);
+    if (component != null) {
+      return component;
+    }
 
     synchronized (this) {
-      if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(interfaceClass)) {
+      if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(componentInterface)) {
         return null;
       }
 
-      Object lock = myComponentsRegistry.getComponentLock(interfaceClass);
-
-      synchronized (lock) {
-        T dcl = (T)myInitializedComponents.get(interfaceClass);
-        if (dcl != null) return dcl;
-
-        T component = (T)getPicoContainer().getComponentInstance(interfaceClass.getName());
-        if (component == null) {
-          component = (T)createComponent(interfaceClass);
+      synchronized (myComponentsRegistry.getComponentLock(componentInterface)) {
+        component = (T)myInitializedComponents.get(componentInterface);
+        if (component != null) {
+          return component;
         }
 
+        component = (T)getPicoContainer().getComponentInstance(componentInterface.getName());
         if (component == null) {
-          throw new IncorrectOperationException("createComponent() returns null for: " + interfaceClass);
+          LOG.error("Can't instantiate component for: " + componentInterface);
         }
 
-        myInitializedComponents.put(interfaceClass, component);
+        myInitializedComponents.put(componentInterface, component);
 
         if (component instanceof com.intellij.openapi.Disposable) {
           Disposer.register(this, (com.intellij.openapi.Disposable)component);
@@ -190,7 +188,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+  public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
     if (myDisposeCompleted) {
       ProgressManager.checkCanceled();
       throw new AssertionError("Already disposed: " + this);
@@ -199,21 +197,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
-    final T fromContainer = getComponentFromContainer(interfaceClass);
-    if (fromContainer != null) return fromContainer;
-    if (defaultImplementation != null) return defaultImplementation;
-    return null;
+  public final <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
+    T component = getComponentFromContainer(interfaceClass);
+    return component == null ? defaultImplementation : component;
   }
 
   @Nullable
-  protected static ProgressIndicator getProgressIndicator() {
-    PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
-    ComponentAdapter adapter = container.getComponentAdapterOfType(ProgressManager.class);
-    if (adapter == null) return null;
-    ProgressManager progressManager = (ProgressManager)adapter.getComponentInstance(container);
-    boolean isProgressManagerInitialized = progressManager != null;
-    return isProgressManagerInitialized ? progressManager.getProgressIndicator() : null;
+  protected ProgressIndicator getProgressIndicator() {
+    return ProgressManager.getInstance().getProgressIndicator();
   }
 
   protected float getPercentageOfComponentsLoaded() {
@@ -253,21 +244,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
     return myComponentsRegistry != null && myComponentsRegistry.containsInterface(interfaceClass);
-  }
-
-  @NotNull
-  protected synchronized Object[] getComponents() {
-    Class[] componentClasses = myComponentsRegistry.getComponentInterfaces();
-    List<Object> components = new ArrayList<Object>(componentClasses.length);
-    for (Class<?> interfaceClass : componentClasses) {
-      ProgressIndicator indicator = getProgressIndicator();
-      if (indicator != null) {
-        indicator.checkCanceled();
-      }
-      Object component = getComponent(interfaceClass);
-      if (component != null) components.add(component);
-    }
-    return ArrayUtil.toObjectArray(components);
   }
 
   @Override
@@ -549,6 +525,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myDelegate = new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true) {
         @Override
         public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
+          if (myInitialized) {
+            // so, instance cached and we don't need to do anything
+            // we have to avoid getProgressIndicator() because it could lead to cyclic call
+            // (get app component -> get app state store to init component -> get progress indicator -> get app state store to init progress indicator -> get progress indicator -> ... )
+            return super.getComponentInstance(picoContainer);
+          }
+
           ProgressIndicator indicator = getProgressIndicator();
           if (indicator != null) {
             indicator.checkCanceled();
@@ -562,11 +545,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
             if (!myInitialized) {
               if (myInitializing) {
+                String errorMessage = "Cyclic component initialization: " + componentKey;
                 if (myConfig.pluginDescriptor != null) {
-                  LOG.error(new PluginException("Cyclic component initialization: " + componentKey, myConfig.pluginDescriptor.getPluginId()));
+                  LOG.error(new PluginException(errorMessage, myConfig.pluginDescriptor.getPluginId()));
                 }
                 else {
-                  LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
+                  LOG.error(new Throwable(errorMessage));
                 }
               }
 

@@ -2,16 +2,12 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.ide.actions.ExportSettingsAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.components.ExportableComponent
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 
 fun copyLocalConfig() {
-  val stateStorageManager = (ApplicationManager.getApplication()!! as ApplicationImpl).getStateStore().getStateStorageManager()
+  val stateStorageManager = ApplicationManager.getApplication()!!.stateStore.getStateStorageManager()
   val streamProvider = stateStorageManager.getStreamProvider()!! as IcsManager.IcsStreamProvider
 
   val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true, false)

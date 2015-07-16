@@ -22,9 +22,12 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyMissingConstructorInspection;
 import com.jetbrains.python.inspections.PyStatementEffectInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class Py3QuickFixTest extends PyTestCase {
@@ -134,7 +137,16 @@ public class Py3QuickFixTest extends PyTestCase {
       }
     });
   }
-
+  
+  // PY-16428 
+  public void testAddParameterNotAvailableInsideAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        doInspectionTest(PyUnresolvedReferencesInspection.class, 
+                         PyBundle.message("QFIX.unresolved.reference.add.param.$0", "unresolved"), false, false);
+      }
+    });
+  }
 
   // PY-8991
   public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
@@ -203,17 +215,17 @@ public class Py3QuickFixTest extends PyTestCase {
     myFixture.enableInspections(inspectionClass);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(quickFixName);
+    final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(quickFixName);
     if (available) {
-      assertNotNull(intentionAction);
+      assertOneElement(intentionActions);
       if (applyFix) {
-        myFixture.launchAction(intentionAction);
+        myFixture.launchAction(intentionActions.get(0));
 
         myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
       }
     }
     else {
-      assertNull(intentionAction);
+      assertEmpty("Quick fix \"" + quickFixName + "\" should not be available", intentionActions);
     }
   }
 

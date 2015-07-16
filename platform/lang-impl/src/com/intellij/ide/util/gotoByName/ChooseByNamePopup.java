@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -138,8 +137,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   protected void showList() {
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
-    Rectangle bounds = new Rectangle(myTextFieldPanel.getLocationOnScreen(), myTextField.getSize());
-    bounds.y += myTextFieldPanel.getHeight() + (SystemInfo.isMac ? 3 : 1);
+    Rectangle bounds = new Rectangle(layeredPane.getLocationOnScreen(), myTextField.getSize());
+    bounds.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
     if (myList.getModel().getSize() == 0) {

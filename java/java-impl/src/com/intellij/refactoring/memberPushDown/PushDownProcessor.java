@@ -17,6 +17,8 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -472,6 +474,9 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
             myJavaDocPolicy.processNewJavaDoc(((PsiMethod)newMember).getDocComment());
+          }
+          if (memberInfo.isToAbstract()) {
+            OverrideImplementUtil.annotateOnOverrideImplement((PsiMethod)newMember, targetClass, (PsiMethod)memberInfo.getMember());
           }
         }
         else { //abstract method: remove @Override

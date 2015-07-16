@@ -63,6 +63,10 @@ public class PushDownTest extends LightRefactoringTestCase {
 
   public void testInterfaceConstants() { doTest();}
 
+  public void testInsertOverrideWhenKeepAbstract() throws Exception {
+    doTestImplements(true);
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -107,6 +111,10 @@ public class PushDownTest extends LightRefactoringTestCase {
   }
 
   private void doTestImplements() {
+    doTestImplements(false);
+  }
+
+  private void doTestImplements(boolean toAbstract) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test", GlobalSearchScope.projectScope(getProject()));
@@ -114,6 +122,9 @@ public class PushDownTest extends LightRefactoringTestCase {
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(currentClass);
     for (MemberInfo member : members) {
       member.setChecked(true);
+      if (toAbstract) {
+        member.setToAbstract(toAbstract);
+      }
     }
 
     new PushDownProcessor(getProject(), members.toArray(new MemberInfo[members.size()]), currentClass,

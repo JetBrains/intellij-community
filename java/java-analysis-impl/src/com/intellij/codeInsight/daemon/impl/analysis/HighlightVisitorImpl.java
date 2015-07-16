@@ -755,11 +755,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkStaticDeclarationInInnerClass(keyword));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalVoidType(keyword));
-
-    if (PsiTreeUtil.getParentOfType(keyword, PsiDocTagValue.class) != null) {
-      HighlightInfo result = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create();
-      myHolder.add(result);
-    }
   }
 
   @Override

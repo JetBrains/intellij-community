@@ -68,7 +68,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPanel.getIntentionTree();
+    return myPanel == null ? null : myPanel.getIntentionTree();
   }
 
   @Override

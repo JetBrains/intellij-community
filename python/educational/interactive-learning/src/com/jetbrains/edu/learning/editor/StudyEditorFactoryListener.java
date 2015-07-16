@@ -9,11 +9,14 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
+import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -43,6 +46,13 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                   StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
                   WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
                   StudyUtils.drawAllWindows(editor, taskFile);
+
+                  final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+                  if (studyToolWindow != null) {
+                    StudyUtils.updateStudyToolWindow(project);
+                    studyToolWindow.show(null);
+                  }
+
                 }
               }
             }

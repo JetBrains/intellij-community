@@ -29,7 +29,6 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -224,8 +223,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   protected StateStorage.Listener createStorageTopicListener() {
-    MessageBus messageBus = (MessageBus)myPicoContainer.getComponentInstanceOfType(MessageBus.class);
-    return messageBus == null ? null : messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+    return null;
   }
 
   protected boolean isUseXmlProlog() {
@@ -241,7 +239,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myStreamProvider;
   }
 
-  protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
+  protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull String fileSpec) {
     return myPathMacroSubstitutor;
   }
 

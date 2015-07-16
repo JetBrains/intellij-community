@@ -191,7 +191,7 @@ public class ExecUtil {
       }, " & \" \" & ");
       final String escapedScript = "tell current application\n" +
                                    "   activate\n" +
-                                   "   do shell script " + escapedCommandLine + " with administrator privileges\n" +
+                                   "   do shell script " + escapedCommandLine + " with administrator privileges without altering line endings\n" +
                                    "end tell";
       return new GeneralCommandLine(getOsascriptPath(), "-e", escapedScript)
         .withWorkDirectory(workDir)

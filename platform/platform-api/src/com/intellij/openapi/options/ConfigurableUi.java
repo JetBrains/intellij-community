@@ -19,6 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * Implement {@link com.intellij.openapi.Disposable} if you need explicit dispose logic.
+ */
 public interface ConfigurableUi<S> {
   void reset(@NotNull S settings);
 

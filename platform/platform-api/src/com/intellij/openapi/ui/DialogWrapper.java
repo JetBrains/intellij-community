@@ -1192,7 +1192,10 @@ public abstract class DialogWrapper {
           myHeight = height;
           myResizeInProgress = true;
           myErrorText.setMinimumSize(new Dimension(0, height));
-          myPeer.getRootPane().validate();
+          JRootPane root = myPeer.getRootPane();
+          if (root != null) {
+            root.validate();
+          }
           if (myActualSize != null) {
             myPeer.setSize(myActualSize.width, myActualSize.height + height);
           }

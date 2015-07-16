@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2.configuration;
+package com.intellij.execution;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;

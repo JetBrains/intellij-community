@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
   }
 
   private void navigateToPlaceholder(@NotNull final Project project) {
-      final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
+      final Editor selectedEditor = StudyUtils.getSelectedEditor(project);
       if (selectedEditor != null) {
         final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
         final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());

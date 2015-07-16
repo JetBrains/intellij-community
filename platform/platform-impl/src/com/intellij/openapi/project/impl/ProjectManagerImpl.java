@@ -31,7 +31,6 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
@@ -677,7 +676,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     changes.putAllValues(myChangedApplicationFiles);
     myChangedApplicationFiles.clear();
 
-    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(changes, ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore());
+    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(changes, ComponentsPackage.getStateStore(ApplicationManager.getApplication()));
     if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
       ApplicationManagerEx.getApplicationEx().restart(true);
       return false;

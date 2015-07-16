@@ -364,6 +364,11 @@ public class PyFormatterTest extends PyTestCase {
     doTestPy3();
   }
 
+  // PY-15791
+  public void testForceSpacesAroundEqualSignInAnnotatedParameter() {
+    doTestPy3();
+  }
+
   public void testWrapInBinaryExpression() {  // PY-9032
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
     doTest(true);
@@ -612,7 +617,7 @@ public class PyFormatterTest extends PyTestCase {
   public void testHangingIndentDetectionIgnoresComments() {
     doTest();
   }
-
+  
   // PY-15530
   public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
     doTest();

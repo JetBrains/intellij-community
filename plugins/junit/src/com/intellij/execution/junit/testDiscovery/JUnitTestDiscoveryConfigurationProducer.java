@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.execution.junit.testDiscovery;
 
-import com.intellij.openapi.module.Module;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
 
-public interface LightProjectDescriptorEx extends LightProjectDescriptor {
-  boolean shouldConfigureModule(); 
-  
-  void setupModule(Module module); 
+public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
+  protected JUnitTestDiscoveryConfigurationProducer() {
+    super(ConfigurationTypeUtil.findConfigurationType(JUnitTestDiscoveryConfigurationType.class));
+  }
 }

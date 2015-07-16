@@ -95,18 +95,16 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
     if (mappings == null) return null;
     synchronized (mappings) {
-      for (VirtualFile cur = file; ; cur = cur.getParent()) {
+      for (VirtualFile cur = file; cur != null; cur = cur.getParent()) {
         T t = mappings.get(cur);
         if (t != null) return t;
-        if (originalFile != null) {
-          t = mappings.get(originalFile);
-          if (t != null) return t;
-          originalFile = originalFile.getParent();
-        }
-        if (cur == null) break;
       }
+      for (VirtualFile cur = originalFile; cur != null; cur = cur.getParent()) {
+        T t = mappings.get(cur);
+        if (t != null) return t;
+      }
+      return mappings.get(null);
     }
-    return null;
   }
 
   @Override

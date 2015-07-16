@@ -62,7 +62,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
 
     public String LAST_BUILD_CHECKED;
     public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
-    public boolean SECURE_CONNECTION = false;
+    public boolean SECURE_CONNECTION = true;
   }
 
   @Nullable
