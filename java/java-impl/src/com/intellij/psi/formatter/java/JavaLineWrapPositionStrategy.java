@@ -34,22 +34,34 @@ public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrateg
     }
 
     if (charAtOffset == '.' || charAtOffset == ' ') {
-      if (isInsideLinkTag(document, offset)) {
+      if (isInsideJDLinkTag(document, offset)) {
         return false;
       }
+    }
+
+    if (isInsideHrefTag(document, offset)) {
+      return false;
     }
 
     return true;
   }
 
-  private static boolean isInsideLinkTag(Document document, int offset) {
+  private static boolean isInsideHrefTag(Document document, int offset) {
+    return isInsideTag(document, offset, "<a", ">");
+  }
+
+  private static boolean isInsideJDLinkTag(Document document, int offset) {
+    return isInsideTag(document, offset, "{@link", "}");
+  }
+
+  private static boolean isInsideTag(Document document, int offset, String tagStart, String tagEnd) {
+    CharSequence sequence = document.getCharsSequence();
+
     int lineNumber = document.getLineNumber(offset);
     int lineStartOffset = document.getLineStartOffset(lineNumber);
     int lineEndOffset = document.getLineEndOffset(lineNumber);
 
-    CharSequence sequence = document.getCharsSequence();
-
-    return CharArrayUtil.indexOf(sequence, "{@link", lineStartOffset, offset) > 0
-      && CharArrayUtil.indexOf(sequence, "}", offset, lineEndOffset) > 0;
+    return CharArrayUtil.indexOf(sequence, tagStart, lineStartOffset, offset) > 0
+      && CharArrayUtil.indexOf(sequence, tagEnd, offset, lineEndOffset) > 0;
   }
 }

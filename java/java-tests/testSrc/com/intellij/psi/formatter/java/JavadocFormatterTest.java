@@ -62,6 +62,26 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
 
+  public void testDoNot() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 70;
+
+    doTextTest(
+      "/**\n" +
+      " * Some of the usl contained <a href=\"http://martinfowler.com/articles/replaceThrowWithNotification.html\">\n" +
+      " */\n" +
+      "            public class X {\n" +
+      "}",
+      "/**\n" +
+      " * Some of the usl contained \n" +
+      " * <a href=\"http://martinfowler.com/articles/replaceThrowWithNotification.html\">\n" +
+      " */\n" +
+      "public class X {\n" +
+      "}"
+    );
+  }
+
+
   public void testPackageJavadoc() throws Exception {
     doTextTest(
       "/**\n" +

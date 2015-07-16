@@ -55,6 +55,9 @@ public abstract class AbstractLineWrapPositionStrategyTest {
     final Document result = myMockery.mock(Document.class);
     myMockery.checking(new Expectations() {{
       allowing(result).getCharsSequence(); will(returnValue(text));
+      allowing(result).getLineNumber(with(any(int.class))); will(returnValue(0));
+      allowing(result).getLineStartOffset(0); will(returnValue(0));
+      allowing(result).getLineEndOffset(0); will(returnValue(text.length()));
     }});
     return result;
   }
