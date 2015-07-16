@@ -1,2 +1,2 @@
-def g(x: object=None):
+def g(x: object = None):
     return x
