@@ -18,7 +18,7 @@ package com.intellij.execution.junit.codeInsight;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFixProvider;
+import com.intellij.codeInsight.daemon.quickFix.MissingDependencyFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.execution.junit.JUnit3Framework;
 import com.intellij.execution.junit.JUnit4Framework;
@@ -103,9 +103,9 @@ public class JUnitUnresolvedReferenceQuickFixProvider extends UnresolvedReferenc
       }
     };
 
-    final OrderEntryFix providedFix = OrderEntryFixProvider.find(new Function<OrderEntryFixProvider, OrderEntryFix>() {
+    final OrderEntryFix providedFix = MissingDependencyFixProvider.find(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
       @Override
-      public OrderEntryFix fun(OrderEntryFixProvider provider) {
+      public OrderEntryFix fun(MissingDependencyFixProvider provider) {
         return provider.getJUnitFix(reference, platformFix, currentModule, framework, className);
       }
     });

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.quickfix;
+package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * {@link OrderEntryFixProvider} extension can be used to override or complement default platform {@link OrderEntryFix}-es.
+ * {@link MissingDependencyFixProvider} extension can be used to override or complement default platform {@link OrderEntryFix}-es.
  * <p/>
  * It can be useful for modules imported from external build system like Maven, Gradle etc,
  * when external build configuration(pom.xml/*.gradle scripts) should be changed in additional or instead of IntelliJ project configuration.
@@ -41,14 +42,14 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 7/15/2015
  */
-public abstract class OrderEntryFixProvider {
-  private static final ExtensionPointName<OrderEntryFixProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.codeInsight.orderEntryFixProvider");
+public abstract class MissingDependencyFixProvider {
+  private static final ExtensionPointName<MissingDependencyFixProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.codeInsight.missingDependencyFixProvider");
 
   @Nullable
-  public static List<LocalQuickFix> findFixes(Function<OrderEntryFixProvider, List<LocalQuickFix>> provider) {
-    OrderEntryFixProvider[] fixProviders = Extensions.getExtensions(EP_NAME);
-    for (OrderEntryFixProvider each : fixProviders) {
+  public static List<LocalQuickFix> findFixes(Function<MissingDependencyFixProvider, List<LocalQuickFix>> provider) {
+    MissingDependencyFixProvider[] fixProviders = Extensions.getExtensions(EP_NAME);
+    for (MissingDependencyFixProvider each : fixProviders) {
       List<LocalQuickFix> result = provider.fun(each);
       if (result != null && !result.isEmpty()) return result;
     }
@@ -57,9 +58,9 @@ public abstract class OrderEntryFixProvider {
   }
 
   @Nullable
-  public static <T> T find(Function<OrderEntryFixProvider, T> provider) {
-    OrderEntryFixProvider[] fixProviders = Extensions.getExtensions(EP_NAME);
-    for (OrderEntryFixProvider each : fixProviders) {
+  public static <T> T find(Function<MissingDependencyFixProvider, T> provider) {
+    MissingDependencyFixProvider[] fixProviders = Extensions.getExtensions(EP_NAME);
+    for (MissingDependencyFixProvider each : fixProviders) {
       T result = provider.fun(each);
       if (result != null && Boolean.FALSE != result) return result;
     }
