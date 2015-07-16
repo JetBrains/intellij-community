@@ -152,7 +152,6 @@ public class Main {
         String[] javaVersion = line.split("\\.");
         int i = 1;
         if (javaVersion.length > i && Integer.parseInt(javaVersion[i]) > 5) {
-          System.out.println("updater: java version: " + line + " location: " + command[0]);
           return true;
         }
       }
