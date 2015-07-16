@@ -96,20 +96,21 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     super(project);
 
     myBus = bus;
-    mySchemeManager = SchemesManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new BaseSchemeProcessor<ShelvedChangeList>() {
-      @Nullable
-      @Override
-      public ShelvedChangeList readScheme(@NotNull Element element) throws InvalidDataException {
-        return readOneShelvedChangeList(element);
-      }
+    mySchemeManager =
+      SchemesManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new BaseSchemeProcessor<ShelvedChangeList>() {
+        @Nullable
+        @Override
+        public ShelvedChangeList readScheme(@NotNull Element element) throws InvalidDataException {
+          return readOneShelvedChangeList(element);
+        }
 
-      @Override
-      public Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
-        Element child = new Element(ELEMENT_CHANGELIST);
-        scheme.writeExternal(child);
-        return child;
-      }
-    });
+        @Override
+        public Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
+          Element child = new Element(ELEMENT_CHANGELIST);
+          scheme.writeExternal(child);
+          return child;
+        }
+      });
     myFileProcessor = new CompoundShelfFileProcessor(mySchemeManager.getRootDirectory());
     ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(mySchemeManager.getRootDirectory().getAbsolutePath());
     mySchemeManager.loadSchemes();
@@ -143,7 +144,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   // could be very long; runs on Pool Thread
-  private void migrateOldShelfInfo(Element element, boolean recycled) throws InvalidDataException {
+  private void migrateOldShelfInfo(@NotNull Element element, boolean recycled) throws InvalidDataException {
     for (Element changeSetElement : element.getChildren(recycled ? ELEMENT_RECYCLED_CHANGELIST : ELEMENT_CHANGELIST)) {
       ShelvedChangeList list = readOneShelvedChangeList(changeSetElement);
       final File oldPatchFile = new File(list.PATH);
@@ -170,7 +171,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           list.setName(newPatchDir.getName());
         }
         catch (IOException e) {
-          LOG.warn("Couldn't migrate shelf resources information from "+ list.PATH);
+          LOG.error("Couldn't migrate shelf resources information from " + list.PATH);
           continue;
         }
         mySchemeManager.addNewScheme(list, false);
@@ -420,13 +421,13 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
+  public void unshelveChangeList(@NotNull final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles, final LocalChangeList targetChangeList) {
     unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, true);
   }
 
   @AsynchronousExecution
-  private void unshelveChangeList(final ShelvedChangeList changeList,
+  private void unshelveChangeList(@NotNull final ShelvedChangeList changeList,
                                   @Nullable final List<ShelvedChange> changes,
                                   @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                   @Nullable final LocalChangeList targetChangeList,
@@ -439,7 +440,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @AsynchronousExecution
-  public void scheduleUnshelveChangeList(final ShelvedChangeList changeList,
+  public void scheduleUnshelveChangeList(@NotNull final ShelvedChangeList changeList,
                                          @Nullable final List<ShelvedChange> changes,
                                          @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                          @Nullable final LocalChangeList targetChangeList,
@@ -650,7 +651,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     notifyStateChanged();
   }
 
-  public void restoreList(final ShelvedChangeList changeList) {
+  public void restoreList(@NotNull final ShelvedChangeList changeList) {
     ShelvedChangeList list = mySchemeManager.findSchemeByName(changeList.getName());
     if (list != null) {
       list.setRecycled(false);
@@ -670,7 +671,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     notifyStateChanged();
   }
 
-  private void recycleChangeList(final ShelvedChangeList listCopy, final ShelvedChangeList newList) {
+  private void recycleChangeList(@NotNull final ShelvedChangeList listCopy, @Nullable final ShelvedChangeList newList) {
     if (newList != null) {
       for (Iterator<ShelvedBinaryFile> shelvedChangeListIterator = listCopy.getBinaryFiles().iterator();
            shelvedChangeListIterator.hasNext(); ) {
@@ -717,18 +718,18 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  private void recycleChangeList(final ShelvedChangeList changeList) {
+  private void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
     recycleChangeList(changeList, null);
     notifyStateChanged();
   }
 
-  public void deleteChangeList(final ShelvedChangeList changeList) {
+  public void deleteChangeList(@NotNull final ShelvedChangeList changeList) {
     deleteListImpl(changeList);
     mySchemeManager.removeScheme(changeList);
     notifyStateChanged();
   }
 
-  private void deleteListImpl(final ShelvedChangeList changeList) {
+  private void deleteListImpl(@NotNull final ShelvedChangeList changeList) {
     FileUtil.delete(new File(myFileProcessor.getBaseDir(), changeList.getName()));
   }
 

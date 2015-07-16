@@ -36,10 +36,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -99,11 +97,11 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-     writeExternal(element, this);
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+    writeExternal(element, this);
   }
 
-  private static void writeExternal(Element element, ShelvedChangeList shelvedChangeList) throws WriteExternalException {
+  private static void writeExternal(@NotNull Element element, @NotNull ShelvedChangeList shelvedChangeList) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(shelvedChangeList, element);
     element.setAttribute(NAME_ATTRIBUTE, shelvedChangeList.getName());
     element.setAttribute(ATTRIBUTE_DATE, Long.toString(shelvedChangeList.DATE.getTime()));
@@ -169,12 +167,5 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   @Override
   public void setName(@NotNull String newName) {
     mySchemeName = newName;
-  }
-
-  @TestOnly
-  public static void writeChanges(@NotNull final Collection<ShelvedChangeList> shelvedChangeLists, Element element) throws WriteExternalException {
-    for(ShelvedChangeList data: shelvedChangeLists) {
-     writeExternal(element, data);
-    }
   }
 }
