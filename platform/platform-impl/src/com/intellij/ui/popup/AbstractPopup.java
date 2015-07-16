@@ -1794,7 +1794,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myWindow != null) {
-      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myWindow.getLocationOnScreen());
+      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myWindow.getLocation());
       int width = Math.min(screenRectangle.width, myMinSize.width);
       int height = Math.min(screenRectangle.height, myMinSize.height);
       myWindow.setMinimumSize(new Dimension(width, height));
