@@ -60,9 +60,7 @@ import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
 import com.jetbrains.python.inspections.quickfix.RemoveTrailingBlankLinesFix;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -324,7 +322,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         return true;
       }
     }
-
+    
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(PythonLanguage.getInstance());
     final PyCodeStyleSettings pySettings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
@@ -353,11 +351,17 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
       }
     }
-    final boolean useTabs = codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE);
-    if (useTabs && problem.myCode.equals("W191")) {
+    if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
       return true;
     }
-    return false;
+    // E251 unexpected spaces around keyword / parameter equals
+    // Note that E222 (multiple spaces after operator) is not suppressed, though. 
+    if (problem.myCode.equals("E251") &&
+        (element.getParent() instanceof PyParameter && pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER ||
+         element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
+      return true;
+    }
+      return false;
   }
 
   private static final Pattern PROBLEM_PATTERN = Pattern.compile(".+:(\\d+):(\\d+): ([EW]\\d{3}) (.+)");
