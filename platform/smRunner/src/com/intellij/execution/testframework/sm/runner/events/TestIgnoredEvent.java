@@ -21,9 +21,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestIgnored;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public class TestIgnoredEvent extends TreeNodeEvent {
   private final String myIgnoreComment;
   private final String myStacktrace;

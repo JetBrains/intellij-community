@@ -19,9 +19,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public class TestFailedEvent extends TreeNodeEvent {
 
   private final String myLocalizedFailureMessage;
