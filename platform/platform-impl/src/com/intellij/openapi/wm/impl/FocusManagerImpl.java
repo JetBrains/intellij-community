@@ -1085,7 +1085,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
 
     @Override
-    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+    public void applicationDeactivating(IdeFrame ideFrame) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         Component parent = UIUtil.findUltimateParent(owner);
 
