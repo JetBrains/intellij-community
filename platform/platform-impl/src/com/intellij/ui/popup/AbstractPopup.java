@@ -416,10 +416,14 @@ public class AbstractPopup implements JBPopup {
   public static Point getCenterOf(final Component aContainer, final JComponent content) {
     final JComponent component = getTargetComponent(aContainer);
 
-    Point containerScreenPoint = component.getVisibleRect().getLocation();
-    SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
+    Rectangle visibleBounds = component != null
+                              ? component.getVisibleRect()
+                              : new Rectangle(aContainer.getSize());
 
-    return UIUtil.getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), content.getPreferredSize());
+    Point containerScreenPoint = visibleBounds.getLocation();
+    SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
+    visibleBounds.setLocation(containerScreenPoint);
+    return UIUtil.getCenterPoint(visibleBounds, content.getPreferredSize());
   }
 
   @Override
