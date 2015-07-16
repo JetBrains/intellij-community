@@ -63,7 +63,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final SpotlightPainter mySpotlightPainter;
   private final Banner myBanner;
 
-  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, String filter) {
+  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);
@@ -248,8 +248,12 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         configurable = ConfigurableVisitor.ALL.find(groups);
       }
     }
-    myFilter.update(filter, false, true);
-    myTreeView.select(configurable);
+    myTreeView.select(configurable).doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        myFilter.update(filter, false, true);
+      }
+    });
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
   }
