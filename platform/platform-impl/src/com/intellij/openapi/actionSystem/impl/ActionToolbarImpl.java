@@ -349,6 +349,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
       presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
     }
+    if (customComponent instanceof JCheckBox && UIUtil.isUnderWindowsLookAndFeel()) {
+      customComponent.setBorder(JBUI.Borders.empty(0, 9, 0, 0));
+    }
     tweakActionComponentUI(customComponent);
     return customComponent;
   }

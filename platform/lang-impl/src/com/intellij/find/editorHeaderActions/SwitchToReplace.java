@@ -7,6 +7,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 
 /**
@@ -17,11 +18,9 @@ import com.intellij.openapi.editor.Editor;
 * To change this template use File | Settings | File Templates.
 */
 public class SwitchToReplace extends EditorHeaderAction {
-  private final Editor myEditor;
 
-  public SwitchToReplace(EditorSearchComponent editorSearchComponent, Editor editor) {
+  public SwitchToReplace(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
-    myEditor = editor;
     AnAction replaceAction = ActionManager.getInstance().getAction("Replace");
     if (replaceAction != null) {
       registerCustomShortcutSet(replaceAction.getShortcutSet(), editorSearchComponent);
@@ -30,7 +29,8 @@ public class SwitchToReplace extends EditorHeaderAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(!ConsoleViewUtil.isConsoleViewEditor(myEditor));
+    final Editor editor = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(e.getDataContext());
+    e.getPresentation().setEnabled(editor != null && !ConsoleViewUtil.isConsoleViewEditor(editor));
   }
 
   @Override

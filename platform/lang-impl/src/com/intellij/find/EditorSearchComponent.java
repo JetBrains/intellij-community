@@ -35,7 +35,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -118,7 +121,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     initUI();
 
     new SwitchToFind(this);
-    new SwitchToReplace(this, editor);
+    new SwitchToReplace(this);
 
     myFindModel.addObserver(new FindModel.FindModelObserver() {
       @Override
@@ -217,8 +220,9 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     Wrapper searchToolbarWrapper1 = new NonOpaquePanel(new BorderLayout());
     searchToolbarWrapper1.add(mySearchActionsToolbar1, BorderLayout.WEST);
     Wrapper searchToolbarWrapper2 = new Wrapper(mySearchActionsToolbar2);
+    mySearchActionsToolbar2.setBorder(JBUI.Borders.empty(0, 16, 0, 0));
     JPanel searchPair = new NonOpaquePanel(new BorderLayout()).setVerticalSizeReferent(mySearchFieldWrapper);
-    searchPair.add(mySearchActionsToolbar1, BorderLayout.WEST);
+    searchPair.add(searchToolbarWrapper1, BorderLayout.WEST);
     searchPair.add(searchToolbarWrapper2, BorderLayout.CENTER);
     JLabel closeLabel = new JLabel(null, AllIcons.Actions.Cross, SwingConstants.RIGHT);
     closeLabel.setBorder(JBUI.Borders.empty(5, 5, 5, 5));
@@ -235,6 +239,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
     Wrapper replaceToolbarWrapper1 = new Wrapper(myReplaceActionsToolbar1).setVerticalSizeReferent(myReplaceFieldWrapper);
     Wrapper replaceToolbarWrapper2 = new Wrapper(myReplaceActionsToolbar2).setVerticalSizeReferent(myReplaceFieldWrapper);
+    myReplaceActionsToolbar2.setBorder(JBUI.Borders.empty(0, 16, 0, 0));
+
     myReplaceToolbarWrapper = new NonOpaquePanel(new BorderLayout());
     myReplaceToolbarWrapper.add(replaceToolbarWrapper1, BorderLayout.WEST);
     myReplaceToolbarWrapper.add(replaceToolbarWrapper2, BorderLayout.CENTER);
@@ -272,12 +278,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                searchFieldDocumentChanged();
-              }
-            });
+            searchFieldDocumentChanged();
           }
         });
       }
@@ -307,6 +308,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     new RestorePreviousSettingsAction(this, mySearchTextComponent);
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
   }
+
   private void searchFieldDocumentChanged() {
     setMatchesLimit(LivePreviewController.MATCHES_LIMIT);
     String text = mySearchTextComponent.getText();
@@ -465,6 +467,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     DefaultActionGroup actionGroup1 = new DefaultActionGroup("replace bar 1", false);
     myReplaceActionsToolbar1 = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actionGroup1, true);
     myReplaceActionsToolbar1.setForceMinimumSize(true);
+    myReplaceActionsToolbar1.setReservePlaceAutoPopupIcon(false);
     final JButton myReplaceButton = new JButton("Replace");
     myReplaceButton.setFocusable(false);
     myReplaceButton.addActionListener(new ActionListener() {
