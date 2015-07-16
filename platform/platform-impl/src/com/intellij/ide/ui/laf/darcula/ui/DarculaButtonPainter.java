@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
@@ -71,6 +72,9 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
+    if (c.getParent() instanceof ActionToolbar) {
+      return JBUI.insets(4, 16, 4, 16);
+    }
     if (DarculaButtonUI.isSquare(c)) {
       return JBUI.insets(2, 0, 2, 0).asUIResource();
     }
