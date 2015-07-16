@@ -451,7 +451,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     // Map to get rid of duplicated (overwritten methods)
     final Map<String, PyFunction> result = new HashMap<String, PyFunction>();
     // We get classes in MRO order (hopefully), so last methods are last
-    for (final PyClass superClass : getSuperClasses()) {
+    for (final PyClass superClass : getAncestorClasses()) {
       for (final PyFunction function : superClass.getMethods(false)) {
         final String functionName = function.getName();
         if (functionName != null) {
