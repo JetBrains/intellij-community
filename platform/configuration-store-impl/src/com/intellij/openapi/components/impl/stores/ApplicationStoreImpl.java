@@ -18,10 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -40,10 +37,15 @@ public class ApplicationStoreImpl extends ComponentStoreImpl {
   private final ApplicationImpl myApplication;
   private final StateStorageManager myStateStorageManager;
 
-  public ApplicationStoreImpl(@NotNull final ApplicationImpl application, @NotNull PathMacroManager pathMacroManager) {
+  public ApplicationStoreImpl(@NotNull ApplicationImpl application, @NotNull PathMacroManager pathMacroManager) {
     myApplication = application;
     myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
       private boolean myConfigDirectoryRefreshed;
+
+      @Nullable
+      protected StateStorage.Listener createStorageTopicListener() {
+        return myApplication.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC);
+      }
 
       @NotNull
       @Override
@@ -74,7 +76,7 @@ public class ApplicationStoreImpl extends ComponentStoreImpl {
 
       @Override
       protected void beforeFileBasedStorageCreate() {
-        if (myConfigDirectoryRefreshed || (!application.isUnitTestMode() && !application.isDispatchThread())) {
+        if (myConfigDirectoryRefreshed || (!myApplication.isUnitTestMode() && !myApplication.isDispatchThread())) {
           return;
         }
 
