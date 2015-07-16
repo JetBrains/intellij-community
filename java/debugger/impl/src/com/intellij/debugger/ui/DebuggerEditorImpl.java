@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.ide.DataManager;
@@ -55,7 +54,7 @@ import java.util.List;
 /**
  * @author lex
  */
-public abstract class DebuggerEditorImpl extends CompletionEditor{
+public abstract class DebuggerEditorImpl extends CompletionEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerEditorImpl");
 
   public static final char SEPARATOR = 13;
@@ -85,22 +84,23 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
       checkContext();
     }
     private void checkContext() {
-      final PsiElement contextElement = getContext();
-      if(contextElement == null || !contextElement.isValid()) {
-        final DebuggerManagerEx manager = DebuggerManagerEx.getInstanceEx(myProject);
+      PsiElement contextElement = getContext();
+      if (contextElement == null || !contextElement.isValid()) {
+        DebuggerManagerEx manager = DebuggerManagerEx.getInstanceEx(myProject);
         if (manager == null) {
           LOG.error("Cannot obtain debugger manager for project " + myProject);
+          return;
         }
-        final DebuggerContextImpl context = manager.getContextManager().getContext();
-        final PsiElement newContextElement = PositionUtil.getContextElement(context);
-        setContext(newContextElement != null && newContextElement.isValid()? newContextElement : null);
+
+        PsiElement newContextElement = PositionUtil.getContextElement(manager.getContextManager().getContext());
+        setContext(newContextElement != null && newContextElement.isValid() ? newContextElement : null);
       }
     }
   };
   private CodeFragmentFactory myFactory;
   protected boolean myInitialFactory;
 
-  public DebuggerEditorImpl(Project project, PsiElement context, String recentsId, final CodeFragmentFactory factory) {
+  public DebuggerEditorImpl(@NotNull Project project, PsiElement context, String recentsId, @NotNull CodeFragmentFactory factory) {
     myProject = project;
     myContext = context;
     myRecentsId = recentsId;
@@ -148,9 +148,9 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     }
 
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
-    return JBPopupFactory.getInstance().createActionGroupPopup("Choose language", actions, dataContext,
-                                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                                          false);
+    return JBPopupFactory.getInstance().createActionGroupPopup("Choose Language", actions, dataContext,
+                                                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                               false);
   }
 
   @Override
@@ -311,7 +311,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     setFactory(findAppropriateFactory(text, myContext));
   }
 
-  private void setFactory(@NotNull final CodeFragmentFactory factory) {
+  private void setFactory(@NotNull CodeFragmentFactory factory) {
     myFactory = factory;
     Icon icon = getCurrentFactory().getFileType().getIcon();
     myChooseFactory.setIcon(icon);
