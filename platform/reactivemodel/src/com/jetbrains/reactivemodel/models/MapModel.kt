@@ -71,10 +71,15 @@ public data class MapModel(val hmap: PersistentHashMap<String, Model> = Persiste
     for ((k, d) in diff.diff) {
       val value = this.find(k)
       if (value == null) {
-        if (d !is ValueDiff<*>) {
-          throw AssertionError()
+        if (d is PrimitiveDiff) {
+          // boolean
+          self = self.assoc(k, PrimitiveModel(d.newValue))
+        } else {
+          if (d !is ValueDiff<*>) {
+            throw AssertionError()
+          }
+          self = self.assoc(k, d.newValue)
         }
-        self = self.assoc(k, d.newValue)
       } else if (d is ValueDiff<*> && d.newValue is AbsentModel) {
         self = self.remove(k)
       } else {

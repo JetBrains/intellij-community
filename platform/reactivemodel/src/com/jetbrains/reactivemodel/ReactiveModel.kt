@@ -3,6 +3,8 @@ package com.jetbrains.reactivemodel
 import com.github.krukow.clj_lang.IPersistentMap
 import com.github.krukow.clj_lang.PersistentHashMap
 import com.github.krukow.clj_lang.PersistentHashSet
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.containers.MultiMap
 import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
@@ -10,16 +12,18 @@ import com.jetbrains.reactivemodel.util.createMeta
 import java.util.ArrayDeque
 import java.util.HashMap
 import java.util.Queue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
   public var root: MapModel = MapModel(meta = createMeta("lifetime", lifetime, INDEX_FIELD, PersistentHashMap.emptyMap<String, PersistentHashSet<Path>>()))
   public val name: String = "ReactiveModel" + counter.incrementAndGet()
-  private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
-  private val tagSubs: MutableMap<String, TagSignal<*>> = HashMap()
+  private val subscriptions: MultiMap<Path, ModelSignal> = MultiMap.create()
+  private val tagSubs: MultiMap<String, TagSignal<*>> = MultiMap.create()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
   private val transactionGuard = Guard()
   private val actionToHandler: MutableMap<String, (MapModel, MapModel) -> MapModel> = HashMap()
+  private val LOG = Logger.getInstance("#com.jetbrains.reactivemodel.ReactiveModel")
 
   companion object {
     val INDEX_FIELD = "index"
@@ -47,18 +51,18 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
 
   public fun subscribe(lt: Lifetime = lifetime, path: Path): Signal<Model?> {
     val signal = ModelSignal(path, lt)
-    subscriptions[path] = signal
-    lifetime += {
-      subscriptions.remove(path)
+    subscriptions.putValue(path, signal)
+    lt += {
+      subscriptions.remove(path, signal)
     }
     return signal
   }
 
   public fun subscribe<T : Model>(lt: Lifetime = lifetime, tag: Tag<T>): TagSignal<T> {
     val signal = TagSignal(tag, lt)
-    tagSubs[tag.name] = signal
-    lifetime += {
-      tagSubs.remove(tag.name)
+    tagSubs.putValue(tag.name, signal)
+    lt += {
+      tagSubs.remove(tag.name, signal)
     }
     return signal
   }
@@ -77,6 +81,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   }
 
   fun performTransaction(f: (MapModel) -> MapModel): MapDiff? {
+    val startTime = System.nanoTime()
     var oldModel = root
     var newModel = f(oldModel)
     val diff = oldModel.diff(newModel)
@@ -90,6 +95,11 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     root = newModel
     fireUpdates(oldModel, newModel, diff)
     terminateLifetimes(oldModel, diff)
+    val endTime = System.nanoTime()
+    val tookTime = TimeUnit.NANOSECONDS.toMillis(endTime - startTime)
+    if(tookTime > 100) {
+      LOG.warn("Slow transaction. Took $tookTime millis")
+    }
     return diff
   }
 
@@ -197,15 +207,19 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
 
   private fun fireUpdates(oldModel: MapModel, newModel: MapModel, diff: MapDiff) {
     updates {
-      for ((path, signal) in subscriptions) {
-        if (path.getIn(diff) != null) {
-          ReactGraph.scheduleUpdate(Change(signal, path.getIn(oldModel), path.getIn(newModel)))
+      for ((path, signals) in subscriptions.entrySet()) {
+        for(signal in signals) {
+          if (path.getIn(diff) != null) {
+            ReactGraph.scheduleUpdate(Change(signal, path.getIn(oldModel), path.getIn(newModel)))
+          }
         }
       }
-      for ((name, signal) in tagSubs) {
-        if (oldModel.meta.index()[name] != newModel.meta.index()[name]) {
-          assert(signal.tag.getIn(oldModel) != signal.tag.getIn(newModel))
-          ReactGraph.scheduleUpdate(Change(signal, signal.tag.getIn(oldModel), signal.tag.getIn(newModel)))
+      for ((name, signals) in tagSubs.entrySet()) {
+        for(signal in signals) {
+          if (oldModel.meta.index()[name] != newModel.meta.index()[name]) {
+            assert(signal.tag.getIn(oldModel) != signal.tag.getIn(newModel))
+            ReactGraph.scheduleUpdate(Change(signal, signal.tag.getIn(oldModel), signal.tag.getIn(newModel)))
+          }
         }
       }
     }

@@ -42,7 +42,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.ListModel
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.get
+import com.jetbrains.reactivemodel.util.lifetime
 import java.awt.Component
 import java.util.HashMap
 import javax.swing.JComponent
@@ -72,10 +76,9 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
     get() {
       val m = model ?: return HashMap()
 
-      var signal = modelEditors[model]
-      if (signal == null) {
+      var signal = modelEditors.getOrPut(m, {
         val editorSignal = m.subscribe(m.lifetime, editorsTag)
-        signal = reaction(true, "editors reaction", editorSignal) { editors ->
+        reaction(true, "editors reaction", editorSignal) { editors ->
           hashMapOf(*editors.map { editor ->
             val file = editor.meta["file"] as VirtualFile
             file to
@@ -83,8 +86,41 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
                     , FileEditorProviderManager.getInstance().getProviders(myProject, file)))
           }.toTypedArray())
         }
-        modelEditors[model] = signal
-      }
+      })
+      return signal.value
+    }
+
+  private val selectedEditorSignals = HashMap<ReactiveModel, Signal<Editor?>>()
+  private val selectedEditor: Editor?
+    get() {
+      val m = model ?: return null
+
+      var signal = selectedEditorSignals.getOrPut(m, {
+        val editorSignal = m.subscribe(m.lifetime, editorsTag)
+        val subs = reaction(true, "selected editor reaction", editorSignal) { editors ->
+          editors.map { editor: MapModel ->
+            val host = editor.meta["host"] as EditorHost
+            val sub = m.subscribe(editor.meta.lifetime(), host.path / "selected")
+            reaction(true, "sub resction", sub) {
+              host.path.getIn(m.root)!!.meta["editor"] as Editor to it
+            }
+          }
+        }
+        var signalList = flatten(reaction(true, "editor reactions", subs) { list ->
+          unlist(list)
+        })
+
+        reaction(true, "selected editor reaction", signalList) { selections ->
+          val selected = selections?.filter { value: kotlin.Pair<Editor, Model?> ->
+            val isSelected = value.second as? PrimitiveModel<*>
+            isSelected != null && (isSelected.value as Boolean)
+          }?.map { value ->
+            value.first
+          } ?: emptyList()
+          assert(selected.isEmpty() || selected.size() == 1)
+          selected.firstOrNull()
+        }
+      })
       return signal.value
     }
 
@@ -305,7 +341,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun getSelectedTextEditor(): Editor? {
-    return null
+    return selectedEditor
   }
 
   override fun isFileOpen(file: VirtualFile): Boolean {
@@ -509,9 +545,9 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
         notifyPublisher(object : Runnable {
           override fun run() {
-              getProject().getMessageBus()
-                  .syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-                  .fileOpened(this@ServerFileEditorManager, file)
+            getProject().getMessageBus()
+                .syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+                .fileOpened(this@ServerFileEditorManager, file)
           }
         })
         val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
