@@ -16,7 +16,6 @@
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
@@ -24,7 +23,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +35,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -50,12 +47,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +57,6 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -258,7 +249,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       builder.buildGroup(actionGroup);
       final List<ActionItem> items = builder.getItems();
 
-      return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, dataContext, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, false, showDisabledActions);
     }
 
@@ -354,7 +345,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                  final int defaultOptionIndex, final boolean autoSelectionEnabled) {
     final List<ActionItem> items = makeActionItemsFromActionGroup(actionGroup, dataContext, showNumbers, useAlphaAsNumbers,
                                                                   showDisabledActions, honorActionMnemonics);
-    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+    return new ActionPopupStep(items, title, dataContext, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                new Condition<AnAction>() {
                                  @Override
                                  public boolean value(AnAction action) {
@@ -379,13 +370,19 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @NotNull
-  private static ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext,
-                                                 boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
-                                                 String title, Component component, boolean honorActionMnemonics,
-                                                 Condition<AnAction> preselectActionCondition, boolean autoSelectionEnabled) {
+  static ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
+                                         @NotNull DataContext dataContext,
+                                         boolean showNumbers,
+                                         boolean useAlphaAsNumbers,
+                                         boolean showDisabledActions,
+                                         String title,
+                                         Component component,
+                                         boolean honorActionMnemonics,
+                                         Condition<AnAction> preselectActionCondition,
+                                         boolean autoSelectionEnabled) {
     final List<ActionItem> items = makeActionItemsFromActionGroup(actionGroup, dataContext, showNumbers, useAlphaAsNumbers,
                                                                   showDisabledActions, honorActionMnemonics);
-    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), preselectActionCondition,
+    return new ActionPopupStep(items, title, dataContext, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), preselectActionCondition,
                                autoSelectionEnabled, showDisabledActions);
   }
 
@@ -597,7 +594,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myPrependWithSeparator;
     private final String mySeparatorText;
 
-    private ActionItem(@NotNull AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
+    public ActionItem(@NotNull AnAction action,
+                      @NotNull String text,
+                      boolean enabled,
+                      Icon icon,
+                      final boolean prependWithSeparator,
+                      String separatorText) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
@@ -631,177 +633,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public boolean isEnabled() { return myIsEnabled; }
   }
 
-  private static class ActionPopupStep implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
-    private final List<ActionItem> myItems;
-    private final String myTitle;
-    private final Component myContext;
-    private final boolean myEnableMnemonics;
-    private final int myDefaultOptionIndex;
-    private final boolean myAutoSelectionEnabled;
-    private final boolean myShowDisabledActions;
-    private Runnable myFinalRunnable;
-    @Nullable private final Condition<AnAction> myPreselectActionCondition;
-
-    private ActionPopupStep(@NotNull final List<ActionItem> items, final String title, Component context, boolean enableMnemonics,
-                            @Nullable Condition<AnAction> preselectActionCondition, final boolean autoSelection, boolean showDisabledActions) {
-      myItems = items;
-      myTitle = title;
-      myContext = context;
-      myEnableMnemonics = enableMnemonics;
-      myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
-      myPreselectActionCondition = preselectActionCondition;
-      myAutoSelectionEnabled = autoSelection;
-      myShowDisabledActions = showDisabledActions;
-    }
-
-    private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<AnAction> preselectActionCondition,
-                                                                @NotNull List<ActionItem> items) {
-      int defaultOptionIndex = 0;
-      if (preselectActionCondition != null) {
-        for (int i = 0; i < items.size(); i++) {
-          final AnAction action = items.get(i).getAction();
-          if (preselectActionCondition.value(action)) {
-            defaultOptionIndex = i;
-            break;
-          }
-        }
-      }
-      return defaultOptionIndex;
-    }
-
-    @Override
-    @NotNull
-    public List<ActionItem> getValues() {
-      return myItems;
-    }
-
-    @Override
-    public boolean isSelectable(final ActionItem value) {
-      return value.isEnabled();
-    }
-
-    @Override
-    public int getMnemonicPos(final ActionItem value) {
-      final String text = getTextFor(value);
-      int i = text.indexOf(UIUtil.MNEMONIC);
-      if (i < 0) {
-        i = text.indexOf('&');
-      }
-      if (i < 0) {
-        i = text.indexOf('_');
-      }
-      return i;
-    }
-
-    @Override
-    public Icon getIconFor(final ActionItem aValue) {
-      return aValue.getIcon();
-    }
-
-    @Override
-    @NotNull
-    public String getTextFor(final ActionItem value) {
-      return value.getText();
-    }
-
-    @Override
-    public ListSeparator getSeparatorAbove(final ActionItem value) {
-      return value.isPrependWithSeparator() ? new ListSeparator(value.getSeparatorText()) : null;
-    }
-
-    @Override
-    public int getDefaultOptionIndex() {
-      return myDefaultOptionIndex;
-    }
-
-    @Override
-    public String getTitle() {
-      return myTitle;
-    }
-
-    @Override
-    public PopupStep onChosen(final ActionItem actionChoice, final boolean finalChoice) {
-      return onChosen(actionChoice, finalChoice, 0);
-    }
-
-    @Override
-    public PopupStep onChosen(ActionItem actionChoice, boolean finalChoice, final int eventModifiers) {
-      if (!actionChoice.isEnabled()) return FINAL_CHOICE;
-      final AnAction action = actionChoice.getAction();
-      DataManager mgr = DataManager.getInstance();
-
-      final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
-
-      if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
-          return createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, true, myShowDisabledActions, null, myContext, false,
-                                   myPreselectActionCondition, false);
-      }
-      else {
-        myFinalRunnable = new Runnable() {
-          @Override
-          public void run() {
-            final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                                                          ActionManager.getInstance(), eventModifiers);
-            event.setInjectedContext(action.isInInjectedContext());
-            if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-              action.actionPerformed(event);
-            }
-          }
-        };
-        return FINAL_CHOICE;
-      }
-    }
-
-    @Override
-    public Runnable getFinalRunnable() {
-      return myFinalRunnable;
-    }
-
-    @Override
-    public boolean hasSubstep(final ActionItem selectedValue) {
-      return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
-    }
-
-    @Override
-    public void canceled() {
-    }
-
-    @Override
-    public boolean isMnemonicsNavigationEnabled() {
-      return myEnableMnemonics;
-    }
-
-    @Override
-    public MnemonicNavigationFilter<ActionItem> getMnemonicNavigationFilter() {
-      return this;
-    }
-
-    @Override
-    public boolean canBeHidden(final ActionItem value) {
-      return true;
-    }
-
-    @Override
-    public String getIndexedString(final ActionItem value) {
-      return getTextFor(value);
-    }
-
-    @Override
-    public boolean isSpeedSearchEnabled() {
-      return true;
-    }
-
-    @Override
-    public boolean isAutoSelectionEnabled() {
-      return myAutoSelectionEnabled;
-    }
-
-    @Override
-    public SpeedSearchFilter<ActionItem> getSpeedSearchFilter() {
-      return this;
-    }
-  }
-
   @Override
   @NotNull
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
@@ -811,206 +642,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   public boolean isPopupActive() {
   return IdeEventQueue.getInstance().isPopupActive();
-  }
-
-  private static class ActionStepBuilder {
-    private final List<ActionItem>                myListModel;
-    private final DataContext                     myDataContext;
-    private final boolean                         myShowNumbers;
-    private final boolean                         myUseAlphaAsNumbers;
-    private final boolean                         myShowDisabled;
-    private final HashMap<AnAction, Presentation> myAction2presentation;
-    private       int                             myCurrentNumber;
-    private       boolean                         myPrependWithSeparator;
-    private       String                          mySeparatorText;
-    private final boolean                         myHonorActionMnemonics;
-    private       Icon                            myEmptyIcon;
-    private int myMaxIconWidth  = -1;
-    private int myMaxIconHeight = -1;
-    @NotNull private String myActionPlace;
-
-    private ActionStepBuilder(@NotNull DataContext dataContext, final boolean showNumbers, final boolean useAlphaAsNumbers,
-                              final boolean showDisabled, final boolean honorActionMnemonics)
-    {
-      myUseAlphaAsNumbers = useAlphaAsNumbers;
-      myListModel = new ArrayList<ActionItem>();
-      myDataContext = dataContext;
-      myShowNumbers = showNumbers;
-      myShowDisabled = showDisabled;
-      myAction2presentation = new HashMap<AnAction, Presentation>();
-      myCurrentNumber = 0;
-      myPrependWithSeparator = false;
-      mySeparatorText = null;
-      myHonorActionMnemonics = honorActionMnemonics;
-      myActionPlace = ActionPlaces.UNKNOWN;
-    }
-
-    public void setActionPlace(@NotNull String actionPlace) {
-      myActionPlace = actionPlace;
-    }
-
-    @NotNull
-    public List<ActionItem> getItems() {
-      return myListModel;
-    }
-
-    public void buildGroup(@NotNull ActionGroup actionGroup) {
-      calcMaxIconSize(actionGroup);
-      myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? new EmptyIcon(myMaxIconWidth, myMaxIconHeight) : null;
-
-      appendActionsFromGroup(actionGroup);
-
-      if (myListModel.isEmpty()) {
-        myListModel.add(new ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, false, null, false, null));
-      }
-    }
-
-    private void calcMaxIconSize(final ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(createActionEvent(actionGroup));
-      for (AnAction action : actions) {
-        if (action == null) continue;
-        if (action instanceof ActionGroup) {
-          final ActionGroup group = (ActionGroup)action;
-          if (!group.isPopup()) {
-            calcMaxIconSize(group);
-            continue;
-          }
-        }
-
-        Icon icon = action.getTemplatePresentation().getIcon();
-        if (icon == null && action instanceof Toggleable) icon = PlatformIcons.CHECK_ICON;
-        if (icon != null) {
-          final int width = icon.getIconWidth();
-          final int height = icon.getIconHeight();
-          if (myMaxIconWidth < width) {
-            myMaxIconWidth = width;
-          }
-          if (myMaxIconHeight < height) {
-            myMaxIconHeight = height;
-          }
-        }
-      }
-    }
-
-    @NotNull
-    private AnActionEvent createActionEvent(@NotNull AnAction actionGroup) {
-      final AnActionEvent actionEvent =
-        new AnActionEvent(null, myDataContext, myActionPlace, getPresentation(actionGroup), ActionManager.getInstance(), 0);
-      actionEvent.setInjectedContext(actionGroup.isInInjectedContext());
-      return actionEvent;
-    }
-
-    private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(createActionEvent(actionGroup));
-      for (AnAction action : actions) {
-        if (action == null) {
-          LOG.error("null action in group " + actionGroup);
-          continue;
-        }
-        if (action instanceof Separator) {
-          myPrependWithSeparator = true;
-          mySeparatorText = ((Separator)action).getText();
-        }
-        else {
-          if (action instanceof ActionGroup) {
-            ActionGroup group = (ActionGroup)action;
-            if (group.isPopup()) {
-              appendAction(group);
-            }
-            else {
-              appendActionsFromGroup(group);
-            }
-          }
-          else {
-            appendAction(action);
-          }
-        }
-      }
-    }
-
-    private void appendAction(@NotNull AnAction action) {
-      Presentation presentation = getPresentation(action);
-      AnActionEvent event = createActionEvent(action);
-
-      ActionUtil.performDumbAwareUpdate(action, event, true);
-      if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
-        String text = presentation.getText();
-        if (myShowNumbers) {
-          if (myCurrentNumber < 9) {
-            text = "&" + (myCurrentNumber + 1) + ". " + text;
-          }
-          else if (myCurrentNumber == 9) {
-            text = "&" + 0 + ". " + text;
-          }
-          else if (myUseAlphaAsNumbers) {
-            text = "&" + (char)('A' + myCurrentNumber - 10) + ". " + text;
-          }
-          myCurrentNumber++;
-        }
-        else if (myHonorActionMnemonics) {
-          text = Presentation.restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
-        }
-
-        Icon icon = presentation.isEnabled() ? presentation.getIcon() : IconLoader.getDisabledIcon(presentation.getIcon());
-        if (icon == null) {
-          @NonNls final String actionId = ActionManager.getInstance().getId(action);
-          if (actionId != null && actionId.startsWith("QuickList.")) {
-            icon = AllIcons.Actions.QuickList;
-          }
-          else if (action instanceof Toggleable) {
-            boolean toggled = Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY));
-            icon = toggled? new IconWrapper(PlatformIcons.CHECK_ICON) : myEmptyIcon;
-          }
-          else {
-            icon = myEmptyIcon;
-          }
-        }
-        else {
-          icon = new IconWrapper(icon);
-        }
-        boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-        assert text != null : action + " has no presentation";
-        myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
-        myPrependWithSeparator = false;
-        mySeparatorText = null;
-      }
-    }
-
-    /**
-     * Adjusts icon size to maximum, so that icons with different sizes were aligned correctly.
-     */
-    private class IconWrapper implements Icon {
-
-      private Icon myIcon;
-
-      IconWrapper(Icon icon) {
-        myIcon = icon;
-      }
-
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        myIcon.paintIcon(c, g, x, y);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return myMaxIconWidth;
-      }
-
-      @Override
-      public int getIconHeight() {
-        return myMaxIconHeight;
-      }
-    }
-
-    private Presentation getPresentation(@NotNull AnAction action) {
-      Presentation presentation = myAction2presentation.get(action);
-      if (presentation == null) {
-        presentation = action.getTemplatePresentation().clone();
-        myAction2presentation.put(action, presentation);
-      }
-      return presentation;
-    }
   }
 
   @NotNull
