@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 public final class PyTestTracebackParser extends TraceBackParser {
 
   public PyTestTracebackParser() {
-    super(Pattern.compile("([^\"]+):(\\d+)"));
+    super(Pattern.compile("([^\"]+?):(\\d+)"));
   }
 
   @NotNull
@@ -36,8 +36,8 @@ public final class PyTestTracebackParser extends TraceBackParser {
   protected LinkInTrace findLinkInTrace(@NotNull final String line, @NotNull final Matcher matchedMatcher) {
     final String fileName = matchedMatcher.group(1).replace('\\', '/');
     final int lineNumber = Integer.parseInt(matchedMatcher.group(2));
-    final int startPos = 0;
-    final int endPos = line.lastIndexOf(':');
+    final int startPos = matchedMatcher.start(1);
+    final int endPos = matchedMatcher.end(2);
     return new LinkInTrace(fileName, lineNumber, startPos, endPos);
   }
 }

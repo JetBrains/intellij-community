@@ -1,14 +1,10 @@
 package com.jetbrains.env.python.testing;
 
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.impl.SdkFinder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.env.PyEnvTaskRunner;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestTask;
 import com.jetbrains.env.ut.PyUnitTestTask;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -145,6 +141,7 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
         // PyTest highlights file:line_number
         Assert.assertTrue("Assert fail not marked", fileNames.contains("reference_tests.py:7"));
         Assert.assertTrue("Failed test not marked", fileNames.contains("reference_tests.py:12"));
+        Assert.assertTrue("Failed test not marked", fileNames.contains("reference_tests.py"));
       }
     });
   }
