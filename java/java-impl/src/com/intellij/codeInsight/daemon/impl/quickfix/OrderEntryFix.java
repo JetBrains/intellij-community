@@ -60,6 +60,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInsight.daemon.impl.quickfix.MissingDependencyFixUtil.*;
+
 /**
  * @author cdr
  */
@@ -101,7 +103,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return null;
 
-    final List<LocalQuickFix> providedFixes = MissingDependencyFixProvider.findFixes(new Function<MissingDependencyFixProvider, List<LocalQuickFix>>() {
+    final List<LocalQuickFix> providedFixes = findFixes(new Function<MissingDependencyFixProvider, List<LocalQuickFix>>() {
       @Override
       public List<LocalQuickFix> fun(MissingDependencyFixProvider provider) {
         return provider.registerFixes(registrar, reference);
@@ -154,7 +156,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         }
       };
 
-      final OrderEntryFix providedFix = MissingDependencyFixProvider.find(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
+      final OrderEntryFix providedFix = provideFix(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
         @Override
         public OrderEntryFix fun(MissingDependencyFixProvider provider) {
           return provider.getJetbrainsAnnotationFix(reference, platformFix, currentModule);
@@ -179,7 +181,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
     final PsiClass[] finalClasses = classes;
     final OrderEntryFix finalModuleDependencyFix = moduleDependencyFix;
-    final OrderEntryFix providedModuleDependencyFix = MissingDependencyFixProvider.find(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
+    final OrderEntryFix providedModuleDependencyFix = provideFix(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
       @Override
       public OrderEntryFix fun(MissingDependencyFixProvider provider) {
         return provider.getAddModuleDependencyFix(reference, finalModuleDependencyFix, currentModule, classVFile, finalClasses);
@@ -245,7 +247,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             }
           };
 
-          final OrderEntryFix providedFix = MissingDependencyFixProvider.find(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
+          final OrderEntryFix providedFix = provideFix(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
             @Override
             public OrderEntryFix fun(MissingDependencyFixProvider provider) {
               return provider.getAddLibraryToClasspathFix(reference, platformFix, currentModule, libraryEntry, aClass);
@@ -322,7 +324,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   public static void addJarsToRoots(@NotNull final List<String> jarPaths, @Nullable final String libraryName,
                                     @NotNull final Module module, @Nullable final PsiElement location) {
-    final Boolean isAdded = MissingDependencyFixProvider.find(new Function<MissingDependencyFixProvider, Boolean>() {
+    final Boolean isAdded = provideFix(new Function<MissingDependencyFixProvider, Boolean>() {
       @Override
       public Boolean fun(MissingDependencyFixProvider provider) {
         return provider.addJarsToRoots(jarPaths, libraryName, module, location);

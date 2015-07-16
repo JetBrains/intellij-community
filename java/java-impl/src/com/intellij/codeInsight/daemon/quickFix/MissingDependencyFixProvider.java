@@ -43,30 +43,8 @@ import java.util.List;
  * @since 7/15/2015
  */
 public abstract class MissingDependencyFixProvider {
-  private static final ExtensionPointName<MissingDependencyFixProvider> EP_NAME =
+  public static final ExtensionPointName<MissingDependencyFixProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.codeInsight.missingDependencyFixProvider");
-
-  @Nullable
-  public static List<LocalQuickFix> findFixes(Function<MissingDependencyFixProvider, List<LocalQuickFix>> provider) {
-    MissingDependencyFixProvider[] fixProviders = Extensions.getExtensions(EP_NAME);
-    for (MissingDependencyFixProvider each : fixProviders) {
-      List<LocalQuickFix> result = provider.fun(each);
-      if (result != null && !result.isEmpty()) return result;
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public static <T> T find(Function<MissingDependencyFixProvider, T> provider) {
-    MissingDependencyFixProvider[] fixProviders = Extensions.getExtensions(EP_NAME);
-    for (MissingDependencyFixProvider each : fixProviders) {
-      T result = provider.fun(each);
-      if (result != null && Boolean.FALSE != result) return result;
-    }
-
-    return null;
-  }
 
   @Nullable
   public List<LocalQuickFix> registerFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull final PsiReference reference) {
