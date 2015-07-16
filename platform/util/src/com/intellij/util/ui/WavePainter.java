@@ -60,14 +60,21 @@ public class WavePainter {
    * Paints a wave in given coordinate range. <code>y</code> defines the lower boundary of painted wave.
    */
   public void paint(Graphics2D g, int xStart, int xEnd, int y) {
+    Shape oldClip = g.getClip();
+    final Rectangle rectangle = new Rectangle(xStart, y - 3, xEnd - xStart, 3);
+    final Rectangle waveClip = oldClip != null ? oldClip.getBounds().intersection(rectangle) : rectangle;
+    if (waveClip.isEmpty()) return;
+
     Composite oldComposite = g.getComposite();
-    g.setComposite(AlphaComposite.SrcOver);
-    Shape clip = g.getClip();
-    g.setClip(xStart, y - 3, xEnd - xStart, 3);
-    xStart -= xStart % 4;
-    UIUtil.drawImage(g, myImage, xStart, y - 3, null);
-    g.setComposite(oldComposite);
-    g.setClip(clip);
+    try {
+      g.setComposite(AlphaComposite.SrcOver);
+      g.setClip(waveClip);
+      xStart -= xStart % 4;
+      UIUtil.drawImage(g, myImage, xStart, y - 3, null);
+    } finally {
+      g.setComposite(oldComposite);
+      g.setClip(oldClip);
+    }
   }
 
   public static WavePainter forColor(Color color) {
