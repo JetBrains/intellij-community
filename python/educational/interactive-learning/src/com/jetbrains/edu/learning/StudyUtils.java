@@ -6,13 +6,17 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -21,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
@@ -34,7 +39,7 @@ import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.util.Collection;
 import java.util.List;
@@ -181,12 +186,21 @@ public class StudyUtils {
    * shows pop up in the center of "check task" button in study editor
    */
   public static void showCheckPopUp(@NotNull final Project project, @NotNull final Balloon balloon) {
-    final StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+    final StudyEditor studyEditor = getSelectedStudyEditor(project);
     assert studyEditor != null;
-    final JButton checkButton = studyEditor.getCheckButton();
-    balloon.showInCenterOf(checkButton);
+
+    balloon.show(computeLocation(studyEditor.getEditor()), Balloon.Position.above);
     Disposer.register(project, balloon);
   }
+
+  public static RelativePoint computeLocation(Editor editor){
+
+    final Rectangle visibleRect = editor.getComponent().getVisibleRect();
+    Point point = new Point(visibleRect.x + visibleRect.width + 10,
+                            visibleRect.y + 10);
+    return new RelativePoint(editor.getComponent(), point);
+  }
+
 
   /**
    * returns language manager which contains all the information about language specific file names
@@ -246,4 +260,47 @@ public class StudyUtils {
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
   }
 
+  @Nullable
+  public static StudyEditor getSelectedStudyEditor(@NotNull final Project project) {
+    try {
+      final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSplitters().getCurrentWindow().
+        getSelectedEditor().getSelectedEditorWithProvider().getFirst();
+      if (fileEditor instanceof StudyEditor) {
+        return (StudyEditor)fileEditor;
+      }
+    }
+    catch (Exception e) {
+      return null;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Editor getSelectedEditor(@NotNull final Project project) {
+    final StudyEditor studyEditor = getSelectedStudyEditor(project);
+    if (studyEditor != null) {
+      return studyEditor.getEditor();
+    }
+    return null;
+  }
+
+  public static void deleteGuardedBlocks(@NotNull final Document document) {
+    if (document instanceof DocumentImpl) {
+      final DocumentImpl documentImpl = (DocumentImpl)document;
+      List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
+      for (final RangeMarker block : blocks) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                document.removeGuardedBlock(block);
+              }
+            });
+          }
+        });
+      }
+    }
+  }
 }

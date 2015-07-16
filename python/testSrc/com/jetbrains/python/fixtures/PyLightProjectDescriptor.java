@@ -16,10 +16,8 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -34,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * Project descriptor (extracted from {@link com.jetbrains.python.fixtures.PyTestCase}) and should be used with it.
  * @author Ilya.Kazakevich
 */
-public class PyLightProjectDescriptor implements LightProjectDescriptor {
+public class PyLightProjectDescriptor extends LightProjectDescriptor {
   private final String myPythonVersion;
 
   public PyLightProjectDescriptor(String pythonVersion) {
@@ -50,10 +48,6 @@ public class PyLightProjectDescriptor implements LightProjectDescriptor {
   @Override
   public Sdk getSdk() {
     return PythonMockSdk.findOrCreate(myPythonVersion);
-  }
-
-  @Override
-  public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
   }
 
   protected void createLibrary(ModifiableRootModel model, final String name, final String path) {

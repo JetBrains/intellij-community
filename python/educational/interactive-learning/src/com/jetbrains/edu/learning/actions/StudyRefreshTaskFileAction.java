@@ -1,13 +1,16 @@
 package com.jetbrains.edu.learning.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -35,12 +38,17 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 
 public class StudyRefreshTaskFileAction extends DumbAwareAction {
   public static final String ACTION_ID = "RefreshTaskAction";
   public static final String SHORTCUT = "ctrl shift pressed X";
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
+
+  public StudyRefreshTaskFileAction() {
+    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Refresh current task", AllIcons.Actions.Refresh);
+  }
 
   public static void refresh(@NotNull final Project project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -50,7 +58,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
           @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
           @Override
           public void run() {
-            StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+            StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
             StudyState studyState = new StudyState(studyEditor);
             if (studyEditor == null || !studyState.isValid()) {
               LOG.info("RefreshTaskFileAction was invoked outside of Study Editor");
@@ -101,9 +109,9 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, messageType, null);
     final Balloon balloon = balloonBuilder.createBalloon();
-    StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
+    StudyEditor selectedStudyEditor = StudyUtils.getSelectedStudyEditor(project);
     assert selectedStudyEditor != null;
-    balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
+    balloon.show(StudyUtils.computeLocation(selectedStudyEditor.getEditor()), Balloon.Position.above);
     Disposer.register(project, balloon);
   }
 
@@ -120,7 +128,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
                                        @NotNull final Document document,
                                        @NotNull final TaskFile taskFile,
                                        String fileName) {
-    StudyEditor.deleteGuardedBlocks(document);
+    StudyUtils.deleteGuardedBlocks(document);
     taskFile.setTrackChanges(false);
     clearDocument(document);
     Task task = taskFile.getTask();
@@ -167,14 +175,14 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent event) {
+    EduUtils.enableAction(event, false);
     final Project project = event.getProject();
     if (project != null) {
-      StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+      StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
       StudyState studyState = new StudyState(studyEditor);
       if (studyState.isValid()) {
         EduUtils.enableAction(event, true);
       }
     }
-    EduUtils.enableAction(event, false);
   }
 }

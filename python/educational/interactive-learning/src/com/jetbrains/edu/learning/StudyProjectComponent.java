@@ -33,7 +33,6 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
-import com.jetbrains.edu.learning.ui.StudyCondition;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,19 +132,9 @@ public class StudyProjectComponent implements ProjectComponent {
   }
 
   private void registerToolWindow(@NotNull final ToolWindowManager toolWindowManager) {
-    try {
-      Method method = toolWindowManager.getClass().getDeclaredMethod("registerToolWindow", String.class,
-                                                                     JComponent.class,
-                                                                     ToolWindowAnchor.class,
-                                                                     boolean.class, boolean.class, boolean.class);
-      method.setAccessible(true);
-      method.invoke(toolWindowManager, StudyToolWindowFactory.STUDY_TOOL_WINDOW, null, ToolWindowAnchor.LEFT, true, true, true);
-    }
-    catch (Exception e) {
-      final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      if (toolWindow == null) {
-        toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
-      }
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+    if (toolWindow == null) {
+      toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
     }
   }
 
@@ -218,8 +206,6 @@ public class StudyProjectComponent implements ProjectComponent {
 
   @Override
   public void projectClosed() {
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    StudyCondition.VALUE = false;
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course != null) {
       ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
