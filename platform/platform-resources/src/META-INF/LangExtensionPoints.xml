@@ -52,6 +52,8 @@
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
 
+    <extensionPoint name="codeInsight.orderEntryFixProvider"
+                    interface="com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFixProvider"/>
 
     <extensionPoint name="bidiRegionsSeparator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">

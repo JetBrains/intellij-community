@@ -18,6 +18,7 @@ package com.intellij.execution.junit.codeInsight;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.execution.junit.JUnit3Framework;
 import com.intellij.execution.junit.JUnit4Framework;
@@ -31,6 +32,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +77,7 @@ public class JUnitUnresolvedReferenceQuickFixProvider extends UnresolvedReferenc
     PsiClass found = JavaPsiFacade.getInstance(project).findClass(className, currentModule.getModuleWithDependenciesAndLibrariesScope(true));
     if (found != null) return;
 
-    final OrderEntryFix fix = new OrderEntryFix() {
+    final OrderEntryFix platformFix = new OrderEntryFix() {
       @Override
       @NotNull
       public String getText() {
@@ -99,6 +102,15 @@ public class JUnitUnresolvedReferenceQuickFixProvider extends UnresolvedReferenc
         addJarsToRootsAndImportClass(jarPaths, libraryName, currentModule, editor, reference, className);
       }
     };
+
+    final OrderEntryFix providedFix = OrderEntryFixProvider.find(new Function<OrderEntryFixProvider, OrderEntryFix>() {
+      @Override
+      public OrderEntryFix fun(OrderEntryFixProvider provider) {
+        return provider.getJUnitFix(reference, platformFix, currentModule, framework, className);
+      }
+    });
+    final OrderEntryFix fix = ObjectUtils.notNull(providedFix, platformFix);
+
     registrar.register(fix);
   }
 
