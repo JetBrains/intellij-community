@@ -24,6 +24,7 @@ import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,6 +44,9 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   protected boolean setupConfigurationFromContext(TestDiscoveryConfiguration configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
+    if (!Registry.is("testDiscovery.enabled")) {
+      return false;
+    }
     final Location contextLocation = configurationContext.getLocation();
     assert contextLocation != null;
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
