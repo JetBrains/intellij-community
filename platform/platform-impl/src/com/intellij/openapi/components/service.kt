@@ -15,4 +15,12 @@
  */
 package com.intellij.openapi.components
 
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.project.Project
+
 public inline fun <reified T: Any> service(): T? = ServiceManager.getService(javaClass<T>())
+
+public inline fun <reified T: Any> Project.service(): T? = ServiceManager.getService(this, javaClass<T>())
+
+public val ComponentManager.stateStore: IComponentStore
+  get() = getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore

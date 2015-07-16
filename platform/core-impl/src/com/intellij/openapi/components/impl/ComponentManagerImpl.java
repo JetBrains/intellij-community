@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -87,8 +88,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     bootstrapPicoContainer(name);
   }
 
-  public void init() {
-    createComponents();
+  protected void init() {
+    init(null);
+  }
+
+  protected final void init(@Nullable Runnable classesLoaded) {
+    createComponents(classesLoaded);
     getComponents();
   }
 
@@ -107,9 +112,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsCreated;
   }
 
-  private void createComponents() {
+  private void createComponents(@Nullable Runnable classesLoaded) {
     try {
       myComponentsRegistry.loadClasses();
+
+      if (classesLoaded != null) {
+        classesLoaded.run();
+      }
 
       Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
@@ -125,6 +134,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
+  @NotNull
   protected synchronized Object createComponent(@NotNull Class componentInterface) {
     final Object component = getPicoContainer().getComponentInstance(componentInterface.getName());
     LOG.assertTrue(component != null, "Can't instantiate component for: " + componentInterface);
@@ -259,13 +269,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected synchronized Object[] getComponents() {
     Class[] componentClasses = myComponentsRegistry.getComponentInterfaces();
     List<Object> components = new ArrayList<Object>(componentClasses.length);
+    ProgressIndicator indicator = getProgressIndicator();
     for (Class<?> interfaceClass : componentClasses) {
-      ProgressIndicator indicator = getProgressIndicator();
       if (indicator != null) {
         indicator.checkCanceled();
       }
-      Object component = getComponent(interfaceClass);
-      if (component != null) components.add(component);
+      ContainerUtilRt.addIfNotNull(components, getComponent(interfaceClass));
     }
     return ArrayUtil.toObjectArray(components);
   }
@@ -549,6 +558,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myDelegate = new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true) {
         @Override
         public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
+          if (myInitialized) {
+            // so, instance cached and we don't need to do anything
+            // we have to avoid getProgressIndicator() because it could lead to cyclic call
+            // (get app component -> get app state store to init component -> get progress indicator -> get app state store to init progress indicator -> get progress indicator -> ... )
+            return super.getComponentInstance(picoContainer);
+          }
+
           ProgressIndicator indicator = getProgressIndicator();
           if (indicator != null) {
             indicator.checkCanceled();
@@ -562,11 +578,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
             if (!myInitialized) {
               if (myInitializing) {
+                String errorMessage = "Cyclic component initialization: " + componentKey;
                 if (myConfig.pluginDescriptor != null) {
-                  LOG.error(new PluginException("Cyclic component initialization: " + componentKey, myConfig.pluginDescriptor.getPluginId()));
+                  LOG.error(new PluginException(errorMessage, myConfig.pluginDescriptor.getPluginId()));
                 }
                 else {
-                  LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
+                  LOG.error(new Throwable(errorMessage));
                 }
               }
 

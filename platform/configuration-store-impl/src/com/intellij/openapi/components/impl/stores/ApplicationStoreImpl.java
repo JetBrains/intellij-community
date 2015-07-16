@@ -40,8 +40,6 @@ public class ApplicationStoreImpl extends ComponentStoreImpl {
   private final ApplicationImpl myApplication;
   private final StateStorageManager myStateStorageManager;
 
-  // created from PicoContainer
-  @SuppressWarnings({"UnusedDeclaration"})
   public ApplicationStoreImpl(@NotNull final ApplicationImpl application, @NotNull PathMacroManager pathMacroManager) {
     myApplication = application;
     myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
@@ -65,9 +63,8 @@ public class ApplicationStoreImpl extends ComponentStoreImpl {
       }
 
       @Override
-      protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
-        if (fileSpec.equals(StoragePathMacros.APP_CONFIG + '/' + PathMacrosImpl.EXT_FILE_NAME + DirectoryStorageData.DEFAULT_EXT)) return null;
-        return super.getMacroSubstitutor(fileSpec);
+      protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull String fileSpec) {
+        return fileSpec.equals(StoragePathMacros.APP_CONFIG + '/' + PathMacrosImpl.EXT_FILE_NAME + DirectoryStorageData.DEFAULT_EXT) ? null : super.getMacroSubstitutor(fileSpec);
       }
 
       @Override

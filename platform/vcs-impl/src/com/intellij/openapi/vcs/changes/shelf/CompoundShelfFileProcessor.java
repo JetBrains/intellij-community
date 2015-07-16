@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -51,7 +51,7 @@ public class CompoundShelfFileProcessor {
   }
 
   public CompoundShelfFileProcessor(String shelfBaseDirPath) {
-    this(((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider(),
+    this(ComponentsPackage.getStateStore(ApplicationManager.getApplication()).getStateStorageManager().getStreamProvider(),
          shelfBaseDirPath + File.separator + SHELF_DIR_NAME);
   }
 

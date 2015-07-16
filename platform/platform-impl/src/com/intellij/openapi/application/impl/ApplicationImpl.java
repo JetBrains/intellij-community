@@ -29,13 +29,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
@@ -173,37 +168,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   };
 
-  @Override
-  protected void bootstrapPicoContainer(@NotNull String name) {
-    super.bootstrapPicoContainer(name);
-    getPicoContainer().registerComponentImplementation(IComponentStore.class, ApplicationStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ApplicationPathMacroManager.class);
-  }
-
   @NotNull
+  @Deprecated
   public IComponentStore getStateStore() {
-    return (IComponentStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    return ComponentsPackage.getStateStore(this);
   }
 
   @Override
   public void initializeComponent(@NotNull Object component, boolean service) {
-    getStateStore().initComponent(component, service);
-  }
-
-  @Override
-  public void init() {
-    loadComponents();
-
-    for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
-      try {
-        listener.beforeApplicationLoaded(this);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+    if (!(component instanceof PathMacroManager || component instanceof IComponentStore)) {
+      ComponentsPackage.getStateStore(this).initComponent(component, service);
     }
-
-    super.init();
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -361,6 +336,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
   }
 
+  @NotNull
   @Override
   protected synchronized Object createComponent(@NotNull Class componentInterface) {
     Object component = super.createComponent(componentInterface);
@@ -493,16 +469,29 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     load(PathManager.getConfigPath(), optionsPath == null ? PathManager.getOptionsPath() : optionsPath);
   }
 
-  public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
-    IComponentStore store = getStateStore();
-    StateStorageManager storageManager = store.getStateStorageManager();
-    storageManager.addMacro(StoragePathMacros.APP_CONFIG, optionsPath);
-    storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
-
+  public void load(@NotNull final String configPath, @NotNull final String optionsPath) throws IOException {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       long t = System.currentTimeMillis();
-      init();
+      loadComponents();
+
+      init(new Runnable() {
+        @Override
+        public void run() {
+          StateStorageManager storageManager = ComponentsPackage.getStateStore(ApplicationImpl.this).getStateStorageManager();
+          storageManager.addMacro(StoragePathMacros.APP_CONFIG, optionsPath);
+          storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
+
+          for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+            try {
+              listener.beforeApplicationLoaded(ApplicationImpl.this);
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }
+        }
+      });
       t = System.currentTimeMillis() - t;
       LOG.info(getComponentConfigurations().length + " application components initialized in " + t + " ms");
     }
@@ -1485,7 +1474,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        StoreUtil.save(getStateStore(), null);
+        StoreUtil.save(ComponentsPackage.getStateStore(this), null);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);

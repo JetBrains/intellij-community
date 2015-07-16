@@ -22,6 +22,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -115,7 +116,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
 
             icsManager.repositoryActive = true
             if (updateResult != null) {
-              restartApplication = updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
+              restartApplication = updateStoragesFromStreamProvider(ApplicationManager.getApplication().stateStore, updateResult!!)
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
               (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {

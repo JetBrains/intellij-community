@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -143,7 +144,7 @@ class AutoSyncManager(private val icsManager: IcsManager) {
         app.invokeAndWait({
           catchAndLog {
             val updateResult = updater.merge()
-            if (!onAppExit && !app.isDisposeInProgress() && updateResult != null && updateStoragesFromStreamProvider(app.getStateStore(), updateResult)) {
+            if (!onAppExit && !app.isDisposeInProgress() && updateResult != null && updateStoragesFromStreamProvider(app.stateStore, updateResult)) {
               // force to avoid saveAll & confirmation
               app.exit(true, true, true, true)
             }

@@ -241,7 +241,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myStreamProvider;
   }
 
-  protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
+  protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull String fileSpec) {
     return myPathMacroSubstitutor;
   }
 

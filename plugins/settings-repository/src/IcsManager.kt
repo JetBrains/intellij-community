@@ -19,11 +19,11 @@ import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -173,7 +173,7 @@ class IcsManager(dir: File) {
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application as ApplicationImpl).getStateStore().getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
+    application.stateStore.getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
 
     autoSyncManager.registerListeners(application)
 

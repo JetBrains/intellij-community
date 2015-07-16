@@ -179,7 +179,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    final StateStorageManager storageManager = application.getStateStore().getStateStorageManager();
+    final StateStorageManager storageManager = ComponentsPackage.getStateStore(application).getStateStorageManager();
     ServiceManagerImpl.processAllImplementationClasses(application, new PairProcessor<Class<?>, PluginDescriptor>() {
       @Override
       public boolean process(@NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
