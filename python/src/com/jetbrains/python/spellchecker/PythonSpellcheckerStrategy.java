@@ -17,6 +17,7 @@ package com.jetbrains.python.spellchecker;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
@@ -38,21 +39,22 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
   private static class StringLiteralTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
     public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
-      Splitter splitter = PlainTextSplitter.getInstance();
-      String text = element.getText();
-      if (text.indexOf('\\') >= 0) {
+      final Splitter splitter = PlainTextSplitter.getInstance();
+      final String text = element.getText();
+      if (text.indexOf('\\') >= 0 && !StringUtil.startsWithIgnoreCase(text, "r")) {
         for (Pair<TextRange, String> fragment : element.getDecodedFragments()) {
           final String value = fragment.getSecond();
-          consumer.consumeToken(element, value, false, fragment.getFirst().getStartOffset(), TextRange.allOf(value),
-                                PlainTextSplitter.getInstance());
+          final int startOffset = fragment.getFirst().getStartOffset();
+          consumer.consumeToken(element, value, false, startOffset, TextRange.allOf(value), splitter);
         }
       }
-      else if (text.startsWith("u") || text.startsWith("U") || text.startsWith("r") || text.startsWith("R") ||
-          text.startsWith("b") || text.startsWith("B")) {
-        List<TextRange> valueTextRanges = element.getStringValueTextRanges();
-        for (TextRange valueTextRange : valueTextRanges) {
+      else if (StringUtil.startsWithIgnoreCase(text, "u") || 
+               StringUtil.startsWithIgnoreCase(text, "r") ||
+               StringUtil.startsWithIgnoreCase(text, "b")) {
+        for (TextRange valueTextRange : element.getStringValueTextRanges()) {
+          final String value = valueTextRange.substring(element.getText());
           final int startOffset = valueTextRange.getStartOffset();
-          consumer.consumeToken(element, valueTextRange.substring(element.getText()), false, startOffset, valueTextRange.shiftRight(-startOffset), splitter);
+          consumer.consumeToken(element, value, false, startOffset, TextRange.allOf(value), splitter);
         }
       }
       else {
