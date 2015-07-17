@@ -204,7 +204,7 @@ public class CompressedAppendableFile {
       assert false;
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
-    catch(CorruptionException e) {
+    catch (CorruptionException e) {
       throw new IOException(e);
     }
   }
