@@ -34,6 +34,22 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
           BaseStartedNodeEvent.isRunning(testStarted));
   }
 
+  public TestStartedEvent(@Nullable String name,
+                          int id,
+                          int parentId,
+                          @Nullable final String locationUrl,
+                          @Nullable String nodeType,
+                          @Nullable String nodeArgs,
+                          boolean running) {
+    super(name,
+          id,
+          parentId,
+          locationUrl,
+          nodeType,
+          nodeArgs,
+          running);
+  }
+
   public TestStartedEvent(@NotNull String name, @Nullable String locationUrl) {
     super(name, -1, -1, locationUrl, null, null, true);
   }
