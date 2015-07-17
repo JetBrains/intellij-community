@@ -105,11 +105,17 @@ public class DomApplicationComponent {
     return ServiceManager.getService(DomApplicationComponent.class);
   }
 
-  public int getCumulativeVersion() {
+  public int getCumulativeVersion(boolean forStubs) {
     int result = 0;
     for (DomFileDescription description : getAllFileDescriptions()) {
-      if (description.hasStubs()) {
-        result += description.getStubVersion();
+      if (forStubs) {
+        if (description.hasStubs()) {
+          result += description.getStubVersion();
+          result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+        }
+      }
+      else {
+        result += description.getVersion();
         result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
       }
     }
