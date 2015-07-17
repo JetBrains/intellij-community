@@ -29,7 +29,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -173,13 +176,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Deprecated
   public IComponentStore getStateStore() {
     return ComponentsPackage.getStateStore(this);
-  }
-
-  @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-    if (!service || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
-      ComponentsPackage.getStateStore(this).initComponent(component, service);
-    }
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -337,13 +333,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
   }
 
-  @Override
-  protected void componentCreatedDuringInit() {
-    if (mySplash != null) {
-      mySplash.showProgress("", 0.65f + getPercentageOfComponentsLoaded() * 0.35f);
-    }
-  }
-
   @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
@@ -471,9 +460,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       long t = System.currentTimeMillis();
-      loadComponents();
-
-      init(new Runnable() {
+      init(mySplash == null ? null : new EmptyProgressIndicator() {
+        @Override
+        public void setFraction(double fraction) {
+          mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
+        }
+      }, new Runnable() {
         @Override
         public void run() {
           // create ServiceManagerImpl at first to force extension classes registration
@@ -494,7 +486,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
       t = System.currentTimeMillis() - t;
-      LOG.info(getComponentConfigurations().length + " application components initialized in " + t + " ms");
+      LOG.info(getComponentConfigurationsSize() + " application components initialized in " + t + " ms");
     }
     catch (StateStorageException e) {
       throw new IOException(e);
@@ -507,6 +499,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     createLocatorFile();
   }
 
+  @Override
+  protected void createComponents(@Nullable final ProgressIndicator indicator) {
+    // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
+    Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        ApplicationImpl.super.createComponents(indicator);
+      }
+    };
+
+    if (indicator == null) {
+      // no splash, no need to to use progress manager
+      task.run();
+    }
+    else {
+      ProgressManager.getInstance().runProcess(task, indicator);
+    }
+  }
+
+  @Override
   @Nullable
   protected ProgressIndicator getProgressIndicator() {
     // could be called before full initialization

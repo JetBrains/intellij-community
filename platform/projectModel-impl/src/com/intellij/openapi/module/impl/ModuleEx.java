@@ -22,8 +22,6 @@ import com.intellij.openapi.module.Module;
  */
 public interface ModuleEx extends Module {
   void init();
-  @Deprecated
-  void loadModuleComponents();
   void moduleAdded();
   void projectOpened();
   void projectClosed();
