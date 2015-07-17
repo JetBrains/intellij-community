@@ -195,25 +195,28 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
 
     // Required keyword-only parameters
-    boolean hasKeywordOnlyParams = false;
+    boolean newSignatureContainsKeywordParams = false;
     for (PyParameter param : origInfo.getRequiredKeywordOnlyParameters()) {
       newFunctionParams.add(param.getText());
-      hasKeywordOnlyParams = true;
+      newSignatureContainsKeywordParams = true;
     }
     for (PyParameter param : superInfo.getRequiredKeywordOnlyParameters()) {
       if (!origInfo.getAllParameterNames().contains(param.getName())) {
         newFunctionParams.add(param.getText());
-        hasKeywordOnlyParams = true;
+        newSignatureContainsKeywordParams = true;
       }
       superCallArgs.add(param.getName() + "=" + param.getName());
-    }
-    if (starredParam instanceof PySingleStarParameter && !hasKeywordOnlyParams) {
-      newFunctionParams.remove(newFunctionParams.size() - 1);
     }
 
     // Optional keyword-only parameters
     for (PyParameter param : origInfo.getOptionalKeywordOnlyParameters()) {
       newFunctionParams.add(param.getText());
+      newSignatureContainsKeywordParams = true;
+    }
+    
+    // If '*' param is followed by nothing in result signature, remove it altogether 
+    if (starredParam instanceof PySingleStarParameter && !newSignatureContainsKeywordParams) {
+      newFunctionParams.remove(newFunctionParams.size() - 1);
     }
 
     // Keyword vararg
