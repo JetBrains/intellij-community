@@ -102,5 +102,10 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     public String getTitle() {
       return "My Commits";
     }
+
+    @Override
+    public boolean showMenuItem() {
+      return true;
+    }
   }
 }

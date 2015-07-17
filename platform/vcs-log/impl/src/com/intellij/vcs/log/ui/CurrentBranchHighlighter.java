@@ -90,5 +90,10 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     public String getTitle() {
       return "Current Branch";
     }
+
+    @Override
+    public boolean showMenuItem() {
+      return true;
+    }
   }
 }

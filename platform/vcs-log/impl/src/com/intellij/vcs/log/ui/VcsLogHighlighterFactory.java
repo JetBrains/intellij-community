@@ -29,4 +29,6 @@ public interface VcsLogHighlighterFactory {
 
   @NotNull
   String getTitle();
+
+  boolean showMenuItem();
 }

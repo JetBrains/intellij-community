@@ -39,7 +39,9 @@ public class HighlightersActionGroup extends ActionGroup {
       if (ui != null) {
         actions.add(new Separator("Highlight"));
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
-          actions.add(new EnableHighlighterAction(ui, factory));
+          if (factory.showMenuItem()) {
+            actions.add(new EnableHighlighterAction(ui, factory));
+          }
         }
       }
     }
