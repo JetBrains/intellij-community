@@ -1007,7 +1007,7 @@ public abstract class ChooseByNameBase {
       cellRenderer = ((ExpandedItemListCellRendererWrapper)cellRenderer).getWrappee();
     }
     if (cellRenderer instanceof MatcherHolder) {
-      final String pattern = transformPattern(text);
+      final String pattern = patternToLowerCase(transformPattern(text));
       final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
     }
@@ -1529,7 +1529,7 @@ public abstract class ChooseByNameBase {
 
       boolean scopeExpanded = fillWithScopeExpansion(elements, myPattern);
 
-      String lowerCased = myPattern.toLowerCase(Locale.US);
+      String lowerCased = patternToLowerCase(myPattern);
       if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
         scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
       }
@@ -1625,6 +1625,11 @@ public abstract class ChooseByNameBase {
 
   }
 
+  @NotNull
+  private String patternToLowerCase(String pattern) {
+    return pattern.toLowerCase(Locale.US);
+  }
+
 
   public boolean canShowListForEmptyPattern() {
     return isShowListForEmptyPattern() || isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion();
@@ -1635,7 +1640,7 @@ public abstract class ChooseByNameBase {
   }
 
   private static Matcher buildPatternMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
+    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   private static class HintLabel extends JLabel {
@@ -1690,7 +1695,7 @@ public abstract class ChooseByNameBase {
       presentation.setDynamicUsagesString(nonPrefixPattern);
       presentation.setTabName(prefixPattern);
       presentation.setTabText(prefixPattern);
-      presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(prefixPattern.toLowerCase()));
+      presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(patternToLowerCase(prefixPattern)));
       final Object[][] elements = getElements();
       final List<PsiElement> targets = new ArrayList<PsiElement>();
       final List<Usage> usages = new ArrayList<Usage>();
