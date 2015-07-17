@@ -396,14 +396,32 @@ public class FindManagerImpl extends FindManager {
   }
 
   private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
-    boolean isWordStart = startOffset == 0 ||
-                          !Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) ||
-                          !Character.isJavaIdentifierPart(text.charAt(startOffset)) ||
-                          startOffset > 1 && text.charAt(startOffset - 2) == '\\';
+    boolean isWordStart;
 
-    boolean isWordEnd = endOffset == text.length() ||
-                        !Character.isJavaIdentifierPart(text.charAt(endOffset)) ||
-                        endOffset > 0 && !Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+    if (startOffset != 0) {
+      boolean previousCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) &&
+                                              (startOffset <= 1 || text.charAt(startOffset - 2) != '\\');
+      boolean previousCharacterIsWhitespace = Character.isWhitespace(text.charAt(startOffset - 1));
+
+      boolean firstCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset));
+      isWordStart = !firstCharacterIsIdentifier && (previousCharacterIsIdentifier || previousCharacterIsWhitespace) ||
+                    firstCharacterIsIdentifier && !previousCharacterIsIdentifier;
+    } else {
+      isWordStart = true;
+    }
+
+    boolean isWordEnd;
+
+    if (endOffset != text.length()) {
+      boolean nextCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(endOffset));
+      boolean nextCharacterIsWhitespace = Character.isWhitespace(text.charAt(endOffset));
+      boolean lastSearchedCharacterIsIdentifier = endOffset  > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+
+      isWordEnd = lastSearchedCharacterIsIdentifier && !nextCharacterIsIdentifier ||
+                  !lastSearchedCharacterIsIdentifier && (nextCharacterIsIdentifier || nextCharacterIsWhitespace);
+    } else {
+      isWordEnd = true;
+    }
 
     return isWordStart && isWordEnd;
   }
@@ -835,11 +853,18 @@ public class FindManagerImpl extends FindManager {
     else {
       buffer.append(Character.toLowerCase(toReplace.charAt(0)));
     }
+
     if (toReplace.length() == 1) return buffer.toString();
 
     if (foundString.length() == 1) {
       buffer.append(toReplace.substring(1));
       return buffer.toString();
+    }
+
+    boolean isReplacementLowercase = true;
+    for (int i = 0; i < toReplace.length(); i++) {
+      isReplacementLowercase = Character.isLowerCase(toReplace.charAt(i));
+      if (!isReplacementLowercase) break;
     }
 
     boolean isTailUpper = true;
@@ -850,10 +875,10 @@ public class FindManagerImpl extends FindManager {
       if (!isTailUpper && !isTailLower) break;
     }
 
-    if (isTailUpper) {
+    if (isTailUpper && isReplacementLowercase) {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
-    else if (isTailLower) {
+    else if (isTailLower && isReplacementLowercase) {
       buffer.append(toReplace.substring(1).toLowerCase());
     }
     else {
