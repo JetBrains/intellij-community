@@ -26,10 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +35,6 @@ import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -270,11 +266,33 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
-    return !isTrue(options, "internal") || ApplicationManager.getApplication().isInternal();
+    return options == null || (isComponentSuitableForOs(options.get("os")) && (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal()));
   }
 
-  private static boolean isTrue(@Nullable Map<String, String> options, @NonNls @NotNull String option) {
-    return options != null && Boolean.parseBoolean(options.get(option));
+  public static boolean isComponentSuitableForOs(@Nullable String os) {
+    if (StringUtil.isEmpty(os)) {
+      return true;
+    }
+
+    if (os.equals("mac")) {
+      return SystemInfoRt.isMac;
+    }
+    else if (os.equals("linux")) {
+      return SystemInfoRt.isLinux;
+    }
+    else if (os.equals("windows")) {
+      return SystemInfoRt.isWindows;
+    }
+    else if (os.equals("unix")) {
+      return SystemInfoRt.isUnix;
+    }
+    else if (os.equals("freebsd")) {
+      return SystemInfoRt.isFreeBSD;
+    }
+    else {
+      LOG.warn("Unknown OS " + os);
+      return true;
+    }
   }
 
   @Override
