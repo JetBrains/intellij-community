@@ -69,6 +69,27 @@ public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixture
                           "c=");
   }
 
+  public void testFixComments() {
+    myFixture.configureByText("p.properties", "a=a\n" +
+                                              "d=d\n" +
+                                              "# some comment on \"e\"\n" +
+                                              "# this is multiline comment\n" +
+                                              "e=e\n" +
+                                              "b=b\n" +
+                                              "c=b");
+    myFixture.enableInspections(new AlphaUnsortedPropertiesFileInspection());
+    final IntentionAction intention = myFixture.getAvailableIntention("Sort resource bundle files", "p.properties");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("a=a\n" +
+                          "b=b\n" +
+                          "c=b\n" +
+                          "d=d\n" +
+                          "# some comment on \"e\"\n" +
+                          "# this is multiline comment\n" +
+                          "e=e");
+  }
+
   private void doTest() throws Exception {
     myFixture.testInspection(getTestName(true), new LocalInspectionToolWrapper(new AlphaUnsortedPropertiesFileInspection()));
   }
