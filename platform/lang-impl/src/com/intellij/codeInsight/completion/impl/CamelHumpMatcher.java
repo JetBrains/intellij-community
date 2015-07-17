@@ -45,7 +45,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean isStartMatch(LookupElement element) {
-    for (String s : CompletionUtil.getImmutableLookupStrings(element)) {
+    for (String s : CompletionUtil.iterateLookupStrings(element)) {
       FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
       if (ranges == null) continue;
       if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
