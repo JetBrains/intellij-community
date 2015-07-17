@@ -38,11 +38,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
-  public void testJava5CastConventions() {
-    setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest(true, false);
-  }
-
+  public void testJava5CastConventions() { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(true, false); }
   public void testJavacQuirks() { doTest(true, false); }
   public void testMethodReturnTypeSubstitutability() { doTest(true, false); }
   public void testIDEADEV11877() { doTest(false, false); }
@@ -60,11 +56,6 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA65473() { doTest(false, false); }
   public void testIDEA61415() { doTest(false, false); }
   public void testGenericArrayCreationWithGenericTypeWithOneUnboundedWildcardOneNormalParams() { doTest(false, false); }
-  public void testAgentPremain() {
-    doTest(false, false); 
-  }
-
-  public void testInitializedBeforeUsed() throws Exception {
-    doTest(false, false);
-  }
+  public void testAgentPremain() { doTest(false, false); }
+  public void testInitializedBeforeUsed() { doTest(false, false); }
 }
