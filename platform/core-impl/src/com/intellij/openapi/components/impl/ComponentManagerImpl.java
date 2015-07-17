@@ -269,12 +269,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsRegistry.getComponentByName(name);
   }
 
-  protected boolean isComponentSuitable(Map<String, String> options) {
+  protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
     return !isTrue(options, "internal") || ApplicationManager.getApplication().isInternal();
   }
 
-  private static boolean isTrue(Map<String, String> options, @NonNls @NotNull String option) {
-    return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option)).booleanValue();
+  private static boolean isTrue(@Nullable Map<String, String> options, @NonNls @NotNull String option) {
+    return options != null && Boolean.parseBoolean(options.get(option));
   }
 
   @Override
@@ -389,7 +389,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
         final Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ?
                                              interfaceClass : StringUtil.isEmpty(config.getImplementationClass()) ? null : Class.forName(config.getImplementationClass(), true, loader);
-        boolean overrides = Boolean.parseBoolean(config.options.get("overrides"));
+        boolean overrides = config.options != null && Boolean.parseBoolean(config.options.get("overrides"));
         MutablePicoContainer picoContainer = getPicoContainer();
         if (overrides) {
           ComponentAdapter oldAdapter = picoContainer.getComponentAdapterOfType(interfaceClass);

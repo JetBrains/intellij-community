@@ -17,6 +17,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
+import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -124,6 +125,7 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
   }
 
   @Override
+  @Nullable
   public Object deserialize(Object context, @NotNull Element element) {
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
       return deserialize(context, element.getChildren());
@@ -133,14 +135,21 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
     }
   }
 
-  private Map deserialize(Object context, List<Element> childNodes) {
+  @Nullable
+  private Map deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
     Map map = (Map)context;
-    map.clear();
+    if (map != null) {
+      map.clear();
+    }
 
     for (Element childNode : childNodes) {
       if (!childNode.getName().equals(getEntryAttributeName())) {
         LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
         continue;
+      }
+
+      if (map == null) {
+        map = new THashMap();
       }
 
       //noinspection unchecked
