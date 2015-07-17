@@ -406,7 +406,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private static MouseEvent convertEvent(final MouseEvent e, final Component target) {
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
-    return MouseEventAdapter.convert(e, target, e.getID(), e.getWhen(), e.getModifiersEx(), point.x, point.y);
+    return MouseEventAdapter.convert(e, target, point.x, point.y);
   }
 
   private static void fireMouseEvent(final MouseListener listener, final MouseEvent event) {

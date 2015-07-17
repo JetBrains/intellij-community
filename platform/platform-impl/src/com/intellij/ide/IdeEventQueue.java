@@ -352,7 +352,7 @@ public class IdeEventQueue extends EventQueue {
         lastMouseWheel = System.currentTimeMillis();
 
         MouseWheelEvent newMouseWheelEvent = MouseEventAdapter.convert(mwe,
-          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers(), mwe.getX(), mwe.getY()
+          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers() | mwe.getModifiersEx(), mwe.getX(), mwe.getY()
         );
         return newMouseWheelEvent;
       }

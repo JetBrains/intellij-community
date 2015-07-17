@@ -98,7 +98,7 @@ public class MouseEventAdapter<T> implements MouseListener, MouseMotionListener,
   }
 
   public static MouseEvent convert(MouseEvent event, Component source, int x, int y) {
-    return convert(event, source, event.getID(), event.getWhen(), event.getModifiers(), x, y);
+    return convert(event, source, event.getID(), event.getWhen(), event.getModifiers() | event.getModifiersEx(), x, y);
   }
 
   public static MouseEvent convert(MouseEvent event, Component source, int id, long when, int modifiers, int x, int y) {

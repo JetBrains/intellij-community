@@ -198,7 +198,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           mouseMoved(MouseEventAdapter.convert(e, e.getComponent(),
                                                MouseEvent.MOUSE_MOVED,
                                                e.getWhen(),
-                                               e.getModifiers(),
+                                               e.getModifiers() | e.getModifiersEx(),
                                                e.getX(),
                                                e.getY()));
         }
