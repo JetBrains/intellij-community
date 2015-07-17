@@ -69,12 +69,17 @@ public class RuntimeResourcesComponent implements ModuleComponent, PersistentSta
   @Nullable
   @Override
   public JpsDevKitModelSerializerExtension.RuntimeResourceListState getState() {
-    return ((RuntimeResourcesConfigurationImpl)myRootManager.getModuleExtension(RuntimeResourcesConfiguration.class)).getState();
+    RuntimeResourcesConfigurationImpl extension = getExtension();
+    return extension.isLoadedByExtension() ? new JpsDevKitModelSerializerExtension.RuntimeResourceListState() : extension.getState();
+  }
+
+  private RuntimeResourcesConfigurationImpl getExtension() {
+    return (RuntimeResourcesConfigurationImpl)myRootManager.getModuleExtension(RuntimeResourcesConfiguration.class);
   }
 
   @Override
   public void loadState(JpsDevKitModelSerializerExtension.RuntimeResourceListState state) {
-    ((RuntimeResourcesConfigurationImpl)myRootManager.getModuleExtension(RuntimeResourcesConfiguration.class)).loadState(state);
+    getExtension().loadState(state);
   }
 
   @NotNull

@@ -34,6 +34,7 @@ import java.util.*;
 public class RuntimeResourcesConfigurationImpl extends RuntimeResourcesConfiguration {
   private final RuntimeResourcesConfigurationImpl mySource;
   private Map<String, RuntimeResourceRoot> myRoots = new LinkedHashMap<String, RuntimeResourceRoot>();
+  private boolean myLoadedByExtension;
 
   public RuntimeResourcesConfigurationImpl() {
     mySource = null;
@@ -95,10 +96,10 @@ public class RuntimeResourcesConfigurationImpl extends RuntimeResourcesConfigura
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    /*
-    JpsDevKitModelSerializerExtension.RuntimeResourceListState state = getState();
-    XmlSerializer.serializeInto(state, element);
-    */
+    if (myLoadedByExtension) {
+      JpsDevKitModelSerializerExtension.RuntimeResourceListState state = getState();
+      XmlSerializer.serializeInto(state, element);
+    }
   }
 
   @NotNull
@@ -115,6 +116,11 @@ public class RuntimeResourcesConfigurationImpl extends RuntimeResourcesConfigura
     JpsDevKitModelSerializerExtension.RuntimeResourceListState state = new JpsDevKitModelSerializerExtension.RuntimeResourceListState();
     XmlSerializer.deserializeInto(state, element);
     loadState(state);
+    myLoadedByExtension = !myRoots.isEmpty();
+  }
+
+  boolean isLoadedByExtension() {
+    return myLoadedByExtension;
   }
 
   void loadState(@Nullable JpsDevKitModelSerializerExtension.RuntimeResourceListState state) {
