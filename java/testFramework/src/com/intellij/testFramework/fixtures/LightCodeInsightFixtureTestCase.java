@@ -84,7 +84,6 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public LightCodeInsightFixtureTestCase(String classToTest, String prefix) {
-    PlatformTestCase.initPlatformPrefix(classToTest, prefix);
   }
 
   @Override

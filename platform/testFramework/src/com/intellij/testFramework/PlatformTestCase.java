@@ -832,7 +832,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
    * @deprecated calling this method is no longer necessary
    */
   public static void initPlatformLangPrefix() {
-    initPlatformPrefix(IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
   /**
@@ -843,7 +842,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
    * is NOT present in classpath.
    * Also, only the very FIRST call to this method will take effect.
    *
-   * @param classToTest marker class qualified name e.g. {@link #IDEA_MARKER_CLASS}.
+   * @param classToTest marker class qualified name
    * @param prefix platform prefix to be set up if marker class not found in classpath.
    * @deprecated calling this method is no longer necessary
    */

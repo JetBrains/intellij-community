@@ -82,7 +82,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
-
+  @Deprecated
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.roots.IdeaModifiableModelsProvider";
   public static final String TEMP_DIR_MARKER = "unitTest_";
 
