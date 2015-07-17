@@ -38,12 +38,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -485,8 +487,17 @@ public class LookupCellRenderer implements ListCellRenderer {
     public void paint(Graphics g){
       if (!myLookup.isFocused() && myLookup.isCompletion()) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+
+        // sub-pixel antialiasing does not work with alpha composite, so we workaround this by painting to RGB image first
+        BufferedImage image = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D imageGraphics = image.createGraphics();
+        super.paint(imageGraphics);
+        imageGraphics.dispose();
+        UIUtil.drawImage(g, image, 0, 0, null);
       }
-      super.paint(g);
+      else {
+        super.paint(g);
+      }
     }
   }
 }
