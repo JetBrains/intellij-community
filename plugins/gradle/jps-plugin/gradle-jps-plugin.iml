@@ -15,27 +15,27 @@
     <orderEntry type="module-library">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-model-core-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-model-groovy-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-resources-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-model-core-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-model-groovy-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-resources-2.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/core/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/base-services-groovy/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/native/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/resources/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/base-services-groovy/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/native/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/resources/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -43,4 +43,3 @@
     <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>
-

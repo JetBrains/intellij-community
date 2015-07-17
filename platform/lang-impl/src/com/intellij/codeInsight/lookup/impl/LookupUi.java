@@ -49,6 +49,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -268,7 +269,8 @@ class LookupUi {
 
   // in layered pane coordinate system.
   Rectangle calculatePosition() {
-    Dimension dim = myLookup.getComponent().getPreferredSize();
+    final JComponent lookupComponent = myLookup.getComponent();
+    Dimension dim = lookupComponent.getPreferredSize();
     int lookupStart = myLookup.getLookupStart();
     Editor editor = myLookup.getEditor();
     if (lookupStart < 0 || lookupStart > editor.getDocument().getTextLength()) {
@@ -279,7 +281,13 @@ class LookupUi {
     LogicalPosition pos = editor.offsetToLogicalPosition(lookupStart);
     Point location = editor.logicalPositionToXY(pos);
     location.y += editor.getLineHeight();
-    location.x -= myLookup.myCellRenderer.getIconIndent() + myLookup.getComponent().getInsets().left;
+    location.x -= myLookup.myCellRenderer.getTextIndent();
+    // extra check for other borders
+    final Window window = UIUtil.getWindow(lookupComponent);
+    if (window != null) {
+      final Point point = SwingUtilities.convertPoint(lookupComponent, 0, 0, window);
+      location.x -= point.x;
+    }
 
     SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
     final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(location);
@@ -322,7 +330,7 @@ class LookupUi {
       setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(@Nullable Container parent) {
-          int maxCellWidth = myLookup.myLookupTextWidth + myLookup.myCellRenderer.getIconIndent();
+          int maxCellWidth = myLookup.myLookupTextWidth + myLookup.myCellRenderer.getTextIndent();
           int scrollBarWidth = myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width;
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH2);
 
