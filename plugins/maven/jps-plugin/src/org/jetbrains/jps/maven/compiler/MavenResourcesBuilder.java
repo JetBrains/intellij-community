@@ -91,6 +91,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
     MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
 
+    context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
     for (MavenResourceRootDescriptor rd : roots) {
       for (File file : files.get(rd)) {
 
@@ -106,8 +107,6 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         File outputFile = new File(outputDir, relPath);
         String sourcePath = file.getPath();
         try {
-          context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
-
           fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileUtilRt.ALL_FILES);
           outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
         }
