@@ -18,29 +18,29 @@
     <orderEntry type="module-library">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-model-core-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-model-groovy-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-model-core-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-model-groovy-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/core/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/base-services-groovy/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/build-init/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/plugins/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/ide/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/ide/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/scala/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/reporting/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/base-services-groovy/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/build-init/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/plugins/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/ide/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/ide/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/scala/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/reporting/src/main/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -58,19 +58,20 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="GradleToolingExtension">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-2.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-2.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/tooling-api/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>
