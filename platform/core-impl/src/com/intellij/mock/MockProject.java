@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -137,8 +139,8 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   public void projectOpened() {
-    final ProjectComponent[] components = getComponents(ProjectComponent.class);
-    for (ProjectComponent component : components) {
+    //noinspection unchecked
+    for (ProjectComponent component : ((List<ProjectComponent>)getPicoContainer().getComponentInstancesOfType(ProjectComponent.class))) {
       try {
         component.projectOpened();
       }

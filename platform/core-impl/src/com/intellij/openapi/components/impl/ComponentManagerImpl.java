@@ -28,7 +28,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -157,12 +156,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Nullable
   private <T> T getComponentFromContainer(@NotNull Class<T> componentInterface) {
     T component = (T)myInitializedComponents.get(componentInterface);
-    if (component != null) {
+    if (component != null || myDisposed) {
       return component;
     }
 
     synchronized (this) {
-      if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(componentInterface)) {
+      if (myComponentsRegistry == null) {
         return null;
       }
 
@@ -235,13 +234,21 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
-    return myComponentsRegistry != null && myComponentsRegistry.containsInterface(interfaceClass);
+    return myComponentsRegistry != null && getPicoContainer().getComponentAdapter(interfaceClass.getName()) != null;
   }
 
   @Override
   @NotNull
-  public synchronized <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    return myComponentsRegistry.getComponentsByType(baseClass);
+  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
+    List list = getPicoContainer().getComponentInstancesOfType(baseClass);
+    //noinspection unchecked
+    return (T[])ArrayUtil.toObjectArray(list, baseClass);
+  }
+
+  @NotNull
+  protected final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+    //noinspection unchecked
+    return getPicoContainer().getComponentInstancesOfType(baseClass);
   }
 
   @Override
@@ -385,7 +392,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private class ComponentsRegistry {
     private final Map<Class, Object> myInterfaceToLockMap = new THashMap<Class, Object>();
-    private final Map<Class, Class> myInterfaceToClassMap = new THashMap<Class, Class>();
     private final List<Class> myComponentInterfaces; // keeps order of component's registration
     private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
     private final int myComponentConfigsSize;
@@ -395,38 +401,31 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     public ComponentsRegistry(@NotNull List<ComponentConfig> componentConfigs) {
       myComponentInterfaces = new ArrayList<Class>(componentConfigs.size());
       for (ComponentConfig config : componentConfigs) {
-        loadClasses(config);
+        registerComponents(config);
       }
       myComponentConfigsSize = componentConfigs.size();
     }
 
-    private void loadClasses(@NotNull ComponentConfig config) {
+    private void registerComponents(@NotNull ComponentConfig config) {
       ClassLoader loader = config.getClassLoader();
 
       try {
         final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
         final Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ?
                                              interfaceClass : StringUtil.isEmpty(config.getImplementationClass()) ? null : Class.forName(config.getImplementationClass(), true, loader);
-        boolean overrides = config.options != null && Boolean.parseBoolean(config.options.get("overrides"));
         MutablePicoContainer picoContainer = getPicoContainer();
-        if (overrides) {
+        if (config.options != null && Boolean.parseBoolean(config.options.get("overrides"))) {
           ComponentAdapter oldAdapter = picoContainer.getComponentAdapterOfType(interfaceClass);
           if (oldAdapter == null) {
             throw new RuntimeException(config + " does not override anything");
           }
           picoContainer.unregisterComponent(oldAdapter.getComponentKey());
-          myInterfaceToClassMap.remove(interfaceClass);
           myComponentClassToConfig.remove(oldAdapter.getComponentImplementation());
           myComponentInterfaces.remove(interfaceClass);
         }
         // implementationClass == null means we want to unregister this component
         if (implementationClass != null) {
-          if (myInterfaceToClassMap.get(interfaceClass) != null) {
-            throw new RuntimeException("Component already registered: " + interfaceClass.getName());
-          }
-
           picoContainer.registerComponent(new ComponentConfigComponentAdapter(config, implementationClass));
-          myInterfaceToClassMap.put(interfaceClass, implementationClass);
           myComponentClassToConfig.put(implementationClass, config);
           myComponentInterfaces.add(interfaceClass);
         }
@@ -442,10 +441,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         myInterfaceToLockMap.put(componentClass, lock = new Object());
       }
       return lock;
-    }
-
-    private boolean containsInterface(final Class interfaceClass) {
-      return myInterfaceToClassMap.containsKey(interfaceClass);
     }
 
     private double getPercentageOfComponentsLoaded() {
@@ -479,22 +474,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     private BaseComponent getComponentByName(final String name) {
       return myNameToComponent.get(name);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T[] getComponentsByType(final Class<T> baseClass) {
-      List<T> array = new ArrayList<T>();
-
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < myComponentInterfaces.size(); i++) {
-        Class interfaceClass = myComponentInterfaces.get(i);
-        final Class implClass = myInterfaceToClassMap.get(interfaceClass);
-        if (ReflectionUtil.isAssignable(baseClass, implClass)) {
-          array.add((T)getComponent(interfaceClass));
-        }
-      }
-
-      return array.toArray((T[])Array.newInstance(baseClass, array.size()));
     }
 
     public ComponentConfig getConfig(final Class componentImplementation) {

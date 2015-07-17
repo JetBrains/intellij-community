@@ -24,3 +24,7 @@ public inline fun <reified T: Any> Project.service(): T? = ServiceManager.getSer
 
 public val ComponentManager.stateStore: IComponentStore
   get() = getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore
+
+
+@suppress("UNCHECKED_CAST")
+public fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> = getPicoContainer().getComponentInstancesOfType(baseClass) as List<T>

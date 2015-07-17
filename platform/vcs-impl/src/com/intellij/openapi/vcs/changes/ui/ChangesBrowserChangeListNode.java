@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.List;
  * @author yole
  */
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
-  private final ChangeListDecorator[] myDecorators;
+  private final List<ChangeListDecorator> myDecorators;
   private final ChangeListManagerEx myClManager;
   private final ChangeListRemoteState myChangeListRemoteState;
 
@@ -37,7 +37,9 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    myDecorators = project.getComponents(ChangeListDecorator.class);
+
+    //noinspection unchecked
+    myDecorators = project.getPicoContainer().getComponentInstancesOfType(ChangeListDecorator.class);
   }
 
   @Override
@@ -47,7 +49,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       renderer.appendTextWithIssueLinks(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       appendCount(renderer);
-      for(ChangeListDecorator decorator: myDecorators) {
+      for (ChangeListDecorator decorator: myDecorators) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
       final String freezed = myClManager.isFreezed();

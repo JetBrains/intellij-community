@@ -46,7 +46,8 @@ public class InspectionToolRegistrar {
     if (!myInspectionComponentsLoaded) {
       myInspectionComponentsLoaded = true;
       Set<InspectionToolProvider> providers = new THashSet<InspectionToolProvider>();
-      ContainerUtil.addAll(providers, ApplicationManager.getApplication().getComponents(InspectionToolProvider.class));
+      //noinspection unchecked
+      providers.addAll((Collection<? extends InspectionToolProvider>)ApplicationManager.getApplication().getPicoContainer().getComponentInstancesOfType(InspectionToolProvider.class));
       ContainerUtil.addAll(providers, Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME));
       List<Factory<InspectionToolWrapper>> factories = new ArrayList<Factory<InspectionToolWrapper>>();
       registerTools(providers, factories);
