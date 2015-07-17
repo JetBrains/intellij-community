@@ -4,4 +4,4 @@ class NormalLR:
 
 class GradientLR(NormalLR):
     def __init__(self, *, tau=None):
-        super().__init__()
+        super().__init__(tau=tau)
