@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author peter
 */
-public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
+public class DefaultLightProjectDescriptor implements LightProjectDescriptor {
   @NotNull
   @Override
   public ModuleType getModuleType() {
