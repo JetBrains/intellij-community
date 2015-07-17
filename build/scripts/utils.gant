@@ -345,6 +345,7 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
     "-Xdebug",
+    "-XX:-OmitStackTraceInFastThrow",
     jdwp
   ]
 })
