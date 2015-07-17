@@ -372,7 +372,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  public static String getComponentName(@NotNull final Object component) {
+  public static String getComponentName(@NotNull Object component) {
     if (component instanceof NamedComponent) {
       return ((NamedComponent)component).getComponentName();
     }
