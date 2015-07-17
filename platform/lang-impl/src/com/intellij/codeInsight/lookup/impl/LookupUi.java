@@ -47,7 +47,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -77,8 +76,6 @@ class LookupUi {
   private final JLabel mySortingLabel = new JLabel();
   private final JScrollPane myScrollPane;
   private final JButton myScrollBarIncreaseButton;
-  private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
-  private final JPanel myIconPanel = new JPanel(new BorderLayout());
   private final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
 
   private LookupHint myElementHint = null;
@@ -90,10 +87,6 @@ class LookupUi {
     myAdvertiser = advertiser;
     myList = list;
     myProject = project;
-
-    myIconPanel.setVisible(false);
-    myIconPanel.setBackground(Color.LIGHT_GRAY);
-    myIconPanel.add(myProcessIcon);
 
     JComponent adComponent = advertiser.getAdComponent();
     adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + AllIcons.Ide.LookupRelevance.getIconWidth()));
@@ -131,7 +124,6 @@ class LookupUi {
 
     updateScrollbarVisibility();
 
-    Disposer.register(lookup, myProcessIcon);
     Disposer.register(lookup, myHintAlarm);
   }
 
@@ -227,19 +219,13 @@ class LookupUi {
     Runnable setVisible = new Runnable() {
       @Override
       public void run() {
-        myIconPanel.setVisible(myLookup.isCalculating());
+        myList.setPaintBusy(myLookup.isCalculating());
       }
     };
     if (myLookup.isCalculating()) {
       new Alarm(myLookup).addRequest(setVisible, 100, myModalityState);
     } else {
       setVisible.run();
-    }
-
-    if (calculating) {
-      myProcessIcon.resume();
-    } else {
-      myProcessIcon.suspend();
     }
   }
 
@@ -331,7 +317,6 @@ class LookupUi {
 
     private LookupLayeredPane() {
       add(mainPanel, 0, 0);
-      add(myIconPanel, 42, 0);
       add(mySortingLabel, 10, 0);
 
       setLayout(new AbstractLayoutManager() {
@@ -386,10 +371,6 @@ class LookupUi {
       vScrollBar.revalidate();
       vScrollBar.repaint();
       
-      final Dimension iconSize = myProcessIcon.getPreferredSize();
-      myIconPanel.setBounds(getWidth() - iconSize.width - (vScrollBar.isVisible() ? vScrollBar.getWidth() : 0), 0, iconSize.width,
-                            iconSize.height);
-
       final Dimension sortSize = mySortingLabel.getPreferredSize();
       final int sortWidth = vScrollBar.isVisible() ? vScrollBar.getWidth() : sortSize.width;
       final int sortHeight = Math.max(sortSize.height, adHeight);
