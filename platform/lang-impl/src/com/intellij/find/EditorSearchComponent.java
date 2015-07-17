@@ -263,14 +263,18 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private void updateSearchComponent() {
     final int oldCaretPosition = mySearchTextComponent != null ? mySearchTextComponent.getCaretPosition() : 0;
-    String oldText = mySearchTextComponent != null ? mySearchTextComponent.getText() : myFindModel.getStringToFind();
+    boolean wasNull = mySearchTextComponent == null;
+    String textToSet = mySearchTextComponent != null ? mySearchTextComponent.getText() : myFindModel.getStringToFind();
 
     if (!updateTextComponent(true)) {
       return;
     }
 
-    if (oldText != null) {
-      mySearchTextComponent.setText(oldText);
+    if (textToSet != null) {
+      mySearchTextComponent.setText(textToSet);
+      if (wasNull) {
+        mySearchTextComponent.selectAll();
+      }
     }
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -297,13 +301,14 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
                                            }
                                          }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        mySearchTextComponent.setCaretPosition(oldCaretPosition);
-      }
-    });
+    if (!wasNull) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          mySearchTextComponent.setCaretPosition(oldCaretPosition);
+        }
+      });
+    }
 
     new RestorePreviousSettingsAction(this, mySearchTextComponent);
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
@@ -379,11 +384,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       adjustRows((JTextArea)myReplaceTextComponent);
     }
     updateMultiLineStateIfNeed();
-  }
-
-  private static void setupHistoryToSearchField(SearchTextField field, String[] strings) {
-    field.setHistorySize(20);
-    field.setHistory(ContainerUtil.reverse(Arrays.asList(strings)));
   }
 
   private void initSearchToolbars() {
@@ -647,9 +647,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       if (UIUtil.isUnderGTKLookAndFeel()) {
         textComponent.setOpaque(false);
       }
-      setupHistoryToSearchField(searchTextField, search
+      searchTextField.setHistorySize(20);
+      searchTextField.setHistory(ContainerUtil.reverse(Arrays.asList(search
                                                  ? FindSettings.getInstance().getRecentFindStrings()
-                                                 : FindSettings.getInstance().getRecentReplaceStrings());
+                                                 : FindSettings.getInstance().getRecentReplaceStrings())));
       textComponent.registerKeyboardAction(new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
