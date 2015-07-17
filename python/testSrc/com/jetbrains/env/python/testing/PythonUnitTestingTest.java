@@ -35,8 +35,8 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
 
       @Override
       public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
-        // This test requires unittest to have decorator "test" that does not exists in 2.5
-        return level.compareTo(LanguageLevel.PYTHON25) > 0;
+        // This test requires unittest to have decorator "test" that does not exists in 2.6
+        return level.compareTo(LanguageLevel.PYTHON26) > 0;
       }
 
       @Override
