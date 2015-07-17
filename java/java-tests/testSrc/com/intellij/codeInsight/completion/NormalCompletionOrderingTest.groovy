@@ -677,4 +677,8 @@ interface TxANotAnno {}
     assert lookup.items[-1].lookupString == 'ritar'
   }
 
+  public void testPreferLocalToExpectedTypedMethod() {
+    checkPreferredItems 0, 'event', 'equals'
+  }
+
 }

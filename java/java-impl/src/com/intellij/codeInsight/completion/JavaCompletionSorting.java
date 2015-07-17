@@ -76,10 +76,10 @@ public class JavaCompletionSorting {
     if (!smart) {
       ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
     }
+    afterPrefix.add(new PreferByKindWeigher(type, position));
     if (!smart && !afterNew) {
       afterPrefix.add(new PreferExpected(false, expectedTypes));
     }
-    afterPrefix.add(new PreferByKindWeigher(type, position));
     ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
     Collections.addAll(afterPrefix, new PreferSimilarlyEnding(expectedTypes),
                        new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple());

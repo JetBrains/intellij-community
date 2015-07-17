@@ -1078,6 +1078,7 @@ public class ListUtils {
 
   public void testKeywordSmartEnter() {
     configure()
+    myFixture.assertPreferredCompletionItems 0, 'null', 'nullity'
     myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
     checkResult()
   }
