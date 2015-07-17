@@ -45,6 +45,7 @@ if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
 };
 
 args << "-Djna.nosys=true"
+args << "-XX:-OmitStackTraceInFastThrow"
 
 setProperty("jvm_args", args)
 
