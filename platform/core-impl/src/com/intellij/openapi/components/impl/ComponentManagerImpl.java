@@ -131,21 +131,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsCreated;
   }
 
-  protected synchronized void disposeComponents() {
+  protected synchronized final void disposeComponents() {
     assert !myDisposeCompleted : "Already disposed!";
-
-    final List<Object> components = myComponentsRegistry == null ? Collections.emptyList() : myComponentsRegistry.getRegisteredImplementations();
     myDisposed = true;
 
+    // we cannot use list of component adapters because we must dispose in reverse order of creation
+    List<BaseComponent> components = myComponentsRegistry == null ? Collections.<BaseComponent>emptyList() : myComponentsRegistry.myBaseComponents;
     for (int i = components.size() - 1; i >= 0; i--) {
-      Object component = components.get(i);
-      if (component instanceof BaseComponent) {
-        try {
-          ((BaseComponent)component).disposeComponent();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+      try {
+        components.get(i).disposeComponent();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
 
@@ -360,7 +357,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final int getComponentConfigurationsSize() {
-    return myComponentsRegistry.myComponentConfigsSize;
+    return myComponentsRegistry.myComponentConfigCount;
   }
 
   @Nullable
@@ -394,8 +391,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private final Map<Class, Object> myInterfaceToLockMap = new THashMap<Class, Object>();
     private final List<Class> myComponentInterfaces; // keeps order of component's registration
     private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
-    private final int myComponentConfigsSize;
-    private final List<Object> myImplementations = new ArrayList<Object>();
+    private final int myComponentConfigCount;
+    private int myInstantiatedComponentCount;
+    private final List<BaseComponent> myBaseComponents = new ArrayList<BaseComponent>();
     private final Map<Class, ComponentConfig> myComponentClassToConfig = new THashMap<Class, ComponentConfig>();
 
     public ComponentsRegistry(@NotNull List<ComponentConfig> componentConfigs) {
@@ -403,7 +401,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       for (ComponentConfig config : componentConfigs) {
         registerComponents(config);
       }
-      myComponentConfigsSize = componentConfigs.size();
+      myComponentConfigCount = componentConfigs.size();
     }
 
     private void registerComponents(@NotNull ComponentConfig config) {
@@ -444,32 +442,30 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     private double getPercentageOfComponentsLoaded() {
-      return ((double)myImplementations.size()) / myComponentConfigsSize;
+      return ((double)myInstantiatedComponentCount) / myComponentConfigCount;
     }
 
-    private void registerComponentInstance(final Object component) {
-      myImplementations.add(component);
+    private void registerComponentInstance(@NotNull Object component) {
+      myInstantiatedComponentCount++;
 
-      if (component instanceof BaseComponent) {
-        BaseComponent baseComponent = (BaseComponent)component;
-        final String componentName = baseComponent.getComponentName();
-
-        if (myNameToComponent.containsKey(componentName)) {
-          BaseComponent loadedComponent = myNameToComponent.get(componentName);
-          // component may have been already loaded by PicoContainer, so fire error only if components are really different
-          if (!component.equals(loadedComponent)) {
-            LOG.error("Component name collision: " + componentName + " " + loadedComponent.getClass() + " and " + component.getClass());
-          }
-        }
-        else {
-          myNameToComponent.put(componentName, baseComponent);
+      if (!(component instanceof BaseComponent)) {
+        return;
+      }
+      
+      BaseComponent baseComponent = (BaseComponent)component;
+      String componentName = baseComponent.getComponentName();
+      if (myNameToComponent.containsKey(componentName)) {
+        BaseComponent loadedComponent = myNameToComponent.get(componentName);
+        // component may have been already loaded by PicoContainer, so fire error only if components are really different
+        if (!component.equals(loadedComponent)) {
+          LOG.error("Component name collision: " + componentName + " " + loadedComponent.getClass() + " and " + component.getClass());
         }
       }
-    }
+      else {
+        myNameToComponent.put(componentName, baseComponent);
+      }
 
-    @NotNull
-    private List<Object> getRegisteredImplementations() {
-      return myImplementations;
+      myBaseComponents.add(baseComponent);
     }
 
     private BaseComponent getComponentByName(final String name) {
