@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -272,5 +273,10 @@ public class DomFileDescription<T> {
 
   public int getStubVersion() {
     return 0;
+  }
+
+  @Override
+  public String toString() {
+    return getRootElementClass() + " <" + getRootTagName() + "> \n" + StringUtil.join(getAllPossibleRootTagNamespaces());
   }
 }
