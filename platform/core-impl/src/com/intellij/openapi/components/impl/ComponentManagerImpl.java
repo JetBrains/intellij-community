@@ -502,101 +502,73 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  private class ComponentConfigComponentAdapter implements ComponentAdapter {
+  private class ComponentConfigComponentAdapter extends ConstructorInjectionComponentAdapter {
     private final ComponentConfig myConfig;
-    private final ComponentAdapter myDelegate;
     private boolean myInitialized;
     private boolean myInitializing;
 
-    public ComponentConfigComponentAdapter(@NotNull final ComponentConfig config, @NotNull Class<?> implementationClass) {
+    public ComponentConfigComponentAdapter(@NotNull ComponentConfig config, @NotNull Class<?> implementationClass) {
+      super(config.getInterfaceClass(), implementationClass, null, true);
+
       myConfig = config;
+    }
 
-      final String componentKey = config.getInterfaceClass();
-      myDelegate = new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true) {
-        @Override
-        public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
-          Object componentInstance = null;
-          try {
-            long startTime = System.nanoTime();
+    @Override
+    public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
+      Object componentInstance = null;
+      try {
+        long startTime = System.nanoTime();
 
-            componentInstance = super.getComponentInstance(picoContainer);
+        componentInstance = super.getComponentInstance(picoContainer);
 
-            if (!myInitialized) {
-              if (myInitializing) {
-                String errorMessage = "Cyclic component initialization: " + componentKey;
-                if (myConfig.pluginDescriptor != null) {
-                  LOG.error(new PluginException(errorMessage, myConfig.pluginDescriptor.getPluginId()));
-                }
-                else {
-                  LOG.error(new Throwable(errorMessage));
-                }
-              }
-
-              try {
-                myInitializing = true;
-                myComponentsRegistry.registerComponentInstance(componentInstance);
-
-                ProgressIndicator indicator = getProgressIndicator();
-                if (indicator != null) {
-                  indicator.checkCanceled();
-                  setProgressDuringInit(indicator);
-                }
-                initializeComponent(componentInstance, false);
-                if (componentInstance instanceof BaseComponent) {
-                  ((BaseComponent)componentInstance).initComponent();
-                }
-
-                long ms = (System.nanoTime() - startTime) / 1000000;
-                if (ms > 10 && logSlowComponents()) {
-                  LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
-                }
-              }
-              finally {
-                myInitializing = false;
-              }
-
-              myInitialized = true;
+        if (!myInitialized) {
+          if (myInitializing) {
+            String errorMessage = "Cyclic component initialization: " + getComponentKey();
+            if (myConfig.pluginDescriptor != null) {
+              LOG.error(new PluginException(errorMessage, myConfig.pluginDescriptor.getPluginId()));
+            }
+            else {
+              LOG.error(new Throwable(errorMessage));
             }
           }
-          catch (ProcessCanceledException e) {
-            throw e;
+
+          try {
+            myInitializing = true;
+            myComponentsRegistry.registerComponentInstance(componentInstance);
+
+            ProgressIndicator indicator = getProgressIndicator();
+            if (indicator != null) {
+              indicator.checkCanceled();
+              setProgressDuringInit(indicator);
+            }
+            initializeComponent(componentInstance, false);
+            if (componentInstance instanceof BaseComponent) {
+              ((BaseComponent)componentInstance).initComponent();
+            }
+
+            long ms = (System.nanoTime() - startTime) / 1000000;
+            if (ms > 10 && logSlowComponents()) {
+              LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+            }
           }
-          catch (StateStorageException e) {
-            throw e;
-          }
-          catch (Throwable t) {
-            handleInitComponentError(t, componentKey, config);
+          finally {
+            myInitializing = false;
           }
 
-          return componentInstance;
+          myInitialized = true;
         }
-      };
-    }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (StateStorageException e) {
+        throw e;
+      }
+      catch (Throwable t) {
+        handleInitComponentError(t, ((String)getComponentKey()), myConfig);
+      }
 
-    @Override
-    public Object getComponentKey() {
-      return myConfig.getInterfaceClass();
-    }
-
-    @Override
-    public Class getComponentImplementation() {
-      return myDelegate.getComponentImplementation();
-    }
-
-    @Override
-    public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-      return myDelegate.getComponentInstance(container);
-    }
-
-    @Override
-    public void verify(final PicoContainer container) throws PicoIntrospectionException {
-      myDelegate.verify(container);
-    }
-
-    @Override
-    public void accept(final PicoVisitor visitor) {
-      visitor.visitComponentAdapter(this);
-      myDelegate.accept(visitor);
+      return componentInstance;
     }
 
     @Override
