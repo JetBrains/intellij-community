@@ -1,11 +1,6 @@
 import java.io.*;
 import java.util.*;
 
-import static java.lang.Math.*;
-
-@interface Anno { }
-
-@Anno
 class UnsupportedFeatures {
   void m(String... args) throws Exception {
     for (String s : args) { System.out.println(s); }
