@@ -15,18 +15,17 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
@@ -47,19 +46,19 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
-  private final ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManagerImpl myVcsManager;
   private final VcsGuess myGuess;
 
   private final DirtBuilder myDirtBuilder;
   @Nullable private DirtBuilder myDirtInProgress;
 
-  private boolean myDisposed;
+  private boolean myReady;
   private final Object LOCK = new Object();
 
   public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myChangeListManager = changeListManager;
-    myVcsManager = vcsManager;
+    myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
 
     myGuess = new VcsGuess(myProject);
     myDirtBuilder = new DirtBuilder(myGuess);
@@ -69,25 +68,17 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @Override
   public void projectOpened() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
-      if (vcss.length > 0) {
+    myVcsManager.addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, new Runnable() {
+      @Override
+      public void run() {
+        synchronized (LOCK) {
+          if (!myProject.isDisposed()) {
+            myReady = true;
+          }
+        }
         markEverythingDirty();
       }
-    }
-    else {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              markEverythingDirty();
-            }
-          });
-        }
-      });
-    }
+    });
   }
 
   public void markEverythingDirty() {
@@ -98,7 +89,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
 
     synchronized (LOCK) {
-      if (!myDisposed) {
+      if (myReady) {
         myDirtBuilder.everythingDirty();
       }
     }
@@ -121,7 +112,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public void disposeComponent() {
     synchronized (LOCK) {
-      myDisposed = true;
+      myReady = false;
       myDirtBuilder.reset();
       myDirtInProgress = null;
     }
@@ -153,7 +144,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
       boolean hasSomethingDirty;
       synchronized (LOCK) {
-        if (myDisposed) return;
+        if (!myReady) return;
         markDirty(myDirtBuilder, filesConverted, false);
         markDirty(myDirtBuilder, dirsConverted, true);
         hasSomethingDirty = !myDirtBuilder.isEmpty();
@@ -227,7 +218,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public VcsInvalidated retrieveScopes() {
     DirtBuilder dirtBuilder;
     synchronized (LOCK) {
-      if (myDisposed) return null;
+      if (!myReady) return null;
       dirtBuilder = new DirtBuilder(myDirtBuilder);
       myDirtInProgress = dirtBuilder;
       myDirtBuilder.reset();
@@ -284,7 +275,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     DirtBuilder dirtBuilder;
     DirtBuilder dirtBuilderInProgress;
     synchronized (LOCK) {
-      if (myDisposed) return Collections.emptyList();
+      if (!myReady) return Collections.emptyList();
       dirtBuilder = new DirtBuilder(myDirtBuilder);
       dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder(myGuess);
     }
