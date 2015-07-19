@@ -22,17 +22,18 @@ import com.intellij.codeInsight.template.TemplateManagerListener
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.command.CommandAdapter
+import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
-import com.intellij.openapi.editor.event.CaretAdapter
 import com.intellij.openapi.editor.event.CaretEvent
-import com.intellij.openapi.editor.event.SelectionEvent
-import com.intellij.openapi.editor.event.SelectionListener
-import com.intellij.openapi.editor.impl.CaretModelImpl
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -45,9 +46,13 @@ import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Guard
 
 public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: VirtualFile,
-                        val editor: Editor, val providesMarkup: Boolean) : MetaHost(reactiveModel, path), DataProvider {
-
+                        val textEditor: TextEditor, val providesMarkup: Boolean) : MetaHost(reactiveModel, path), DataProvider {
+  public val editor: Editor = textEditor.getEditor()
   override fun getData(dataId: String?): Any? {
+    if (PlatformDataKeys.FILE_EDITOR.`is`(dataId)) {
+      return textEditor
+    }
+
     val data = (editor.getContentComponent() as EditorComponentImpl).getData(dataId)
     if (data != null) {
       return data;
@@ -123,7 +128,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
               }
             } catch(e: Throwable) {
             }
-          }, "Update caret and selection", DocCommandGroupId.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument())
+          }, updateCaretAndSelectionCommand, DocCommandGroupId.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument())
 
         }
       }
@@ -132,38 +137,23 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
 
     sendSelectionAndCaret()
 
+    val commandListener = object : CommandAdapter() {
+      override fun commandFinished(event: CommandEvent?) {
+        if (event?.getCommandName() != updateCaretAndSelectionCommand &&
+            event?.getCommandName() != documentHost.eventListenerCommandName) {
+          sendSelectionAndCaret()
+        }
+      }
+    }
+
+    CommandProcessor.getInstance().addCommandListener(commandListener)
+    lifetime += {
+      CommandProcessor.getInstance().removeCommandListener(commandListener)
+    }
+
+
     reactiveModel.transaction { m ->
       (path / "name").putIn(m, PrimitiveModel(name))
-    }
-
-    val caretListener = object : CaretAdapter() {
-      override fun caretPositionChanged(e: CaretEvent) {
-        if (!caretGuard.locked && !(caretModel as CaretModelImpl).isDocumentChanged()) {
-          caretGuard.lock {
-            sendSelectionAndCaret()
-          }
-        }
-      }
-    }
-
-    caretModel.addCaretListener(caretListener)
-    lifetime += {
-      caretModel.removeCaretListener(caretListener)
-    }
-
-    val selectionListener = object : SelectionListener {
-      override fun selectionChanged(e: SelectionEvent) {
-        if (!caretGuard.locked && !(caretModel as CaretModelImpl).isDocumentChanged()) {
-          caretGuard.lock {
-            sendSelectionAndCaret()
-          }
-        }
-      }
-    }
-
-    editor.getSelectionModel().addSelectionListener(selectionListener)
-    lifetime += {
-      editor.getSelectionModel().removeSelectionListener(selectionListener)
     }
 
     val disposable = Disposer.newDisposable()
@@ -171,6 +161,22 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
       override fun templateStarted(state: TemplateState) {
         if (state.getEditor() == editor) {
           reactiveModel.transaction { m -> (path / "live-template").putIn(m, PrimitiveModel(true))}
+          val listener = object : CaretListener {
+            override fun caretAdded(e: CaretEvent?) {
+              throw UnsupportedOperationException()
+            }
+
+            override fun caretPositionChanged(e: CaretEvent?) {
+              if (!caretGuard.locked) caretGuard.lock {
+                sendSelectionAndCaret()
+              }
+            }
+
+            override fun caretRemoved(e: CaretEvent?) {
+              throw UnsupportedOperationException()
+            }
+          }
+          editor.getCaretModel().addCaretListener(listener)
           state.addTemplateStateListener(object: TemplateEditingAdapter() {
             override fun templateFinished(template: Template?, brokenOff: Boolean) {
               finished();
@@ -182,6 +188,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
 
             private fun finished() {
               reactiveModel.transaction { m -> (path / "live-template").putIn(m, AbsentModel()) }
+              editor.getCaretModel().removeCaretListener(listener)
             }
           })
         }
@@ -191,6 +198,8 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
       Disposer.dispose(disposable)
     }
   }
+
+  private val updateCaretAndSelectionCommand= "UpdateCaretAndSelection$name"
 
   private fun sendSelectionAndCaret() {
     val textRange = TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())

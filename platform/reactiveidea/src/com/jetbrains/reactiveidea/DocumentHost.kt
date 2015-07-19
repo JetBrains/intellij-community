@@ -43,6 +43,7 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
 
   private val pendingEvents = arrayListOf<DocumentEvent>()
 
+  public val eventListenerCommandName: String = "doc sync " + reactModel.name
 
   init {
     initModel { m ->
@@ -59,7 +60,7 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
       }
     }
 
-    val eventListenerCommandName = "doc sync " + reactModel.name
+
 
     val commandListener = object : CommandAdapter() {
       override fun commandFinished(event: CommandEvent?) {

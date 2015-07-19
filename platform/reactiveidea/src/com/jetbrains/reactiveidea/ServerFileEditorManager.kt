@@ -551,7 +551,8 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
           }
         })
         val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
-        tabHost.addEditor((newEditors[0] as TextEditor).getEditor(), file)
+        val textEditor = newEditors[0] as TextEditor
+        tabHost.addEditor(textEditor, file)
         setActive(file)
 
         //[jeka] this is a hack to support back-forward navigation
