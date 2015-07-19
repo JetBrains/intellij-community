@@ -30,10 +30,6 @@ import java.io.File;
  */
 public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public AddGradleDslDependencyActionTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   public void testAddMavenDependencyInEmptyFile() throws Exception {
     AddGradleDslDependencyAction.TEST_THREAD_LOCAL.set(ContainerUtil.list(new MavenId("testGroupId", "testArtifactId", "1.0")));
     doTest("testAddMavenDependencyInEmptyFile.gradle");

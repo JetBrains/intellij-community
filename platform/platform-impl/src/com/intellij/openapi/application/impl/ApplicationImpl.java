@@ -29,7 +29,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -125,15 +128,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private volatile boolean myActive;
-  private volatile boolean myActiveDelayed;
-  public volatile boolean myCancelDeactivation;
+  private volatile Boolean myActive;
+  private volatile boolean myDeactivating;
+  public volatile boolean myDeactivationCancelled;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
 
-  public boolean isActiveDelayed() {
-    return myActiveDelayed;
+  public boolean isDeactivating() {
+    return myDeactivating;
   }
 
   private static class Status {
@@ -173,13 +176,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Deprecated
   public IComponentStore getStateStore() {
     return ComponentsPackage.getStateStore(this);
-  }
-
-  @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-    if (!service || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
-      ComponentsPackage.getStateStore(this).initComponent(component, service);
-    }
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -337,13 +333,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
   }
 
-  @Override
-  protected void componentCreatedDuringInit() {
-    if (mySplash != null) {
-      mySplash.showProgress("", 0.65f + getPercentageOfComponentsLoaded() * 0.35f);
-    }
-  }
-
   @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
@@ -471,9 +460,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       long t = System.currentTimeMillis();
-      loadComponents();
-
-      init(new Runnable() {
+      init(mySplash == null ? null : new EmptyProgressIndicator() {
+        @Override
+        public void setFraction(double fraction) {
+          mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
+        }
+      }, new Runnable() {
         @Override
         public void run() {
           // create ServiceManagerImpl at first to force extension classes registration
@@ -494,7 +486,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
       t = System.currentTimeMillis() - t;
-      LOG.info(getComponentConfigurations().length + " application components initialized in " + t + " ms");
+      LOG.info(getComponentConfigurationsSize() + " application components initialized in " + t + " ms");
     }
     catch (StateStorageException e) {
       throw new IOException(e);
@@ -507,6 +499,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     createLocatorFile();
   }
 
+  @Override
+  protected void createComponents(@Nullable final ProgressIndicator indicator) {
+    // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
+    Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        ApplicationImpl.super.createComponents(indicator);
+      }
+    };
+
+    if (indicator == null) {
+      // no splash, no need to to use progress manager
+      task.run();
+    }
+    else {
+      ProgressManager.getInstance().runProcess(task, indicator);
+    }
+  }
+
+  @Override
   @Nullable
   protected ProgressIndicator getProgressIndicator() {
     // could be called before full initialization
@@ -1177,8 +1189,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
-  public boolean isDeactivationCanceled() {
-    return myCancelDeactivation;
+  public boolean isDeactivationCancelled() {
+    return myDeactivationCancelled;
   }
 
   /**
@@ -1199,13 +1211,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean tryToApplyActivationState(Window window, boolean activation, boolean immediate) {
     return activation ? applyActivation(window) :
            immediate ? applyDeactivation(window)
-                     : applyDelayedDeactivation(window);
+                     : applyDeactivating(window);
   }
 
   private boolean applyActivation(Window window) {
     if (!isActive()) {
+      myDeactivationCancelled = true;
       myActive = true;
-      myActiveDelayed = true;
+      myDeactivating = false;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
         getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
@@ -1226,12 +1239,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return false;
   }
 
-  private boolean applyDelayedDeactivation(Window window) {
-    if (isActiveDelayed()) {
-      myActiveDelayed = false;
+  private boolean applyDeactivating(Window window) {
+    if (isActive() && !myDeactivating) {
+      myDeactivationCancelled = false;
+      myDeactivating = true;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivating(ideFrame);
         return true;
       }
     }
@@ -1246,8 +1260,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isActive() {
    if (isUnitTestMode()) return true;
-
-   return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null || myActive;
+    if (myActive == null) {//Here we get initial state that's been unknown before
+      myActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null;
+    }
+   return myActive;
   }
 
   @NotNull

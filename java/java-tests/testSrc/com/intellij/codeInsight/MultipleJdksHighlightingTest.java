@@ -36,11 +36,6 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   private Module myJava7Module;
   private Module myJava8Module;
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public MultipleJdksHighlightingTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Override
   protected void tearDown() throws Exception {
     try {

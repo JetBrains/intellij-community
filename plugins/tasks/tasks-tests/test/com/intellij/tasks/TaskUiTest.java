@@ -89,9 +89,4 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     action.update(event);
     return event.getPresentation();
   }
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public TaskUiTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
 }

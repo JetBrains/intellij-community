@@ -349,7 +349,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
       presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
     }
-    if (customComponent instanceof JCheckBox && UIUtil.isUnderWindowsLookAndFeel()) {
+    if (customComponent instanceof JCheckBox) {
       customComponent.setBorder(JBUI.Borders.empty(0, 9, 0, 0));
     }
     tweakActionComponentUI(customComponent);
@@ -517,7 +517,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (myOrientation == SwingConstants.HORIZONTAL) {
       int eachX = insets.left;
       int eachY = insets.top;
-      int maxHeight = 0;
+      int maxHeight = sizeToFit.height;
       for (int i = 0; i < componentCount; i++) {
         final Component eachComp = getComponent(i);
         final boolean isLast = i == componentCount - 1;

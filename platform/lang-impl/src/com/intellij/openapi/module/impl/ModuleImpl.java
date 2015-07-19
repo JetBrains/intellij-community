@@ -33,6 +33,8 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.Comparing;
@@ -93,11 +95,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return (ModuleStoreImpl)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
-  @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-    getStateStore().initComponent(component, service);
-  }
-
   private void init(String filePath) {
     getStateStore().setModuleFilePath(filePath);
     myName = moduleNameByFileName(PathUtil.getFileName(filePath));
@@ -107,13 +104,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void init() {
-    loadComponents();
-    super.init();
+    init(ProgressManager.getInstance().getProgressIndicator());
   }
 
   @Override
-  public void loadModuleComponents() {
-    loadComponents();
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
   }
 
   @Override

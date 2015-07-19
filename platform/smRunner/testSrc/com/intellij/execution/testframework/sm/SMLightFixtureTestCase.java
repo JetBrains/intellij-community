@@ -18,7 +18,6 @@ package com.intellij.execution.testframework.sm;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -31,11 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Roman.Chernyatchik
  */
 public abstract class SMLightFixtureTestCase extends UsefulTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected SMLightFixtureTestCase() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   protected CodeInsightTestFixture myFixture;
 
   @Override

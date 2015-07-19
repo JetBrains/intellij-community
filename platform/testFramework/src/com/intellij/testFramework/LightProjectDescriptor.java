@@ -47,11 +47,14 @@ import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
-  @NotNull
-  public ProjectInfo setUpProject(@NotNull Project project) throws Exception {
+  public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
     Module module = createMainModule(project);
-    VirtualFile contentRoot = createSourcesRoot(module);
-    return new ProjectInfo(module, contentRoot);
+    handler.moduleCreated(module);
+    VirtualFile sourceRoot = createSourcesRoot(module);
+    if (sourceRoot != null) {
+      handler.sourceRootCreated(sourceRoot);
+      createContentEntry(module, sourceRoot);
+    }
   }
 
   @NotNull
@@ -110,6 +113,10 @@ public class LightProjectDescriptor {
       }
     });
 
+    return srcRoot;
+  }
+
+  protected void createContentEntry(@NotNull final Module module, @NotNull final VirtualFile srcRoot) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
@@ -124,8 +131,6 @@ public class LightProjectDescriptor {
         configureModule(module, model, contentEntry);
       }
     });
-
-    return srcRoot;
   }
 
   @Nullable
@@ -146,13 +151,8 @@ public class LightProjectDescriptor {
   protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
   }
   
-  public static class ProjectInfo {
-    @NotNull public final Module module;
-    @Nullable public final VirtualFile moduleSourcesRoot;
-
-    public ProjectInfo(@NotNull Module module, @Nullable VirtualFile moduleSourcesRoot) {
-      this.module = module;
-      this.moduleSourcesRoot = moduleSourcesRoot;
-    }
-  }
+  public interface SetupHandler {
+    void moduleCreated(@NotNull Module module);
+    void sourceRootCreated(@NotNull VirtualFile sourceRoot); 
+  } 
 }

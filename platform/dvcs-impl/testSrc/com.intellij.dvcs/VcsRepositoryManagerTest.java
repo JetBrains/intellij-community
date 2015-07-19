@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -55,11 +54,6 @@ public class VcsRepositoryManagerTest extends UsefulTestCase {
   private static final String LOCK_ERROR_TEXT = "Possible dead lock occurred!";
   private VirtualFile myProjectRoot;
   private VcsRepositoryCreator myMockCreator;
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public VcsRepositoryManagerTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {

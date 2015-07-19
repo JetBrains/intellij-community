@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import org.gradle.initialization.BuildCancellationToken;
+import org.gradle.internal.Factory;
 import org.gradle.internal.UncheckedException;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
@@ -78,9 +79,8 @@ public class DistributionFactoryExt extends DistributionFactory {
       progressLogger.setDescription(String.format("Download %s", address));
       progressLogger.started();
       try {
-        new Download("Gradle Tooling API", GradleVersion.current().getVersion()).download(address, destination);
-      }
-      finally {
+        new Download(new Logger(false), "Gradle Tooling API", GradleVersion.current().getVersion()).download(address, destination);
+      } finally {
         progressLogger.completed();
       }
     }
@@ -141,9 +141,9 @@ public class DistributionFactoryExt extends DistributionFactory {
   private static class ZippedDistribution implements Distribution {
     private InstalledDistribution installedDistribution;
     private final WrapperConfiguration wrapperConfiguration;
-    private final ExecutorServiceFactory executorFactory;
+    private final Factory<? extends ExecutorService> executorFactory;
 
-    private ZippedDistribution(WrapperConfiguration wrapperConfiguration, ExecutorServiceFactory executorFactory) {
+    private ZippedDistribution(WrapperConfiguration wrapperConfiguration, Factory<? extends ExecutorService> executorFactory) {
       this.wrapperConfiguration = wrapperConfiguration;
       this.executorFactory = executorFactory;
     }
@@ -159,7 +159,8 @@ public class DistributionFactoryExt extends DistributionFactory {
             File installDir;
             try {
               File realUserHomeDir = userHomeDir != null ? userHomeDir : GradleUserHomeLookup.gradleUserHome();
-              Install install = new Install(new ProgressReportingDownload(progressLoggerFactory), new PathAssembler(realUserHomeDir));
+              Install install =
+                new Install(new Logger(false), new ProgressReportingDownload(progressLoggerFactory), new PathAssembler(realUserHomeDir));
               installDir = install.createDist(wrapperConfiguration);
             } catch (FileNotFoundException e) {
               throw new IllegalArgumentException(String.format("The specified %s does not exist.", getDisplayName()), e);

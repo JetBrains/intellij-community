@@ -40,6 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.UnmodifiableIterator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -271,14 +272,40 @@ public class CompletionUtil {
     return result;
   }
 
-  public static List<String> getImmutableLookupStrings(@NotNull LookupElement element) {
-    try {
-      return ContainerUtil.newArrayList(element.getAllLookupStrings());
-    }
-    catch (ConcurrentModificationException e) {
-      final Attachment dump = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
-      throw new LogEventException("Error while traversing lookup strings of " + element + " of " + element.getClass(),
-                                  ExceptionUtil.getThrowableText(e), dump);
-    }
+  public static Iterable<String> iterateLookupStrings(@NotNull final LookupElement element) {
+    return new Iterable<String>() {
+      @NotNull
+      @Override
+      public Iterator<String> iterator() {
+        final Iterator<String> original = element.getAllLookupStrings().iterator();
+        return new UnmodifiableIterator<String>(original) {
+          @Override
+          public boolean hasNext() {
+            try {
+              return super.hasNext();
+            }
+            catch (ConcurrentModificationException e) {
+              throw handleCME(e);
+            }
+          }
+
+          @Override
+          public String next() {
+            try {
+              return super.next();
+            }
+            catch (ConcurrentModificationException e) {
+              throw handleCME(e);
+            }
+          }
+
+          private LogEventException handleCME(ConcurrentModificationException e) {
+            final Attachment dump = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+            return new LogEventException("Error while traversing lookup strings of " + element + " of " + element.getClass(),
+                                        ExceptionUtil.getThrowableText(e), dump);
+          }
+        };
+      }
+    };
   }
 }

@@ -36,14 +36,14 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -92,7 +92,8 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myLookup = lookup;
     myNameComponent = new MySimpleColoredComponent();
-    myNameComponent.setIpad(new Insets(0, 0, 0, 0));
+    myNameComponent.setIpad(JBUI.insetsLeft(2));
+    myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
     myTailComponent.setIpad(new Insets(0, 0, 0, 0));
@@ -133,7 +134,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color background = nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
                              isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
 
-    int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
+    int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getTextIndent();
 
     FontMetrics normalMetrics = getRealFontMetrics(item, false);
     FontMetrics boldMetrics = getRealFontMetrics(item, true);
@@ -455,10 +456,9 @@ public class LookupCellRenderer implements ListCellRenderer {
     return RealLookupElementPresentation.calculateWidth(p, getRealFontMetrics(item, false), getRealFontMetrics(item, true)) + AFTER_TAIL + AFTER_TYPE;
   }
 
-  public int getIconIndent() {
-    return myNameComponent.getIconTextGap() + myEmptyIcon.getIconWidth();
+  public int getTextIndent() {
+    return myNameComponent.getIpad().left + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap();
   }
-
 
   private static class MySimpleColoredComponent extends SimpleColoredComponent {
     private MySimpleColoredComponent() {
@@ -485,8 +485,17 @@ public class LookupCellRenderer implements ListCellRenderer {
     public void paint(Graphics g){
       if (!myLookup.isFocused() && myLookup.isCompletion()) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+
+        // sub-pixel antialiasing does not work with alpha composite, so we workaround this by painting to RGB image first
+        BufferedImage image = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D imageGraphics = image.createGraphics();
+        super.paint(imageGraphics);
+        imageGraphics.dispose();
+        UIUtil.drawImage(g, image, 0, 0, null);
       }
-      super.paint(g);
+      else {
+        super.paint(g);
+      }
     }
   }
 }

@@ -19,9 +19,6 @@ import com.intellij.execution.filters.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public interface TestProxyFilterProvider {
   @Nullable
   Filter getFilter(@NotNull String nodeType, @NotNull String nodeName, @Nullable String nodeArguments);

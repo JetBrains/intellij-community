@@ -65,8 +65,8 @@ public class ProjectStateStorageManager extends StateStorageManagerImpl {
     return fileSpec;
   }
 
-  private static boolean isWorkspace(final Map options) {
-    return options != null && Boolean.parseBoolean((String)options.get(ProjectStoreImpl.OPTION_WORKSPACE));
+  private static boolean isWorkspace(@Nullable Map<String, String> options) {
+    return options != null && Boolean.parseBoolean(options.get(ProjectStoreImpl.OPTION_WORKSPACE));
   }
 
   @NotNull

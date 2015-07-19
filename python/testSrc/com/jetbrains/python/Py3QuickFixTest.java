@@ -127,7 +127,17 @@ public class Py3QuickFixTest extends PyTestCase {
       }
     });
   }
-
+  
+  // PY-16421
+  public void testAddCallSuperSingleStarParamPreserved() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+  }
+  
     // PY-15867
   public void testAddCallSuperRequiredKeywordOnlyParamAfterSingleStarInSuperInitIsMerged() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {

@@ -79,6 +79,10 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
 
+        if (!ComponentManagerImpl.isComponentSuitableForOs(descriptor.os)) {
+          return;
+        }
+
         // empty serviceImplementation means we want to unregister service
         if (!StringUtil.isEmpty(descriptor.serviceImplementation)) {
           picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));

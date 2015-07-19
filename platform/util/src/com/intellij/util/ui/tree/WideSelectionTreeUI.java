@@ -130,6 +130,12 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   @Override
+  public void installUI(JComponent c) {
+    super.installUI(c);
+    tree.setDragEnabled(true);
+  }
+
+  @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
 

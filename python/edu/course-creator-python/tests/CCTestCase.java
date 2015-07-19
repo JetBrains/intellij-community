@@ -1,4 +1,3 @@
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -12,16 +11,11 @@ public abstract class CCTestCase extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initPlatformPrefix();
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(
       getName());
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
-  }
-
-  private static void initPlatformPrefix() {
-    PlatformTestCase.autodetectPlatformPrefix();
   }
 
   protected String getTestDataPath() {

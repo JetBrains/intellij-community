@@ -352,7 +352,7 @@ public class IdeEventQueue extends EventQueue {
         lastMouseWheel = System.currentTimeMillis();
 
         MouseWheelEvent newMouseWheelEvent = MouseEventAdapter.convert(mwe,
-          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers(), mwe.getX(), mwe.getY()
+          wheelDestinationComponent, mwe.getID(), lastMouseWheel, mwe.getModifiers() | mwe.getModifiersEx(), mwe.getX(), mwe.getY()
         );
         return newMouseWheelEvent;
       }
@@ -812,32 +812,30 @@ public class IdeEventQueue extends EventQueue {
         //if () {
         //  getPopupManager().closeAllPopups();
         //}
-        appImpl.myCancelDeactivation = true;
-        if (!appImpl.isActive()) {
-          appImpl.tryToApplyActivationState(eventWindow, true, false);
-        }
+        appImpl.tryToApplyActivationState(eventWindow, true, true);
       }
       else if (we.getID() == WindowEvent.WINDOW_DEACTIVATED) {
         requestToDeactivateTime.getAndSet(System.currentTimeMillis());
 
-        // For stuff that cannot wait we notify about deactivation immediately
-        appImpl.tryToApplyActivationState(eventWindow, false, true);
+        // For stuff that cannot wait we notify about upcoming deactivation
+        appImpl.tryToApplyActivationState(eventWindow, false, false);
 
         // We do not know for sure that application is going to be inactive,
         // we could just be showing a popup or another transient window.
         // So let's postpone the application deactivation for a while
-        appImpl.myCancelDeactivation = false;
+        if (appImpl.isActive() && !appImpl.isDeactivating()) {
 
-        Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
-          public void actionPerformed(ActionEvent evt) {
-            if (appImpl.isActiveDelayed() && !appImpl.isDeactivationCanceled()) {
-              appImpl.tryToApplyActivationState(eventWindow, false, false);
+          Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+              if (!appImpl.isDeactivationCancelled()) {
+                appImpl.tryToApplyActivationState(eventWindow, false, true);
+              }
             }
-          }
-        });
+          });
 
-        timer.setRepeats(false);
-        timer.start();
+          timer.setRepeats(false);
+          timer.start();
+        }
       }
 
       if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {

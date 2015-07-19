@@ -52,7 +52,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
     @Override
     public String getName() {
-      return "-- from all projects --";
+      return "-- all issues created by you --";
     }
 
     @Override

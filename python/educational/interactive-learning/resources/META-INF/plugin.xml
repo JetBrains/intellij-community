@@ -61,6 +61,9 @@
             description="Show hint for answer placeholder"/>
     <action id="StudyRunAction" class="com.jetbrains.edu.learning.actions.StudyRunAction" text="Run File With Tests"
             description="Run your code with tests"/>
+    <action overrides="true"  id="RenameElement" class="com.jetbrains.edu.learning.actions.StudyRenameTaskFileAction"
+      text="Rename..."
+    />
 
   </actions>
 

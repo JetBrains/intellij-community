@@ -24,11 +24,6 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public XmlSchemaIndexTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   public void testBuilder() throws IOException {
 
     VirtualFile file = myFixture.copyFileToProject("spring-beans-2.0.xsd");

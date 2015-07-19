@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
 
-/**
- * @author Sergey Simonchik
- */
 public final class TestProxyPrinterProvider {
 
   private final TestProxyFilterProvider myFilterProvider;

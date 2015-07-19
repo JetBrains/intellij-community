@@ -17,13 +17,8 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 
 public class FoldingStressTest extends LightPlatformTestCase {
-
-  static {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
 
   public void testStressFoldingFromZeroOffset() throws Exception {
     for (int len = 2; len < 25; len++) {

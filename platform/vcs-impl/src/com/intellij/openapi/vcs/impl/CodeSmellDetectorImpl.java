@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -161,7 +162,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     ProgressManager.getInstance().runProcess(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
+        DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
           @Override
           public void run() {
             final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);

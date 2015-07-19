@@ -17,7 +17,6 @@ package com.intellij.xml.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -38,11 +37,6 @@ import java.util.Set;
  */
 public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
   private final static String ourNs = "http://www.omg.org/spec/BPMN/20100524/MODEL";
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public XmlSchemaTypeInheritanceTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
 
   @Test
   public void testBuilder() throws Exception {

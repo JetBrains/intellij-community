@@ -378,6 +378,16 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
   }
 
+  // PY-16420
+  public void testAddCallSuperRepeatedOptionalParamsPassedToSuperConstructor() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+
+  // PY-16420
+  public void testAddCallSuperRepeatedOptionalTupleParamsPassedToSuperConstructor() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+  
   // PY-16258
   public void testAddCallSuperCommentAfterColonPreserved() {
     doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);

@@ -67,10 +67,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   private boolean myUnexpectedEventWasProduced = false;
   private MessageBusConnection myBusConnection = null;
 
-  public AddAnnotationFixTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Override
   public void setUp() throws Exception {
     super.setUp();

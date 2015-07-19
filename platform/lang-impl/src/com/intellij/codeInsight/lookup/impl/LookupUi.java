@@ -47,9 +47,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,8 +77,6 @@ class LookupUi {
   private final JLabel mySortingLabel = new JLabel();
   private final JScrollPane myScrollPane;
   private final JButton myScrollBarIncreaseButton;
-  private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
-  private final JPanel myIconPanel = new JPanel(new BorderLayout());
   private final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
 
   private LookupHint myElementHint = null;
@@ -90,10 +88,6 @@ class LookupUi {
     myAdvertiser = advertiser;
     myList = list;
     myProject = project;
-
-    myIconPanel.setVisible(false);
-    myIconPanel.setBackground(Color.LIGHT_GRAY);
-    myIconPanel.add(myProcessIcon);
 
     JComponent adComponent = advertiser.getAdComponent();
     adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + AllIcons.Ide.LookupRelevance.getIconWidth()));
@@ -131,7 +125,6 @@ class LookupUi {
 
     updateScrollbarVisibility();
 
-    Disposer.register(lookup, myProcessIcon);
     Disposer.register(lookup, myHintAlarm);
   }
 
@@ -227,19 +220,13 @@ class LookupUi {
     Runnable setVisible = new Runnable() {
       @Override
       public void run() {
-        myIconPanel.setVisible(myLookup.isCalculating());
+        myList.setPaintBusy(myLookup.isCalculating());
       }
     };
     if (myLookup.isCalculating()) {
       new Alarm(myLookup).addRequest(setVisible, 100, myModalityState);
     } else {
       setVisible.run();
-    }
-
-    if (calculating) {
-      myProcessIcon.resume();
-    } else {
-      myProcessIcon.suspend();
     }
   }
 
@@ -282,7 +269,8 @@ class LookupUi {
 
   // in layered pane coordinate system.
   Rectangle calculatePosition() {
-    Dimension dim = myLookup.getComponent().getPreferredSize();
+    final JComponent lookupComponent = myLookup.getComponent();
+    Dimension dim = lookupComponent.getPreferredSize();
     int lookupStart = myLookup.getLookupStart();
     Editor editor = myLookup.getEditor();
     if (lookupStart < 0 || lookupStart > editor.getDocument().getTextLength()) {
@@ -293,7 +281,13 @@ class LookupUi {
     LogicalPosition pos = editor.offsetToLogicalPosition(lookupStart);
     Point location = editor.logicalPositionToXY(pos);
     location.y += editor.getLineHeight();
-    location.x -= myLookup.myCellRenderer.getIconIndent() + myLookup.getComponent().getInsets().left;
+    location.x -= myLookup.myCellRenderer.getTextIndent();
+    // extra check for other borders
+    final Window window = UIUtil.getWindow(lookupComponent);
+    if (window != null) {
+      final Point point = SwingUtilities.convertPoint(lookupComponent, 0, 0, window);
+      location.x -= point.x;
+    }
 
     SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
     final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(location);
@@ -331,13 +325,12 @@ class LookupUi {
 
     private LookupLayeredPane() {
       add(mainPanel, 0, 0);
-      add(myIconPanel, 42, 0);
       add(mySortingLabel, 10, 0);
 
       setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(@Nullable Container parent) {
-          int maxCellWidth = myLookup.myLookupTextWidth + myLookup.myCellRenderer.getIconIndent();
+          int maxCellWidth = myLookup.myLookupTextWidth + myLookup.myCellRenderer.getTextIndent();
           int scrollBarWidth = myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width;
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH2);
 
@@ -386,10 +379,6 @@ class LookupUi {
       vScrollBar.revalidate();
       vScrollBar.repaint();
       
-      final Dimension iconSize = myProcessIcon.getPreferredSize();
-      myIconPanel.setBounds(getWidth() - iconSize.width - (vScrollBar.isVisible() ? vScrollBar.getWidth() : 0), 0, iconSize.width,
-                            iconSize.height);
-
       final Dimension sortSize = mySortingLabel.getPreferredSize();
       final int sortWidth = vScrollBar.isVisible() ? vScrollBar.getWidth() : sortSize.width;
       final int sortHeight = Math.max(sortSize.height, adHeight);

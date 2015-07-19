@@ -253,9 +253,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
         ourPsiManager = null;
 
-        LightProjectDescriptor.ProjectInfo projectInfo = ourProjectDescriptor.setUpProject(ourProject);
-        ourModule = projectInfo.module;
-        ourSourceRoot = projectInfo.moduleSourcesRoot;
+        ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
+          @Override
+          public void moduleCreated(@NotNull Module module) {
+            ourModule = module;
+          }
+
+          @Override
+          public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+            ourSourceRoot = sourceRoot;
+          }
+        });
       }
     }.execute().throwException();
 

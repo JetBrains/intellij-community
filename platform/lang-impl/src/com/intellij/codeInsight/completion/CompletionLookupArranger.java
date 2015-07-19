@@ -256,7 +256,12 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private void addFrozenItems(Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
-    myFrozenItems.retainAll(items);
+    for (Iterator<LookupElement> iterator = myFrozenItems.iterator(); iterator.hasNext(); ) {
+      LookupElement element = iterator.next();
+      if (!element.isValid() || !items.contains(element)) {
+        iterator.remove();
+      }
+    }
     model.addAll(myFrozenItems);
   }
 

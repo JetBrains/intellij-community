@@ -208,8 +208,10 @@ public class StudyProjectComponent implements ProjectComponent {
   public void projectClosed() {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course != null) {
-      ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
-        .removeAllContents(false);
+      final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+      if (toolWindow != null) {
+        toolWindow.getContentManager().removeAllContents(false);
+      }
       if (!myDeletedShortcuts.isEmpty()) {
         for (Map.Entry<String, String> shortcut : myDeletedShortcuts.entrySet()) {
           final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();

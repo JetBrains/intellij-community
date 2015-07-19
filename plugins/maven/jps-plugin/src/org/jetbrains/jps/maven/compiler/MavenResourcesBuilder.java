@@ -1,5 +1,6 @@
 package org.jetbrains.jps.maven.compiler;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ import java.util.*;
  *         Date: 10/6/11
  */
 public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
+  private static final Logger LOG = Logger.getInstance(MavenResourcesBuilder.class);
   public static final String BUILDER_NAME = "Maven Resources Compiler";
 
   public MavenResourcesBuilder() {
@@ -91,6 +93,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
     MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
 
+    context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
     for (MavenResourceRootDescriptor rd : roots) {
       for (File file : files.get(rd)) {
 
@@ -106,14 +109,16 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         File outputFile = new File(outputDir, relPath);
         String sourcePath = file.getPath();
         try {
-          context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
-
           fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileUtilRt.ALL_FILES);
           outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
         }
         catch (UnsupportedEncodingException e) {
           context.processMessage(
             new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Resource was not copied: " + e.getMessage(), sourcePath));
+        }
+        catch (IOException e) {
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Failed to copy '" + sourcePath + "' to '" + outputFile.getAbsolutePath() + "': " + e.getMessage()));
+          LOG.info(e);
         }
 
         if (context.getCancelStatus().isCanceled()) {

@@ -15,29 +15,20 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.ExtensionPoints;
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection;
 import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.testFramework.InspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Batkovich
  */
-public class AlphaUnsortedInspectionTest extends InspectionTestCase {
-  private AlphaUnsortedPropertiesFileInspection myTool;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myTool = new AlphaUnsortedPropertiesFileInspection();
-  }
-
+public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testUnsorted() throws Exception {
     doTest();
   }
@@ -63,14 +54,53 @@ public class AlphaUnsortedInspectionTest extends InspectionTestCase {
     }
   }
 
-  private void doTest() throws Exception {
-    doTest("alphaUnsorted/" + getTestName(true), myTool);
+  public void testFix() {
+    myFixture.configureByText("p.properties", "a=\n" +
+                                              "c=\n" +
+                                              "b=\\r\\n\\\n" +
+                                              "f");
+    myFixture.enableInspections(new AlphaUnsortedPropertiesFileInspection());
+    final IntentionAction intention = myFixture.getAvailableIntention("Sort resource bundle files", "p.properties");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("a=\n" +
+                          "b=\\r\\n\\\n" +
+                          "f\n" +
+                          "c=");
   }
 
-  @NotNull
+  public void testFixComments() {
+    myFixture.configureByText("p.properties", "a=a\n" +
+                                              "d=d\n" +
+                                              "# some comment on \"e\"\n" +
+                                              "# this is multiline comment\n" +
+                                              "e=e\n" +
+                                              "b=b\n" +
+                                              "c=b");
+    myFixture.enableInspections(new AlphaUnsortedPropertiesFileInspection());
+    final IntentionAction intention = myFixture.getAvailableIntention("Sort resource bundle files", "p.properties");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("a=a\n" +
+                          "b=b\n" +
+                          "c=b\n" +
+                          "d=d\n" +
+                          "# some comment on \"e\"\n" +
+                          "# this is multiline comment\n" +
+                          "e=e");
+  }
+
+  private void doTest() throws Exception {
+    myFixture.testInspection(getTestName(true), new LocalInspectionToolWrapper(new AlphaUnsortedPropertiesFileInspection()));
+  }
+
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+    return PluginPathManager.getPluginHomePath("properties") + "/testData/alphaUnsorted/";
   }
 
+  @Override
+  protected boolean isWriteActionRequired() {
+    return false;
+  }
 }

@@ -24,8 +24,9 @@
   </application-components>
 
   <extensionPoints>
-  <extensionPoint qualifiedName="PythonidEdu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
+    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
       <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
   </extensions>

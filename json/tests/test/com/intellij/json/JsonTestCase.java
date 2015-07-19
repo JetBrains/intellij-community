@@ -4,7 +4,6 @@ import com.intellij.json.formatter.JsonCodeStyleSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -17,13 +16,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class JsonTestCase extends LightCodeInsightFixtureTestCase {
   static {
     Logger.setFactory(TestLoggerFactory.class);
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    PlatformTestCase.autodetectPlatformPrefix();
-    //IdeaTestCase.initPlatformPrefix();
-    super.setUp();
   }
 
   @NotNull

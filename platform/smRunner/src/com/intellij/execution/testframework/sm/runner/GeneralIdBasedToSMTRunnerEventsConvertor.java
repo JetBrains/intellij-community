@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Sergey Simonchik
- */
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class.getName());
 
@@ -313,7 +310,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         String stackTrace = testFailedEvent.getStacktrace();
         if (comparisonFailureActualText != null && comparisonFailureExpectedText != null) {
           testProxy.setTestComparisonFailed(failureMessage, stackTrace,
-                                            comparisonFailureActualText, comparisonFailureExpectedText);
+                                            comparisonFailureActualText, comparisonFailureExpectedText, testFailedEvent.getFilePath());
         } else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
           testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
         } else {
@@ -322,6 +319,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                      + comparisonFailureExpectedText + "\n"
                      + "Actual:\n"
                      + comparisonFailureActualText);
+        }
+        long duration = testFailedEvent.getDurationMillis();
+        if (duration >= 0) {
+          testProxy.setDuration(duration);
         }
 
         // fire event
@@ -389,6 +390,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return null;
     }
     return myNodeByIdMap.get(treeNodeEvent.getId());
+  }
+
+  @Nullable
+  public SMTestProxy findProxyById(int id) {
+    Node node = myNodeByIdMap.get(id);
+    return node != null ? node.getProxy() : null;
   }
 
   private void fireOnTestingStarted() {

@@ -590,6 +590,37 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text);
   }
 
+  public void testReplacePreserveCase() {
+    configureByText(FileTypes.PLAIN_TEXT, "Bar bar BAR");
+    FindModel model = new FindModel();
+    model.setStringToFind("bar");
+    model.setStringToReplace("foo");
+    model.setPromptOnReplace(false);
+    model.setPreserveCase(true);
+
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("Foo foo FOO", myEditor.getDocument().getText());
+
+    configureByText(FileTypes.PLAIN_TEXT, "Bar bar");
+
+    model.setStringToFind("bar");
+    model.setStringToReplace("fooBar");
+
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("FooBar fooBar", myEditor.getDocument().getText());
+  }
+
+  public void testFindWholeWords() {
+    configureByText(FileTypes.PLAIN_TEXT, "-- -- ---");
+    FindModel model = new FindModel();
+    model.setStringToFind("--");
+    model.setWholeWordsOnly(true);
+
+    List<Usage> usages = FindUtil.findAll(myProject, myEditor, model);
+    assertNotNull(usages);
+    assertEquals(2, usages.size());
+  }
+
   public void testFindInCurrentFileOutsideProject() throws Exception {
     final TempDirTestFixture tempDirFixture = new TempDirTestFixtureImpl();
     tempDirFixture.setUp();

@@ -36,7 +36,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -203,20 +202,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-    if (!service) {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null) {
-  //      indicator.setText2(getComponentName(component));
-        indicator.setIndeterminate(false);
-        indicator.setFraction(getPercentageOfComponentsLoaded());
-      }
-    }
-
-    getStateStore().initComponent(component, service);
-  }
-
-  @Override
   public boolean isOpen() {
     return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
   }
@@ -302,14 +287,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (progressIndicator != null) {
       progressIndicator.pushState();
     }
-    loadComponents();
-    super.init();
+    super.init(progressIndicator);
     if (progressIndicator != null) {
       progressIndicator.popState();
     }
 
     long time = System.currentTimeMillis() - start;
-    LOG.info(getComponentConfigurations().length + " project components initialized in " + time + " ms");
+    LOG.info(getComponentConfigurationsSize() + " project components initialized in " + time + " ms");
 
     getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 

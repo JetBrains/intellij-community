@@ -20,10 +20,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NonNls;
@@ -173,6 +175,25 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunctionParams.add(param.getText());
     }
 
+    // Pass parameters with default values to super class constructor, only if both functions contain them  
+    for (PyParameter param : superInfo.getOptionalParameters()) {
+      final PyTupleParameter tupleParam = param.getAsTuple();
+      if (tupleParam != null) {
+        if (origInfo.getAllParameterNames().containsAll(collectParameterNames(tupleParam))) {
+          final String paramText = tupleParam.getText();
+          final PsiElement equalSign = PyPsiUtils.getFirstChildOfType(param, PyTokenTypes.EQ);
+          if (equalSign != null) {
+            superCallArgs.add(paramText.substring(0, equalSign.getStartOffsetInParent()).trim());
+          }
+        }
+      }
+      else {
+        if (origInfo.getAllParameterNames().contains(param.getName())) {
+          superCallArgs.add(param.getName());
+        }
+      }
+    }
+
     // Positional vararg
     PyParameter starredParam = null;
     if (origInfo.getPositionalContainerParameter() != null) {
@@ -195,25 +216,34 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
 
     // Required keyword-only parameters
-    boolean hasKeywordOnlyParams = false;
+    boolean newSignatureContainsKeywordParams = false;
     for (PyParameter param : origInfo.getRequiredKeywordOnlyParameters()) {
       newFunctionParams.add(param.getText());
-      hasKeywordOnlyParams = true;
+      newSignatureContainsKeywordParams = true;
     }
     for (PyParameter param : superInfo.getRequiredKeywordOnlyParameters()) {
       if (!origInfo.getAllParameterNames().contains(param.getName())) {
         newFunctionParams.add(param.getText());
-        hasKeywordOnlyParams = true;
+        newSignatureContainsKeywordParams = true;
       }
       superCallArgs.add(param.getName() + "=" + param.getName());
-    }
-    if (starredParam instanceof PySingleStarParameter && !hasKeywordOnlyParams) {
-      newFunctionParams.remove(newFunctionParams.size() - 1);
     }
 
     // Optional keyword-only parameters
     for (PyParameter param : origInfo.getOptionalKeywordOnlyParameters()) {
       newFunctionParams.add(param.getText());
+      newSignatureContainsKeywordParams = true;
+    }
+    
+    // If '*' param is followed by nothing in result signature, remove it altogether 
+    if (starredParam instanceof PySingleStarParameter && !newSignatureContainsKeywordParams) {
+      newFunctionParams.remove(newFunctionParams.size() - 1);
+    }
+
+    for (PyParameter param : superInfo.getOptionalKeywordOnlyParameters()) {
+      if (origInfo.getAllParameterNames().contains(param.getName())) {
+        superCallArgs.add(param.getName() + "=" + param.getName());
+      }
     }
 
     // Keyword vararg

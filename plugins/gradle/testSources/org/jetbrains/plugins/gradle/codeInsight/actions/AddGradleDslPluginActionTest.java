@@ -28,10 +28,6 @@ import java.io.File;
  */
 public class AddGradleDslPluginActionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public AddGradleDslPluginActionTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   public void testApplyPlugin() throws Exception {
     doTest("testApplyPlugin.gradle", "java");
   }

@@ -61,7 +61,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   public void addElement(LookupElement added, ProcessingContext context) {
     myCount++;
 
-    for (String string : CompletionUtil.getImmutableLookupStrings(added)) {
+    for (String string : CompletionUtil.iterateLookupStrings(added)) {
       if (string.length() == 0) continue;
 
       myElements.putValue(string, added);
@@ -97,7 +97,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   private void calculateToLift(LookupElement element) {
     boolean hasChanges = false;
-    for (String string : CompletionUtil.getImmutableLookupStrings(element)) {
+    for (String string : CompletionUtil.iterateLookupStrings(element)) {
       for (int len = 1; len < string.length(); len++) {
         String prefix = string.substring(0, len);
         for (LookupElement shorterElement : myElements.get(prefix)) {
