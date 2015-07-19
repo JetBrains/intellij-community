@@ -298,9 +298,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
 
       if (actionPopupStep != null) {
-        ToggleAction toggleAction = getToggleAction(selectedValue, actionPopupStep);
-        if (toggleAction != null) {
-          actionPopupStep.performAction(toggleAction, e != null ? e.getModifiers() : 0);
+        KeepingPopupOpenAction dontClosePopupAction = getActionByClass(selectedValue, actionPopupStep, KeepingPopupOpenAction.class);
+        if (dontClosePopupAction != null) {
+          actionPopupStep.performAction((AnAction)dontClosePopupAction, e != null ? e.getModifiers() : 0);
           for (ActionItem item : actionPopupStep.myItems) {
             updateActionItem(item);
           }
@@ -322,7 +322,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, new Function<Object, ToggleAction>() {
         @Override
         public ToggleAction fun(Object o) {
-          return getToggleAction(o, actionPopupStep);
+          return getActionByClass(o, actionPopupStep, ToggleAction.class);
         }
       });
 
@@ -338,11 +338,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     @Nullable
-    private static ToggleAction getToggleAction(@Nullable Object value, @NotNull ActionPopupStep actionPopupStep) {
+    private static <T> T getActionByClass(@Nullable Object value, @NotNull ActionPopupStep actionPopupStep, @NotNull Class<T> actionClass) {
       ActionItem item = value instanceof ActionItem ? (ActionItem)value : null;
       if (item == null) return null;
       if (!actionPopupStep.isSelectable(item)) return null;
-      return item.getAction() instanceof ToggleAction ? (ToggleAction)item.getAction() : null;
+      return actionClass.isInstance(item.getAction()) ? actionClass.cast(item.getAction()) : null;
     }
   }
 

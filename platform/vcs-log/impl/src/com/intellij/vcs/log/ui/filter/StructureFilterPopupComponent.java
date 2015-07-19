@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
@@ -223,7 +224,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
   }
 
-  private class SelectVisibleRootAction extends ToggleAction implements DumbAware {
+  private class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
     @NotNull private final CheckboxColorIcon myIcon;
     @NotNull private final VirtualFile myRoot;
 
