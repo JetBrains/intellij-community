@@ -121,8 +121,16 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
           assert(selected.isEmpty() || selected.size() == 1)
           selected.firstOrNull()
         }
+        var lastEditor: Editor? = null;
+        val notNull = reaction(true, "not-nullize selected editor", selSig) {
+          if (it != null) {
+            lastEditor = it
+            it
+          }
+          else lastEditor
+        }
 
-        reaction(false, "active editors change", selSig) { editor ->
+        reaction(false, "active editors change", notNull) { editor ->
           CommandProcessor.getInstance().executeCommand(myProject, object : Runnable {
             override fun run() {
               println("command $editor")
@@ -223,7 +231,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
   }
 
-  override fun getWindowSplitCount(): Int  = 0
+  override fun getWindowSplitCount(): Int = 0
 
   override fun hasSplitOrUndockedWindows(): Boolean = false
 
@@ -266,7 +274,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
   override fun getCurrentFile(): VirtualFile? {
     val editor = getSelectedTextEditor()
-    if(editor is EditorImpl) {
+    if (editor is EditorImpl) {
       return editor.getVirtualFile()
     }
     return null
@@ -312,7 +320,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
   override fun getNextWindow(window: EditorWindow): EditorWindow? = null
 
-  override fun getPrevWindow(window: EditorWindow): EditorWindow?  = null
+  override fun getPrevWindow(window: EditorWindow): EditorWindow? = null
 
   override fun isInsideChange(): Boolean = false
 
