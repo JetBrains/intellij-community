@@ -22,6 +22,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -110,7 +111,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
           unlist(list)
         })
 
-        reaction(true, "selected editor reaction", signalList) { selections ->
+        val selSig = reaction(true, "selected editor reaction", signalList) { selections ->
           val selected = selections?.filter { value: kotlin.Pair<Editor, Model?> ->
             val isSelected = value.second as? PrimitiveModel<*>
             isSelected != null && (isSelected.value as Boolean)
@@ -120,6 +121,17 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
           assert(selected.isEmpty() || selected.size() == 1)
           selected.firstOrNull()
         }
+
+        reaction(false, "active editors change", selSig) { editor ->
+          CommandProcessor.getInstance().executeCommand(myProject, object : Runnable {
+            override fun run() {
+              println("command $editor")
+              (IdeDocumentHistory.getInstance(myProject) as IdeDocumentHistoryImpl).onSelectionChanged()
+            }
+          }, null, null)
+        }
+
+        selSig
       })
       return signal.value
     }
@@ -253,11 +265,16 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun getCurrentFile(): VirtualFile? {
+    val editor = getSelectedTextEditor()
+    if(editor is EditorImpl) {
+      return editor.getVirtualFile()
+    }
     return null
   }
 
   override fun getSelectedEditorWithProvider(file: VirtualFile): Pair<FileEditor, FileEditorProvider>? {
-    return null
+    val pairs = myVirtualFile2Editor[file] ?: return null
+    return Pair.create(pairs.first.first(), pairs.second.first())
   }
 
   override fun closeAllFiles() {

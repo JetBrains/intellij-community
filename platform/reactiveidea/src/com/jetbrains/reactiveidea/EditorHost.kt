@@ -34,6 +34,8 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -128,8 +130,8 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
               }
             } catch(e: Throwable) {
             }
+            (IdeDocumentHistory.getInstance(editor.getProject()) as IdeDocumentHistoryImpl).onSelectionChanged()
           }, updateCaretAndSelectionCommand, DocCommandGroupId.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument())
-
         }
       }
       selection
