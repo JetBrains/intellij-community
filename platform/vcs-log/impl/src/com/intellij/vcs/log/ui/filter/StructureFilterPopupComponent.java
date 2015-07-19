@@ -261,6 +261,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
 
       updateIcon();
       e.getPresentation().setIcon(myIcon);
+      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, "Ctrl+Click to see only \"" + e.getPresentation().getText() + "\"");
     }
 
     private void updateIcon() {

@@ -671,14 +671,22 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Icon myIcon;
     private final boolean myPrependWithSeparator;
     private final String mySeparatorText;
+    private final String myDescription;
 
-    private ActionItem(@NotNull AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
+    private ActionItem(@NotNull AnAction action,
+                       @NotNull String text,
+                       @Nullable String description,
+                       boolean enabled,
+                       Icon icon,
+                       final boolean prependWithSeparator,
+                       String separatorText) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
       myIcon = icon;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
+      myDescription = description;
     }
 
     @NotNull
@@ -704,6 +712,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean isEnabled() { return myIsEnabled; }
+
+    public String getDescription() {
+      return myDescription;
+    }
   }
 
   private static class ActionPopupStep implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
@@ -777,6 +789,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @NotNull
     public String getTextFor(final ActionItem value) {
       return value.getText();
+    }
+
+    @Nullable
+    @Override
+    public String getTooltipTextFor(ActionItem value) {
+      return value.getDescription();
     }
 
     @Override
@@ -942,7 +960,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       appendActionsFromGroup(actionGroup);
 
       if (myListModel.isEmpty()) {
-        myListModel.add(new ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, false, null, false, null));
+        myListModel.add(new ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, false, null));
       }
     }
 
@@ -1051,7 +1069,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
         boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
         assert text != null : action + " has no presentation";
-        myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
+        myListModel.add(
+          new ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY), presentation.isEnabled(), icon,
+                         prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
         mySeparatorText = null;
       }
