@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -29,7 +30,6 @@ import com.jetbrains.reactivemodel.models.AbsentModel;
 import com.jetbrains.reactivemodel.models.MapModel;
 import com.jetbrains.reactivemodel.models.PrimitiveModel;
 import com.jetbrains.reactivemodel.util.Lifetime;
-import com.jetbrains.reactivemodel.util.LifetimeDefinition;
 import com.jetbrains.reactivemodel.util.UtilPackage;
 import kotlin.Function2;
 import kotlin.Unit;
@@ -42,7 +42,8 @@ import java.awt.*;
 import java.util.HashMap;
 
 public class ModelListPopup extends ListPopupImpl {
-  private final LifetimeDefinition myLifetime;
+  private final Lifetime myLifetime;
+  private final MetaHost myHost;
   private ReactiveModel myModel;
   private Path myPath;
   private int mySelectedIndex = 0;
@@ -89,8 +90,8 @@ public class ModelListPopup extends ListPopupImpl {
     myModel.transaction(new Function1<MapModel, MapModel>() {
       @Override
       public MapModel invoke(MapModel mapModel) {
-        return (MapModel)ReactivemodelPackage.putIn(myPath.div("selectedIndex"), mapModel,
-                                                    new PrimitiveModel<Integer>(index, UtilPackage.emptyMeta()));
+        return (MapModel)ReactivemodelPackage
+          .putIn(myPath.div("selectedIndex"), mapModel, new PrimitiveModel<Integer>(index, UtilPackage.emptyMeta()));
       }
     });
   }
@@ -99,17 +100,37 @@ public class ModelListPopup extends ListPopupImpl {
     super(aStep);
     myModel = model;
     myPath = path;
-    myLifetime = Lifetime.Companion.create(Lifetime.Eternal);
-    myLifetime.getLifetime().add(new Function0<Unit>() {
+    clearPopupModel();
+
+    myHost = new MetaHost(model, path);
+    myHost.initModel(new Function1<MapModel, MapModel>() {
+      @Override
+      public MapModel invoke(MapModel mapModel) {
+        return mapModel;
+      }
+    });
+    myLifetime = myHost.getLifetime();
+    myLifetime.add(new Function0<Unit>() {
       @Override
       public Unit invoke() {
-        myModel.transaction(new Function1<MapModel, MapModel>() {
-          @Override
-          public MapModel invoke(MapModel mapModel) {
-            return (MapModel)ReactivemodelPackage.putIn(myPath, mapModel, new AbsentModel());
-          }
-        });
+        Disposer.dispose(ModelListPopup.this);
         return null;
+      }
+    });
+  }
+
+  @Override
+  public void dispose() {
+    clearPopupModel();
+
+    super.dispose();
+  }
+
+  private void clearPopupModel() {
+    myModel.transaction(new Function1<MapModel, MapModel>() {
+      @Override
+      public MapModel invoke(MapModel mapModel) {
+        return (MapModel)ReactivemodelPackage.putIn(myPath, mapModel, new AbsentModel());
       }
     });
   }
@@ -128,12 +149,6 @@ public class ModelListPopup extends ListPopupImpl {
     final MapModel context =
       new MapModel(ContainerUtil.newHashMap(new Pair<String, Model>("editor", ReactivemodelPackage.toList(editorPath))), UtilPackage.emptyMeta());
     show(context);
-  }
-
-  @Override
-  public void dispose() {
-    myLifetime.terminate();
-    super.dispose();
   }
 
   private void show(final Model context) {
@@ -160,8 +175,8 @@ public class ModelListPopup extends ListPopupImpl {
         return mapModel;
       }
     });
-    Signal<Model> selection = myModel.subscribe(myLifetime.getLifetime(), myPath.div("selectedIndex"));
-    Signal<Model> actionPerformed = myModel.subscribe(myLifetime.getLifetime(), myPath.div("action"));
+    Signal<Model> selection = myModel.subscribe(myLifetime, myPath.div("selectedIndex"));
+    Signal<Model> actionPerformed = myModel.subscribe(myLifetime, myPath.div("action"));
     final VariableSignal<Integer> reaction =
       ReactivemodelPackage.reaction(false, "selectedIndex reaction", selection, new Function1<Model, Integer>() {
         @Override
