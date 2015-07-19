@@ -155,6 +155,11 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
+  public final JBIterator<E> takeWhile(int count) {
+    return takeWhile(new CountDown<E>(count));
+  }
+
+  @NotNull
   public final JBIterator<E> takeWhile(@NotNull final Condition<? super E> condition) {
     return addOp(new Op() {
       @Override
@@ -170,11 +175,21 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
+  public final JBIterator<E> skipWhile(int count) {
+    return skipWhile(new CountDown<E>(count));
+  }
+
+  @NotNull
   public final JBIterator<E> skipWhile(@NotNull final Condition<? super E> condition) {
     return addOp(new Op() {
+
+      boolean active = true;
+
       @Override
       public Object apply(Object o) {
-        return condition.value((E)o) ? SKIP : o;
+        if (active && condition.value((E)o)) return SKIP;
+        active = false;
+        return o;
       }
 
       @Override
@@ -203,7 +218,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @Override
   public String toString() {
-    JBIterable<Op> ops = JBIterable.generate(firstOp, new Function<Op, Op>() {
+    JBIterable<Op> ops = JBIterable.generate(firstOp.nextOp, new Function<Op, Op>() {
       @Override
       public Op fun(Op op) {
         return op.nextOp;
@@ -229,6 +244,19 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
     Object apply(Object o) {
       throw new UnsupportedOperationException();
+    }
+  }
+
+  private static class CountDown<A> implements Condition<A> {
+    int cur;
+
+    public CountDown(int count) {
+      cur = count;
+    }
+
+    @Override
+    public boolean value(A a) {
+      return cur > 0 && cur-- != 0;
     }
   }
 }

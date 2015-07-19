@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,13 +50,22 @@ import java.util.Map;
  *
  * @author Louis Wasserman
  */
-public abstract class TreeTraverser<T> {
+public class TreeTraverser<T> {
+
+  protected final Function<T, ? extends Iterable<? extends T>> treeStructure;
+
+  public TreeTraverser(Function<T, ? extends Iterable<? extends T>> provider) {
+    treeStructure = provider;
+  }
 
   /**
    * Returns the children of the specified node.  Must not contain null.
    */
   @NotNull
-  public abstract JBIterable<T> children(@NotNull T root);
+  public Iterable<? extends T> children(@NotNull T root) {
+    Iterable<? extends T> result = treeStructure.fun(root);
+    return result != null ? result : JBIterable.<T>empty();
+  }
 
   public static abstract class TracingIt<T> extends JBIterator<T> {
     @Nullable
@@ -173,21 +183,21 @@ public abstract class TreeTraverser<T> {
   }
 
   private abstract static class DfsIt<T> extends TracingIt<T> {
-    final ArrayDeque<Pair<T, Iterator<T>>> stack = new ArrayDeque<Pair<T, Iterator<T>>>();
+    final ArrayDeque<Pair<T, Iterator<? extends T>>> stack = new ArrayDeque<Pair<T, Iterator<? extends T>>>();
 
     @Nullable
     public T parent() {
-      Iterator<Pair<T, Iterator<T>>> it = stack.descendingIterator();
+      Iterator<Pair<T, Iterator<? extends T>>> it = stack.descendingIterator();
       it.next();
       return it.hasNext() ? it.next().first : null;
     }
 
     @NotNull
     public JBIterable<T> backtrace() {
-      return new JBIterable<Pair<T, Iterator<T>>>() {
+      return new JBIterable<Pair<T, Iterator<? extends T>>>() {
         @Override
-        public Iterator<Pair<T, Iterator<T>>> iterator() {
-          Iterator<Pair<T, Iterator<T>>> iterator = stack.descendingIterator();
+        public Iterator<Pair<T, Iterator<? extends T>>> iterator() {
+          Iterator<Pair<T, Iterator<? extends T>>> iterator = stack.descendingIterator();
           iterator.next();
           return iterator;
         }
@@ -201,29 +211,29 @@ public abstract class TreeTraverser<T> {
 
     PreOrderIt(@Nullable T root) {
       if (root != null) {
-        stack.addLast(Pair.<T, Iterator<T>>create(null, new SingletonIterator<T>(root)));
+        stack.addLast(Pair.<T, Iterator<? extends T>>create(null, new SingletonIterator<T>(root)));
       }
     }
 
     PreOrderIt(@NotNull Iterable<T> roots) {
       Iterator<T> iterator = roots.iterator();
       if (iterator.hasNext()) {
-        stack.addLast(Pair.<T, Iterator<T>>create(null, iterator));
+        stack.addLast(Pair.<T, Iterator<? extends T>>create(null, iterator));
       }
     }
 
     @Override
     public T nextImpl() {
       if (stack.size() <= doneCount) return stop();
-      Pair<T, Iterator<T>> top;
+      Pair<T, Iterator<? extends T>> top;
       while (!(top = stack.getLast()).second.hasNext()) {
         stack.removeLast();
         doneCount--;
       }
       T result = top.second.next();
       if (!top.second.hasNext()) doneCount++;
-      Iterator<T> childItr = children(result).iterator();
-      stack.addLast(Pair.create(result, childItr));
+      Iterator<? extends T> childItr = children(result).iterator();
+      stack.addLast(Pair.<T, Iterator<? extends T>>create(result, childItr));
       if (!childItr.hasNext()) doneCount++;
       return result;
     }
@@ -233,23 +243,23 @@ public abstract class TreeTraverser<T> {
 
     PostOrderIt(@Nullable T root) {
       if (root != null) {
-        stack.addLast(Pair.create(root, children(root).iterator()));
+        stack.addLast(Pair.<T, Iterator<? extends T>>create(root, children(root).iterator()));
       }
     }
 
     PostOrderIt(@NotNull Iterable<? extends T> roots) {
       for (T root : roots) {
-        stack.addLast(Pair.create(root, children(root).iterator()));
+        stack.addLast(Pair.<T, Iterator<? extends T>>create(root, children(root).iterator()));
       }
     }
 
     @Override
     public T nextImpl() {
       while (!stack.isEmpty()) {
-        Pair<T, Iterator<T>> top = stack.getLast();
+        Pair<T, Iterator<? extends T>> top = stack.getLast();
         if (top.second.hasNext()) {
           T child = top.second.next();
-          stack.addLast(Pair.create(child, children(child).iterator()));
+          stack.addLast(Pair.<T, Iterator<? extends T>>create(child, children(child).iterator()));
         }
         else {
           stack.removeLast();

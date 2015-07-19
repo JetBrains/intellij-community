@@ -5,7 +5,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteredTraverser;
+import com.intellij.util.containers.FilteredTraverserBase;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ import java.util.LinkedList;
 /**
  * @author gregsh
  */
-public class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTraverser<T>> implements Iterable<T>, UserDataHolder {
+public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser<T>> implements Iterable<T>, UserDataHolder {
 
   @NotNull
   public static ApiEx<PsiElement> psiApi() {
@@ -63,18 +63,13 @@ public class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTraverser<T>>
   public final Api<T> api;
 
   protected SyntaxTraverser(@NotNull Api<T> api, @Nullable Meta<T> meta) {
-    super(meta);
+    super(meta, api);
     this.api = api;
   }
 
   @Override
   protected SyntaxTraverser<T> newInstance(Meta<T> meta) {
     return new SyntaxTraverser<T>(api, meta);
-  }
-
-  @Override
-  protected final JBIterable<? extends T> childrenImpl(T node) {
-    return api.children(node);
   }
 
   @Nullable
@@ -116,16 +111,16 @@ public class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTraverser<T>>
 
   @NotNull
   public JBIterable<T> parents(@Nullable final T element) {
-    return JBIterable.generate(null, new Function<T, T>() {
+    return JBIterable.generate(element, new Function<T, T>() {
       @Override
       public T fun(T t) {
-        return t == null ? element : api.parent(t);
+        return api.parent(t);
       }
     });
   }
 
 
-  public abstract static class Api<T> {
+  public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
     @NotNull
     public abstract IElementType typeOf(@NotNull T node);
 
@@ -140,6 +135,11 @@ public class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTraverser<T>>
 
     @NotNull
     public abstract JBIterable<? extends T> children(@NotNull T node);
+
+    @Override
+    public JBIterable<? extends T> fun(T t) {
+      return children(t);
+    }
 
     @NotNull
     public Function<T, IElementType> TO_TYPE() {
@@ -205,10 +205,10 @@ public class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTraverser<T>>
     public JBIterable<? extends T> children(@NotNull final T node) {
       final T first = first(node);
       if (first == null) return JBIterable.empty();
-      return JBIterable.generate(null, new Function<T, T>() {
+      return JBIterable.generate(first, new Function<T, T>() {
         @Override
         public T fun(T t) {
-          return t == null ? first : next(t);
+          return next(t);
         }
       });
     }
