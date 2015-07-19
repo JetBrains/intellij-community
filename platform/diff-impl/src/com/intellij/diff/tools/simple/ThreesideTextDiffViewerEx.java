@@ -190,6 +190,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     else {
       myChangesCount++;
     }
+    myStatusPanel.update();
   }
 
   protected void onChangeRemoved(@NotNull ThreesideDiffChangeBase change) {
@@ -199,6 +200,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     else {
       myChangesCount--;
     }
+    myStatusPanel.update();
   }
 
   //
