@@ -220,6 +220,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (componentRoot == null) return;
 
     final Set<File> moduleFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    //final List<File> moduleFiles = new ArrayList<File>();
     for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final File file = new File(path);
