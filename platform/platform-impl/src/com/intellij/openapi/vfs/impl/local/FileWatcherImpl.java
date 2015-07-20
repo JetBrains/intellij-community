@@ -409,7 +409,6 @@ public class FileWatcherImpl extends PluggableFileWatcher {
         }
         catch (IllegalArgumentException e) {
           LOG.error("Illegal watcher command: " + line);
-
           return;
         }
 
