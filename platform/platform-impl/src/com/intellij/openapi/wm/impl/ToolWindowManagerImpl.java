@@ -639,7 +639,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             @Override
             public ActionCallback run() {
               runnable.run();
-              return new ActionCallback.Done();
+              return ActionCallback.DONE;
             }
           }.setExpirable(runnable), forced);
         }
@@ -690,7 +690,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                   activateToolWindow(myActiveStack.peek(), false, true);
                 }
               }
-              return new ActionCallback.Done();
+              return ActionCallback.DONE;
             }
           }, false);
         }
@@ -1840,7 +1840,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private ActionCallback appendRequestFocusInEditorComponentCmd(List<FinalizableCommand> commandList, boolean forced) {
-    if (myProject.isDisposed()) return new ActionCallback.Done();
+    if (myProject.isDisposed()) return ActionCallback.DONE;
     EditorsSplitters splitters = getSplittersToFocus();
     CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), commandProcessor, forced);
@@ -2480,7 +2480,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         activateToolWindow(activeId, forced, true);
       }
 
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (activeWindow != null) {
@@ -2496,13 +2496,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(root);
         if (toFocus != null) {
           if (DialogWrapper.findInstance(toFocus) != null) {
-            return new ActionCallback.Done(); //IDEA-80929
+            return ActionCallback.DONE; //IDEA-80929
           }
           return IdeFocusManager.findInstanceByComponent(toFocus).requestFocus(toFocus, forced);
         }
       }
     }
-    return new ActionCallback.Rejected();
+    return ActionCallback.REJECTED;
   }
 
 

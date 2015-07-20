@@ -298,7 +298,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   @NotNull
   public ActionCallback queueUpdateFrom(final Object element, final boolean forceResort, final boolean updateStructure) {
-    if (getUi() == null) return new ActionCallback.Rejected();
+    if (getUi() == null) return ActionCallback.REJECTED;
 
     final ActionCallback result = new ActionCallback();
 
@@ -487,14 +487,14 @@ public class AbstractTreeBuilder implements Disposable {
   @NotNull
   public final ActionCallback getInitialized() {
     if (isDisposed()) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
     return myUi.getInitialized();
   }
 
   @NotNull
   public final ActionCallback getReady(Object requestor) {
-    if (isDisposed()) return new ActionCallback.Rejected();
+    if (isDisposed()) return ActionCallback.REJECTED;
 
     return myUi.getReady(requestor);
   }
@@ -517,14 +517,14 @@ public class AbstractTreeBuilder implements Disposable {
 
   @NotNull
   public ActionCallback cancelUpdate() {
-    if (isDisposed()) return new ActionCallback.Rejected();
+    if (isDisposed()) return ActionCallback.REJECTED;
 
     return getUi().cancelUpdate();
   }
 
   @NotNull
   public ActionCallback batch(@NotNull Progressive progressive) {
-    if (isDisposed()) return new ActionCallback.Rejected();
+    if (isDisposed()) return ActionCallback.REJECTED;
 
     return getUi().batch(progressive);
   }

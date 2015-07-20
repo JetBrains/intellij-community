@@ -395,7 +395,7 @@ public final class TreeUtil {
       row++;
       return showAndSelect(tree, row, row + 2, row, getSelectedRow(tree), false, true, true);
     } else {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
   }
 
@@ -406,7 +406,7 @@ public final class TreeUtil {
       row--;
       return showAndSelect(tree, row - 2, row, row, getSelectedRow(tree), false, true, true);
     } else {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
   }
 
@@ -485,12 +485,12 @@ public final class TreeUtil {
   public static ActionCallback showAndSelect(@NotNull final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll, final boolean resetSelection) {
     final TreePath path = tree.getPathForRow(row);
 
-    if (path == null) return new ActionCallback.Done();
+    if (path == null) return ActionCallback.DONE;
 
     final int size = tree.getRowCount();
     if (size == 0) {
       tree.clearSelection();
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
     if (top < 0){
       top = 0;
@@ -499,7 +499,7 @@ public final class TreeUtil {
       bottom = size - 1;
     }
 
-    if (row >= tree.getRowCount()) return new ActionCallback.Done();
+    if (row >= tree.getRowCount()) return ActionCallback.DONE;
 
     boolean okToScroll = true;
     if (tree.isShowing()) {
@@ -533,12 +533,12 @@ public final class TreeUtil {
 
     if (!okToScroll) {
       selectRunnable.run();
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
 
     final Rectangle rowBounds = tree.getRowBounds(row);
-    if (rowBounds == null) return new ActionCallback.Done();
+    if (rowBounds == null) return ActionCallback.DONE;
 
     Rectangle topBounds = tree.getRowBounds(top);
     if (topBounds == null) {
@@ -835,7 +835,7 @@ public final class TreeUtil {
 
   @NotNull
   public static ActionCallback selectInTree(@Nullable DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree, boolean center) {
-    if (node == null) return new ActionCallback.Done();
+    if (node == null) return ActionCallback.DONE;
 
     final TreePath treePath = new TreePath(node.getPath());
     tree.expandPath(treePath);
@@ -847,7 +847,7 @@ public final class TreeUtil {
 
   @NotNull
   public static ActionCallback selectInTree(Project project, @Nullable DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree, boolean center) {
-    if (node == null) return new ActionCallback.Done();
+    if (node == null) return ActionCallback.DONE;
 
     final TreePath treePath = new TreePath(node.getPath());
     tree.expandPath(treePath);

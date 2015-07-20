@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 public class Place implements ComparableObject {
 
@@ -105,7 +105,7 @@ public class Place implements ComparableObject {
     if (object instanceof Navigator) {
       return ((Navigator)object).navigateTo(place, requestFocus);
     }
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   public static void queryFurther(final Object object, final Place place) {

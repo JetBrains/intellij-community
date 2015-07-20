@@ -783,7 +783,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
@@ -1535,7 +1535,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return pane.updateFromRoot(false);
       }
     }
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   private static boolean getPaneOptionValue(@NotNull Map<String, Boolean> optionsMap, String paneId, boolean defaultValue) {
@@ -1906,6 +1906,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (pane == null) {
       pane = myId2Pane.get(myCurrentViewId);
     }
-    return pane != null ? pane.getReady(requestor) : new ActionCallback.Done();
+    return pane != null ? pane.getReady(requestor) : ActionCallback.DONE;
   }
 }

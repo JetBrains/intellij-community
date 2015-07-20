@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,7 +325,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
   ActionCallback select(@Nullable final Configurable configurable) {
     if (myBuilder.isSelectionBeingAdjusted()) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
     final ActionCallback callback = new ActionCallback();
     myQueuedConfigurable = configurable;
@@ -392,18 +392,18 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   @Override
   public ActionCallback onModifiedAdded(Configurable configurable) {
     myTree.repaint();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
   public ActionCallback onModifiedRemoved(Configurable configurable) {
     myTree.repaint();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
   public ActionCallback onErrorsChanged() {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   private final class MyRoot extends CachingSimpleNode {

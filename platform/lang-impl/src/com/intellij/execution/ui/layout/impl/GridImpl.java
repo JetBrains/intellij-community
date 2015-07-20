@@ -245,7 +245,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
             setContent(myContent);
             myContent = null;
           }
-          return new ActionCallback.Done();
+          return ActionCallback.DONE;
         }
       };
     }

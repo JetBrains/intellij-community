@@ -97,7 +97,7 @@ public class SwitchManager {
 
   private ActionCallback tryToInitSessionFromFocus(@Nullable SwitchTarget preselected, boolean showSpots) {
     if (isSessionActive()) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -106,7 +106,7 @@ public class SwitchManager {
       return initSession(new SwitchingSession(this, provider, myAutoInitSessionEvent, preselected, showSpots));
     }
 
-    return new ActionCallback.Rejected();
+    return ActionCallback.REJECTED;
   }
 
   private void cancelWaitingForAutoInit() {
@@ -150,7 +150,7 @@ public class SwitchManager {
 
     disposeCurrentSession(false);
     mySession = session;
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   public void disposeCurrentSession(boolean fadeAway) {

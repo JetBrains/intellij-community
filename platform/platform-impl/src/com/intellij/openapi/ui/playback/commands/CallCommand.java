@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,13 @@ public class CallCommand extends AbstractCommand {
     final int open = cmd.indexOf("(");
     if (open == -1) {
       context.error("( expected", getLine());
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     final int close = cmd.lastIndexOf(")");
     if (close == -1) {
       context.error(") expected", getLine());
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
 
@@ -69,14 +69,14 @@ public class CallCommand extends AbstractCommand {
       Pair<Method, Class> methodClass = findMethod(context, methodName, types);
       if (methodClass == null) {
         context.error("No method \"" + methodName + "\" found in facade classes: " + context.getCallClasses(), getLine());
-        return new ActionCallback.Rejected();
+        return ActionCallback.REJECTED;
       }
 
       Method m = methodClass.getFirst();
 
       if (!m.getReturnType().isAssignableFrom(AsyncResult.class)) {
         context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object", getLine());
-        return new ActionCallback.Rejected();
+        return ActionCallback.REJECTED;
       }
 
       Object[] actualArgs = noArgs ? new Object[1] : new Object[args.length + 1];
@@ -87,7 +87,7 @@ public class CallCommand extends AbstractCommand {
       AsyncResult result = (AsyncResult<String>)m.invoke(null, actualArgs);
       if (result == null) {
         context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object, but was null", getLine());
-        return new ActionCallback.Rejected();
+        return ActionCallback.REJECTED;
       }
 
       result.doWhenDone(new Consumer<String>() {

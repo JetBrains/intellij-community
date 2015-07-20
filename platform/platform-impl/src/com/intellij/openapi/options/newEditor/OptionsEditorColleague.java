@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.options.newEditor;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.Nullable;
 
 interface OptionsEditorColleague {
   ActionCallback onSelected(@Nullable Configurable configurable, final Configurable oldConfigurable);
@@ -30,19 +30,19 @@ interface OptionsEditorColleague {
 
   class Adapter implements OptionsEditorColleague {
     public ActionCallback onSelected(@Nullable final Configurable configurable, final Configurable oldConfigurable) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     public ActionCallback onModifiedAdded(final Configurable configurable) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     public ActionCallback onModifiedRemoved(final Configurable configurable) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     public ActionCallback onErrorsChanged() {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
   }
 

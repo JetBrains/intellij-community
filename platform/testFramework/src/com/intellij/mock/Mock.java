@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,10 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -147,13 +150,13 @@ public class Mock {
     @Override
     public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     @NotNull
     @Override
     public ActionCallback getReady(@NotNull Object requestor) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     @NotNull

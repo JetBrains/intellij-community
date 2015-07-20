@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,12 @@ public class ActionCallback implements Disposable {
     myRejected = new ExecutionCallback();
   }
 
+  private ActionCallback(ExecutionCallback done, ExecutionCallback rejected) {
+    myDone = done;
+    myRejected = rejected;
+    myName = null;
+  }
+
   public ActionCallback(int countToDone) {
     this(null, countToDone);
   }
@@ -54,10 +60,7 @@ public class ActionCallback implements Disposable {
     myName = name;
 
     assert countToDone >= 0 : "count=" + countToDone;
-
-    int count = countToDone >= 1 ? countToDone : 1;
-
-    myDone = new ExecutionCallback(count);
+    myDone = new ExecutionCallback(countToDone >= 1 ? countToDone : 1);
     myRejected = new ExecutionCallback();
 
     if (countToDone < 1) {
@@ -164,13 +167,52 @@ public class ActionCallback implements Disposable {
 
   public static class Done extends ActionCallback {
     public Done() {
-      setDone();
+      super(new ExecutedExecutionCallback(), new IgnoreExecutionCallback());
     }
   }
 
   public static class Rejected extends ActionCallback {
     public Rejected() {
-      setRejected();
+      super(new IgnoreExecutionCallback(), new ExecutedExecutionCallback());
+    }
+  }
+
+  private static class ExecutedExecutionCallback extends ExecutionCallback {
+    public ExecutedExecutionCallback() {
+      super(0);
+    }
+
+    @Override
+    void doWhenExecuted(@NotNull Runnable runnable) {
+      runnable.run();
+    }
+
+    @Override
+    boolean setExecuted() {
+      throw new IllegalStateException("Forbidden");
+    }
+
+    @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+    @Override
+    boolean isExecuted() {
+      return true;
+    }
+  }
+
+  private static class IgnoreExecutionCallback extends ExecutionCallback {
+    @Override
+    void doWhenExecuted(@NotNull Runnable runnable) {
+    }
+
+    @Override
+    boolean setExecuted() {
+      throw new IllegalStateException("Forbidden");
+    }
+
+    @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+    @Override
+    boolean isExecuted() {
+      return false;
     }
   }
 

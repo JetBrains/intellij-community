@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
   @NotNull
   @Override
   public ActionCallback selectAndFocus(@Nullable final Content content, boolean requestFocus, final boolean forced, boolean implicit) {
-    if (content == null) return new ActionCallback.Rejected();
+    if (content == null) return ActionCallback.REJECTED;
     return getContentManager(content).setSelectedContent(content, requestFocus || shouldRequestFocus(), forced, implicit);
   }
 
