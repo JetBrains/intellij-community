@@ -665,9 +665,15 @@ public class JavaCompletionUtil {
 
         if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
           final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
-          PsiElement newElement = staticImport
-                                  ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
-                                  : ref.bindToElement(psiClass);
+          PsiElement newElement;
+          try {
+            newElement = staticImport
+                                    ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
+                                    : ref.bindToElement(psiClass);
+          }
+          catch (IncorrectOperationException e) {
+            return endOffset; // can happen if fqn contains reserved words, for example
+          }
 
           final RangeMarker rangeMarker = document.createRangeMarker(newElement.getTextRange());
           documentManager.doPostponedOperationsAndUnblockDocument(document);
