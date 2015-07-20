@@ -28,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -298,14 +299,23 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       for(Runnable r:tasks) r.run();
       return;
     }
+    
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    assert progress != null;
+    
     final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
     Future<?> result = null;
     if (tasks.size() > 1) {
       result = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          Runnable runnable;
-          while ((runnable = tasksQueue.poll()) != null) runnable.run();
+          ProgressManager.getInstance().runProcess(new Runnable() {
+            @Override
+            public void run() {
+              Runnable runnable;
+              while ((runnable = tasksQueue.poll()) != null) runnable.run();
+            }
+          }, ProgressWrapper.wrap(progress));
         }
       });
     }
