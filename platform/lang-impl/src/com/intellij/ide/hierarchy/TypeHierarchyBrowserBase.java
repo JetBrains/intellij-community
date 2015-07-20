@@ -24,7 +24,11 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.Map;
 
 public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
@@ -47,6 +51,27 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   protected abstract boolean isInterface(PsiElement psiElement);
+
+  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, ActionGroup group) {
+    final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
+    final JTree tree1 = createTree(true);
+    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    baseOnThisTypeAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree1);
+    trees.put(TYPE_HIERARCHY_TYPE, tree1);
+
+    final JTree tree2 = createTree(true);
+    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    baseOnThisTypeAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree2);
+    trees.put(SUPERTYPES_HIERARCHY_TYPE, tree2);
+
+    final JTree tree3 = createTree(true);
+    PopupHandler.installPopupHandler(tree3, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    baseOnThisTypeAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
+    trees.put(SUBTYPES_HIERARCHY_TYPE, tree3);
+  }
 
   protected abstract boolean canBeDeleted(PsiElement psiElement);
 
