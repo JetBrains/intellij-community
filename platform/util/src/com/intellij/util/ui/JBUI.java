@@ -59,7 +59,7 @@ public class JBUI {
   }
 
   public static int scale(int i) {
-    return isHiDPI() ? 2 * i : i;
+    return isHiDPI() ? (int)(1.5f * i) : i;
   }
 
   public static JBDimension size(int width, int height) {
@@ -154,27 +154,31 @@ public class JBUI {
     }
 
     public static JBEmptyBorder empty(int topAndBottom, int leftAndRight) {
-      return new JBEmptyBorder(topAndBottom, leftAndRight, topAndBottom, leftAndRight);
+      return empty(topAndBottom, leftAndRight, topAndBottom, leftAndRight);
     }
 
     public static JBEmptyBorder emptyTop(int offset) {
-      return new JBEmptyBorder(offset, 0, 0, 0);
+      return empty(offset, 0, 0, 0);
     }
 
     public static JBEmptyBorder emptyLeft(int offset) {
-      return new JBEmptyBorder(0, offset,  0, 0);
+      return empty(0, offset,  0, 0);
     }
 
     public static JBEmptyBorder emptyBottom(int offset) {
-      return new JBEmptyBorder(0, 0, offset, 0);
+      return empty(0, 0, offset, 0);
     }
 
     public static JBEmptyBorder emptyRight(int offset) {
-      return new JBEmptyBorder(0, 0, 0, offset);
+      return empty(0, 0, 0, offset);
     }
 
     public static JBEmptyBorder empty() {
-      return new JBEmptyBorder(0);
+      return empty(0, 0, 0, 0);
+    }
+
+    public static Border empty(int offsets) {
+      return empty(offsets, offsets, offsets, offsets);
     }
 
     public static Border customLine(Color color, int top, int left, int bottom, int right) {
