@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,8 @@ import java.util.List;
  * Handles Test Runner events
 */
 public interface SMTRunnerEventsListener {
+  Topic<SMTRunnerEventsListener> TEST_STATUS = new Topic<SMTRunnerEventsListener>("test status", SMTRunnerEventsListener.class);
+
   /**
    * On start testing, before tests and suits launching
    * @param testsRoot
