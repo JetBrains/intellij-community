@@ -49,8 +49,12 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    getEditorFactory().releaseEditor(editor);
-    super.tearDown();
+    try {
+      getEditorFactory().releaseEditor(editor);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static EditorFactory getEditorFactory() {
