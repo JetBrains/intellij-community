@@ -2470,6 +2470,15 @@ public class ContainerUtil extends ContainerUtilRt {
   }
   @NotNull
   @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap(int initialCapacity,
+                                 float loadFactor,
+                                 int concurrencyLevel,
+                                 @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    //noinspection deprecation
+    return new ConcurrentSoftHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+  @NotNull
+  @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(int initialCapacity,
                                  float loadFactor,
                                  int concurrencyLevel,
