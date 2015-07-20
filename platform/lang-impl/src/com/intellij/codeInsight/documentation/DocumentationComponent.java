@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -66,7 +67,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
-import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
@@ -74,7 +76,9 @@ import java.util.*;
 import java.util.List;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
+  private static Logger LOGGER = Logger.getInstance(DocumentationComponent.class);
 
+  private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
   @NonNls private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
 
   private static final int PREFERRED_WIDTH_EM = 37;
@@ -113,11 +117,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     private final SmartPsiElementPointer element;
     private final String text;
     private final Rectangle viewRect;
+    private final int highlightedLink;
 
-    public Context(SmartPsiElementPointer element, String text, Rectangle viewRect) {
+    public Context(SmartPsiElementPointer element, String text, Rectangle viewRect, int highlightedLink) {
       this.element = element;
       this.text = text;
       this.viewRect = viewRect;
+      this.highlightedLink = highlightedLink;
     }
   }
 
@@ -128,6 +134,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private boolean myControlPanelVisible;
   private final ExternalDocAction myExternalDocAction;
   private Consumer<PsiElement> myNavigateCallback;
+  private int myHighlightedLink = -1;
+  private Object myHighlightingTag;
 
   private JBPopup myHint;
 
@@ -150,11 +158,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsShown = false;
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
-      @Override
-      public EditorKit getEditorKit() {
-        return new HTMLEditorKit();
-      }
-
       @Override
       public Dimension getPreferredScrollableViewportSize() {
         int em = myEditorPane.getFont().getSize();
@@ -341,6 +344,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
       }
     }
+
+    new NextLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this);
+    new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
+    new ActivateLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), this);
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true);
 
@@ -548,12 +555,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (clearHistory) clearHistory();
   }
 
-  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, String ref) {
-    setDataInternal(element, text, viewRect, ref, false);
-  }
-
-  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, final String ref, boolean skip) {
+  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, final String ref) {
     setElement(element);
+    
+    highlightLink(-1);
 
     myEditorPane.setText(text);
     applyFontSize();
@@ -563,9 +568,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myIsShown = true;
     }
 
-    if (!skip) {
-      myText = text;
-    }
+    myText = text;
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
@@ -620,7 +623,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, rect);
+    return new Context(myElement, myText, rect, myHighlightedLink);
   }
 
   private void restoreContext(Context context) {
@@ -631,6 +634,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         myNavigateCallback.consume(element);
       }
     }
+    highlightLink(context.highlightedLink);
   }
 
   private void updateControlState() {
@@ -864,6 +868,61 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myNavigateCallback = null;
   }
 
+  private int getLinkCount() {
+    HTMLDocument document = (HTMLDocument)myEditorPane.getDocument();
+    int linkCount = 0;
+    for (HTMLDocument.Iterator it = document.getIterator(HTML.Tag.A); it.isValid(); it.next()) {
+      if (it.getAttributes().isDefined(HTML.Attribute.HREF)) linkCount++;
+    }
+    return linkCount;
+  }
+
+  @Nullable
+  private HTMLDocument.Iterator getLink(int n) {
+    if (n >= 0) {
+      HTMLDocument document = (HTMLDocument)myEditorPane.getDocument();
+      int linkCount = 0;
+      for (HTMLDocument.Iterator it = document.getIterator(HTML.Tag.A); it.isValid(); it.next()) {
+        if (it.getAttributes().isDefined(HTML.Attribute.HREF) && linkCount++ == n) return it;
+      }
+    }
+    return null;
+  }
+  
+  private void highlightLink(int n) {
+    myHighlightedLink = n;
+    Highlighter highlighter = myEditorPane.getHighlighter();
+    HTMLDocument.Iterator link = getLink(n);
+    if (link != null) {
+      int startOffset = link.getStartOffset();
+      int endOffset = link.getEndOffset();
+      try {
+        if (myHighlightingTag == null) {
+          myHighlightingTag = highlighter.addHighlight(startOffset, endOffset, LINK_HIGHLIGHTER);
+        }
+        else {
+          highlighter.changeHighlight(myHighlightingTag, startOffset, endOffset);
+        }
+        myEditorPane.setCaretPosition(startOffset);
+      }
+      catch (BadLocationException e) {
+        LOGGER.warn("Error highlighting link", e);
+      }
+    }
+    else if (myHighlightingTag != null) {
+      highlighter.removeHighlight(myHighlightingTag);
+      myHighlightingTag = null;
+    }
+  }
+
+  private void activateLink(int n) {
+    HTMLDocument.Iterator link = getLink(n);
+    if (link != null) {
+      String href = (String)link.getAttributes().getAttribute(HTML.Attribute.HREF);
+      myManager.navigateByLink(this, href);
+    }
+  }
+
   private class MyShowSettingsButton extends ActionButton {
 
     private MyShowSettingsButton() {
@@ -934,6 +993,54 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public V remove(Object key) {
       throw new UnsupportedOperationException();
+    }
+  }
+
+  private class PreviousLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      int linkCount = getLinkCount();
+      if (linkCount <= 0) return;
+      highlightLink(myHighlightedLink < 0 ? (linkCount - 1) : (myHighlightedLink + linkCount - 1) % linkCount);
+    }
+  }
+
+  private class NextLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      int linkCount = getLinkCount();
+      if (linkCount <= 0) return;
+      highlightLink((myHighlightedLink + 1) % linkCount);
+    }
+  }
+
+  private class ActivateLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      activateLink(myHighlightedLink);
+    }
+  }
+  
+  private static class LinkHighlighter implements Highlighter.HighlightPainter {
+    private static final Stroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{1}, 0);
+    
+    @Override
+    public void paint(Graphics g, int p0, int p1, Shape bounds, JTextComponent c) {
+      try {
+        Rectangle target = c.getUI().getRootView(c).modelToView(p0, Position.Bias.Forward, p1, Position.Bias.Backward, bounds).getBounds();
+        Graphics2D g2d = (Graphics2D)g.create();
+        try {
+          g2d.setStroke(STROKE);
+          g2d.setColor(c.getSelectionColor());
+          g2d.drawRect(target.x, target.y, target.width - 1, target.height - 1);
+        }
+        finally {
+          g2d.dispose();
+        }
+      }
+      catch (Exception e) {
+        LOGGER.warn("Error painting link highlight", e);
+      }
     }
   }
 }
