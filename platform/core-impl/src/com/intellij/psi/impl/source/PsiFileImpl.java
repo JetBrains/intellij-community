@@ -458,6 +458,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     else if (myOriginalFile != null) {
       clone.myOriginalFile = myOriginalFile;
     }
+    
+    clone.clearCaches();
 
     return clone;
   }
