@@ -346,7 +346,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
-    progressCountPanel.setBorder(JBUI.Borders.empty(0, 0, 0, 4));
+    progressCountPanel.setBorder(JBUI.Borders.emptyRight(4));
     add(progressCountPanel, BorderLayout.EAST);
 
     revalidate();
