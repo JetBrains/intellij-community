@@ -51,7 +51,10 @@ public class SwitchManager {
     myQa = quickAccess;
   }
 
-  boolean dispatchKeyEvent(@NotNull KeyEvent e) {
+  /**
+   * internal use only
+   */
+  public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
     if (isSessionActive()) {
       return false;
     }
