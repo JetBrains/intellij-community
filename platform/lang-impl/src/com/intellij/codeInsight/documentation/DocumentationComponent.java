@@ -37,9 +37,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -331,8 +333,22 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     actions.add(myExternalDocAction = new ExternalDocAction());
     actions.add(edit);
 
-    back.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), this);
-    forward.registerCustomShortcutSet(CustomShortcutSet.fromString("RIGHT"), this);
+    try {
+      CustomShortcutSet backShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString("LEFT"),
+                                                                KeymapUtil.parseMouseShortcut("button4"));
+      CustomShortcutSet forwardShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString("RIGHT"),
+                                                                   KeymapUtil.parseMouseShortcut("button5"));
+      back.registerCustomShortcutSet(backShortcutSet, this);
+      forward.registerCustomShortcutSet(forwardShortcutSet, this);
+      // mouse actions are checked only for exact component over which click was performed, 
+      // so we need to register shortcuts for myEditorPane as well
+      back.registerCustomShortcutSet(backShortcutSet, myEditorPane); 
+      forward.registerCustomShortcutSet(forwardShortcutSet, myEditorPane);
+    }
+    catch (InvalidDataException e) {
+      LOGGER.error(e);
+    }
+    
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     if (additionalActions != null) {
