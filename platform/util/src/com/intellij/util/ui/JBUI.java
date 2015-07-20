@@ -29,6 +29,7 @@ import java.awt.*;
  */
 public class JBUI {
   private static boolean IS_HIDPI = calculateHiDPI();
+  private static float SCALE_FACTOR = calculateScaleFactor();
 
   private static boolean calculateHiDPI() {
     if (SystemInfo.isMac) {
@@ -50,6 +51,24 @@ public class JBUI {
     return false;
   }
 
+  private static float calculateScaleFactor() {
+    if (SystemInfo.isMac) {
+      return 1.0f;
+    }
+
+    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      return 1.0f;
+    }
+
+    final int dpi = getSystemDPI();
+    if (dpi <= 96)  return 1.0f;
+    if (dpi <= 120) return 1.25f;
+    if (dpi <= 144) return 1.5f;
+    if (dpi <= 168) return 1.75f;
+
+    return 2.0f;
+  }
+
   private static int getSystemDPI() {
     try {
       return Toolkit.getDefaultToolkit().getScreenResolution();
@@ -59,7 +78,7 @@ public class JBUI {
   }
 
   public static int scale(int i) {
-    return isHiDPI() ? 2 * i : i;
+    return (int)(SCALE_FACTOR * i);
   }
 
   public static JBDimension size(int width, int height) {
@@ -115,7 +134,7 @@ public class JBUI {
   }
 
   public static float scale(float f) {
-    return f * scale(1);
+    return f * SCALE_FACTOR;
   }
 
   public static JBInsets insets(Insets insets) {
@@ -123,7 +142,7 @@ public class JBUI {
   }
 
   public static boolean isHiDPI() {
-    return IS_HIDPI;
+    return SCALE_FACTOR > 1.0f;
   }
 
   public static class Fonts {
