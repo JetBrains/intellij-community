@@ -117,6 +117,13 @@ public class MinusculeMatcher implements Matcher {
     return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));
   }
 
+  private static int nextWord(@NotNull String name, int start) {
+    if (start < name.length() && Character.isDigit(name.charAt(start))) {
+      return start + 1; //treat each digit as a separate hump
+    }
+    return NameUtil.nextWord(name, start);
+  }
+
   private boolean hasWildCards() {
     for (int i = 0; i < myPattern.length; i++) {
       if (isWildcard(i)) {
@@ -177,7 +184,7 @@ public class MinusculeMatcher implements Matcher {
           if (nextHumpStart == i) {
             isHumpStart = true;
           }
-          nextHumpStart = NameUtil.nextWord(name, nextHumpStart);
+          nextHumpStart = nextWord(name, nextHumpStart);
           if (first != range) {
             humpIndex++;
           }
@@ -457,7 +464,7 @@ public class MinusculeMatcher implements Matcher {
     }
     int nextWordStart = startFrom;
     while (true) {
-      nextWordStart = NameUtil.nextWord(name, nextWordStart);
+      nextWordStart = nextWord(name, nextWordStart);
       if (nextWordStart >= name.length()) {
         return -1;
       }

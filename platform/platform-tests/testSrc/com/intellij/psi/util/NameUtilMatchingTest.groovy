@@ -430,6 +430,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("*TEST-* ", "TEST-001");
     assertMatches("*TEST-0* ", "TEST-001");
     assertMatches("*v2 ", "VARCHAR2");
+    assertMatches("smart8co", "SmartType18CompletionTest");
+    assertMatches("smart8co", "smart18completion");
   }
 
   public void testSpecialSymbols() {
