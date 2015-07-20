@@ -242,7 +242,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       myPopup.removeIndicator(progress);
 
       final ProgressIndicatorEx original = removeFromMaps(progress);
-      if (myOriginals.contains(original)) return;
+      if (myOriginals.contains(original)) {
+        Disposer.dispose(progress);
+        return;
+      }
 
       if (last) {
         restoreEmptyStatus();
