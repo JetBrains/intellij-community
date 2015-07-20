@@ -44,7 +44,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     document = FileDocumentManager.getInstance().getDocument(f);
     document.setText("foo");
 
-    editor = getEditorFactory().createEditor(document);
+    editor = getEditorFactory().createEditor(document, myProject);
   }
 
   @Override
