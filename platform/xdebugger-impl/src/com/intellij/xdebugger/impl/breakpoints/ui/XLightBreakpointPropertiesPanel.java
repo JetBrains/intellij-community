@@ -165,7 +165,8 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
       }
     }
 
-    XBreakpointCustomPropertiesPanel<B> customPropertiesPanel = breakpointType.createCustomPropertiesPanel();
+    XBreakpointCustomPropertiesPanel<B> customPropertiesPanel = breakpointType.createCustomPropertiesPanel(project);
+    if (customPropertiesPanel == null) customPropertiesPanel = breakpointType.createCustomPropertiesPanel();
     if (customPropertiesPanel != null) {
       myCustomPropertiesPanelWrapper.add(customPropertiesPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customPropertiesPanel);

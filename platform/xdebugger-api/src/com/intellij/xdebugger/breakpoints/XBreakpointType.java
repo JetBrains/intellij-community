@@ -144,6 +144,12 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   @Nullable
+  public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel(@NotNull Project project) {
+    return null;
+  }
+
+  @Nullable
+  @Deprecated
   public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel() {
     return null;
   }
