@@ -25,6 +25,8 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * @author nik
@@ -46,6 +48,36 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
 
   @Nullable
   public String detectJdkVersion(@NotNull String homePath, @NotNull final ActionRunner actionRunner) {
+    final File path = new File(homePath, "jre/lib/rt.jar");
+    try {
+      JarFile runtimeArchive;
+      try {
+        runtimeArchive = new JarFile(path, false);
+      }
+      catch (IOException e) {
+        try {
+          runtimeArchive = new JarFile(path.getParentFile(), false);
+        }
+        catch (IOException e1) {
+          // jdk9 case. Alternatively, if jrt-fs.jar is not available, we could read the 'release' file
+          runtimeArchive = new JarFile(new File(homePath, "jrt-fs.jar"));
+        }
+      }
+      try {
+        final Manifest manifest = runtimeArchive.getManifest();
+        if (manifest != null) {
+          final String version = manifest.getMainAttributes().getValue("Implementation-Version");
+          if (version != null) {
+            return "java version \"" + version + "\"";
+          }
+        }
+      }
+      finally {
+        runtimeArchive.close();
+      }
+    }
+    catch (IOException ignored) {
+    }
     JdkVersionInfo info = detectJdkVersionInfo(homePath, actionRunner);
     if (info != null) {
       return info.getVersion();
