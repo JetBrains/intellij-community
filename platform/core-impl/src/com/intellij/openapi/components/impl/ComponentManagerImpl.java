@@ -153,6 +153,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsCreated = false;
   }
 
+  @Nullable
   @SuppressWarnings("unchecked")
   @Override
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {

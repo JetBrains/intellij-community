@@ -91,6 +91,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     registerComponentInDisposer(instance);
   }
 
+  @Nullable
   @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);
