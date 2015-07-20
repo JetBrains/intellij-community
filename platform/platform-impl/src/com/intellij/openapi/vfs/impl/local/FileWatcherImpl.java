@@ -408,8 +408,8 @@ public class FileWatcherImpl extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          final String message = "Illegal watcher command: " + line;
-          if (ApplicationManager.getApplication().isUnitTestMode()) LOG.debug(message); else LOG.error(message);
+          LOG.error("Illegal watcher command: " + line);
+
           return;
         }
 
