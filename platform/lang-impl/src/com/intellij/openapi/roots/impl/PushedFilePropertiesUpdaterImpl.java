@@ -301,7 +301,6 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     }
     
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    assert progress != null;
     
     final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
     Future<?> result = null;
