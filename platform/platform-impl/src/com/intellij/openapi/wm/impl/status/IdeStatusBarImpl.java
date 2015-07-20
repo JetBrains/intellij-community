@@ -54,7 +54,7 @@ import java.util.List;
  * User: spLeaner
  */
 public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
-  private static final int MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1);
+  private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
 
