@@ -35,6 +35,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -43,14 +44,12 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
@@ -157,8 +156,39 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     while (element != null) {
       element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class);
       if (element instanceof PsiClassInitializer) return true;
-      if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) return true;
+      if (element instanceof PsiMethod) {
+        if (((PsiMethod)element).isConstructor()) return true;
+        
+        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+        return !InheritanceUtil.processSupers(containingClass, true, new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass psiClass) {
+            return !canCallMethodsInConstructors(psiClass, psiClass != containingClass);
+          }
+        });
+        
+      }
     }
+    return false;
+  }
+
+  private static boolean canCallMethodsInConstructors(PsiClass aClass, boolean virtual) {
+    for (PsiMethod constructor : aClass.getConstructors()) {
+      if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) continue;
+
+      for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
+        PsiReferenceExpression methodExpression = call.getMethodExpression();
+        if (methodExpression instanceof PsiThisExpression || methodExpression instanceof PsiSuperExpression) continue;
+        if (!virtual) return true;
+        
+        PsiMethod target = call.resolveMethod();
+        if (target != null && PsiUtil.canBeOverriden(target)) return true;
+      }
+    }
+
     return false;
   }
 
