@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,9 +49,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -220,7 +219,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
 
-    List<File> moduleFiles = new ArrayList<File>();
+    final Set<File> moduleFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final File file = new File(path);
@@ -240,7 +239,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @NotNull
-  public static List<JpsModule> loadModules(@NotNull List<File> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
+  public static List<JpsModule> loadModules(@NotNull Collection<File> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
                                             @NotNull final Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<JpsModule>();
     List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<Future<Pair<File, Element>>>();
