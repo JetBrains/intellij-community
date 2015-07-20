@@ -159,10 +159,15 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
       FileType fileType = findFileTypeBoundToName(subDirName);
       if (fileType != null) {
         String message = "The name you entered looks like a file name. Do you want to create a file named " + subDirName + " instead?";
-        int ec = Messages.showYesNoDialog(myProject, message,
-                                           "File Name Detected", "Yes, create file",
-                                           "No, create " + (myIsDirectory ? "directory" : "packages"),
-                                           fileType.getIcon());
+        int ec = Messages.showYesNoCancelDialog(myProject, message,
+                                                "File Name Detected", 
+                                                "&Yes, create file",
+                                                "&No, create " + (myIsDirectory ? "directory" : "packages"),
+                                                "&Cancel",
+                                                fileType.getIcon());
+        if (ec == Messages.CANCEL) {
+          return false;
+        }
         if (ec == Messages.YES) {
           createFile = true;
         }
