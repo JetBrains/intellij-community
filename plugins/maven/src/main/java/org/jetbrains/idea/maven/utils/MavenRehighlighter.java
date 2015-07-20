@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,17 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
@@ -38,67 +42,75 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 
-public class MavenRehighlighter extends MavenSimpleProjectComponent {
-  private MergingUpdateQueue myQueue;
+public class MavenRehighlighter {
+  private final MergingUpdateQueue queue;
 
-  protected MavenRehighlighter(Project project) {
-    super(project);
+  public MavenRehighlighter(@NotNull Project project) {
+    queue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, project, null, true);
+    queue.setPassThrough(false);
   }
 
-  public void initComponent() {
-    myQueue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, myProject, null, true);
-    myQueue.setPassThrough(false);
-
-    MavenProjectsManager m = MavenProjectsManager.getInstance(myProject);
-
-    m.addManagerListener(new MavenProjectsManager.Listener() {
-      public void activated() {
-        rehighlight(myProject);
-      }
-
-      public void projectsScheduled() {
-      }
-
-      @Override
-      public void importAndResolveScheduled() {
-      }
-    });
-
-    m.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
-      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
-        for (Pair<MavenProject, MavenProjectChanges> each : updated) {
-          rehighlight(myProject, each.first);
+  private static final class MavenRehighlighterPostStartupActivity implements StartupActivity, DumbAware {
+    @Override
+    public void runActivity(@NotNull final Project project) {
+      MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
+      mavenProjectManager.addManagerListener(new MavenProjectsManager.Listener() {
+        @Override
+        public void activated() {
+          rehighlight(project, null);
         }
-      }
 
-      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  NativeMavenProjectHolder nativeMavenProject) {
-        rehighlight(myProject, projectWithChanges.first);
-      }
+        @Override
+        public void projectsScheduled() {
+        }
 
-      public void pluginsResolved(MavenProject project) {
-        rehighlight(myProject, project);
-      }
+        @Override
+        public void importAndResolveScheduled() {
+        }
+      });
 
-      public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        rehighlight(myProject, projectWithChanges.first);
-      }
+      mavenProjectManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
+        @Override
+        public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+          for (Pair<MavenProject, MavenProjectChanges> each : updated) {
+            rehighlight(project, each.first);
+          }
+        }
 
-      public void artifactsDownloaded(MavenProject project) {
-        rehighlight(myProject, project);
-      }
-    });
+        @Override
+        public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                    NativeMavenProjectHolder nativeMavenProject) {
+          rehighlight(project, projectWithChanges.first);
+        }
+
+        @Override
+        public void pluginsResolved(MavenProject mavenProject) {
+          rehighlight(project, mavenProject);
+        }
+
+        @Override
+        public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+          rehighlight(project, projectWithChanges.first);
+        }
+
+        @Override
+        public void artifactsDownloaded(MavenProject mavenProject) {
+          rehighlight(project, mavenProject);
+        }
+      });
+    }
   }
 
-  public static void rehighlight(final Project project) {
+  public static void rehighlight(@NotNull Project project) {
     rehighlight(project, null);
   }
 
-  public static void rehighlight(final Project project, final MavenProject mavenProject) {
+  public static void rehighlight(@NotNull Project project, @Nullable MavenProject mavenProject) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      if (project.isDisposed()) return;
-      ServiceManager.getService(project, MavenRehighlighter.class).myQueue.queue(new MyUpdate(project, mavenProject));
+      if (!project.isDisposed()) {
+        ServiceManager.getService(project, MavenRehighlighter.class).queue.queue(new MyUpdate(project, mavenProject));
+      }
     }
     finally {
       accessToken.finish();
@@ -115,6 +127,7 @@ public class MavenRehighlighter extends MavenSimpleProjectComponent {
       myMavenProject = mavenProject;
     }
 
+    @Override
     public void run() {
       if (myMavenProject == null) {
         for (VirtualFile each : FileEditorManager.getInstance(myProject).getOpenFiles()) {
