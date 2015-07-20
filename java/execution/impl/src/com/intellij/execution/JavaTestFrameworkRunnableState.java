@@ -117,11 +117,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     final OSProcessHandler handler = createHandler(executor);
     consoleView.attachToProcess(handler);
+    final AbstractTestProxy root = viewer.getRoot();
+    if (root instanceof TestProxyRoot) {
+      ((TestProxyRoot)root).setHandler(handler);
+    }
     handler.addProcessListener(new ProcessAdapter() {
       @Override
       public void startNotified(ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {
-          viewer.getRoot().setOutputFilePath(getConfiguration().getOutputFilePath());
+          root.setOutputFilePath(getConfiguration().getOutputFilePath());
         }
       }
 
@@ -129,7 +133,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = new Runnable() {
           public void run() {
-            viewer.getRoot().flush();
+            root.flush();
             deleteTempFiles();
             clear();
           }

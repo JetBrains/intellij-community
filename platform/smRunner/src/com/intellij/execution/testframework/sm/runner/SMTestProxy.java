@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
@@ -785,6 +786,14 @@ public class SMTestProxy extends AbstractTestProxy {
       containerSuite.invalidateCachedDurationForContainerSuites();
     }
   }
+  
+  public SMRootTestProxy getRoot() {
+    SMTestProxy parent = getParent();
+    while (parent != null && !(parent instanceof SMRootTestProxy)) {
+      parent = parent.getParent();
+    }
+    return parent instanceof SMRootTestProxy ? (SMRootTestProxy)parent : null;
+  }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
     private boolean myTestsReporterAttached; // false by default
@@ -792,6 +801,7 @@ public class SMTestProxy extends AbstractTestProxy {
     private String myPresentation;
     private String myComment;
     private String myRootLocationUrl;
+    private ProcessHandler myHandler;
 
     public SMRootTestProxy() {
       super("[root]", true, null);
@@ -830,6 +840,15 @@ public class SMTestProxy extends AbstractTestProxy {
     @Override
     public String getRootLocation() {
       return myRootLocationUrl;
+    }
+
+    public ProcessHandler getHandler() {
+      return myHandler;
+    }
+
+    @Override
+    public void setHandler(ProcessHandler handler) {
+      myHandler = handler;
     }
 
     @Nullable
