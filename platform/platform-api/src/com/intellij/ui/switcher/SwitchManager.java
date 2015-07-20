@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,18 +77,22 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     });
   }
 
+  @Override
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     if (!mySwitchActions.contains(action)) {
       disposeCurrentSession(false);
     }
   }
 
+  @Override
   public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
   }
 
+  @Override
   public void beforeEditorTyping(char c, DataContext dataContext) {
   }
 
+  @Override
   public boolean dispatchKeyEvent(KeyEvent e) {
     if (!myQa.isEnabled()) return false;
 
@@ -112,8 +116,10 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
         myWaitingForAutoInitSession = true;
         myAutoInitSessionEvent = e;
         Runnable initRunnable = new Runnable() {
+          @Override
           public void run() {
             IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+              @Override
               public void run() {
                 if (myWaitingForAutoInitSession) {
                   tryToInitSessionFromFocus(null, false);
@@ -182,9 +188,11 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     myQa = null;
   }
@@ -213,12 +221,15 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     }
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "ViewSwitchManager";
@@ -237,6 +248,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
         public void consume(final SwitchTarget switchTarget) {
           mySession = null;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+            @Override
             public void run() {
               tryToInitSessionFromFocus(switchTarget, showSpots).doWhenProcessed(result.createSetDoneRunnable());
             }
