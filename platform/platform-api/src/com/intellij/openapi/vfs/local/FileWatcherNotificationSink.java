@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collection;
 
 /**
- * Created by dslomov on 7/9/15.
+ * @author dslomov
  */
 public interface FileWatcherNotificationSink {
   void notifyDirtyPaths(Collection<String> paths);

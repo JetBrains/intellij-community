@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * @author dslomov.
+ * @author dslomov
  */
 public abstract class PluggableFileWatcher {
   public static final ExtensionPointName<PluggableFileWatcher> EP_NAME = ExtensionPointName.create("com.intellij.vfs.local.pluggableFileWatcher");

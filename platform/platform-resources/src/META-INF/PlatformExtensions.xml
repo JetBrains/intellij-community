@@ -401,6 +401,6 @@
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
-    <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.FileWatcherImpl" />
+    <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
   </extensions>
 </idea-plugin>

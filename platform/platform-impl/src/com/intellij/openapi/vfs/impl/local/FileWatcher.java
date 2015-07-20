@@ -55,6 +55,7 @@ public class FileWatcher {
 
 
   private final Object myLock = new Object();
+  private final PluggableFileWatcher[] myWatchers;
 
   public static class DirtyPaths {
     public final List<String> dirtyPaths = newArrayList();
@@ -73,30 +74,27 @@ public class FileWatcher {
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     MyFileWatcherNotificationSink notificationSink = new MyFileWatcherNotificationSink();
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
+    for (PluggableFileWatcher watcher : myWatchers) {
       watcher.initialize(managingFS, notificationSink);
     }
   }
 
-  private static PluggableFileWatcher[] getWatchers() {
-    return PluggableFileWatcher.EP_NAME.getExtensions();
-  }
-
   public void dispose() {
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       watcher.dispose();
     }
   }
 
   public boolean isOperational() {
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       if (!watcher.isOperational()) return false;
     }
     return true;
   }
 
   public boolean isSettingRoots() {
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
@@ -108,7 +106,7 @@ public class FileWatcher {
       if (!myDirtyPaths.isEmpty()) {
         DirtyPaths dirtyPaths = myDirtyPaths;
         myDirtyPaths = new DirtyPaths();
-        for (PluggableFileWatcher watcher : getWatchers()) {
+        for (PluggableFileWatcher watcher : myWatchers) {
           watcher.resetChangedPaths();
         }
         return dirtyPaths;
@@ -121,12 +119,11 @@ public class FileWatcher {
 
   @NotNull
   public List<String> getManualWatchRoots() {
-    PluggableFileWatcher[] watchers = getWatchers();
-    if (watchers.length == 1) {
-      return watchers[0].getManualWatchRoots();
+    if (myWatchers.length == 1) {
+      return myWatchers[0].getManualWatchRoots();
     }
     HashSet<String> result = null;
-    for (PluggableFileWatcher watcher : watchers) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       List<String> roots = watcher.getManualWatchRoots();
       if (result == null) {
         result = new HashSet<String>(roots);
@@ -139,13 +136,13 @@ public class FileWatcher {
   }
 
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       watcher.setWatchRoots(recursive, flat);
     }
   }
 
   public boolean isWatched(@NotNull VirtualFile file) {
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isWatched(file)) return true;
     }
     return false;
@@ -156,13 +153,8 @@ public class FileWatcher {
 
 
   @TestOnly
-  public static Logger getLog() {
-    return FileWatcherImpl.getLog();
-  }
-
-  @TestOnly
   public void shutdown() throws InterruptedException {
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       watcher.shutdown();
     }
     myTestNotifier = null;
@@ -183,7 +175,7 @@ public class FileWatcher {
   @TestOnly
   public void startup(@Nullable Runnable notifier) throws IOException {
     myTestNotifier = notifier;
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : myWatchers) {
       watcher.startup();
     }
   }

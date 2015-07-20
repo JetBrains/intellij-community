@@ -54,10 +54,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
- * Created by dslomov on 7/9/15.
+ * @author dslomov
  */
-public class FileWatcherImpl extends PluggableFileWatcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcherImpl");
+public class NativeFileWatcherImpl extends PluggableFileWatcher {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl");
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
   private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
