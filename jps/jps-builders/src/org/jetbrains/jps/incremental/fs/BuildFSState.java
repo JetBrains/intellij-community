@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.fs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -267,11 +268,11 @@ public class BuildFSState {
     if (currentDelta == null) {
       // this is the initial round.
       // Need to make a snapshot of the FS state so that all builders in the chain see the same picture
-      currentDelta = new FilesDelta();
+      final List<FilesDelta> deltas = new SmartList<FilesDelta>();
       for (ModuleBuildTarget target : chunk.getTargets()) {
-        final FilesDelta targetDelta = getDelta(target);
-        currentDelta.addAll(targetDelta);
+        deltas.add(getDelta(target));
       }
+      currentDelta = new FilesDelta(deltas);
     }
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, currentDelta);
     setRoundDelta(NEXT_ROUND_DELTA_KEY, context, new FilesDelta());
