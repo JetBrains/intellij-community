@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -322,16 +323,27 @@ public final class ActionMenu extends JMenu {
       }
     }
   }
-
   private static class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
 
     private Component myComponent;
     private Point myLastMousePoint = null;
     private Point myUpperTargetPoint = null;
     private Point myLowerTargetPoint = null;
+    private SingleAlarm myCallbackAlarm;
+    private MouseEvent myEventToRedispatch = null;
 
     private UsabilityHelper(Component component, @NotNull Disposable disposable) {
       Disposer.register(disposable, this);
+      myCallbackAlarm = new SingleAlarm(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(myCallbackAlarm);
+          myCallbackAlarm = null;
+          if (myEventToRedispatch != null) {
+            IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
+          }
+        }
+      }, 50, this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
       myLastMousePoint = info != null ? info.getLocation() : null;
@@ -365,19 +377,25 @@ public final class ActionMenu extends JMenu {
 
     @Override
     public boolean dispatch(AWTEvent e) {
-      if (e instanceof MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null) {
+      if (e instanceof MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null && myCallbackAlarm != null) {
         if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
           return false;
         }
         Point point = ((MouseEvent)e).getLocationOnScreen();
 
-        boolean result = new Polygon(
+        myCallbackAlarm.cancel();
+        boolean isMouseMovingTowardsSubmenu = new Polygon(
           new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
           new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
           3).contains(point);
 
+        myEventToRedispatch = (MouseEvent)e;
+
+        if (!isMouseMovingTowardsSubmenu) {
+          myCallbackAlarm.request();
+        }
         myLastMousePoint = point;
-        return result;
+        return true;
       }
       return false;
     }
@@ -385,6 +403,7 @@ public final class ActionMenu extends JMenu {
     @Override
     public void dispose() {
       myComponent = null;
+      myEventToRedispatch = null;
       myLastMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     }
