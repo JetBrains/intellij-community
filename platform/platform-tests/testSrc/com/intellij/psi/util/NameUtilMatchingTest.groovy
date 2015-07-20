@@ -334,6 +334,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertFalse(firstLetterMatcher("*I").matches("id"));
   }
 
+  public void "test asterisk ending inside uppercase word"() {
+    assertMatches("*LRUMap", "SLRUMap");
+  }
+
   public void testMiddleMatchingFirstLetterSensitive() {
     assertTrue(firstLetterMatcher(" cl").matches("getClass"));
     assertFalse(firstLetterMatcher(" EUC-").matches("x-EUC-TW"));
