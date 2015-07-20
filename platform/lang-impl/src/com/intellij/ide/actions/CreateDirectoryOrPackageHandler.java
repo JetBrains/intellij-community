@@ -163,7 +163,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
                                                 "File Name Detected", 
                                                 "&Yes, create file",
                                                 "&No, create " + (myIsDirectory ? "directory" : "packages"),
-                                                "&Cancel",
+                                                CommonBundle.getCancelButtonText(),
                                                 fileType.getIcon());
         if (ec == Messages.CANCEL) {
           return false;
