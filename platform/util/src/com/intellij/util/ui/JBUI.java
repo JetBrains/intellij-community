@@ -59,7 +59,7 @@ public class JBUI {
   }
 
   public static int scale(int i) {
-    return isHiDPI() ? (int)(1.5f * i) : i;
+    return isHiDPI() ? 2 * i : i;
   }
 
   public static JBDimension size(int width, int height) {
