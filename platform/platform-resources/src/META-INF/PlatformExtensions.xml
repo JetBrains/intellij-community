@@ -201,6 +201,8 @@
 
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
 
+    <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
+
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
