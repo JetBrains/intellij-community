@@ -1368,8 +1368,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private boolean isPopupAction(MouseEvent e) {
     GutterIconRenderer renderer = getGutterRenderer(e);
-    return renderer != null && !isNavigationBlocked(renderer, myEditor.getProject()) &&
-           renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
+    return renderer != null && renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
   }
 
   @Override
@@ -1381,10 +1380,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     GutterIconRenderer renderer = getGutterRenderer(e);
     final Project project = myEditor.getProject();
-    if (renderer != null && isNavigationBlocked(renderer, project)) {
-      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available during indexing");
-      return;
-    }
     
     AnAction clickAction = null;
     if (renderer != null && e.getButton() < 4) {
@@ -1393,11 +1388,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                     : renderer.getClickAction();
     }
     if (clickAction != null) {
-      clickAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION", clickAction.getTemplatePresentation(),
-                                                    ActionManager.getInstance(),
-                                                    e.getModifiers()));
+      if (checkActionNotBlocked(clickAction, project)) {
+        clickAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION", clickAction.getTemplatePresentation(),
+                                                      ActionManager.getInstance(),
+                                                      e.getModifiers()));
+        repaint();
+      }
       e.consume();
-      repaint();
     }
     else {
       ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
@@ -1409,8 +1406,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private static boolean isNavigationBlocked(@NotNull GutterIconRenderer renderer, @Nullable Project project) {
-    return project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(renderer);
+  private static boolean checkActionNotBlocked(@NotNull AnAction action, @Nullable Project project) {
+    if (project == null || !DumbService.isDumb(project) || action.isDumbAware()) return true;
+    DumbService.getInstance(project).showDumbModeNotification("Action is not available during indexing");
+    return false;
   }
 
   @Nullable
@@ -1552,16 +1551,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (renderer != null) {
         ActionGroup actionGroup = renderer.getPopupMenuActions();
         if (actionGroup != null) {
-          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
-                                                                                        actionGroup);
-          popupMenu.getComponent().show(this, e.getX(), e.getY());
+          if (checkActionNotBlocked(actionGroup, myEditor.getProject())) {
+            ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
+                                                                            actionGroup);
+            popupMenu.getComponent().show(this, e.getX(), e.getY());
+          }
           e.consume();
-        } else {
+        }
+        else {
           AnAction rightButtonAction = renderer.getRightButtonClickAction();
           if (rightButtonAction != null) {
-            rightButtonAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION_SECONDARY_BUTTON", rightButtonAction.getTemplatePresentation(),
-                                                                ActionManager.getInstance(),
-                                                                e.getModifiers()));
+            if (checkActionNotBlocked(rightButtonAction, myEditor.getProject())) {
+              rightButtonAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION_SECONDARY_BUTTON", rightButtonAction.getTemplatePresentation(),
+                                                                  ActionManager.getInstance(),
+                                                                  e.getModifiers()));
+            }
             e.consume();
           }
         }
