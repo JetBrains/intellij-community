@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -237,15 +238,27 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   @NotNull
   public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    List list = getPicoContainer().getComponentInstancesOfType(baseClass);
-    //noinspection unchecked
-    return (T[])ArrayUtil.toObjectArray(list, baseClass);
+    return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass), baseClass);
   }
 
   @NotNull
-  protected final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
-    //noinspection unchecked
-    return getPicoContainer().getComponentInstancesOfType(baseClass);
+  @Override
+  public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+    List<T> result = null;
+    // we must use instances only from our adapter (could be service or extension point or something else)
+    for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
+      if (componentAdapter instanceof ComponentConfigComponentAdapter && ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
+        //noinspection unchecked
+        T instance = (T)((ComponentConfigComponentAdapter)componentAdapter).myInitializedComponentInstance;
+        if (instance != null) {
+          if (result == null) {
+            result = new ArrayList<T>();
+          }
+          result.add(instance);
+        }
+      }
+    }
+    return ContainerUtil.notNullize(result);
   }
 
   @Override
@@ -479,7 +492,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private class ComponentConfigComponentAdapter extends ConstructorInjectionComponentAdapter {
     private final ComponentConfig myConfig;
-    private boolean myInitialized;
+    private volatile Object myInitializedComponentInstance;
     private boolean myInitializing;
 
     public ComponentConfigComponentAdapter(@NotNull ComponentConfig config, @NotNull Class<?> implementationClass) {
@@ -490,48 +503,49 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     @Override
     public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
-      Object componentInstance = null;
+      Object instance = myInitializedComponentInstance;
+      if (instance != null) {
+        return instance;
+      }
+
       try {
         long startTime = System.nanoTime();
 
-        componentInstance = super.getComponentInstance(picoContainer);
+        instance = super.getComponentInstance(picoContainer);
 
-        if (!myInitialized) {
-          if (myInitializing) {
-            String errorMessage = "Cyclic component initialization: " + getComponentKey();
-            if (myConfig.pluginDescriptor != null) {
-              LOG.error(new PluginException(errorMessage, myConfig.pluginDescriptor.getPluginId()));
-            }
-            else {
-              LOG.error(new Throwable(errorMessage));
-            }
+        if (myInitializing) {
+          String errorMessage = "Cyclic component initialization: " + getComponentKey();
+          if (myConfig.pluginDescriptor != null) {
+            LOG.error(new PluginException(errorMessage, myConfig.pluginDescriptor.getPluginId()));
           }
-
-          try {
-            myInitializing = true;
-            myComponentsRegistry.registerComponentInstance(componentInstance);
-
-            ProgressIndicator indicator = getProgressIndicator();
-            if (indicator != null) {
-              indicator.checkCanceled();
-              setProgressDuringInit(indicator);
-            }
-            initializeComponent(componentInstance, false);
-            if (componentInstance instanceof BaseComponent) {
-              ((BaseComponent)componentInstance).initComponent();
-            }
-
-            long ms = (System.nanoTime() - startTime) / 1000000;
-            if (ms > 10 && logSlowComponents()) {
-              LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
-            }
+          else {
+            LOG.error(new Throwable(errorMessage));
           }
-          finally {
-            myInitializing = false;
-          }
-
-          myInitialized = true;
         }
+
+        try {
+          myInitializing = true;
+          myComponentsRegistry.registerComponentInstance(instance);
+
+          ProgressIndicator indicator = getProgressIndicator();
+          if (indicator != null) {
+            indicator.checkCanceled();
+            setProgressDuringInit(indicator);
+          }
+          initializeComponent(instance, false);
+          if (instance instanceof BaseComponent) {
+            ((BaseComponent)instance).initComponent();
+          }
+
+          long ms = (System.nanoTime() - startTime) / 1000000;
+          if (ms > 10 && logSlowComponents()) {
+            LOG.info(instance.getClass().getName() + " initialized in " + ms + " ms");
+          }
+        }
+        finally {
+          myInitializing = false;
+        }
+        myInitializedComponentInstance = instance;
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -543,7 +557,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         handleInitComponentError(t, ((String)getComponentKey()), myConfig);
       }
 
-      return componentInstance;
+      return instance;
     }
 
     @Override

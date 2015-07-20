@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -37,9 +38,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-
-    //noinspection unchecked
-    myDecorators = project.getPicoContainer().getComponentInstancesOfType(ChangeListDecorator.class);
+    myDecorators = ComponentsPackage.getComponents(project, ChangeListDecorator.class);
   }
 
   @Override
@@ -109,11 +108,13 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
+  @Override
   public int getSortWeight() {
     if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return 1;
     return 2;
   }
 
+  @Override
   public int compareUserObjects(final Object o2) {
     if (o2 instanceof ChangeList) {
       return getUserObject().getName().compareToIgnoreCase(((ChangeList)o2).getName());

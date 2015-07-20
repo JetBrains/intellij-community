@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
-import java.util.List;
-
 /**
  * @author yole
  */
@@ -139,8 +137,8 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   public void projectOpened() {
-    //noinspection unchecked
-    for (ProjectComponent component : ((List<ProjectComponent>)getPicoContainer().getComponentInstancesOfType(ProjectComponent.class))) {
+    final ProjectComponent[] components = getComponents(ProjectComponent.class);
+    for (ProjectComponent component : components) {
       try {
         component.projectOpened();
       }
