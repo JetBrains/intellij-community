@@ -15,26 +15,28 @@
  */
 package com.intellij.vcs.log.ui;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogFilterUi myFilterUi;
+  private boolean myAreTheOnlyUsers = false;
 
   public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder,
                               @NotNull VcsLogUiProperties uiProperties,
@@ -49,17 +51,36 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
       myUiProperties.enableHighlighter(Factory.ID, false);
       myUiProperties.setHighlightMyCommits(true);
     }
+
+    // this is a tmp solution for performance problems of calculating areTheOnlyUsers every repaint (we simply do not want to do that)
+    // todo remove this when history2 branch is merged into master (history2 will allow a proper way to fix the problem)
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        VcsLogManager logManager = VcsLogContentProvider.findLogManager(myDataHolder.getProject());
+        if (logManager != null) {
+          VcsLogUiImpl logUi = logManager.getLogUi();
+          if (logUi != null) {
+            logUi.addLogListener(new VcsLogListener() {
+              @Override
+              public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+                myAreTheOnlyUsers = areTheOnlyUsers();
+              }
+            });
+          }
+        }
+      }
+    });
   }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
     if (!myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    Map<VirtualFile, VcsUser> currentUsers = myDataHolder.getCurrentUser();
-    if (!areTheOnlyUsers(currentUsers) && !isFilteredByCurrentUser()) {
+    if (!myAreTheOnlyUsers && !isFilteredByCurrentUser()) {
       VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
       if (details != null && !(details instanceof LoadingDetails)) {
-        VcsUser currentUser = currentUsers.get(details.getRoot());
+        VcsUser currentUser = myDataHolder.getCurrentUser().get(details.getRoot());
         if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
           return VcsCommitStyleFactory.bold();
         }
@@ -68,7 +89,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     return VcsCommitStyle.DEFAULT;
   }
 
-  private boolean areTheOnlyUsers(@NotNull Map<VirtualFile, VcsUser> currentUsers) {
+  private boolean areTheOnlyUsers() {
     NotNullFunction<VcsUser, String> nameToString = new NotNullFunction<VcsUser, String>() {
       @NotNull
       @Override
@@ -77,7 +98,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
       }
     };
     Set<String> allUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myDataHolder.getAllUsers(), nameToString));
-    Set<String> currentUserNames = ContainerUtil.newHashSet(ContainerUtil.map(currentUsers.values(), nameToString));
+    Set<String> currentUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myDataHolder.getCurrentUser().values(), nameToString));
     return allUserNames.size() == currentUserNames.size() && currentUserNames.containsAll(allUserNames);
   }
 
