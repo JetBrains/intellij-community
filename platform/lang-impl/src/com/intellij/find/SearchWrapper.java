@@ -51,7 +51,7 @@ class SearchWrapper extends NonOpaquePanel implements PropertyChangeListener, Fo
     scrollPane.getVerticalScrollBar().setBackground(UIUtil.TRANSPARENT_COLOR);
     scrollPane.getViewport().setBorder(null);
     scrollPane.getViewport().setOpaque(false);
-    scrollPane.setBorder(JBUI.Borders.empty(0, 0, 0, 2));
+    scrollPane.setBorder(JBUI.Borders.emptyRight(2));
     scrollPane.setOpaque(false);
     ActionButton button =
       new ActionButton(showHistoryAction, showHistoryAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, new Dimension(JBUI.scale(16), JBUI.scale(16)));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,12 +220,12 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     Wrapper searchToolbarWrapper1 = new NonOpaquePanel(new BorderLayout());
     searchToolbarWrapper1.add(mySearchActionsToolbar1, BorderLayout.WEST);
     Wrapper searchToolbarWrapper2 = new Wrapper(mySearchActionsToolbar2);
-    mySearchActionsToolbar2.setBorder(JBUI.Borders.empty(0, 16, 0, 0));
+    mySearchActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(16));
     JPanel searchPair = new NonOpaquePanel(new BorderLayout()).setVerticalSizeReferent(mySearchFieldWrapper);
     searchPair.add(searchToolbarWrapper1, BorderLayout.WEST);
     searchPair.add(searchToolbarWrapper2, BorderLayout.CENTER);
     JLabel closeLabel = new JLabel(null, AllIcons.Actions.Cross, SwingConstants.RIGHT);
-    closeLabel.setBorder(JBUI.Borders.empty(5, 5, 5, 5));
+    closeLabel.setBorder(JBUI.Borders.empty(5));
     closeLabel.setVerticalAlignment(SwingConstants.TOP);
     closeLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -239,7 +239,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
     Wrapper replaceToolbarWrapper1 = new Wrapper(myReplaceActionsToolbar1).setVerticalSizeReferent(myReplaceFieldWrapper);
     Wrapper replaceToolbarWrapper2 = new Wrapper(myReplaceActionsToolbar2).setVerticalSizeReferent(myReplaceFieldWrapper);
-    myReplaceActionsToolbar2.setBorder(JBUI.Borders.empty(0, 16, 0, 0));
+    myReplaceActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(16));
 
     myReplaceToolbarWrapper = new NonOpaquePanel(new BorderLayout());
     myReplaceToolbarWrapper.add(replaceToolbarWrapper1, BorderLayout.WEST);
