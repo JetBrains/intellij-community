@@ -68,7 +68,7 @@ public class RegistryValue {
     return myBooleanCachedValue.booleanValue();
   }
 
-  public int asInteger() {
+  public int asInteger() throws NumberFormatException {
     if (myIntCachedValue == null) {
       myIntCachedValue = Integer.valueOf(get(myKey, "0", true));
     }
@@ -76,7 +76,7 @@ public class RegistryValue {
     return myIntCachedValue.intValue();
   }
 
-  public double asDouble() {
+  public double asDouble() throws NumberFormatException {
     if (myDoubleCachedValue == null) {
       myDoubleCachedValue = Double.valueOf(get(myKey, "0.0", true));
     }
