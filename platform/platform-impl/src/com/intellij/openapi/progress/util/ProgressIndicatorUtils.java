@@ -176,12 +176,7 @@ public class ProgressIndicatorUtils {
       @Override
       public void run() {
         try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              task.computeInReadAction(progressIndicator);
-            }
-          });
+          task.runBackgroundProcess(progressIndicator);
         }
         catch (ProcessCanceledException ignore) {
         }
