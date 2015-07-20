@@ -264,13 +264,18 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private void updateSearchComponent() {
     final int oldCaretPosition = mySearchTextComponent != null ? mySearchTextComponent.getCaretPosition() : 0;
     boolean wasNull = mySearchTextComponent == null;
-    String textToSet = mySearchTextComponent != null ? mySearchTextComponent.getText() : myFindModel.getStringToFind();
+    String textToSet = mySearchTextComponent != null && !StringUtil.isEmpty(mySearchTextComponent.getText())
+                       ? mySearchTextComponent.getText()
+                       : myFindModel.getStringToFind();
 
     if (!updateTextComponent(true)) {
+      if (!mySearchTextComponent.getText().equals(textToSet)) {
+        mySearchTextComponent.setText(textToSet);
+      }
       return;
     }
 
-    if (textToSet != null) {
+    if (textToSet != null && !mySearchTextComponent.getText().equals(textToSet)) {
       mySearchTextComponent.setText(textToSet);
       if (wasNull) {
         mySearchTextComponent.selectAll();
@@ -310,7 +315,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       });
     }
 
-    new RestorePreviousSettingsAction(this, mySearchTextComponent);
+    new RestorePreviousSettingsAction(this, mySearchFieldWrapper);
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
   }
 
@@ -371,7 +376,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     });
 
     new VariantsCompletionAction(myReplaceTextComponent);
-    new NextOccurrenceAction(this, myReplaceFieldWrapper);
+    new NextOccurrenceAction(this, myReplaceFieldWrapper, false);
     new PrevOccurrenceAction(this, myReplaceFieldWrapper);
     myReplaceFieldWrapper.revalidate();
     myReplaceFieldWrapper.repaint();
@@ -406,7 +411,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
 
     actionGroup1.add(new PrevOccurrenceAction(this, mySearchFieldWrapper));
-    actionGroup1.add(new NextOccurrenceAction(this, mySearchFieldWrapper));
+    actionGroup1.add(new NextOccurrenceAction(this, mySearchFieldWrapper, true));
     actionGroup1.add(new FindAllAction(this));
     actionGroup1.addSeparator();
     actionGroup1.add(new AddOccurrenceAction(this));
@@ -555,7 +560,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     }
   }
 
-  private void updateUIWithFindModel() {
+  public void updateUIWithFindModel() {
     boolean needToResetSearchFocus = mySearchTextComponent.hasFocus();
     boolean needToResetReplaceFocus = myReplaceTextComponent.hasFocus();
     updateSearchComponent();
