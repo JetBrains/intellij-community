@@ -1524,12 +1524,17 @@ public abstract class ChooseByNameBase {
 
     @Override
     public void runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
-      DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
+      Runnable r = new Runnable() {
         @Override
         public void run() {
           computeInReadAction(indicator);
         }
-      });
+      };
+      if (DumbService.isDumbAware(myModel)) {
+        ApplicationManager.getApplication().runReadAction(r);
+      } else {
+        DumbService.getInstance(myProject).runReadActionInSmartMode(r);
+      }
     }
 
     @Override
