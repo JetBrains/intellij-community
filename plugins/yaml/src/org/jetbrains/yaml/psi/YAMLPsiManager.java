@@ -25,26 +25,32 @@ public class YAMLPsiManager implements ProjectComponent, PsiTreeChangePreprocess
     myPsiManager = psiManager;
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "YAMLPsiManager";
 
   }
 
+  @Override
   public void initComponent() {
     myModificationTracker = (PsiModificationTrackerImpl) myPsiManager.getModificationTracker();
     myPsiManager.addTreeChangePreprocessor(this);
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void treeChanged(@NotNull final PsiTreeChangeEventImpl event) {
     if (!(event.getFile() instanceof YAMLFile)) return;
     boolean changedInsideCodeBlock = false;
