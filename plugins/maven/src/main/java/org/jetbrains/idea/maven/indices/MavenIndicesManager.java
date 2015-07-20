@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,7 +258,9 @@ public class MavenIndicesManager implements Disposable {
 
         try {
           getIndicesObject().updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(projectOrNull, indicator) : null, indicator);
-          if (projectOrNull != null) MavenRehighlighter.rehighlight(projectOrNull);
+          if (projectOrNull != null) {
+            MavenRehighlighter.rehighlight(projectOrNull);
+          }
         }
         finally {
           synchronized (myUpdatingIndicesLock) {

@@ -282,7 +282,7 @@ public class GridCellImpl implements GridCell {
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
     final TabInfo tabInfo = myContents.getValue(content);
-    return tabInfo != null ? myTabs.select(tabInfo, requestFocus) : new ActionCallback.Done();
+    return tabInfo != null ? myTabs.select(tabInfo, requestFocus) : ActionCallback.DONE;
   }
 
   public void processAlert(final Content content, final boolean activate) {
@@ -511,6 +511,6 @@ public class GridCellImpl implements GridCell {
 
   ActionCallback restore(Content content) {
     myMinimizedContents.remove(content);
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 }

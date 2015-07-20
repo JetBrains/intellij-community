@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -202,7 +203,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
-    for (final Configurable moduleConfigurable : myModule.getComponents(Configurable.class)) {
+    for (Configurable moduleConfigurable : ComponentsPackage.getComponents(myModule, Configurable.class)) {
       myEditors.add(new ModuleConfigurableWrapper(moduleConfigurable));
     }
     for(ModuleConfigurableEP extension : myModule.getExtensions(MODULE_CONFIGURABLES)) {
@@ -214,7 +215,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private static ModuleConfigurationEditorProvider[] collectProviders(final Module module) {
     List<ModuleConfigurationEditorProvider> result = new ArrayList<ModuleConfigurationEditorProvider>();
-    ContainerUtil.addAll(result, module.getComponents(ModuleConfigurationEditorProvider.class));
+    result.addAll(ComponentsPackage.getComponents(module, ModuleConfigurationEditorProvider.class));
     ContainerUtil.addAll(result, Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module));
     return result.toArray(new ModuleConfigurationEditorProvider[result.size()]);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ public class KeyShortcutCommand extends TypeCommand {
     final String one = getText().substring(PREFIX.length());
     if (!one.endsWith(POSTFIX)) {
       dumpError(context, "Expected " + "]");
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
     type(context.getRobot(), getFromShortcut(one.substring(0, one.length() - 1).trim()));
 
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 }

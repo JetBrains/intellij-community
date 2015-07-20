@@ -558,6 +558,16 @@ public class ReflectionUtil {
     return (field.getModifiers() & Modifier.FINAL) != 0;
   }
 
+  @NotNull
+  public static Class forName(@NotNull String fqn) {
+    try {
+      return Class.forName(fqn);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 
   private static class MySecurityManager extends SecurityManager {
     private static final MySecurityManager INSTANCE = new MySecurityManager();

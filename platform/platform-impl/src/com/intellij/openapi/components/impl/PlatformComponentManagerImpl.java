@@ -16,11 +16,11 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +36,11 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
   }
 
   @Override
-  protected void handleInitComponentError(Throwable t, String componentClassName, ComponentConfig config) {
+  protected void handleInitComponentError(Throwable t, String componentClassName, PluginId pluginId) {
     if (!myHandlingInitComponentError) {
       myHandlingInitComponentError = true;
       try {
-        PluginManager.handleComponentError(t, componentClassName, config);
+        PluginManager.handleComponentError(t, componentClassName, pluginId);
       }
       finally {
         myHandlingInitComponentError = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.ContextType;
 import org.intellij.lang.xpath.context.NamespaceContext;
@@ -40,13 +40,14 @@ import java.util.Set;
 */
 public class XPathSupportProxyImpl extends XPathSupportProxy {
   private static class Provider extends ContextProvider {
-    private final XmlTokenImpl myDummyContext = new XmlTokenImpl(XmlElementType.XML_CONTENT_EMPTY, "") {
+    private final XmlTokenImpl myDummyContext = new XmlTokenImpl(XmlTokenType.XML_CONTENT_EMPTY, "") {
       @Override
       public boolean isValid() {
         return true;
       }
     };
 
+    @Override
     @NotNull
     public ContextType getContextType() {
       return XPathSupport.TYPE;
@@ -58,24 +59,29 @@ public class XPathSupportProxyImpl extends XPathSupportProxy {
       return XPathType.BOOLEAN;
     }
 
+    @Override
     public XmlElement getContextElement() {
       // needed because the static method ContextProvider.isValid() checks this to determine if the provider
       // is still valid - refactor this into an instance method ContextProvider.isValid()?
       return myDummyContext;
     }
 
+    @Override
     public NamespaceContext getNamespaceContext() {
       return null;
     }
 
+    @Override
     public VariableContext getVariableContext() {
       return null;
     }
 
+    @Override
     public Set<QName> getAttributes(boolean forValidation) {
       return null;
     }
 
+    @Override
     public Set<QName> getElements(boolean forValidation) {
       return null;
     }
@@ -84,11 +90,13 @@ public class XPathSupportProxyImpl extends XPathSupportProxy {
   private final ContextProvider myProvider = new Provider();
   private final XPathSupport mySupport = XPathSupport.getInstance();
 
+  @Override
   @NotNull
   public XPath createXPath(String expression) throws JaxenException {
     return mySupport.createXPath(null, expression, Collections.<Namespace>emptyList());
   }
 
+  @Override
   public void attachContext(@NotNull PsiFile file) {
     myProvider.attachTo(file);
   }

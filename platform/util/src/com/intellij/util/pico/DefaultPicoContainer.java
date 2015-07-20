@@ -153,7 +153,8 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
         if (nonAssignableComponentAdapters.compareAndSet(oldList, newList)) {
           break;
         }
-      } while (true);
+      }
+      while (true);
     }
 
     componentAdapters.add(componentAdapter);
@@ -188,13 +189,13 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   }
 
   @Override
-  public List getComponentInstancesOfType(Class componentType) {
+  public List<Object> getComponentInstancesOfType(@Nullable Class componentType) {
     if (componentType == null) {
       return Collections.emptyList();
     }
 
     List<Object> result = new ArrayList<Object>();
-    for (final ComponentAdapter componentAdapter : getComponentAdapters()) {
+    for (ComponentAdapter componentAdapter : getComponentAdapters()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         // may be null in the case of the "implicit" adapter representing "this".
         ContainerUtil.addIfNotNull(result, getInstance(componentAdapter));

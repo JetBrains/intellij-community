@@ -70,6 +70,10 @@ public class DfaPsiUtil {
       return Nullness.UNKNOWN;
     }
 
+    if (owner instanceof PsiEnumConstant) {
+      return Nullness.NOT_NULL;
+    }
+
     if (resultType != null) {
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
       for (PsiAnnotation annotation : resultType.getAnnotations()) {

@@ -263,7 +263,7 @@ public class ProjectUtil {
           f.toFront();
           //f.requestFocus();
         }
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       }
     };
 

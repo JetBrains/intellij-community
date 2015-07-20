@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>();
+  private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>(); // guarded by myProblems
   private final Collection<VirtualFile> myCheckingQueue = new THashSet<VirtualFile>(10);
 
   private final Project myProject;
@@ -322,8 +322,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (!myProject.isOpen()) return false;
     synchronized (myProblems) {
       if (!myProblems.isEmpty()) {
-        Set<VirtualFile> problemFiles = myProblems.keySet();
-        for (VirtualFile problemFile : problemFiles) {
+        for (VirtualFile problemFile : myProblems.keySet()) {
           if (problemFile.isValid() && condition.value(problemFile)) return true;
         }
       }

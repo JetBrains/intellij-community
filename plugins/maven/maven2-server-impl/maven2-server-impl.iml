@@ -93,6 +93,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="maven" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
-

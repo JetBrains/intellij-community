@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.concurrency;
 
-package com.intellij.util.pico;
+import com.intellij.util.Consumer;
 
-import org.picocontainer.PicoContainer;
-
-/**
- * @deprecated please use DefaultPicoContainer directly
- */
-public class IdeaPicoContainer extends DefaultPicoContainer {
-
-  public IdeaPicoContainer() {
-    super(null);
+public abstract class ConsumerRunnable implements Consumer<Void>, Runnable {
+  @Override
+  public final void consume(Void aVoid) {
+    run();
   }
 
-  public IdeaPicoContainer(final PicoContainer parent) {
-    super(parent);
-  }
+  @Override
+  public abstract void run();
 }
