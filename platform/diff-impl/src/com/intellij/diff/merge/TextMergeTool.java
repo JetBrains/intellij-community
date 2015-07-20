@@ -34,7 +34,9 @@ import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Caret;
@@ -314,13 +316,17 @@ public class TextMergeTool implements MergeTool {
         final Document baseDocument = ThreeSide.BASE.select(myMergeRequest.getContents()).getDocument();
         final Document outputDocument = myMergeRequest.getOutputContent().getDocument();
 
-        DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content",
-                                     UndoConfirmationPolicy.REQUEST_CONFIRMATION, new Runnable() {
-            @Override
-            public void run() {
-              outputDocument.setText(baseDocument.getCharsSequence());
+        DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", new Runnable() {
+          @Override
+          public void run() {
+            outputDocument.setText(baseDocument.getCharsSequence());
+            UndoManager undoManager = getProject() != null ? UndoManager.getInstance(getProject()) : UndoManager.getGlobalInstance();
+            if (undoManager != null) {
+              DocumentReference ref = DocumentReferenceManager.getInstance().create(outputDocument);
+              undoManager.nonundoableActionPerformed(ref, false);
             }
-          });
+          }
+        });
       }
 
       @Override
