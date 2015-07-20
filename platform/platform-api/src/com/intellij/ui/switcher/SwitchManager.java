@@ -16,22 +16,15 @@
 package com.intellij.ui.switcher;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +32,11 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
 import java.util.Set;
 
-public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnActionListener {
+public class SwitchManager {
   private final Project myProject;
-  private QuickAccessSettings myQa;
+  private final QuickAccessSettings myQa;
 
   private SwitchingSession mySession;
 
@@ -52,56 +44,16 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   private final Alarm myInitSessionAlarm = new Alarm();
   private KeyEvent myAutoInitSessionEvent;
 
-  private final Set<AnAction> mySwitchActions = new HashSet<AnAction>();
+  private final Set<SwitchingSession> myFadingAway = new THashSet<SwitchingSession>();
 
-  private final Set<SwitchingSession> myFadingAway = new HashSet<SwitchingSession>();
-
-  public SwitchManager(Project project, QuickAccessSettings quickAccess, ActionManager actionManager) {
+  public SwitchManager(@NotNull Project project, QuickAccessSettings quickAccess) {
     myProject = project;
     myQa = quickAccess;
-
-
-    actionManager.addAnActionListener(this, project);
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_UP));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_DOWN));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_LEFT));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_RIGHT));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_APPLY));
-
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(SwitchManager.this);
-      }
-    });
   }
 
-  @Override
-  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (!mySwitchActions.contains(action)) {
-      disposeCurrentSession(false);
-    }
-  }
-
-  @Override
-  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-  }
-
-  @Override
-  public void beforeEditorTyping(char c, DataContext dataContext) {
-  }
-
-  @Override
-  public boolean dispatchKeyEvent(KeyEvent e) {
-    if (!myQa.isEnabled()) return false;
-
-    if (mySession != null && !mySession.isFinished()) return false;
-
-    Component c = e.getComponent();
-    Component frame = UIUtil.findUltimateParent(c);
-    if (frame instanceof IdeFrame) {
-      if (((IdeFrame)frame).getProject() != myProject) return false;
+  boolean dispatchKeyEvent(@NotNull KeyEvent e) {
+    if (isSessionActive()) {
+      return false;
     }
 
     if (e.getID() != KeyEvent.KEY_PRESSED) {
@@ -136,18 +88,17 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
         }
       }
     }
-    else {
-      if (myWaitingForAutoInitSession) {
-        cancelWaitingForAutoInit();
-      }
+    else if (myWaitingForAutoInitSession) {
+      cancelWaitingForAutoInit();
     }
 
     return false;
   }
 
-
   private ActionCallback tryToInitSessionFromFocus(@Nullable SwitchTarget preselected, boolean showSpots) {
-    if (mySession != null && !mySession.isFinished()) return new ActionCallback.Rejected();
+    if (isSessionActive()) {
+      return new ActionCallback.Rejected();
+    }
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     SwitchProvider provider = SwitchProvider.KEY.getData(DataManager.getInstance().getDataContext(owner));
@@ -162,7 +113,6 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     myWaitingForAutoInitSession = false;
     myInitSessionAlarm.cancelAllRequests();
   }
-
 
   public static boolean areAllModifiersPressed(@JdkConstants.InputEventMask int modifiers, Set<Integer> modifierCodes) {
     int mask = 0;
@@ -187,18 +137,8 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     return (modifiers ^ mask) == 0;
   }
 
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-    myQa = null;
-  }
-
   public static SwitchManager getInstance(Project project) {
-    return project != null ? project.getComponent(SwitchManager.class) : null;
+    return project != null ? ServiceManager.getService(project, SwitchManager.class) : null;
   }
 
   public SwitchingSession getSession() {
@@ -219,20 +159,6 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
       Disposer.dispose(mySession);
       mySession = null;
     }
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ViewSwitchManager";
   }
 
   public boolean isSessionActive() {

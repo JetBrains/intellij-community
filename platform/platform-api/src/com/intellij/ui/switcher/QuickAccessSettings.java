@@ -15,21 +15,18 @@
  */
 package com.intellij.ui.switcher;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
 import java.util.Set;
 
-public class QuickAccessSettings implements ApplicationComponent, KeymapManagerListener, Disposable {
-  private final Set<Integer> myModifierVks = new HashSet<Integer>();
-  private Keymap myKeymap;
+public class QuickAccessSettings {
+  private final Set<Integer> myModifierVks = new THashSet<Integer>();
   @NonNls public static final String SWITCH_UP = "SwitchUp";
   @NonNls public static final String SWITCH_DOWN = "SwitchDown";
   @NonNls public static final String SWITCH_LEFT = "SwitchLeft";
@@ -50,46 +45,20 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
   @NonNls public static final String SWITCH_APPLY = "SwitchApply";
   private RegistryValue myModifiersValue;
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "QuickAccess";
-  }
-
-  @Override
-  public void initComponent() {
+  public QuickAccessSettings() {
     myModifiersValue = Registry.get("actionSystem.quickAccessModifiers");
     myModifiersValue.addListener(new RegistryValueListener.Adapter() {
       @Override
       public void afterValueChanged(RegistryValue value) {
         applyModifiersFromRegistry();
       }
-    }, this);
-
-    KeymapManager kmMgr = KeymapManager.getInstance();
-    kmMgr.addKeymapManagerListener(this, this);
-
-    activeKeymapChanged(kmMgr.getActiveKeymap());
+    }, ApplicationManager.getApplication());
 
     applyModifiersFromRegistry();
   }
 
-  @Override
-  public void disposeComponent() {
-    Disposer.dispose(this);
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  @Override
-  public void activeKeymapChanged(Keymap keymap) {
-    myKeymap = KeymapManager.getInstance().getActiveKeymap();
-  }
-
   Keymap getKeymap() {
-    return myKeymap;
+    return KeymapManager.getInstance().getActiveKeymap();
   }
 
   void saveModifiersToRegistry(Set<String> codeTexts) {
@@ -105,13 +74,12 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
 
   private void applyModifiersFromRegistry() {
     Application app = ApplicationManager.getApplication();
-    if (app != null && app.isUnitTestMode()) return;
+    if (app != null && app.isUnitTestMode()) {
+      return;
+    }
 
-    String text = getModifierRegistryValue();
-    String[] vks = text.split(" ");
-
-    HashSet<String> vksSet = new HashSet<String>();
-    ContainerUtil.addAll(vksSet, vks);
+    Set<String> vksSet = new THashSet<String>();
+    ContainerUtil.addAll(vksSet, getModifierRegistryValue().split(" "));
     myModifierVks.clear();
     int mask = getModifierMask(vksSet);
     myModifierVks.addAll(getModifiersVKs(mask));
@@ -123,30 +91,27 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     reassignActionShortcut(SWITCH_APPLY, mask, KeyEvent.VK_ENTER);
   }
 
+  @NotNull
   private String getModifierRegistryValue() {
     String value = myModifiersValue.asString().trim();
-    if (value.length() > 0) return value;
-
-    if (SystemInfo.isMac) {
-      return "control alt";
+    if (value.length() > 0) {
+      return value;
     }
-    else {
-      return "shift alt";
-    }
+    return SystemInfo.isMac ? "control alt" : "shift alt";
   }
 
   private void reassignActionShortcut(String actionId, @JdkConstants.InputEventMask int modifiers, int actionCode) {
     removeShortcuts(actionId);
     if (modifiers > 0) {
-      myKeymap.addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(actionCode, modifiers), null));
+      getKeymap().addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(actionCode, modifiers), null));
     }
   }
 
   private void removeShortcuts(String actionId) {
-    Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
+    Shortcut[] shortcuts = getKeymap().getShortcuts(actionId);
     for (Shortcut each : shortcuts) {
       if (each instanceof KeyboardShortcut) {
-        myKeymap.removeShortcut(actionId, each);
+        getKeymap().removeShortcut(actionId, each);
       }
     }
   }
@@ -172,8 +137,9 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     return mask;
   }
 
+  @NotNull
   public static Set<Integer> getModifiersVKs(int mask) {
-    Set<Integer> codes = new HashSet<Integer>();
+    Set<Integer> codes = new THashSet<Integer>();
     if ((mask & InputEvent.SHIFT_MASK) > 0) {
       codes.add(KeyEvent.VK_SHIFT);
     }
