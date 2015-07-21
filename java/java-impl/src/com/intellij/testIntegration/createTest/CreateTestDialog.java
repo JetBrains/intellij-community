@@ -345,13 +345,14 @@ public class CreateTestDialog extends DialogWrapper {
         }
       }
     });
+    final boolean hasTestRoots = !ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.TESTS).isEmpty();
     final List<TestFramework> attachedLibraries = new ArrayList<TestFramework>();
     final String defaultLibrary = getDefaultLibraryName();
     TestFramework defaultDescriptor = null;
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myLibrariesCombo.getModel();
     for (final TestFramework descriptor : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
       model.addElement(descriptor);
-      if (descriptor.isLibraryAttached(myTargetModule)) {
+      if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
       }
 
