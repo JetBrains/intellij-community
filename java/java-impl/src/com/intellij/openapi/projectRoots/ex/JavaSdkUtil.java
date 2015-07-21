@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.platform.loader.PlatformLoader;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class JavaSdkUtil {
@@ -49,9 +48,11 @@ public class JavaSdkUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link #getJUnit4JarPaths()} instead
+   */
   public static String getJunit4JarPath() {
     return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
-    //return PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.projectLibrary("JUnit4"));
   }
 
   public static String getJunit3JarPath() {
