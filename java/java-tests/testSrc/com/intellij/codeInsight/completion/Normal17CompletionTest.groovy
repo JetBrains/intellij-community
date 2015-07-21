@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull
 public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
   }
 
   @NotNull
@@ -47,7 +47,8 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
     assert 'MyClass' in myFixture.lookupElementStrings
     myFixture.type('C\n')
-    checkResultByFile(getTestName(false) + "_after.java") }
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 
   private void doTest() {
     configureByFile(getTestName(false) + ".java")

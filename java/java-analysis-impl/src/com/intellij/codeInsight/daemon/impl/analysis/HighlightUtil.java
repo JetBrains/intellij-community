@@ -784,9 +784,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return highlight;
   }
 
-  private static void registerUnhandledExceptionFixes(@NotNull final PsiElement element,
-                                                      final HighlightInfo errorResult,
-                                                      @NotNull final List<PsiClassType> unhandled) {
+  private static void registerUnhandledExceptionFixes(PsiElement element, HighlightInfo errorResult, List<PsiClassType> unhandled) {
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToCatchFix());
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToThrowsFix(element));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithTryCatchFix(element));
@@ -2920,7 +2918,7 @@ public class HighlightUtil extends HighlightUtilBase {
     private final LanguageLevel level;
     private final String key;
 
-    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
+    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
       this.level = level;
       this.key = key;
     }

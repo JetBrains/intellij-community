@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitResourceList(this);
     }
@@ -57,15 +57,15 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
-                                     final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
     return PsiImplUtil.processDeclarationsInResourceList(this, processor, state, lastParent);
   }
 
   @Override
-  public void deleteChildInternal(@NotNull final ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getPsi() instanceof PsiResourceVariable && getResourceVariablesCount() == 1) {
       getTreeParent().deleteChildInternal(this);
       return;

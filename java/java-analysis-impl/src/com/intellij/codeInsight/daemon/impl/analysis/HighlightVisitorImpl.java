@@ -220,8 +220,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
       }
-      catch (IndexNotReadyException ignored) {
-      }
+      catch (IndexNotReadyException ignored) { }
     }
   }
 
@@ -568,8 +567,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression, myResolveHelper, list));
             }
           }
-          catch (IndexNotReadyException ignored) {
-          }
+          catch (IndexNotReadyException ignored) { }
         }
       }
     }
@@ -841,8 +839,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
       }
-      catch (IndexNotReadyException ignored) {
-      }
+      catch (IndexNotReadyException ignored) { }
     }
     else if (parent instanceof PsiImportStatement && ((PsiImportStatement)parent).isOnDemand()) {
       // highlight on demand import as class
@@ -862,8 +859,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       try {
         myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper, myLanguageLevel,myJavaSdkVersion));
       }
-      catch (IndexNotReadyException ignored) {
-      }
+      catch (IndexNotReadyException ignored) { }
     }
 
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorCallMustBeFirstStatement(expression));
@@ -892,8 +888,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             }
           }
         }
-        catch (IndexNotReadyException ignored) {
-        }
+        catch (IndexNotReadyException ignored) { }
       }
       PsiClass aClass = method.getContainingClass();
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
@@ -948,8 +943,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     try {
       if (!myHolder.hasErrorResults()) HighlightMethodUtil.checkNewExpression(expression, type, myHolder, myJavaSdkVersion);
     }
-    catch (IndexNotReadyException ignored) {
-    }
+    catch (IndexNotReadyException ignored) { }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression, aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
@@ -1198,8 +1192,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         try {
           myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, (PsiVariable)resolved, myUninitializedVarProblems,myFile));
         }
-        catch (IndexNotReadyException ignored) {
-        }
+        catch (IndexNotReadyException ignored) { }
       }
       PsiVariable variable = (PsiVariable)resolved;
       boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
@@ -1224,8 +1217,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               .checkAmbiguousMethodCallArguments(expression, results, list, resolved, result, methodCallExpression, myResolveHelper, expression.getReferenceNameElement()));
           }
         }
-        catch (IndexNotReadyException ignored) {
-        }
+        catch (IndexNotReadyException ignored) { }
       }
     }
 
@@ -1234,8 +1226,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       try {
         myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
       }
-      catch (IndexNotReadyException ignored) {
-      }
+      catch (IndexNotReadyException ignored) { }
     }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkAccessStaticFieldFromEnumConstructor(expression, result));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
@@ -1424,8 +1415,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     try {
       myHolder.add(HighlightUtil.checkReturnStatementType(statement));
     }
-    catch (IndexNotReadyException ignore) {
-    }
+    catch (IndexNotReadyException ignore) { }
   }
 
   @Override
@@ -1486,20 +1476,20 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitResourceVariable(final PsiResourceVariable resourceVariable) {
-    visitVariable(resourceVariable);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkTryResourceIsAutoCloseable(resourceVariable));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnhandledCloserExceptions(resourceVariable));
-  }
-
-  @Override
   public void visitResourceList(PsiResourceList resourceList) {
     super.visitResourceList(resourceList);
     if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(resourceList, Feature.TRY_WITH_RESOURCES));
   }
 
   @Override
-  public void visitTypeElement(final PsiTypeElement type) {
+  public void visitResourceVariable(PsiResourceVariable variable) {
+    super.visitResourceVariable(variable);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkTryResourceIsAutoCloseable(variable));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnhandledCloserExceptions(variable));
+  }
+
+  @Override
+  public void visitTypeElement(PsiTypeElement type) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalType(type));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type, myLanguageLevel));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkWildcardUsage(type));
@@ -1512,8 +1502,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
     }
-    catch (IndexNotReadyException ignore) {
-    }
+    catch (IndexNotReadyException ignored) { }
   }
 
   @Override
@@ -1531,8 +1520,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     try {
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
     }
-    catch (IndexNotReadyException ignored) {
-    }
+    catch (IndexNotReadyException ignored) { }
   }
 
   private boolean isReassigned(@NotNull PsiVariable variable) {
