@@ -23,7 +23,6 @@ import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.ModuleFileData;
-import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -98,7 +97,14 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @NotNull
   private FileBasedStorage getMainStorage() {
-    return ((ModuleStoreImpl)ComponentsPackage.getStateStore(this)).getMainStorage();
+    return getMainStorage(this);
+  }
+
+  @NotNull
+  public static FileBasedStorage getMainStorage(@NotNull Module module) {
+    FileBasedStorage storage = (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
+    assert storage != null;
+    return storage;
   }
 
   @Override
