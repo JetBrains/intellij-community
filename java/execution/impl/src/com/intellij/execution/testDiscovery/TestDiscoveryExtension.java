@@ -77,12 +77,12 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
         public void onTestFinished(@NotNull SMTestProxy test) {
           final SMTestProxy.SMRootTestProxy root = test.getRoot();
           if ((root == null || root.getHandler() == handler) && processTracesAlarm.getActiveRequestCount() == 0) {
-            processTracesAlarm.addRequest(new Runnable() {
+            /*processTracesAlarm.addRequest(new Runnable() {
               @Override
               public void run() {
                 processAvailableTraces(configuration);
               }
-            }, 200);
+            }, 200);*/
           }
         }
 
