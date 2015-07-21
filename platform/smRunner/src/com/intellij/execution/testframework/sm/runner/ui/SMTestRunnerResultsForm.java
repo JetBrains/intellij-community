@@ -351,7 +351,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         }
       });
       Disposer.register(parentDisposable, processIndicator);
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
+
+      CompositePrintable.invokeInAlarm(new Runnable() {
+        public void run() {
+          ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
+        }
+      });
     }
   }
 
