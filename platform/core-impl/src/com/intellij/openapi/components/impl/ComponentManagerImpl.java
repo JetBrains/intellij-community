@@ -212,19 +212,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentAdapter adapter = picoContainer.getComponentAdapter(componentKey);
-    if (adapter instanceof ComponentConfigComponentAdapter) {
-      ComponentConfigComponentAdapter componentAdapter = (ComponentConfigComponentAdapter)adapter;
-      Object oldInstance = componentAdapter.myInitializedComponentInstance;
-      // we don't update pluginId - method is test only
-      componentAdapter.myInitializedComponentInstance = componentImplementation;
-      return (T)oldInstance;
-    }
-    else {
-      // todo it seems, it is unrealistic (illegal) case - component must have our adapter
-      picoContainer.unregisterComponent(componentKey);
-      picoContainer.registerComponentInstance(componentKey, componentImplementation);
-      return null;
-    }
+    LOG.assertTrue(adapter instanceof ComponentConfigComponentAdapter);
+    ComponentConfigComponentAdapter componentAdapter = (ComponentConfigComponentAdapter)adapter;
+    Object oldInstance = componentAdapter.myInitializedComponentInstance;
+    // we don't update pluginId - method is test only
+    componentAdapter.myInitializedComponentInstance = componentImplementation;
+    return (T)oldInstance;
   }
 
   @Override
