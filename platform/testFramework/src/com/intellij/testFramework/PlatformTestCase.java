@@ -421,8 +421,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     try {
-      CompositeException damage = checkForSettingsDamage();
-      result.add(damage);
+      result.addAll(checkForSettingsDamage());
     }
     catch (Throwable e) {
       result.add(e);

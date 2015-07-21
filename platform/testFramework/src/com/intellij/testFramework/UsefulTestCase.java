@@ -216,21 +216,26 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  protected CompositeException checkForSettingsDamage() throws Exception {
+  @NotNull
+  protected List<Throwable> checkForSettingsDamage() throws Exception {
     Application app = ApplicationManager.getApplication();
     if (isPerformanceTest() || app == null || app instanceof MockApplication) {
-      return new CompositeException();
+      return Collections.emptyList();
     }
 
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
+    if (oldCodeStyleSettings == null) {
+      return Collections.emptyList();
+    }
+
     myOldCodeStyleSettings = null;
 
     return doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
   }
 
-  public static CompositeException doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                                            @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
-    CompositeException result = new CompositeException();
+  @NotNull
+  public static List<Throwable> doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
+    List<Throwable> result = new SmartList<Throwable>();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     try {
       Element newS = new Element("temp");
