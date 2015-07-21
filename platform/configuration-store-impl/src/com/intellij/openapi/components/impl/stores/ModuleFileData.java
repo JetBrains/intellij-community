@@ -59,11 +59,10 @@ final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData
   public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
     super.load(rootElement, pathMacroSubstitutor, intern);
 
-    KeyFMap options = KeyFMap.EMPTY_MAP;
     for (Attribute attribute : rootElement.getAttributes()) {
       String name = attribute.getName();
       if (!name.equals(BaseFileConfigurableStoreImpl.VERSION_OPTION) && !StringUtil.isEmpty(name)) {
-        options.plus(ModuleManagerImpl.createOptionKey(name), attribute.getValue());
+        options = options.plus(ModuleManagerImpl.createOptionKey(name), attribute.getValue());
       }
     }
 
