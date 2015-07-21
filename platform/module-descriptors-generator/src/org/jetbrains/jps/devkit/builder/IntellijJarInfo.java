@@ -15,6 +15,10 @@
  */
 package org.jetbrains.jps.devkit.builder;
 
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.platform.loader.impl.repository.ModuleXmlParser;
 import org.jetbrains.platform.loader.repository.RuntimeModuleDescriptor;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
@@ -31,12 +35,15 @@ import java.util.jar.JarFile;
  * @author nik
  */
 class IntellijJarInfo {
+  public static final String PLATFORM_PLUGIN = "platform";
   private final List<RuntimeModuleDescriptor> myIncludedModules;
   private final Map<RuntimeModuleId, RuntimeModuleId> myDependencies;
   private final File myJarFile;
+  private final String myPluginName;
 
-  public IntellijJarInfo(File jarFile) {
+  public IntellijJarInfo(File jarFile, String pluginName) {
     myJarFile = jarFile;
+    myPluginName = pluginName;
     myIncludedModules = new ArrayList<RuntimeModuleDescriptor>();
     myDependencies = new LinkedHashMap<RuntimeModuleId, RuntimeModuleId>();
     try {
@@ -66,6 +73,35 @@ class IntellijJarInfo {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  static List<IntellijJarInfo> collectJarsFromDist(File distRoot) {
+    final List<IntellijJarInfo> jars = new ArrayList<IntellijJarInfo>();
+    collectJars(jars, new File(distRoot, "lib"), PLATFORM_PLUGIN);
+    File[] pluginDirs = new File(distRoot, "plugins").listFiles();
+    if (pluginDirs != null) {
+      for (final File pluginDir : pluginDirs) {
+        collectJars(jars, pluginDir, pluginDir.getName());
+      }
+    }
+    return jars;
+  }
+
+  private static void collectJars(final List<IntellijJarInfo> jars, File jarRoot, final String pluginName) {
+    FileUtil.processFilesRecursively(jarRoot, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (FileUtilRt.extensionEquals(file.getName(), "jar")) {
+          jars.add(new IntellijJarInfo(file, pluginName));
+        }
+        return true;
+      }
+    });
+  }
+
+  public String getPluginName() {
+    return myPluginName;
   }
 
   public List<RuntimeModuleDescriptor> getIncludedModules() {
