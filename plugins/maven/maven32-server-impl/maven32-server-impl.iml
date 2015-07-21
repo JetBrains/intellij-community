@@ -18,9 +18,7 @@
           <root url="file://$MODULE_DIR$/lib/maven32/lib" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/maven-core-3.2.5-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
         <jarDirectory url="file://$MODULE_DIR$/lib/maven32/lib" recursive="false" />
       </library>
     </orderEntry>
