@@ -1077,6 +1077,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myContentlessIndicesUpdateQueue.signalUpdateStart();
     myContentlessIndicesUpdateQueue.ensureUpToDate();
     myProjectsBeingUpdated.add(project);
+    ++myFilesModCount;
   }
 
   void filesUpdateFinished(@NotNull Project project) {
@@ -1787,7 +1788,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
     }
     else {
-      IndexingStamp.setFileIndexedStateUnindexed(fileId, indexId);
+      IndexingStamp.setFileIndexedStateOutdated(fileId, indexId);
     }
     if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(fileId);
   }

@@ -668,7 +668,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    final InspectionProfileImpl inspectionProfile = getSelectedObject();
+    final InspectionProfileImpl inspectionProfile = myProfiles.getSelectedProfile();
     SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
     return panel == null ? null : panel.getPreferredFocusedComponent();
   }

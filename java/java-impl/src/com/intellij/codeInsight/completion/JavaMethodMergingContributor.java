@@ -57,7 +57,10 @@ public class JavaMethodMergingContributor extends CompletionContributor {
 
         commonName = name;
         allMethods.add(method);
-        item.putUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, allMethods);
+      }
+
+      for (LookupElement item : items) {
+        JavaCompletionUtil.putAllMethods(item, allMethods);
       }
 
       return AutoCompletionDecision.insertItem(findBestOverload(items));

@@ -238,7 +238,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       jar("jps-model.jar") {
         jpsCommonModules.each { module it }
       }
-      jar("jps-server.jar") {
+      jar("jps-builders.jar") {
         module("jps-builders")
       }
 

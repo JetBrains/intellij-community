@@ -49,13 +49,12 @@
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
       <headless-implementation-class/>
     </component>
+    <component>
+      <implementation-class>com.intellij.ui.switcher.SwitchManagerAppComponent</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.SwitchManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
     <component>
       <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
     </component>

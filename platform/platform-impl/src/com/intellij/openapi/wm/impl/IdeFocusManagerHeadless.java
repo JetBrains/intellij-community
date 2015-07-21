@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,13 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
@@ -84,7 +84,7 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   @Override
   @NotNull
   public ActionCallback requestDefaultFocus(boolean forced) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override

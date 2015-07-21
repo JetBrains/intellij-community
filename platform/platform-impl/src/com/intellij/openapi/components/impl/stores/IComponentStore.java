@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
@@ -59,4 +60,7 @@ public interface IComponentStore {
    */
   @Nullable
   Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages);
+
+  @TestOnly
+  void saveApplicationComponent(@NotNull Object component);
 }

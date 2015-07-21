@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -68,7 +67,7 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
   }
 
   @Nullable
-  protected Editor getBaseEditor(final DataContext dataContext, final Project project) {
+  protected Editor getBaseEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
     return super.getEditor(dataContext, project);
   }
 

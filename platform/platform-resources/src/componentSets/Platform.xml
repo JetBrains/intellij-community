@@ -71,11 +71,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.UiActivityMonitor</interface-class>
-      <implementation-class>com.intellij.ide.UiActivityMonitorImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.diagnostic.PerformanceWatcher</implementation-class>
     </component>
 

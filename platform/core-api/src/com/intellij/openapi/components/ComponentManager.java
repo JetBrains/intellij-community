@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -48,6 +49,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @param interfaceClass the interface class of the component
    * @return component that matches interface class or null if there is no such component
    */
+  @Nullable
   <T> T getComponent(@NotNull Class<T> interfaceClass);
 
   /**

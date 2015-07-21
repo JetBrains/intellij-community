@@ -60,7 +60,12 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
-    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, Conditions.<PsiClass>alwaysTrue());
+    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass psiClass) {
+        return psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
+      }
+    });
   }
 
   public boolean runMethodInAbstractClass(final ConfigurationContext context,
@@ -68,7 +73,7 @@ public class InheritorChooser {
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass,
                                           final Condition<PsiClass> acceptAbstractCondition) {
-    if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && acceptAbstractCondition.value(containingClass)) {
+    if (containingClass != null && acceptAbstractCondition.value(containingClass)) {
       final Location location = context.getLocation();
       if (location instanceof MethodLocation) {
         final PsiClass aClass = ((MethodLocation)location).getContainingClass();

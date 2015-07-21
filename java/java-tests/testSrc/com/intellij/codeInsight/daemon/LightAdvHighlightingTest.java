@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -281,20 +281,17 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
   public void testUnusedInspectionNonPrivateMembersReferencedFromText() {
     doTest(true, false);
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        PsiDirectory directory = myFile.getParent();
-        assertNotNull(myFile.toString(), directory);
-        PsiFile txt = directory.createFile("x.txt");
-        VirtualFile vFile = txt.getVirtualFile();
-        assertNotNull(txt.toString(), vFile);
-        try {
-          VfsUtil.saveText(vFile, "XXX");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      PsiDirectory directory = myFile.getParent();
+      assertNotNull(myFile.toString(), directory);
+      PsiFile txt = directory.createFile("x.txt");
+      VirtualFile vFile = txt.getVirtualFile();
+      assertNotNull(txt.toString(), vFile);
+      try {
+        VfsUtil.saveText(vFile, "XXX");
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
 
@@ -311,6 +308,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
+  // must stay public for picocontainer to work
   public static class MyAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
@@ -358,12 +356,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     final String hugeExpr = sb.toString();
     final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        getEditor().getDocument().replaceString(pos, pos + 2, hugeExpr);
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      getEditor().getDocument().replaceString(pos, pos + 2, hugeExpr);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
 
     final PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
@@ -406,6 +401,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertTrue(!infos.isEmpty());
   }
 
+  // must stay public for picocontainer to work
   public static class MyTopFileAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {

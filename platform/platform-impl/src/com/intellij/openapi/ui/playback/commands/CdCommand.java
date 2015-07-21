@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class CdCommand extends AbstractCommand {
     File file = context.getPathMacro().resolveFile(myDir, context.getBaseDir());
     if (!file.exists()) {
       context.message("Cannot cd, directory doesn't exist: " + file.getAbsoluteFile(), getLine());
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
     try {
@@ -54,6 +54,6 @@ public class CdCommand extends AbstractCommand {
     }
     
     context.message("{base.dir} set to " + context.getBaseDir().getAbsolutePath(), getLine());
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 }

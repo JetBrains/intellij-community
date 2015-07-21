@@ -18,6 +18,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -32,8 +33,11 @@ import java.util.ArrayList;
 * To change this template use File | Settings | File Templates.
 */
 public class NextOccurrenceAction extends EditorHeaderAction implements DumbAware {
-  public NextOccurrenceAction(EditorSearchComponent editorSearchComponent, JComponent shortcutHolder) {
+  private final boolean mySearch;
+
+  public NextOccurrenceAction(EditorSearchComponent editorSearchComponent, JComponent shortcutHolder, boolean search) {
     super(editorSearchComponent);
+    mySearch = search;
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
     ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
     ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts());
@@ -54,6 +58,9 @@ public class NextOccurrenceAction extends EditorHeaderAction implements DumbAwar
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(myEditorSearchComponent.hasMatches());
+    String textToSearch = mySearch
+                          ? myEditorSearchComponent.getSearchTextComponent().getText()
+                          : myEditorSearchComponent.getReplaceTextComponent().getText();
+    e.getPresentation().setEnabled(myEditorSearchComponent.hasMatches() && !StringUtil.isEmpty(textToSearch));
   }
 }

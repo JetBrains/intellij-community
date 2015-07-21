@@ -267,9 +267,6 @@ public class UIUtil {
     }
   };
 
-  // accessed only from EDT
-  private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
-
   private static volatile Pair<String, Integer> ourSystemFontData = null;
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
@@ -1677,82 +1674,8 @@ public class UIUtil {
       drawLine(g, startX, lineY + 2, endX, lineY + 2);
     }
 
-    // Draw apple like dotted line:
-    //
-    // CCC CCC CCC ...
-    // CCC CCC CCC ...
-    // CCC CCC CCC ...
-    //
-    // (where "C" - colored pixel, " " - white pixel)
-
-    final int step = 4;
-    final int startPosCorrection = startX % step < 3 ? 0 : 1;
-
-    // Optimization - lets draw dotted line using dot sample image.
-
-    // draw one dot by pixel:
-
-    // save old settings
-    final Composite oldComposite = g.getComposite();
-    // draw image "over" on top of background
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-
-    // sample
-    final BufferedImage image = getAppleDotStamp(fgColor, oldColor);
-
-    // Now copy our dot several times
-    final int dotX0 = (startX / step + startPosCorrection) * step;
-    for (int dotXi = dotX0; dotXi < endX; dotXi += step) {
-      g.drawImage(image, dotXi, lineY, null);
-    }
-
-    //restore previous settings
-    g.setComposite(oldComposite);
-  }
-
-  private static BufferedImage getAppleDotStamp(final Color fgColor,
-                                                final Color oldColor) {
-    final Color color = fgColor != null ? fgColor : oldColor;
-
-    // let's avoid of generating tons of GC and store samples for different colors
-    BufferedImage sample = ourAppleDotSamples.get(color);
-    if (sample == null) {
-      sample = createAppleDotStamp(color);
-      ourAppleDotSamples.put(color, sample);
-    }
-    return sample;
-  }
-
-  private static BufferedImage createAppleDotStamp(final Color color) {
-    final BufferedImage image = createImage(3, 3, BufferedImage.TYPE_INT_ARGB);
-    final Graphics2D g = image.createGraphics();
-
-    g.setColor(color);
-
-    // Each dot:
-    // | 20%  | 50%  | 20% |
-    // | 80%  | 80%  | 80% |
-    // | 50%  | 100% | 50% |
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .2f));
-    g.drawLine(0, 0, 0, 0);
-    g.drawLine(2, 0, 2, 0);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 0.7f));
-    g.drawLine(0, 1, 2, 1);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1.0f));
-    g.drawLine(1, 2, 1, 2);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .5f));
-    g.drawLine(1, 0, 1, 0);
-    g.drawLine(0, 2, 0, 2);
-    g.drawLine(2, 2, 2, 2);
-
-    // dispose graphics
-    g.dispose();
-
-    return image;
+    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
+    painter.paint(g, startX, endX, lineY);
   }
 
   /** This method is intended to use when user settings are not accessible yet.

@@ -44,13 +44,17 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     document = FileDocumentManager.getInstance().getDocument(f);
     document.setText("foo");
 
-    editor = getEditorFactory().createEditor(document);
+    editor = getEditorFactory().createEditor(document, myProject);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    getEditorFactory().releaseEditor(editor);
-    super.tearDown();
+    try {
+      getEditorFactory().releaseEditor(editor);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static EditorFactory getEditorFactory() {

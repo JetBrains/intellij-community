@@ -24,6 +24,7 @@ import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
+import org.intellij.lang.annotations.Flow;
 import org.iq80.snappy.Snappy;
 import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
@@ -431,7 +432,7 @@ public class PathManager {
   public static Collection<String> getUtilClassPath() {
     final Class<?>[] classes = {
       PathManager.class,            // module 'util'
-      NotNull.class,                // module 'annotations'
+      Flow.class,                   // module 'annotations'
       SystemInfoRt.class,           // module 'util-rt'
       Document.class,               // jDOM
       Appender.class,               // log4j

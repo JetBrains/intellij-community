@@ -812,30 +812,32 @@ public class IdeEventQueue extends EventQueue {
         //if () {
         //  getPopupManager().closeAllPopups();
         //}
-        appImpl.tryToApplyActivationState(eventWindow, true, true);
+        appImpl.myCancelDeactivation = true;
+        if (!appImpl.isActive()) {
+          appImpl.tryToApplyActivationState(eventWindow, true, false);
+        }
       }
       else if (we.getID() == WindowEvent.WINDOW_DEACTIVATED) {
         requestToDeactivateTime.getAndSet(System.currentTimeMillis());
 
-        // For stuff that cannot wait we notify about upcoming deactivation
-        appImpl.tryToApplyActivationState(eventWindow, false, false);
+        // For stuff that cannot wait we notify about deactivation immediately
+        appImpl.tryToApplyActivationState(eventWindow, false, true);
 
         // We do not know for sure that application is going to be inactive,
         // we could just be showing a popup or another transient window.
         // So let's postpone the application deactivation for a while
-        if (appImpl.isActive() && !appImpl.isDeactivating()) {
+        appImpl.myCancelDeactivation = false;
 
-          Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-              if (!appImpl.isDeactivationCancelled()) {
-                appImpl.tryToApplyActivationState(eventWindow, false, true);
-              }
+        Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
+          public void actionPerformed(ActionEvent evt) {
+            if (appImpl.isActiveDelayed() && !appImpl.isDeactivationCanceled()) {
+              appImpl.tryToApplyActivationState(eventWindow, false, false);
             }
-          });
+          }
+        });
 
-          timer.setRepeats(false);
-          timer.start();
-        }
+        timer.setRepeats(false);
+        timer.start();
       }
 
       if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {

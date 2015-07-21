@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -28,6 +27,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -243,17 +243,28 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             if (isGroup) {
               final ProjectGroup group = ((ProjectGroupActionGroup)value).getGroup();
               name.setText(" " + group.getName());
-              name.setIcon(AllIcons.Nodes.Folder);
+              name.setIcon(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon());
               name.setFont(name.getFont().deriveFont(Font.BOLD));
               add(name);
-              add(new JLabel(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon()), BorderLayout.EAST);
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
               name.setText(((ReopenProjectAction)value).getTemplatePresentation().getText());
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
               p.add(name, BorderLayout.NORTH);
               p.add(path, BorderLayout.SOUTH);
-              Icon icon = RecentProjectsManagerBase.getProjectOrAppIcon(((ReopenProjectAction)value).getProjectPath());
+
+              String projectPath = ((ReopenProjectAction)value).getProjectPath();
+              Icon icon = RecentProjectsManagerBase.getProjectIcon(projectPath, UIUtil.isUnderDarcula());
+              if (icon == null) {
+                if (UIUtil.isUnderDarcula()) {
+                  //No dark icon for this project
+                  icon = RecentProjectsManagerBase.getProjectIcon(projectPath, false);
+                }
+              }
+              if (icon == null) {
+                icon = EmptyIcon.ICON_16;
+              }
+
               final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override
                 protected void paintComponent(Graphics g) {

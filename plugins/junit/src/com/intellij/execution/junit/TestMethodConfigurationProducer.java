@@ -97,7 +97,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
         super.runForClass(aClass, psiMethod, context, performRunnable);
       }
     };
-    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
+    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, getConditionToSearchForInheritors())) return;
     super.onFirstRun(fromContext, context, performRunnable);
   }
 }

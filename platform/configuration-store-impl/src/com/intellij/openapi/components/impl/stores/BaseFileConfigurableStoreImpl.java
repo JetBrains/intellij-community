@@ -91,16 +91,9 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
   }
 
-  @NotNull
-  protected abstract XmlElementStorage getMainStorage();
-
   @Nullable
   static List<String> getConversionProblemsStorage() {
     return ourConversionProblemsStorage;
-  }
-
-  public BaseStorageData getMainStorageData() {
-    return (BaseStorageData)getMainStorage().getStorageData();
   }
 
   @NotNull

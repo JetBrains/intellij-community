@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (context.getModule() == null) return false;
 
     if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY),
+      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH),
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
@@ -119,7 +119,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
         if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
+          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID),
           GradleConstants.SYSTEM_ID.toString())) {
           return;
         }
@@ -135,7 +135,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                  ConfigurationContext context,
                                  Runnable performRunnable) {
         if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
+          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID),
           GradleConstants.SYSTEM_ID.toString())) {
           return;
         }
@@ -154,12 +154,12 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                       @NotNull PsiMethod psiMethod,
                                                       @NotNull PsiClass... containingClasses) {
     if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
+      context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID),
       GradleConstants.SYSTEM_ID.toString())) {
       return false;
     }
 
-    configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
+    configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH));
     configuration.getSettings().setTaskNames(TASKS_TO_RUN);
 
     StringBuilder buf = new StringBuilder();

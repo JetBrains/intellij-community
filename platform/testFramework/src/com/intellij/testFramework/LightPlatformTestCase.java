@@ -53,7 +53,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
@@ -61,18 +60,19 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -92,19 +92,18 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.Consumer;
 import com.intellij.util.GCUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexableFileSet;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -118,8 +117,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 
 /**
  * @author yole
@@ -228,11 +225,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
-  public static boolean isLight(@NotNull Project project) {
-    String creationPlace = project.getUserData(CREATION_PLACE);
-    return creationPlace != null && StringUtil.startsWith(creationPlace, LIGHT_PROJECT_MARK);
-  }
-
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
 
@@ -261,78 +253,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           registerShutdownHook();
         }
         ourPsiManager = null;
-        ourModule = createMainModule(descriptor.getModuleType());
 
-        if (descriptor instanceof LightProjectDescriptorEx) {
-          ((LightProjectDescriptorEx)descriptor).setupModule(ourModule);
-          
-          if(!((LightProjectDescriptorEx)descriptor).shouldConfigureModule()) return;
-        }
-        
-        VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-        assert dummyRoot != null;
-        dummyRoot.refresh(false, false);
-
-        try {
-          ourSourceRoot = dummyRoot.createChildDirectory(this, "src");
-          cleanSourceRoot();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-
-        final IndexableFileSet indexableFileSet = new IndexableFileSet() {
+        ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
           @Override
-          public boolean isInSet(@NotNull final VirtualFile file) {
-            return ourSourceRoot != null &&
-                   file.getFileSystem() == ourSourceRoot.getFileSystem() &&
-                   ourProject != null &&
-                   ourProject.isOpen();
+          public void moduleCreated(@NotNull Module module) {
+            ourModule = module;
           }
 
           @Override
-          public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
-            VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-              @Override
-              public boolean visitFile(@NotNull VirtualFile file) {
-                iterator.processFile(file);
-                return true;
-              }
-            });
-          }
-        };
-        FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, null);
-        Disposer.register(ourProject, new Disposable() {
-          @Override
-          public void dispose() {
-            FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet);
+          public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+            ourSourceRoot = sourceRoot;
           }
         });
-
-        updateModel(ourModule, new Consumer<ModifiableRootModel>() {
-          @Override
-          public void consume(ModifiableRootModel model) {
-            final Sdk sdk = descriptor.getSdk();
-            if (sdk != null) {
-              model.setSdk(sdk);
-            }
-
-            ContentEntry contentEntry = model.addContentEntry(ourSourceRoot);
-            contentEntry.addSourceFolder(ourSourceRoot, false);
-
-            descriptor.configureModule(ourModule, model, contentEntry);
-          }
-        });
-      }
-
-      private void cleanSourceRoot() throws IOException {
-        TempFileSystem tempFs = (TempFileSystem)ourSourceRoot.getFileSystem();
-        for (VirtualFile child : ourSourceRoot.getChildren()) {
-          if (!tempFs.exists(child)) {
-            tempFs.createChildFile(this, ourSourceRoot, child.getName());
-          }
-          child.delete(this);
-        }
       }
     }.execute().throwException();
 
@@ -340,15 +272,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
   }
 
-  @NotNull
-  protected static Module createMainModule(@NotNull final ModuleType moduleType) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", moduleType.getId());
-      }
-    });
-  }
 
   /**
    * @return The only source root
@@ -514,8 +437,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    CompositeException damage = checkForSettingsDamage();
+    List<Throwable> errors = checkForSettingsDamage();
     VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     doTearDown(project, ourApplication, true);
 
@@ -527,7 +449,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
       filePointerManager.assertPointersAreDisposed();
     }
-    damage.throwIfNotEmpty();
+    CompoundRuntimeException.doThrow(errors);
   }
 
   public static void doTearDown(@NotNull final Project project, @NotNull IdeaTestApplication application, boolean checkForEditors) throws Exception {
@@ -838,11 +760,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
   }
 
-  private static class SimpleLightProjectDescriptor implements LightProjectDescriptor {
+  private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
     @NotNull private final ModuleType myModuleType;
-    private final Sdk mySdk;
+    @Nullable private final Sdk mySdk;
 
-    SimpleLightProjectDescriptor(@NotNull ModuleType moduleType, Sdk sdk) {
+    SimpleLightProjectDescriptor(@NotNull ModuleType moduleType, @Nullable Sdk sdk) {
       myModuleType = moduleType;
       mySdk = sdk;
     }
@@ -853,13 +775,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       return myModuleType;
     }
 
+    @Nullable 
     @Override
     public Sdk getSdk() {
       return mySdk;
-    }
-
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
     }
 
     @Override

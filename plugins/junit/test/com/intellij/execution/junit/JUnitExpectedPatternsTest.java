@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.execution.junit;
 
-package com.intellij.util.pico;
+import com.intellij.junit4.ExpectedPatterns;
+import junit.framework.Assert;
+import org.junit.Test;
 
-import org.picocontainer.PicoContainer;
-
-/**
- * @deprecated please use DefaultPicoContainer directly
- */
-public class IdeaPicoContainer extends DefaultPicoContainer {
-
-  public IdeaPicoContainer() {
-    super(null);
-  }
-
-  public IdeaPicoContainer(final PicoContainer parent) {
-    super(parent);
+public class JUnitExpectedPatternsTest {
+  @Test
+  public void testArrayComparison() throws Exception {
+    Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("arrays first differed at element [0]; expected: java.lang.String<Text> but was: java.lang.StringBuilder<Text>"));
   }
 }

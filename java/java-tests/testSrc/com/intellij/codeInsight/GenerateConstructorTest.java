@@ -37,6 +37,7 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
   public void testSameNamedFields() throws Exception { doTest(); }
   public void testEnumWithAbstractMethod() throws Exception { doTest(); }
   public void testNoMoreConstructorsCanBeGenerated() throws Exception { doTest(); }
+  public void testBaseVarargs() throws Exception { doTest(); }
 
   public void testImmediatelyAfterRBrace() throws Exception {    // IDEADEV-28811
     CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

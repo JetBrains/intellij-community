@@ -49,22 +49,25 @@ public final class FilesDelta {
     myDataLock.unlock();
   }
 
-  protected void addAll(FilesDelta other) {
-    lockData();
+  public FilesDelta() {
+  }
+
+  FilesDelta(Collection<FilesDelta> deltas) {
+    for (FilesDelta delta : deltas) {
+      addAll(delta);
+    }
+  }
+
+  private void addAll(FilesDelta other) {
+    other.lockData();
     try {
-      other.lockData();
-      try {
-        myDeletedPaths.addAll(other.myDeletedPaths);
-        for (Map.Entry<BuildRootDescriptor, Set<File>> entry : other.myFilesToRecompile.entrySet()) {
-          _addToRecompiled(entry.getKey(), entry.getValue());
-        }
-      }
-      finally {
-        other.unlockData();
+      myDeletedPaths.addAll(other.myDeletedPaths);
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : other.myFilesToRecompile.entrySet()) {
+        _addToRecompiled(entry.getKey(), entry.getValue());
       }
     }
     finally {
-      unlockData();
+      other.unlockData();
     }
   }
 

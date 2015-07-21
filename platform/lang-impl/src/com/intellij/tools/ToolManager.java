@@ -19,11 +19,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class ToolManager extends BaseToolManager<Tool> {
   public ToolManager(ActionManagerEx actionManagerEx,
                      SchemesManagerFactory factory) {
@@ -58,11 +54,5 @@ public class ToolManager extends BaseToolManager<Tool> {
 
   public static ToolManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ToolManager.class);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ToolManager";
   }
 }

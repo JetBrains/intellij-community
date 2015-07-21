@@ -61,7 +61,9 @@ import org.picocontainer.*;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
@@ -293,7 +295,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     long time = System.currentTimeMillis() - start;
-    LOG.info(getComponentConfigurationsSize() + " project components initialized in " + time + " ms");
+    LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
 
     getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
@@ -385,8 +387,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   private void projectOpened() {
-    final ProjectComponent[] components = getComponents(ProjectComponent.class);
-    for (ProjectComponent component : components) {
+    for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class)) {
       try {
         component.projectOpened();
       }
@@ -397,11 +398,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   private void projectClosed() {
-    List<ProjectComponent> components = new ArrayList<ProjectComponent>(Arrays.asList(getComponents(ProjectComponent.class)));
-    Collections.reverse(components);
-    for (ProjectComponent component : components) {
+    List<ProjectComponent> components = getComponentInstancesOfType(ProjectComponent.class);
+    for (int i = components.size() - 1; i >= 0; i--) {
       try {
-        component.projectClosed();
+        components.get(i).projectClosed();
       }
       catch (Throwable e) {
         LOG.error(e);

@@ -195,7 +195,7 @@ public class GradleResourceCompilerConfigurationGenerator {
 
       if (shouldBeBuiltByExternalSystem(module)) continue;
 
-      final String gradleProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+      final String gradleProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
       assert gradleProjectPath != null;
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {

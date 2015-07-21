@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
 
     Module module = ModuleUtilCore.findModuleForPsiElement(place);
     if (module == null) return;
-    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
     GradleLocalSettings localSettings = GradleLocalSettings.getInstance(place.getProject());
     Collection<ExternalTaskPojo> taskPojos = localSettings.getAvailableTasks().get(path);
     if (taskPojos == null) return;

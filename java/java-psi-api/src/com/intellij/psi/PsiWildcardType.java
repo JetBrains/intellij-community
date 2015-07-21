@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,13 +28,12 @@ import org.jetbrains.annotations.Nullable;
  * @author dsl
  */
 public class PsiWildcardType extends PsiType.Stub {
+  public static final String EXTENDS_PREFIX = "? extends ";
+  public static final String SUPER_PREFIX = "? super ";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWildcardType");
-
   private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<PsiWildcardType>("UNBOUNDED_WILDCARD");
-  @NonNls private static final String EXTENDS_PREFIX = "? extends ";
-  @NonNls private static final String SUPER_PREFIX = "? super ";
 
-  @NotNull
   private final PsiManager myManager;
   private final boolean myIsExtending;
   private final PsiType myBound;
@@ -138,14 +136,17 @@ public class PsiWildcardType extends PsiType.Stub {
 
   @Override
   public boolean equalsToText(@NotNull String text) {
-    if (myBound == null) return "?".equals(text);
-    if (myIsExtending) {
+    if (myBound == null) {
+      return "?".equals(text);
+    }
+    else if (myIsExtending) {
       return text.startsWith(EXTENDS_PREFIX) && myBound.equalsToText(text.substring(EXTENDS_PREFIX.length()));
     }
     else {
       return text.startsWith(SUPER_PREFIX) && myBound.equalsToText(text.substring(SUPER_PREFIX.length()));
     }
   }
+
   @NotNull
   public PsiManager getManager() {
     return myManager;

@@ -19,11 +19,14 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Processes events of test runner in general text-based form.
@@ -41,6 +43,8 @@ import java.util.Map;
  * @author: Roman Chernyatchik
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
+  protected final SMTRunnerEventsListener myEventPublisher;
+  private final Project myProject;
   private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
     new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
       @Override
@@ -49,8 +53,12 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
         return true;
       }
     }, getDisposedCondition(), 300);
+  private HashMap<SMTRunnerEventsListener, MessageBusConnection> myListenerAdapters = new HashMap<SMTRunnerEventsListener, MessageBusConnection>();
 
-
+  public GeneralTestEventsProcessor(Project project) {
+    myProject = project;
+    myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
+  }
   // tree construction events
 
   public void onRootPresentationAdded(String rootName, String comment, String rootLocation) {}
@@ -108,7 +116,11 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public abstract void setLocator(@NotNull SMTestLocator locator);
 
-  public abstract void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
+  public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
+    final MessageBusConnection connection = myProject.getMessageBus().connect();
+    myListenerAdapters.put(listener, connection);
+    connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, listener);
+  }
 
   public abstract void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
 
@@ -121,6 +133,12 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
           myTransferToEDTQueue.drain();
         }
       });
+    }
+  }
+
+  protected void disconnectListeners() {
+    for (MessageBusConnection connection : myListenerAdapters.values()) {
+      connection.disconnect();
     }
   }
 

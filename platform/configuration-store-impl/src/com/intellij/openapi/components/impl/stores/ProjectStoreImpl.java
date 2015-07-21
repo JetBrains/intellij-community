@@ -60,7 +60,6 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
   private static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
 
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
-  @NonNls static final String OPTION_WORKSPACE = "workspace";
 
   private static int originalVersion = -1;
 
@@ -387,12 +386,6 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
 
   @NotNull
   @Override
-  protected XmlElementStorage getMainStorage() {
-    return getProjectFileStorage();
-  }
-
-  @NotNull
-  @Override
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject);
   }
@@ -453,7 +446,8 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
       super.load(rootElement, pathMacroSubstitutor, intern);
     }
 
-    protected void convert(final Element root, final int originalVersion) {
+    @SuppressWarnings("UnusedParameters")
+    protected void convert(Element root, int originalVersion) {
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -176,7 +177,7 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
       if (notReloadableComponents.isEmpty()) {
         return false
       }
-      return ComponentStoreImpl.askToRestart(store, notReloadableComponents, null)
+      return StoreUtil.askToRestart(store, notReloadableComponents, null)
     }
   })!!
 }

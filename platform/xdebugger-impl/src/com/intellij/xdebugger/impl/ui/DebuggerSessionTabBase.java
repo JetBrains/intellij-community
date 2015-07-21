@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,37 +92,55 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   }
 
 
+  public void select() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (myRunContentDescriptor != null) {
+          ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+            .getToolWindowByDescriptor(myRunContentDescriptor);
+          Content content = myRunContentDescriptor.getAttachedContent();
+          if (toolWindow != null && content != null && !toolWindow.getContentManager().isSelected(content)) {
+            toolWindow.getContentManager().setSelectedContent(content);
+          }
+        }
+      }
+    });
+  }
+
   public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (myRunContentDescriptor != null) {
+          ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+            .getToolWindowByDescriptor(myRunContentDescriptor);
+          if (toolWindow != null) {
+            if (!toolWindow.isVisible()) {
+              toolWindow.show(onShowCallback);
+            }
+            //noinspection ConstantConditions
+            toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
+          }
+        }
+      }
+    });
+
+    if (focus) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myRunContentDescriptor != null) {
-            ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
-              .getToolWindowByDescriptor(myRunContentDescriptor);
-            if (toolWindow != null) {
-              if (!toolWindow.isVisible()) {
-                toolWindow.show(onShowCallback);
-              }
-              //noinspection ConstantConditions
-              toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
-            }
+          boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+          ProjectUtil.focusProjectWindow(myProject, focusWnd);
+          if (!focusWnd) {
+            AppIcon.getInstance().requestAttention(myProject, true);
           }
         }
       });
-
-      if (focus) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
-            ProjectUtil.focusProjectWindow(myProject, focusWnd);
-            if (!focusWnd) {
-              AppIcon.getInstance().requestAttention(myProject, true);
-            }
-          }
-        });
-      }
     }
   }
 }

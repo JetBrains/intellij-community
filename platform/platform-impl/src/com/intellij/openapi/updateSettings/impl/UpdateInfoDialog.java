@@ -239,14 +239,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
     }
 
-    private String formatVersion(String version, String build) {
-      String[] parts = version.split("\\.", 3);
-      String major = parts.length > 0 ? parts[0] : "0";
-      String minor = parts.length > 1 ? parts[1] : "0";
-      String patch = parts.length > 2 ? parts[2] : "0";
-      version = major + '.' + minor + '.' + patch;
-
-      return IdeBundle.message("updates.version.info", version, build);
+    protected String formatVersion(String version, String build) {
+      return IdeBundle.message("updates.version.info", StringUtil.formatVersionToMajorMinorPatchString(version), build);
     }
   }
 }

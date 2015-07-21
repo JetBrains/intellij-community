@@ -71,24 +71,27 @@ public class JavaGenerateMemberCompletionContributor {
   }
 
   private static void addGetterSetterElements(CompletionResultSet result, PsiClass parent, Set<MethodSignature> addedSignatures) {
-    List<PsiMethod> prototypes = ContainerUtil.newArrayList();
+    int count = 0;
     for (PsiField field : parent.getFields()) {
-      if (!(field instanceof PsiEnumConstant)) {
-        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
-        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
-      }
-    }
-    for (final PsiMethod prototype : prototypes) {
-      if (parent.findMethodBySignature(prototype, false) == null && addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
-        Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-        result.addElement(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, icon, "", new InsertHandler<LookupElement>() {
-          @Override
-          public void handleInsert(InsertionContext context, LookupElement item) {
-            removeLookupString(context);
+      if (field instanceof PsiEnumConstant) continue;
 
-            insertGenerationInfos(context, Arrays.asList(new PsiGenerationInfo<PsiMethod>(prototype)));
-          }
-        }));
+      List<PsiMethod> prototypes = ContainerUtil.newSmartList();
+      Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
+      Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
+      for (final PsiMethod prototype : prototypes) {
+        if (parent.findMethodBySignature(prototype, false) == null && addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
+          Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+          result.addElement(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, icon, "", new InsertHandler<LookupElement>() {
+            @Override
+            public void handleInsert(InsertionContext context, LookupElement item) {
+              removeLookupString(context);
+
+              insertGenerationInfos(context, Collections.singletonList(new PsiGenerationInfo<PsiMethod>(prototype)));
+            }
+          }));
+          
+          if (count++ > 100) return;
+        }
       }
     }
   }

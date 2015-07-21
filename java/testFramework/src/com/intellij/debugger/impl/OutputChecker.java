@@ -211,7 +211,7 @@ public class OutputChecker {
         result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
         result = result.replaceAll("at \\'.*?\\'", "at '!HOST_NAME!:PORT_NAME!'");
         result = result.replaceAll("address: \\'.*?\\'", "address: '!HOST_NAME!:PORT_NAME!'");
-        result = result.replaceAll("file:.*AppletPage.*\\.html", "file:!APPLET_HTML!");
+        result = result.replaceAll("\"?file:.*AppletPage.*\\.html\"?", "file:!APPLET_HTML!");
         result = result.replaceAll("\"(!JDK_HOME!.*?)\"", "$1");
         result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
         result = result.replaceAll("\"(" + TEST_JDK_HOME_STR + ".*?)\"", "$1");

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.Application;
@@ -387,12 +402,12 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
   }
 
   public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-    module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH);
+    module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION);
   }
 
   private class ImportModulesTask implements Runnable {
@@ -435,20 +450,20 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
 
-    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY, moduleData.getId());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
+    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID, moduleData.getOwner().toString());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID, moduleData.getId());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH, moduleData.getLinkedExternalProjectPath());
     final ProjectData projectData = moduleDataNode.getData(ProjectKeys.PROJECT);
-    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
+    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
 
     if (moduleData.getGroup() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY, moduleData.getGroup());
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP, moduleData.getGroup());
     }
     if (moduleData.getVersion() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY, moduleData.getVersion());
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION, moduleData.getVersion());
     }
 
     // clear maven option
-    module.clearOption("org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule");
+    module.clearOption(ExternalSystemConstants.MAVEN_MODULE_KEY);
   }
 }

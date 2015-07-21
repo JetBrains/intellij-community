@@ -433,7 +433,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       location.translate(size.width / 2, size.height / 2);
       getDockManager().createNewDockContainerFor(content, new RelativePoint(location));
     }
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   private void storeDefaultIndices(@NotNull Content[] contents) {
@@ -971,7 +971,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private ActionCallback restoreLastUiState() {
-    if (isStateBeingRestored()) return new ActionCallback.Rejected();
+    if (isStateBeingRestored()) return ActionCallback.REJECTED;
 
     try {
       setStateIsBeingRestored(true, this);
@@ -1569,7 +1569,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         saveUiState();
         select(content, true);
         updateTabsUI(false);
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       }
     }));
 
@@ -1617,11 +1617,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public ActionCallback select(final Content content, final boolean requestFocus) {
     final GridImpl grid = (GridImpl)findGridFor(content);
-    if (grid == null) return new ActionCallback.Done();
+    if (grid == null) return ActionCallback.DONE;
 
 
     final TabInfo info = myTabs.findInfo(grid);
-    if (info == null) return new ActionCallback.Done();
+    if (info == null) return ActionCallback.DONE;
 
 
     final ActionCallback result = new ActionCallback();

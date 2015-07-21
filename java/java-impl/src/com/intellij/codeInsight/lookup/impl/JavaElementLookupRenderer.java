@@ -129,7 +129,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   }
 
   public static boolean isToStrikeout(LookupItem<?> item) {
-    final List<PsiMethod> allMethods = item.getUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
+    final List<PsiMethod> allMethods = JavaCompletionUtil.getAllMethods(item);
     if (allMethods != null){
       for (PsiMethod method : allMethods) {
         if (!method.isValid()) { //?

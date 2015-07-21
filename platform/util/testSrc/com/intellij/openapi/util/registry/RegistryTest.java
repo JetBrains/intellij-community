@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.openapi.util.registry;
 
-import com.intellij.openapi.module.Module;
+import org.junit.Test;
 
-public interface LightProjectDescriptorEx extends LightProjectDescriptor {
-  boolean shouldConfigureModule(); 
-  
-  void setupModule(Module module); 
+import static junit.framework.Assert.assertEquals;
+
+public class RegistryTest {
+  private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
+
+  @Test
+  public void testInvalidInteger() {
+    int originalValue = Registry.intValue(INTEGER_KEY);
+    Registry.get(INTEGER_KEY).setValue("invalidNumber");
+    assertEquals(originalValue, Registry.intValue(INTEGER_KEY));
+  }
 }

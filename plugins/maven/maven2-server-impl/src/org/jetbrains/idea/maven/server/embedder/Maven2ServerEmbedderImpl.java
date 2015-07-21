@@ -22,16 +22,23 @@ import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
+import org.apache.maven.artifact.repository.DefaultArtifactRepository;
+import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -80,6 +87,11 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   private final MavenEmbedder myImpl;
   private final Maven2ServerConsoleWrapper myConsoleWrapper;
   private volatile MavenServerProgressIndicator myCurrentIndicator;
+
+  private Maven2ServerEmbedderImpl(MavenEmbedder impl, Maven2ServerConsoleWrapper consoleWrapper) {
+    myImpl = impl;
+    myConsoleWrapper = consoleWrapper;
+  }
 
   public static Maven2ServerEmbedderImpl create(MavenServerSettings facadeSettings) throws RemoteException {
     MavenEmbedderSettings settings = new MavenEmbedderSettings();
@@ -132,9 +144,147 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return MavenEmbedderSettings.UpdatePolicy.DO_NOT_UPDATE;
   }
 
-  private Maven2ServerEmbedderImpl(MavenEmbedder impl, Maven2ServerConsoleWrapper consoleWrapper) {
-    myImpl = impl;
-    myConsoleWrapper = consoleWrapper;
+  private static Collection<String> collectProfilesIds(List<Profile> profiles) {
+    Collection<String> result = new THashSet<String>();
+    for (Profile each : profiles) {
+      if (each.getId() != null) {
+        result.add(each.getId());
+      }
+    }
+    return result;
+  }
+
+  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
+    Model result = Maven2ModelConverter.toNativeModel(model);
+    result = doInterpolate(result, basedir);
+
+    PathTranslator pathTranslator = new DefaultPathTranslator();
+    pathTranslator.alignToBaseDirectory(result, basedir);
+
+    return Maven2ModelConverter.convertModel(result, null);
+  }
+
+  private static Model doInterpolate(Model result, File basedir) throws RemoteException {
+    try {
+      AbstractStringBasedModelInterpolator interpolator = new CustomModelInterpolator(new DefaultPathTranslator());
+      interpolator.initialize();
+
+      Properties props = MavenServerUtil.collectSystemProperties();
+      ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
+      result = interpolator.interpolate(result, basedir, config, false);
+    }
+    catch (ModelInterpolationException e) {
+      Maven2ServerGlobals.getLogger().warn(e);
+    }
+    catch (InitializationException e) {
+      Maven2ServerGlobals.getLogger().error(e);
+    }
+    return result;
+  }
+
+  public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException {
+    Model result = Maven2ModelConverter.toNativeModel(model);
+    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, Maven2ModelConverter.toNativeModel(parentModel));
+    return Maven2ModelConverter.convertModel(result, null);
+  }
+
+  public static ProfileApplicationResult applyProfiles(MavenModel model,
+                                                       File basedir,
+                                                       MavenExplicitProfiles explicitProfiles,
+                                                       Collection<String> alwaysOnProfiles) throws RemoteException {
+    Model nativeModel = Maven2ModelConverter.toNativeModel(model);
+
+    Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
+    Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
+    List<Profile> activatedPom = new ArrayList<Profile>();
+    List<Profile> activatedExternal = new ArrayList<Profile>();
+    List<Profile> activeByDefault = new ArrayList<Profile>();
+
+    List<Profile> rawProfiles = nativeModel.getProfiles();
+    List<Profile> expandedProfilesCache = null;
+    List<Profile> deactivatedProfiles = new ArrayList<Profile>();
+
+    for (int i = 0; i < rawProfiles.size(); i++) {
+      Profile eachRawProfile = rawProfiles.get(i);
+
+      if (disabledProfiles.contains(eachRawProfile.getId())) {
+        deactivatedProfiles.add(eachRawProfile);
+        continue;
+      }
+
+      boolean shouldAdd = enabledProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
+
+      Activation activation = eachRawProfile.getActivation();
+      if (activation != null) {
+        if (activation.isActiveByDefault()) {
+          activeByDefault.add(eachRawProfile);
+        }
+
+        // expand only if necessary
+        if (expandedProfilesCache == null) expandedProfilesCache = doInterpolate(nativeModel, basedir).getProfiles();
+        Profile eachExpandedProfile = expandedProfilesCache.get(i);
+
+        for (ProfileActivator eachActivator : getProfileActivators(basedir)) {
+          try {
+            if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
+              shouldAdd = true;
+              break;
+            }
+          }
+          catch (ProfileActivationException e) {
+            Maven2ServerGlobals.getLogger().warn(e);
+          }
+        }
+      }
+
+      if (shouldAdd) {
+        if (MavenConstants.PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
+          activatedPom.add(eachRawProfile);
+        }
+        else {
+          activatedExternal.add(eachRawProfile);
+        }
+      }
+    }
+
+    List<Profile> activatedProfiles = new ArrayList<Profile>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
+    activatedProfiles.addAll(activatedExternal);
+
+    for (Profile each : activatedProfiles) {
+      new DefaultProfileInjector().inject(each, nativeModel);
+    }
+
+    return new ProfileApplicationResult(Maven2ModelConverter.convertModel(nativeModel, null),
+                                        new MavenExplicitProfiles(collectProfilesIds(activatedProfiles),
+                                                                  collectProfilesIds(deactivatedProfiles))
+    );
+  }
+
+  private static ProfileActivator[] getProfileActivators(File basedir) throws RemoteException {
+    SystemPropertyProfileActivator sysPropertyActivator = new SystemPropertyProfileActivator();
+    DefaultContext context = new DefaultContext();
+    context.put("SystemProperties", MavenServerUtil.collectSystemProperties());
+    try {
+      sysPropertyActivator.contextualize(context);
+    }
+    catch (ContextException e) {
+      Maven2ServerGlobals.getLogger().error(e);
+      return new ProfileActivator[0];
+    }
+
+    return new ProfileActivator[]{new MyFileProfileActivator(basedir),
+      sysPropertyActivator,
+      new JdkPrefixProfileActivator(),
+      new OperatingSystemProfileActivator()};
+  }
+
+  private static void setupContainer(PlexusContainer c) {
+    MavenEmbedder.setImplementation(c, ArtifactFactory.class, CustomArtifactFactory.class);
+    MavenEmbedder.setImplementation(c, ProjectArtifactFactory.class, CustomArtifactFactory.class);
+    MavenEmbedder.setImplementation(c, ArtifactResolver.class, CustomArtifactResolver.class);
+    MavenEmbedder.setImplementation(c, RepositoryMetadataManager.class, CustomRepositoryMetadataManager.class);
+    MavenEmbedder.setImplementation(c, WagonManager.class, CustomWagonManager.class);
+    MavenEmbedder.setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
   }
 
   @NotNull
@@ -200,16 +350,6 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
       mavenProject = mavenProject.getParent();
     }
     return collectProfilesIds(profiles);
-  }
-
-  private static Collection<String> collectProfilesIds(List<Profile> profiles) {
-    Collection<String> result = new THashSet<String>();
-    for (Profile each : profiles) {
-      if (each.getId() != null) {
-        result.add(each.getId());
-      }
-    }
-    return result;
   }
 
   @Nullable
@@ -400,130 +540,6 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return result;
   }
 
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
-    Model result = Maven2ModelConverter.toNativeModel(model);
-    result = doInterpolate(result, basedir);
-
-    PathTranslator pathTranslator = new DefaultPathTranslator();
-    pathTranslator.alignToBaseDirectory(result, basedir);
-
-    return Maven2ModelConverter.convertModel(result, null);
-  }
-
-  private static Model doInterpolate(Model result, File basedir) throws RemoteException {
-    try {
-      AbstractStringBasedModelInterpolator interpolator = new CustomModelInterpolator(new DefaultPathTranslator());
-      interpolator.initialize();
-
-      Properties props = MavenServerUtil.collectSystemProperties();
-      ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
-      result = interpolator.interpolate(result, basedir, config, false);
-    }
-    catch (ModelInterpolationException e) {
-      Maven2ServerGlobals.getLogger().warn(e);
-    }
-    catch (InitializationException e) {
-      Maven2ServerGlobals.getLogger().error(e);
-    }
-    return result;
-  }
-
-  public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException {
-    Model result = Maven2ModelConverter.toNativeModel(model);
-    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, Maven2ModelConverter.toNativeModel(parentModel));
-    return Maven2ModelConverter.convertModel(result, null);
-  }
-
-  public static ProfileApplicationResult applyProfiles(MavenModel model,
-                                                       File basedir,
-                                                       MavenExplicitProfiles explicitProfiles,
-                                                       Collection<String> alwaysOnProfiles) throws RemoteException {
-    Model nativeModel = Maven2ModelConverter.toNativeModel(model);
-
-    Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
-    Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
-    List<Profile> activatedPom = new ArrayList<Profile>();
-    List<Profile> activatedExternal = new ArrayList<Profile>();
-    List<Profile> activeByDefault = new ArrayList<Profile>();
-
-    List<Profile> rawProfiles = nativeModel.getProfiles();
-    List<Profile> expandedProfilesCache = null;
-    List<Profile> deactivatedProfiles = new ArrayList<Profile>();
-
-    for (int i = 0; i < rawProfiles.size(); i++) {
-      Profile eachRawProfile = rawProfiles.get(i);
-
-      if (disabledProfiles.contains(eachRawProfile.getId())) {
-        deactivatedProfiles.add(eachRawProfile);
-        continue;
-      }
-
-      boolean shouldAdd = enabledProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
-
-      Activation activation = eachRawProfile.getActivation();
-      if (activation != null) {
-        if (activation.isActiveByDefault()) {
-          activeByDefault.add(eachRawProfile);
-        }
-
-        // expand only if necessary
-        if (expandedProfilesCache == null) expandedProfilesCache = doInterpolate(nativeModel, basedir).getProfiles();
-        Profile eachExpandedProfile = expandedProfilesCache.get(i);
-
-        for (ProfileActivator eachActivator : getProfileActivators(basedir)) {
-          try {
-            if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
-              shouldAdd = true;
-              break;
-            }
-          }
-          catch (ProfileActivationException e) {
-            Maven2ServerGlobals.getLogger().warn(e);
-          }
-        }
-      }
-
-      if (shouldAdd) {
-        if (MavenConstants.PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
-          activatedPom.add(eachRawProfile);
-        }
-        else {
-          activatedExternal.add(eachRawProfile);
-        }
-      }
-    }
-
-    List<Profile> activatedProfiles = new ArrayList<Profile>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
-    activatedProfiles.addAll(activatedExternal);
-
-    for (Profile each : activatedProfiles) {
-      new DefaultProfileInjector().inject(each, nativeModel);
-    }
-
-    return new ProfileApplicationResult(Maven2ModelConverter.convertModel(nativeModel, null),
-                                        new MavenExplicitProfiles(collectProfilesIds(activatedProfiles),
-                                                                  collectProfilesIds(deactivatedProfiles))
-    );
-  }
-
-  private static ProfileActivator[] getProfileActivators(File basedir) throws RemoteException {
-    SystemPropertyProfileActivator sysPropertyActivator = new SystemPropertyProfileActivator();
-    DefaultContext context = new DefaultContext();
-    context.put("SystemProperties", MavenServerUtil.collectSystemProperties());
-    try {
-      sysPropertyActivator.contextualize(context);
-    }
-    catch (ContextException e) {
-      Maven2ServerGlobals.getLogger().error(e);
-      return new ProfileActivator[0];
-    }
-
-    return new ProfileActivator[]{new MyFileProfileActivator(basedir),
-      sysPropertyActivator,
-      new JdkPrefixProfileActivator(),
-      new OperatingSystemProfileActivator()};
-  }
-
   @NotNull
   public File getLocalRepositoryFile() {
     return myImpl.getLocalRepositoryFile();
@@ -539,10 +555,6 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   public PlexusContainer getContainer() {
     return myImpl.getContainer();
-  }
-
-  private interface Executor<T> {
-    T execute() throws Exception;
   }
 
   private <T> T doExecute(final Executor<T> executor) throws MavenServerProcessCanceledException, RemoteException {
@@ -598,15 +610,6 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return rethrowException(throwable);
   }
 
-  private static void setupContainer(PlexusContainer c) {
-    MavenEmbedder.setImplementation(c, ArtifactFactory.class, CustomArtifactFactory.class);
-    MavenEmbedder.setImplementation(c, ProjectArtifactFactory.class, CustomArtifactFactory.class);
-    MavenEmbedder.setImplementation(c, ArtifactResolver.class, CustomArtifactResolver.class);
-    MavenEmbedder.setImplementation(c, RepositoryMetadataManager.class, CustomRepositoryMetadataManager.class);
-    MavenEmbedder.setImplementation(c, WagonManager.class, CustomWagonManager.class);
-    MavenEmbedder.setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
-  }
-
   public void customize(@Nullable MavenWorkspaceMap workspaceMap,
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
@@ -624,6 +627,41 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     catch (Exception e) {
       throw rethrowException(e);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<String> retrieveAvailableVersions(@NotNull String groupId, @NotNull String artifactId, @NotNull String remoteRepositoryUrl)
+    throws RemoteException {
+    try {
+      Artifact artifact =
+        new DefaultArtifact(groupId, artifactId, VersionRange.createFromVersion(""), Artifact.SCOPE_COMPILE, "pom", null,
+                            new DefaultArtifactHandler("pom"));
+      ArtifactRepositoryLayout repositoryLayout = getComponent(ArtifactRepositoryLayout.class);
+      ArtifactRepository remoteRepository = new DefaultArtifactRepository(
+        "id",
+        remoteRepositoryUrl,
+        repositoryLayout,
+        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN),
+        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN));
+      List versions = getComponent(ArtifactMetadataSource.class).retrieveAvailableVersions(
+        artifact,
+        new DefaultArtifactRepository(
+          "local",
+          getLocalRepositoryFile().getPath(),
+          repositoryLayout),
+        Collections.singletonList(remoteRepository));
+
+      List<String> result = new ArrayList<String>();
+      for (Object version : versions) {
+        result.add(version.toString());
+      }
+      return result;
+    }
+    catch (Exception e) {
+      Maven2ServerGlobals.getLogger().info(e);
+    }
+    return Collections.emptyList();
   }
 
   private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
@@ -697,6 +735,10 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     catch (Exception e) {
       throw rethrowException(e);
     }
+  }
+
+  private interface Executor<T> {
+    T execute() throws Exception;
   }
 }
 

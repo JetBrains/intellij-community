@@ -149,6 +149,8 @@
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
+
+    <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
   </extensions>
 
   <project-components>
@@ -157,12 +159,6 @@
     </component>
   </project-components>
 
-  <module-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.build.PluginBuildConfiguration</implementation-class>
-      <option name="type" value="PLUGIN_MODULE"/>
-    </component>
-  </module-components>
 
   <actions>
     <group id="PluginDeployActions">

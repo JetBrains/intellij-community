@@ -45,7 +45,7 @@ public class ActionCommand extends TypeCommand {
     final AnAction targetAction = am.getAction(actionName);
     if (targetAction == null) {
       dumpError(context, "Unknown action: " + actionName);
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
 

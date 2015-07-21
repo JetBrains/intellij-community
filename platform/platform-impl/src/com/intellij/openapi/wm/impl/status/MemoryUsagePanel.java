@@ -221,8 +221,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @Override
   public Dimension getPreferredSize() {
     final Insets insets = getInsets();
-    int width = getFontMetrics(getWidgetFont()).stringWidth(SAMPLE_STRING) + insets.left + insets.right + 2;
-    int height = getFontMetrics(getWidgetFont()).getHeight() + insets.top + insets.bottom + 2;
+    int width = getFontMetrics(getWidgetFont()).stringWidth(SAMPLE_STRING) + insets.left + insets.right + JBUI.scale(2);
+    int height = getFontMetrics(getWidgetFont()).getHeight() + insets.top + insets.bottom + JBUI.scale(2);
     return new Dimension(width, height);
   }
 

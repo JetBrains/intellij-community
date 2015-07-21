@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.impl.stores.IModuleStore;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import com.intellij.openapi.module.Module;
@@ -52,7 +52,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
-  public ClasspathStorage(@NotNull Module module, @NotNull IModuleStore moduleStore) {
+  public ClasspathStorage(@NotNull Module module, @NotNull IComponentStore moduleStore) {
     super(moduleStore.getStateStorageManager().getMacroSubstitutor());
 
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
@@ -184,7 +184,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
   @NotNull
   public static String getStorageRootFromOptions(@NotNull Module module) {
     String moduleRoot = getModuleDir(module);
-    String storageRef = module.getOptionValue(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
+    String storageRef = module.getOptionValue(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE_KEY);
     if (storageRef == null) {
       return moduleRoot;
     }
@@ -212,12 +212,12 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
 
     provider = getProvider(storageId);
     if (provider == null) {
-      module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
-      module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
+      module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE_KEY);
+      module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE_KEY);
     }
     else {
-      module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
-      module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider.getContentRoot(model));
+      module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE_KEY, storageId);
+      module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE_KEY, provider.getContentRoot(model));
     }
   }
 

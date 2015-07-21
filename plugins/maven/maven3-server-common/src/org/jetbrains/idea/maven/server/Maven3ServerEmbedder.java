@@ -39,25 +39,6 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     initLog4J(settings);
   }
 
-  @Nullable
-  public String getMavenVersion() {
-    return MAVEN_VERSION;
-  }
-
-  @SuppressWarnings({"unchecked"})
-  public abstract <T> T getComponent(Class<T> clazz, String roleHint);
-
-  @SuppressWarnings({"unchecked"})
-  public abstract <T> T getComponent(Class<T> clazz);
-
-  public abstract void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable);
-
-  public abstract MavenExecutionRequest createRequest(File file,
-                                                      List<String> activeProfiles,
-                                                      List<String> inactiveProfiles,
-                                                      List<String> goals)
-    throws RemoteException;
-
   private static void initLog4J(MavenServerSettings settings) {
     try {
       BasicConfigurator.configure();
@@ -89,4 +70,23 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
     return Level.INFO;
   }
+
+  @Nullable
+  public String getMavenVersion() {
+    return MAVEN_VERSION;
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public abstract <T> T getComponent(Class<T> clazz, String roleHint);
+
+  @SuppressWarnings({"unchecked"})
+  public abstract <T> T getComponent(Class<T> clazz);
+
+  public abstract void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable);
+
+  public abstract MavenExecutionRequest createRequest(File file,
+                                                      List<String> activeProfiles,
+                                                      List<String> inactiveProfiles,
+                                                      List<String> goals)
+    throws RemoteException;
 }

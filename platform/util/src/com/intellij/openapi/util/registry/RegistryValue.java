@@ -70,7 +70,14 @@ public class RegistryValue {
 
   public int asInteger() {
     if (myIntCachedValue == null) {
-      myIntCachedValue = Integer.valueOf(get(myKey, "0", true));
+      try {
+        myIntCachedValue = Integer.valueOf(get(myKey, "0", true));
+      }
+      catch (NumberFormatException e) {
+        String bundleValue = getBundleValue(myKey, true);
+        assert bundleValue != null;
+        myIntCachedValue = Integer.valueOf(bundleValue);
+      }
     }
 
     return myIntCachedValue.intValue();
@@ -78,7 +85,14 @@ public class RegistryValue {
 
   public double asDouble() {
     if (myDoubleCachedValue == null) {
-      myDoubleCachedValue = Double.valueOf(get(myKey, "0.0", true));
+      try {
+        myDoubleCachedValue = Double.valueOf(get(myKey, "0.0", true));
+      }
+      catch (NumberFormatException e) {
+        String bundleValue = getBundleValue(myKey, true);
+        assert bundleValue != null;
+        myDoubleCachedValue = Double.valueOf(bundleValue);
+      }
     }
 
     return myDoubleCachedValue.doubleValue();

@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.lambda;
+package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -25,7 +23,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
 public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
-  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting8";
 
   @Override
   protected void setUp() throws Exception {
@@ -40,19 +38,14 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
     return IdeaTestUtil.getMockJdk18();
   }
 
-  private void doTest() {
-    doTest(true, false, false);
+  private void doTest(boolean warnings, boolean weakWarnings) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, weakWarnings, false);
   }
 
-  private void doTest(boolean warnings, boolean weakWarnings, boolean infos, InspectionProfileEntry... inspections) {
-    enableInspectionTools(inspections);
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, weakWarnings, infos);
-  }
-
-  public void testUnderscore() { doTest(); }
-  public void testFinalVariableMightNotHaveBeenInitializedInsideLambda() { doTest(); }
-  public void testStrictfpInsideInterface() { doTest(); }
-  public void testMethodReferences() { doTest(false, true, false); }
-  public void testUsedMethodsByMethodReferences() { doTest(true, true, false, new UnusedDeclarationInspection()); }
-  public void testLambdaExpressions() { doTest(false, true, false); }
+  public void testUnderscore() { doTest(true, false); }
+  public void testFinalVariableMightNotHaveBeenInitializedInsideLambda() { doTest(true, false); }
+  public void testStrictfpInsideInterface() { doTest(true, false); }
+  public void testMethodReferences() { doTest(false, true); }
+  public void testUsedMethodsByMethodReferences() { enableInspectionTool(new UnusedDeclarationInspection()); doTest(true, true); }
+  public void testLambdaExpressions() { doTest(false, true); }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
-        setBorder(JBUI.Borders.empty(0, 2, 0, 2));
+        setBorder(JBUI.Borders.empty(0, 2));
         if (!UIUtil.isUnderGTKLookAndFeel()) {
           setFont(JBUI.Fonts.label(11));
         }

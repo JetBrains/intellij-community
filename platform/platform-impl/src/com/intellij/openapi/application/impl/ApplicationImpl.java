@@ -128,15 +128,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private volatile Boolean myActive;
-  private volatile boolean myDeactivating;
-  public volatile boolean myDeactivationCancelled;
+  private volatile boolean myActive;
+  private volatile boolean myActiveDelayed;
+  public volatile boolean myCancelDeactivation;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
 
-  public boolean isDeactivating() {
-    return myDeactivating;
+  public boolean isActiveDelayed() {
+    return myActiveDelayed;
   }
 
   private static class Status {
@@ -486,7 +486,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
       t = System.currentTimeMillis() - t;
-      LOG.info(getComponentConfigurationsSize() + " application components initialized in " + t + " ms");
+      LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
     }
     catch (StateStorageException e) {
       throw new IOException(e);
@@ -1189,8 +1189,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
-  public boolean isDeactivationCancelled() {
-    return myDeactivationCancelled;
+  public boolean isDeactivationCanceled() {
+    return myCancelDeactivation;
   }
 
   /**
@@ -1211,14 +1211,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean tryToApplyActivationState(Window window, boolean activation, boolean immediate) {
     return activation ? applyActivation(window) :
            immediate ? applyDeactivation(window)
-                     : applyDeactivating(window);
+                     : applyDelayedDeactivation(window);
   }
 
   private boolean applyActivation(Window window) {
     if (!isActive()) {
-      myDeactivationCancelled = true;
       myActive = true;
-      myDeactivating = false;
+      myActiveDelayed = true;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
         getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
@@ -1239,13 +1238,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return false;
   }
 
-  private boolean applyDeactivating(Window window) {
-    if (isActive() && !myDeactivating) {
-      myDeactivationCancelled = false;
-      myDeactivating = true;
+  private boolean applyDelayedDeactivation(Window window) {
+    if (isActiveDelayed()) {
+      myActiveDelayed = false;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivating(ideFrame);
+        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
         return true;
       }
     }
@@ -1260,10 +1258,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isActive() {
    if (isUnitTestMode()) return true;
-    if (myActive == null) {//Here we get initial state that's been unknown before
-      myActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null;
-    }
-   return myActive;
+
+   return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null || myActive;
   }
 
   @NotNull

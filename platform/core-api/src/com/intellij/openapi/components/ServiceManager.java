@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,49 @@
  */
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * For old-style components, the contract specifies a lifecycle: the component gets created and notified during the project opening process.
  * For services, there's no such contract, so we don't even load the class implementing the service until someone requests it.
  */
 public class ServiceManager {
+  private static final Logger LOG = Logger.getInstance(ServiceManager.class);
+
   private ServiceManager() { }
 
   public static <T> T getService(@NotNull Class<T> serviceClass) {
-    @SuppressWarnings("unchecked") T instance = (T)ApplicationManager.getApplication().getPicoContainer().getComponentInstance(serviceClass.getName());
-    return instance;
+    return doGetService(ApplicationManager.getApplication(), serviceClass);
   }
 
   public static <T> T getService(@NotNull Project project, @NotNull Class<T> serviceClass) {
-    @SuppressWarnings("unchecked") T instance = (T)project.getPicoContainer().getComponentInstance(serviceClass.getName());
+    return doGetService(project, serviceClass);
+  }
+
+  @Nullable
+  private static <T> T doGetService(@NotNull ComponentManager componentManager, @NotNull Class<T> serviceClass) {
+    @SuppressWarnings("unchecked") T instance = (T)componentManager.getPicoContainer().getComponentInstance(serviceClass.getName());
+    if (instance == null) {
+      instance = componentManager.getComponent(serviceClass);
+      if (instance != null) {
+        Application app = ApplicationManager.getApplication();
+        String message = serviceClass.getName() + " requested as a service, but it is a component - convert it to a service or change call to " +
+                         (componentManager == app ? "ApplicationManager.getApplication().getComponent()" : "project.getComponent()");
+        if (app.isUnitTestMode()) {
+          LOG.error(message);
+        }
+        else {
+          LOG.warn(message);
+        }
+      }
+    }
     return instance;
   }
 

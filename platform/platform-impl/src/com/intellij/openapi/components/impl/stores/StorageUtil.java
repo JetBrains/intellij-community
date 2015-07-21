@@ -19,20 +19,15 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -78,6 +73,22 @@ public class StorageUtil {
 
   public static boolean isChangedByStorageOrSaveSession(@NotNull VirtualFileEvent event) {
     return event.getRequestor() instanceof StateStorage.SaveSession || event.getRequestor() instanceof StateStorage;
+  }
+
+  public static void checkUnknownMacros(@NotNull final ComponentManager componentManager, @NotNull final Project project) {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
+      // should be invoked last
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+        @Override
+        public void run() {
+          TrackingPathMacroSubstitutor substitutor = ComponentsPackage.getStateStore(componentManager).getStateStorageManager().getMacroSubstitutor();
+          if (substitutor != null) {
+            notifyUnknownMacros(substitutor, project, null);
+          }
+        }
+      });
+    }
   }
 
   public static void notifyUnknownMacros(@NotNull TrackingPathMacroSubstitutor substitutor,

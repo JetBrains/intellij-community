@@ -132,7 +132,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    tree.setDragEnabled(true);
+    if (!GraphicsEnvironment.isHeadless()) {
+      tree.setDragEnabled(true);
+    }
   }
 
   @Override

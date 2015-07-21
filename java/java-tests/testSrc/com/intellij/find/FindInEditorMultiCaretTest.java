@@ -150,7 +150,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
 
   private void nextOccurrence() {
     final EditorSearchComponent editorSearchComponent = getEditorSearchComponent();
-    executeAction(new NextOccurrenceAction(editorSearchComponent, editorSearchComponent.getSearchTextComponent()));
+    executeAction(new NextOccurrenceAction(editorSearchComponent, editorSearchComponent.getSearchTextComponent(), true));
   }
 
   private void prevOccurrence() {
