@@ -794,8 +794,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       return module;
     }
 
-    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentInitialization) {
-      module.init(path, beforeComponentInitialization);
+    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
+      module.init(path, beforeComponentCreation);
       myModulesCache = null;
       myPathToModule.put(path, module);
     }

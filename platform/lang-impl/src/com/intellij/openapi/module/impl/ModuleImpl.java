@@ -17,6 +17,7 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
@@ -103,7 +104,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void init(@NotNull final String path, @Nullable final Runnable beforeComponentInitialization) {
+  public void init(@NotNull final String path, @Nullable final Runnable beforeComponentCreation) {
     init(ProgressManager.getInstance().getProgressIndicator(), new Runnable() {
       @Override
       public void run() {
@@ -111,8 +112,8 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
         getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
         ComponentsPackage.getStateStore(ModuleImpl.this).getStateStorageManager().addMacro(StoragePathMacros.MODULE_FILE, path);
 
-        if (beforeComponentInitialization != null) {
-          beforeComponentInitialization.run();
+        if (beforeComponentCreation != null) {
+          beforeComponentCreation.run();
         }
       }
     });
@@ -128,7 +129,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     if (!super.isComponentSuitable(options)) {
       return false;
     }
-    if (options == null) {
+    if (options == null || options.isEmpty()) {
       return true;
     }
 
@@ -137,9 +138,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
         continue;
       }
 
-      String optionValue = options.get(optionName);
-      if (!StringUtil.isEmpty(optionValue) || StringUtil.split(optionValue, ";").contains(getOptionValue(createOptionKey(optionName)))) {
-        return false;
+      // we cannot filter using module options because at this moment module file data could be not loaded
+      String message = "Don't specify " + optionName + " in the component registration, transform component to service and implement your logic in your getInstance() method";
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(message);
+      }
+      else {
+        LOG.warn(message);
       }
     }
 
