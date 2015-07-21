@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -46,8 +47,15 @@ public class ServiceManager {
     if (instance == null) {
       instance = componentManager.getComponent(serviceClass);
       if (instance != null) {
-        LOG.warn(serviceClass.getName() + " requested as a service, but it is a component - convert it to a service or change call to " +
-                 (componentManager == ApplicationManager.getApplication() ? "ApplicationManager.getApplication().getComponent()" : "project.getComponent()"));
+        Application app = ApplicationManager.getApplication();
+        String message = serviceClass.getName() + " requested as a service, but it is a component - convert it to a service or change call to " +
+                         (componentManager == app ? "ApplicationManager.getApplication().getComponent()" : "project.getComponent()");
+        if (app.isUnitTestMode()) {
+          LOG.error(message);
+        }
+        else {
+          LOG.warn(message);
+        }
       }
     }
     return instance;
