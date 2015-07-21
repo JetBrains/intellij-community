@@ -218,9 +218,18 @@ public abstract class InplaceRefactoring {
   }
 
   protected SearchScope getReferencesSearchScope(VirtualFile file) {
-    return file == null
-           ? ProjectScope.getProjectScope(myElementToRename.getProject())
-           : new LocalSearchScope(myElementToRename.getContainingFile());
+    if (file == null) {
+      return ProjectScope.getProjectScope(myElementToRename.getProject());
+    }
+    else {
+      final PsiFile containingFile = myElementToRename.getContainingFile();
+      if (!file.equals(containingFile.getVirtualFile())) {
+        final PsiFile topLevelFile = PsiManager.getInstance(myProject).findFile(file);
+        return topLevelFile == null ? ProjectScope.getProjectScope(myElementToRename.getProject()) 
+                                    : new LocalSearchScope(topLevelFile);
+      }
+      return new LocalSearchScope(containingFile);
+    }
   }
 
   @Nullable
