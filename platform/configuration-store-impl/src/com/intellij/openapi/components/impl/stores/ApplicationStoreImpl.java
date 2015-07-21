@@ -28,7 +28,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplicationStoreImpl extends ComponentStoreImpl {
+class ApplicationStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
 
   private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT;

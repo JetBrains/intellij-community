@@ -90,7 +90,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @param optionName the name of the custom option.
    * @param optionValue the value of the custom option.
    */
-  void setOption(@NotNull Key<String> optionName, @NotNull String optionValue);
+  void setOption(@NotNull Key<String> key, @NotNull String value);
 
   @SuppressWarnings("unused")
   @Deprecated

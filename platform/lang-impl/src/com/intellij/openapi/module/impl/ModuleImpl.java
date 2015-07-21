@@ -18,14 +18,13 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentsPackage;
-import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.impl.ModulePathMacroManager;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.FileBasedStorage;
+import com.intellij.openapi.components.impl.stores.ModuleFileData;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -78,28 +77,44 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
-    getStateStore().setModuleFilePath(filePath);
     myName = moduleNameByFileName(PathUtil.getFileName(filePath));
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+  }
+
+  private void setModuleFilePath(@NotNull String filePath) {
+    String path = filePath.replace(File.separatorChar, '/');
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    StateStorageManager storageManager = ComponentsPackage.getStateStore(this).getStateStorageManager();
+    storageManager.clearStateStorage(StoragePathMacros.MODULE_FILE);
+    storageManager.addMacro(StoragePathMacros.MODULE_FILE, path);
   }
 
   @Override
   protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
     super.bootstrapPicoContainer(name);
-    getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ModulePathMacroManager.class);
   }
 
   @NotNull
-  public ModuleStoreImpl getStateStore() {
-    return (ModuleStoreImpl)ComponentsPackage.getStateStore(this);
+  private FileBasedStorage getMainStorage() {
+    return ((ModuleStoreImpl)ComponentsPackage.getStateStore(this)).getMainStorage();
   }
 
   @Override
-  public void init() {
-    init(ProgressManager.getInstance().getProgressIndicator());
+  public void init(@NotNull final String path, @Nullable final Runnable beforeComponentInitialization) {
+    init(ProgressManager.getInstance().getProgressIndicator(), new Runnable() {
+      @Override
+      public void run() {
+        // create ServiceManagerImpl at first to force extension classes registration
+        getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
+        ComponentsPackage.getStateStore(ModuleImpl.this).getStateStorageManager().addMacro(StoragePathMacros.MODULE_FILE, path);
+
+        if (beforeComponentInitialization != null) {
+          beforeComponentInitialization.run();
+        }
+      }
+    });
   }
 
   @Override
@@ -133,25 +148,25 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    return getStateStore().getMainStorage().getVirtualFile();
+    return getMainStorage().getVirtualFile();
   }
 
   @Override
   public void rename(String newName) {
     myName = newName;
-    final VirtualFile file = getStateStore().getMainStorage().getVirtualFile();
+    final VirtualFile file = getMainStorage().getVirtualFile();
     try {
       if (file != null) {
         ClasspathStorage.moduleRenamed(this, newName);
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-        getStateStore().setModuleFilePath(VfsUtilCore.virtualToIoFile(file).getCanonicalPath());
+        setModuleFilePath(VfsUtilCore.virtualToIoFile(file).getCanonicalPath());
         return;
       }
 
       // [dsl] we get here if either old file didn't exist or renaming failed
       final File oldFile = new File(getModuleFilePath());
       final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      getStateStore().setModuleFilePath(newFile.getCanonicalPath());
+      setModuleFilePath(newFile.getCanonicalPath());
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -161,7 +176,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @NotNull
   public String getModuleFilePath() {
-    return getStateStore().getModuleFilePath();
+    return getMainStorage().getFilePath();
   }
 
   @Override
@@ -234,18 +249,33 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void setOption(@NotNull Key<String> key, @NotNull String optionValue) {
-    getStateStore().setOption(key, optionValue);
+  public void setOption(@NotNull Key<String> key, @NotNull String value) {
+    try {
+      getStorageData().setOption(key, value);
+    }
+    catch (StateStorageException e) {
+      LOG.error(e);
+    }
+  }
+
+  @NotNull
+  private ModuleFileData getStorageData() {
+    return (ModuleFileData)getMainStorage().getStorageData();
   }
 
   @Override
   public void clearOption(@NotNull String optionName) {
-    getStateStore().clearOption(createOptionKey(optionName));
+    clearOption(createOptionKey(optionName));
   }
 
   @Override
   public void clearOption(@NotNull Key<String> key) {
-    getStateStore().clearOption(key);
+    try {
+      getStorageData().clearOption(key);
+    }
+    catch (StateStorageException e) {
+      LOG.error(e);
+    }
   }
 
   @Override
@@ -256,7 +286,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Nullable
   @Override
   public String getOptionValue(@NotNull Key<String> key) {
-    return getStateStore().getOptionValue(key);
+    try {
+      return getStorageData().getOptionValue(key);
+    }
+    catch (StateStorageException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @NotNull
@@ -382,7 +418,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       modifiableModel.setModuleFilePath(ModuleImpl.this, moduleFilePath, newFilePath);
       modifiableModel.commit();
 
-      getStateStore().setModuleFilePath(newFilePath);
+      ModuleImpl.this.setModuleFilePath(newFilePath);
     }
 
     @Override

@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +36,7 @@ public class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NotNull
   @Override
   protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
-    return new ModuleStoreImpl.ModuleFileData(ROOT_TAG_NAME, myModule);
+    return new ModuleFileData(ROOT_TAG_NAME, myModule);
   }
 
   @NotNull
@@ -49,9 +46,10 @@ public class ModuleStateStorageManager extends StateStorageManagerImpl {
       @NotNull
       @Override
       public List<StateStorage.SaveSession> createSaveSessions() {
-        if (myModule.getStateStore().getMainStorageData().isDirty()) {
+        FileBasedStorage storage = ((ModuleStoreImpl)ComponentsPackage.getStateStore(myModule)).getMainStorage();
+        if (storage.getStorageData().isDirty()) {
           // force XmlElementStorageSaveSession creation
-          getExternalizationSession(myModule.getStateStore().getMainStorage());
+          getExternalizationSession(storage);
         }
         return super.createSaveSessions();
       }

@@ -16,15 +16,21 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public interface ModuleEx extends Module {
-  void init();
+  void init(@NotNull String path, @Nullable Runnable beforeComponentInitialization);
+
   void moduleAdded();
+
   void projectOpened();
+
   void projectClosed();
+
   void rename(String newName);
 
   void clearScopesCache();
