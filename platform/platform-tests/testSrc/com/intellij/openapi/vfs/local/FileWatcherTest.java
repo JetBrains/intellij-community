@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -112,7 +113,7 @@ public class FileWatcherTest extends PlatformTestCase {
     myAcceptedDirectories.clear();
     myAcceptedDirectories.add(getTempDirectory().getAbsolutePath());
 
-    LOG = FileWatcher.getLog();
+    LOG = NativeFileWatcherImpl.getLog();
     LOG.debug("================== setting up " + getName() + " ==================");
   }
 
