@@ -151,7 +151,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           }
 
           IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
-          if (installedPlugin != null) {
+          if (installedPlugin != null && !installedPlugin.isBundled()) {
             File oldFile = installedPlugin.getPath();
             if (oldFile != null) {
               StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));

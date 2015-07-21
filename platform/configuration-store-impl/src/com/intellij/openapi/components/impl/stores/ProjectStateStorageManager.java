@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class ProjectStateStorageManager extends StateStorageManagerImpl {
   protected final ProjectImpl myProject;
   @NonNls protected static final String ROOT_TAG_NAME = "project";
@@ -53,20 +51,13 @@ public class ProjectStateStorageManager extends StateStorageManagerImpl {
   @Nullable
   @Override
   protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
-    final ComponentConfig config = myProject.getConfig(component.getClass());
-    assert config != null : "Couldn't find old storage for " + component.getClass().getName();
-
-    final boolean workspace = isWorkspace(config.options);
+    boolean workspace = myProject.isWorkspaceComponent(component.getClass());
     String fileSpec = workspace ? StoragePathMacros.WORKSPACE_FILE : StoragePathMacros.PROJECT_FILE;
     StateStorage storage = getStateStorage(fileSpec, workspace ? RoamingType.DISABLED : RoamingType.PER_USER);
     if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class, false)) {
       fileSpec = StoragePathMacros.PROJECT_FILE;
     }
     return fileSpec;
-  }
-
-  private static boolean isWorkspace(@Nullable Map<String, String> options) {
-    return options != null && Boolean.parseBoolean(options.get(ProjectStoreImpl.OPTION_WORKSPACE));
   }
 
   @NotNull

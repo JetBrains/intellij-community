@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1013,7 +1013,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     @NotNull
     @Override
     public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
-      final ActionCallback result = isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(c, forced);
+      final ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, forced);
       result.doWhenProcessed(new Runnable() {
         @Override
         public void run() {
@@ -1030,7 +1030,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     @NotNull
     @Override
     public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
-      return isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(command, forced);
+      return isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(command, forced);
     }
 
     @Override
@@ -1186,7 +1186,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
     
     
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override

@@ -1186,6 +1186,14 @@ public final class PsiUtil extends PsiUtilCore {
       }
       throw new AssertionError("Invalid type: " + type + " of class " + type.getClass() + " " + customMessage);
     }
+    for (PsiAnnotation annotation : type.getAnnotations()) {
+      try {
+        PsiUtilCore.ensureValid(annotation);
+      }
+      catch (PsiInvalidElementAccessException e) {
+        throw customMessage == null? e : new RuntimeException(customMessage, e);
+      }
+    }
   }
 
   @Nullable

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,17 +26,31 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.openapi.progress.util.ProgressIndicatorUtils#scheduleWithWriteActionPriority(ReadTask) 
  * 
  */
-public interface ReadTask {
+public abstract class ReadTask {
   /**
    * Performs the computation.
    * Is invoked inside a read action and under a progress indicator that's canceled when a write action is about to occur.
    */
-  void computeInReadAction(@NotNull ProgressIndicator indicator);
+  public abstract void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException;
 
   /**
    * Is invoked on Swing thread whenever the computation is canceled by a write action.
    * A likely implementation is to restart the computation, maybe based on the new state of the system.
    */
-  void onCanceled(@NotNull ProgressIndicator indicator);
+  public abstract void onCanceled(@NotNull ProgressIndicator indicator);
 
+  /**
+   * Is invoked on a background thread. The responsibility of this method is to start a read action and 
+   * call {@link #computeInReadAction(ProgressIndicator)}. Overriders might also do something else.
+   * For example, use {@link com.intellij.openapi.project.DumbService#runReadActionInSmartMode(Runnable)}.
+   * @param indicator the progress indicator of the background thread
+   */
+  public void runBackgroundProcess(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        computeInReadAction(indicator);
+      }
+    });
+  }
 }

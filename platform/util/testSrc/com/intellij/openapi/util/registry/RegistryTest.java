@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.util.registry;
 
-package com.intellij.util.pico;
+import org.junit.Test;
 
-import org.picocontainer.PicoContainer;
+import static junit.framework.Assert.assertEquals;
 
-/**
- * @deprecated please use DefaultPicoContainer directly
- */
-public class IdeaPicoContainer extends DefaultPicoContainer {
-
-  public IdeaPicoContainer() {
-    super(null);
-  }
-
-  public IdeaPicoContainer(final PicoContainer parent) {
-    super(parent);
+@SuppressWarnings("UnresolvedPropertyKey")
+public class RegistryTest {
+  @Test
+  public void testInvalidInteger() {
+    Registry.get("blah").setValue("invalidNumber");
+    assertEquals(123, Registry.intValue("blah", 123));
   }
 }

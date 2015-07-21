@@ -931,7 +931,7 @@ public class AbstractPopup implements JBPopup {
         public ActionCallback run() {
           if (isDisposed()) {
             removeActivity();
-            return new ActionCallback.Done();
+            return ActionCallback.DONE;
           }
 
           _requestFocus();
@@ -961,14 +961,14 @@ public class AbstractPopup implements JBPopup {
                   @Override
                   public ActionCallback run() {
                     if (isDisposed()) {
-                      return new ActionCallback.Rejected();
+                      return ActionCallback.REJECTED;
                     }
 
                     _requestFocus();
 
                     afterShowRunnable.run();
 
-                    return new ActionCallback.Done();
+                    return ActionCallback.DONE;
                   }
                 }, true).notify(result).doWhenProcessed(new Runnable() {
                   @Override
@@ -1181,7 +1181,7 @@ public class AbstractPopup implements JBPopup {
       @Override
       public ActionCallback run() {
         _requestFocus();
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       }
     }, true);
 

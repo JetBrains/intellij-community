@@ -542,21 +542,21 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
+  public static <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
 
-  public <T> void assertContainsOrdered(Collection<? extends T> collection, Collection<T> expected) {
+  public static <T> void assertContainsOrdered(Collection<? extends T> collection, Collection<T> expected) {
     ArrayList<T> copy = new ArrayList<T>(collection);
     copy.retainAll(expected);
     assertOrderedEquals(toString(collection), copy, expected);
   }
 
-  public <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
+  public static <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
     assertContainsElements(collection, Arrays.asList(expected));
   }
 
-  public <T> void assertContainsElements(Collection<? extends T> collection, Collection<T> expected) {
+  public static <T> void assertContainsElements(Collection<? extends T> collection, Collection<T> expected) {
     ArrayList<T> copy = new ArrayList<T>(collection);
     copy.retainAll(expected);
     assertSameElements(toString(collection), copy, expected);
@@ -566,11 +566,11 @@ public abstract class UsefulTestCase extends TestCase {
     return toString(Arrays.asList(collection), separator);
   }
 
-  public <T> void assertDoesntContain(Collection<? extends T> collection, T... notExpected) {
+  public static <T> void assertDoesntContain(Collection<? extends T> collection, T... notExpected) {
     assertDoesntContain(collection, Arrays.asList(notExpected));
   }
 
-  public <T> void assertDoesntContain(Collection<? extends T> collection, Collection<T> notExpected) {
+  public static <T> void assertDoesntContain(Collection<? extends T> collection, Collection<T> notExpected) {
     ArrayList<T> expected = new ArrayList<T>(collection);
     expected.removeAll(notExpected);
     assertSameElements(collection, expected);

@@ -1258,7 +1258,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     @Override
     public ActionCallback switchTo(boolean requestFocus) {
       myButton.click();
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     @Override

@@ -14,12 +14,29 @@ public class JpsMavenModuleSerializationTest extends JpsSerializationTestCase {
     loadProject("plugins/maven/jps-plugin/testData/compiler/classpathTest");
     List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
-    JpsModule main = modules.get(0);
-    assertEquals("main", main.getName());
-    JpsModule dep = modules.get(1);
-    assertEquals("dep", dep.getName());
-    JpsModule depTest = modules.get(2);
-    assertEquals("dep-test", depTest.getName());
+
+    JpsModule main = null;
+    JpsModule dep = null;
+    JpsModule depTest = null;
+    for (JpsModule module : modules) {
+      final String name = module.getName();
+      if ("main".equals(name)) {
+        main = module;
+      }
+      else if ("dep-test".equals(name)) {
+        depTest = module;
+      }
+      else if ("dep".equals(name)) {
+        dep = module;
+      }
+      else {
+        fail("Unexpected module name " + name);
+      }
+    }
+    assertNotNull("module 'main' was not loaded",  main);
+    assertNotNull("module 'depTest' was not loaded", depTest);
+    assertNotNull("module 'dep' was not loaded", dep);
+
 
     for (JpsModule module : modules) {
       assertNotNull(getService().getExtension(module));

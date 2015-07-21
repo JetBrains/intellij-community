@@ -320,6 +320,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     return classOrPrimitiveName;
   }
 
+  @Nullable
   private static String getQualifierTextByMethodCall(final PsiMethodCallExpression methodCall,
                                                      final PsiType functionalInterfaceType,
                                                      final PsiParameter[] parameters,
@@ -363,6 +364,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     }
   }
 
+  @Nullable
   private static String composeReceiverQualifierText(PsiParameter[] parameters,
                                                      PsiMethod psiMethod,
                                                      PsiClass containingClass,
@@ -400,8 +402,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       return qualifiedName;
     }
     else {
-      final String containingClassName = containingClass.getName();
-      return containingClassName != null ? containingClassName : "";
+      return containingClass.getName();
     }
   }
 

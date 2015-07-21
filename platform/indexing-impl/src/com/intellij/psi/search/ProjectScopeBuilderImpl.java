@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +39,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
   @NotNull
   @Override
   public GlobalSearchScope buildLibrariesScope() {
-    return new ProjectAndLibrariesScope(myProject) {
+    ProjectAndLibrariesScope result = new ProjectAndLibrariesScope(myProject) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
         return myProjectFileIndex.isInLibrarySource(file) || myProjectFileIndex.isInLibraryClasses(file);
@@ -49,6 +50,8 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         return false;
       }
     };
+    result.setDisplayName(PsiBundle.message("psi.search.scope.libraries"));
+    return result;
   }
 
   @NotNull
@@ -65,7 +68,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
 
     return new ProjectAndLibrariesScope(myProject, searchOutsideRootModel);
   }
-
+  
   @NotNull
   @Override
   public GlobalSearchScope buildProjectScope() {

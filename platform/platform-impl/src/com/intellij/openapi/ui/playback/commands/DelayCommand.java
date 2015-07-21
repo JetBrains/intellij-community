@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ public class DelayCommand extends AbstractCommand {
     }
     catch (NumberFormatException e) {
       dumpError(context, "Invalid delay value: " + s);
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 }

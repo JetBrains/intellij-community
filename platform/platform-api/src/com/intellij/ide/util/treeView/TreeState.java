@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -437,7 +437,7 @@ public class TreeState implements JDOMExternalizable {
     @Override
     public ActionCallback expand(DefaultMutableTreeNode node) {
       myTree.expandPath(new TreePath(node.getPath()));
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     @Override
@@ -445,7 +445,7 @@ public class TreeState implements JDOMExternalizable {
       final WeakReference<ActionCallback> ref = (WeakReference<ActionCallback>)myTree.getClientProperty(CALLBACK);
       final ActionCallback callback = SoftReference.dereference(ref);
       if (callback != null) return callback;
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     @Override
@@ -475,7 +475,7 @@ public class TreeState implements JDOMExternalizable {
     @Override
     public ActionCallback expand(DefaultMutableTreeNode node) {
       final Object userObject = node.getUserObject();
-      if (!(userObject instanceof NodeDescriptor)) return new ActionCallback.Rejected();
+      if (!(userObject instanceof NodeDescriptor)) return ActionCallback.REJECTED;
 
       NodeDescriptor desc = (NodeDescriptor)userObject;
 

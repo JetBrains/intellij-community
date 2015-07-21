@@ -157,7 +157,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private void applyRelevant() {
     for (ExternalAnnotator annotator : myAnnotator2DataMap.keySet()) {
       final MyData data = myAnnotator2DataMap.get(annotator);
-      if (data != null) {
+      if (data != null && data.myAnnotationResult != null) {
         annotator.apply(data.myPsiRoot, data.myAnnotationResult, myAnnotationHolder);
       }
     }

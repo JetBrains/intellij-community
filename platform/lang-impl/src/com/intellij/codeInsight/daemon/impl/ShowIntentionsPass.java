@@ -258,9 +258,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     else if (result == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
       myHasToRecreate = true;
     }
-    else {
-      myShowBulb = false;  // nothing to apply
-    }
   }
 
   public static void getActionsToShow(@NotNull final Editor hostEditor,

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -344,6 +345,30 @@ public class RepositoryAttachHandler {
                                      final Processor<List<MavenArtifact>> resultProcessor,
                                      ProgressIndicator indicator) {
     doResolveInner(project, Collections.singletonList(mavenId), extraTypes, repositories, resultProcessor, indicator);
+  }
+
+  public static List<String> retrieveVersions(@NotNull final Project project,
+                                              @NotNull final String groupId,
+                                              @NotNull final String artifactId,
+                                              @NotNull final String remoteRepository) {
+    MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
+    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
+    try {
+      List<String> versions = embedder.retrieveVersions(groupId, artifactId, remoteRepository);
+      Collections.sort(versions, new Comparator<String>() {
+        @Override
+        public int compare(String o1, String o2) {
+          return StringUtil.compareVersionNumbers(o2, o1);
+        }
+      });
+      return versions;
+    }
+    catch (MavenProcessCanceledException e) {
+      return Collections.emptyList();
+    }
+    finally {
+      manager.release(embedder);
+    }
   }
 
   public static void doResolveInner(Project project,

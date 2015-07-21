@@ -60,7 +60,6 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
   private static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
 
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
-  @NonNls static final String OPTION_WORKSPACE = "workspace";
 
   private static int originalVersion = -1;
 

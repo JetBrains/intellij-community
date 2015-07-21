@@ -72,7 +72,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
     if (project != null && project.isDefault()) title = "Default " + title;
-    setTitle(name == null ? title : name.replaceAll("\n", " "));
+    setTitle(name == null ? title : name.replace('\n', ' '));
     init();
   }
 

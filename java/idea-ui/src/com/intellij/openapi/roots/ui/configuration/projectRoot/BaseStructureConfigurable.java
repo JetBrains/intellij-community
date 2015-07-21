@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,17 +98,17 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-    if (place == null) return new ActionCallback.Done();
+    if (place == null) return ActionCallback.DONE;
 
     final Object object = place.getPath(TREE_OBJECT);
     final String byName = (String)place.getPath(TREE_NAME);
 
-    if (object == null && byName == null) return new ActionCallback.Done();
+    if (object == null && byName == null) return ActionCallback.DONE;
 
     final MyNode node = object == null ? null : findNodeByObject(myRoot, object);
     final MyNode nodeByName = byName == null ? null : findNodeByName(myRoot, byName);
 
-    if (node == null && nodeByName == null) return new ActionCallback.Done();
+    if (node == null && nodeByName == null) return ActionCallback.DONE;
 
     final NamedConfigurable config;
     if (node != null) {

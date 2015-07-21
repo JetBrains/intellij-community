@@ -24,7 +24,6 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
@@ -195,19 +194,11 @@ public class DfaVariableValue extends DfaValue {
 
       boolean hasUnknowns = false;
       for (PsiExpression expression : initializers) {
-        if (!(expression instanceof PsiReferenceExpression)) {
-          hasUnknowns = true;
-          continue;
-        }
-        PsiElement target = ((PsiReferenceExpression)expression).resolve();
-        if (!(target instanceof PsiParameter)) {
-          hasUnknowns = true;
-          continue;
-        }
-        if (NullableNotNullManager.isNullable((PsiParameter)target)) {
+        Nullness nullness = getFieldInitializerNullness(expression);
+        if (nullness == Nullness.NULLABLE) {
           return Nullness.NULLABLE;
         }
-        if (!NullableNotNullManager.isNotNull((PsiParameter)target)) {
+        if (nullness == Nullness.UNKNOWN) {
           hasUnknowns = true;
         }
       }
@@ -223,6 +214,20 @@ public class DfaVariableValue extends DfaValue {
     }
 
     return defaultNullability;
+  }
+
+  private static Nullness getFieldInitializerNullness(@NotNull PsiExpression expression) {
+    if (expression.textMatches(PsiKeyword.NULL)) return Nullness.NULLABLE;
+    if (expression instanceof PsiNewExpression || expression instanceof PsiLiteralExpression || expression instanceof PsiPolyadicExpression) return Nullness.NOT_NULL;
+    if (expression instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      return DfaPsiUtil.getElementNullability(null, (PsiModifierListOwner)target);
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+      return method != null ? DfaPsiUtil.getElementNullability(null, method) : Nullness.UNKNOWN;
+    }
+    return Nullness.UNKNOWN;
   }
 
   public boolean isFlushableByCalls() {

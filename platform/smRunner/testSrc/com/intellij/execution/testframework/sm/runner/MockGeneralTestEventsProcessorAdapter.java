@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,10 @@ import org.jetbrains.annotations.Nullable;
 */
 public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProcessor {
   private final StringBuilder myOutputBuffer = new StringBuilder();
+
+  public MockGeneralTestEventsProcessorAdapter(Project project) {
+    super(project);
+  }
 
   @Override
   public void onStartTesting() {
@@ -96,7 +101,7 @@ public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProc
   }
 
   @Override
-  public void addEventsListener(@NotNull SMTRunnerEventsListener viewer) {
+  public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
   }
 
   @Override

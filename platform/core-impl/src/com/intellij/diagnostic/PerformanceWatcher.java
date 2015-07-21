@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +65,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private static final int SAMPLING_INTERVAL_MS = 1000;
 
   public static PerformanceWatcher getInstance() {
-    return ServiceManager.getService(PerformanceWatcher.class);
+    return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
   }
 
   @Override

@@ -49,12 +49,28 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals("sampleProjectName", myProject.getName());
     List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
-    JpsModule main = modules.get(0);
-    assertEquals("main", main.getName());
-    JpsModule util = modules.get(1);
-    assertEquals("util", util.getName());
-    JpsModule xxx = modules.get(2);
-    assertEquals("xxx", xxx.getName());
+
+    JpsModule main = null;
+    JpsModule xxx = null;
+    JpsModule util = null;
+    for (JpsModule module : modules) {
+      final String name = module.getName();
+      if ("main".equals(name)) {
+        main = module;
+      }
+      else if ("util".equals(name)) {
+        util = module;
+      }
+      else if ("xxx".equals(name)) {
+        xxx = module;
+      }
+      else {
+        fail("Unexpected module name " + name);
+      }
+    }
+    assertNotNull("module 'main' was not loaded",  main);
+    assertNotNull("module 'util' was not loaded", util);
+    assertNotNull("module 'xxx' was not loaded", xxx);
 
     assertTrue(FileUtil.filesEqual(new File(baseDirPath, "util"), JpsModelSerializationDataService.getBaseDirectory(util)));
 
@@ -174,8 +190,23 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   public void testSaveProject() {
     loadProject(SAMPLE_PROJECT_PATH);
     List<JpsModule> modules = myProject.getModules();
-    doTestSaveModule(modules.get(0), SAMPLE_PROJECT_PATH + "/main.iml");
-    doTestSaveModule(modules.get(1), SAMPLE_PROJECT_PATH + "/util/util.iml");
+
+    JpsModule main = null, util = null;
+    for (JpsModule module : modules) {
+      final String name = module.getName();
+      if ("main".equals(name)) {
+        main  = module;
+      }
+      else if ("util".equals(name)) {
+        util  = module;
+      }
+    }
+
+    assertNotNull(main);
+    assertNotNull(util);
+
+    doTestSaveModule(main, SAMPLE_PROJECT_PATH + "/main.iml");
+    doTestSaveModule(util, SAMPLE_PROJECT_PATH + "/util/util.iml");
     //tod[nik] remember that test output root wasn't specified and doesn't save it to avoid unnecessary modifications of iml files
     //doTestSaveModule(modules.get(2), "xxx/xxx.iml");
 

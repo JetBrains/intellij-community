@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
@@ -37,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
@@ -319,7 +321,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Nullable
   public Icon getProgressTailIcon() {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
-      myProgressTailIcon = IconLoader.getIcon(myProgressTailIconName);
+      try {
+        final URL url = getClass().getResource(myProgressTailIconName);
+        final Image image = ImageLoader.loadFromUrl(url, false);
+        if (image != null) {
+          myProgressTailIcon = new ImageIcon(image);
+        }
+      } catch (Exception ignore) {}
     }
     return myProgressTailIcon;
   }

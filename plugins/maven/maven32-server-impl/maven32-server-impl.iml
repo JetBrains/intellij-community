@@ -18,7 +18,9 @@
           <root url="file://$MODULE_DIR$/lib/maven32/lib" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/maven-core-3.2.5-sources.jar!/" />
+        </SOURCES>
         <jarDirectory url="file://$MODULE_DIR$/lib/maven32/lib" recursive="false" />
       </library>
     </orderEntry>
@@ -73,5 +75,46 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="maven3-server-common" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/boot/plexus-classworlds-2.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/commons-io-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/wagon-file-2.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/commons-cli-1.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/commons-lang-2.6.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-core-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/sisu-guava-0.9.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/aether-api-1.13.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/aether-spi-1.13.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-model-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/plexus-cipher-1.7.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/aether-impl-1.13.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/aether-util-1.13.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-compat-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/plexus-utils-2.0.6.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-embedder-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-settings-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/wagon-http-2.8-shaded.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/wagon-http-shared-2.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-plugin-api-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/sisu-inject-bean-2.3.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/wagon-provider-api-2.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/sisu-guice-3.1.0-no_aop.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/sisu-inject-plexus-2.3.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-model-builder-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/plexus-interpolation-1.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/plexus-sec-dispatcher-1.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-aether-provider-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-settings-builder-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/aether-connector-wagon-1.13.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-repository-metadata-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

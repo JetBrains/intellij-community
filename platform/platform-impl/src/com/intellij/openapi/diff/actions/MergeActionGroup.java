@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public class MergeActionGroup extends ActionGroup {
     }
   }
 
-  public static class OperationAction extends AnAction {
+  public static class OperationAction extends DumbAwareAction {
     private final MergeOperations.Operation myOperation;
 
     public OperationAction(MergeOperations.Operation operation) {

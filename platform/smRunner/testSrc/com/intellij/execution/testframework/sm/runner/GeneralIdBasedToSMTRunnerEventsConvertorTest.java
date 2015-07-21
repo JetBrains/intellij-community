@@ -28,7 +28,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
   protected void setUp() throws Exception {
     super.setUp();
     myRootProxy = new SMTestProxy.SMRootTestProxy();
-    myEventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(myRootProxy, "test");
+    myEventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), myRootProxy, "test");
     myEventsProcessor.onStartTesting();
   }
 

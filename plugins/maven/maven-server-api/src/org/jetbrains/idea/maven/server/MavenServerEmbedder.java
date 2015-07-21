@@ -36,6 +36,10 @@ public interface MavenServerEmbedder extends Remote {
                  boolean alwaysUpdateSnapshots) throws RemoteException;
 
   @NotNull
+  List<String> retrieveAvailableVersions(@NotNull String groupId, @NotNull String artifactId, @NotNull String remoteRepository)
+    throws RemoteException;
+
+  @NotNull
   MavenServerExecutionResult resolveProject(@NotNull File file,
                                             @NotNull Collection<String> activeProfiles,
                                             @NotNull Collection<String> inactiveProfiles) throws RemoteException,

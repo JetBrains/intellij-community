@@ -117,6 +117,13 @@ public class MinusculeMatcher implements Matcher {
     return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));
   }
 
+  private static int nextWord(@NotNull String name, int start) {
+    if (start < name.length() && Character.isDigit(name.charAt(start))) {
+      return start + 1; //treat each digit as a separate hump
+    }
+    return NameUtil.nextWord(name, start);
+  }
+
   private boolean hasWildCards() {
     for (int i = 0; i < myPattern.length; i++) {
       if (isWildcard(i)) {
@@ -177,7 +184,7 @@ public class MinusculeMatcher implements Matcher {
           if (nextHumpStart == i) {
             isHumpStart = true;
           }
-          nextHumpStart = NameUtil.nextWord(name, nextHumpStart);
+          nextHumpStart = nextWord(name, nextHumpStart);
           if (first != range) {
             humpIndex++;
           }
@@ -365,7 +372,7 @@ public class MinusculeMatcher implements Matcher {
       return null;
     }
 
-    // middle matches have to be at least of length 3, to prevent too many irrelevant matches
+    // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
     int minFragment = isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
                       Character.isLetterOrDigit(name.charAt(nameIndex)) && !isWordStart(name, nameIndex)
                       ? 3 : 1;
@@ -375,11 +382,11 @@ public class MinusculeMatcher implements Matcher {
            patternIndex + i < myPattern.length &&
            charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
       if (isUpperCase[patternIndex + i] && myHasHumps) {
-        if (i < minFragment) {
-          return null;
-        }
         // when an uppercase pattern letter matches lowercase name letter, try to find an uppercase (better) match further in the name
         if (myPattern[patternIndex + i] != name.charAt(nameIndex + i)) {
+          if (i < minFragment) {
+            return null;
+          }
           int nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i);
           FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart, matchingState);
           if (ranges != null) {
@@ -457,7 +464,7 @@ public class MinusculeMatcher implements Matcher {
     }
     int nextWordStart = startFrom;
     while (true) {
-      nextWordStart = NameUtil.nextWord(name, nextWordStart);
+      nextWordStart = nextWord(name, nextWordStart);
       if (nextWordStart >= name.length()) {
         return -1;
       }

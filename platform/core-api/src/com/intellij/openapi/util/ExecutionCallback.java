@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ class ExecutionCallback {
 
   ExecutionCallback(int executedCount) {
     myCountToExecution = executedCount;
-    assert executedCount >= 1 : executedCount;
   }
 
   /**
@@ -74,7 +73,7 @@ class ExecutionCallback {
     }
   }
 
-  final void doWhenExecuted(@NotNull final Runnable runnable) {
+  void doWhenExecuted(@NotNull final Runnable runnable) {
     Runnable toRun;
     synchronized (this) {
       if (isExecuted()) {

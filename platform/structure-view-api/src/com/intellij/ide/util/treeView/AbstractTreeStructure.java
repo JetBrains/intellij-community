@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,10 @@ public abstract class AbstractTreeStructure {
 
   @NotNull
   public static ActionCallback asyncCommitDocuments(@NotNull Project project) {
-    if (project.isDisposed()) return new ActionCallback.Done();
+    if (project.isDisposed()) return ActionCallback.DONE;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     if (!documentManager.hasUncommitedDocuments()) {
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
     final ActionCallback callback = new ActionCallback();
     documentManager.performWhenAllCommitted(callback.createSetDoneRunnable());
@@ -57,7 +57,7 @@ public abstract class AbstractTreeStructure {
   @NotNull
   public ActionCallback asyncCommit() {
     if (hasSomethingToCommit()) commit();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   public boolean isToBuildChildrenInBackground(Object element){

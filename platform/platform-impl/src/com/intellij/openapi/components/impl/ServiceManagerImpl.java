@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.components.impl;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
@@ -148,9 +148,9 @@ public class ServiceManagerImpl implements BaseComponent {
           continue;
         }
 
-        ComponentConfig config = componentManager.getConfig(aClass);
-        if (config != null) {
-          processor.process(aClass, config.pluginDescriptor);
+        PluginId pluginId = componentManager.getConfig(aClass);
+        if (pluginId != null) {
+          processor.process(aClass, PluginManager.getPlugin(pluginId));
         }
       }
     }

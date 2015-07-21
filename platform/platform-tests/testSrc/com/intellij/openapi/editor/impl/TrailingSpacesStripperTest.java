@@ -116,7 +116,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   public void testOnlyModifiedLinesWhenDoesNotAllowCaretAfterEndOfLine() throws IOException {
     configureFromFileText("x.txt", "xxx<caret>   \nZ   ");
     type(' ');
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().indexOf("Z") + 1);
+    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().indexOf('Z') + 1);
     type('Z');
 
     stripTrailingSpaces();

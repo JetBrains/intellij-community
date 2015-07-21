@@ -49,6 +49,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -1494,7 +1495,7 @@ public abstract class ChooseByNameBase {
     return panel;
   }
 
-  private class CalcElementsThread implements ReadTask {
+  private class CalcElementsThread extends ReadTask {
     private final String myPattern;
     private final boolean myCheckboxState;
     private final Consumer<Set<?>> myCallback;
@@ -1519,6 +1520,21 @@ public abstract class ChooseByNameBase {
       myCalcElementsThread = this;
       showCard(SEARCHING_CARD, 200);
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, this);
+    }
+
+    @Override
+    public void runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+      Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          computeInReadAction(indicator);
+        }
+      };
+      if (DumbService.isDumbAware(myModel)) {
+        ApplicationManager.getApplication().runReadAction(r);
+      } else {
+        DumbService.getInstance(myProject).runReadActionInSmartMode(r);
+      }
     }
 
     @Override
