@@ -114,6 +114,9 @@ public class RuntimeResourcesConfigurationImpl extends RuntimeResourcesConfigura
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    if (!myLoadedByExtension && !myRoots.isEmpty()) {
+      return;
+    }
     JpsDevKitModelSerializerExtension.RuntimeResourceListState state = new JpsDevKitModelSerializerExtension.RuntimeResourceListState();
     XmlSerializer.deserializeInto(state, element);
     loadState(state);
