@@ -43,6 +43,7 @@ public class RuntimeResourcesConfigurationImpl extends RuntimeResourcesConfigura
   public RuntimeResourcesConfigurationImpl(RuntimeResourcesConfigurationImpl source) {
     mySource = source;
     copyRootsFrom(source);
+    myLoadedByExtension = source.myLoadedByExtension;
   }
 
   @Override
