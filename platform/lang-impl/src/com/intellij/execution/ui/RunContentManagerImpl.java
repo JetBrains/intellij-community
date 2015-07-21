@@ -155,8 +155,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(final ContentManagerEvent event) {
-        Content content = event.getContent();
-        getSyncPublisher().contentSelected(content == null ? null : getRunContentDescriptorByContent(content), executor);
+        if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+          Content content = event.getContent();
+          getSyncPublisher().contentSelected(content == null ? null : getRunContentDescriptorByContent(content), executor);
+        }
       }
     });
     myToolwindowIdToContentManagerMap.put(toolWindowId, contentManager);
