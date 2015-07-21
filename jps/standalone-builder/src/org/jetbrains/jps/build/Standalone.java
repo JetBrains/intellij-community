@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.build;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ParameterizedRunnable;
 import com.sampullara.cli.Args;
@@ -88,7 +89,8 @@ public class Standalone {
       printUsageAndExit();
     }
 
-    instance.loadAndRunBuild(projectPaths.get(0));
+    final String projectPath = (new File(projectPaths.get(0))).getAbsolutePath();
+    instance.loadAndRunBuild(FileUtil.toCanonicalPath(projectPath));
     System.exit(0);
   }
 
