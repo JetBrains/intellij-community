@@ -19,11 +19,13 @@ import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 
-@SuppressWarnings("UnresolvedPropertyKey")
 public class RegistryTest {
+  private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
+
   @Test
   public void testInvalidInteger() {
-    Registry.get("blah").setValue("invalidNumber");
-    assertEquals(123, Registry.intValue("blah", 123));
+    int originalValue = Registry.intValue(INTEGER_KEY);
+    Registry.get(INTEGER_KEY).setValue("invalidNumber");
+    assertEquals(originalValue, Registry.intValue(INTEGER_KEY));
   }
 }
