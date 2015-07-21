@@ -73,6 +73,10 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
           StringUtil.startsWith(methodCallInfo.get(0), GradleSourceSetsContributor.SOURCE_SETS + '.')) {
         GradleResolverUtil.addImplicitVariable(processor, state, place, GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER);
       }
+      if (place.getText().equals(GradleDistributionsContributor.DISTRIBUTIONS) &&
+          StringUtil.startsWith(methodCallInfo.get(0), GradleDistributionsContributor.DISTRIBUTIONS + '.')) {
+        GradleResolverUtil.addImplicitVariable(processor, state, place, GradleCommonClassNames.GRADLE_API_DISTRIBUTION_CONTAINER);
+      }
     }
   }
 
