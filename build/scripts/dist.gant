@@ -228,9 +228,9 @@ private layoutWin(Map args, String home, Paths paths) {
 
   List resourcePaths = ["$home/${appInfoModulePath}/src", "$home/platform/icons/src"]
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/${name}.exe", appInfoFile(),
-                   productProperties.exe_launcher_properties, productProperties.exe_selector, resourcePaths)
+                   productProperties.exe_launcher_properties, productProperties.systemSelector(), resourcePaths)
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/${name}64.exe", appInfoFile(),
-                   productProperties.exe64_launcher_properties, productProperties.exe_selector, resourcePaths)
+                   productProperties.exe64_launcher_properties, productProperties.systemSelector(), resourcePaths)
 
   productProperties.customWinLayout(target)
 }
