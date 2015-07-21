@@ -22,7 +22,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
-import com.intellij.openapi.components.impl.stores.ModuleFileData;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -31,6 +30,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.module.OptionManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -96,12 +96,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @NotNull
-  private FileBasedStorage getMainStorage() {
-    return getMainStorage(this);
-  }
-
-  @NotNull
-  public static FileBasedStorage getMainStorage(@NotNull Module module) {
+  private static FileBasedStorage getMainStorage(@NotNull Module module) {
     FileBasedStorage storage = (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
     assert storage != null;
     return storage;
@@ -154,13 +149,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    return getMainStorage().getVirtualFile();
+    return getMainStorage(this).getVirtualFile();
   }
 
   @Override
   public void rename(String newName) {
     myName = newName;
-    final VirtualFile file = getMainStorage().getVirtualFile();
+    final VirtualFile file = getMainStorage(this).getVirtualFile();
     try {
       if (file != null) {
         ClasspathStorage.moduleRenamed(this, newName);
@@ -182,7 +177,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @NotNull
   public String getModuleFilePath() {
-    return getMainStorage().getFilePath();
+    return getMainStorage(this).getFilePath();
   }
 
   @Override
@@ -256,17 +251,21 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void setOption(@NotNull Key<String> key, @NotNull String value) {
-    try {
-      getStorageData().setOption(key, value);
-    }
-    catch (StateStorageException e) {
-      LOG.error(e);
+    OptionManager manager = getOptionManager();
+    if (manager != null) {
+      manager.setOption(key, value);
     }
   }
 
-  @NotNull
-  private ModuleFileData getStorageData() {
-    return (ModuleFileData)getMainStorage().getStorageData();
+  @Nullable
+  private OptionManager getOptionManager() {
+    try {
+      return (OptionManager)getMainStorage(this).getStorageData();
+    }
+    catch (StateStorageException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @Override
@@ -276,11 +275,9 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void clearOption(@NotNull Key<String> key) {
-    try {
-      getStorageData().clearOption(key);
-    }
-    catch (StateStorageException e) {
-      LOG.error(e);
+    OptionManager manager = getOptionManager();
+    if (manager != null) {
+      manager.clearOption(key);
     }
   }
 
@@ -292,13 +289,8 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Nullable
   @Override
   public String getOptionValue(@NotNull Key<String> key) {
-    try {
-      return getStorageData().getOptionValue(key);
-    }
-    catch (StateStorageException e) {
-      LOG.error(e);
-      return null;
-    }
+    OptionManager manager = getOptionManager();
+    return manager == null ? null : manager.getOptionValue(key);
   }
 
   @NotNull

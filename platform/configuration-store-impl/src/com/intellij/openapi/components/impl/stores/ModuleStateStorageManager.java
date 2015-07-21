@@ -15,16 +15,14 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 class ModuleStateStorageManager extends StateStorageManagerImpl {
@@ -50,8 +48,9 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
       @NotNull
       @Override
       public List<StateStorage.SaveSession> createSaveSessions() {
-        FileBasedStorage storage = ModuleImpl.getMainStorage(myModule);
-        if (storage.getStorageData().isDirty()) {
+        StateStorageManagerImpl storageManager = (StateStorageManagerImpl)ComponentsPackage.getStateStore(myModule).getStateStorageManager();
+        FileBasedStorage storage = ContainerUtil.getFirstItem(storageManager.getCachedFileStorages(Collections.singletonList(StoragePathMacros.MODULE_FILE)));
+        if (storage != null && storage.getStorageData().isDirty()) {
           // force XmlElementStorageSaveSession creation
           getExternalizationSession(storage);
         }

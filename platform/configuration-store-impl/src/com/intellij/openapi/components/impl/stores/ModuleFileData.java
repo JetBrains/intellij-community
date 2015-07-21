@@ -17,6 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.OptionManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData {
+final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData implements OptionManager {
   private KeyFMap options;
   private final Module myModule;
 
@@ -102,6 +103,7 @@ public class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageDat
     return super.getChangedComponentNames(newStorageData, substitutor);
   }
 
+  @Override
   public void setOption(@NotNull Key<String> key, @NotNull String optionValue) {
     if (optionValue.equals(options.get(key))) {
       return;
@@ -111,6 +113,7 @@ public class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageDat
     dirty = true;
   }
 
+  @Override
   public void clearOption(@NotNull Key<String> key) {
     KeyFMap newOptions = options.minus(key);
     if (newOptions != options) {
@@ -119,6 +122,7 @@ public class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageDat
     }
   }
 
+  @Override
   @Nullable
   public String getOptionValue(@NotNull Key<String> key) {
     return options.get(key);
