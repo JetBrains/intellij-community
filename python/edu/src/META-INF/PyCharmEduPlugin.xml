@@ -28,7 +28,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+      <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyDebugFileLineMarkerProvider"/>
       <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+      <programRunner implementation="com.jetbrains.python.edu.PyEduDebugRunner"/>
+      <executor implementation="com.jetbrains.python.edu.PyEduDebugExecutor" order="first,after run"/>
   </extensions>
 
   <actions>

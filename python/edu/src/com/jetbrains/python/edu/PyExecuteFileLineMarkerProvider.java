@@ -11,14 +11,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Function;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyImportStatement;
-import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +33,7 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
     for (PsiElement element : elements) {
-      if (isFirstCodeLine(element)) {
+      if (PyEduUtils.isFirstCodeLine(element)) {
         final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
           element, element.getTextRange(), AllIcons.Actions.Execute, Pass.UPDATE_OVERRIDEN_MARKERS,
           new Function<PsiElement, String>() {
@@ -99,28 +94,5 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
         result.add(markerInfo);
       }
     }
-  }
-
-  private static boolean isFirstCodeLine(PsiElement element) {
-    return element instanceof PyStatement &&
-           element.getParent() instanceof PyFile &&
-           !isNothing(element) &&
-           nothingBefore(element);
-  }
-
-  private static boolean nothingBefore(PsiElement element) {
-    element = element.getPrevSibling();
-    while (element != null) {
-      if (!isNothing(element)) {
-        return false;
-      }
-      element = element.getPrevSibling();
-    }
-
-    return true;
-  }
-
-  private static boolean isNothing(PsiElement element) {
-    return (element instanceof PsiComment) || (element instanceof PyImportStatement) || (element instanceof PsiWhiteSpace);
   }
 }

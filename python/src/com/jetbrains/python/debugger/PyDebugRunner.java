@@ -44,6 +44,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,8 +82,8 @@ public class PyDebugRunner extends GenericProgramRunner {
            ((AbstractPythonRunConfiguration)profile).canRunWithCoverage();
   }
 
-  @Override
-  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+
+  protected XDebugSession createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final PythonCommandLineState pyState = (PythonCommandLineState)state;
@@ -91,7 +92,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     RunProfile profile = environment.getRunProfile();
     final ExecutionResult result = pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
 
-    final XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
+    return XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
         @Override
         @NotNull
@@ -101,12 +102,18 @@ public class PyDebugRunner extends GenericProgramRunner {
                                pyState.isMultiprocessDebug());
 
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
-
-
+          initDebugProcess(((PythonRunConfiguration)environment.getRunProfile()).getScriptName(), pyDebugProcess);
           return pyDebugProcess;
         }
       });
-    return session.getRunContentDescriptor();
+  }
+
+  protected void initDebugProcess(String name, PyDebugProcess pyDebugProcess) {
+  }
+
+  @Override
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+    return createSession(state, environment).getRunContentDescriptor();
   }
 
   public static int findIndex(List<String> paramList, String paramName) {
