@@ -50,10 +50,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.ui.JBColor;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.PairFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
@@ -102,7 +99,7 @@ public class JavaCompletionUtil {
     return null;
   }
 
-  public static final Key<List<PsiMethod>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
+  private static final Key<List<SmartPsiElementPointer<PsiMethod>>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
   public static PsiType getQualifierType(LookupItem item) {
     return item.getUserData(QUALIFIER_TYPE_ATTR);
@@ -111,6 +108,27 @@ public class JavaCompletionUtil {
   public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, String prefix, PsiType varType, VariableKind varKind) {
     final CamelHumpMatcher camelHumpMatcher = new CamelHumpMatcher(prefix);
     JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, camelHumpMatcher, varType, varKind, true, false);
+  }
+
+  public static void putAllMethods(LookupElement item, List<PsiMethod> methods) {
+    item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, new Function<PsiMethod, SmartPsiElementPointer<PsiMethod>>() {
+      @Override
+      public SmartPsiElementPointer<PsiMethod> fun(PsiMethod method) {
+        return SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method);
+      }
+    }));
+  }
+
+  public static List<PsiMethod> getAllMethods(LookupElement item) {
+    List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
+    if (pointers == null) return null;
+
+    return ContainerUtil.mapNotNull(pointers, new Function<SmartPsiElementPointer<PsiMethod>, PsiMethod>() {
+      @Override
+      public PsiMethod fun(SmartPsiElementPointer<PsiMethod> pointer) {
+        return pointer.getElement();
+      }
+    });
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, @Nullable final PsiType varType,
@@ -220,7 +238,7 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static List<? extends PsiElement> getAllPsiElements(final LookupElement item) {
-    List<PsiMethod> allMethods = item.getUserData(ALL_METHODS_ATTRIBUTE);
+    List<PsiMethod> allMethods = getAllMethods(item);
     if (allMethods != null) return allMethods;
     if (item.getObject() instanceof PsiElement) return Arrays.asList((PsiElement)item.getObject());
     return null;
