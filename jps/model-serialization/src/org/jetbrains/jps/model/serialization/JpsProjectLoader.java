@@ -49,7 +49,10 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -219,12 +222,12 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
 
-    final Set<File> moduleFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    //final List<File> moduleFiles = new ArrayList<File>();
+    final Set<File> foundFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final List<File> moduleFiles = new ArrayList<File>();
     for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final File file = new File(path);
-      if (file.exists()) {
+      if (foundFiles.add(file) && file.exists()) {
         moduleFiles.add(file);
       }
       else {
@@ -240,7 +243,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @NotNull
-  public static List<JpsModule> loadModules(@NotNull Collection<File> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
+  public static List<JpsModule> loadModules(@NotNull List<File> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
                                             @NotNull final Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<JpsModule>();
     List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<Future<Pair<File, Element>>>();
