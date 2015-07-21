@@ -151,4 +151,21 @@ public class EditorImplTest extends AbstractEditorTest {
     document.setInBulkUpdate(false);
     assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getVisualPosition());
   }
+  
+  public void testSuccessiveBulkModeOperations() throws Exception {
+    initText("some text");
+    DocumentEx document = (DocumentEx)myEditor.getDocument();
+    
+    document.setInBulkUpdate(true);
+    document.replaceString(4, 5, "-");
+    document.setInBulkUpdate(false);
+    
+    myEditor.getCaretModel().moveToOffset(9);
+    
+    document.setInBulkUpdate(true);
+    document.replaceString(4, 5, "+");
+    document.setInBulkUpdate(false);
+    
+    checkResultByText("some+text<caret>");
+  }
 }

@@ -972,20 +972,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (myAssertThreading) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    if (myDoingBulkUpdate == value) {
-      // do not fire listeners or otherwise updateStarted() will be called more times than updateFinished()
-      return;
-    }
     if (myUpdatingBulkModeStatus) {
       throw new IllegalStateException("Detected bulk mode status update from DocumentBulkUpdateListener");
     }
+    if (myDoingBulkUpdate == value) {
+      return;
+    }
     myUpdatingBulkModeStatus = true;
     try {
-      myDoingBulkUpdate = value;
       if (value) {
         getPublisher().updateStarted(this);
+        myDoingBulkUpdate = true;
       }
       else {
+        myDoingBulkUpdate = false;
         getPublisher().updateFinished(this);
       }
     }
