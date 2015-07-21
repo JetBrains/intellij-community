@@ -35,6 +35,9 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -481,8 +484,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (final ToolWindowEP bean : beans) {
       final Condition<Project> condition = bean.getCondition();
-      if (condition == null || condition.value(myProject)) {
+      if (condition == null) {
         initToolWindow(bean);
+      }
+      else {
+        ProgressManager.getInstance().run(
+          new Task.Backgroundable(myProject, bean.id + " initialization", true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              if (condition.value(myProject)) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    initToolWindow(bean);
+                  }
+                });
+              }
+            }
+          });
       }
     }
   }
