@@ -496,16 +496,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void checkConditionInReadAction(@NotNull final ToolWindowEP bean, @NotNull final Condition<Project> condition) {
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-      private volatile boolean myComputed = false;
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        boolean value = condition.value(myProject);
-        myComputed = true;
+        boolean value = !myProject.isDisposed() && condition.value(myProject);
         if (value) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              initToolWindow(bean);
+              if (!myProject.isDisposed()) {
+                initToolWindow(bean);
+              }
             }
           });
         }
@@ -513,9 +513,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        if (!myComputed) {
-          checkConditionInReadAction(bean, condition);
-        }
+        checkConditionInReadAction(bean, condition);
       }
     });
   }
