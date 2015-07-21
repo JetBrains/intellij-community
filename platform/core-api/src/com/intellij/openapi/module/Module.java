@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -39,8 +38,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable, Opti
   Module[] EMPTY_ARRAY = new Module[0];
 
   @NonNls String ELEMENT_TYPE = "type";
-
-  Key<String> ELEMENT_TYPE_KEY = Key.create("type");
 
   /**
    * Returns the <code>VirtualFile</code> for the module .iml file.
@@ -80,17 +77,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable, Opti
   boolean isDisposed();
 
   boolean isLoaded();
-
-  @Deprecated
-  void setOption(@NotNull String optionName, @NotNull String optionValue);
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  void clearOption(@NotNull String optionName);
-
-  @Nullable
-  @Deprecated
-  String getOptionValue(@NotNull String optionName);
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.

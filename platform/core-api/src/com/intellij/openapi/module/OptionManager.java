@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ public interface OptionManager {
    *
    * @param key the name of the custom option.
    */
-  void clearOption(@NotNull Key<String> key);
+  void clearOption(@NotNull String key);
 
   /**
    * Sets a custom option for this module.
@@ -33,7 +32,7 @@ public interface OptionManager {
    * @param key the name of the custom option.
    * @param value the value of the custom option.
    */
-  void setOption(@NotNull Key<String> key, @NotNull String value);
+  void setOption(@NotNull String key, @NotNull String value);
 
   /**
    * Gets the value of a custom option for this module.
@@ -42,5 +41,5 @@ public interface OptionManager {
    * @return the value of the custom option, or null if no value has been set.
    */
   @Nullable
-  String getOptionValue(@NotNull Key<String> key);
+  String getOptionValue(@NotNull String key);
 }

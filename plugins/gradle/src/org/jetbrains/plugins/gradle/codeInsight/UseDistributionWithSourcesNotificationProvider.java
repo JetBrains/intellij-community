@@ -167,12 +167,12 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
 
   @Nullable
   private static String getRootProjectPath(@NotNull Module module) {
-    String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
+    String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
     if (externalSystemId == null || !GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) {
       return null;
     }
 
-    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
+    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
     return StringUtil.isEmpty(path) ? null : path;
   }
 }

@@ -35,7 +35,6 @@ import com.intellij.openapi.roots.impl.ModuleFileIndexImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -180,22 +179,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   @Override
   public String getOptionValue(@NotNull String optionName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setOption(@NotNull Key<String> optionName, @NotNull String optionValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clearOption(@NotNull Key<String> key) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Nullable
-  @Override
-  public String getOptionValue(@NotNull Key<String> key) {
     throw new UnsupportedOperationException();
   }
 

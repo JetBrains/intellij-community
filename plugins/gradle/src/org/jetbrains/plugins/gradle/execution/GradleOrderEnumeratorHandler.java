@@ -78,7 +78,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     if (!type.equals(OrderRootType.CLASSES)) return false;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, rootModel.getModule())) return false;
 
-    final String gradleProjectPath = rootModel.getModule().getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
+    final String gradleProjectPath = rootModel.getModule().getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
     if (gradleProjectPath == null) {
       LOG.error("Root project path of the Gradle project not found for " + rootModel.getModule());
       return false;

@@ -402,12 +402,12 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
   }
 
   public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH);
-    module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
   }
 
   private class ImportModulesTask implements Runnable {
@@ -450,20 +450,20 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
 
-    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID, moduleData.getOwner().toString());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID, moduleData.getId());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH, moduleData.getLinkedExternalProjectPath());
+    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY, moduleData.getId());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
     final ProjectData projectData = moduleDataNode.getData(ProjectKeys.PROJECT);
-    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
+    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
 
     if (moduleData.getGroup() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP, moduleData.getGroup());
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY, moduleData.getGroup());
     }
     if (moduleData.getVersion() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION, moduleData.getVersion());
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY, moduleData.getVersion());
     }
 
     // clear maven option
-    module.clearOption(ExternalSystemConstants.MAVEN_MODULE_KEY);
+    module.clearOption("org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule");
   }
 }

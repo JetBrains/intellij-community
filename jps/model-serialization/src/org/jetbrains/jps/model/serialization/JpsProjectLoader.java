@@ -17,7 +17,6 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
@@ -64,9 +63,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
   private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor(SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
-  public static final Key<String> CLASSPATH_ATTRIBUTE_KEY = Key.create(CLASSPATH_ATTRIBUTE);
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
-  public static final Key<String> CLASSPATH_DIR_ATTRIBUTE_KEY = Key.create(CLASSPATH_DIR_ATTRIBUTE);
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
 

@@ -18,7 +18,6 @@ package com.intellij.mock;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -143,21 +142,5 @@ public class MockModule extends MockComponentManager implements Module {
   @Override
   public void clearOption(@NotNull String optionName) {
     throw new UnsupportedOperationException("Method clearOption is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  public void setOption(@NotNull Key<String> optionName, @NotNull String optionValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clearOption(@NotNull Key<String> key) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Nullable
-  @Override
-  public String getOptionValue(@NotNull Key<String> key) {
-    throw new UnsupportedOperationException();
   }
 }

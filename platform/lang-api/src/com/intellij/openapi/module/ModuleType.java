@@ -112,7 +112,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   }
 
   public static boolean is(@NotNull Module module, @NotNull ModuleType moduleType) {
-    return moduleType.getId().equals(module.getOptionValue(Module.ELEMENT_TYPE_KEY));
+    return moduleType.getId().equals(module.getOptionValue(Module.ELEMENT_TYPE));
   }
 
   @NotNull
@@ -121,7 +121,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     if (instance == null) {
       return EMPTY;
     }
-    return instance.findByID(module.getOptionValue(Module.ELEMENT_TYPE_KEY));
+    return instance.findByID(module.getOptionValue(Module.ELEMENT_TYPE));
   }
 
   @NotNull
