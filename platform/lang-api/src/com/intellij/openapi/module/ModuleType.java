@@ -111,6 +111,11 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return true;
   }
 
+  public static boolean is(@NotNull Module module, @NotNull ModuleType moduleType) {
+    return moduleType.getId().equals(module.getOptionValue(Module.ELEMENT_TYPE_KEY));
+  }
+
+  @NotNull
   public static ModuleType get(@NotNull Module module) {
     final ModuleTypeManager instance = ModuleTypeManager.getInstance();
     if (instance == null) {

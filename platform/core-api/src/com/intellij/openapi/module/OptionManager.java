@@ -13,20 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.module;
 
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface IModuleStore extends IComponentStore {
-  void setModuleFilePath(@NotNull String filePath);
-
-  @NotNull
-  String getModuleFilePath();
-
-  void setOption(@NotNull Key<String> key, @NotNull String value);
-
+public interface OptionManager {
+  /**
+   * Removes a custom option from this module.
+   *
+   * @param key the name of the custom option.
+   */
   void clearOption(@NotNull Key<String> key);
 
+  /**
+   * Sets a custom option for this module.
+   *
+   * @param key the name of the custom option.
+   * @param value the value of the custom option.
+   */
+  void setOption(@NotNull Key<String> key, @NotNull String value);
+
+  /**
+   * Gets the value of a custom option for this module.
+   *
+   * @param key the name of the custom option.
+   * @return the value of the custom option, or null if no value has been set.
+   */
+  @Nullable
   String getOptionValue(@NotNull Key<String> key);
 }

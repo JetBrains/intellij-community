@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.module.ModuleServiceManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -42,10 +43,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
 
-public class PluginBuildConfiguration implements ModuleComponent, JDOMExternalizable {
+public class PluginBuildConfiguration implements JDOMExternalizable {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myManifestFilePointer;
@@ -55,7 +57,7 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
 
-  public PluginBuildConfiguration(Module module) {
+  public PluginBuildConfiguration(@NotNull Module module) {
     myModule = module;
     myPluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(myModule.getProject(), PluginDescriptorConstants.META_DATA);
     Disposer.register(module, myPluginXmlContainer);
@@ -63,26 +65,10 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
 
   @Nullable
   public static PluginBuildConfiguration getInstance(Module module) {
-    return module.getComponent(PluginBuildConfiguration.class);
+    return ModuleType.is(module, PluginModuleType.getInstance()) ? ModuleServiceManager.getService(module, PluginBuildConfiguration.class) : null;
   }
 
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-  public void moduleAdded() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "DevKit.ModuleBuildProperties";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-                                                                       
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     String url = element.getAttributeValue(URL_ATTR);
     if (url != null) {
@@ -94,6 +80,7 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     final String url = getPluginXmlUrl();
     if (url != null) {
@@ -148,6 +135,7 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
     new WriteAction() {
+      @Override
       protected void run(final Result result) throws Throwable {
         createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
       }
@@ -163,6 +151,7 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
       if (manifest == null){
         Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
               VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
@@ -170,6 +159,7 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
         });
       } else {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
           }

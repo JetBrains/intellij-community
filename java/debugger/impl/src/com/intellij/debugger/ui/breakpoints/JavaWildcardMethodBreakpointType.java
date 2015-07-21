@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ import javax.swing.*;
 /**
  * @author Egor
  */
-public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<JavaMethodBreakpointProperties> implements JavaBreakpointType {
+public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<JavaMethodBreakpointProperties>
+                                              implements JavaBreakpointType<JavaMethodBreakpointProperties> {
+
   public JavaWildcardMethodBreakpointType() {
     super("java-wildcard-method", DebuggerBundle.message("method.breakpoints.tab.title"));
   }
@@ -114,7 +116,7 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
 
   @NotNull
   @Override
-  public Breakpoint createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
+  public Breakpoint<JavaMethodBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     return new WildcardMethodBreakpoint(project, breakpoint);
   }
 }

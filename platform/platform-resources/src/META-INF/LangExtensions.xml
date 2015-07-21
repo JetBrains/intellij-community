@@ -327,6 +327,9 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.LibraryScopeCache"
                     serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
+    <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore" serviceImplementation="com.intellij.openapi.components.impl.stores.ModuleStoreImpl"/>
+    <moduleService serviceInterface="com.intellij.openapi.components.PathMacroManager" serviceImplementation="com.intellij.openapi.components.impl.ModulePathMacroManager"/>
+
     <projectViewPane implementation="com.intellij.ide.scratch.ScratchProjectViewPane"/>
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>

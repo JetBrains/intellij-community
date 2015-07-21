@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleManager#getModules()
  * @see ModuleComponent
  */
-public interface Module extends ComponentManager, AreaInstance, Disposable {
+public interface Module extends ComponentManager, AreaInstance, Disposable, OptionManager {
   /**
    * The empty array of modules which cab be reused to avoid unnecessary allocations.
    */
@@ -84,37 +84,13 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @Deprecated
   void setOption(@NotNull String optionName, @NotNull String optionValue);
 
-  /**
-   * Sets a custom option for this module.
-   *
-   * @param optionName the name of the custom option.
-   * @param optionValue the value of the custom option.
-   */
-  void setOption(@NotNull Key<String> optionName, @NotNull String optionValue);
-
   @SuppressWarnings("unused")
   @Deprecated
   void clearOption(@NotNull String optionName);
 
-  /**
-   * Removes a custom option from this module.
-   *
-   * @param key the name of the custom option.
-   */
-  void clearOption(@NotNull Key<String> key);
-
   @Nullable
   @Deprecated
   String getOptionValue(@NotNull String optionName);
-
-  /**
-   * Gets the value of a custom option for this module.
-   *
-   * @param key the name of the custom option.
-   * @return the value of the custom option, or null if no value has been set.
-   */
-  @Nullable
-  String getOptionValue(@NotNull Key<String> key);
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.

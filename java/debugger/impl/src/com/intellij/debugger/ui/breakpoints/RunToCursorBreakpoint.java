@@ -34,7 +34,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
  * @author Eugene Zhuravlev
  *         Date: Sep 13, 2006
  */
-public class RunToCursorBreakpoint extends LineBreakpoint {
+public class RunToCursorBreakpoint<P extends JavaBreakpointProperties> extends LineBreakpoint<P> {
   private final boolean myRestoreBreakpoints;
   @NotNull
   protected final SourcePosition myCustomPosition;
@@ -116,7 +116,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   }
 
   @Override
-  protected JavaBreakpointProperties getProperties() {
+  protected P getProperties() {
     return null;
   }
 

@@ -263,6 +263,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection,
                                final @Nullable GutterIconRenderer gutterIconRenderer) {
     boolean sessionChanged = myActiveSession.getAndSet(session) != session;
+    if (sessionChanged && session != null) {
+      XDebugSessionTab tab = session.getSessionTab();
+      if (tab != null) {
+        tab.select();
+      }
+    }
     updateExecutionPoint(position, useSelection, gutterIconRenderer);
     if (sessionChanged) {
       onActiveSessionChanged();

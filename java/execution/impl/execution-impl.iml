@@ -23,7 +23,9 @@
           <root url="jar://$MODULE_DIR$/../../../lib/testDiscoveryInstrumenter.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/testDiscovery" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>

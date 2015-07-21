@@ -146,6 +146,10 @@ public class MockProjectStore implements IProjectStore {
     return null;
   }
 
+  @Override
+  public void saveApplicationComponent(@NotNull Object component) {
+  }
+
   @NotNull
   @Override
   public StateStorageManager getStateStorageManager() {

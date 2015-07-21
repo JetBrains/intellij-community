@@ -135,7 +135,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @NotNull
-  private Collection<FileBasedStorage> getCachedFileStorages(@NotNull Collection<String> fileSpecs) {
+  public Collection<FileBasedStorage> getCachedFileStorages(@NotNull Collection<String> fileSpecs) {
     if (fileSpecs.isEmpty()) {
       return Collections.emptyList();
     }

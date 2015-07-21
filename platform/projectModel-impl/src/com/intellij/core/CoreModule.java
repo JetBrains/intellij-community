@@ -116,7 +116,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
-  public void init() {
+  public void init(@NotNull String path, @Nullable final Runnable beforeComponentCreation) {
   }
 
   @Override
