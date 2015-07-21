@@ -236,7 +236,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private void removeProgress(@NotNull InlineProgressIndicator progress) {
     synchronized (myOriginals) {
-      LOG.assertTrue(myInline2Original.containsKey(progress));
+      if (!myInline2Original.containsKey(progress)) return; // already disposed
 
       final boolean last = myOriginals.size() == 1;
       final boolean beforeLast = myOriginals.size() == 2;
