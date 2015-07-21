@@ -126,10 +126,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   }
 
                   if (includeReturnConstraint && interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
-                    if (method.isConstructor()) {
-                      //todo
-                      session.initBounds(reference, method.getContainingClass().getTypeParameters());
-                    }
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
                     if (returnType != null) {
                       session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);

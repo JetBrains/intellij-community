@@ -265,7 +265,7 @@ public class InferenceSession {
           !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(parent.getParent()))) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
-          collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs());
+          collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
         }
 
         if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
@@ -279,9 +279,22 @@ public class InferenceSession {
       if (myContext != null) {
         myContext.putUserData(ERASED, myErased);
       }
-      mySiteSubstitutor = mySiteSubstitutor.putAll(substitutor);
-      for (InferenceVariable variable : myInferenceVariables) {
-        variable.setInstantiation(substitutor.substitute(variable.getParameter()));
+      final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
+      for (PsiTypeParameter parameter : map.keySet()) {
+        final PsiType mapping = map.get(parameter);
+        PsiTypeParameter param;
+        if (parameter instanceof InferenceVariable) {
+          ((InferenceVariable)parameter).setInstantiation(mapping);
+          if (((InferenceVariable)parameter).getCallContext() != myContext) {
+            //don't include in result substitutor foreign inference variables
+            continue;
+          }
+          param = ((InferenceVariable)parameter).getParameter();
+        }
+        else {
+          param = parameter;
+        }
+        mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
       }
     } else {
       return prepareSubstitution();
@@ -781,19 +794,15 @@ public class InferenceSession {
     for (InferenceVariable dependency : dependencies) {
       PsiType instantiation = dependency.getInstantiation();
       if (instantiation != PsiType.NULL) {
-        substitutor = substitutor.put(dependency.getParameter(), instantiation);
+        substitutor = substitutor.put(dependency, instantiation);
       }
     }
     return substitutor.substitute(bound);
   }
 
   private  boolean hasBoundProblems(final List<InferenceVariable> typeParams,
-                                    final PsiSubstitutor psiSubstitutor,
                                     final PsiSubstitutor substitutor) {
     for (InferenceVariable typeParameter : typeParams) {
-      if (isForeignVariable(psiSubstitutor, typeParameter)) {
-        continue;
-      }
       final List<PsiType> extendsTypes = typeParameter.getBounds(InferenceBound.UPPER);
       final PsiType[] bounds = extendsTypes.toArray(new PsiType[extendsTypes.size()]);
       if (GenericsUtil.findTypeParameterBoundError(typeParameter, bounds, substitutor, myContext, true) != null) {
@@ -803,36 +812,19 @@ public class InferenceSession {
     return false;
   }
 
-  private boolean isForeignVariable(PsiSubstitutor fullSubstitutor,
-                                    InferenceVariable typeParameter) {
-    return fullSubstitutor.putAll(mySiteSubstitutor).getSubstitutionMap().containsKey(typeParameter.getParameter()) &&
-           typeParameter.getCallContext() != myContext;
-  }
-
   private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables,
                                        PsiSubstitutor substitutor) {
     final Collection<InferenceVariable> allVars = new ArrayList<InferenceVariable>(inferenceVariables);
-    final Map<InferenceVariable, PsiType> foreignMap = new LinkedHashMap<InferenceVariable, PsiType>();
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
       if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
-        PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor, foreignMap);
-        if (firstSubstitutor != null) {
-          if (hasBoundProblems(vars, substitutor, firstSubstitutor)) {
-            firstSubstitutor = null;
-          }
+        PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);
+        if (firstSubstitutor != null && hasBoundProblems(vars, firstSubstitutor)) {
+          firstSubstitutor = null;
         }
         if (firstSubstitutor != null) {
           substitutor = firstSubstitutor;
           allVars.removeAll(vars);
-
-          for (InferenceVariable var : vars) {
-            PsiType type = foreignMap.get(var);
-            if (type != null) {
-              var.setInstantiation(type);
-            }
-          }
-
           continue;
         }
       }
@@ -900,29 +892,11 @@ public class InferenceSession {
   }
 
   private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
-    return resolveSubset(vars, substitutor, null);
-  }
-
-  private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars,
-                                       PsiSubstitutor substitutor,
-                                       Map<InferenceVariable, PsiType> foreignMap) {
     for (InferenceVariable var : vars) {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
-      final PsiTypeParameter typeParameter = var.getParameter();
-
       final PsiType type = checkBoundsConsistency(substitutor, var);
       if (type != PsiType.NULL) {
-        if (foreignMap != null) {
-          //save all instantiations in a map where inference variables are not merged by type parameters 
-          //for same method called with different args resulting in different inferred types 
-          foreignMap.put(var, type);
-        }
-
-        if (isForeignVariable(substitutor, var)) {
-          continue;
-        }
-
-        substitutor = substitutor.put(typeParameter, type);
+        substitutor = substitutor.put(var, type);
       }
     }
 
@@ -954,7 +928,6 @@ public class InferenceSession {
         type =  PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
       }
       else {
-        if (substitutor.putAll(mySiteSubstitutor).getSubstitutionMap().get(var.getParameter()) != null) return PsiType.NULL;
         type = myErased ? null : upperBound;
       }
     }
