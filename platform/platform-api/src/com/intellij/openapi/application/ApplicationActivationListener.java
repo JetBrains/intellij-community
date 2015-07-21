@@ -42,7 +42,7 @@ public interface ApplicationActivationListener {
    * The shortcoming of the method is that a notification is delivered
    * with a delay. See {code app.deactivation.timeout} key in the registry
    */
-  void applicationDeactivating(IdeFrame ideFrame);
+  void delayedApplicationDeactivated(IdeFrame ideFrame);
 
   abstract class Adapter implements ApplicationActivationListener {
     @Override
@@ -52,6 +52,6 @@ public interface ApplicationActivationListener {
     public void applicationDeactivated(IdeFrame ideFrame) { }
 
     @Override
-    public void applicationDeactivating(IdeFrame ideFrame) { }
+    public void delayedApplicationDeactivated(IdeFrame ideFrame) { }
   }
 }
