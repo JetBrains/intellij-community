@@ -15,18 +15,17 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtilRt;
+import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -34,10 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance(ModuleStoreImpl.class);
@@ -53,7 +49,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
   @NotNull
   @Override
-  protected FileBasedStorage getMainStorage() {
+  public FileBasedStorage getMainStorage() {
     FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
     assert storage != null;
     return storage;
@@ -64,36 +60,13 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return myModule.getProject();
   }
 
-  public void load() {
-    String moduleTypeId = getMainStorageData().myOptions.get(Module.ELEMENT_TYPE);
-    myModule.setOption(Module.ELEMENT_TYPE, ModuleTypeManager.getInstance().findByID(moduleTypeId).getId());
-
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-    final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
-    if (substitutor != null) {
-      final Collection<String> macros = substitutor.getUnknownMacros(null);
-      if (!macros.isEmpty()) {
-        final Project project = myModule.getProject();
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-          @Override
-          public void run() {
-            StorageUtil.notifyUnknownMacros(substitutor, project, null);
-          }
-        });
-      }
-    }
-  }
-
   @Override
   public ModuleFileData getMainStorageData() {
     return (ModuleFileData)super.getMainStorageData();
   }
 
   static class ModuleFileData extends BaseStorageData {
-    private final Map<String, String> myOptions;
+    private KeyFMap options;
     private final Module myModule;
 
     private boolean dirty = true;
@@ -102,7 +75,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       super(rootElementName);
 
       myModule = module;
-      myOptions = new TreeMap<String, String>();
+      options = KeyFMap.EMPTY_MAP;
     }
 
     @Override
@@ -115,16 +88,18 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
       myModule = storageData.myModule;
       dirty = storageData.dirty;
-      myOptions = new TreeMap<String, String>(storageData.myOptions);
+      options = storageData.options;
     }
 
     @Override
     public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
       super.load(rootElement, pathMacroSubstitutor, intern);
 
+      KeyFMap options = KeyFMap.EMPTY_MAP;
       for (Attribute attribute : rootElement.getAttributes()) {
-        if (!attribute.getName().equals(VERSION_OPTION)) {
-          myOptions.put(attribute.getName(), attribute.getValue());
+        String name = attribute.getName();
+        if (!name.equals(VERSION_OPTION) && !StringUtil.isEmpty(name)) {
+          options.plus(ModuleManagerImpl.createOptionKey(name), attribute.getValue());
         }
       }
 
@@ -133,9 +108,13 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
     @Override
     protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
-      if (!myOptions.isEmpty()) {
-        for (Map.Entry<String, String> entry : myOptions.entrySet()) {
-          root.setAttribute(entry.getKey(), entry.getValue());
+      if (!options.isEmpty()) {
+        //noinspection unchecked
+        for (Key<String> key : options.getKeys()) {
+          String value = options.get(key);
+          if (value != null) {
+            root.setAttribute(key.toString(), value);
+          }
         }
       }
       // need be last for compat reasons
@@ -153,27 +132,33 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     @Override
     public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
       final ModuleFileData data = (ModuleFileData)newStorageData;
-      if (!myOptions.equals(data.myOptions)) {
+      if (options != data.options) {
         return null;
       }
+
       return super.getChangedComponentNames(newStorageData, substitutor);
     }
 
-    public void setOption(@NotNull String optionName, @NotNull String optionValue) {
-      if (!optionValue.equals(myOptions.put(optionName, optionValue))) {
-        dirty = true;
+    void setOption(@NotNull Key<String> key, @NotNull String optionValue) {
+      if (optionValue.equals(options.get(key))) {
+        return;
       }
+
+      options = options.plus(key, optionValue);
+      dirty = true;
     }
 
-    public void clearOption(@NotNull String optionName) {
-      if (myOptions.remove(optionName) != null) {
+    public void clearOption(@NotNull Key<String> key) {
+      KeyFMap newOptions = options.minus(key);
+      if (newOptions != options) {
+        options = newOptions;
         dirty = true;
       }
     }
 
     @Nullable
-    public String getOptionValue(@NotNull String optionName) {
-      return myOptions.get(optionName);
+    public String getOptionValue(@NotNull Key<String> key) {
+      return options.get(key);
     }
   }
 
@@ -187,27 +172,15 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  @Nullable
-  public VirtualFile getModuleFile() {
-    return getMainStorage().getVirtualFile();
-  }
-
-  @Override
   @NotNull
   public String getModuleFilePath() {
     return getMainStorage().getFilePath();
   }
 
   @Override
-  @NotNull
-  public String getModuleFileName() {
-    return PathUtilRt.getFileName(getMainStorage().getFilePath());
-  }
-
-  @Override
-  public void setOption(@NotNull String optionName, @NotNull String optionValue) {
+  public void setOption(@NotNull Key<String> key, @NotNull String value) {
     try {
-      getMainStorageData().setOption(optionName,  optionValue);
+      getMainStorageData().setOption(key,  value);
     }
     catch (StateStorageException e) {
       LOG.error(e);
@@ -215,9 +188,9 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void clearOption(@NotNull String optionName) {
+  public void clearOption(@NotNull Key<String> key) {
     try {
-      getMainStorageData().clearOption(optionName);
+      getMainStorageData().clearOption(key);
     }
     catch (StateStorageException e) {
       LOG.error(e);
@@ -225,9 +198,9 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public String getOptionValue(@NotNull String optionName) {
+  public String getOptionValue(@NotNull Key<String> key) {
     try {
-      return getMainStorageData().getOptionValue(optionName);
+      return getMainStorageData().getOptionValue(key);
     }
     catch (StateStorageException e) {
       LOG.error(e);

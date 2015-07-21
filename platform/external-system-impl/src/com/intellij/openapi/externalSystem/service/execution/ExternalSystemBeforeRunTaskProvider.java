@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,9 +210,9 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
 
     String desc = StringUtil.join(task.getTaskExecutionSettings().getTaskNames(), " ");
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      if (!mySystemId.toString().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY))) continue;
+      if (!mySystemId.toString().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID))) continue;
 
-      if (StringUtil.equals(externalProjectPath, module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY))) {
+      if (StringUtil.equals(externalProjectPath, module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH))) {
         desc = module.getName() + ": " + desc;
         break;
       }

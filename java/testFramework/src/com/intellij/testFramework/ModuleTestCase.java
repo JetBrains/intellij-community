@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -161,7 +162,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
       public void run() {
         final ProjectImpl project = (ProjectImpl)myProject;
         project.setOptimiseTestLoadSpeed(false);
-        ((ModuleImpl)module).getStateStore().initComponent(component, false);
+        ComponentsPackage.getStateStore(module).initComponent(component, false);
         project.setOptimiseTestLoadSpeed(true);
       }
     });

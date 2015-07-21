@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +39,8 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   Module[] EMPTY_ARRAY = new Module[0];
 
   @NonNls String ELEMENT_TYPE = "type";
+
+  Key<String> ELEMENT_TYPE_KEY = Key.create("type");
 
   /**
    * Returns the <code>VirtualFile</code> for the module .iml file.
@@ -78,29 +81,40 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
 
   boolean isLoaded();
 
+  @Deprecated
+  void setOption(@NotNull String optionName, @NotNull String optionValue);
+
   /**
    * Sets a custom option for this module.
    *
    * @param optionName the name of the custom option.
    * @param optionValue the value of the custom option.
    */
-  void setOption(@NotNull String optionName, @NotNull String optionValue);
+  void setOption(@NotNull Key<String> optionName, @NotNull String optionValue);
+
+  @SuppressWarnings("unused")
+  @Deprecated
+  void clearOption(@NotNull String optionName);
 
   /**
    * Removes a custom option from this module.
    *
-   * @param optionName the name of the custom option.
+   * @param key the name of the custom option.
    */
-  void clearOption(@NotNull String optionName);
+  void clearOption(@NotNull Key<String> key);
+
+  @Nullable
+  @Deprecated
+  String getOptionValue(@NotNull String optionName);
 
   /**
    * Gets the value of a custom option for this module.
    *
-   * @param optionName the name of the custom option.
+   * @param key the name of the custom option.
    * @return the value of the custom option, or null if no value has been set.
    */
   @Nullable
-  String getOptionValue(@NotNull String optionName);
+  String getOptionValue(@NotNull Key<String> key);
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.

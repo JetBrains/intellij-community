@@ -75,6 +75,7 @@
     <orderEntry type="module" module-name="external-system-impl" />
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="module" module-name="external-system-api" />
   </component>
   <component name="copyright">
     <Base>

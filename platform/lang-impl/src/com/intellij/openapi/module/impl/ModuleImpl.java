@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
@@ -37,20 +38,22 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+
+import static com.intellij.openapi.module.impl.ModuleManagerImpl.createOptionKey;
 
 /**
  * @author max
@@ -61,13 +64,9 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @NotNull private final Project myProject;
   private boolean isModuleAdded;
 
-  @NonNls private static final String OPTION_WORKSPACE = "workspace";
-
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   private String myName;
-
-  private String myModuleType;
 
   private final ModuleScopeProvider myModuleScopeProvider;
 
@@ -79,7 +78,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
-    init(filePath);
+    getStateStore().setModuleFilePath(filePath);
+    myName = moduleNameByFileName(PathUtil.getFileName(filePath));
+
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
   }
 
   @Override
@@ -92,14 +94,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @NotNull
   public ModuleStoreImpl getStateStore() {
-    return (ModuleStoreImpl)getPicoContainer().getComponentInstance(IComponentStore.class);
-  }
-
-  private void init(String filePath) {
-    getStateStore().setModuleFilePath(filePath);
-    myName = moduleNameByFileName(PathUtil.getFileName(filePath));
-
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+    return (ModuleStoreImpl)ComponentsPackage.getStateStore(this);
   }
 
   @Override
@@ -113,34 +108,38 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  protected boolean isComponentSuitable(Map<String, String> options) {
-    if (!super.isComponentSuitable(options)) return false;
-    if (options == null) return true;
+  protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
+    if (!super.isComponentSuitable(options)) {
+      return false;
+    }
+    if (options == null) {
+      return true;
+    }
 
-    Set<String> optionNames = options.keySet();
-    for (String optionName : optionNames) {
-      if (Comparing.equal(OPTION_WORKSPACE, optionName)) continue;
-      if (!parseOptionValue(options.get(optionName)).contains(getOptionValue(optionName))) return false;
+    for (String optionName : options.keySet()) {
+      if ("workspace".equals(optionName)) {
+        continue;
+      }
+
+      String optionValue = options.get(optionName);
+      if (!StringUtil.isEmpty(optionValue) || StringUtil.split(optionValue, ";").contains(getOptionValue(createOptionKey(optionName)))) {
+        return false;
+      }
     }
 
     return true;
   }
 
-  private static List<String> parseOptionValue(String optionValue) {
-    if (optionValue == null) return new ArrayList<String>(0);
-    return Arrays.asList(optionValue.split(";"));
-  }
-
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    return getStateStore().getModuleFile();
+    return getStateStore().getMainStorage().getVirtualFile();
   }
 
   @Override
   public void rename(String newName) {
     myName = newName;
-    final VirtualFile file = getStateStore().getModuleFile();
+    final VirtualFile file = getStateStore().getMainStorage().getVirtualFile();
     try {
       if (file != null) {
         ClasspathStorage.moduleRenamed(this, newName);
@@ -231,29 +230,33 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
-    if (ELEMENT_TYPE.equals(optionName)) {
-      myModuleType = optionValue;
-    }
-    getStateStore().setOption(optionName, optionValue);
+    setOption(createOptionKey(optionName), optionValue);
+  }
+
+  @Override
+  public void setOption(@NotNull Key<String> key, @NotNull String optionValue) {
+    getStateStore().setOption(key, optionValue);
   }
 
   @Override
   public void clearOption(@NotNull String optionName) {
-    if (ELEMENT_TYPE.equals(optionName)) {
-      myModuleType = null;
-    }
-    getStateStore().clearOption(optionName);
+    getStateStore().clearOption(createOptionKey(optionName));
+  }
+
+  @Override
+  public void clearOption(@NotNull Key<String> key) {
+    getStateStore().clearOption(key);
   }
 
   @Override
   public String getOptionValue(@NotNull String optionName) {
-    if (ELEMENT_TYPE.equals(optionName)) {
-      if (myModuleType == null) {
-        myModuleType = getStateStore().getOptionValue(optionName);
-      }
-      return myModuleType;
-    }
-    return getStateStore().getOptionValue(optionName);
+    return getOptionValue(createOptionKey(optionName));
+  }
+
+  @Nullable
+  @Override
+  public String getOptionValue(@NotNull Key<String> key) {
+    return getStateStore().getOptionValue(key);
   }
 
   @NotNull

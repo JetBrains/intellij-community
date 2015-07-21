@@ -27,6 +27,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -529,7 +530,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public boolean isMavenizedModule(final Module m) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      return !m.isDisposed() && "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
+      return !m.isDisposed() && "true".equals(m.getOptionValue(ExternalSystemConstants.MAVEN_MODULE_KEY));
     }
     finally {
       accessToken.finish();
@@ -542,24 +543,20 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (m.isDisposed()) continue;
 
       if (mavenized) {
-        m.setOption(getMavenizedModuleOptionName(), "true");
+        m.setOption(ExternalSystemConstants.MAVEN_MODULE_KEY, "true");
 
         // clear external system API options
         // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
-        m.clearOption("external.system.id");
-        m.clearOption("external.linked.project.path");
-        m.clearOption("external.root.project.path");
-        m.clearOption("external.system.module.group");
-        m.clearOption("external.system.module.version");
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
+        m.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH);
+        m.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH);
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP);
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION);
       }
       else {
-        m.clearOption(getMavenizedModuleOptionName());
+        m.clearOption(ExternalSystemConstants.MAVEN_MODULE_KEY);
       }
     }
-  }
-
-  private static String getMavenizedModuleOptionName() {
-    return "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
   }
 
   @TestOnly

@@ -92,7 +92,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   @NotNull
-  protected abstract XmlElementStorage getMainStorage();
+  public abstract XmlElementStorage getMainStorage();
 
   @Nullable
   static List<String> getConversionProblemsStorage() {

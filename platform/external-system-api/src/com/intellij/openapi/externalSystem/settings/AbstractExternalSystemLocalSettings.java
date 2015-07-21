@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,11 +255,11 @@ public abstract class AbstractExternalSystemLocalSettings {
       pathsToForget.remove(projectSettings.getExternalProjectPath());
     }
     for (Module module : myPlatformFacade.getModules(myProject)) {
-      String id = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+      String id = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
       if (!myExternalSystemId.toString().equals(id)) {
         continue;
       }
-      pathsToForget.remove(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
+      pathsToForget.remove(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH));
     }
 
     if (!pathsToForget.isEmpty()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,18 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface IModuleStore extends IComponentStore {
   void setModuleFilePath(@NotNull String filePath);
 
-  @Nullable
-  VirtualFile getModuleFile();
-
   @NotNull
   String getModuleFilePath();
 
-  @NotNull
-  String getModuleFileName();
+  void setOption(@NotNull Key<String> key, @NotNull String value);
 
-  void setOption(@NotNull String optionName, @NotNull String optionValue);
+  void clearOption(@NotNull Key<String> key);
 
-  void clearOption(@NotNull String optionName);
-
-  String getOptionValue(@NotNull String optionName);
+  String getOptionValue(@NotNull Key<String> key);
 }

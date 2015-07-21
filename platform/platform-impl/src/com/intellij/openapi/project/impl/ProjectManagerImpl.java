@@ -486,18 +486,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       return false;
     }
 
-    if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
-      // should be invoked last
-      startupManager.runWhenProjectIsInitialized(new Runnable() {
-        @Override
-        public void run() {
-          TrackingPathMacroSubstitutor substitutor = ((ProjectEx)project).getStateStore().getStateStorageManager().getMacroSubstitutor();
-          if (substitutor != null) {
-            StorageUtil.notifyUnknownMacros(substitutor, project, null);
-          }
-        }
-      });
-    }
+    StorageUtil.checkUnknownMacros(project, project);
 
     return true;
   }

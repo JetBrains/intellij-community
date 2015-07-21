@@ -184,7 +184,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
   @NotNull
   public static String getStorageRootFromOptions(@NotNull Module module) {
     String moduleRoot = getModuleDir(module);
-    String storageRef = module.getOptionValue(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
+    String storageRef = module.getOptionValue(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE_KEY);
     if (storageRef == null) {
       return moduleRoot;
     }
@@ -212,12 +212,12 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
 
     provider = getProvider(storageId);
     if (provider == null) {
-      module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
-      module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
+      module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE_KEY);
+      module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE_KEY);
     }
     else {
-      module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
-      module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider.getContentRoot(model));
+      module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE_KEY, storageId);
+      module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE_KEY, provider.getContentRoot(model));
     }
   }
 

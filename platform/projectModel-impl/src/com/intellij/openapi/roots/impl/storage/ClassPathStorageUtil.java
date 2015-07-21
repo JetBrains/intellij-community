@@ -29,7 +29,7 @@ public class ClassPathStorageUtil {
 
   @NotNull
   public static String getStorageType(@NotNull Module module) {
-    String id = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
+    String id = module.getOptionValue(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE_KEY);
     return id == null ? DEFAULT_STORAGE : id;
   }
 }

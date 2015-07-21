@@ -71,11 +71,24 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     AccessToken token = ReadAction.start();
     try {
+      String componentNameIfStateExists;
       if (component instanceof PersistentStateComponent) {
-        initPersistentComponent((PersistentStateComponent<?>)component, null, false);
+        componentNameIfStateExists = initPersistentComponent((PersistentStateComponent<?>)component, null, false);
       }
       else {
-        initJdomExternalizable((JDOMExternalizable)component);
+        componentNameIfStateExists = initJdomExternalizable((JDOMExternalizable)component);
+      }
+
+      // if not service, so, component manager will check it later for all components
+      if (componentNameIfStateExists != null && service) {
+        Project project = getProject();
+        Application app = ApplicationManager.getApplication();
+        if (project != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && project.isInitialized()) {
+          TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
+          if (substitutor != null) {
+            StorageUtil.notifyUnknownMacros(substitutor, project, componentNameIfStateExists);
+          }
+        }
       }
     }
     catch (StateStorageException e) {
@@ -214,24 +227,25 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  private void initJdomExternalizable(@NotNull JDOMExternalizable component) {
+  @Nullable
+  private String initJdomExternalizable(@NotNull JDOMExternalizable component) {
     String componentName = ComponentManagerImpl.getComponentName(component);
     doAddComponent(componentName, component);
 
     if (optimizeTestLoading()) {
-      return;
+      return null;
     }
 
     loadJdomDefaults(component, componentName);
 
     StateStorage stateStorage = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ);
     if (stateStorage == null) {
-      return;
+      return null;
     }
 
     Element element = stateStorage.getState(component, componentName, Element.class, null);
     if (element == null) {
-      return;
+      return null;
     }
 
     try {
@@ -242,10 +256,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
     catch (InvalidDataException e) {
       LOG.error(e);
-      return;
+      return null;
     }
 
-    validateUnusedMacros(componentName, true);
+    return componentName;
   }
 
   private void doAddComponent(String componentName, Object component) {
@@ -273,20 +287,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return null;
   }
 
-  private void validateUnusedMacros(@Nullable final String componentName, final boolean service) {
-    final Project project = getProject();
-    if (project == null) return;
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      if (service && componentName != null && project.isInitialized()) {
-        final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
-        if (substitutor != null) {
-          StorageUtil.notifyUnknownMacros(substitutor, project, componentName);
-        }
-      }
-    }
-  }
-
+  @Nullable
   private <T> String initPersistentComponent(@NotNull PersistentStateComponent<T> component, @Nullable Set<StateStorage> changedStorages, boolean reloadData) {
     State stateSpec = StoreUtil.getStateSpec(component);
     String name = stateSpec.name();
@@ -294,7 +295,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       doAddComponent(name, component);
     }
     if (optimizeTestLoading()) {
-      return name;
+      return null;
     }
 
     Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
@@ -328,8 +329,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     if (state != null) {
       component.loadState(state);
     }
-
-    validateUnusedMacros(name, true);
 
     return name;
   }

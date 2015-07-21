@@ -386,7 +386,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
 
   @NotNull
   @Override
-  protected XmlElementStorage getMainStorage() {
+  public XmlElementStorage getMainStorage() {
     return getProjectFileStorage();
   }
 
