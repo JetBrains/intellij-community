@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   protected void setUpJdk() {
     super.setUpJdk();
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         ProjectJdkTable table = ProjectJdkTable.getInstance();
         myPluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(IdeaJdk.class));
@@ -70,6 +71,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   @Override
   protected void tearDown() throws Exception {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         ProjectJdkTable.getInstance().removeJdk(myPluginSdk);
       }
