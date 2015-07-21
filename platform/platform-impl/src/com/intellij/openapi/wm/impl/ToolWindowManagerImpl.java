@@ -498,8 +498,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        boolean value = !myProject.isDisposed() && condition.value(myProject);
-        if (value) {
+        if (!myProject.isDisposed() && condition.value(myProject)) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
