@@ -87,7 +87,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
       if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
         @Override
         public boolean value(PsiClass aClass) {
-          return TestNGUtil.hasTest(aClass);
+          return aClass.hasModifierProperty(PsiModifier.ABSTRACT) && TestNGUtil.hasTest(aClass);
         }
       })) return;
     }
