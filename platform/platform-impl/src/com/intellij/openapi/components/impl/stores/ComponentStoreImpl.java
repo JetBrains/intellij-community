@@ -26,15 +26,12 @@ import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -134,6 +131,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @TestOnly
+  @Override
   public void saveApplicationComponent(@NotNull Object component) {
     StateStorageManager.ExternalizationSession externalizationSession = getStateStorageManager().startExternalization();
     if (externalizationSession == null) {
@@ -223,7 +221,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     T state = component.getState();
     if (state != null) {
       Storage[] storageSpecs = getComponentStorageSpecs(component, StoreUtil.getStateSpec(component), StateStorageOperation.WRITE);
-      session.setState(storageSpecs, component, componentName == null ? getComponentName(component) : componentName, state);
+      session.setState(storageSpecs, component, componentName == null ? StoreUtil.getComponentName(component) : componentName, state);
     }
   }
 
@@ -361,11 +359,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     catch (JDOMException e) {
       throw new StateStorageException("Error loading state from " + url, e);
     }
-  }
-
-  @NotNull
-  public static String getComponentName(@NotNull PersistentStateComponent<?> persistentStateComponent) {
-    return StoreUtil.getStateSpec(persistentStateComponent).name();
   }
 
   @NotNull
@@ -532,90 +525,5 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     finally {
       messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
     }
-  }
-
-  public enum ReloadComponentStoreStatus {
-    RESTART_AGREED,
-    RESTART_CANCELLED,
-    ERROR,
-    SUCCESS,
-  }
-
-  @NotNull
-  public static ReloadComponentStoreStatus reloadStore(@NotNull MultiMap<StateStorage, VirtualFile> changes, @NotNull IComponentStore store) {
-    Collection<String> notReloadableComponents;
-    boolean willBeReloaded = false;
-    try {
-      AccessToken token = WriteAction.start();
-      try {
-        notReloadableComponents = store.reload(changes);
-      }
-      catch (Throwable e) {
-        Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
-                                   ProjectBundle.message("project.reload.failed.title"));
-        return ReloadComponentStoreStatus.ERROR;
-      }
-      finally {
-        token.finish();
-      }
-
-      if (ContainerUtil.isEmpty(notReloadableComponents)) {
-        return ReloadComponentStoreStatus.SUCCESS;
-      }
-
-      willBeReloaded = askToRestart(store, notReloadableComponents, changes);
-      return willBeReloaded ? ReloadComponentStoreStatus.RESTART_AGREED : ReloadComponentStoreStatus.RESTART_CANCELLED;
-    }
-    finally {
-      if (!willBeReloaded) {
-        for (StateStorage storage : changes.keySet()) {
-          if (storage instanceof StateStorageBase) {
-            ((StateStorageBase)storage).enableSaving();
-          }
-        }
-      }
-    }
-  }
-
-  // used in settings repository plugin
-  public static boolean askToRestart(@NotNull IComponentStore store,
-                                     @NotNull Collection<String> notReloadableComponents,
-                                     @Nullable MultiMap<StateStorage, VirtualFile> changedStorages) {
-    StringBuilder message = new StringBuilder();
-    String storeName = store instanceof IProjectStore ? "Project" : "Application";
-    message.append(storeName).append(' ');
-    message.append("components were changed externally and cannot be reloaded:\n\n");
-    int count = 0;
-    for (String component : notReloadableComponents) {
-      if (count == 10) {
-        message.append('\n').append("and ").append(notReloadableComponents.size() - count).append(" more").append('\n');
-      }
-      else {
-        message.append(component).append('\n');
-        count++;
-      }
-    }
-
-    message.append("\nWould you like to ");
-    if (store instanceof IProjectStore) {
-      message.append("reload project?");
-    }
-    else {
-      message.append(ApplicationManager.getApplication().isRestartCapable() ? "restart" : "shutdown").append(' ');
-      message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?');
-    }
-
-    if (Messages.showYesNoDialog(message.toString(),
-                                 storeName + " Files Changed", Messages.getQuestionIcon()) == Messages.YES) {
-      if (changedStorages != null) {
-        for (StateStorage storage : changedStorages.keySet()) {
-          if (storage instanceof StateStorageBase) {
-            ((StateStorageBase)storage).disableSaving();
-          }
-        }
-      }
-      return true;
-    }
-    return false;
   }
 }

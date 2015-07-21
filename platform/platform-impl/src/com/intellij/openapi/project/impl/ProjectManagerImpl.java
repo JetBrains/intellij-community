@@ -33,7 +33,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.*;
-import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
+import com.intellij.openapi.components.impl.stores.StoreUtil.ReloadComponentStoreStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
@@ -643,7 +643,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
 
       CHANGED_FILES_KEY.set(project, null);
-      if (!changes.isEmpty() && ComponentStoreImpl.reloadStore(changes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED) {
+      if (!changes.isEmpty() && StoreUtil.reloadStore(changes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED) {
         projectsToReload.add(project);
       }
     }
@@ -665,7 +665,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     changes.putAllValues(myChangedApplicationFiles);
     myChangedApplicationFiles.clear();
 
-    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(changes, ComponentsPackage.getStateStore(ApplicationManager.getApplication()));
+    ReloadComponentStoreStatus status = StoreUtil.reloadStore(changes, ComponentsPackage.getStateStore(ApplicationManager.getApplication()));
     if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
       ApplicationManagerEx.getApplicationEx().restart(true);
       return false;
