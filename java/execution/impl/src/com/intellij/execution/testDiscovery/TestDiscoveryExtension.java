@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -34,7 +35,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
@@ -45,6 +48,8 @@ import org.jetbrains.testme.instrumentation.ProjectData;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestDiscoveryExtension extends RunConfigurationExtension {
   private static final Logger LOG = Logger.getInstance("#" + TestDiscoveryExtension.class.getName());
@@ -73,16 +78,25 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
       connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
+        private List<String> myCompletedMethodNames = new ArrayList<String>();
         @Override
         public void onTestFinished(@NotNull SMTestProxy test) {
           final SMTestProxy.SMRootTestProxy root = test.getRoot();
-          if ((root == null || root.getHandler() == handler) && processTracesAlarm.getActiveRequestCount() == 0) {
-            /*processTracesAlarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                processAvailableTraces(configuration);
+          if ((root == null || root.getHandler() == handler)) {
+            final String fullTestName = test.getLocationUrl();
+            if (fullTestName != null && fullTestName.startsWith(JavaTestLocator.TEST_PROTOCOL)) {
+              myCompletedMethodNames.add(fullTestName.substring(JavaTestLocator.TEST_PROTOCOL.length() + 3));
+              if (myCompletedMethodNames.size() > 50) {
+                final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
+                myCompletedMethodNames.clear();
+                processTracesAlarm.addRequest(new Runnable() {
+                  @Override
+                  public void run() {
+                    processAvailableTraces(configuration, fullTestNames);
+                  }
+                }, 100);
               }
-            }, 200);*/
+            }
           }
         }
 
@@ -144,6 +158,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   private static final Object ourTracesLock = new Object();
+  
   private static void processAvailableTraces(RunConfigurationBase configuration) {
     final String tracesDirectory = getTracesDirectory(configuration);
     final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
@@ -166,5 +181,29 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
         }
       }
     }
+  }
+
+  private static void processAvailableTraces(RunConfigurationBase configuration, String[] fullTestNames) {
+    final String tracesDirectory = getTracesDirectory(configuration);
+    final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
+    synchronized (ourTracesLock) {
+      for (String fullTestName : fullTestNames) {
+        final String className = StringUtil.getPackageName(fullTestName);
+        final String methodName = StringUtil.getShortName(fullTestName);
+        if (!StringUtil.isEmptyOrSpaces(className) && !StringUtil.isEmptyOrSpaces(methodName)) {
+          final File testMethodTrace = new File(tracesDirectory, className + "-" + methodName + ".tr");
+          if (testMethodTrace.exists()) {
+            try {
+              coverageIndex.updateFromTestTrace(testMethodTrace);
+              FileUtil.delete(testMethodTrace);
+            }
+            catch (IOException e) {
+              LOG.error("Can not load " + testMethodTrace, e);
+            }
+          }
+        }
+      } 
+    }
+    
   }
 }
