@@ -335,6 +335,7 @@
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
     <annotatedPackagesSearch implementation="com.intellij.psi.impl.search.AnnotatedPackagesSearcher"/>
     <directClassInheritorsSearch implementation="com.intellij.psi.impl.search.JavaDirectInheritorsSearcher"/>
+    <classInheritorsSearch implementation="com.intellij.psi.impl.search.JavaClassInheritorsSearcher"/>
     <overridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaOverridingMethodsSearcher"/>
     <allOverridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaAllOverridingMethodsSearcher"/>
     <methodReferencesSearch implementation="com.intellij.psi.impl.search.MethodUsagesSearcher"/>
@@ -731,7 +732,7 @@
                      displayName="Block marker comment"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
                      groupBundle="messages.InspectionsBundle"
-                     groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
                      displayName="Pseudo functional expression using static class"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
@@ -746,7 +747,7 @@
                      displayName="Collection.addAll() can be replaced with parametrized constructor"/>
     <localInspection groupPath="Java" language="JAVA" shortName="GuavaFluentIterable"
                      groupBundle="messages.InspectionsBundle"
-                     groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.GuavaFluentIterableInspection"
                      displayName="Guava's FluentIterable can be replaced by java.util.stream.Stream"/>
     <intentionAction>
@@ -1301,7 +1302,6 @@
     <runConfigurationProducer implementation="com.intellij.execution.jar.JarApplicationConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
-    <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>
 
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.JavaRunConfigurationPathMacroFilter"/>

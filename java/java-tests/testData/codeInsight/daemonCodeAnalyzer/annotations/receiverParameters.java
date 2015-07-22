@@ -15,7 +15,6 @@ class C {
   @interface Anno { String f(Anno this); }
 
   void m0() {
-    try (Object <error descr="Receivers are not allowed outside of method parameter list">this</error>) { }
     Runnable r = (C <error descr="Receivers are not allowed outside of method parameter list">C.this</error>) -> { };
   }
 

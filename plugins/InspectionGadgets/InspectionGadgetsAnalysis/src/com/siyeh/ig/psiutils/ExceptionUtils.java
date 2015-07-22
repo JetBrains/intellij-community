@@ -47,8 +47,8 @@ public class ExceptionUtils {
     if (element == null) return out;
     if (element instanceof PsiResourceList) {
       final PsiResourceList resourceList = (PsiResourceList)element;
-      for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
-        final PsiMethod method = PsiUtil.getResourceCloserMethod(variable);
+      for (PsiResourceListElement resource : resourceList) {
+        final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
         collectExceptionsThrown(method, out);
       }
     }

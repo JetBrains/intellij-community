@@ -85,7 +85,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
     make(module);
     assertOutput(module, fs().dir("xxx").file("MyAction.class"));
 
-    File sandbox = new File(FileUtil.toSystemDependentName(getSandboxPath()));
+    File sandbox = new File(FileUtilRt.toSystemDependentName(getSandboxPath()));
     assertTrue(sandbox.exists());
     fs().dir("plugins")
           .dir("pluginProject")

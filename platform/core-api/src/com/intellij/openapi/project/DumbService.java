@@ -266,6 +266,27 @@ public abstract class DumbService {
   public abstract boolean isAlternativeResolveEnabled();
 
   /**
+   * By default, dumb mode tasks (including indexing) are allowed in non-modal state only. The reason is that
+   * when some code shows a dialog, it probably does't expect that after the dialog is closed the dumb mode will be on.
+   * Therefore any dumb mode started within a dialog is considered a mistake, performed under modal progress and reported as an exception.<p/>
+   *
+   * If the dialog (e.g. Project Structure) starting background dumb mode is an expected situation, the dumb mode should be started inside the runnable
+   * passed to this method. This will suppress the exception and allow either modal or background indexing. Note that this will only affect the invocation time
+   * modality state, so showing other dialogs from within the runnable and starting dumb mode from them would still result in an assertion failure.
+   */
+  public abstract void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable);
+
+  /**
+   * Permits the dumb mode to start at a specific moment, either modally or in background.
+   * @see #allowStartingDumbModeInside(DumbModePermission, Runnable)
+   */
+  public enum DumbModePermission {
+    MAY_START_MODAL,
+    MAY_START_BACKGROUND
+  }
+
+
+  /**
    * @see #DUMB_MODE
    */
   public interface DumbModeListener {

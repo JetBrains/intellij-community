@@ -24,7 +24,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
@@ -42,6 +42,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -64,7 +65,7 @@ import java.util.List;
  * @author yole
  * @author Konstantin Bulenkov
  */
-public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements ProjectManagerListener, PersistentStateComponent<RecentProjectsManagerBase.State> {
+public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
   private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
   private static Icon ourSmallAppIcon;
 
@@ -101,8 +102,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
 
-  protected RecentProjectsManagerBase(MessageBus messageBus) {
-    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
+  protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
+    MessageBusConnection connection = messageBus.connect();
+    connection.subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      connection.subscribe(ProjectManager.TOPIC, new MyProjectListener());
+    }
   }
 
   @Override
@@ -451,37 +456,34 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return file.exists() && (!file.isDirectory() || new File(file, Project.DIRECTORY_STORE_FOLDER).exists());
   }
 
-  @Override
-  public void projectOpened(final Project project) {
-    String path = getProjectPath(project);
-    if (path != null) {
-      markPathRecent(path);
-    }
-    SystemDock.updateMenu();
-  }
-
-  @Override
-  public final boolean canCloseProject(Project project) {
-    return true;
-  }
-
-  @Override
-  public void projectClosing(Project project) {
-    synchronized (myStateLock) {
-      myState.names.put(getProjectPath(project), getProjectDisplayName(project));
-    }
-  }
-
-  @Override
-  public void projectClosed(final Project project) {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0) {
-      String path = getProjectPath(openProjects[openProjects.length - 1]);
+  private class MyProjectListener extends ProjectManagerAdapter {
+    @Override
+    public void projectOpened(final Project project) {
+      String path = getProjectPath(project);
       if (path != null) {
         markPathRecent(path);
       }
+      SystemDock.updateMenu();
     }
-    SystemDock.updateMenu();
+
+    @Override
+    public void projectClosing(Project project) {
+      synchronized (myStateLock) {
+        myState.names.put(getProjectPath(project), getProjectDisplayName(project));
+      }
+    }
+
+    @Override
+    public void projectClosed(final Project project) {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      if (openProjects.length > 0) {
+        String path = getProjectPath(openProjects[openProjects.length - 1]);
+        if (path != null) {
+          markPathRecent(path);
+        }
+      }
+      SystemDock.updateMenu();
+    }
   }
 
   @NotNull
@@ -570,9 +572,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
     @Override
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        ProjectManager.getInstance().addProjectManagerListener(RecentProjectsManagerBase.this);
-      }
       if (willReopenProjectOnStart()) {
         willOpenProject.set(Boolean.TRUE);
       }

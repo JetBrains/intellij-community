@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,14 +118,19 @@ public class ExceptionUtil {
     else if (element instanceof PsiTryStatement) {
       return getTryExceptions((PsiTryStatement)element);
     }
-    else if (element instanceof PsiResourceVariable) {
-      final PsiResourceVariable variable = (PsiResourceVariable)element;
-      final List<PsiClassType> types = ContainerUtil.newArrayList();
-      addExceptions(types, getCloserExceptions(variable));
-      final PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) addExceptions(types, getThrownExceptions(initializer));
+    else if (element instanceof PsiResourceListElement) {
+      List<PsiClassType> types = ContainerUtil.newArrayList();
+      addExceptions(types, getCloserExceptions((PsiResourceListElement)element));
+      if (element instanceof PsiResourceVariable) {
+        PsiResourceVariable variable = (PsiResourceVariable)element;
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null) {
+          addExceptions(types, getThrownExceptions(initializer));
+        }
+      }
       return types;
     }
+
     return getThrownExceptions(element.getChildren());
   }
 
@@ -135,8 +140,8 @@ public class ExceptionUtil {
 
     PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
-      for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
-        addExceptions(array, getUnhandledCloserExceptions(variable, resourceList));
+      for (PsiResourceListElement resource : resourceList) {
+        addExceptions(array, getUnhandledCloserExceptions(resource, resourceList));
       }
     }
 
@@ -303,16 +308,10 @@ public class ExceptionUtil {
       }
       unhandledExceptions = unhandled;
     }
-
-    if (element instanceof PsiResourceVariable) {
-      final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResourceVariable)element, topElement);
+    else if (element instanceof PsiResourceListElement) {
+      final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResourceListElement)element, topElement);
       if (!unhandled.isEmpty()) {
-        if (unhandledExceptions == null) {
-          unhandledExceptions = ContainerUtil.newArrayList(unhandled);
-        }
-        else {
-          unhandledExceptions.addAll(unhandled);
-        }
+        unhandledExceptions = ContainerUtil.newArrayList(unhandled);
       }
     }
 
@@ -356,6 +355,7 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getUnhandledExceptions(final @NotNull PsiElement[] elements) {
     final List<PsiClassType> array = ContainerUtil.newArrayList();
+
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitCallExpression(@NotNull PsiCallExpression expression) {
@@ -377,9 +377,15 @@ public class ExceptionUtil {
       }
 
       @Override
-      public void visitResourceVariable(@NotNull PsiResourceVariable resourceVariable) {
-        addExceptions(array, getUnhandledCloserExceptions(resourceVariable, null));
-        visitElement(resourceVariable);
+      public void visitResourceVariable(@NotNull PsiResourceVariable resource) {
+        addExceptions(array, getUnhandledCloserExceptions((PsiResourceListElement)resource, null));
+        visitElement(resource);
+      }
+
+      @Override
+      public void visitResourceExpression(@NotNull PsiResourceExpression resource) {
+        addExceptions(array, getUnhandledCloserExceptions(resource, null));
+        visitElement(resource);
       }
     };
 
@@ -392,18 +398,6 @@ public class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiElement element) {
-    if (element instanceof PsiCallExpression) {
-      PsiCallExpression expression = (PsiCallExpression)element;
-      return getUnhandledExceptions(expression, null);
-    }
-    else if (element instanceof PsiThrowStatement) {
-      PsiThrowStatement throwStatement = (PsiThrowStatement)element;
-      return getUnhandledExceptions(throwStatement, null);
-    }
-    else if (element instanceof PsiResourceVariable) {
-      return getUnhandledCloserExceptions((PsiResourceVariable)element, null);
-    }
-
     return getUnhandledExceptions(new PsiElement[]{element});
   }
 
@@ -532,17 +526,29 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceVariable resource) {
+  public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceListElement resource) {
     PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
     PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(resource.getType()).getSubstitutor();
     return method != null ? getExceptionsByMethod(method, substitutor, resource) : Collections.<PsiClassType>emptyList();
   }
 
+  /** @deprecated use {@link #getCloserExceptions(PsiResourceListElement)} (to be removed in IDEA 16) */
+  @SuppressWarnings("unused")
+  public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceVariable resource) {
+    return getCloserExceptions((PsiResourceListElement)resource);
+  }
+
   @NotNull
-  public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull PsiResourceVariable resource, @Nullable PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull PsiResourceListElement resource, @Nullable PsiElement topElement) {
     PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
     PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(resource.getType()).getSubstitutor();
     return method != null ? getUnhandledExceptions(method, resource, topElement, substitutor) : Collections.<PsiClassType>emptyList();
+  }
+
+  /** @deprecated use {@link #getUnhandledCloserExceptions(PsiResourceListElement, PsiElement)} (to be removed in IDEA 16) */
+  @SuppressWarnings("unused")
+  public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull PsiResourceVariable resource, @Nullable PsiElement topElement) {
+    return getUnhandledCloserExceptions((PsiResourceListElement)resource, topElement);
   }
 
   @NotNull
@@ -574,7 +580,7 @@ public class ExceptionUtil {
     if (expression != null) {
       final PsiType type = expression.getType();
       if (type != null) {
-        return Arrays.asList(type);
+        return Collections.singletonList(type);
       }
     }
 

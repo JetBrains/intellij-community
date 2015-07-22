@@ -1126,10 +1126,15 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Nullable
-  public static PsiMethod getResourceCloserMethod(@NotNull final PsiResourceVariable resource) {
-    final PsiType resourceType = resource.getType();
-    if (!(resourceType instanceof PsiClassType)) return null;
-    return getResourceCloserMethodForType((PsiClassType)resourceType);
+  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceListElement resource) {
+    PsiType resourceType = resource.getType();
+    return resourceType instanceof PsiClassType ? getResourceCloserMethodForType((PsiClassType)resourceType) : null;
+  }
+
+  /** @deprecated use {@link #getResourceCloserMethod(PsiResourceListElement)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceVariable resource) {
+    return getResourceCloserMethod((PsiResourceListElement)resource);
   }
 
   @Nullable

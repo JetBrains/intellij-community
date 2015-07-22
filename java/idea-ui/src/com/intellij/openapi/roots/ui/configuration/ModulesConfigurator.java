@@ -32,6 +32,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -300,23 +301,27 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
     myFacetsConfigurator.applyEditors();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
+    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbService.DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       public void run() {
-        try {
-          final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-          ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
-          myModuleModelCommitted = true;
-          myFacetsConfigurator.commitFacets();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
+              ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
+              myModuleModelCommitted = true;
+              myFacetsConfigurator.commitFacets();
 
-        }
-        finally {
-          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
+            }
+            finally {
+              ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
 
-          myFacetsConfigurator = createFacetsConfigurator();
-          myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-          myModuleModelCommitted = false;
-        }
+              myFacetsConfigurator = createFacetsConfigurator();
+              myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+              myModuleModelCommitted = false;
+            }
+          }
+        });
       }
     });
 

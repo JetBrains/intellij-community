@@ -178,7 +178,7 @@ public class JUnit4TestListener extends RunListener {
       ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
     }
     finally {
-      myPrintStream.println(MapSerializerUtil.asString(messageName, attrs));
+      myPrintStream.println("\n" + MapSerializerUtil.asString(messageName, attrs));
     }
   }
 

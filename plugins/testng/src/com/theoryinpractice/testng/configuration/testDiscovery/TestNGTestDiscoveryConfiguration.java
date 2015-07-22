@@ -65,6 +65,12 @@ public class TestNGTestDiscoveryConfiguration extends TestDiscoveryConfiguration
     return null;
   }
 
+  @NotNull
+  @Override
+  public String getFrameworkPrefix() {
+    return "g";
+  }
+
   private class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
     public TestNGTestDiscoveryRunnableState(ExecutionEnvironment environment) {
       super(environment, ((TestNGConfiguration)myDelegate));
@@ -76,7 +82,7 @@ public class TestNGTestDiscoveryConfiguration extends TestDiscoveryConfiguration
         @Override
         protected void search() throws CantRunException {
           myClasses.clear();
-          final Set<String> patterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList());
+          final Set<String> patterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList(), getFrameworkPrefix());
           final Module module = getConfigurationModule().getModule();
           final GlobalSearchScope searchScope =
             module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(getProject());

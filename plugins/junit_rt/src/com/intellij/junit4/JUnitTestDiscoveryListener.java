@@ -16,7 +16,10 @@
 package com.intellij.junit4;
 
 import com.intellij.execution.TestDiscoveryListener;
-import com.intellij.rt.execution.junit.IDEAJUnitListener;
+import com.intellij.rt.execution.junit.IDEAJUnitListenerEx;
 
-public class JUnitTestDiscoveryListener extends TestDiscoveryListener implements IDEAJUnitListener {
+public class JUnitTestDiscoveryListener extends TestDiscoveryListener implements IDEAJUnitListenerEx {
+  public String getFrameworkId() {
+    return "j";
+  }
 }

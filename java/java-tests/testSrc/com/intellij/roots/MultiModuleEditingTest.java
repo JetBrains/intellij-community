@@ -70,8 +70,8 @@ public class MultiModuleEditingTest extends ModuleTestCase {
 
     {
       final ModifiableModuleModel modifiableModel = moduleManager.getModifiableModel();
-      moduleA = modifiableModel.newModule(new File("a.iml").getAbsolutePath(), StdModuleTypes.JAVA.getId());
-      moduleB = modifiableModel.newModule(new File("b.iml").getAbsolutePath(), StdModuleTypes.JAVA.getId());
+      moduleA = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
+      moduleB = modifiableModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
       assertEquals("Changes are not applied until commit", 0, moduleManager.getModules().length);
       //noinspection SSBasedInspection
       moduleListener.assertCorrectEvents(new String[0][]);
@@ -107,8 +107,8 @@ public class MultiModuleEditingTest extends ModuleTestCase {
     final Module moduleB;
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule(new File("a.iml").getAbsolutePath(), StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule(new File("b.iml").getAbsolutePath(), StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
+      moduleB = moduleModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleA);
@@ -146,9 +146,9 @@ public class MultiModuleEditingTest extends ModuleTestCase {
 
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule(new File("a.iml").getAbsolutePath(), StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule(new File("b.iml").getAbsolutePath(), StdModuleTypes.JAVA.getId());
-      final Module moduleC = moduleModel.newModule(new File("c.iml").getAbsolutePath(), StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
+      moduleB = moduleModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
+      final Module moduleC = moduleModel.newModule("c.iml", StdModuleTypes.JAVA.getId());
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);

@@ -22,6 +22,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -41,7 +43,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(TestDiscoveryConfiguration configuration,
+  protected boolean setupConfigurationFromContext(final TestDiscoveryConfiguration configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
     if (!Registry.is("testDiscovery.enabled")) {
@@ -56,7 +58,13 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       try {
         final Collection<String> testsByMethodName = TestDiscoveryIndex
           .getInstance(configuration.getProject()).getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName == null || testsByMethodName.isEmpty()) return false;
+        if (testsByMethodName == null || ContainerUtil.filter(testsByMethodName, new Condition<String>() {
+          @Override
+          public boolean value(String s) {
+            return s.startsWith(configuration.getFrameworkPrefix());
+          }
+        }).isEmpty()) return false;
+        
       }
       catch (IOException e) {
         return false;

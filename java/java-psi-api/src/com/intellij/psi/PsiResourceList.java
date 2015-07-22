@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 
 /**
  * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
  *
  * @see PsiTryStatement#getResourceList()
- * @since 10.5.
+ * @since 10.5
  */
-public interface PsiResourceList extends PsiElement {
+public interface PsiResourceList extends PsiElement, Iterable<PsiResourceListElement> {
   int getResourceVariablesCount();
 
-  @NotNull
+  /** @deprecated use {@link #iterator()} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   List<PsiResourceVariable> getResourceVariables();
 }

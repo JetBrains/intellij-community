@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,20 +51,26 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       withParent(psiElement(PsiTypeElement.class).
         withParent(or(psiElement(PsiCatchSection.class),
                       psiElement(PsiVariable.class).withParent(PsiCatchSection.class)))));
+
   static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
-    or(psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
-       psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class)
-                                .withSuperParent(3, PsiCatchSection.class)));
+    or(psiElement().afterLeaf(psiElement().withText("|").
+         withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
+       psiElement().afterLeaf(psiElement().withText("|").
+         withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
+
   static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
     psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
-  static final ElementPattern<PsiElement> IN_RESOURCE_TYPE =
-    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
-      withParent(psiElement(PsiTypeElement.class).
-        withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
+
+  static final ElementPattern<PsiElement> IN_RESOURCE =
+    psiElement().withParent(or(
+      psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiTypeElement.class).
+        withSuperParent(2, or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class))),
+      psiElement(PsiReferenceExpression.class).withParent(PsiResourceExpression.class)));
+
   private final CompletionType myCompletionType;
   private final PsiElement myPosition;
   private final Set<PsiField> myNonInitializedFields;
-  @NotNull private final Condition<PsiClass> myRequiredSuper;
+  private final Condition<PsiClass> myRequiredSuper;
 
   public PreferByKindWeigher(CompletionType completionType, final PsiElement position) {
     super("kind");
@@ -74,6 +80,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     myRequiredSuper = createSuitabilityCondition(position);
   }
 
+  @NotNull
   private static Condition<PsiClass> createSuitabilityCondition(final PsiElement position) {
     if (IN_CATCH_TYPE.accepts(position) || IN_MULTI_CATCH_TYPE.accepts(position)) {
       PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(position, PsiTryStatement.class);
@@ -109,7 +116,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       };
     }
 
-    if (IN_RESOURCE_TYPE.accepts(position)) {
+    if (IN_RESOURCE.accepts(position)) {
       return new Condition<PsiClass>() {
         @Override
         public boolean value(PsiClass psiClass) {

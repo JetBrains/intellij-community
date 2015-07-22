@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -30,7 +29,7 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
+    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new RedundantCastInspection());
     setLanguageLevel(LanguageLevel.JDK_1_9);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, getModule(), getTestRootDisposable());
   }
@@ -46,6 +45,8 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
 
   public void testSafeVarargsApplicability() { doTest(true, false); }
   public void testPrivateInInterfaces() { doTest(false, false); }
+  public void testUnderscore() { doTest(false, false); }
+  public void testTryWithResources() { doTest(false, false); }
 
   public void testValueTypes() { setLanguageLevel(LanguageLevel.JDK_X); doTest(false, false); }
 }

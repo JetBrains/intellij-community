@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -57,6 +58,9 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     final PsiClass fluentIterable = JavaPsiFacade.getInstance(holder.getProject())
       .findClass(GUAVA_FLUENT_ITERABLE, GlobalSearchScope.allScope(holder.getProject()));
     if (fluentIterable == null) {
