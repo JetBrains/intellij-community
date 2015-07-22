@@ -34,9 +34,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
@@ -53,14 +51,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Encapsulates functionality of importing gradle module to the intellij project.
+ * Encapsulates functionality of importing external system module to the intellij project.
  * 
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
@@ -118,9 +115,9 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     });
   }
 
-  private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
-                             @NotNull final Project project,
-                             @NotNull final PlatformFacade platformFacade) {
+  private static void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
+                                    @NotNull final Project project,
+                                    @NotNull final PlatformFacade platformFacade) {
     Application application = ApplicationManager.getApplication();
     final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
     application.runWriteAction(new Runnable() {
