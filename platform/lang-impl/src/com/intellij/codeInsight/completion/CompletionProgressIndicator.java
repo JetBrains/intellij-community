@@ -40,6 +40,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -56,6 +57,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
@@ -229,7 +231,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         final int selectionEndOffset = initContext.getSelectionEndOffset();
         final PsiReference reference = TargetElementUtil.findReference(myEditor, selectionEndOffset);
         if (reference != null) {
-          initContext.setReplacementOffset(findReplacementOffset(selectionEndOffset, reference));
+          final int replacementOffset = findReplacementOffset(selectionEndOffset, reference);
+          final Document document = initContext.getEditor().getDocument();
+          if (replacementOffset > document.getTextLength()) {
+            LOG.error("Invalid replacementOffset: " + replacementOffset + " returned by reference " + reference + " of " + reference.getClass() + 
+                      "; doc=" + document + 
+                      "; doc actual=" + (document == initContext.getFile().getViewProvider().getDocument()) + 
+                      "; doc committed=" + PsiDocumentManager.getInstance(getProject()).isCommitted(document));
+          } else {
+            initContext.setReplacementOffset(replacementOffset);
+          }
         }
       }
       catch (IndexNotReadyException ignored) {
