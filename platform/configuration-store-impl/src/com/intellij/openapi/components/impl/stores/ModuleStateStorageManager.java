@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class ModuleStateStorageManager extends StateStorageManagerImpl {
+public class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NonNls private static final String ROOT_TAG_NAME = "module";
   private final Module myModule;
 
