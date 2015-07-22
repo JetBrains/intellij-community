@@ -119,7 +119,7 @@ public class TestDiscoveryInstrumentator {
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         if (methodsFilter.shouldVisitMethod(access, name, desc, signature, exceptions)) {
           if ("<init>".equals(name)) {
-            final int slashPos = className.lastIndexOf('/');
+            final int slashPos = className.lastIndexOf('.');
             final int $Pos = className.lastIndexOf('$');
             name = className.substring(Math.max(slashPos, $Pos) + 1);
           }
