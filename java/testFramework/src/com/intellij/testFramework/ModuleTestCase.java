@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -154,14 +155,14 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return result.get();
   }
 
-  protected void readJdomExternalizables(final ModuleImpl module) {
+  protected void readJdomExternalizables(@NotNull Module module) {
     loadModuleComponentState(module, ModuleRootManager.getInstance(module));
   }
 
   protected final void loadModuleComponentState(@NotNull Module module, @NotNull Object component) {
     AccessToken token = WriteAction.start();
     try {
-      ProjectImpl project = (ProjectImpl)myProject;
+      ProjectEx project = (ProjectEx)myProject;
       project.setOptimiseTestLoadSpeed(false);
       ComponentsPackage.getStateStore(module).initComponent(component, false);
       project.setOptimiseTestLoadSpeed(true);

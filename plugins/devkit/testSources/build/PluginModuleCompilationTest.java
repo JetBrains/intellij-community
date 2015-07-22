@@ -20,7 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -139,7 +138,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   }
 
   @Override
-  protected void readJdomExternalizables(ModuleImpl module) {
+  protected void readJdomExternalizables(@NotNull Module module) {
     super.readJdomExternalizables(module);
     PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration != null) {
@@ -156,17 +155,17 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   private Module setupSimplePluginProject() {
     copyToProject("plugins/devkit/testData/build/simple");
     Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
-    readJdomExternalizables((ModuleImpl)module);
+    readJdomExternalizables(module);
     return module;
   }
 
   private Module setupPluginProjectWithJpsModule() {
     copyToProject("plugins/devkit/testData/build/withJpsModule");
     Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
-    readJdomExternalizables((ModuleImpl)module);
+    readJdomExternalizables(module);
     loadModuleComponentState(module, PluginBuildConfiguration.getInstance(module));
     Module jpsModule = loadModule(getProjectBasePath() + "/jps-plugin/jps-plugin.iml");
-    readJdomExternalizables((ModuleImpl)jpsModule);
+    readJdomExternalizables(jpsModule);
     ModuleRootModificationUtil.setModuleSdk(jpsModule, getTestProjectJdk());
     return module;
   }
