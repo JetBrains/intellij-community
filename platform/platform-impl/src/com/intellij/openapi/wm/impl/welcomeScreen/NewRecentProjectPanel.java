@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -243,7 +244,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             if (isGroup) {
               final ProjectGroup group = ((ProjectGroupActionGroup)value).getGroup();
               name.setText(" " + group.getName());
-              name.setIcon(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon());
+              name.setIcon(IconUtil.toSize(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon(), JBUI.scale(16), JBUI.scale(16)));
               name.setFont(name.getFont().deriveFont(Font.BOLD));
               add(name);
             } else if (value instanceof ReopenProjectAction) {
