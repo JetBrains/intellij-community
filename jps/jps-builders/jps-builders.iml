@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" />
+    <orderEntry type="module" module-name="platform-module-descriptors-generator" scope="TEST" />
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="platform-loader" exported="" />
