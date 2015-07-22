@@ -4,8 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
 
 public class ProjectData {
     public static final String PROJECT_DATA_OWNER = "org/jetbrains/testme/instrumentation/ProjectData";
@@ -57,6 +55,48 @@ public class ProjectData {
         myTrace3.put(className, methodNames);
     }
 
+    private static final int STRING_LENGTH_THRESHOLD = 255;
+    private static final int STRING_HEADER_SIZE = 1;
+
+    private static void writeUTF(DataOutput storage, byte[] buffer, String value) throws IOException {
+        int len = value.length();
+
+        if (len < STRING_LENGTH_THRESHOLD) {
+            buffer[0] = (byte)len;
+            boolean isAscii = true;
+            for (int i = 0; i < len; i++) {
+                char c = value.charAt(i);
+                if (c >= 128) {
+                    isAscii = false;
+                    break;
+                }
+                buffer[i + STRING_HEADER_SIZE] = (byte)c;
+            }
+            if (isAscii) {
+                storage.write(buffer, 0, len + STRING_HEADER_SIZE);
+                return;
+            }
+        }
+
+        storage.writeByte((byte)0xFF);
+        storage.writeUTF(value);
+    }
+
+    private static void writeINT(DataOutput record, int val) throws IOException {
+        if (0 <= val && val < 192) {
+            record.writeByte(val);
+        }
+        else {
+            record.writeByte(192 + (val & 0x3F));
+            val >>>= 6;
+            while (val >= 128) {
+                record.writeByte((val & 0x7F) | 0x80);
+                val >>>= 7;
+            }
+            record.writeByte(val);
+        }
+    }
+
     private static volatile boolean traceDirDumped;
 
     public synchronized void testEnded(final String name) {
@@ -74,9 +114,9 @@ public class ProjectData {
                 traceFile.createNewFile();
             }
             DataOutputStream os = null;
-            Deflater def = new Deflater(1);
             try {
-                os = new DataOutputStream(new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(traceFile)), def));
+                os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(traceFile), 64 * 1024));
+                final byte[] buffer = new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
 
                 //saveOldTrace(os);
 
@@ -94,7 +134,7 @@ public class ProjectData {
                     }
                 }
 
-                os.writeInt(classToUsedMethods.size());
+                writeINT(os, classToUsedMethods.size());
                 for(Map.Entry<String, boolean[]> e: myTrace2.entrySet()) {
                     final boolean[] used = e.getValue();
                     final String className = e.getKey();
@@ -104,13 +144,13 @@ public class ProjectData {
 
                     int usedMethodsCount = integer;
 
-                    os.writeUTF(className);
-                    os.writeInt(usedMethodsCount);
+                    writeUTF(os, buffer, className);
+                    writeINT(os, usedMethodsCount);
 
                     String[] methodNames = myTrace3.get(className);
                     for (int i = 0, len = used.length; i < len; ++i) {
-                        // we check usedMethodCount here since used was observed to change // ?
-                        if (used[i] && usedMethodsCount-- > 0) os.writeUTF(methodNames[i]);
+                        // we check usedMethodCount here since used can still be updated by other threads
+                        if (used[i] && usedMethodsCount-- > 0) writeUTF(os, buffer, methodNames[i]);
                     }
                 }
             }
@@ -118,7 +158,6 @@ public class ProjectData {
                 if (os != null) {
                     os.close();
                 }
-                def.end();
             }
         }
         catch (IOException e) {
