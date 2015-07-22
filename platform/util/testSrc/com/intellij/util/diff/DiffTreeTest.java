@@ -235,7 +235,7 @@ public class DiffTreeTest extends TestCase {
     Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1)));
     Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1), new Node(4,2), new Node(5,3)));
 
-    performTest(r1, r2, "INSERTED to 1: 5 at 2", "INSERTED to 1: 4 at 2");
+    performTest(r1, r2, "INSERTED to 1: 4 at 2", "INSERTED to 1: 5 at 3");
   }
 
   public void testSubtreeAppears() throws Exception {
