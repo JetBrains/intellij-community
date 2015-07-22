@@ -23,7 +23,7 @@ public class InstrumentedMethodsFilter {
         if ((access & Opcodes.ACC_ABSTRACT) != 0) return false; //skip abstracts; do not include interfaces without non-abstract methods in result
         if ("<clinit>".equals(name) || //static initializer
             ((access & Opcodes.ACC_SYNTHETIC) != 0 && name.startsWith("access$")) || // synthetic access method
-            name.equals("<init>") && signature != null && signature.equals("()V") // default constructor
+            name.equals("<init>") //&& signature != null && signature.equals("()V") // todo: constructor
           ) {
             // todo skip only trivial default constructor
             return false;
