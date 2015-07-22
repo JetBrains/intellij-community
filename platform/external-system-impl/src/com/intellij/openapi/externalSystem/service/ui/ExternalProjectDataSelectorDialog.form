@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.externalSystem.service.ui.ExternalProjectStructureDialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog">
   <grid id="cbd77" binding="mainPanel" layout-manager="BorderLayout" hgap="5" vgap="5">
     <constraints>
       <xy x="48" y="54" width="793" height="309"/>
