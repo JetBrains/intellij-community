@@ -1302,7 +1302,6 @@
     <runConfigurationProducer implementation="com.intellij.execution.jar.JarApplicationConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
-    <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>
 
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.JavaRunConfigurationPathMacroFilter"/>
