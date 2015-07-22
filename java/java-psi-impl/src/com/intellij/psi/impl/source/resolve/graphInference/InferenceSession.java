@@ -1231,7 +1231,9 @@ public class InferenceSession {
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
     final PsiClass containingClass = qualifierResolveResult.getContainingClass();
-    LOG.assertTrue(containingClass != null, myContext);
+    if (containingClass == null) {
+      return resolveSubset(myInferenceVariables, mySiteSubstitutor); 
+    }
 
     final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
