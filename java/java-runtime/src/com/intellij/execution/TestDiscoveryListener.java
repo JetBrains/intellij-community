@@ -48,4 +48,8 @@ public class TestDiscoveryListener {
       return null; //should not happen
     }
   }
+
+  public void testRunStarted(String name) {}
+
+  public void testRunFinished(String name) {}
 }
