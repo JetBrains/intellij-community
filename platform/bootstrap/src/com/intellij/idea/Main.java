@@ -148,7 +148,7 @@ public class Main {
     try {
       Process process = Runtime.getRuntime().exec(command);
       String line = (new BufferedReader(new InputStreamReader(process.getErrorStream()))).readLine();
-      if (line != null && (line.startsWith("java version") || (line.startsWith("Openjdk version")))){
+      if (line != null && (line.toLowerCase().startsWith("java version") || (line.toLowerCase().startsWith("openjdk version")))){
         String[] javaVersion = line.split("\\.");
         int i = 1;
         if (javaVersion.length > i && Integer.parseInt(javaVersion[i]) > 5) {
@@ -161,23 +161,17 @@ public class Main {
     return false;
   }
 
-
   private static String getBundledJava(String javaHome) throws IOException {
-    boolean clear = true;
     String javaHomeCopy = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/jre";
     File javaCopy = SystemInfoRt.isWindows ? new File(javaHomeCopy + "/bin/java.exe") : new File(javaHomeCopy + "/bin/java");
-    if (javaCopy != null && javaCopy.exists()) {
-      if (checkBundledJava(javaCopy)) {
-        javaHome = javaHomeCopy;
-      }
-    }
-    else {
-      clear = false;
+    if (javaCopy != null && javaCopy.isFile() && checkBundledJava(javaCopy)) {
+      javaHome = javaHomeCopy;
     }
     if (javaHome != javaHomeCopy) {
-      if (clear) FileUtil.delete(new File(javaHomeCopy));
-      System.out.println("Updater: java copy: " + javaHome + " to " + javaHomeCopy);
-      FileUtil.copyDir(new File(javaHome), new File(javaHomeCopy));
+      File javaHomeCopyDir = new File(javaHomeCopy);
+      if (javaHomeCopyDir.exists()) FileUtil.delete(javaHomeCopyDir);
+      System.out.println("Updater: java: " + javaHome + " copied to " + javaHomeCopy);
+      FileUtil.copyDir(new File(javaHome), javaHomeCopyDir);
       javaHome = javaHomeCopy;
     }
     return javaHome;
@@ -186,7 +180,7 @@ public class Main {
   private static String getJava() throws IOException {
     String javaHome = System.getProperty("java.home");
     if (javaHome.toLowerCase().startsWith(PathManager.getHomePath().toLowerCase())) {
-      System.out.println("bundled java.");
+      System.out.println("Updater: uses bundled java.");
       javaHome = getBundledJava(javaHome);
     }
     return javaHome + "/bin/java";

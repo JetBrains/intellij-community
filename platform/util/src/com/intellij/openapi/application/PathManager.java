@@ -24,6 +24,7 @@ import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
+import org.intellij.lang.annotations.Flow;
 import org.iq80.snappy.Snappy;
 import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
@@ -431,7 +432,7 @@ public class PathManager {
   public static Collection<String> getUtilClassPath() {
     final Class<?>[] classes = {
       PathManager.class,            // module 'util'
-      NotNull.class,                // module 'annotations'
+      Flow.class,                   // module 'annotations'
       SystemInfoRt.class,           // module 'util-rt'
       Document.class,               // jDOM
       Appender.class,               // log4j
@@ -448,6 +449,16 @@ public class PathManager {
       final String path = getJarPathForClass(aClass);
       if (path != null) {
         classPath.add(path);
+      }
+    }
+
+    final String annotationsRoot = getJarPathForClass(Flow.class);
+    if (annotationsRoot != null && !annotationsRoot.endsWith(".jar")) {
+      // We're running IDEA built from sources. Flow.class is under annotations-common, and NotNull.class is under annotations. Add both
+      // roots to classpath.
+      final File notNullRoot = new File(new File(annotationsRoot).getParentFile(), "annotations");
+      if (notNullRoot.exists()) {
+        classPath.add(notNullRoot.getAbsolutePath());
       }
     }
 

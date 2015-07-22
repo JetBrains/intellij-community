@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleManager#getModules()
  * @see ModuleComponent
  */
-public interface Module extends ComponentManager, AreaInstance, Disposable {
+public interface Module extends ComponentManager, AreaInstance, Disposable, OptionManager {
   /**
    * The empty array of modules which cab be reused to avoid unnecessary allocations.
    */
@@ -77,30 +77,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   boolean isDisposed();
 
   boolean isLoaded();
-
-  /**
-   * Sets a custom option for this module.
-   *
-   * @param optionName the name of the custom option.
-   * @param optionValue the value of the custom option.
-   */
-  void setOption(@NotNull String optionName, @NotNull String optionValue);
-
-  /**
-   * Removes a custom option from this module.
-   *
-   * @param optionName the name of the custom option.
-   */
-  void clearOption(@NotNull String optionName);
-
-  /**
-   * Gets the value of a custom option for this module.
-   *
-   * @param optionName the name of the custom option.
-   * @return the value of the custom option, or null if no value has been set.
-   */
-  @Nullable
-  String getOptionValue(@NotNull String optionName);
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.

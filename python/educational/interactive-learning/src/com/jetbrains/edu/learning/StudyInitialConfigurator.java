@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,8 +28,7 @@ public class StudyInitialConfigurator {
                                   CodeInsightSettings codeInsightSettings,
                                   final PropertiesComponent propertiesComponent,
                                   FileTypeManager fileTypeManager,
-                                  final ProjectManagerEx projectManager,
-                                  RecentProjectsManager recentProjectsManager) {
+                                  final ProjectManagerEx projectManager) {
     final File file = new File(getCoursesRoot(), "introduction_course.zip");
     if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
       final File newCourses = new File(PathManager.getConfigPath(), "courses");

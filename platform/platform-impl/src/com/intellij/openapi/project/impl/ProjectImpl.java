@@ -295,7 +295,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     long time = System.currentTimeMillis() - start;
-    LOG.info(getComponentConfigurationsSize() + " project components initialized in " + time + " ms");
+    LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
 
     getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,16 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.util.Producer;
+
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class OnePixelSplitter extends JBSplitter {
+
+  private Producer<Insets> myBlindZone;
 
   public OnePixelSplitter() {
     super();
@@ -56,4 +61,14 @@ public class OnePixelSplitter extends JBSplitter {
   protected Divider createDivider() {
     return new OnePixelDivider(isVertical(), this);
   }
+
+  public void setBlindZone(Producer<Insets> blindZone) {
+    myBlindZone = blindZone;
+  }
+
+  public Producer<Insets> getBlindZone() {
+    return myBlindZone;
+  }
+
+  public enum BlindZone {TOP, BOTTOM, LEFT, RIGHT}
 }

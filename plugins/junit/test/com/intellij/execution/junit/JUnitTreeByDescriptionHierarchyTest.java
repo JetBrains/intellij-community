@@ -318,6 +318,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
                                           "##teamcity[testSuiteStarted name='TestA']\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
@@ -357,6 +358,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testSuiteStarted name='TestA']\n" +
                                           "##teamcity[testSuiteStarted name='param']\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
@@ -371,6 +373,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
                                           "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "\n" +
                                           "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n", StringUtil.convertLineSeparators(buf.toString()));
     
   }

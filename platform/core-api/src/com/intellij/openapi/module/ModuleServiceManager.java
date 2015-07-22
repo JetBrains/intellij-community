@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.module;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -25,7 +26,9 @@ public class ModuleServiceManager {
   private ModuleServiceManager() {
   }
 
+  @Nullable
   public static <T> T getService(@NotNull Module module, @NotNull Class<T> serviceClass) {
-    return (T)module.getPicoContainer().getComponentInstance(serviceClass);
+    //noinspection unchecked
+    return (T)module.getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 }

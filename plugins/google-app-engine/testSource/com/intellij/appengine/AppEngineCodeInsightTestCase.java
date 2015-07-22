@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.CommonProcessors;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -51,7 +52,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     myCodeInsightFixture = createCodeInsightFixture(getBaseDirectoryPath());
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         addAppEngineSupport(myProjectFixture.getModule());
       }
     }.execute();

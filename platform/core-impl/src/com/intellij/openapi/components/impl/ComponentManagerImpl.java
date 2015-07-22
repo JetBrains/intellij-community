@@ -43,17 +43,11 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author mike
- */
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
-
-  private boolean myComponentsCreated;
 
   private volatile MutablePicoContainer myPicoContainer;
   private volatile boolean myDisposed;
@@ -61,8 +55,16 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private MessageBus myMessageBus;
 
+  private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private int myComponentConfigCount;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private int myInstantiatedComponentCount = -1;
+
+  private final List<BaseComponent> myBaseComponents = new ArrayList<BaseComponent>();
+
   private final ComponentManager myParentComponentManager;
-  private ComponentsRegistry myComponentsRegistry;
   private final Condition myDisposedCondition = new Condition() {
     @Override
     public boolean value(final Object o) {
@@ -85,27 +87,28 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
-    try {
-      ArrayList<ComponentConfig> componentConfigs = new ArrayList<ComponentConfig>();
-      registerComponents(componentConfigs);
-      myComponentsRegistry = new ComponentsRegistry(componentConfigs);
-
-      if (componentsRegistered != null) {
-        componentsRegistered.run();
-      }
-
-      if (indicator != null) {
-        indicator.setIndeterminate(false);
-      }
-      createComponents(indicator);
+    List<ComponentConfig> componentConfigs = getComponentConfigs();
+    for (ComponentConfig config : componentConfigs) {
+      registerComponents(config);
     }
-    finally {
-      myComponentsCreated = true;
+    myComponentConfigCount = componentConfigs.size();
+
+    if (componentsRegistered != null) {
+      componentsRegistered.run();
     }
+
+    if (indicator != null) {
+      indicator.setIndeterminate(false);
+    }
+    createComponents(indicator);
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
     indicator.setFraction(getPercentageOfComponentsLoaded());
+  }
+
+  protected final double getPercentageOfComponentsLoaded() {
+    return ((double)myInstantiatedComponentCount) / myComponentConfigCount;
   }
 
   protected void createComponents(@Nullable ProgressIndicator indicator) {
@@ -131,8 +134,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myMessageBus;
   }
 
-  public boolean isComponentsCreated() {
-    return myComponentsCreated;
+  public final boolean isComponentsCreated() {
+    return myComponentConfigCount != -1;
   }
 
   protected synchronized final void disposeComponents() {
@@ -140,7 +143,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myDisposed = true;
 
     // we cannot use list of component adapters because we must dispose in reverse order of creation
-    List<BaseComponent> components = myComponentsRegistry == null ? Collections.<BaseComponent>emptyList() : myComponentsRegistry.myBaseComponents;
+    List<BaseComponent> components = myBaseComponents;
     for (int i = components.size() - 1; i >= 0; i--) {
       try {
         components.get(i).disposeComponent();
@@ -150,7 +153,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
     }
 
-    myComponentsCreated = false;
+    myComponentConfigCount = -1;
   }
 
   @Nullable
@@ -188,10 +191,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return ProgressManager.getInstance().getProgressIndicator();
   }
 
-  protected final double getPercentageOfComponentsLoaded() {
-    return myComponentsRegistry.getPercentageOfComponentsLoaded();
-  }
-
   @Override
   public void initializeComponent(@NotNull Object component, boolean service) {
   }
@@ -213,19 +212,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentAdapter adapter = picoContainer.getComponentAdapter(componentKey);
-    if (adapter instanceof ComponentConfigComponentAdapter) {
-      ComponentConfigComponentAdapter componentAdapter = (ComponentConfigComponentAdapter)adapter;
-      Object oldInstance = componentAdapter.myInitializedComponentInstance;
-      // we don't update pluginId - method is test only
-      componentAdapter.myInitializedComponentInstance = componentImplementation;
-      return (T)oldInstance;
-    }
-    else {
-      // todo it seems, it is unrealistic (illegal) case - component must have our adapter
-      picoContainer.unregisterComponent(componentKey);
-      picoContainer.registerComponentInstance(componentKey, componentImplementation);
-      return null;
-    }
+    LOG.assertTrue(adapter instanceof ComponentConfigComponentAdapter);
+    ComponentConfigComponentAdapter componentAdapter = (ComponentConfigComponentAdapter)adapter;
+    Object oldInstance = componentAdapter.myInitializedComponentInstance;
+    // we don't update pluginId - method is test only
+    componentAdapter.myInitializedComponentInstance = componentImplementation;
+    return (T)oldInstance;
   }
 
   @Override
@@ -275,11 +267,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myParentComponentManager == null ? new DefaultPicoContainer() : new DefaultPicoContainer(myParentComponentManager.getPicoContainer());
   }
 
-  @Override
-  public synchronized BaseComponent getComponent(@NotNull String name) {
-    return myComponentsRegistry.getComponentByName(name);
-  }
-
   protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
     return options == null || (isComponentSuitableForOs(options.get("os")) && (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal()));
   }
@@ -311,7 +298,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public synchronized void dispose() {
+  public void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myDisposeCompleted = true;
 
@@ -320,7 +307,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myMessageBus = null;
     }
 
-    myComponentsRegistry = null;
     myPicoContainer = null;
   }
 
@@ -329,7 +315,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed;
   }
 
-  private void registerComponents(@NotNull ArrayList<ComponentConfig> componentConfigs) {
+  @NotNull
+  private List<ComponentConfig> getComponentConfigs() {
+    ArrayList<ComponentConfig> componentConfigs = new ArrayList<ComponentConfig>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -346,28 +334,29 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         }
       }
     }
+    return componentConfigs;
   }
 
-  @NotNull // used in upsource
+  // used in upsource
+  @NotNull
   public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getAppComponents();
   }
 
   protected void bootstrapPicoContainer(@NotNull String name) {
-    myPicoContainer = createPicoContainer();
+    MutablePicoContainer picoContainer = createPicoContainer();
+    myPicoContainer = picoContainer;
 
     myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
-    final MutablePicoContainer picoContainer = getPicoContainer();
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
   }
 
-
-  protected ComponentManager getParentComponentManager() {
+  protected final ComponentManager getParentComponentManager() {
     return myParentComponentManager;
   }
 
-  protected final int getComponentConfigurationsSize() {
-    return myComponentsRegistry.myComponentConfigCount;
+  protected final int getComponentConfigCount() {
+    return myComponentConfigCount;
   }
 
   @Nullable
@@ -393,7 +382,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   @NotNull
-  public Condition getDisposed() {
+  public final Condition getDisposed() {
     return myDisposedCondition;
   }
 
@@ -409,81 +398,66 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return LOG.isDebugEnabled();
   }
 
-  private class ComponentsRegistry {
-    private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
-    private final int myComponentConfigCount;
-    private int myInstantiatedComponentCount;
-    private final List<BaseComponent> myBaseComponents = new ArrayList<BaseComponent>();
-
-    public ComponentsRegistry(@NotNull List<ComponentConfig> componentConfigs) {
-      for (ComponentConfig config : componentConfigs) {
-        registerComponents(config);
-      }
-      myComponentConfigCount = componentConfigs.size();
-    }
-
-    private void registerComponents(@NotNull ComponentConfig config) {
-      ClassLoader loader = config.getClassLoader();
-
-      try {
-        final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
-        final Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ?
-                                             interfaceClass : StringUtil.isEmpty(config.getImplementationClass()) ? null : Class.forName(config.getImplementationClass(), true, loader);
-        MutablePicoContainer picoContainer = getPicoContainer();
-        if (config.options != null && Boolean.parseBoolean(config.options.get("overrides"))) {
-          ComponentAdapter oldAdapter = picoContainer.getComponentAdapterOfType(interfaceClass);
-          if (oldAdapter == null) {
-            throw new RuntimeException(config + " does not override anything");
-          }
-          picoContainer.unregisterComponent(oldAdapter.getComponentKey());
+  private void registerComponents(@NotNull ComponentConfig config) {
+    ClassLoader loader = config.getClassLoader();
+    try {
+      final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
+      final Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass())
+                                           ?
+                                           interfaceClass
+                                           : StringUtil.isEmpty(config.getImplementationClass()) ? null : Class.forName(config.getImplementationClass(), true, loader);
+      MutablePicoContainer picoContainer = getPicoContainer();
+      if (config.options != null && Boolean.parseBoolean(config.options.get("overrides"))) {
+        ComponentAdapter oldAdapter = picoContainer.getComponentAdapterOfType(interfaceClass);
+        if (oldAdapter == null) {
+          throw new RuntimeException(config + " does not override anything");
         }
-        // implementationClass == null means we want to unregister this component
-        if (implementationClass != null) {
-          picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(), config.options != null && Boolean.parseBoolean(config.options.get("workspace"))));
-        }
+        picoContainer.unregisterComponent(oldAdapter.getComponentKey());
       }
-      catch (Throwable t) {
-        handleInitComponentError(t, null, config.getPluginId());
+      // implementationClass == null means we want to unregister this component
+      if (implementationClass != null) {
+        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(),
+                                                                            config.options != null && Boolean.parseBoolean(config.options.get("workspace"))));
       }
     }
-
-    private double getPercentageOfComponentsLoaded() {
-      return ((double)myInstantiatedComponentCount) / myComponentConfigCount;
-    }
-
-    private void registerComponentInstance(@NotNull Object instance) {
-      myInstantiatedComponentCount++;
-
-      if (instance instanceof com.intellij.openapi.Disposable) {
-        Disposer.register(ComponentManagerImpl.this, (com.intellij.openapi.Disposable)instance);
-      }
-
-      if (!(instance instanceof BaseComponent)) {
-        return;
-      }
-      
-      BaseComponent baseComponent = (BaseComponent)instance;
-      String componentName = baseComponent.getComponentName();
-      if (myNameToComponent.containsKey(componentName)) {
-        BaseComponent loadedComponent = myNameToComponent.get(componentName);
-        // component may have been already loaded by PicoContainer, so fire error only if components are really different
-        if (!instance.equals(loadedComponent)) {
-          LOG.error("Component name collision: " + componentName + " " + loadedComponent.getClass() + " and " + instance.getClass());
-        }
-      }
-      else {
-        myNameToComponent.put(componentName, baseComponent);
-      }
-
-      myBaseComponents.add(baseComponent);
-    }
-
-    private BaseComponent getComponentByName(final String name) {
-      return myNameToComponent.get(name);
+    catch (Throwable t) {
+      handleInitComponentError(t, null, config.getPluginId());
     }
   }
 
-  private class ComponentConfigComponentAdapter extends ConstructorInjectionComponentAdapter {
+  private void registerComponentInstance(@NotNull Object instance) {
+    myInstantiatedComponentCount++;
+
+    if (instance instanceof com.intellij.openapi.Disposable) {
+      Disposer.register(this, (com.intellij.openapi.Disposable)instance);
+    }
+
+    if (!(instance instanceof BaseComponent)) {
+      return;
+    }
+
+    BaseComponent baseComponent = (BaseComponent)instance;
+    String componentName = baseComponent.getComponentName();
+    if (myNameToComponent.containsKey(componentName)) {
+      BaseComponent loadedComponent = myNameToComponent.get(componentName);
+      // component may have been already loaded by PicoContainer, so fire error only if components are really different
+      if (!instance.equals(loadedComponent)) {
+        LOG.error("Component name collision: " + componentName + " " + loadedComponent.getClass() + " and " + instance.getClass());
+      }
+    }
+    else {
+      myNameToComponent.put(componentName, baseComponent);
+    }
+
+    myBaseComponents.add(baseComponent);
+  }
+
+  @Override
+  public synchronized BaseComponent getComponent(@NotNull String name) {
+    return myNameToComponent.get(name);
+  }
+
+  private final class ComponentConfigComponentAdapter extends ConstructorInjectionComponentAdapter {
     private final PluginId myPluginId;
     private volatile Object myInitializedComponentInstance;
     private boolean myInitializing;
@@ -528,7 +502,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
           try {
             myInitializing = true;
-            myComponentsRegistry.registerComponentInstance(instance);
+            registerComponentInstance(instance);
 
             ProgressIndicator indicator = getProgressIndicator();
             if (indicator != null) {

@@ -40,6 +40,9 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -48,17 +51,16 @@ import java.util.concurrent.ConcurrentMap;
  * A file has three indexed states (per particular index): indexed (with particular index_stamp), outdated and (trivial) unindexed
  * if index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything
  * if we get remove file event -> we should remove all indexed state from indices data for it (if state is nontrivial)
- * and set its indexed state to unindexed
+ * and set its indexed state to outdated
  * if we get other event we set indexed state to outdated
  *
  * Index stamp is file timestamp of the index directory, it is assumed that index stamps are monotonically increasing, but
- * still << Long.MAX_VALUE: there are two negative special timestamps used for marking outdated / unindexed index state.
+ * still << Long.MAX_VALUE: there is one negative special timestamp used for marking outdated index state.
  * The code doesn't take overflow of real file timestaps (or their coincidence to negative special timestamps) into account because
  * it will happen (if time will go as forward as it does today) near year 292277094 (=new java.util.Date(Long.MAX_VALUE).getYear()).
  * At that time (if this code will be still actual) we can use positive small timestamps for special cases.
  */
 public class IndexingStamp {
-  private static final long UNINDEXED_STAMP = -1L; // we don't store trivial "absent" state
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
   private static final int VERSION = 14;
@@ -155,10 +157,6 @@ public class IndexingStamp {
 
   public static void setFileIndexedStateCurrent(int fileId, ID<?, ?> id) {
     update(fileId, id, getIndexCreationStamp(id));
-  }
-
-  public static void setFileIndexedStateUnindexed(int fileId, ID<?, ?> id) {
-    update(fileId, id, UNINDEXED_STAMP);
   }
 
   public static void setFileIndexedStateOutdated(int fileId, ID<?, ?> id) {
@@ -281,11 +279,6 @@ public class IndexingStamp {
 
     private void set(ID<?, ?> id, long tmst) {
       try {
-        if (tmst == UNINDEXED_STAMP) {
-          if (myIndexStamps == null) return;
-          myIndexStamps.remove(id);
-          return;
-        }
         if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
 
         myIndexStamps.put(id, tmst);
@@ -311,10 +304,14 @@ public class IndexingStamp {
   }
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
-    synchronized (getStripedLock(fileId)) {
+    Lock readLock = getStripedLock(fileId).readLock();
+    readLock.lock();
+    try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       if (stamp != null) return stamp.get(indexName);
       return 0;
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -337,32 +334,39 @@ public class IndexingStamp {
 
   public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
     if (fileId < 0 || fileId == INVALID_FILE_ID) return;
-    synchronized (getStripedLock(fileId)) {
+    Lock writeLock = getStripedLock(fileId).writeLock();
+    writeLock.lock();
+    try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       if (stamp != null) stamp.set(indexName, indexCreationStamp);
+    } finally {
+      writeLock.unlock();
     }
   }
 
   @NotNull
   public static List<ID<?,?>> getNontrivialFileIndexedStates(int fileId) {
     if (fileId != INVALID_FILE_ID) {
-      synchronized (getStripedLock(fileId)) {
-        try {
-          Timestamps stamp = createOrGetTimeStamp(fileId);
-          if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
-            final SmartList<ID<?, ?>> retained = new SmartList<ID<?, ?>>();
-            stamp.myIndexStamps.forEach(new TObjectProcedure<ID<?, ?>>() {
-              @Override
-              public boolean execute(ID<?, ?> object) {
-                retained.add(object);
-                return true;
-              }
-            });
-            return retained;
-          }
+      Lock readLock = getStripedLock(fileId).readLock();
+      readLock.lock();
+      try {
+        Timestamps stamp = createOrGetTimeStamp(fileId);
+        if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
+          final SmartList<ID<?, ?>> retained = new SmartList<ID<?, ?>>();
+          stamp.myIndexStamps.forEach(new TObjectProcedure<ID<?, ?>>() {
+            @Override
+            public boolean execute(ID<?, ?> object) {
+              retained.add(object);
+              return true;
+            }
+          });
+          return retained;
         }
-        catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
-        }
+      }
+      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
+      }
+      finally {
+        readLock.unlock();
       }
     }
     return Collections.emptyList();
@@ -381,19 +385,21 @@ public class IndexingStamp {
 
       if (!files.isEmpty()) {
         for (Integer file : files) {
-          synchronized (getStripedLock(file)) {
+          Lock writeLock = getStripedLock(file).writeLock();
+          writeLock.lock();
+          try {
             Timestamps timestamp = myTimestampsCache.remove(file);
             if (timestamp == null) continue;
-            try {
-              if (timestamp.isDirty() /*&& file.isValid()*/) {
-                final DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE);
-                timestamp.writeToStream(sink);
-                sink.close();
-              }
+
+            if (timestamp.isDirty() /*&& file.isValid()*/) {
+              final DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE);
+              timestamp.writeToStream(sink);
+              sink.close();
             }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          } finally {
+            writeLock.unlock();
           }
         }
       }
@@ -408,12 +414,12 @@ public class IndexingStamp {
     flushCache(finishedFile);
   }
 
-  private static final Object[] ourLocks = new Object[16];
+  private static final ReadWriteLock[] ourLocks = new ReadWriteLock[16];
   static {
-    for(int i = 0; i < ourLocks.length; ++i) ourLocks[i] = new Object();
+    for(int i = 0; i < ourLocks.length; ++i) ourLocks[i] = new ReentrantReadWriteLock();
   }
 
-  private static Object getStripedLock(int fileId) {
+  private static ReadWriteLock getStripedLock(int fileId) {
     if (fileId < 0) fileId = -fileId;
     return ourLocks[(fileId & 0xFF) % ourLocks.length];
   }

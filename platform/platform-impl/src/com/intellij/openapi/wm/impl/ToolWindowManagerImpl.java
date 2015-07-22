@@ -35,9 +35,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -488,22 +489,32 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         initToolWindow(bean);
       }
       else {
-        ProgressManager.getInstance().run(
-          new Task.Backgroundable(myProject, bean.id + " initialization", true) {
+        checkConditionInReadAction(bean, condition);
+      }
+    }
+  }
+
+  private void checkConditionInReadAction(@NotNull final ToolWindowEP bean, @NotNull final Condition<Project> condition) {
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
+      @Override
+      public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+        if (!myProject.isDisposed() && condition.value(myProject)) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              if (condition.value(myProject)) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    initToolWindow(bean);
-                  }
-                });
+            public void run() {
+              if (!myProject.isDisposed()) {
+                initToolWindow(bean);
               }
             }
           });
+        }
       }
-    }
+
+      @Override
+      public void onCanceled(@NotNull ProgressIndicator indicator) {
+        checkConditionInReadAction(bean, condition);
+      }
+    });
   }
 
   @Override

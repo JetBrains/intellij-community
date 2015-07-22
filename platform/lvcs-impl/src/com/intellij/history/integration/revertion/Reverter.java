@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
@@ -79,7 +80,7 @@ public abstract class Reverter {
     try {
       new WriteCommandAction(myProject, getCommandName()) {
         @Override
-        protected void run(Result objectResult) throws Throwable {
+        protected void run(@NotNull Result objectResult) throws Throwable {
           myGateway.saveAllUnsavedDocuments();
           doRevert();
           myGateway.saveAllUnsavedDocuments();

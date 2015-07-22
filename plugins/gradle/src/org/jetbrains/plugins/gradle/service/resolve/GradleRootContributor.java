@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.plugins.gradle.service.resolve.GradleDistributionsContributor.DISTRIBUTIONS;
 import static org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor.SOURCE_SETS;
 
 /**
@@ -35,9 +36,11 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContr
 public class GradleRootContributor implements GradleMethodContextContributor {
 
   private final GradleSourceSetsContributor mySourceSetsContributor;
+  private final GradleDistributionsContributor myDistributionsContributor;
 
-  public GradleRootContributor(GradleSourceSetsContributor sourceSetsContributor) {
+  public GradleRootContributor(GradleSourceSetsContributor sourceSetsContributor, GradleDistributionsContributor contributor) {
     mySourceSetsContributor = sourceSetsContributor;
+    myDistributionsContributor = contributor;
   }
 
   private final static Set<String> BUILD_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
@@ -45,7 +48,9 @@ public class GradleRootContributor implements GradleMethodContextContributor {
     "allprojects",
     "beforeEvaluate",
     "afterEvaluate",
-    SOURCE_SETS);
+    SOURCE_SETS,
+    DISTRIBUTIONS
+  );
 
   @Override
   public void process(@NotNull List<String> methodCallInfo,
@@ -63,6 +68,10 @@ public class GradleRootContributor implements GradleMethodContextContributor {
       String method = ContainerUtil.getLastItem(methodCallInfo);
       if (method != null && StringUtil.startsWith(method, SOURCE_SETS)) {
         mySourceSetsContributor.process(methodCallInfo, processor, state, place);
+        return;
+      }
+      if (method != null && StringUtil.startsWith(method, DISTRIBUTIONS)) {
+        myDistributionsContributor.process(methodCallInfo, processor, state, place);
         return;
       }
     }

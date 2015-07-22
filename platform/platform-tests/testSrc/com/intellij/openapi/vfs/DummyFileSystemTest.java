@@ -34,7 +34,7 @@ public class DummyFileSystemTest extends PlatformTestCase {
     final VirtualFile root = fs.createRoot("root");
     VirtualFile f = new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         VirtualFile res = root.createChildData(this, "f");
         result.setResult(res);
       }

@@ -321,12 +321,11 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkValidAnnotationType(final PsiTypeElement typeElement) {
-    PsiType type = typeElement.getType();
-    if (type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
+  static HighlightInfo checkValidAnnotationType(PsiType type, final PsiTypeElement typeElement) {
+    if (type != null && type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
     }
-    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type");
+    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type", type != null ? type.getPresentableText() : type);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
   }
 

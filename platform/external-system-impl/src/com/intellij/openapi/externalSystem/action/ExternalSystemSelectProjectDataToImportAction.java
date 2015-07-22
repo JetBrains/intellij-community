@@ -21,7 +21,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.service.ui.ExternalProjectStructureDialog;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
@@ -33,14 +33,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 5/12/2015
  */
-public class ExternalSystemOpenProjectStructureAction extends ExternalSystemAction {
-
-  public ExternalSystemOpenProjectStructureAction() {
-    //super(AbstractExternalEntityData.class);
-    //getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text", "external"));
-    //getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
-    //getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
-  }
+public class ExternalSystemSelectProjectDataToImportAction extends ExternalSystemAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -65,9 +58,9 @@ public class ExternalSystemOpenProjectStructureAction extends ExternalSystemActi
         ProjectDataManager.getInstance().getExternalProjectData(project, projectSystemId, projectData.getLinkedExternalProjectPath());
     }
 
-    final ExternalProjectStructureDialog dialog;
+    final ExternalProjectDataSelectorDialog dialog;
     if (projectInfo != null) {
-      dialog = new ExternalProjectStructureDialog(project, projectInfo, externalSystemNode != null ? externalSystemNode.getData() : null);
+      dialog = new ExternalProjectDataSelectorDialog(project, projectInfo, externalSystemNode != null ? externalSystemNode.getData() : null);
       dialog.showAndGet();
     }
   }

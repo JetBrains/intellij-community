@@ -96,6 +96,7 @@ import com.intellij.util.GCUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -436,8 +437,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    CompositeException damage = checkForSettingsDamage();
+    List<Throwable> errors = checkForSettingsDamage();
     VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     doTearDown(project, ourApplication, true);
 
@@ -449,7 +449,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
       filePointerManager.assertPointersAreDisposed();
     }
-    damage.throwIfNotEmpty();
+    CompoundRuntimeException.doThrow(errors);
   }
 
   public static void doTearDown(@NotNull final Project project, @NotNull IdeaTestApplication application, boolean checkForEditors) throws Exception {

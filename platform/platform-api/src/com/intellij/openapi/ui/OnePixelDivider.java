@@ -23,6 +23,8 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.util.Producer;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -52,9 +54,28 @@ public class OnePixelDivider extends Divider {
     mySwitchOrientationEnabled = false;
     setFocusable(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    //setOpaque(false);
+    setOpaque(false);
     setOrientation(vertical);
     setBackground(BACKGROUND);
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    final Rectangle bounds = g.getClipBounds();
+    if (mySplitter instanceof OnePixelSplitter) {
+      final Producer<Insets> blindZone = ((OnePixelSplitter)mySplitter).getBlindZone();
+      if (blindZone != null) {
+        final Insets insets = blindZone.produce();
+        if (insets != null) {
+          bounds.x += insets.left;
+          bounds.y += insets.top;
+          bounds.width -= insets.left + insets.right;
+          bounds.height -= insets.top + insets.bottom;
+        }
+      }
+    }
+    g.setColor(getBackground());
+    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
   @Override

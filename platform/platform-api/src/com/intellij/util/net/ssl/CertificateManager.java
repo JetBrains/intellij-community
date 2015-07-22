@@ -1,10 +1,28 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,6 +32,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +52,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
 
 /**
  * {@code CertificateManager} is responsible for negotiation SSL connection with server
@@ -66,7 +83,7 @@ import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPAT
   name = "CertificateManager",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
-public class CertificateManager implements ApplicationComponent, PersistentStateComponent<CertificateManager.Config> {
+public class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
 
   @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
   @NonNls private static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
@@ -78,7 +95,7 @@ public class CertificateManager implements ApplicationComponent, PersistentState
    * Special version of hostname verifier, that asks user whether he accepts certificate, which subject's common name
    * doesn't match requested hostname.
    */
-  public static final HostnameVerifier HOSTNAME_VERIFIER = new ConfirmingHostnameVerifier(BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+  public static final HostnameVerifier HOSTNAME_VERIFIER = new ConfirmingHostnameVerifier(SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
   /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
    * {@link java.awt.MediaTracker}.
@@ -86,7 +103,7 @@ public class CertificateManager implements ApplicationComponent, PersistentState
   static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
 
   public static CertificateManager getInstance() {
-    return (CertificateManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
+    return ApplicationManager.getApplication().getComponent(CertificateManager.class);
   }
 
   private final String myCacertsPath;
@@ -108,10 +125,7 @@ public class CertificateManager implements ApplicationComponent, PersistentState
     myPassword = DEFAULT_PASSWORD;
     myConfig = new Config();
     myTrustManager = ConfirmingTrustManager.createForStorage(myCacertsPath, myPassword);
-  }
 
-  @Override
-  public void initComponent() {
     try {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
@@ -123,17 +137,6 @@ public class CertificateManager implements ApplicationComponent, PersistentState
     catch (Exception e) {
       LOG.error(e);
     }
-  }
-
-  @Override
-  public void disposeComponent() {
-    // empty
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return COMPONENT_NAME;
   }
 
   /**

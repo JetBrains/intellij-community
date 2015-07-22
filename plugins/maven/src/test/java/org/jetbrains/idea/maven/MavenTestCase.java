@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -215,7 +214,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       if (runInWriteAction()) {
         new WriteAction() {
           @Override
-          protected void run(Result result) throws Throwable {
+          protected void run(@NotNull Result result) throws Throwable {
             MavenTestCase.super.runTest();
           }
         }.executeSilently().throwException();
@@ -345,7 +344,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected Module createModule(final String name, final ModuleType type) throws IOException {
     return new WriteCommandAction<Module>(myProject) {
       @Override
-      protected void run(Result<Module> moduleResult) throws Throwable {
+      protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
         VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
         Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type.getId());
         PsiTestUtil.addContentRoot(module, f.getParent());
@@ -367,7 +366,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     if (f == null) {
       f = new WriteAction<VirtualFile>() {
         @Override
-        protected void run(Result<VirtualFile> result) throws Throwable {
+        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
           VirtualFile res = dir.createChildData(null, "pom.xml");
           result.setResult(res);
         }
@@ -422,7 +421,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     if (f == null) {
       f = new WriteAction<VirtualFile>() {
         @Override
-        protected void run(Result<VirtualFile> result) throws Throwable {
+        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
           VirtualFile res = dir.createChildData(null, "profiles.xml");
           result.setResult(res);
         }
@@ -493,7 +492,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {
     new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         if (advanceStamps) {
           file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 4000);
         }

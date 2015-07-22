@@ -278,7 +278,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
     if (mySession != null) {
       new WriteAction() {
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           mySession.stop();
         }
       }.execute();

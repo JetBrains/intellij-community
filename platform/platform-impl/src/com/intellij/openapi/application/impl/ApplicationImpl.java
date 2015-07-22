@@ -486,7 +486,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
       t = System.currentTimeMillis() - t;
-      LOG.info(getComponentConfigurationsSize() + " application components initialized in " + t + " ms");
+      LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
     }
     catch (StateStorageException e) {
       throw new IOException(e);

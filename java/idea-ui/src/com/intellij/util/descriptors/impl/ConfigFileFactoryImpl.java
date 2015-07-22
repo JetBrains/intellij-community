@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,20 +40,24 @@ import java.io.IOException;
 public class ConfigFileFactoryImpl extends ConfigFileFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.impl.ConfigFileFactoryImpl");
 
+  @Override
   public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaDatas) {
     return new ConfigFileMetaDataRegistryImpl(metaDatas);
   }
 
+  @Override
   public ConfigFileMetaDataRegistry createMetaDataRegistry() {
     return new ConfigFileMetaDataRegistryImpl();
   }
 
+  @Override
   public ConfigFileInfoSet createConfigFileInfoSet(final ConfigFileMetaDataProvider metaDataProvider) {
     return new ConfigFileInfoSetImpl(metaDataProvider);
   }
 
+  @Override
   public ConfigFileContainer createConfigFileContainer(final Project project, final ConfigFileMetaDataProvider metaDataProvider,
-                                                              final ConfigFileInfoSet configuration) {
+                                                       final ConfigFileInfoSet configuration) {
     return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
   }
 
@@ -66,6 +70,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     return template.getText(templateManager.getDefaultProperties());
   }
 
+  @Override
   @Nullable
   public VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew) {
     return createFileFromTemplate(project, url, version.getTemplateName(), forceNew);
@@ -106,6 +111,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     catch (final IOException e) {
       LOG.info(e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showErrorDialog(IdeBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
                                    IdeBundle.message("message.text.creating.deployment.descriptor"));
@@ -115,6 +121,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     return null;
   }
 
+  @Override
   public ConfigFileContainer createSingleFileContainer(Project project, ConfigFileMetaData metaData) {
     final ConfigFileMetaDataProvider metaDataProvider = createMetaDataProvider(metaData);
     return createConfigFileContainer(project, metaDataProvider, createConfigFileInfoSet(metaDataProvider));

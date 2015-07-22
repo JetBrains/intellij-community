@@ -42,7 +42,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
@@ -446,8 +445,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         oldViewProvider.performNonPhysically(new Runnable() {
           @Override
           public void run() {
-            //todo
-            final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator());
+            final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+                                                                oldFileNode.getText());
             DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
           }
         });

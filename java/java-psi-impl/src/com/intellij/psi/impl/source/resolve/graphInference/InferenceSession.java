@@ -233,7 +233,14 @@ public class InferenceSession {
 
   private static PsiType getParameterType(PsiParameter[] parameters, int i, @Nullable PsiSubstitutor substitutor, boolean varargs) {
     if (substitutor == null) return null;
-    PsiType parameterType = substitutor.substitute(parameters[i < parameters.length ? i : parameters.length - 1].getType());
+    
+    final PsiParameter parameter = parameters[i < parameters.length ? i : parameters.length - 1];
+    final PsiType type = parameter.getType();
+    if (!type.isValid()) {
+      PsiUtil.ensureValidType(type, "Invalid type of parameter " + parameter + " of " + parameter.getClass());
+    }
+    
+    PsiType parameterType = substitutor.substitute(type);
     if (parameterType instanceof PsiEllipsisType && varargs) {
       parameterType = ((PsiEllipsisType)parameterType).getComponentType();
     }
@@ -1231,7 +1238,9 @@ public class InferenceSession {
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
     final PsiClass containingClass = qualifierResolveResult.getContainingClass();
-    LOG.assertTrue(containingClass != null, myContext);
+    if (containingClass == null) {
+      return resolveSubset(myInferenceVariables, mySiteSubstitutor); 
+    }
 
     final PsiParameter[] functionalMethodParameters = interfaceMethod.getParameterList().getParameters();
     final PsiParameter[] parameters = method.getParameterList().getParameters();

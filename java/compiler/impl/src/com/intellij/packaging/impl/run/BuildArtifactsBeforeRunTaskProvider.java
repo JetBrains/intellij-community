@@ -169,7 +169,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
 
     final List<Artifact> artifacts = new ArrayList<Artifact>();
     new ReadAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         for (ArtifactPointer pointer : task.getArtifactPointers()) {
           ContainerUtil.addIfNotNull(pointer.getArtifact(), artifacts);
         }

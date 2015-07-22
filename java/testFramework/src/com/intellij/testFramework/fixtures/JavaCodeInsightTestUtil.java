@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class JavaCodeInsightTestUtil {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         final Editor editor = fixture.getEditor();
         final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
         assert element instanceof PsiLocalVariable : element;
@@ -54,7 +54,7 @@ public class JavaCodeInsightTestUtil {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         final Editor editor = fixture.getEditor();
         final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
         assert element instanceof PsiParameter : element;
@@ -69,7 +69,7 @@ public class JavaCodeInsightTestUtil {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         final Editor editor = fixture.getEditor();
         final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
         assert element instanceof PsiMethod : element;
@@ -90,7 +90,7 @@ public class JavaCodeInsightTestUtil {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         final Editor editor = fixture.getEditor();
         final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
         assert element instanceof PsiField : element;

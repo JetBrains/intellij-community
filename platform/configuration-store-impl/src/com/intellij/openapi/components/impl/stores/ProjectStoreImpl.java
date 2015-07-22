@@ -386,12 +386,6 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
 
   @NotNull
   @Override
-  protected XmlElementStorage getMainStorage() {
-    return getProjectFileStorage();
-  }
-
-  @NotNull
-  @Override
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject);
   }
@@ -452,7 +446,8 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
       super.load(rootElement, pathMacroSubstitutor, intern);
     }
 
-    protected void convert(final Element root, final int originalVersion) {
+    @SuppressWarnings("UnusedParameters")
+    protected void convert(Element root, int originalVersion) {
     }
 
     @Override

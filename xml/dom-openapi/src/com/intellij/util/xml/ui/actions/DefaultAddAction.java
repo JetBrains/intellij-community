@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final Type[] aClass = new Type[]{null};
     final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), DomUtil.getFile(parent)) {
       @Override
-      protected void run(Result<StableElement<T>> result) throws Throwable {
+      protected void run(@NotNull Result<StableElement<T>> result) throws Throwable {
         final DomElement parentDomElement = getParentDomElement();
         final T t = (T)getDomCollectionChildDescription().addValue(parentDomElement, getElementType());
         tuneNewValue(t);

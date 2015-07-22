@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ public class SearchResults implements DocumentListener {
   private int myStamp = 0;
 
   private int myLastUpdatedStamp = -1;
+  private long myDocumentTimestamp;
 
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<Pair<FindModel, FindResult>>();
 
@@ -352,6 +353,7 @@ public class SearchResults implements DocumentListener {
       notifyCursorMoved();
     }
     dumpIfNeeded();
+    myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
   }
 
   private void dumpIfNeeded() {
@@ -628,5 +630,9 @@ public class SearchResults implements DocumentListener {
     for (SearchResultsListener listener : myListeners) {
       listener.cursorMoved();
     }
+  }
+  
+  public boolean isUpToDate() {
+    return myDocumentTimestamp == myEditor.getDocument().getModificationStamp();
   }
 }

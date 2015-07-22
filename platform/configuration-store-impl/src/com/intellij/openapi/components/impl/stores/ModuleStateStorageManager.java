@@ -15,22 +15,21 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
-public class ModuleStateStorageManager extends StateStorageManagerImpl {
+class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NonNls private static final String ROOT_TAG_NAME = "module";
-  private final ModuleImpl myModule;
+  private final Module myModule;
 
-  public ModuleStateStorageManager(@NotNull TrackingPathMacroSubstitutor pathMacroManager, @NotNull ModuleImpl module) {
+  public ModuleStateStorageManager(@NotNull TrackingPathMacroSubstitutor pathMacroManager, @NotNull Module module) {
     super(pathMacroManager, ROOT_TAG_NAME, module, module.getPicoContainer());
 
     myModule = module;
@@ -39,7 +38,7 @@ public class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NotNull
   @Override
   protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
-    return new ModuleStoreImpl.ModuleFileData(ROOT_TAG_NAME, myModule);
+    return new ModuleFileData(ROOT_TAG_NAME, myModule);
   }
 
   @NotNull
@@ -49,9 +48,11 @@ public class ModuleStateStorageManager extends StateStorageManagerImpl {
       @NotNull
       @Override
       public List<StateStorage.SaveSession> createSaveSessions() {
-        if (myModule.getStateStore().getMainStorageData().isDirty()) {
+        StateStorageManagerImpl storageManager = (StateStorageManagerImpl)ComponentsPackage.getStateStore(myModule).getStateStorageManager();
+        FileBasedStorage storage = ContainerUtil.getFirstItem(storageManager.getCachedFileStorages(Collections.singletonList(StoragePathMacros.MODULE_FILE)));
+        if (storage != null && storage.getStorageData().isDirty()) {
           // force XmlElementStorageSaveSession creation
-          getExternalizationSession(myModule.getStateStore().getMainStorage());
+          getExternalizationSession(storage);
         }
         return super.createSaveSessions();
       }

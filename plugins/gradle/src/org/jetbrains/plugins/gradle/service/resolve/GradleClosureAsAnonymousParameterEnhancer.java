@@ -43,6 +43,10 @@ public class GradleClosureAsAnonymousParameterEnhancer extends ClosureAsAnonymou
           wildcardType.getBound().equalsToText(GradleCommonClassNames.GRADLE_API_SOURCE_SET)) {
         return wildcardType.getBound();
       }
+      if (wildcardType.isSuper() && wildcardType.getBound() != null &&
+          wildcardType.getBound().equalsToText(GradleCommonClassNames.GRADLE_API_DISTRIBUTION)) {
+        return wildcardType.getBound();
+      }
     }
 
     return null;

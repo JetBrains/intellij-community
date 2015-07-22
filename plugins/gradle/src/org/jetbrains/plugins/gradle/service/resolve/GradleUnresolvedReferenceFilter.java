@@ -34,7 +34,9 @@ public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFi
   private final static Set<String> IGNORE_SET = newHashSet(
     GradleCommonClassNames.GRADLE_API_TASK,
     GradleCommonClassNames.GRADLE_API_SOURCE_SET,
-    GradleCommonClassNames.GRADLE_API_CONFIGURATION);
+    GradleCommonClassNames.GRADLE_API_CONFIGURATION,
+    GradleCommonClassNames.GRADLE_API_DISTRIBUTION
+  );
 
   @Override
   public boolean isReject(@NotNull GrReferenceExpression expression) {

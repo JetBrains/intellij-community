@@ -90,6 +90,11 @@ public class MockDumbService extends DumbService {
     return false;
   }
 
+  @Override
+  public void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
+    runnable.run();
+  }
+
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     runnable.run();
   }

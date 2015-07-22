@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
@@ -48,7 +49,7 @@ public class ArtifactCompilerUtil {
   public static MultiMap<String, Artifact> createOutputToArtifactMap(final Project project) {
     final MultiMap<String, Artifact> result = MultiMap.create(FileUtil.PATH_HASHING_STRATEGY);
     new ReadAction() {
-      protected void run(final Result r) {
+      protected void run(@NotNull final Result r) {
         for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
           String outputPath = artifact.getOutputFilePath();
           if (!StringUtil.isEmpty(outputPath)) {

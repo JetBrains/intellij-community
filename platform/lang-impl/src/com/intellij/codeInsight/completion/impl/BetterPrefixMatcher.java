@@ -16,10 +16,9 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionResult;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.LinkedHashSet;
 
 /**
  * @author peter
@@ -33,16 +32,19 @@ public class BetterPrefixMatcher extends PrefixMatcher {
     myOriginal = original;
     myMinMatchingDegree = minMatchingDegree;
   }
-  
-  public static int getBestMatchingDegree(LinkedHashSet<CompletionResult> plainResults) {
-    int bestMatchingDegree = Integer.MIN_VALUE;
-    for (CompletionResult cr : plainResults) {
-      bestMatchingDegree = Math.max(bestMatchingDegree, RealPrefixMatchingWeigher
-        .getBestMatchingDegree(cr.getLookupElement(), cr.getPrefixMatcher()));
-    }
-    return bestMatchingDegree;
+
+  public BetterPrefixMatcher(CompletionResultSet set) {
+    this(set.getPrefixMatcher(), Integer.MIN_VALUE);
   }
 
+  @NotNull
+  public BetterPrefixMatcher improve(CompletionResult result) {
+    int degree = RealPrefixMatchingWeigher.getBestMatchingDegree(result.getLookupElement(), result.getPrefixMatcher());
+    if (degree <= myMinMatchingDegree) return this;
+
+    return new BetterPrefixMatcher(myOriginal, degree);
+  }
+  
   @Override
   public boolean prefixMatches(@NotNull String name) {
     if (!myOriginal.prefixMatches(name) || !myOriginal.isStartMatch(name)) {

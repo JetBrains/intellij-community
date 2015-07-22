@@ -102,7 +102,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myCachedSortedModules = null;
   }
 
-
   @Override
   @NotNull
   public String getComponentName() {
@@ -700,22 +699,25 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     @NotNull
-    public Module newModule(@NotNull String filePath,
-                            final String moduleTypeId,
-                            @Nullable Map<String, String> options) {
+    public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId, @Nullable final Map<String, String> options) {
       assertWritable();
-      filePath = resolveShortWindowsName(filePath);
+      filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
 
       ModuleEx module = getModuleByFilePath(filePath);
       if (module == null) {
         module = createModule(filePath);
-        module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
-        if (options != null) {
-          for ( Map.Entry<String,String> option : options.entrySet()) {
-            module.setOption(option.getKey(),option.getValue());
+        final ModuleEx newModule = module;
+        initModule(module, filePath, new Runnable() {
+          @Override
+          public void run() {
+            newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+            if (options != null) {
+              for (Map.Entry<String, String> option : options.entrySet()) {
+                newModule.setOption(option.getKey(), option.getValue());
+              }
+            }
           }
-        }
-        initModule(module);
+        });
       }
       return module;
     }
@@ -766,7 +768,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
       }
 
-      ModuleEx module = getModuleByFilePath(moduleFile.getPath());
+      String path = moduleFile.getPath();
+      ModuleEx module = getModuleByFilePath(path);
       if (module == null) {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
@@ -774,15 +777,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
             moduleFile.refresh(false, false);
           }
         }, ModalityState.any());
-        module = createAndLoadModule(moduleFile.getPath());
-        initModule(module);
+        module = createAndLoadModule(path);
+        initModule(module, path, null);
       }
       return module;
     }
 
-    private void initModule(@NotNull ModuleEx module) {
-      String path = module.getModuleFilePath();
-      module.init();
+    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
+      module.init(path, beforeComponentCreation);
       myModulesCache = null;
       myPathToModule.put(path, module);
     }

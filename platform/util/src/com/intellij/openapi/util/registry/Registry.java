@@ -72,9 +72,6 @@ public class Registry  {
     try {
       return get(key).asInteger();
     }
-    catch (NumberFormatException ex) {
-      return defaultValue;
-    }
     catch (MissingResourceException ex) {
       return defaultValue;
     }

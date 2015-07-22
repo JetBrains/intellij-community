@@ -26,7 +26,6 @@ import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 public abstract class PluginModuleTestCase extends LightCodeInsightFixtureTestCase {
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

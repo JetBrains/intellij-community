@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -41,7 +42,7 @@ public class GroovyGotoImplementationTest extends JavaCodeInsightFixtureTestCase
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         final VirtualFile outside = dirFixture.getFile("").createChildDirectory(this, "outside");
         PsiTestUtil.addContentRoot(myModule, outside);
         VirtualFile out = outside.createChildData(this, "Outside.groovy");
