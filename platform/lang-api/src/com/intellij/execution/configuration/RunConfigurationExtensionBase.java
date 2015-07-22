@@ -60,8 +60,10 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param runConfiguration the run configuration being serialized.
    * @param element          the element into which the settings should be persisted,
    */
-  protected abstract void writeExternal(@NotNull final T runConfiguration,
-                                        @NotNull final Element element) throws WriteExternalException;
+  protected void writeExternal(@NotNull final T runConfiguration,
+                               @NotNull final Element element) throws WriteExternalException {
+    throw new WriteExternalException();
+  }
 
   /**
    * Creates an editor for the settings of this extension. The editor is displayed as an additional tab of the run configuration options
