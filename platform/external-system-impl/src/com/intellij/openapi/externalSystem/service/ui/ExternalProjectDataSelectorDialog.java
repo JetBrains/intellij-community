@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -211,12 +212,17 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
           @Override
           public void execute() {
-            ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
-              @Override
-              public void run() {
-                ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, true);
-              }
-            });
+            DumbService.getInstance(myProject).allowStartingDumbModeInside(
+              DumbService.DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+                public void run() {
+                  ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
+                    @Override
+                    public void run() {
+                      ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, true);
+                    }
+                  });
+                }
+              });
           }
         });
       }
