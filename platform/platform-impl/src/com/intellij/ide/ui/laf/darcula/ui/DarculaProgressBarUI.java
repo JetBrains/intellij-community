@@ -67,8 +67,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     int x = -offset;
     final float R = JBUI.scale(8f);
     final float R2 = JBUI.scale(9f);
-    final float off = JBUI.scale(1f);
-    final Area aaa = new Area(new RoundRectangle2D.Float(1f, 1f, w - 2f, h - 2f, R, R));
+    final Area containingRoundRect = new Area(new RoundRectangle2D.Float(1f, 1f, w - 2f, h - 2f, R, R));
     while (x < Math.max(c.getWidth(), c.getHeight())) {
       Path2D.Double path = new Path2D.Double();
       float ww = getPeriodLength() / 2f;
@@ -80,7 +79,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       path.closePath();
 
       final Area area = new Area(path);
-      area.intersect(aaa);
+      area.intersect(containingRoundRect);
       g.fill(area);
       x+= getPeriodLength();
     }
