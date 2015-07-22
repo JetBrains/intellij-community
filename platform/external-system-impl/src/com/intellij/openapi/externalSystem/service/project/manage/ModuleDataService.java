@@ -121,7 +121,6 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
   private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
                              @NotNull final Project project,
                              @NotNull final PlatformFacade platformFacade) {
-    removeExistingModulesConfigs(toCreate, project);
     Application application = ApplicationManager.getApplication();
     final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
     application.runWriteAction(new Runnable() {
@@ -183,31 +182,6 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
       }
     }
     return result;
-  }
-
-  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull final Project project) {
-    if (nodes.isEmpty()) {
-      return;
-    }
-    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-        for (DataNode<ModuleData> node : nodes) {
-          // Remove existing '*.iml' file if necessary.
-          ModuleData data = node.getData();
-          VirtualFile file = fileSystem.refreshAndFindFileByPath(data.getModuleFilePath());
-          if (file != null) {
-            try {
-              file.delete(this);
-            }
-            catch (IOException e) {
-              LOG.warn("Can't remove existing module config file at '" + data.getModuleFilePath() + "'");
-            }
-          }
-        }
-      }
-    });
   }
 
   private static void syncPaths(@NotNull Module module, @NotNull PlatformFacade platformFacade, @NotNull ModuleData data) {
