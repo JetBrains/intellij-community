@@ -29,8 +29,10 @@ import java.util.Map;
  */
 public class ProductionRepository extends PlatformRepositoryBase implements PlatformRepository {
   private final Map<RuntimeModuleId, RuntimeModuleDescriptor> myModuleDescriptorMap;
+  @NotNull private final File myIdeHome;
 
   public ProductionRepository(@NotNull File ideHome) {
+    myIdeHome = ideHome;
     myModuleDescriptorMap = loadModulesFromZip(ideHome);
   }
 
@@ -38,5 +40,10 @@ public class ProductionRepository extends PlatformRepositoryBase implements Plat
   @Override
   protected RuntimeModuleDescriptor findModule(RuntimeModuleId moduleName) {
     return myModuleDescriptorMap.get(moduleName);
+  }
+
+  @Override
+  public String toString() {
+    return "Production Repository [" + myIdeHome.getAbsolutePath() + "]";
   }
 }
