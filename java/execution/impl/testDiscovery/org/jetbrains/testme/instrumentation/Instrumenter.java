@@ -67,6 +67,7 @@ public class Instrumenter extends ClassVisitor {
       final int myMethodId = myCurrentMethodCount++;
 
       public void visitCode() {
+        // todo for constructor insert the code after calling 'super'
         visitFieldInsn(Opcodes.GETSTATIC, myInternalClassName, METHODS_VISITED, METHODS_VISITED_CLASS);
         pushInstruction(this, myMethodId);
         visitInsn(Opcodes.ICONST_1);

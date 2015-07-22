@@ -67,6 +67,7 @@ public class TestDiscoveryInstrumentator {
             || className.startsWith("org.jetbrains.org.objectweb.asm.")
             || className.startsWith("org.apache.oro.text.regex.")
             || className.startsWith("org.jetbrains.testme.")
+            || className.startsWith("org.apache.log4j.")
             || className.startsWith("org.junit.")
             || className.startsWith("com.sun.")
             || className.startsWith("junit.")
@@ -97,7 +98,7 @@ public class TestDiscoveryInstrumentator {
     long started = System.nanoTime();
     final ClassReader cr = new ClassReader(classfileBuffer);
     final ClassWriter cw;
-    if (computeFrames && false) {
+    if (computeFrames && false) { // frames calculation traverses hierarchy and makes instrumentation longer
       final int version = getClassFileVersion(cr);
       cw = getClassWriter(version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS, loader);
     } else {
@@ -117,6 +118,11 @@ public class TestDiscoveryInstrumentator {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         if (methodsFilter.shouldVisitMethod(access, name, desc, signature, exceptions)) {
+          if ("<init>".equals(name)) {
+            final int slashPos = className.lastIndexOf('/');
+            final int $Pos = className.lastIndexOf('$');
+            name = className.substring(Math.max(slashPos, $Pos) + 1);
+          }
           instrumentedMethods.add(name);
         }
         return super.visitMethod(access, name, desc, signature, exceptions);
@@ -133,9 +139,9 @@ public class TestDiscoveryInstrumentator {
     long time = myInstrumentedClassesTime.addAndGet(System.nanoTime() - started);
     int classes = myInstrumentedClasses.incrementAndGet();
     int methods = myInstrumentedMethods.addAndGet(instrumentedMethods.size());
-    if (classes % 1000 == 0) {
-      System.out.println("Done instrumenting " + classes + ", methods:" + methods + " for " + (time / 1000000));
-    }
+    //if (classes % 1000 == 0) {
+    //  System.out.println("Done instrumenting " + classes + ", methods:" + methods + " for " + (time / 1000000));
+    //}
 
     if (false) {
       try {
