@@ -29,13 +29,15 @@ public abstract class TestDiscoveryListener {
     }
   }
 
-  public void testFinished(String className, String methodName) {
-    try {
-      final Object data = getData();
-      Method testEnded = data.getClass().getMethod("testEnded", new Class[] {String.class});
-      testEnded.invoke(data, new Object[] {getFrameworkId() + className + "-" + methodName});
-    } catch (Throwable t) {
-      t.printStackTrace();
+  public void testFinished(String className, String methodName, boolean succeed) {
+    if (succeed) {
+      try {
+        final Object data = getData();
+        Method testEnded = data.getClass().getMethod("testEnded", new Class[] {String.class});
+        testEnded.invoke(data, new Object[] {getFrameworkId() + className + "-" + methodName});
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
     }
   }
 
