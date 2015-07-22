@@ -489,8 +489,7 @@ public class LookupCellRenderer implements ListCellRenderer {
         g = g.create();
         try {
           g.setColor(ColorUtil.withAlpha(BACKGROUND_COLOR, .4));
-          Rectangle r = new Rectangle(getSize());
-          g.fillRect(r.x, r.y, r.width, r.height);
+          g.fillRect(0, 0, getWidth(), getHeight());
         }
         finally {
           g.dispose();
