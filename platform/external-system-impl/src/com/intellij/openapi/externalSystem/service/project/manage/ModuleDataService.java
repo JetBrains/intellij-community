@@ -356,6 +356,11 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
             protected JComponent createCenterPanel() {
               return new JBScrollPane(content);
             }
+            
+            @NotNull
+            protected Action[] createActions() {
+              return new Action[]{getOKAction()};
+            }
           };
 
           dialog.showAndGet();
