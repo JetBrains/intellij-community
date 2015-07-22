@@ -691,7 +691,7 @@ public class CodeCompletionHandlerBase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        if (caretOffset != idEndOffset && completionChar == Lookup.REPLACE_SELECT_CHAR) {
+        if (caretOffset < idEndOffset && completionChar == Lookup.REPLACE_SELECT_CHAR) {
           editor.getDocument().deleteString(caretOffset, idEndOffset);
         }
 
