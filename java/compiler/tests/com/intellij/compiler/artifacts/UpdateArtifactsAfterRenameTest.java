@@ -5,6 +5,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -66,7 +67,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     final Module module = new WriteAction<Module>() {
       @Override
-      protected void run(Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) throws Throwable {
         Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA.getId());
         result.setResult(res);
       }
@@ -77,7 +78,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " module:myModule");
     new WriteAction() {
       @Override
-      protected void run(final Result result) throws ModuleWithNameAlreadyExists {
+      protected void run(@NotNull final Result result) throws ModuleWithNameAlreadyExists {
         final ModifiableModuleModel model = moduleManager.getModifiableModel();
         model.renameModule(module, "newName");
         model.commit();
@@ -96,7 +97,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
   private void moveFile(final VirtualFile file, final VirtualFile newParent) {
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         try {
           file.move(this, newParent);
         }

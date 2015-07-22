@@ -10,6 +10,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -169,7 +170,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     VirtualFile virtualDir = getVirtualFile(createTempDir("externalDir"));
     final VirtualFile file = VfsTestUtil.createFile(virtualDir, "2.txt", "a");
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
         model.getOrCreateModifiableArtifact(a).getRootElement()
           .addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
