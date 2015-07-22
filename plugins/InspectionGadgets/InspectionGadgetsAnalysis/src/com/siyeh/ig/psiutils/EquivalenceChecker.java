@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,16 +207,27 @@ public class EquivalenceChecker {
       if (resourceList1.getResourceVariablesCount() != resourceList2.getResourceVariablesCount()) {
         return false;
       }
-      final List<PsiResourceVariable> resourceVariables1 = resourceList1.getResourceVariables();
-      final List<PsiResourceVariable> resourceVariables2 = resourceList2.getResourceVariables();
-      for (int i1 = 0, size = resourceVariables1.size(); i1 < size; i1++) {
-        final PsiResourceVariable variable1 = resourceVariables1.get(i1);
-        final PsiResourceVariable variable2 = resourceVariables2.get(i1);
-        if (!localVariablesAreEquivalent(variable1, variable2)) {
+      final List<PsiResourceListElement> resources1 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList1, PsiResourceListElement.class);
+      final List<PsiResourceListElement> resources2 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList2, PsiResourceListElement.class);
+      for (int i = 0, size = resources1.size(); i < size; i++) {
+        final PsiResourceListElement resource1 = resources1.get(i);
+        final PsiResourceListElement resource2 = resources2.get(i);
+        if (resource1 instanceof PsiResourceVariable && resource2 instanceof PsiResourceVariable) {
+          if (!localVariablesAreEquivalent((PsiLocalVariable)resource1, (PsiLocalVariable)resource2)) {
+            return false;
+          }
+        }
+        else if (resource1 instanceof PsiResourceExpression && resource2 instanceof PsiResourceExpression) {
+          if (!expressionsAreEquivalent(((PsiResourceExpression)resource1).getExpression(), ((PsiResourceExpression)resource2).getExpression())) {
+            return false;
+          }
+        }
+        else {
           return false;
         }
       }
-    } else if (resourceList2 != null) {
+    }
+    else if (resourceList2 != null) {
       return false;
     }
     final PsiParameter[] catchParameters1 = statement1.getCatchBlockParameters();

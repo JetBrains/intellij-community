@@ -38,8 +38,8 @@
             text="Collapse All"
             icon="AllIcons.Actions.Collapseall"
             use-shortcut-of="CollapseAll"/>
-    <action id="ExternalSystem.OpenProjectStructure" class="com.intellij.openapi.externalSystem.action.ExternalSystemOpenProjectStructureAction"
-            text="Open Project Structure"
+    <action id="ExternalSystem.SelectProjectDataToImport" class="com.intellij.openapi.externalSystem.action.ExternalSystemSelectProjectDataToImportAction"
+            text="Select Project Data To import"
             icon="AllIcons.Modules.ModulesNode"/>
 
     <action id="ExternalSystem.RunTask"
@@ -132,7 +132,7 @@
       <separator/>
       <reference id="ExternalSystem.ExpandAll"/>
       <reference id="ExternalSystem.CollapseAll"/>
-      <reference id="ExternalSystem.OpenProjectStructure"/>
+      <reference id="ExternalSystem.SelectProjectDataToImport"/>
     </group>
     <group id="ExternalSystemView.ActionsToolbar.RightPanel">
     </group>

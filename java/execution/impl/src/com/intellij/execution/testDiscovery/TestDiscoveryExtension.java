@@ -85,7 +85,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           if ((root == null || root.getHandler() == handler)) {
             final String fullTestName = test.getLocationUrl();
             if (fullTestName != null && fullTestName.startsWith(JavaTestLocator.TEST_PROTOCOL)) {
-              myCompletedMethodNames.add(fullTestName.substring(JavaTestLocator.TEST_PROTOCOL.length() + 3));
+              myCompletedMethodNames.add(((TestDiscoveryConfiguration)configuration).getFrameworkPrefix() + fullTestName.substring(JavaTestLocator.TEST_PROTOCOL.length() + 3));
               if (myCompletedMethodNames.size() > 50) {
                 final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
                 myCompletedMethodNames.clear();

@@ -20,9 +20,9 @@ import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -128,7 +128,7 @@ public class PsiElementListNavigator {
     });
 
     list.setCellRenderer(listRenderer);
-    list.setFont(ChooseByNameBase.getEditorFont());
+    list.setFont(EditorUtil.getEditorFont());
 
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
     if (listRenderer instanceof PsiElementListCellRenderer) {

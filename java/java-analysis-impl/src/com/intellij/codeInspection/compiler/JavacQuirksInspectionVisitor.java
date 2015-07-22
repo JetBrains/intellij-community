@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,13 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     psiElement().withParent(PsiJavaCodeReferenceElement.class).withSuperParent(2, PsiJavaCodeReferenceElement.class);
 
   private final ProblemsHolder myHolder;
+  private final LanguageLevel myLanguageLevel;
+  private final JavaSdkVersion mySdkVersion;
 
   public JavacQuirksInspectionVisitor(ProblemsHolder holder) {
     myHolder = holder;
+    mySdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(myHolder.getFile());
+    myLanguageLevel = PsiUtil.getLanguageLevel(myHolder.getFile());
   }
 
   @Override
@@ -72,12 +76,11 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   @Override
   public void visitIdentifier(PsiIdentifier identifier) {
     super.visitIdentifier(identifier);
-    final JavaSdkVersion version = JavaVersionService.getInstance().getJavaSdkVersion(identifier);
-    if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
-      if ("_".equals(identifier.getText())) {
-        myHolder.registerProblem(identifier, JavaErrorMessages.message("underscore.identifier"),
-                                 version.isAtLeast(JavaSdkVersion.JDK_1_9) ? ProblemHighlightType.ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      }
+    if ("_".equals(identifier.getText()) &&
+        mySdkVersion != null && mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8) &&
+        myLanguageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
+      final String message = JavaErrorMessages.message("underscore.identifier.warn");
+      myHolder.registerProblem(identifier, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
   }
 }

@@ -701,7 +701,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId, @Nullable final Map<String, String> options) {
       assertWritable();
-      filePath = resolveShortWindowsName(filePath);
+      filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
 
       ModuleEx module = getModuleByFilePath(filePath);
       if (module == null) {

@@ -224,10 +224,12 @@ public class InitializationUtils {
                                                             @NotNull Set<MethodSignature> checkedMethods, boolean strict) {
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
-      for (PsiResourceVariable resourceVariable : resourceList.getResourceVariables()) {
-        final PsiExpression initializer = resourceVariable.getInitializer();
-        if (expressionAssignsVariableOrFails(initializer, variable, checkedMethods, strict)) {
-          return true;
+      for (PsiResourceListElement resource : resourceList) {
+        if (resource instanceof PsiResourceVariable) {
+          final PsiExpression initializer = ((PsiResourceVariable)resource).getInitializer();
+          if (expressionAssignsVariableOrFails(initializer, variable, checkedMethods, strict)) {
+            return true;
+          }
         }
       }
     }

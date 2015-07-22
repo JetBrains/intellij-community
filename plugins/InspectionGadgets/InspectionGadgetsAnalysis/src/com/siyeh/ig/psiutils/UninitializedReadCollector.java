@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class UninitializedReadCollector {
@@ -222,11 +221,12 @@ public class UninitializedReadCollector {
                                               int stamp, @NotNull Set<MethodSignature> checkedMethods) {
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
-      final List<PsiResourceVariable> resourceVariables = resourceList.getResourceVariables();
-      for (PsiResourceVariable resourceVariable : resourceVariables) {
-        final PsiExpression initializer = resourceVariable.getInitializer();
-        if (expressionAssignsVariable(initializer, variable, stamp, checkedMethods)) {
-          return true;
+      for (PsiResourceListElement resource : resourceList) {
+        if (resource instanceof PsiResourceVariable) {
+          final PsiExpression initializer = ((PsiResourceVariable)resource).getInitializer();
+          if (expressionAssignsVariable(initializer, variable, stamp, checkedMethods)) {
+            return true;
+          }
         }
       }
     }

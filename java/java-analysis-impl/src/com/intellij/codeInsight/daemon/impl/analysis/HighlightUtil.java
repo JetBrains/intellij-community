@@ -725,13 +725,18 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier,
-                                       @NotNull PsiVariable variable,
-                                       @NotNull LanguageLevel languageLevel) {
-    if ("_".equals(variable.getName()) && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-      if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
-        String message = JavaErrorMessages.message("underscore.lambda.identifier");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(message).create();
+  static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull LanguageLevel languageLevel) {
+    if ("_".equals(identifier.getText())) {
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+        String text = JavaErrorMessages.message("underscore.identifier.error");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+      }
+      else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        PsiElement parent = identifier.getParent();
+        if (parent instanceof PsiParameter && ((PsiParameter)parent).getDeclarationScope() instanceof PsiLambdaExpression) {
+          String text = JavaErrorMessages.message("underscore.lambda.identifier");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        }
       }
     }
 
@@ -770,23 +775,20 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkUnhandledCloserExceptions(@NotNull final PsiResourceVariable resource) {
-    final List<PsiClassType> unhandled = ExceptionUtil.getUnhandledCloserExceptions(resource, null);
+  static HighlightInfo checkUnhandledCloserExceptions(@NotNull PsiResourceListElement resource) {
+    List<PsiClassType> unhandled = ExceptionUtil.getUnhandledCloserExceptions(resource, null);
     if (unhandled.isEmpty()) return null;
 
-    final HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
+    HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
     if (highlightType == null) return null;
 
-    final String description = getUnhandledExceptionsDescriptor(unhandled, "auto-closeable resource");
-    final HighlightInfo highlight =
-      HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description).create();
+    String description = getUnhandledExceptionsDescriptor(unhandled, "auto-closeable resource");
+    HighlightInfo highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description).create();
     registerUnhandledExceptionFixes(resource, highlight, unhandled);
     return highlight;
   }
 
-  private static void registerUnhandledExceptionFixes(@NotNull final PsiElement element,
-                                                      final HighlightInfo errorResult,
-                                                      @NotNull final List<PsiClassType> unhandled) {
+  private static void registerUnhandledExceptionFixes(PsiElement element, HighlightInfo errorResult, List<PsiClassType> unhandled) {
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToCatchFix());
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToThrowsFix(element));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithTryCatchFix(element));
@@ -1717,13 +1719,47 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull final PsiResourceVariable resource) {
-    final PsiType type = resource.getType();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(resource.getProject()).getElementFactory();
-    final PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
+  static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull PsiResourceListElement resource) {
+    PsiType type = resource.getType();
+    if (type == null) return null;
+
+    PsiElementFactory factory = JavaPsiFacade.getInstance(resource.getProject()).getElementFactory();
+    PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return null;
 
     return createIncompatibleTypeHighlightInfo(autoCloseable, type, resource.getTextRange(), 0);
+  }
+
+  @Nullable
+  static HighlightInfo checkResourceVariableIsFinal(@NotNull PsiResourceExpression resource) {
+    PsiExpression expression = resource.getExpression();
+
+    if (expression instanceof PsiThisExpression) return null;
+
+    if (expression instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (target == null) return null;
+
+      if (target instanceof PsiVariable) {
+        PsiVariable variable = (PsiVariable)target;
+
+        PsiModifierList modifierList = variable.getModifierList();
+        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) return null;
+
+        PsiElement scope = null;
+        if (variable instanceof PsiParameter) scope = ((PsiParameter)variable).getDeclarationScope();
+        else if (variable instanceof PsiResourceVariable) scope = variable.getParent().getParent();
+        else if (variable instanceof PsiLocalVariable) scope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+        if (scope != null) {
+          if (HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return null;
+        }
+      }
+
+      String text = JavaErrorMessages.message("resource.variable.must.be.final");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
+    }
+
+    return null;
   }
 
   @Nullable
@@ -2915,12 +2951,13 @@ public class HighlightUtil extends HighlightUtilBase {
     METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references"),
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
-    RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers");
+    RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
+    REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs");
 
     private final LanguageLevel level;
     private final String key;
 
-    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
+    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
       this.level = level;
       this.key = key;
     }

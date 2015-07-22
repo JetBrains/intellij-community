@@ -18,7 +18,7 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
-import com.intellij.openapi.externalSystem.service.ui.ExternalProjectStructureDialog;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
@@ -158,7 +158,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     systemSettings.setLinkedProjectsSettings(projects);
 
     if (externalProjectNode != null) {
-      ExternalProjectStructureDialog dialog = new ExternalProjectStructureDialog(
+      ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
         project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
       dialog.showAndGet();
 

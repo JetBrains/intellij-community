@@ -350,8 +350,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else if (parent instanceof PsiTryStatement) {
       PsiResourceList list = ((PsiTryStatement)parent).getResourceList();
       if (list != null) {
-        for (PsiResourceVariable variable : list.getResourceVariables()) {
-          myCurrentFlow.removeVariable(variable);
+        for (PsiResourceListElement resource : list) {
+          if (resource instanceof PsiResourceVariable) {
+            myCurrentFlow.removeVariable((PsiVariable)resource);
+          }
         }
       }
     }
@@ -1029,12 +1031,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitResourceList(PsiResourceList resourceList) {
-    for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) {
-        initializeVariable(variable, initializer);
+    for (PsiResourceListElement resource : resourceList) {
+      if (resource instanceof PsiResourceVariable) {
+        PsiResourceVariable variable = (PsiResourceVariable)resource;
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null) {
+          initializeVariable(variable, initializer);
+        }
       }
-      PsiMethod closer = PsiUtil.getResourceCloserMethod(variable);
+      else if (resource instanceof PsiResourceExpression) {
+        ((PsiResourceExpression)resource).getExpression().accept(this);
+      }
+
+      PsiMethod closer = PsiUtil.getResourceCloserMethod(resource);
       if (closer != null) {
         addMethodThrows(closer, null);
       }
