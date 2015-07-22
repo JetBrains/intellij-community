@@ -73,7 +73,12 @@ public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, Refer
     } else if (element instanceof PsiPackage) {
       final String qualifiedName = ((PsiPackage)element).getQualifiedName();
       final Project project = element.getProject();
-      final String[] filenames = FilenameIndex.getAllFilenames(project);
+      final String[] filenames = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+        @Override
+        public String[] compute() {
+          return FilenameIndex.getAllFilenames(project);
+        }
+      });
       for (final String filename : filenames) {
         if (filename.startsWith(qualifiedName + ".")) {
           final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
