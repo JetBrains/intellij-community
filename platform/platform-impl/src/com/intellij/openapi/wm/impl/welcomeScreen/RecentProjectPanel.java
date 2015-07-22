@@ -160,17 +160,8 @@ public class RecentProjectPanel extends JPanel {
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
           if (rc == Messages.OK) {
-            RecentProjectsManager manager = RecentProjectsManager.getInstance();
             for (Object projectAction : selection) {
-              if (projectAction instanceof ReopenProjectAction) {
-                manager.removePath(((ReopenProjectAction)projectAction).getProjectPath());
-              } else if (projectAction instanceof ProjectGroupActionGroup) {
-                final ProjectGroup group = ((ProjectGroupActionGroup)projectAction).getGroup();
-                for (String path : group.getProjects()) {
-                  manager.removePath(path);
-                }
-                manager.removeGroup(group);
-              }
+              removeRecentProjectElement(projectAction);
             }
             ListUtil.removeSelectedItems(myList);
           }
@@ -219,6 +210,19 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+  }
+
+  protected static void removeRecentProjectElement(Object element) {
+    final RecentProjectsManager manager = RecentProjectsManager.getInstance();
+    if (element instanceof ReopenProjectAction) {
+      manager.removePath(((ReopenProjectAction)element).getProjectPath());
+    } else if (element instanceof ProjectGroupActionGroup) {
+      final ProjectGroup group = ((ProjectGroupActionGroup)element).getGroup();
+      for (String path : group.getProjects()) {
+        manager.removePath(path);
+      }
+      manager.removeGroup(group);
+    }
   }
 
   protected boolean isUseGroups() {
@@ -310,17 +314,77 @@ public class RecentProjectPanel extends JPanel {
 
   private static class MyList extends JBList {
     private final Dimension mySize;
+    private Point myMousePoint;
 
     private MyList(Dimension size, @NotNull Object ... listData) {
       super(listData);
       mySize = size;
       setEmptyText("  No Project Open Yet  ");
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      final MouseHandler handler = new MouseHandler();
+      addMouseListener(handler);
+      addMouseMotionListener(handler);
+    }
+
+    public Rectangle getCloseIconRect(int index) {
+      final Rectangle bounds = getCellBounds(index, index);
+      Icon icon = AllIcons.Welcome.Project.Remove;
+      return new Rectangle(bounds.width - icon.getIconWidth() - 10, bounds.y + 10, icon.getIconWidth(), icon.getIconHeight());
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      if (myMousePoint != null) {
+        final int index = locationToIndex(myMousePoint);
+        if (index != -1) {
+          final Rectangle iconRect = getCloseIconRect(index);
+          Icon icon = iconRect.contains(myMousePoint) ? AllIcons.Welcome.Project.Remove_hover : AllIcons.Welcome.Project.Remove;
+          icon.paintIcon(this, g, iconRect.x, iconRect.y);
+        }
+      }
+    }
+
+    @Override
+    protected void processMouseEvent(MouseEvent e) {
+      super.processMouseEvent(e);
     }
 
     @Override
     public Dimension getPreferredScrollableViewportSize() {
       return mySize == null ? super.getPreferredScrollableViewportSize() : mySize;
+    }
+
+    class MouseHandler extends MouseAdapter {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        myMousePoint = e.getPoint();
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myMousePoint = null;
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        myMousePoint = e.getPoint();
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        final Point point = e.getPoint();
+        final MyList list = MyList.this;
+        final int index = list.locationToIndex(point);
+        if (index != -1) {
+          if (getCloseIconRect(index).contains(point)) {
+            e.consume();
+            final Object element = getModel().getElementAt(index);
+            removeRecentProjectElement(element);
+            ListUtil.removeSelectedItems(MyList.this);
+          }
+        }
+      }
     }
   }
 
