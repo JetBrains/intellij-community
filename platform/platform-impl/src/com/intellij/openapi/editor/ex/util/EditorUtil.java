@@ -17,10 +17,12 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
@@ -898,6 +900,13 @@ public final class EditorUtil {
       });
     }
     editor.getSelectionModel().setSelection(startOffset, endOffset);
+  }
+
+  public static Font getEditorFont() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int size = UISettings.getInstance().PRESENTATION_MODE
+               ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
+    return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 }
 
