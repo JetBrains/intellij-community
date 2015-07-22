@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
             public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
               new WriteCommandAction(project, ExpandStaticImportAction.this.getText()) {
                 @Override
-                protected void run(Result result) throws Throwable {
+                protected void run(@NotNull Result result) throws Throwable {
                   if (selectedValue == REPLACE_THIS_OCCURRENCE) {
                     expand(refExpr, staticImport);
                   }

@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author peter
@@ -61,7 +62,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
     flag[0] = true;
     new WriteCommandAction(LightPlatformTestCase.getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         tag.setName("b");
       }
     }.execute();

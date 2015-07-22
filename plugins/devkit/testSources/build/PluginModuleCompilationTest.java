@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
@@ -51,7 +52,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
     super.setUpJdk();
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         ProjectJdkTable table = ProjectJdkTable.getInstance();
         myPluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(IdeaJdk.class));
         SdkModificator modificator = myPluginSdk.getSdkModificator();
@@ -72,7 +73,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   protected void tearDown() throws Exception {
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         ProjectJdkTable.getInstance().removeJdk(myPluginSdk);
       }
     }.execute();

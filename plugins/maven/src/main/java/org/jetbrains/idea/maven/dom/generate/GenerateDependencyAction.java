@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
           XmlFile psiFile = DomUtil.getFile(mavenModel);
           return new WriteCommandAction<MavenDomDependency>(psiFile.getProject(), "Generate Dependency", psiFile) {
             @Override
-            protected void run(Result<MavenDomDependency> result) throws Throwable {
+            protected void run(@NotNull Result<MavenDomDependency> result) throws Throwable {
               boolean isInsideManagedDependencies;
 
               MavenDomDependencyManagement dependencyManagement = mavenModel.getDependencyManagement();

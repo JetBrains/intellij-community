@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,10 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
@@ -310,7 +313,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected Module createModule(final String name, final ModuleType type) throws IOException {
     return new WriteCommandAction<Module>(myProject) {
       @Override
-      protected void run(Result<Module> moduleResult) throws Throwable {
+      protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
         VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
         Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type.getId());
         PsiTestUtil.addContentRoot(module, f.getParent());
@@ -329,7 +332,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     if (f == null) {
       f = new WriteAction<VirtualFile>() {
         @Override
-        protected void run(Result<VirtualFile> result) throws Throwable {
+        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
           VirtualFile res = dir.createChildData(null, configFileName);
           result.setResult(res);
         }

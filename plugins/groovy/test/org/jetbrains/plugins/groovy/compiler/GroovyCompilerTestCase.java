@@ -52,6 +52,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
@@ -127,7 +128,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   protected void setupTestSources() {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
         final ContentEntry entry = rootModel.getContentEntries()[0];
@@ -148,7 +149,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   protected Module addModule(final String name, final boolean withSource) {
     return new WriteCommandAction<Module>(getProject()) {
       @Override
-      protected void run(Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) throws Throwable {
         final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir(name);
 
         final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();

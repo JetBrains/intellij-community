@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -481,7 +481,7 @@ public class CreateTestDialog extends DialogWrapper {
     final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
 
     final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
         CreateTestAction.checkForTestRoots(myTargetModule, testFolders);
         List<VirtualFile> roots;
@@ -505,7 +505,7 @@ public class CreateTestDialog extends DialogWrapper {
     if (selectedRoot == null) return null;
 
     return new WriteCommandAction<PsiDirectory>(myProject, CodeInsightBundle.message("create.directory.command")) {
-      protected void run(Result<PsiDirectory> result) throws Throwable {
+      protected void run(@NotNull Result<PsiDirectory> result) throws Throwable {
         result.setResult(RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
       }
     }.execute().getResultObject();

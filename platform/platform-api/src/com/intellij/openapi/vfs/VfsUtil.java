@@ -425,7 +425,7 @@ public class VfsUtil extends VfsUtilCore {
   public static VirtualFile createDirectories(@NotNull final String directoryPath) throws IOException {
     return new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         VirtualFile res = createDirectoryIfMissing(directoryPath);
         result.setResult(res);
       }

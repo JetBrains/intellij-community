@@ -55,7 +55,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Con
     public JComponent createComponent() {
         myEditor = new ReadAction<AssociationsEditor>() {
             @Override
-            protected void run(Result<AssociationsEditor> result) throws Throwable {
+            protected void run(@NotNull Result<AssociationsEditor> result) throws Throwable {
                 result.setResult(new AssociationsEditor(myProject, myState.state));
             }
         }.execute().getResultObject();
