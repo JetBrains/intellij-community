@@ -132,6 +132,15 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myState = state;
   }
 
+  private static void removePathFrom(List<String> items, String path) {
+    for (Iterator<String> iterator = items.iterator(); iterator.hasNext();) {
+      final String next = iterator.next();
+      if (SystemInfo.isFileSystemCaseSensitive ? path.equals(next) : path.equalsIgnoreCase(next)) {
+        iterator.remove();
+      }
+    }
+  }
+
   @Override
   public void removePath(@Nullable String path) {
     if (path == null) {
@@ -139,17 +148,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     synchronized (myStateLock) {
-      if (SystemInfo.isFileSystemCaseSensitive) {
-        myState.recentPaths.remove(path);
-        myState.names.remove(path);
-      }
-      else {
-        for (Iterator<String> iterator = myState.recentPaths.iterator(); iterator.hasNext(); ) {
-          if (path.equalsIgnoreCase(iterator.next())) {
-            iterator.remove();
-            myState.names.remove(path);
-          }
-        }
+      removePathFrom(myState.recentPaths, path);
+      myState.names.remove(path);
+      for (ProjectGroup group : myState.groups) {
+        group.removeProject(path);
       }
     }
   }
