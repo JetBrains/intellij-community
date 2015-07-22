@@ -15,9 +15,11 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -176,12 +178,15 @@ public class PsiUtil {
       return false;
     }
 
-    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);
-    if (JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) == null) {
-      return false;
-    }
-
-    return true;
+    final Ref<Boolean> isIdeaProject = Ref.create(false);
+    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);
+        isIdeaProject.set(JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) != null);
+      }
+    });
+    return isIdeaProject.get();
   }
 
   @NotNull
