@@ -18,6 +18,7 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.Change;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,17 +37,14 @@ import java.io.IOException;
 import java.util.*;
 
 public class TestDiscoverySearchHelper {
-  public static Set<String> search(final Project project, final Pair<String, String> position, final String changeList) {
+  public static Set<String> search(final Project project, 
+                                   final Pair<String, String> position, 
+                                   final String changeList,
+                                   final String frameworkPrefix) {
     final Set<String> patterns = new LinkedHashSet<String>();
     if (position != null) {
       try {
-        final Collection<String> testsByMethodName = TestDiscoveryIndex
-          .getInstance(project).getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName != null) {
-          for (String pattern : testsByMethodName) {
-            patterns.add(pattern.replace('-', ','));
-          }
-        }
+        collectPatterns(project, patterns, position.first, position.second, frameworkPrefix);
       }
       catch (IOException ignore) {
       }
@@ -73,7 +72,7 @@ public class TestDiscoverySearchHelper {
                     methods.add(containingMethod);
                   }
                   for (PsiMethod changedMethod : methods) {
-                    final LinkedHashSet<String> detectedPatterns = collectPatterns(changedMethod);
+                    final LinkedHashSet<String> detectedPatterns = collectPatterns(changedMethod, frameworkPrefix);
                     if (detectedPatterns != null) {
                       patterns.addAll(detectedPatterns);
                     }
@@ -88,6 +87,25 @@ public class TestDiscoverySearchHelper {
       }
     }
     return patterns;
+  }
+
+  private static void collectPatterns(final Project project,
+                                      final Set<String> patterns,
+                                      final String classFQName,
+                                      final String methodName,
+                                      final String frameworkId) throws IOException {
+    final Collection<String> testsByMethodName = TestDiscoveryIndex
+      .getInstance(project).getTestsByMethodName(classFQName, methodName);
+    if (testsByMethodName != null) {
+      for (String pattern : ContainerUtil.filter(testsByMethodName, new Condition<String>() {
+        @Override
+        public boolean value(String s) {
+          return s.startsWith(frameworkId);
+        }
+      })) {
+        patterns.add(pattern.substring(frameworkId.length()).replace('-', ','));
+      }
+    }
   }
 
   @NotNull
@@ -115,20 +133,14 @@ public class TestDiscoverySearchHelper {
   }
 
   @Nullable
-  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod) {
+  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, String frameworkId) {
     LinkedHashSet<String> patterns = new LinkedHashSet<String>();
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass != null) {
       final String qualifiedName = containingClass.getQualifiedName();
       if (qualifiedName != null) {
         try {
-          final Collection<String> testsByMethodName
-            = TestDiscoveryIndex.getInstance(containingClass.getProject()).getTestsByMethodName(qualifiedName, psiMethod.getName());
-          if (testsByMethodName != null) {
-            for (String pattern : testsByMethodName) {
-              patterns.add(pattern.replace('-', ','));
-            }
-          }
+          collectPatterns(psiMethod.getProject(), patterns, qualifiedName, psiMethod.getName(), frameworkId);
         }
         catch (IOException e) {
           return null;

@@ -17,10 +17,11 @@ package com.intellij.execution;
 
 import java.lang.reflect.Method;
 
-public class TestDiscoveryListener {
+public abstract class TestDiscoveryListener {
+  public abstract String getFrameworkId();
   public void testStarted(String className, String methodName) {
-    final Object data = getData();
     try {
+      final Object data = getData();
       Method testStarted = data.getClass().getMethod("testStarted", new Class[] {String.class});
       testStarted.invoke(data, new Object[] {className + "-" + methodName});
     } catch (Throwable t) {
@@ -29,24 +30,19 @@ public class TestDiscoveryListener {
   }
 
   public void testFinished(String className, String methodName) {
-    final Object data = getData();
     try {
+      final Object data = getData();
       Method testEnded = data.getClass().getMethod("testEnded", new Class[] {String.class});
-      testEnded.invoke(data, new Object[] {className + "-" + methodName});
+      testEnded.invoke(data, new Object[] {getFrameworkId() + className + "-" + methodName});
     } catch (Throwable t) {
       t.printStackTrace();
     }
   }
 
-  protected Object getData() {
-    try {
-      return Class.forName("org.jetbrains.testme.instrumentation.ProjectData")
+  protected Object getData() throws Exception {
+    return Class.forName("org.jetbrains.testme.instrumentation.ProjectData")
         .getMethod("getProjectData", new Class[0])
         .invoke(null, new Object[0]);
-
-    } catch (Exception e) {
-      return null; //should not happen
-    }
   }
 
   public void testRunStarted(String name) {}

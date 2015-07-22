@@ -53,4 +53,9 @@ public class TestNGTestDiscoveryListener extends TestDiscoveryListener implement
   public void onFinish(ISuite suite) {
     testRunFinished(suite.getName());
   }
+
+  @Override
+  public String getFrameworkId() {
+    return "g";
+  }
 }

@@ -61,6 +61,12 @@ public class JUnitTestDiscoveryConfiguration extends TestDiscoveryConfiguration 
     return null;
   }
 
+  @NotNull
+  @Override
+  public String getFrameworkPrefix() {
+    return "j";
+  }
+
   private class JUnitTestDiscoveryRunnableState extends TestObject {
     public JUnitTestDiscoveryRunnableState(ExecutionEnvironment environment) {
       super(((JUnitConfiguration)myDelegate), environment);
@@ -71,7 +77,7 @@ public class JUnitTestDiscoveryConfiguration extends TestDiscoveryConfiguration 
       return new SearchForTestsTask(getProject(), myServerSocket) {
         @Override
         protected void search() throws ExecutionException {
-          final Set<String> patterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList());
+          final Set<String> patterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList(), getFrameworkPrefix());
           addClassesListToJavaParameters(patterns, FunctionUtil.<String>id(), "", false, getJavaParameters());
         }
 
