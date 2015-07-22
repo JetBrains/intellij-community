@@ -20,6 +20,7 @@ import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
@@ -28,6 +29,7 @@ import com.jgoodies.forms.layout.CellConstraints;
 import io.netty.util.NetUtil;
 import jsr166e.extra.SequenceLock;
 import net.n3.nanoxml.IXMLBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -39,6 +41,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import javax.tools.*;
 import java.io.File;
@@ -132,7 +135,7 @@ public class ClasspathBootstrap {
 
     cp.add(getResourcePath(BuildMain.class));
 
-    cp.addAll(PathManager.getUtilClassPath()); // util
+    cp.addAll(getUtilClassPath()); // util
     cp.add(getResourcePath(PlatformLoader.class)); // platform-loader
     cp.add(getResourcePath(Message.class)); // protobuf
     cp.add(getResourcePath(NetUtil.class)); // netty
@@ -165,6 +168,14 @@ public class ClasspathBootstrap {
     return ContainerUtil.newArrayList(cp);
   }
 
+  @NotNull
+  private static Collection<String> getUtilClassPath() {
+    if (Registry.is("platform.use.runtime.modules")) {
+      return PlatformLoader.getInstance().getRepository().getModuleClasspath(RuntimeModuleId.module("util"));
+    }
+    return PathManager.getUtilClassPath();
+  }
+
   public static void appendJavaCompilerClasspath(Collection<String> cp) {
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
@@ -181,7 +192,7 @@ public class ClasspathBootstrap {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     // util
-    for (String path : PathManager.getUtilClassPath()) {
+    for (String path : getUtilClassPath()) {
       cp.add(new File(path));
     }
     cp.add(getResourceFile(JpsModel.class));  // jps-model-api

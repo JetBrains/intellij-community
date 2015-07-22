@@ -125,7 +125,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         final List<String> classPath = ContainerUtilRt.newArrayList();
 
         // IDE jars.
-        classPath.addAll(PathManager.getUtilClassPath());
+        classPath.addAll(PlatformLoader.getInstance().getRepository().getModuleClasspath(RuntimeModuleId.module("util")));
         RuntimeModuleId[] modules = {
           RuntimeModuleId.module("projectModel-api"),
           RuntimeModuleId.module("editor-ui-api"),
