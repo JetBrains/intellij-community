@@ -283,6 +283,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (currentVersionCorrupted) {
         FileUtil.deleteWithRenaming(indexRoot);
         indexRoot.mkdirs();
+        // serialization manager is initialized before and use removed index root so we need to reinitialize it
+        mySerializationManagerEx.reinitializeNameStorage();
       }
 
       FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
