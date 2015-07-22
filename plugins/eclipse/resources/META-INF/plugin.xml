@@ -30,12 +30,9 @@
         name="Eclipse XML Profile"
         implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
+
+    <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
   </extensions>
-  <module-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl</implementation-class>
-    </component>
-  </module-components>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export to Eclipse...">
       <add-to-group group-id="ExportImportGroup" anchor="last"/>

@@ -16,6 +16,9 @@
 
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +26,28 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class ModuleServiceManager {
+  private static final Logger LOG = Logger.getInstance(ModuleServiceManager.class);
+
   private ModuleServiceManager() {
   }
 
   @Nullable
   public static <T> T getService(@NotNull Module module, @NotNull Class<T> serviceClass) {
     //noinspection unchecked
-    return (T)module.getPicoContainer().getComponentInstance(serviceClass.getName());
+    T instance = (T)module.getPicoContainer().getComponentInstance(serviceClass.getName());
+    if (instance == null) {
+      instance = module.getComponent(serviceClass);
+      if (instance != null) {
+        Application app = ApplicationManager.getApplication();
+        String message = serviceClass.getName() + " requested as a service, but it is a component - convert it to a service or change call to module.getComponent()";
+        if (app.isUnitTestMode()) {
+          LOG.error(message);
+        }
+        else {
+          LOG.warn(message);
+        }
+      }
+    }
+    return instance;
   }
 }
