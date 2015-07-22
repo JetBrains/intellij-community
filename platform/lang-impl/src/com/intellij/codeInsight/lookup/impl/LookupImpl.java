@@ -116,7 +116,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
   private final Map<LookupElement, PrefixMatcher> myMatchers =
-    ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.<LookupElement>identityStrategy());
   private final Map<LookupElement, Font> myCustomFonts = ContainerUtil.createConcurrentWeakMap(10, 0.75f, Runtime.getRuntime().availableProcessors(),
     ContainerUtil.<LookupElement>identityStrategy());
   private boolean myStartCompletionWhenNothingMatches;

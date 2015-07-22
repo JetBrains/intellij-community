@@ -132,7 +132,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
   private final ConcurrentMap<LookupElement, CompletionSorterImpl> myItemSorters =
-    ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
@@ -829,17 +829,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     strategy.startThread(this, new CalculateItems());
   }
 
-  private LookupElement[] calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
+  private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
     duringCompletion(initContext);
     ProgressManager.checkCanceled();
 
-    LookupElement[] result = CompletionService.getCompletionService().performCompletion(myParameters, weigher);
+    CompletionService.getCompletionService().performCompletion(myParameters, weigher);
     ProgressManager.checkCanceled();
 
     weigher.waitFor();
     ProgressManager.checkCanceled();
-
-    return result;
   }
 
   public void addAdvertisement(@NotNull final String text, @Nullable final Color bgColor) {
