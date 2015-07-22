@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -157,6 +158,8 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
     reactiveModel.transaction { m ->
       (path / "name").putIn(m, PrimitiveModel(name))
     }
+
+    ServerMarkupHost(editor.getMarkupModel() as MarkupModelEx, reactiveModel, path / "markup")
 
     val disposable = Disposer.newDisposable()
     TemplateManager.getInstance(editor.getProject()).addTemplateManagerListener(disposable, object: TemplateManagerListener {

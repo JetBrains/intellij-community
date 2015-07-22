@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -1090,7 +1089,7 @@ public class TemplateState implements Disposable {
 
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    RangeHighlighter segmentHighlighter = DocumentMarkupModel.forDocument(myEditor.getDocument(), myProject, true)
+    RangeHighlighter segmentHighlighter = myEditor.getMarkupModel()
       .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, isEnd ? endAttributes : attributes, HighlighterTargetArea.EXACT_RANGE);
     segmentHighlighter.setGreedyToLeft(true);
     segmentHighlighter.setGreedyToRight(true);

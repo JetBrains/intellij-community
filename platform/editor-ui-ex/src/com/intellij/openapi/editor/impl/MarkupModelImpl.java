@@ -58,6 +58,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final List<MarkupModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeHighlighterTree myHighlighterTree;          // this tree holds regular highlighters with target = HighlighterTargetArea.EXACT_RANGE
   private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
+  private boolean myFlush = false;
 
   MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
@@ -230,6 +231,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     for (MarkupModelListener listener : myListeners) {
       listener.attributesChanged(segmentHighlighter, renderersChanged);
     }
+    ensureFlush();
   }
 
   @Override
@@ -237,6 +239,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     for (MarkupModelListener listener : myListeners) {
       listener.afterAdded(segmentHighlighter);
     }
+    ensureFlush();
   }
 
   @Override
@@ -244,6 +247,19 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(segmentHighlighter);
     }
+    ensureFlush();
+  }
+
+  private void ensureFlush() {
+    if (myFlush) return;
+    myFlush = true;
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        fireFlush();
+        myFlush = false;
+      }
+    });
   }
 
   @Override

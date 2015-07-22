@@ -105,7 +105,8 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   private RangeHighlighter addSegmentHighlighter(@NotNull Editor editor, int startOffset, int endOffset, TextAttributes attributes, @HideFlags int flags) {
-    RangeHighlighter highlighter = getMarkupModel(editor)
+    final MarkupModel markupModel = editor.getMarkupModel();
+    RangeHighlighter highlighter = markupModel
       .addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, attributes, HighlighterTargetArea.EXACT_RANGE);
     HighlightInfo info = new HighlightInfo(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, true);
