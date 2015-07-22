@@ -1412,7 +1412,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private static boolean checkActionNotBlocked(@NotNull AnAction action, @Nullable Project project) {
     if (project == null || !DumbService.isDumb(project) || action.isDumbAware()) return true;
-    DumbService.getInstance(project).showDumbModeNotification("Action is not available during indexing");
+    DumbService.getInstance(project).showDumbModeNotification("This functionality is not available during indexing");
     return false;
   }
 
