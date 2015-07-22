@@ -254,7 +254,7 @@ public class DiffTreeTest extends TestCase {
 
   private static void performTest(final Node r1, final Node r2, final String... expected) {
     final DiffBuilder result = new DiffBuilder();
-    DiffTree.diff(new TreeStructure(r1), new TreeStructure(r2), new NodeComparator(), result);
+    DiffTree.diff(new TreeStructure(r1), new TreeStructure(r2), new NodeComparator(), result, r1.toString());
 
     final List<String> expectedList = Arrays.asList(expected);
     final List<String> actual = result.getEvents();

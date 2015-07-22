@@ -41,11 +41,12 @@ public class DiffTree<OT, NT> {
 
   private DiffTree(@NotNull FlyweightCapableTreeStructure<OT> oldTree,
                    @NotNull FlyweightCapableTreeStructure<NT> newTree,
-                   @NotNull ShallowNodeComparator<OT, NT> comparator) {
+                   @NotNull ShallowNodeComparator<OT, NT> comparator,
+                   @NotNull CharSequence oldText) {
     myOldTree = oldTree;
     myNewTree = newTree;
     myComparator = comparator;
-    myOldText = oldTree.toString(oldTree.getRoot());
+    myOldText = oldText;
     myOldTreeStart = oldTree.getStartOffset(oldTree.getRoot());
     myNewText = newTree.toString(newTree.getRoot());
     myNewTreeStart = newTree.getStartOffset(newTree.getRoot());
@@ -54,8 +55,9 @@ public class DiffTree<OT, NT> {
   public static <OT, NT> void diff(@NotNull FlyweightCapableTreeStructure<OT> oldTree,
                                    @NotNull FlyweightCapableTreeStructure<NT> newTree,
                                    @NotNull ShallowNodeComparator<OT, NT> comparator,
-                                   @NotNull DiffTreeChangeBuilder<OT, NT> consumer) {
-    final DiffTree<OT, NT> tree = new DiffTree<OT, NT>(oldTree, newTree, comparator);
+                                   @NotNull DiffTreeChangeBuilder<OT, NT> consumer,
+                                   @NotNull CharSequence oldText) {
+    final DiffTree<OT, NT> tree = new DiffTree<OT, NT>(oldTree, newTree, comparator, oldText);
     tree.build(oldTree.getRoot(), newTree.getRoot(), 0, consumer);
   }
 

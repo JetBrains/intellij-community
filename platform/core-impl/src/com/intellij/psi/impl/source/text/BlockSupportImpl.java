@@ -79,12 +79,13 @@ public class BlockSupportImpl extends BlockSupport {
   public DiffLog reparseRange(@NotNull final PsiFile file,
                               @NotNull TextRange changedPsiRange,
                               @NotNull final CharSequence newFileText,
-                              @NotNull final ProgressIndicator indicator) {
+                              @NotNull final ProgressIndicator indicator,
+                              @NotNull CharSequence lastCommittedText) {
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     
     final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, changedPsiRange, newFileText);
     return reparseableRoots != null
-           ? mergeTrees(fileImpl, reparseableRoots.first, reparseableRoots.second, indicator)
+           ? mergeTrees(fileImpl, reparseableRoots.first, reparseableRoots.second, indicator, lastCommittedText)
            : makeFullParse(fileImpl.getTreeElement(), newFileText, newFileText.length(), fileImpl, indicator);
   }
 
@@ -205,7 +206,7 @@ public class BlockSupportImpl extends BlockSupport {
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
 
-      DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator);
+      DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, oldFileElement.getText());
 
       ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
       return diffLog;
@@ -258,7 +259,8 @@ public class BlockSupportImpl extends BlockSupport {
   public static DiffLog mergeTrees(@NotNull final PsiFileImpl fileImpl,
                                    @NotNull final ASTNode oldRoot,
                                    @NotNull final ASTNode newRoot,
-                                   @NotNull ProgressIndicator indicator) {
+                                   @NotNull ProgressIndicator indicator,
+                                   @NotNull CharSequence lastCommittedText) {
     if (newRoot instanceof FileElement) {
       ((FileElement)newRoot).setCharTable(fileImpl.getTreeElement().getCharTable());
     }
@@ -285,7 +287,7 @@ public class BlockSupportImpl extends BlockSupport {
     final ASTStructure treeStructure = createInterruptibleASTStructure(newRoot, indicator);
 
     DiffLog diffLog = new DiffLog();
-    diffTrees(oldRoot, diffLog, comparator, treeStructure, indicator);
+    diffTrees(oldRoot, diffLog, comparator, treeStructure, indicator, lastCommittedText);
     return diffLog;
   }
 
@@ -293,9 +295,10 @@ public class BlockSupportImpl extends BlockSupport {
                                    @NotNull final DiffTreeChangeBuilder<ASTNode, T> builder,
                                    @NotNull final ShallowNodeComparator<ASTNode, T> comparator,
                                    @NotNull final FlyweightCapableTreeStructure<T> newTreeStructure,
-                                   @NotNull ProgressIndicator indicator) {
+                                   @NotNull ProgressIndicator indicator,
+                                   @NotNull CharSequence lastCommittedText) {
     TreeUtil.ensureParsedRecursivelyCheckingProgress(oldRoot, indicator);
-    DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder);
+    DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder, lastCommittedText);
   }
 
   private static ASTStructure createInterruptibleASTStructure(@NotNull final ASTNode oldRoot, @NotNull final ProgressIndicator indicator) {
