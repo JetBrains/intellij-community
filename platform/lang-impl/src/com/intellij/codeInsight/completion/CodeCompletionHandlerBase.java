@@ -609,6 +609,7 @@ public class CodeCompletionHandlerBase {
       final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
       final PsiFile originalFile = indicator.getParameters().getOriginalFile();
       final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(originalFile);
+      assert hostFile != null;
       final OffsetMap hostMap = translateOffsetMapToHost(originalFile, hostFile, hostEditor, indicator.getOffsetMap());
       hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
@@ -618,9 +619,13 @@ public class CodeCompletionHandlerBase {
           Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
           int targetCaretOffset = targetEditor.getCaretModel().getOffset();
           OffsetMap injectedMap = translateOffsetMapToInjected(hostMap, targetEditor.getDocument());
+          int idEnd = targetCaretOffset + idEndOffsetDelta;
+          if (idEnd > targetEditor.getDocument().getTextLength()) {
+            idEnd = targetCaretOffset; // no replacement by Tab when offsets gone wrong for some reason
+          }
           CompletionAssertions.WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update,
                                                                                     targetEditor, targetFile == null ? hostFile : targetFile,
-                                                                                    targetCaretOffset, targetCaretOffset + idEndOffsetDelta,
+                                                                                    targetCaretOffset, idEnd,
                                                                                     injectedMap);
           contexts.add(currentContext);
         }
