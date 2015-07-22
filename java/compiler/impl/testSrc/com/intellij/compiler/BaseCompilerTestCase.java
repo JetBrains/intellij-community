@@ -47,10 +47,10 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.Assert;
 
 import javax.swing.*;
 import java.io.File;
@@ -125,6 +125,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       throw new RuntimeException(e);
     }
     new WriteAction() {
+      @Override
       protected void run(@NotNull final Result result) {
         VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
         assertNotNull(target.getAbsolutePath() + " not found", virtualDir);
@@ -301,15 +302,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return result.get();
   }
 
-  private Set<String> getRelativePaths(String[] paths) {
-    final Set<String> set = new THashSet<String>();
-    final String basePath = myProject.getBaseDir().getPath();
-    for (String path : paths) {
-      set.add(StringUtil.trimStart(StringUtil.trimStart(FileUtil.toSystemIndependentName(path), basePath), "/"));
-    }
-    return set;
-  }
-
   protected void changeFile(VirtualFile file) {
     changeFile(file, null);
   }
@@ -424,7 +416,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }
   }
 
-  protected class CompilationLog {
+  protected static class CompilationLog {
     private final Set<String> myGeneratedPaths;
     private final boolean myExternalBuildUpToDate;
     private final CompilerMessage[] myErrors;
@@ -454,7 +446,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       return myWarnings;
     }
 
-    private void assertSet(String name, Set<String> actual, String[] expected) {
+    private static void assertSet(String name, Set<String> actual, String[] expected) {
       for (String path : expected) {
         if (!actual.remove(path)) {
           Assert.fail("'" + path + "' is not " + name + ". " + name + ": " + new HashSet<String>(actual));

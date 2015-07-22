@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.junit4;
+package com.intellij.rt.execution.junit;
 
-import com.intellij.execution.TestDiscoveryListener;
-import com.intellij.rt.execution.junit.IDEAJUnitListenerEx;
-
-public class JUnitTestDiscoveryListener extends TestDiscoveryListener implements IDEAJUnitListenerEx {}
+public interface IDEAJUnitListenerEx extends IDEAJUnitListener {
+  void testRunStarted(String name);
+  void testRunFinished(String name);
+}

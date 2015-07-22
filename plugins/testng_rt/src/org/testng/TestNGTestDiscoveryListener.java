@@ -17,7 +17,7 @@ package org.testng;
 
 import com.intellij.execution.TestDiscoveryListener;
 
-public class TestNGTestDiscoveryListener extends TestDiscoveryListener implements IDEATestNGListener {
+public class TestNGTestDiscoveryListener extends TestDiscoveryListener implements IDEATestNGListener, ISuiteListener {
   public void onTestStart(ITestResult result) {
     testStarted(result.getTestClass().getName(), result.getTestName());
   }
@@ -44,5 +44,13 @@ public class TestNGTestDiscoveryListener extends TestDiscoveryListener implement
 
   private void onTestEnded(ITestResult result) {
     testFinished(result.getTestClass().getName(), result.getName());
+  }
+
+  public void onStart(ISuite suite) {
+    testRunStarted(suite.getName());
+  }
+
+  public void onFinish(ISuite suite) {
+    testRunFinished(suite.getName());
   }
 }

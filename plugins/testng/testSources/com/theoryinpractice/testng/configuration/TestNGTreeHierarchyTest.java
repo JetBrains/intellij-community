@@ -21,6 +21,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.testng.IDEATestNGRemoteListener;
+import org.testng.IDEATestNGRemoteListenerEx;
 import org.testng.ISuite;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
@@ -313,7 +314,7 @@ public class TestNGTreeHierarchyTest {
 
   @NotNull
   private static IDEATestNGRemoteListener createListener(final StringBuffer buf) {
-    return new IDEATestNGRemoteListener(new PrintStream(new OutputStream() {
+    return new IDEATestNGRemoteListenerEx(new PrintStream(new OutputStream() {
         @Override
         public void write(int b) throws IOException {
           buf.append(new String(new byte[]{(byte)b}));

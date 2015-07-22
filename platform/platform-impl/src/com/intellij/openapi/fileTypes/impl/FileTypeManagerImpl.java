@@ -86,9 +86,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
   private static final int DETECT_BUFFER_SIZE = 8192; // the number of bytes to read from the file to feed to the file type detector
 
-  @NonNls
+  // must be sorted
   private static final String DEFAULT_IGNORED =
-    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;.tox;_svn;rcs;vssver.scc;vssver2.scc;";
+    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.git;.hg;.svn;.tox;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
