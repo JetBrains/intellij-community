@@ -15,18 +15,14 @@
  */
 package com.intellij.psi;
 
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
+ * Common interface for {@link PsiResourceVariable} and {@link PsiResourceExpression}.
  *
- * @see PsiTryStatement#getResourceList()
- * @since 10.5
+ * @since 15
  */
-public interface PsiResourceList extends PsiElement, Iterable<PsiResourceListElement> {
-  int getResourceVariablesCount();
-
-  /** @deprecated use {@link #iterator()} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  List<PsiResourceVariable> getResourceVariables();
+public interface PsiResourceListElement extends PsiElement {
+  @Nullable
+  PsiType getType();
 }

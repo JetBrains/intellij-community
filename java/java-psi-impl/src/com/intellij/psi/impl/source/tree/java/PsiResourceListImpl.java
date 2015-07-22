@@ -24,6 +24,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class PsiResourceListImpl extends CompositePsiElement implements PsiResourceList {
@@ -35,15 +36,21 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
   public int getResourceVariablesCount() {
     int count = 0;
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiResourceVariable) ++count;
+      if (child instanceof PsiResourceListElement) ++count;
     }
     return count;
   }
 
-  @NotNull
+  @Deprecated
   @Override
   public List<PsiResourceVariable> getResourceVariables() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiResourceVariable.class);
+  }
+
+  @NotNull
+  @Override
+  public Iterator<PsiResourceListElement> iterator() {
+    return PsiTreeUtil.childIterator(this, PsiResourceListElement.class);
   }
 
   @Override
@@ -66,7 +73,7 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    if (child.getPsi() instanceof PsiResourceVariable && getResourceVariablesCount() == 1) {
+    if (child.getPsi() instanceof PsiResourceListElement && getResourceVariablesCount() == 1) {
       getTreeParent().deleteChildInternal(this);
       return;
     }

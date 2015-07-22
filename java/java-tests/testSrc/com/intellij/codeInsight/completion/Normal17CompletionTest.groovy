@@ -38,6 +38,7 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   public void testOnlyResourcesInResourceList2() { doTest() }
   public void testOnlyResourcesInResourceList3() { doTest() }
   public void testOnlyResourcesInResourceList4() { doTest() }
+  public void testOnlyResourcesInResourceList5() { doTest() }
 
   public void testMethodReferenceNoStatic() { doTest() }
   public void testMethodReferenceCallContext() { doTest() }

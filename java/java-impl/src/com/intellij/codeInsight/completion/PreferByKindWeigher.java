@@ -61,10 +61,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
     psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
 
-  static final ElementPattern<PsiElement> IN_RESOURCE_TYPE =
-    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
-      withParent(psiElement(PsiTypeElement.class).
-        withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
+  static final ElementPattern<PsiElement> IN_RESOURCE =
+    psiElement().withParent(or(
+      psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiTypeElement.class).
+        withSuperParent(2, or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class))),
+      psiElement(PsiReferenceExpression.class).withParent(PsiResourceExpression.class)));
 
   private final CompletionType myCompletionType;
   private final PsiElement myPosition;
@@ -115,7 +116,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       };
     }
 
-    if (IN_RESOURCE_TYPE.accepts(position)) {
+    if (IN_RESOURCE.accepts(position)) {
       return new Condition<PsiClass>() {
         @Override
         public boolean value(PsiClass psiClass) {

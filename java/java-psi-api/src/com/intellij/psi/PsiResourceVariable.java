@@ -20,10 +20,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a resource variable of try-with-resources statement (automatic resource management) introduced in JDK 7.
  *
- * @see PsiResourceList#getResourceVariables()
+ * @see PsiResourceList
  * @since 10.5
  */
-public interface PsiResourceVariable extends PsiLocalVariable {
+public interface PsiResourceVariable extends PsiLocalVariable, PsiResourceListElement {
   @NotNull
   PsiElement[] getDeclarationScope();
 }

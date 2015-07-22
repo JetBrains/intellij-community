@@ -48,6 +48,8 @@ public class DeclarationParser {
     JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW);
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
+  private static final TokenSet RESOURCE_EXPRESSIONS = TokenSet.create(
+    JavaElementType.REFERENCE_EXPRESSION, JavaElementType.THIS_EXPRESSION);
 
   private static final String WHITESPACES = "\n\r \t";
   private static final String LINE_ENDS = "\n\r";
@@ -575,6 +577,16 @@ public class DeclarationParser {
 
   @Nullable
   public PsiBuilder.Marker parseResource(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
+
+    PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+    if (expr != null && RESOURCE_EXPRESSIONS.contains(exprType(expr)) && builder.getTokenType() != JavaTokenType.IDENTIFIER) {
+      marker.done(JavaElementType.RESOURCE_EXPRESSION);
+      return marker;
+    }
+
+    marker.rollbackTo();
+
     return parseListElement(builder, true, false, false, true);
   }
 
