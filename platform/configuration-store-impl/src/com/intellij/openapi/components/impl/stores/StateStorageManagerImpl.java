@@ -175,14 +175,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageClass);
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    final String filePath = expandMacros(fileSpec);
-    File file = new File(filePath).getAbsoluteFile();
+
+    String filePath = expandMacros(fileSpec);
+    File file = new File(filePath);
 
     //noinspection deprecation
     if (!stateSplitter.equals(StateSplitter.class) && !stateSplitter.equals(StateSplitterEx.class)) {
-      @SuppressWarnings("deprecation")
-      StateSplitter splitter = ReflectionUtil.newInstance(stateSplitter);
-      return new DirectoryBasedStorage(myPathMacroSubstitutor, file, splitter, this, createStorageTopicListener());
+      return new DirectoryBasedStorage(myPathMacroSubstitutor, file, ReflectionUtil.newInstance(stateSplitter), this, createStorageTopicListener());
     }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
