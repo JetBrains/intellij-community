@@ -122,7 +122,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
               AbstractExternalSystemSettings externalSystemSettings =
                 ExternalSystemApiUtil.getSettings(module.getProject(), projectSystemId);
 
-              String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
+              String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
               if (path != null) {
                 ExternalProjectSettings projectSettings = externalSystemSettings.getLinkedProjectSettings(path);
                 createEmptyContentRootDirectories = projectSettings != null && projectSettings.isCreateEmptyContentRootDirectories();

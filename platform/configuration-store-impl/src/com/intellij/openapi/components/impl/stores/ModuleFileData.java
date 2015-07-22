@@ -18,19 +18,17 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.OptionManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.TreeMap;
 
 final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData implements OptionManager {
-  private KeyFMap options;
+  private TreeMap<String, String> options;
   private final Module myModule;
 
   private boolean dirty = true;
@@ -39,7 +37,7 @@ final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData
     super(rootElementName);
 
     myModule = module;
-    options = KeyFMap.EMPTY_MAP;
+    options = new TreeMap<String, String>();
   }
 
   @Override
@@ -52,18 +50,17 @@ final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData
 
     myModule = storageData.myModule;
     dirty = storageData.dirty;
-    options = storageData.options;
+    options = new TreeMap<String, String>(storageData.options);
   }
 
   @Override
   public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
     super.load(rootElement, pathMacroSubstitutor, intern);
 
-    KeyFMap options = KeyFMap.EMPTY_MAP;
     for (Attribute attribute : rootElement.getAttributes()) {
       String name = attribute.getName();
       if (!name.equals(BaseFileConfigurableStoreImpl.VERSION_OPTION) && !StringUtil.isEmpty(name)) {
-        options.plus(ModuleManagerImpl.createOptionKey(name), attribute.getValue());
+        options.put(name, attribute.getValue());
       }
     }
 
@@ -73,11 +70,10 @@ final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData
   @Override
   protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
     if (!options.isEmpty()) {
-      //noinspection unchecked
-      for (Key<String> key : options.getKeys()) {
+      for (String key : options.keySet()) {
         String value = options.get(key);
         if (value != null) {
-          root.setAttribute(key.toString(), value);
+          root.setAttribute(key, value);
         }
       }
     }
@@ -96,7 +92,7 @@ final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData
   @Override
   public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
     final ModuleFileData data = (ModuleFileData)newStorageData;
-    if (options != data.options) {
+    if (!options.equals(data.options)) {
       return null;
     }
 
@@ -104,27 +100,22 @@ final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData
   }
 
   @Override
-  public void setOption(@NotNull Key<String> key, @NotNull String optionValue) {
-    if (optionValue.equals(options.get(key))) {
-      return;
+  public void setOption(@NotNull String key, @NotNull String value) {
+    if (!value.equals(options.put(key, value))) {
+      dirty = true;
     }
-
-    options = options.plus(key, optionValue);
-    dirty = true;
   }
 
   @Override
-  public void clearOption(@NotNull Key<String> key) {
-    KeyFMap newOptions = options.minus(key);
-    if (newOptions != options) {
-      options = newOptions;
+  public void clearOption(@NotNull String key) {
+    if (options.remove(key) != null) {
       dirty = true;
     }
   }
 
   @Override
   @Nullable
-  public String getOptionValue(@NotNull Key<String> key) {
+  public String getOptionValue(@NotNull String key) {
     return options.get(key);
   }
 }

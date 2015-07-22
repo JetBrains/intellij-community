@@ -226,7 +226,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       if (elementToRename != null) {
         new WriteCommandAction(myProject, getCommandName()) {
           @Override
-          protected void run(Result result) throws Throwable {
+          protected void run(@NotNull Result result) throws Throwable {
             renameSynthetic(newName);
           }
         }.execute();
@@ -279,7 +279,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             };
             final WriteCommandAction writeCommandAction = new WriteCommandAction(myProject, getCommandName()) {
               @Override
-              protected void run(Result result) throws Throwable {
+              protected void run(@NotNull Result result) throws Throwable {
                 performAutomaticRename.run();
               }
             };

@@ -129,7 +129,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   @Nullable
   private ClassLoader createGradleClassLoader(@NotNull Module module) {
-    String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
+    String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
     if (StringUtil.isEmpty(rootProjectPath)) {
       return null;
     }

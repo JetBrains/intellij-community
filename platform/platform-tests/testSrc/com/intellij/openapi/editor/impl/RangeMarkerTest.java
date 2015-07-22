@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -875,7 +875,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       final DocumentEx finalDocument = document;
       new WriteCommandAction(getProject()) {
         @Override
-        protected void run(Result result) throws Exception {
+        protected void run(@NotNull Result result) throws Exception {
           List<Pair<RangeMarker, TextRange>> adds = new ArrayList<Pair<RangeMarker, TextRange>>();
           List<Pair<RangeMarker, TextRange>> dels = new ArrayList<Pair<RangeMarker, TextRange>>();
           List<Trinity<Integer, Integer, Integer>> edits = new ArrayList<Trinity<Integer, Integer, Integer>>();

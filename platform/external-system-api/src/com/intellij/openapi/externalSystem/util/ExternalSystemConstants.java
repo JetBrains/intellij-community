@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,23 +24,14 @@ import org.jetbrains.annotations.NotNull;
  * @since 4/16/13 11:44 AM
  */
 public class ExternalSystemConstants {
+
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_ID_KEY  = "external.system.id";
-  public static final Key<String> EXTERNAL_SYSTEM_ID  = Key.create(EXTERNAL_SYSTEM_ID_KEY);
-
   @NonNls @NotNull public static final String LINKED_PROJECT_PATH_KEY = "external.linked.project.path";
-  public static final Key<String> LINKED_PROJECT_PATH  = Key.create(LINKED_PROJECT_PATH_KEY);
-
   @NonNls @NotNull public static final String ROOT_PROJECT_PATH_KEY = "external.root.project.path";
-  public static final Key<String> ROOT_PROJECT_PATH  = Key.create(ROOT_PROJECT_PATH_KEY);
-
   @NonNls @NotNull public static final String LINKED_PROJECT_ID_KEY = "external.linked.project.id";
-  public static final Key<String> LINKED_PROJECT_ID  = Key.create(LINKED_PROJECT_ID_KEY);
 
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_MODULE_GROUP_KEY  = "external.system.module.group";
-  public static final Key<String> EXTERNAL_SYSTEM_MODULE_GROUP  = Key.create(EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
-
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_MODULE_VERSION_KEY  = "external.system.module.version";
-  public static final Key<String> EXTERNAL_SYSTEM_MODULE_VERSION  = Key.create(EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
 
   @NonNls @NotNull public static final String TOOL_WINDOW_TOOLBAR_ACTIONS_GROUP_ID = "ExternalSystem.ToolWindow.Toolbar";
   @NonNls @NotNull public static final String TREE_ACTIONS_GROUP_ID                = "ExternalSystem.Tree.Context";
@@ -71,6 +61,4 @@ public class ExternalSystemConstants {
   public static final int UNORDERED = 1000;
 
   public static final int TEXT_FIELD_WIDTH_IN_COLUMNS = 20;
-
-  public static final Key<String> MAVEN_MODULE_KEY = Key.create("org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule");
 }

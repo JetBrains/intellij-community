@@ -16,7 +16,9 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.module.Module;
@@ -24,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -152,20 +155,21 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return result.get();
   }
 
-  protected void readJdomExternalizables(final ModuleImpl module) {
+  protected void readJdomExternalizables(@NotNull Module module) {
     loadModuleComponentState(module, ModuleRootManager.getInstance(module));
   }
 
-  protected final void loadModuleComponentState(final Module module, final Object component) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ProjectImpl project = (ProjectImpl)myProject;
-        project.setOptimiseTestLoadSpeed(false);
-        ComponentsPackage.getStateStore(module).initComponent(component, false);
-        project.setOptimiseTestLoadSpeed(true);
-      }
-    });
+  protected final void loadModuleComponentState(@NotNull Module module, @NotNull Object component) {
+    AccessToken token = WriteAction.start();
+    try {
+      ProjectEx project = (ProjectEx)myProject;
+      project.setOptimiseTestLoadSpeed(false);
+      ComponentsPackage.getStateStore(module).initComponent(component, false);
+      project.setOptimiseTestLoadSpeed(true);
+    }
+    finally {
+      token.finish();
+    }
   }
 
   protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType,

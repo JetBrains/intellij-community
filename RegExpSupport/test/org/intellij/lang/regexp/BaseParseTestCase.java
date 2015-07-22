@@ -25,6 +25,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -45,7 +46,7 @@ public abstract class BaseParseTestCase extends UsefulTestCase {
 
     new WriteCommandAction(project) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         FileTypeManager.getInstance().registerFileType(RegExpFileType.INSTANCE, new String[]{"regexp"});
       }
     }.execute();

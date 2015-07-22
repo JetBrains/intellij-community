@@ -166,7 +166,7 @@ public class MavenProjectsManagerWatcher {
               public void run() {
                 new WriteAction() {
                   @Override
-                  protected void run(Result result) throws Throwable {
+                  protected void run(@NotNull Result result) throws Throwable {
                     for (Document each : copy) {
                       PsiDocumentManager.getInstance(myProject).commitDocument(each);
                       ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);

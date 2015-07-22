@@ -908,7 +908,7 @@ public class ExternalSystemUtil {
     
     PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
     for (Module module : platformFacade.getModules(ideProject)) {
-      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH);
+      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
       if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
         return false;
       }

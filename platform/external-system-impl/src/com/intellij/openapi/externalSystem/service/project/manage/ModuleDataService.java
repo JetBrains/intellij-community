@@ -34,9 +34,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
@@ -53,14 +51,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Encapsulates functionality of importing gradle module to the intellij project.
+ * Encapsulates functionality of importing external system module to the intellij project.
  * 
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
@@ -118,10 +115,9 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     });
   }
 
-  private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
-                             @NotNull final Project project,
-                             @NotNull final PlatformFacade platformFacade) {
-    removeExistingModulesConfigs(toCreate, project);
+  private static void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
+                                    @NotNull final Project project,
+                                    @NotNull final PlatformFacade platformFacade) {
     Application application = ApplicationManager.getApplication();
     final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
     application.runWriteAction(new Runnable() {
@@ -183,31 +179,6 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
       }
     }
     return result;
-  }
-
-  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull final Project project) {
-    if (nodes.isEmpty()) {
-      return;
-    }
-    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-        for (DataNode<ModuleData> node : nodes) {
-          // Remove existing '*.iml' file if necessary.
-          ModuleData data = node.getData();
-          VirtualFile file = fileSystem.refreshAndFindFileByPath(data.getModuleFilePath());
-          if (file != null) {
-            try {
-              file.delete(this);
-            }
-            catch (IOException e) {
-              LOG.warn("Can't remove existing module config file at '" + data.getModuleFilePath() + "'");
-            }
-          }
-        }
-      }
-    });
   }
 
   private static void syncPaths(@NotNull Module module, @NotNull PlatformFacade platformFacade, @NotNull ModuleData data) {
@@ -402,12 +373,12 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
   }
 
   public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH);
-    module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
   }
 
   private class ImportModulesTask implements Runnable {
@@ -450,20 +421,20 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
 
-    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID, moduleData.getOwner().toString());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID, moduleData.getId());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH, moduleData.getLinkedExternalProjectPath());
+    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY, moduleData.getId());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
     final ProjectData projectData = moduleDataNode.getData(ProjectKeys.PROJECT);
-    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
+    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
 
     if (moduleData.getGroup() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP, moduleData.getGroup());
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY, moduleData.getGroup());
     }
     if (moduleData.getVersion() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION, moduleData.getVersion());
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY, moduleData.getVersion());
     }
 
     // clear maven option
-    module.clearOption(ExternalSystemConstants.MAVEN_MODULE_KEY);
+    module.clearOption("org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule");
   }
 }

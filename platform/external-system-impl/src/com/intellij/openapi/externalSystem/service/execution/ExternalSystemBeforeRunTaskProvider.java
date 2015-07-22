@@ -210,9 +210,9 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
 
     String desc = StringUtil.join(task.getTaskExecutionSettings().getTaskNames(), " ");
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      if (!mySystemId.toString().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID))) continue;
+      if (!mySystemId.toString().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY))) continue;
 
-      if (StringUtil.equals(externalProjectPath, module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH))) {
+      if (StringUtil.equals(externalProjectPath, module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY))) {
         desc = module.getName() + ": " + desc;
         break;
       }

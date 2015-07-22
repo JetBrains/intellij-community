@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class GenerateParentAction extends GenerateDomElementAction {
           if (parentProject == null) return null;
 
           return new WriteCommandAction<MavenDomParent>(editor.getProject(), getDescription()) {
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               result.setResult(MavenDomUtil.updateMavenParent(mavenModel, parentProject));
             }
           }.execute().getResultObject();

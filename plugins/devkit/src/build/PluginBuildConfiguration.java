@@ -15,18 +15,21 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +39,7 @@ import com.intellij.util.descriptors.ConfigFile;
 import com.intellij.util.descriptors.ConfigFileContainer;
 import com.intellij.util.descriptors.ConfigFileFactory;
 import com.intellij.util.descriptors.ConfigFileInfo;
-import org.jdom.Element;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +50,16 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
 
-public class PluginBuildConfiguration implements JDOMExternalizable {
+@State(name = "DevKit.ModuleBuildProperties", storages = @Storage(file = StoragePathMacros.MODULE_FILE))
+public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
-  @NonNls private static final String URL_ATTR = "url";
-  @NonNls private static final String MANIFEST_ATTR = "manifest";
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
+
+  private State state = new State();
 
   public PluginBuildConfiguration(@NotNull Module module) {
     myModule = module;
@@ -68,26 +72,50 @@ public class PluginBuildConfiguration implements JDOMExternalizable {
     return ModuleType.is(module, PluginModuleType.getInstance()) ? ModuleServiceManager.getService(module, PluginBuildConfiguration.class) : null;
   }
 
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    String url = element.getAttributeValue(URL_ATTR);
-    if (url != null) {
-      myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, url);
+  static class State {
+    @Attribute
+    String url;
+
+    @Attribute
+    String manifest;
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      State state = (State)o;
+
+      if (url != null ? !url.equals(state.url) : state.url != null) return false;
+      if (manifest != null ? !manifest.equals(state.manifest) : state.manifest != null) return false;
+
+      return true;
     }
-    url = element.getAttributeValue(MANIFEST_ATTR);
-    if (url != null) {
-      setManifestPath(VfsUtilCore.urlToPath(url));
+
+    @Override
+    public int hashCode() {
+      int result = url != null ? url.hashCode() : 0;
+      result = 31 * result + (manifest != null ? manifest.hashCode() : 0);
+      return result;
     }
   }
 
+  @Nullable
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    final String url = getPluginXmlUrl();
-    if (url != null) {
-      element.setAttribute(URL_ATTR, url);
+  public State getState() {
+    state.url = getPluginXmlUrl();
+    state.manifest = myManifestFilePointer == null ? null : myManifestFilePointer.getUrl();
+    return state;
+  }
+
+  @Override
+  public void loadState(State state) {
+    this.state = state;
+    if (state.url != null) {
+      myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, state.url);
     }
-    if (myManifestFilePointer != null){
-      element.setAttribute(MANIFEST_ATTR, myManifestFilePointer.getUrl());
+    if (state.manifest != null) {
+      setManifestPath(VfsUtilCore.urlToPath(state.manifest));
     }
   }
 
@@ -136,52 +164,49 @@ public class PluginBuildConfiguration implements JDOMExternalizable {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
     new WriteAction() {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
       }
     }.execute();
   }
 
-  public void setManifestPath(final String manifestPath) {
-    if (manifestPath == null || manifestPath.length() == 0){
+  public void setManifestPath(@Nullable String manifestPath) {
+    if (StringUtil.isEmpty(manifestPath)) {
       myManifestFilePointer = null;
-    } else {
+      return;
+    }
 
-      final VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
-      if (manifest == null){
-        Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
-              VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
-          }
-        });
-      } else {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
-          }
-        });
+    VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
+    if (manifest == null) {
+      Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
+      AccessToken token = ReadAction.start();
+      try {
+        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
+          VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
+      }
+      finally {
+        token.finish();
+      }
+    }
+    else {
+      AccessToken token = ReadAction.start();
+      try {
+        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
+      }
+      finally {
+        token.finish();
       }
     }
   }
 
   @Nullable
   public String getManifestPath() {
-    if (myManifestFilePointer != null){
-      return FileUtil.toSystemDependentName(myManifestFilePointer.getPresentableUrl());
-    }
-    return null;
+    return myManifestFilePointer != null ? FileUtil.toSystemDependentName(myManifestFilePointer.getPresentableUrl()) : null;
   }
 
   @Nullable
   public VirtualFile getManifest(){
-    if (myManifestFilePointer != null){
-      return myManifestFilePointer.getFile();
-    }
-    return null;
+    return myManifestFilePointer != null ? myManifestFilePointer.getFile() : null;
   }
 
   public boolean isUseUserManifest() {

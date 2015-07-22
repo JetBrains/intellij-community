@@ -127,7 +127,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
             session.activateSession();
           }
           else {
-            setActiveSession(null, null, false, null);
+            setCurrentSession(null);
           }
         }
       }
@@ -260,22 +260,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     }
   }
 
-  public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection,
-                               final @Nullable GutterIconRenderer gutterIconRenderer) {
-    boolean sessionChanged = myActiveSession.getAndSet(session) != session;
-    if (sessionChanged && session != null) {
-      XDebugSessionTab tab = session.getSessionTab();
-      if (tab != null) {
-        tab.select();
-      }
-    }
-    updateExecutionPoint(position, useSelection, gutterIconRenderer);
-    if (sessionChanged) {
-      onActiveSessionChanged();
-    }
-  }
-
-  public void updateExecutionPoint(@Nullable XSourcePosition position, boolean useSelection, @Nullable GutterIconRenderer gutterIconRenderer) {
+  void updateExecutionPoint(@Nullable XSourcePosition position, boolean useSelection, @Nullable GutterIconRenderer gutterIconRenderer) {
     if (position != null) {
       myExecutionPointHighlighter.show(position, useSelection, gutterIconRenderer);
     }
@@ -330,6 +315,22 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @Nullable
   public XDebugSessionImpl getCurrentSession() {
     return myActiveSession.get();
+  }
+
+  void setCurrentSession(@Nullable XDebugSessionImpl session) {
+    boolean sessionChanged = myActiveSession.getAndSet(session) != session;
+    if (sessionChanged) {
+      if (session != null) {
+        XDebugSessionTab tab = session.getSessionTab();
+        if (tab != null) {
+          tab.select();
+        }
+      }
+      else {
+        myExecutionPointHighlighter.hide();
+      }
+      onActiveSessionChanged();
+    }
   }
 
   @Override

@@ -39,6 +39,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiType;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.element.ClassElement;
 import org.jetbrains.java.generate.element.FieldElement;
 import org.jetbrains.java.generate.element.GenerationHelper;
@@ -115,7 +116,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
 
     public void reset() {
         new WriteCommandAction(null) {
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
                 myEditor.getDocument().setText(template.getTemplate());
             }
         }.execute();

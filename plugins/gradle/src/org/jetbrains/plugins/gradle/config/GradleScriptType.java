@@ -220,7 +220,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
         if (module == null) {
           throw new CantRunException("Target module is undefined");
         }
-        String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
+        String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
         if (StringUtil.isEmpty(rootProjectPath)) {
           throw new CantRunException(String.format("Module '%s' is not backed by gradle", module.getName()));
         }
@@ -321,7 +321,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
     GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
-      String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
+      String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
       if(!GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) return baseScope;
 
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
@@ -331,7 +331,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
         }
       }
 
-      String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH);
+      String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
       if(modulePath == null) return result;
 
       files = GradleBuildClasspathManager.getInstance(file.getProject()).getModuleClasspathEntries(modulePath);

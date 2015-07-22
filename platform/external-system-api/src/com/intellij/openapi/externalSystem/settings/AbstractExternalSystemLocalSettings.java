@@ -255,11 +255,11 @@ public abstract class AbstractExternalSystemLocalSettings {
       pathsToForget.remove(projectSettings.getExternalProjectPath());
     }
     for (Module module : myPlatformFacade.getModules(myProject)) {
-      String id = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID);
+      String id = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
       if (!myExternalSystemId.toString().equals(id)) {
         continue;
       }
-      pathsToForget.remove(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH));
+      pathsToForget.remove(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
     }
 
     if (!pathsToForget.isEmpty()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
     }
     final List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
     new ReadAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope, false);
         if (ArtifactCompileScope.getArtifacts(baseScope) == null) {
           Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(artifacts, project);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,7 +280,7 @@ public class ManifestFileUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Ref<IOException> exc = Ref.create(null);
     final VirtualFile file = new WriteAction<VirtualFile>() {
-      protected void run(final Result<VirtualFile> result) {
+      protected void run(@NotNull final Result<VirtualFile> result) {
         VirtualFile dir = directory;
         try {
           if (!dir.getName().equals(MANIFEST_DIR_NAME)) {

@@ -6,7 +6,7 @@
   <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>
   <p>See <a href="https://github.com/develar/settings-repository">project page</a> for more info.</p>]]></description>
   <version>999.999</version>
-  <idea-version since-build="142.2968" until-build="143.0"/>
+  <idea-version since-build="142.3406" until-build="143.0"/>
   <vendor>JetBrains</vendor>
 
   <!-- otherwise plugin will be not loaded in tests -->

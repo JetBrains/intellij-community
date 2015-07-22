@@ -137,6 +137,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @Override
       public Module newModule(Project project, @NotNull @NonNls String filePath, String moduleTypeId) {
         final Module module = model.newModule(filePath, moduleTypeId);
+        // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
+        module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
         modules.add(module);
         return module;
       }

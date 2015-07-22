@@ -59,7 +59,11 @@ public class EditorImplTest extends AbstractEditorTest {
                           "}</selection>");
     CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
     configureSoftWraps(32);
+
+    // verify initial state
     assertEquals(4, EditorUtil.getTabSize(myEditor));
+    assertEquals("[FoldRegion +(59:64), placeholder=' { ', FoldRegion +(85:88), placeholder=' }']", myEditor.getFoldingModel().toString());
+    verifySoftWrapPositions(52, 85);
     
     Document document = myEditor.getDocument();
     for (int i = document.getLineCount() - 1; i >= 0; i--) {

@@ -452,6 +452,16 @@ public class PathManager {
       }
     }
 
+    final String annotationsRoot = getJarPathForClass(Flow.class);
+    if (annotationsRoot != null && !annotationsRoot.endsWith(".jar")) {
+      // We're running IDEA built from sources. Flow.class is under annotations-common, and NotNull.class is under annotations. Add both
+      // roots to classpath.
+      final File notNullRoot = new File(new File(annotationsRoot).getParentFile(), "annotations");
+      if (notNullRoot.exists()) {
+        classPath.add(notNullRoot.getAbsolutePath());
+      }
+    }
+
     final String resourceRoot = getResourceRoot(PathManager.class, "/messages/CommonBundle.properties");  // platform-resources-en
     if (resourceRoot != null) {
       classPath.add(new File(resourceRoot).getAbsolutePath());

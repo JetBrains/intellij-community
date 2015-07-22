@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.impl.quickfix.MissingDependencyFixUtil.*;
+import static com.intellij.codeInsight.daemon.impl.quickfix.MissingDependencyFixUtil.findFixes;
+import static com.intellij.codeInsight.daemon.impl.quickfix.MissingDependencyFixUtil.provideFix;
 
 /**
  * @author cdr
@@ -145,7 +146,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
               if (libraryPath != null) {
                 new WriteCommandAction(project) {
                   @Override
-                  protected void run(final Result result) throws Throwable {
+                  protected void run(@NotNull final Result result) throws Throwable {
                     addJarsToRootsAndImportClass(Collections.singletonList(libraryPath), null, currentModule, editor, reference,
                                                  "org.jetbrains.annotations." + referenceName);
                   }
@@ -363,7 +364,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     if (libraryPath != null) {
       new WriteCommandAction(module.getProject()) {
         @Override
-        protected void run(final Result result) throws Throwable {
+        protected void run(@NotNull final Result result) throws Throwable {
           addJarToRoots(libraryPath, module, null);
         }
       }.execute();

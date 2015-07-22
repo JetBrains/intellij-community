@@ -57,12 +57,12 @@ public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfig
     if (module == null) return false;
 
     if (!StringUtil.equals(
-      module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID),
+      module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
       GradleConstants.SYSTEM_ID.toString())) {
       return false;
     }
 
-    final String linkedGradleProject = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH);
+    final String linkedGradleProject = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
     if (linkedGradleProject == null) return false;
     configuration.getSettings().setExternalProjectPath(linkedGradleProject);
     configuration.getSettings().setTaskNames(TASKS_TO_RUN);
@@ -88,7 +88,7 @@ public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfig
     if (context.getModule() == null) return false;
 
     if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH),
+      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY),
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }

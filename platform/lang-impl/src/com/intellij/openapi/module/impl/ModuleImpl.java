@@ -37,7 +37,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -51,8 +50,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.openapi.module.impl.ModuleManagerImpl.createOptionKey;
 
 /**
  * @author max
@@ -250,12 +247,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void setOption(@NotNull String optionName, @NotNull String optionValue) {
-    setOption(createOptionKey(optionName), optionValue);
-  }
-
-  @Override
-  public void setOption(@NotNull Key<String> key, @NotNull String value) {
+  public void setOption(@NotNull String key, @NotNull String value) {
     OptionManager manager = getOptionManager();
     if (manager != null) {
       manager.setOption(key, value);
@@ -274,12 +266,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void clearOption(@NotNull String optionName) {
-    clearOption(createOptionKey(optionName));
-  }
-
-  @Override
-  public void clearOption(@NotNull Key<String> key) {
+  public void clearOption(@NotNull String key) {
     OptionManager manager = getOptionManager();
     if (manager != null) {
       manager.clearOption(key);
@@ -287,13 +274,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public String getOptionValue(@NotNull String optionName) {
-    return getOptionValue(createOptionKey(optionName));
-  }
-
-  @Nullable
-  @Override
-  public String getOptionValue(@NotNull Key<String> key) {
+  public String getOptionValue(@NotNull String key) {
     OptionManager manager = getOptionManager();
     return manager == null ? null : manager.getOptionValue(key);
   }

@@ -158,7 +158,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
 
     Module module = ModuleUtilCore.findModuleForPsiElement(place);
     if (module == null) return;
-    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
+    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
     GradleLocalSettings localSettings = GradleLocalSettings.getInstance(place.getProject());
     Collection<ExternalTaskPojo> taskPojos = localSettings.getAvailableTasks().get(path);
     if (taskPojos == null) return;

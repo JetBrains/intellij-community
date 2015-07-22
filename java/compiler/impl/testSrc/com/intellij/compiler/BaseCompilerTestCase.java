@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
@@ -33,6 +48,7 @@ import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -109,7 +125,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       throw new RuntimeException(e);
     }
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
         assertNotNull(target.getAbsolutePath() + " not found", virtualDir);
         virtualDir.refresh(false, true);
@@ -124,7 +140,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot, final @Nullable VirtualFile testRoot) {
     return new WriteAction<Module>() {
       @Override
-      protected void run(final Result<Module> result) {
+      protected void run(@NotNull final Result<Module> result) {
         final Module module = createModule(moduleName);
         if (sourceRoot != null) {
           PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
@@ -313,7 +329,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   protected void deleteFile(final VirtualFile file) {
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         try {
           file.delete(this);
         }
@@ -347,7 +363,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     PlatformTestCase.myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
       @Override
-      protected void run(Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) throws Throwable {
         Module module = ModuleManager.getInstance(myProject)
           .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
         module.getModuleFile();

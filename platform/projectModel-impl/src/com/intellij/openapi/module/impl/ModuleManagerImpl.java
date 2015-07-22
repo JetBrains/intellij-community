@@ -97,21 +97,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myMessageBus = messageBus;
   }
 
-  @NotNull
-  public static Key<String> createOptionKey(@NotNull String name) {
-    if (name.equals(Module.ELEMENT_TYPE)) {
-      return Module.ELEMENT_TYPE_KEY;
-    }
-    else {
-      return Key.create(name);
-    }
-  }
-
   protected void cleanCachedStuff() {
     myCachedModuleComparator = null;
     myCachedSortedModules = null;
   }
-
 
   @Override
   @NotNull
@@ -721,10 +710,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         initModule(module, filePath, new Runnable() {
           @Override
           public void run() {
-            newModule.setOption(Module.ELEMENT_TYPE_KEY, moduleTypeId);
+            newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
             if (options != null) {
               for (Map.Entry<String, String> option : options.entrySet()) {
-                newModule.setOption(createOptionKey(option.getKey()), option.getValue());
+                newModule.setOption(option.getKey(), option.getValue());
               }
             }
           }

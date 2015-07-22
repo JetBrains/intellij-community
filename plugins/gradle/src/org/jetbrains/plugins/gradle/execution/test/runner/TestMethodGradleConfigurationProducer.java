@@ -100,7 +100,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (context.getModule() == null) return false;
 
     if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH),
+      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY),
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
@@ -119,7 +119,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
         if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID),
+          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
           GradleConstants.SYSTEM_ID.toString())) {
           return;
         }
@@ -135,7 +135,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                  ConfigurationContext context,
                                  Runnable performRunnable) {
         if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID),
+          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
           GradleConstants.SYSTEM_ID.toString())) {
           return;
         }
@@ -154,12 +154,12 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                       @NotNull PsiMethod psiMethod,
                                                       @NotNull PsiClass... containingClasses) {
     if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID),
+      context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
       GradleConstants.SYSTEM_ID.toString())) {
       return false;
     }
 
-    configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH));
+    configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
     configuration.getSettings().setTaskNames(TASKS_TO_RUN);
 
     StringBuilder buf = new StringBuilder();

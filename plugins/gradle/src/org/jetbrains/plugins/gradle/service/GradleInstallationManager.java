@@ -462,7 +462,7 @@ public class GradleInstallationManager {
 
     if(rootProjectPath == null) {
       for (Module module : myPlatformFacade.getModules(project)) {
-        rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH);
+        rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
         List<File> result = findGradleSdkClasspath(project, rootProjectPath);
         if(!result.isEmpty()) return result;
       }

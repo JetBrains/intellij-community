@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.XmlTagUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -305,7 +306,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
     new WriteCommandAction(getProject(), file) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, y.getTextOffset());
       }
     }.execute();
@@ -355,7 +356,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlTag div = tag.getSubTags()[0];
     new WriteCommandAction(getProject(), tag.getContainingFile()) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         div.delete();
       }
     }.execute();
