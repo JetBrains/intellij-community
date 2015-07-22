@@ -34,6 +34,13 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public static final Topic<BulkFileListener> VFS_CHANGES =
     new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
 
+  public static final ModificationTracker VFS_STRUCTURE_MODIFICATIONS = new ModificationTracker() {
+    @Override
+    public long getModificationCount() {
+      return getInstance().getStructureModificationCount();
+    }
+  };
+
   /**
    * Gets the instance of <code>VirtualFileManager</code>.
    *
@@ -169,4 +176,20 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @NotNull String property, Object oldValue, Object newValue);
+
+  /**
+   * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
+   * This only counts modifications done in current IDE session.
+   * @see #getStructureModificationCount()
+   */
+  @Override
+  public abstract long getModificationCount();
+
+  /**
+   * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
+   * This only counts modifications done in current IDE session.
+   * @see #getModificationCount()
+   */
+  public abstract long getStructureModificationCount();
+
 }
