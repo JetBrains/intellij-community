@@ -351,6 +351,11 @@ public class SimpleDiffChange {
       public String getTooltipText() {
         return tooltipText;
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
   }
 }

@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -377,7 +378,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return ColorUtil.isDark(gutterBackground);
   }
 
-  private static class MyGutterIconRenderer extends GutterIconRenderer {
+  private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     private final Bookmark myBookmark;
 
     public MyGutterIconRenderer(@NotNull Bookmark bookmark) {

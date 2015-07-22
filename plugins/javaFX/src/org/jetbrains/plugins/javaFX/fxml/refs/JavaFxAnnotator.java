@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -138,7 +139,7 @@ public class JavaFxAnnotator implements Annotator {
     }
   }
 
-  private static class ColorIconRenderer extends GutterIconRenderer {
+  private static class ColorIconRenderer extends GutterIconRenderer implements DumbAware {
     private final ColorIcon myIcon;
     private final PsiElement myElement;
 

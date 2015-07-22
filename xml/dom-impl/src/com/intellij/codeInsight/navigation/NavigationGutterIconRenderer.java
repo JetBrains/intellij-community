@@ -21,6 +21,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -45,7 +46,8 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class NavigationGutterIconRenderer extends GutterIconRenderer implements GutterIconNavigationHandler<PsiElement>{
+public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
+  implements GutterIconNavigationHandler<PsiElement>, DumbAware {
   private final String myPopupTitle;
   private final String myEmptyText;
   private final Computable<PsiElementListCellRenderer> myCellRenderer;

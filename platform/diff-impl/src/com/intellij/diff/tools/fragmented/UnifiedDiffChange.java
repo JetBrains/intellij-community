@@ -288,6 +288,11 @@ public class UnifiedDiffChange {
       public String getTooltipText() {
         return tooltipText;
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
   }
 }
