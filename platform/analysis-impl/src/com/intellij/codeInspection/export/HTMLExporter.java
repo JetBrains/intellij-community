@@ -59,9 +59,10 @@ public class HTMLExporter {
 
   public void createPage(RefEntity element) throws IOException {
     final String currentFileName = fileNameForElement(element);
-    StringBuffer buf = new StringBuffer();
+    StringBuffer buf = new StringBuffer("<html><body>");
     appendNavBar(buf, element);
     myComposer.composeWithExporter(buf, element, this);
+    buf.append("</body></html>");
     writeFileImpl(myRootFolder, currentFileName, buf);
     myGeneratedPages.add(element);
   }
