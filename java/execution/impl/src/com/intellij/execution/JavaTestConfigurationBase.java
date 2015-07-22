@@ -34,4 +34,7 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
                                    ConfigurationFactory factory) {
     super(configurationModule, factory);
   }
+
+  @NotNull
+  public abstract String getFrameworkPrefix();
 }

@@ -426,4 +426,10 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
     return new TestNGConsoleProperties(this, executor);
   }
+
+  @NotNull
+  @Override
+  public String getFrameworkPrefix() {
+    return "g";
+  }
 }
