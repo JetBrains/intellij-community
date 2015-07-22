@@ -18,13 +18,10 @@ package com.jetbrains.reactiveidea
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.reactivemodel.Path
-import com.jetbrains.reactivemodel.ReactiveModel
-import com.jetbrains.reactivemodel.getIn
+import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.putIn
 import gnu.trove.TObjectIntHashMap
 
 class TabViewHost(val project: Project, reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveModel, path) {
@@ -44,7 +41,9 @@ class TabViewHost(val project: Project, reactiveModel: ReactiveModel, path: Path
 
 
   fun addEditor(editor: TextEditor, file: VirtualFile) {
-    EditorHost(reactiveModel, path / editorsPath / currentIdx.toString(), file, editor, true)
+    reactiveModel.host(path / editorsPath / currentIdx.toString()) { path, lifetime, init ->
+      EditorHost(reactiveModel, path, lifetime, file, editor, init)
+    }
     fileToEditorIdx.put(file, currentIdx++)
   }
 

@@ -124,7 +124,7 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
     map.put("childs", MapModel())
 
     if(state != "leaf") {
-      val stateSignal = reactiveModel.subscribe(meta.lifetime(), path / descriptor.toString())
+      val stateSignal = reactiveModel.subscribe(meta.lifetime()!!, path / descriptor.toString())
       reaction(true, "update state of project tree node", stateSignal) { state ->
         if (state != null) {
           state as MapModel
@@ -143,7 +143,7 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
   private fun updateChilds(m: MapModel, descriptor: AbstractTreeNode<*>, path: Path, index: Int): MapModel {
     descriptor.update();
     val parentPath = path / descriptor.toString()
-    val parentLifetime = parentPath.getIn(m)!!.meta.lifetime()
+    val parentLifetime = parentPath.getIn(m)!!.meta.lifetime()!!
     val nodesPath = parentPath / "childs"
     val childsLifetime = Lifetime.create(parentLifetime).lifetime
     if (descriptor.getValue() is PsiDirectory) {

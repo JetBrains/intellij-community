@@ -47,10 +47,24 @@ import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Guard
+import com.jetbrains.reactivemodel.util.Lifetime
 
-public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: VirtualFile,
-                        val textEditor: TextEditor, val providesMarkup: Boolean) : MetaHost(reactiveModel, path), DataProvider {
+public class EditorHost(val reactiveModel: ReactiveModel,
+                        val path: Path,
+                        val lifetime: Lifetime,
+                        val file: VirtualFile,
+                        val textEditor: TextEditor,
+                        init: Initializer) : Host, DataProvider {
+
+  override val tags: Array<String>
+    get() = arrayOf("editor")
+
   public val editor: Editor = textEditor.getEditor()
+  private val caretGuard = Guard()
+  public val name: String = file.getName()
+  private val updateCaretAndSelectionCommand = "UpdateCaretAndSelection$name"
+
+
   override fun getData(dataId: String?): Any? {
     if (PlatformDataKeys.FILE_EDITOR.`is`(dataId)) {
       return textEditor
@@ -75,26 +89,21 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
   companion object {
     val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
     val activePath = "active"
-
     public fun getHost(editor: Editor): EditorHost? = editor.getUserData(editorHostKey)
   }
 
-  val caretGuard = Guard()
-  val name = file.getName()
-
-  override fun buildMeta(): Map<String, Any> = super<MetaHost>.buildMeta()
-      .plus("editor" to editor)
-      .plus("file" to file)
-
   init {
-    initModel { m ->
-      var editorsModel: List<Model?> = (path.dropLast(1).getIn(m) as? MapModel)
+
+    editor.putUserData(editorHostKey, this)
+    editor.putUserData(pathKey, path)
+
+    init += {
+      var editorsModel: List<Model?> = (path.dropLast(1).getIn(it) as? MapModel)
           ?.values()
           ?.filter { (it as MapModel).isNotEmpty() } ?: emptyList()
-      var model = (path / activePath).putIn(m, PrimitiveModel(editorsModel.isEmpty()))
-      model = (path / tagsField).putIn(model, ListModel(arrayListOf(PrimitiveModel("editor"))))
-      model
+      it.putIn(path / activePath, PrimitiveModel(editorsModel.isEmpty()))
     }
+
     lifetime += {
       val project = editor.getProject()
       if (project != null) {
@@ -102,15 +111,16 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
         manager.closeFile(file)
       }
     }
-    val documentHost = DocumentHost(reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
-    editor.putUserData(editorHostKey, this)
-    editor.putUserData(pathKey, path)
+
+    val documentHost = reactiveModel.host(path / "document") { path, lifetime, init ->
+      DocumentHost(reactiveModel, path, lifetime, editor.getDocument(), editor.getProject(), caretGuard, init)
+    }
+
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")
 
-
     val caretModel = editor.getCaretModel()
-    val selectionReaction = reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated) { selection, caret, _ ->
+    val selectionReaction = reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated!!) { selection, caret, _ ->
 
       selection as MapModel?
       caret as MapModel?
@@ -138,13 +148,15 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
       selection
     }
 
-    sendSelectionAndCaret()
+    init += {
+      writeSelectionAndCaret(it)
+    }
 
     val commandListener = object : CommandAdapter() {
       override fun commandFinished(event: CommandEvent?) {
         if (event?.getCommandName() != updateCaretAndSelectionCommand &&
             event?.getCommandName() != documentHost.eventListenerCommandName) {
-          sendSelectionAndCaret()
+          reactiveModel.transaction { writeSelectionAndCaret(it) }
         }
       }
     }
@@ -154,18 +166,15 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
       CommandProcessor.getInstance().removeCommandListener(commandListener)
     }
 
-
-    reactiveModel.transaction { m ->
-      (path / "name").putIn(m, PrimitiveModel(name))
+    reactiveModel.host(path / "markup") { path, lifetime, init ->
+      MarkupHost(editor.getMarkupModel() as MarkupModelEx, reactiveModel, path, lifetime, init)
     }
 
-    ServerMarkupHost(editor.getMarkupModel() as MarkupModelEx, reactiveModel, path / "markup")
-
     val disposable = Disposer.newDisposable()
-    TemplateManager.getInstance(editor.getProject()).addTemplateManagerListener(disposable, object: TemplateManagerListener {
+    TemplateManager.getInstance(editor.getProject()).addTemplateManagerListener(disposable, object : TemplateManagerListener {
       override fun templateStarted(state: TemplateState) {
         if (state.getEditor() == editor) {
-          reactiveModel.transaction { m -> (path / "live-template").putIn(m, PrimitiveModel(true))}
+          reactiveModel.transaction { m -> m.putIn(path / "live-template", PrimitiveModel(true)) }
           val listener = object : CaretListener {
             override fun caretAdded(e: CaretEvent?) {
               throw UnsupportedOperationException()
@@ -173,7 +182,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
 
             override fun caretPositionChanged(e: CaretEvent?) {
               if (!caretGuard.locked) caretGuard.lock {
-                sendSelectionAndCaret()
+                reactiveModel.transaction { writeSelectionAndCaret(it) }
               }
             }
 
@@ -182,7 +191,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
             }
           }
           editor.getCaretModel().addCaretListener(listener)
-          state.addTemplateStateListener(object: TemplateEditingAdapter() {
+          state.addTemplateStateListener(object : TemplateEditingAdapter() {
             override fun templateFinished(template: Template?, brokenOff: Boolean) {
               finished();
             }
@@ -192,7 +201,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
             }
 
             private fun finished() {
-              reactiveModel.transaction { m -> (path / "live-template").putIn(m, AbsentModel()) }
+              reactiveModel.transaction { it.putIn(path / "live-template", AbsentModel()) }
               editor.getCaretModel().removeCaretListener(listener)
             }
           })
@@ -202,21 +211,21 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
     lifetime += {
       Disposer.dispose(disposable)
     }
+
+    init += {
+      it.putIn(path / "name", PrimitiveModel(name))
+    }
   }
 
-  private val updateCaretAndSelectionCommand= "UpdateCaretAndSelection$name"
-
-  private fun sendSelectionAndCaret() {
+  private fun writeSelectionAndCaret(m: MapModel): MapModel {
     val textRange = TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())
     val caretOffset = editor.getCaretModel().getOffset()
-    reactiveModel.transaction { m ->
-      val m1 = (path / "selection").putIn(m,
-          MapModel(hashMapOf(
-              "startOffset" to PrimitiveModel(textRange.getStartOffset()),
-              "endOffset" to PrimitiveModel(textRange.getEndOffset())
-          )))
-      (path / "caret" / "offset").putIn(m1, PrimitiveModel(caretOffset))
-
-    }
+    return m
+        .putIn(path / "selection",
+            MapModel(hashMapOf(
+                "startOffset" to PrimitiveModel(textRange.getStartOffset()),
+                "endOffset" to PrimitiveModel(textRange.getEndOffset())
+            )))
+        .putIn(path / "caret" / "offset", PrimitiveModel(caretOffset))
   }
 }

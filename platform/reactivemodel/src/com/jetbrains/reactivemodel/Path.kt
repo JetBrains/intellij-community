@@ -55,11 +55,15 @@ fun<M : AssocModel<K, M>, K> Path.putIn(mapModel: M, model: Model): M {
   }
 }
 
+fun MapModel.putIn(p: Path, model: Model): MapModel  = p.putIn(this, model)
+
 fun<M : AssocModel<*, M>> Path.getIn(mapModel: M): Model? =
     components.fold<Any, Model?>(mapModel) { model, component ->
       if (model is AssocModel<*, *>) (model as AssocModel<Any, *>).find(component)
       else null
     }
+
+fun MapModel.getIn(path: Path): Model? = path.getIn(this)
 
 fun Path.getIn(mapDiff: MapDiff): Diff<Model>? =
     components.fold<Any, Diff<Model>?>(mapDiff) { mapDiff, component ->

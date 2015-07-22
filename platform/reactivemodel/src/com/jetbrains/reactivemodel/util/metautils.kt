@@ -33,5 +33,6 @@ public fun emptyMeta() : IPersistentMap<String, *>  = PersistentHashMap.EMPTY as
 
 public fun createMeta(vararg objects: Any) : IPersistentMap<String, *> = PersistentHashMap.create<String, Any>(*objects)
 
-fun IPersistentMap<String, *>.lifetime(): Lifetime = this.valAt("lifetime") as Lifetime
+fun IPersistentMap<String, *>.lifetime(): Lifetime? = this.valAt("lifetime") as Lifetime?
+fun IPersistentMap<String, *>.host(): Any? = this.valAt("host")
 fun IPersistentMap<String, *>.get(key: String): Any? = this.valAt(key)

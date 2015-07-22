@@ -42,6 +42,7 @@ import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.get
+import com.jetbrains.reactivemodel.util.host
 
 public class DocumentsSynchronizer(val project: Project, val serverEditorTracker: ServerEditorTracker) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
@@ -97,7 +98,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         serverModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
           val path = toPath((args["path"] as ListModel))
           val mapModel = path.getIn(model) as MapModel
-          val editorHost = mapModel.meta["host"] as EditorHost
+          val editorHost = mapModel.meta.host() as EditorHost
           val actionManager = EditorActionManager.getInstance()
 
           CommandProcessor.getInstance().executeCommand(project, object : Runnable {
@@ -161,7 +162,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
               val isActive = (it[EditorHost.activePath] as PrimitiveModel<*>?)?.value
               if (isActive == null) false else isActive as Boolean
             }.map {
-              it!!.meta.valAt("editor") as Editor
+              (it!!.meta["host"] as EditorHost).editor
             }
           }
     }

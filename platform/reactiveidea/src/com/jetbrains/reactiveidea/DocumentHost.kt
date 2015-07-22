@@ -33,39 +33,37 @@ import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Guard
+import com.jetbrains.reactivemodel.util.Lifetime
 
-public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Document, project: Project?,
-                          providesMarkup: Boolean, caretGuard: Guard) : MetaHost(reactModel, path) {
+public class DocumentHost(val reactiveModel: ReactiveModel,
+                          val path: Path,
+                          val lifetime: Lifetime,
+                          val doc: Document,
+                          val project: Project?,
+                          val caretGuard: Guard,
+                          init: Initializer) : Host {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
-  private val recursionGuard = Guard()
 
-  val documentUpdated: Signal<Any?>
+  private val recursionGuard = Guard()
+  var documentUpdated: Signal<Any?>? = null
 
   private val pendingEvents = arrayListOf<DocumentEvent>()
 
-  public val eventListenerCommandName: String = "doc sync " + reactModel.name
+  public val eventListenerCommandName: String = "doc sync " + reactiveModel.name
 
   init {
-    initModel { m ->
-      var result = (path / "text").putIn(m, PrimitiveModel(doc.getText()))
-      result = (path / "events").putIn(result, ListModel())
-      result
-    }
     val listener = object : DocumentAdapter() {
       override fun documentChanged(e: DocumentEvent) {
-        if(recursionGuard.locked) {
+        if (recursionGuard.locked) {
           return
         }
         pendingEvents.add(e)
       }
     }
-
-
-
     val commandListener = object : CommandAdapter() {
       override fun commandFinished(event: CommandEvent?) {
         if (event?.getCommandName() != eventListenerCommandName) {
-          val transaction: (MapModel) -> MapModel = { m ->
+          reactiveModel.transaction({ m ->
             var result = m
             for (e in pendingEvents) {
               result = (path / "events" / Last).putIn(result, documentEvent(e))
@@ -74,8 +72,7 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
             if (i == null) i = 0
             doc.putUserData(TIMESTAMP, i + pendingEvents.size())
             result
-          }
-          reactiveModel.transaction(transaction)
+          })
         } else {
           pendingEvents.clear()
         }
@@ -87,15 +84,14 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
       CommandProcessor.getInstance().removeCommandListener(commandListener)
     }
 
-    val textSignal = reaction(true, "document text", reactModel.subscribe(lifetime, path / "text")) { model ->
-      if (model == null) null
-      else (model as PrimitiveModel<String>).value
+    val textSignal = reaction(true, "document text", reactiveModel.subscribe(lifetime, path / "text")) {
+      (it as? PrimitiveModel<String>)?.value
     }
 
-    val updateDocumentText = reaction(true, "init document text", textSignal) { text ->
+    val updateDocumentText = reaction(false, "init document text", textSignal) { text ->
       if (text != null) {
         ApplicationManager.getApplication().runWriteAction {
-          if(doc.isWritable()) {
+          if (doc.isWritable()) {
             doc.setText(text)
           }
         }
@@ -108,7 +104,7 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
       doc.removeDocumentListener(listener)
     }
 
-    val listenToDocumentEvents = reaction(true, "listen to model events", reactModel.subscribe(lifetime, (path / "events"))) { model ->
+    val listenToDocumentEvents = reaction(false, "listen to model events", reactiveModel.subscribe(lifetime, (path / "events"))) { model ->
       val evts = model as ListModel?
 
       if (evts != null) {
@@ -133,23 +129,22 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
             }
           }, eventListenerCommandName, DocCommandGroupId.noneGroupId(doc))
         }
-
       }
       evts
     }
 
-    documentUpdated = reaction(true, "document updated", listenToDocumentEvents, updateDocumentText) { _, __ -> _ to __ }
+    documentUpdated = reaction(false, "document updated", listenToDocumentEvents, updateDocumentText) { _, __ -> _ to __ }
 
     val documentMarkup = DocumentMarkupModel.forDocument(doc, project, true) as MarkupModelEx
-    if (providesMarkup) {
-      ServerMarkupHost(documentMarkup, reactModel, path / "markup")
-    } else {
-      ClientMarkupHost(
-          documentMarkup,
-          reactModel,
-          path / "markup",
-          lifetime,
-          documentUpdated)
+
+    reactiveModel.host(path / "markup") { path, lifetime, init ->
+      MarkupHost(documentMarkup, reactiveModel, path, lifetime, init)
+    }
+
+    init += {
+      it
+        .putIn(path / "text", PrimitiveModel(doc.getText()))
+        .putIn(path / "events", ListModel())
     }
   }
 }

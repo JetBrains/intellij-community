@@ -16,8 +16,8 @@ public data class MapModel(val hmap: PersistentHashMap<String, Model> = Persiste
 
   override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitMapModel(this)
 
-  public constructor(m: Map<String, Model>, metadata: IPersistentMap<String, *> = emptyMeta())
-  : this(PersistentHashMap.create(m), metadata)
+  public constructor(m: Map<String, Model>, meta: IPersistentMap<String, *> = emptyMeta())
+  : this(PersistentHashMap.create(m), meta)
 
   public fun assocMeta(key: String, value: Any?): MapModel {
     return MapModel(hmap, (meta as IPersistentMap<String, Any>).assoc(key, value))

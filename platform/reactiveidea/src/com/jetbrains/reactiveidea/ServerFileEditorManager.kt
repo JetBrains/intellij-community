@@ -47,6 +47,7 @@ import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.get
+import com.jetbrains.reactivemodel.util.host
 import com.jetbrains.reactivemodel.util.lifetime
 import java.awt.Component
 import java.util.HashMap
@@ -81,9 +82,9 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         val editorSignal = m.subscribe(m.lifetime, editorsTag)
         reaction(true, "editors reaction", editorSignal) { editors ->
           hashMapOf(*editors.map { editor ->
-            val file = editor.meta["file"] as VirtualFile
+            val file = (editor.meta.host() as EditorHost).file
             file to
-                (Pair.create(arrayOf(TextEditorProvider.getInstance().getTextEditor(editor.meta["editor"] as Editor) as FileEditor)
+                (Pair.create(arrayOf((editor.meta.host() as EditorHost).textEditor as FileEditor)
                     , FileEditorProviderManager.getInstance().getProviders(myProject, file)))
           }.toTypedArray())
         }
@@ -100,10 +101,10 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         val editorSignal = m.subscribe(m.lifetime, editorsTag)
         val subs = reaction(true, "selected editor reaction", editorSignal) { editors ->
           editors.map { editor: MapModel ->
-            val host = editor.meta["host"] as EditorHost
-            val sub = m.subscribe(editor.meta.lifetime(), host.path / "selected")
+            val host = editor.meta.host() as EditorHost
+            val sub = m.subscribe(editor.meta.lifetime()!!, host.path / "selected")
             reaction(true, "sub resction", sub) {
-              host.path.getIn(m.root)!!.meta["editor"] as Editor to it
+              host.editor to it
             }
           }
         }

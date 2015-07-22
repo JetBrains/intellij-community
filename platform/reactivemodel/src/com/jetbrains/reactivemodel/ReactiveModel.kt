@@ -5,10 +5,12 @@ import com.github.krukow.clj_lang.PersistentHashMap
 import com.github.krukow.clj_lang.PersistentHashSet
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.MultiMap
+import com.jetbrains.reactivemodel.log.logTime
 import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.createMeta
+import com.jetbrains.reactivemodel.util.lifetime
 import java.util.ArrayDeque
 import java.util.HashMap
 import java.util.Queue
@@ -24,6 +26,8 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   private val transactionGuard = Guard()
   private val actionToHandler: MutableMap<String, (MapModel, MapModel) -> MapModel> = HashMap()
   private val LOG = Logger.getInstance("#com.jetbrains.reactivemodel.ReactiveModel")
+
+  public var currentInit: Initializer? = null
 
   companion object {
     val INDEX_FIELD = "index"
@@ -80,28 +84,20 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     }
   }
 
-  fun performTransaction(f: (MapModel) -> MapModel): MapDiff? {
-    val startTime = System.nanoTime()
-    var oldModel = root
-    var newModel = f(oldModel)
-    val diff = oldModel.diff(newModel)
-    if (diff == null) {
-      return null
+  fun performTransaction(f: (MapModel) -> MapModel): MapDiff? =
+    logTime("transaction", 100) {
+      var oldModel = root
+      var newModel = f(oldModel)
+      val diff = oldModel.diff(newModel) ?: return null
+      if (diff !is MapDiff) {
+        throw AssertionError()
+      }
+      newModel = updateIndexes(oldModel, newModel, diff)
+      root = newModel
+      fireUpdates(oldModel, newModel, diff)
+      terminateLifetimes(oldModel, diff)
+      return diff
     }
-    if (diff !is MapDiff) {
-      throw AssertionError()
-    }
-    newModel = updateIndexes(oldModel, newModel, diff)
-    root = newModel
-    fireUpdates(oldModel, newModel, diff)
-    terminateLifetimes(oldModel, diff)
-    val endTime = System.nanoTime()
-    val tookTime = TimeUnit.NANOSECONDS.toMillis(endTime - startTime)
-    if(tookTime > 100) {
-      LOG.warn("Slow transaction. Took $tookTime millis")
-    }
-    return diff
-  }
 
   class UpdateIndexVisitor(val model: MapModel, val oldModel: MapModel, val path: Path = Path()) : DiffVisitor<MapModel> {
     override fun visitMapDiff(mapDiff: MapDiff): MapModel {
@@ -186,7 +182,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     }
 
     private fun terminateLifetimesRec(oldModel: MapModel) {
-      val lifetime = oldModel.meta.valAt("lifetime") as Lifetime?
+      val lifetime = oldModel.meta.lifetime()
       if (lifetime != null) {
         lifetime.terminate()
       } else {

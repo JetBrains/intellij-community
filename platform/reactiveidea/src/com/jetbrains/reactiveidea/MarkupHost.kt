@@ -36,61 +36,17 @@ import com.jetbrains.reactivemodel.util.Lifetime
 import java.awt.Color
 import java.util.HashMap
 
-public class ClientMarkupHost(val markupModel: MarkupModelEx,
-                              reactiveModel: ReactiveModel,
-                              path: Path,
-                              lifetime: Lifetime,
-                              documentUpdated: com.jetbrains.reactivemodel.Signal<Any>) {
-  val markupIndex: MutableMap<String, RangeHighlighter> = HashMap()
-  init {
-    val markupSignal = reactiveModel.subscribe(lifetime, path)
-    var oldMarkup: MapModel = MapModel()
-    val updateEditorMarkup = com.jetbrains.reactivemodel.reaction(true, "update editor markup from the model", documentUpdated, markupSignal) { _, markup ->
-      if (markup != null) {
-        val diff = oldMarkup.diff(markup) as MapDiff?
-        if (diff != null) {
-          for ((markupId, highlighterDiff) in diff.diff) {
-            if (highlighterDiff is ValueDiff<*>) {
-              val valueDiff = highlighterDiff as ValueDiff<Model>
-              val highlighterModel = valueDiff.newValue
-              if (highlighterModel is AbsentModel) {
-                val highlighterEx = markupIndex[markupId]
-                if (highlighterEx != null) {
-                  markupModel.removeHighlighter(highlighterEx)
-                }
-              } else {
-                highlighterModel as MapModel
-
-                val rangeHighlighter = markupModel.addRangeHighlighter(
-                    (highlighterModel["startOffset"] as PrimitiveModel<Int>).value,
-                    (highlighterModel["endOffset"] as PrimitiveModel<Int>).value,
-                    10000,
-                    unmarshalTextAttributes(highlighterModel["attrs"]), HighlighterTargetArea.EXACT_RANGE)
-                markupIndex[markupId] = rangeHighlighter
-              }
-            }
-          }
-        }
-        oldMarkup = markup as MapModel
-      }
-      markup
-    }
-    lifetime.addNested(updateEditorMarkup.lifetimeDefinition)
-  }
-}
-
-public class ServerMarkupHost(val markupModel: MarkupModelEx,
-                              reactiveModel: ReactiveModel,
-                              path: Path) : MetaHost(reactiveModel, path) {
+public class MarkupHost(val markupModel: MarkupModelEx,
+                              val reactiveModel: ReactiveModel,
+                              val path: Path,
+                              val lifetime: Lifetime,
+                              init: Initializer) : Host {
   var markupIdFactory = 0
+
   val markupIdKey = Key<String>("com.jetbrains.reactiveidea.markupId." + reactiveModel.name)
   volatile var disposed = false;
 
   init {
-    initModel() { m ->
-      val highlighters = markupModel.getAllHighlighters()
-      path.putIn(m, MapModel(highlighters.map { highlighter -> (markupIdFactory++).toString() to marshalHighlighter(highlighter) }.toMap()))
-    }
     val markupListenerDisposable = { }
     lifetime += {
       disposed = true
@@ -104,7 +60,7 @@ public class ServerMarkupHost(val markupModel: MarkupModelEx,
         if (!markupBuffer.isEmpty() && !disposed) {
           reactiveModel.transaction { m ->
             var result = m;
-            for ((k, v) in markupBuffer)  {
+            for ((k, v) in markupBuffer) {
               result = (path / k).putIn(result, v)
             }
             markupBuffer.clear()
@@ -135,6 +91,15 @@ public class ServerMarkupHost(val markupModel: MarkupModelEx,
         markupBuffer[markupId] = marshalHighlighter(highlighter)
       }
     })
+
+    init += {
+      it.putIn(path,
+        MapModel(markupModel.getAllHighlighters()
+            .map { highlighter ->
+              (markupIdFactory++).toString() to marshalHighlighter(highlighter)
+            }
+            .toMap()))
+    }
   }
 }
 
