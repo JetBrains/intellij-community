@@ -35,7 +35,7 @@ public class RuntimeModuleReferenceContributor extends PsiReferenceContributor {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-        return new PsiReference[]{new IdeaModuleReference(element)};
+        return new PsiReference[]{new IdeaModuleReference(element, false)};
       }
     });
 
@@ -44,7 +44,7 @@ public class RuntimeModuleReferenceContributor extends PsiReferenceContributor {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-        return new PsiReference[]{new ProjectLibraryReference(element)};
+        return new PsiReference[]{new ProjectLibraryReference(element, false)};
       }
     });
 

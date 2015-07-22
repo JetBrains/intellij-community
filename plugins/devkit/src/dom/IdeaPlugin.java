@@ -90,7 +90,6 @@ public interface IdeaPlugin extends DomElement {
   List<GenericDomValue<String>> getResourceBundles();
   GenericDomValue<String> addResourceBundle();
 
-
   @NotNull
   @Stubbed
   @SubTagList("depends")
@@ -102,6 +101,10 @@ public interface IdeaPlugin extends DomElement {
   @Stubbed
   @SubTagList("module")
   List<PluginModule> getModules();
+
+  @NotNull
+  @SubTag("modules")
+  PluginModulesList getModulesList();
 
   @NotNull
   @SubTagList("extensions")

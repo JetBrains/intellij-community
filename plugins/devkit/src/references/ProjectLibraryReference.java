@@ -15,7 +15,11 @@
  */
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.pom.references.PomService;
@@ -31,8 +35,11 @@ import java.util.List;
  * @author nik
  */
 public class ProjectLibraryReference extends RuntimeModuleReferenceBase {
-  public ProjectLibraryReference(@NotNull PsiElement element) {
+  private final boolean mySuggestModulesWithLibraries;
+
+  public ProjectLibraryReference(@NotNull PsiElement element, boolean suggestModulesWithLibraries) {
     super(element);
+    mySuggestModulesWithLibraries = suggestModulesWithLibraries;
   }
 
   @Nullable
@@ -50,6 +57,13 @@ public class ProjectLibraryReference extends RuntimeModuleReferenceBase {
     List<String> names = new ArrayList<String>();
     for (Library library : libraries) {
       names.add(library.getName());
+    }
+    if (mySuggestModulesWithLibraries) {
+      for (Module module : ModuleManager.getInstance(myElement.getProject()).getModules()) {
+        if (!OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(module)).isEmpty()) {
+          names.add(module.getName() + ".");
+        }
+      }
     }
     return ArrayUtil.toStringArray(names);
   }

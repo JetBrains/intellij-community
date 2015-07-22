@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +31,11 @@ import java.util.List;
  * @author nik
  */
 public class IdeaModuleReference extends RuntimeModuleReferenceBase {
-  public IdeaModuleReference(@NotNull PsiElement element) {
+  private final boolean mySuggestLibraryPrefix;
+
+  public IdeaModuleReference(@NotNull PsiElement element, boolean suggestLibraryPrefix) {
     super(element);
+    mySuggestLibraryPrefix = suggestLibraryPrefix;
   }
 
   @Nullable
@@ -49,6 +53,9 @@ public class IdeaModuleReference extends RuntimeModuleReferenceBase {
     List<String> result = new ArrayList<String>();
     for (Module module : modules) {
       result.add(module.getName());
+    }
+    if (mySuggestLibraryPrefix) {
+      result.add(RuntimeModuleId.LIB_NAME_PREFIX);
     }
     return ArrayUtil.toStringArray(result);
   }

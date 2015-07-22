@@ -28,18 +28,22 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class ModuleResourceReferenceBase extends RuntimeModuleReferenceBase {
-  @NotNull private final PsiLiteralExpression myModuleNameElement;
+  private final IdeaModuleReference myModuleReference;
 
   public ModuleResourceReferenceBase(@NotNull PsiElement element, @NotNull PsiLiteralExpression moduleNameElement) {
     super(element);
-    myModuleNameElement = moduleNameElement;
+    myModuleReference = findModuleReference(moduleNameElement);
+  }
+
+  public ModuleResourceReferenceBase(PsiElement element, IdeaModuleReference moduleReference) {
+    super(element);
+    myModuleReference = moduleReference;
   }
 
   @Nullable
   protected Module resolveModule() {
-    IdeaModuleReference moduleNameReference = findModuleReference();
-    if (moduleNameReference == null) return null;
-    PsiElement resolved = moduleNameReference.resolve();
+    if (myModuleReference == null) return null;
+    PsiElement resolved = myModuleReference.resolve();
     if (!(resolved instanceof PomTargetPsiElement)) return null;
 
     PomTarget pomTarget = ((PomTargetPsiElement)resolved).getTarget();
@@ -49,8 +53,8 @@ public abstract class ModuleResourceReferenceBase extends RuntimeModuleReference
   }
 
   @Nullable
-  private IdeaModuleReference findModuleReference() {
-    for (PsiReference reference : myModuleNameElement.getReferences()) {
+  private static IdeaModuleReference findModuleReference(PsiLiteralExpression moduleNameElement) {
+    for (PsiReference reference : moduleNameElement.getReferences()) {
       if (reference instanceof IdeaModuleReference) {
         return (IdeaModuleReference)reference;
       }

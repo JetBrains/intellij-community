@@ -41,6 +41,10 @@ public class ModuleLibraryReference extends ModuleResourceReferenceBase {
     super(libraryNameElement, moduleNameElement);
   }
 
+  public ModuleLibraryReference(@NotNull PsiElement element, @Nullable IdeaModuleReference moduleReference) {
+    super(element, moduleReference);
+  }
+
   @Nullable
   @Override
   public PsiElement resolve() {
