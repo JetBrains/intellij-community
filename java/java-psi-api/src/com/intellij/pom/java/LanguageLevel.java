@@ -64,6 +64,10 @@ public enum LanguageLevel {
     return compareTo(level) >= 0;
   }
 
+  public boolean isLessThan(@NotNull LanguageLevel level) {
+    return compareTo(level) < 0;
+  }
+
   @Nullable
   public static LanguageLevel parse(@Nullable String value) {
     if ("1.3".equals(value)) return JDK_1_3;

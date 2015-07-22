@@ -621,8 +621,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
         }
       }
-
-      myHolder.add(HighlightUtil.checkUnderscore(identifier, variable, myLanguageLevel));
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
@@ -649,6 +647,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(GenericsHighlightUtil.checkDefaultMethodOverrideEquivalentToObjectNonPrivate(myLanguageLevel, aClass, method, identifier));
       }
     }
+
+    myHolder.add(HighlightUtil.checkUnderscore(identifier, myLanguageLevel));
 
     super.visitIdentifier(identifier);
   }

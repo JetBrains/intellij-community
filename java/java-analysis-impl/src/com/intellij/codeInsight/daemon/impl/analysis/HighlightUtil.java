@@ -725,13 +725,18 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier,
-                                       @NotNull PsiVariable variable,
-                                       @NotNull LanguageLevel languageLevel) {
-    if ("_".equals(variable.getName()) && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-      if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
-        String message = JavaErrorMessages.message("underscore.lambda.identifier");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(message).create();
+  static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull LanguageLevel languageLevel) {
+    if ("_".equals(identifier.getText())) {
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+        String text = JavaErrorMessages.message("underscore.identifier.error");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+      }
+      else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        PsiElement parent = identifier.getParent();
+        if (parent instanceof PsiParameter && ((PsiParameter)parent).getDeclarationScope() instanceof PsiLambdaExpression) {
+          String text = JavaErrorMessages.message("underscore.lambda.identifier");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        }
       }
     }
 
