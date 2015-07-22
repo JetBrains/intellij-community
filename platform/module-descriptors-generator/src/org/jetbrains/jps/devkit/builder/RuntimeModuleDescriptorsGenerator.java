@@ -31,6 +31,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.platform.loader.impl.ModuleDescriptorsGenerationRunner;
@@ -59,6 +60,7 @@ public class RuntimeModuleDescriptorsGenerator {
   }
 
   public void generateForProductionMode(File distRoot) {
+    myMessageHandler.showProgressMessage("Generating runtime module descriptors for packaged distribution at '" + distRoot.getAbsolutePath() + "'");
     final List<IntellijJarInfo> jars = IntellijJarInfo.collectJarsFromDist(distRoot);
     Map<RuntimeModuleId, RuntimeModuleDescriptor> includedModules = new LinkedHashMap<RuntimeModuleId, RuntimeModuleDescriptor>();
     Map<RuntimeModuleId, String> usedLibraryNames = new LinkedHashMap<RuntimeModuleId, String>();
@@ -74,7 +76,7 @@ public class RuntimeModuleDescriptorsGenerator {
       usedLibraryNames.remove(includedModule.getModuleId());
     }
 
-    myMessageHandler.showProgressMessage(includedModules.size() + " modules detected in " + distRoot);
+    myMessageHandler.showProgressMessage(includedModules.size() + " modules found in IDE layout in " + distRoot);
     List<JpsLibrary> allLibraries = new ArrayList<JpsLibrary>(myProject.getLibraryCollection().getLibraries());
     List<RuntimeModuleDescriptor> descriptorsToAdd = new ArrayList<RuntimeModuleDescriptor>();
     List<JpsRuntimeResourceRoot> runtimeResourceRoots = new ArrayList<JpsRuntimeResourceRoot>();
@@ -259,6 +261,8 @@ public class RuntimeModuleDescriptorsGenerator {
   }
 
   public void generateForDevelopmentMode() {
+    myMessageHandler.showProgressMessage("Generating runtime module descriptors for source distribution at '" +
+                                         JpsModelSerializationDataService.getBaseDirectory(myProject) + "'");
     File outputDir = getDescriptorsDirectory(myProject);
     if (outputDir == null) {
       myMessageHandler.reportError("Project compiler output directory is not specified");
@@ -284,7 +288,7 @@ public class RuntimeModuleDescriptorsGenerator {
 
 
   private void generateDescriptorsForModules() {
-    myMessageHandler.showProgressMessage("Generating runtime dependencies information...");
+    myMessageHandler.showProgressMessage("Generating descriptors in module output directories...");
     long start = System.currentTimeMillis();
     for (JpsModule module : myProject.getModules()) {
       for (final boolean test : BOOLEANS) {
