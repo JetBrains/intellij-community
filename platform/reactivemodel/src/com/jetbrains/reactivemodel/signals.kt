@@ -75,7 +75,7 @@ object ReactGraph {
       }
     }
     children.keySet().forEach { dfs(it) }
-    return time.sortBy(compareByDescending { it.first }).map {it.second}
+    return time.sortBy(compareByDescending { it.first }).map { it.second }
   }
 
 
@@ -102,21 +102,19 @@ object ReactGraph {
     val changed = HashSet(changes.filter { it.newValue != it.oldValue }.map { it.s })
     updatesGuard.lock {
       scheduleOrder.forEach { signal ->
-        if (changed.contains(signal)) {
-          children.get(signal).forEach { child ->
-            val oldValue = child.value
-            val args = parents[child].map { parent -> parent.value }.toList()
-            val handler = handlers[child]
-            if (handler != null) {
-              val newValue = log.catch { handler(args) }
-              if (newValue != oldValue) {
-                if (child is VariableSignal) {
-                  silentUpdateGuard.lock {
-                    child.value = newValue
-                  }
+        if (parents[signal].any { it in changed }) {
+          val args = parents[signal].map { s -> s.value }.toList()
+          val handler = handlers[signal]
+          if (handler != null) {
+            val oldValue = signal.value
+            val newValue = log.catch { handler(args) }
+            if (oldValue != newValue) {
+              if (signal is VariableSignal) {
+                silentUpdateGuard.lock {
+                  signal.value = newValue
                 }
-                changed.add(child)
               }
+              changed.add(signal)
             }
           }
         }
@@ -238,7 +236,7 @@ fun main(args: Array<String>): Unit {
   val ul: Signal<Signal<List<Int>>> = reaction(true, "asd", l) { list -> unlist(list) }
   val ulfl: Signal<List<Int>?> = flatten(ul)
 
-  reaction(false, "print", ul) { l ->
+  reaction(true, "print", ulfl) { l ->
     print(l)
   }
 }
