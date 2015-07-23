@@ -57,6 +57,11 @@ public interface RepositoryManager {
 
   public fun canCommit(): Boolean
 
+  /**
+   * Think twice before use
+   */
+  public fun renameDirectory(pairs: Map<String, String?>)
+
   public interface Updater {
     fun merge(): UpdateResult?
 

@@ -17,8 +17,11 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
@@ -34,14 +37,11 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
   override final fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
     val storageManager = componentManager.stateStore.getStateStorageManager()
 
-    val path = normalizeDirectoryName(directoryName)
-    val manager = SchemeManagerImpl<T, E>(path, processor, roamingType, storageManager.getStreamProvider(), pathToFile(path, storageManager), componentManager)
+    val manager = SchemeManagerImpl<T, E>(directoryName, processor, roamingType, storageManager.getStreamProvider(), pathToFile(directoryName, storageManager), componentManager)
     @suppress("CAST_NEVER_SUCCEEDS")
     managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager
   }
-
-  open fun normalizeDirectoryName(directoryName: String) = directoryName
 
   abstract fun pathToFile(path: String, storageManager: StateStorageManager): File
 
@@ -74,8 +74,6 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
 private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
   override val componentManager: ComponentManager
     get() = ApplicationManager.getApplication()
-
-  override fun normalizeDirectoryName(directoryName: String) = if (directoryName.startsWith('$')) directoryName else "${StoragePathMacros.ROOT_CONFIG}/$directoryName"
 
   override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros(path))
 }
