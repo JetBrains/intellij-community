@@ -18,11 +18,9 @@ package com.jetbrains.python.inspections;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -58,6 +56,17 @@ public abstract class PyInspectionExtension {
   }
 
   public boolean ignoreUnresolvedMember(@NotNull PyType type, @NotNull String name) {
+    return false;
+  }
+
+  /**
+   * Returns true if access to protected (the one started with "_") symbol should not be treated as violation.
+   *
+   * @param expression access expression i.e. "_foo"
+   * @param context    type eval to be used
+   * @return true if ignore
+   */
+  public boolean ignoreProtectedSymbol(@NotNull final PyReferenceExpression expression, @NotNull final TypeEvalContext context) {
     return false;
   }
 }
