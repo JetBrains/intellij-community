@@ -32,12 +32,30 @@ public class ServerDataManagerImpl : DataManagerImpl() {
     fun getInstance(): ServerDataManagerImpl {
       return DataManager.getInstance() as ServerDataManagerImpl
     }
+
+    private fun getDataWithPath(dataId: String, dataPath: Path, reactiveModel: ReactiveModel): Any? {
+      var path: Path = dataPath
+      while (true) {
+        val model: Model = path.getIn(reactiveModel.root) ?: break
+        val host = model.meta["host"]
+        if (host is DataProvider) {
+          val data = host.getData(dataId)
+          if (data != null) {
+            return data
+          }
+        }
+        if (path.components.isEmpty()) {
+          break;
+        }
+        path = path.dropLast(1)
+      }
+      return null
+    }
   }
 
   override fun getDataFromProvider(provider: DataProvider, dataId: String, alreadyComputedIds: MutableSet<String>?): Any? {
     val data = provider.getData(dataId)
-    if (data != null)
-      return data
+    if (data != null) return data
 
     var dataPath = extractPath(provider)
     if (dataPath is Path) {
@@ -55,34 +73,10 @@ public class ServerDataManagerImpl : DataManagerImpl() {
   }
 
   public fun getDataContext(path: Path, model: ReactiveModel): DataContext = ModelDataContext(path, model)
-}
 
-private fun getDataWithPath(dataId: String, dataPath: Path, reactiveModel: ReactiveModel): Any? {
-  var path: Path = dataPath
-  while (true) {
-    val model: Model = path.getIn(reactiveModel.root) ?: break
-    var data = model.meta[dataId]
-    if (data != null) {
-      return data
-    }
-    val host = model.meta["host"]
-    if (host is DataProvider) {
-      data = host.getData(dataId)
-      if (data != null) {
-        return data
-      }
-    }
-    if (path.components.isEmpty()) {
-      break;
-    }
-    path = path.dropLast(1)
+  class ModelDataContext(val path: Path, val model: ReactiveModel) : DataContext {
+    override fun getData(dataId: String?): Any? =
+        if (dataId == null) null
+        else getDataWithPath(dataId, path, model)
   }
-  return null
-}
-
-
-class ModelDataContext(val path: Path, val model: ReactiveModel) : DataContext {
-  override fun getData(dataId: String?): Any? =
-      if (dataId == null) null
-      else getDataWithPath(dataId, path, model)
 }
