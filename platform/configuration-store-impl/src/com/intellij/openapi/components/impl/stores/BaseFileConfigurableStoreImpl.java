@@ -13,104 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.util.SmartList;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PathMacroSubstitutor
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.impl.stores.StorageData
+import com.intellij.openapi.project.impl.ProjectManagerImpl
+import org.jdom.Element
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+val VERSION_OPTION: String = "version"
 
-abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
-  @NonNls protected static final String VERSION_OPTION = "version";
-  @NonNls public static final String ATTRIBUTE_NAME = "name";
+abstract class BaseFileConfigurableStoreImpl(protected val myPathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  private var myStateStorageManager: StateStorageManager? = null
 
-  private static final List<String> ourConversionProblemsStorage = new SmartList<String>();
+  public open class BaseStorageData : StorageData {
+    private var myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION
 
-  private StateStorageManager myStateStorageManager;
-  protected final PathMacroManager myPathMacroManager;
-
-  protected BaseFileConfigurableStoreImpl(@NotNull PathMacroManager pathMacroManager) {
-    myPathMacroManager = pathMacroManager;
-  }
-
-  protected static class BaseStorageData extends StorageData {
-    private int myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
-
-    public BaseStorageData(@NotNull String rootElementName) {
-      super(rootElementName);
+    public constructor(rootElementName: String) : super(rootElementName) {
     }
 
-    protected BaseStorageData(BaseStorageData storageData) {
-      super(storageData);
+    protected constructor(storageData: BaseStorageData) : super(storageData) {
     }
 
-    @Override
-    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
-      super.load(rootElement, pathMacroSubstitutor, intern);
+    override fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
+      super.load(rootElement, pathMacroSubstitutor, intern)
 
-      String v = rootElement.getAttributeValue(VERSION_OPTION);
-      myVersion = v == null ? ProjectManagerImpl.CURRENT_FORMAT_VERSION : Integer.parseInt(v);
+      val v = rootElement.getAttributeValue(VERSION_OPTION)
+      myVersion = if (v == null) ProjectManagerImpl.CURRENT_FORMAT_VERSION else Integer.parseInt(v)
     }
 
-    @Override
-    @NotNull
-    protected final Element save(@NotNull Map<String, Element> newLiveStates) {
-      Element root = super.save(newLiveStates);
+    override fun save(newLiveStates: Map<String, Element>): Element {
+      var root = super.save(newLiveStates)
       if (root == null) {
-        root = new Element(myRootElementName);
+        root = Element(myRootElementName)
       }
-      writeOptions(root, Integer.toString(myVersion));
-      return root;
+      writeOptions(root, Integer.toString(myVersion))
+      return root
     }
 
-    protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
-      root.setAttribute(VERSION_OPTION, versionString);
+    protected open fun writeOptions(root: Element, versionString: String) {
+      root.setAttribute(VERSION_OPTION, versionString)
     }
 
-    @Override
-    public StorageData clone() {
-      return new BaseStorageData(this);
+    override fun clone(): StorageData {
+      return BaseStorageData(this)
     }
 
-    @Nullable
-    @Override
-    public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
-      BaseStorageData data = (BaseStorageData)newStorageData;
+    override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
+      val data = newStorageData as BaseStorageData
       if (myVersion != data.myVersion) {
-        return null;
+        return null
       }
-      return super.getChangedComponentNames(newStorageData, substitutor);
+      return super.getChangedComponentNames(newStorageData, substitutor)
     }
   }
 
-  @Nullable
-  static List<String> getConversionProblemsStorage() {
-    return ourConversionProblemsStorage;
+  override fun getPathMacroManagerForDefaults(): PathMacroManager {
+    return myPathMacroManager
   }
 
-  @NotNull
-  @Override
-  protected final PathMacroManager getPathMacroManagerForDefaults() {
-    return myPathMacroManager;
-  }
-
-  @NotNull
-  @Override
-  public final StateStorageManager getStateStorageManager() {
+  override fun getStateStorageManager(): StateStorageManager {
     if (myStateStorageManager == null) {
-      myStateStorageManager = createStateStorageManager();
+      myStateStorageManager = createStateStorageManager()
     }
-    return myStateStorageManager;
+    return myStateStorageManager!!
   }
 
-  @NotNull
-  protected abstract StateStorageManager createStateStorageManager();
+  protected abstract fun createStateStorageManager(): StateStorageManager
 }

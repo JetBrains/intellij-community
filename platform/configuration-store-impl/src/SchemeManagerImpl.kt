@@ -26,7 +26,6 @@ import com.intellij.openapi.components.impl.stores.DirectoryStorageData
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.util.Comparing
@@ -53,8 +52,6 @@ import java.io.File
 import java.io.InputStream
 import java.util.ArrayList
 import java.util.Collections
-
-private val LOG = Logger.getInstance(javaClass<SchemeManagerImpl<*, *>>())
 
 public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
                                                                      private val processor: SchemeProcessor<E>,

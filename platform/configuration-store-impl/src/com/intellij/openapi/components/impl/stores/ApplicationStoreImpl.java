@@ -13,101 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.application.options.PathMacrosImpl
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.BasePathMacroManager
+import com.intellij.openapi.components.impl.stores.DirectoryStorageData
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.impl.stores.StorageData
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.NamedJDOMExternalizable
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.messages.MessageBus
 
-class ApplicationStoreImpl extends ComponentStoreImpl {
-  private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
+public class ApplicationPathMacroManager : BasePathMacroManager(null)
 
-  private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT;
-  private static final String ROOT_ELEMENT_NAME = "application";
+class ApplicationStoreImpl(private val myApplication: ApplicationImpl, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  private val myStateStorageManager: StateStorageManager
 
-  private final ApplicationImpl myApplication;
-  private final StateStorageManager myStateStorageManager;
+  init {
+    myStateStorageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, myApplication, myApplication.getPicoContainer()) {
+      private var myConfigDirectoryRefreshed: Boolean = false
 
-  public ApplicationStoreImpl(@NotNull ApplicationImpl application, @NotNull PathMacroManager pathMacroManager) {
-    myApplication = application;
-    myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
-      private boolean myConfigDirectoryRefreshed;
-
-      @Nullable
-      protected StateStorage.Listener createStorageTopicListener() {
-        return myApplication.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC);
+      override fun createStorageTopicListener(): StateStorage.Listener? {
+        return myApplication.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC)
       }
 
-      @NotNull
-      @Override
-      protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
-        return new StorageData(ROOT_ELEMENT_NAME);
+      override fun createStorageData(fileSpec: String, filePath: String): StorageData {
+        return StorageData(ROOT_ELEMENT_NAME)
       }
 
-      @Nullable
-      @Override
-      protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
-        if (component instanceof NamedJDOMExternalizable) {
-          return StoragePathMacros.APP_CONFIG + '/' + ((NamedJDOMExternalizable)component).getExternalFileName() + DirectoryStorageData.DEFAULT_EXT;
+      override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
+        if (component is NamedJDOMExternalizable) {
+          return StoragePathMacros.APP_CONFIG + '/' + component.getExternalFileName() + DirectoryStorageData.DEFAULT_EXT
         }
         else {
-          return DEFAULT_STORAGE_SPEC;
+          return DEFAULT_STORAGE_SPEC
         }
       }
 
-      @Override
-      protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull String fileSpec) {
-        return fileSpec.equals(StoragePathMacros.APP_CONFIG + '/' + PathMacrosImpl.EXT_FILE_NAME + DirectoryStorageData.DEFAULT_EXT) ? null : super.getMacroSubstitutor(fileSpec);
-      }
+      override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == StoragePathMacros.APP_CONFIG + '/' + PathMacrosImpl.EXT_FILE_NAME + DirectoryStorageData.DEFAULT_EXT) null else super.getMacroSubstitutor(fileSpec)
 
-      @Override
-      protected boolean isUseXmlProlog() {
-        return false;
-      }
+      override fun isUseXmlProlog() = false
 
-      @Override
-      protected void beforeFileBasedStorageCreate() {
+      override fun beforeFileBasedStorageCreate() {
         if (myConfigDirectoryRefreshed || (!myApplication.isUnitTestMode() && !myApplication.isDispatchThread())) {
-          return;
+          return
         }
 
         try {
-          String configPath = getMacrosValue(StoragePathMacros.ROOT_CONFIG);
+          val configPath = getMacrosValue(StoragePathMacros.ROOT_CONFIG)
           if (configPath == null) {
-            LOG.warn("Macros ROOT_CONFIG is not defined");
-            return;
+            LOG.warn("Macros ROOT_CONFIG is not defined")
+            return
           }
 
-          VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configPath);
+          val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configPath)
           if (configDir != null) {
-            VfsUtil.markDirtyAndRefresh(false, true, true, configDir);
+            VfsUtil.markDirtyAndRefresh(false, true, true, configDir)
           }
         }
         finally {
-          myConfigDirectoryRefreshed = true;
+          myConfigDirectoryRefreshed = true
         }
       }
-    };
+    }
   }
 
-  @Override
-  @NotNull
-  protected MessageBus getMessageBus() {
-    return myApplication.getMessageBus();
+  override fun getMessageBus(): MessageBus {
+    return myApplication.getMessageBus()
   }
 
-  @NotNull
-  @Override
-  public StateStorageManager getStateStorageManager() {
-    return myStateStorageManager;
+  override fun getStateStorageManager(): StateStorageManager {
+    return myStateStorageManager
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(javaClass<ApplicationStoreImpl>())
+
+    private val DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT
+    private val ROOT_ELEMENT_NAME = "application"
   }
 }

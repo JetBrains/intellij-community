@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.project.impl.ProjectStoreClassProvider;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.impl.stores.DefaultProjectStoreImpl
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 
 /**
  * @author yole
  */
-class PlatformLangProjectStoreClassProvider implements ProjectStoreClassProvider {
-  @NotNull
-  @Override
-  public Class<? extends IComponentStore> getProjectStoreClass(final boolean isDefaultProject) {
-    return isDefaultProject ? DefaultProjectStoreImpl.class : ProjectWithModulesStoreImpl.class;
+class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
+  override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
+    return if (isDefaultProject) javaClass<DefaultProjectStoreImpl>() else javaClass<ProjectWithModulesStoreImpl>()
   }
 }

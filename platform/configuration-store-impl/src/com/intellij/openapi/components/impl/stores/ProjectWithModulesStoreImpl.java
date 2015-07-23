@@ -13,87 +13,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorage.SaveSession
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
 
-import java.util.List;
-import java.util.Set;
+public class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
 
-public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
-  public ProjectWithModulesStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
-    super(project, pathMacroManager);
-  }
-
-  @Override
-  public boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
+  override fun reinitComponent(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     if (super.reinitComponent(componentName, changedStorages)) {
-      return true;
+      return true
     }
 
-    for (Module module : getPersistentModules()) {
+    for (module in getPersistentModules()) {
       // we have to reinit all modules for component because we don't know affected module
-      getComponentStore(module).reinitComponent(componentName, changedStorages);
+      getComponentStore(module).reinitComponent(componentName, changedStorages)
     }
-    return true;
+    return true
   }
 
-  @NotNull
-  private static IComponentStore getComponentStore(@NotNull Module module) {
-    return (IComponentStore)module.getPicoContainer().getComponentInstance(IComponentStore.class);
+  private fun getComponentStore(module: Module): IComponentStore {
+    return module.getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore
   }
 
-  @NotNull
-  @Override
-  public TrackingPathMacroSubstitutor[] getSubstitutors() {
-    List<TrackingPathMacroSubstitutor> result = new SmartList<TrackingPathMacroSubstitutor>();
-    ContainerUtil.addIfNotNull(result, getStateStorageManager().getMacroSubstitutor());
+  override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
+    val result = SmartList<TrackingPathMacroSubstitutor>()
+    ContainerUtil.addIfNotNull(result, getStateStorageManager().getMacroSubstitutor())
 
-    for (Module module : getPersistentModules()) {
-      ContainerUtil.addIfNotNull(result, getComponentStore(module).getStateStorageManager().getMacroSubstitutor());
+    for (module in getPersistentModules()) {
+      ContainerUtil.addIfNotNull(result, getComponentStore(module).getStateStorageManager().getMacroSubstitutor())
     }
 
-    return result.toArray(new TrackingPathMacroSubstitutor[result.size()]);
+    return result.toArray<TrackingPathMacroSubstitutor>(arrayOfNulls<TrackingPathMacroSubstitutor>(result.size()))
   }
 
-  @Override
-  public boolean isReloadPossible(@NotNull Set<String> componentNames) {
+  override fun isReloadPossible(componentNames: Set<String>): Boolean {
     if (!super.isReloadPossible(componentNames)) {
-      return false;
+      return false
     }
 
-    for (Module module : getPersistentModules()) {
+    for (module in getPersistentModules()) {
       if (!getComponentStore(module).isReloadPossible(componentNames)) {
-        return false;
+        return false
       }
     }
 
-    return true;
+    return true
   }
 
-  @NotNull
-  protected Module[] getPersistentModules() {
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    return moduleManager == null ? Module.EMPTY_ARRAY : moduleManager.getModules();
+  protected fun getPersistentModules(): Array<Module> {
+    val moduleManager = ModuleManager.getInstance(myProject)
+    return if (moduleManager == null) Module.EMPTY_ARRAY else moduleManager.getModules()
   }
 
-  @Override
-  protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-    super.beforeSave(readonlyFiles);
+  override protected fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
+    super.beforeSave(readonlyFiles)
 
-    for (Module module : getPersistentModules()) {
-      getComponentStore(module).save(readonlyFiles);
+    for (module in getPersistentModules()) {
+      getComponentStore(module).save(readonlyFiles)
     }
   }
 }

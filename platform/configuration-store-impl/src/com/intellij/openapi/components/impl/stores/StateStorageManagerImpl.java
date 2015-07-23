@@ -13,360 +13,291 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.components.StateStorageChooserEx.Resolution;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.RoamingTypeDisabled;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoContainer;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
+import com.intellij.openapi.components.StateStorage.SaveSession
+import com.intellij.openapi.components.StateStorageChooserEx.Resolution
+import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtilRt
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import gnu.trove.THashMap
+import org.jdom.Element
+import org.picocontainer.MutablePicoContainer
+import org.picocontainer.PicoContainer
+import java.io.File
+import java.util.LinkedHashMap
+import java.util.UUID
+import java.util.concurrent.locks.ReentrantLock
+import java.util.regex.Pattern
+import kotlin.reflect.jvm.java
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+abstract class StateStorageManagerImpl(private val myPathMacroSubstitutor: TrackingPathMacroSubstitutor, protected val rootTagName: String, parentDisposable: Disposable, private val myPicoContainer: PicoContainer) : StateStorageManager, Disposable {
+  private val myMacros = LinkedHashMap<String, String>()
+  private val myStorageLock = ReentrantLock()
+  private val myStorages = THashMap<String, StateStorage>()
 
-public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable {
-  private static final Logger LOG = Logger.getInstance(StateStorageManagerImpl.class);
+  private var myStreamProvider: StreamProvider? = null
 
-  private final Map<String, String> myMacros = new LinkedHashMap<String, String>();
-  private final Lock myStorageLock = new ReentrantLock();
-  private final Map<String, StateStorage> myStorages = new THashMap<String, StateStorage>();
-  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-  private final String myRootTagName;
-  private final PicoContainer myPicoContainer;
-
-  private StreamProvider myStreamProvider;
-
-  public StateStorageManagerImpl(@NotNull TrackingPathMacroSubstitutor pathMacroSubstitutor,
-                                 @NotNull String rootTagName,
-                                 @NotNull Disposable parentDisposable,
-                                 @NotNull PicoContainer picoContainer) {
-    myPicoContainer = picoContainer;
-    myRootTagName = rootTagName;
-    myPathMacroSubstitutor = pathMacroSubstitutor;
-    Disposer.register(parentDisposable, this);
+  init {
+    Disposer.register(parentDisposable, this)
   }
 
-  @Override
-  public TrackingPathMacroSubstitutor getMacroSubstitutor() {
-    return myPathMacroSubstitutor;
+  companion object {
+    private val MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)")
   }
 
-  @Override
-  public synchronized void addMacro(@NotNull String macro, @NotNull String expansion) {
-    assert !macro.isEmpty();
+  override fun getMacroSubstitutor(): TrackingPathMacroSubstitutor? {
+    return myPathMacroSubstitutor
+  }
+
+  synchronized override fun addMacro(macro: String, expansion: String) {
+    var effectiveExpansion = expansion
+    assert(!macro.isEmpty())
     // backward compatibility
     if (macro.charAt(0) != '$') {
-      LOG.warn("Add macros instead of macro name: " + macro);
-      expansion = '$' + macro + '$';
+      LOG.warn("Add macros instead of macro name: " + macro)
+      effectiveExpansion = '$' + macro + '$'
     }
-    myMacros.put(macro, expansion);
+    myMacros.put(macro, effectiveExpansion)
   }
 
-  @Nullable
-  protected final String getMacrosValue(@NotNull String macro) {
-    return myMacros.get(macro);
+  protected fun getMacrosValue(macro: String): String? {
+    return myMacros.get(macro)
   }
 
-  @Override
-  @NotNull
-  public StateStorage getStateStorage(@NotNull Storage storageSpec) {
-    String key = storageSpec.storageClass().equals(StateStorage.class) ? storageSpec.file() : storageSpec.storageClass().getName();
+  override fun getStateStorage(storageSpec: Storage): StateStorage {
+    @suppress("USELESS_CAST")
+    val storageClass = storageSpec.storageClass.java as Class<out StateStorage>
+    val key = if (storageClass == javaClass<StateStorage>()) storageSpec.file else storageClass.getName()
 
-    myStorageLock.lock();
+    myStorageLock.lock()
     try {
-      StateStorage stateStorage = myStorages.get(key);
+      var stateStorage: StateStorage? = myStorages.get(key)
       if (stateStorage == null) {
-        stateStorage = createStateStorage(storageSpec.storageClass(), storageSpec.file(), storageSpec.roamingType(), storageSpec.stateSplitter());
-        myStorages.put(key, stateStorage);
+        stateStorage = createStateStorage(storageClass, storageSpec.file, storageSpec.roamingType, storageSpec.stateSplitter.java)
+        myStorages.put(key, stateStorage)
       }
-      return stateStorage;
+      return stateStorage
     }
     finally {
-      myStorageLock.unlock();
+      myStorageLock.unlock()
     }
   }
 
-  @Nullable
-  @Override
-  public StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    myStorageLock.lock();
+  override fun getStateStorage(fileSpec: String, roamingType: RoamingType): StateStorage? {
+    myStorageLock.lock()
     try {
-      StateStorage stateStorage = myStorages.get(fileSpec);
+      var stateStorage: StateStorage? = myStorages.get(fileSpec)
       if (stateStorage == null) {
-        stateStorage = createStateStorage(StateStorage.class, fileSpec, roamingType, StateSplitterEx.class);
-        myStorages.put(fileSpec, stateStorage);
+        stateStorage = createStateStorage(javaClass<StateStorage>(), fileSpec, roamingType, javaClass<StateSplitterEx>())
+        myStorages.put(fileSpec, stateStorage)
       }
-      return stateStorage;
+      return stateStorage
     }
     finally {
-      myStorageLock.unlock();
+      myStorageLock.unlock()
     }
   }
 
-  @NotNull
-  @Override
-  public Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted) {
-    myStorageLock.lock();
+  override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileBasedStorage>> {
+    myStorageLock.lock()
     try {
-      return Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted));
+      return Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted))
     }
     finally {
-      myStorageLock.unlock();
+      myStorageLock.unlock()
     }
   }
 
-  @NotNull
-  Collection<FileBasedStorage> getCachedFileStorages(@NotNull Collection<String> fileSpecs) {
+  public fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileBasedStorage> {
     if (fileSpecs.isEmpty()) {
-      return Collections.emptyList();
+      return emptyList()
     }
 
-    List<FileBasedStorage> result = null;
-    for (String fileSpec : fileSpecs) {
-      StateStorage storage = myStorages.get(fileSpec);
-      if (storage instanceof FileBasedStorage) {
+    var result: MutableList<FileBasedStorage>? = null
+    for (fileSpec in fileSpecs) {
+      val storage = myStorages.get(fileSpec)
+      if (storage is FileBasedStorage) {
         if (result == null) {
-          result = new SmartList<FileBasedStorage>();
+          result = SmartList<FileBasedStorage>()
         }
-        result.add((FileBasedStorage)storage);
+        result.add(storage)
       }
     }
-    return result == null ? Collections.<FileBasedStorage>emptyList() : result;
+    return if (result == null) emptyList<FileBasedStorage>() else result
   }
 
-  @NotNull
-  @Override
-  public Collection<String> getStorageFileNames() {
-    myStorageLock.lock();
+  override fun getStorageFileNames(): Collection<String> {
+    myStorageLock.lock()
     try {
-      return myStorages.keySet();
+      return myStorages.keySet()
     }
     finally {
-      myStorageLock.unlock();
+      myStorageLock.unlock()
     }
   }
 
   // overridden in upsource
-  protected StateStorage createStateStorage(@NotNull Class<? extends StateStorage> storageClass,
-                                            @NotNull String fileSpec,
-                                            @NotNull RoamingType roamingType,
-                                            @SuppressWarnings("deprecation") @NotNull Class<? extends StateSplitter> stateSplitter) {
-    if (!storageClass.equals(StateStorage.class)) {
-      String key = UUID.randomUUID().toString();
-      ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageClass);
-      return (StateStorage)myPicoContainer.getComponentInstance(key);
+  protected fun createStateStorage(storageClass: Class<out StateStorage>, fileSpec: String, roamingType: RoamingType, SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter>): StateStorage {
+    if (storageClass != javaClass<StateStorage>()) {
+      val key = UUID.randomUUID().toString()
+      (myPicoContainer as MutablePicoContainer).registerComponentImplementation(key, storageClass)
+      return myPicoContainer.getComponentInstance(key) as StateStorage
     }
 
-    String filePath = expandMacros(fileSpec);
-    File file = new File(filePath);
+    val filePath = expandMacros(fileSpec)
+    val file = File(filePath)
 
     //noinspection deprecation
-    if (!stateSplitter.equals(StateSplitter.class) && !stateSplitter.equals(StateSplitterEx.class)) {
-      return new DirectoryBasedStorage(myPathMacroSubstitutor, file, ReflectionUtil.newInstance(stateSplitter), this, createStorageTopicListener());
+    if (stateSplitter != javaClass<StateSplitter>() && stateSplitter != javaClass<StateSplitterEx>()) {
+      return DirectoryBasedStorage(myPathMacroSubstitutor, file, ReflectionUtil.newInstance(stateSplitter), this, createStorageTopicListener())
     }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
-      throw new IllegalArgumentException("Extension is missing for storage file: " + filePath);
+      throw IllegalArgumentException("Extension is missing for storage file: " + filePath)
     }
 
-    if (roamingType == RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
-      roamingType = RoamingType.DISABLED;
+    val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
+    beforeFileBasedStorageCreate()
+    return object : FileBasedStorage(file, fileSpec, effectiveRoamingType, getMacroSubstitutor(fileSpec), rootTagName, this@StateStorageManagerImpl, createStorageTopicListener(), myStreamProvider) {
+      override fun createStorageData() = this@StateStorageManagerImpl.createStorageData(myFileSpec, getFilePath())
+
+      override fun isUseXmlProlog() = this@StateStorageManagerImpl.isUseXmlProlog()
     }
-
-    beforeFileBasedStorageCreate();
-    return new FileBasedStorage(file, fileSpec,
-                                roamingType, getMacroSubstitutor(fileSpec), myRootTagName, StateStorageManagerImpl.this,
-                                createStorageTopicListener(), myStreamProvider) {
-      @Override
-      @NotNull
-      protected StorageData createStorageData() {
-        return StateStorageManagerImpl.this.createStorageData(myFileSpec, getFilePath());
-      }
-
-      @Override
-      protected boolean isUseXmlProlog() {
-        return StateStorageManagerImpl.this.isUseXmlProlog();
-      }
-    };
   }
 
-  @Override
-  public void clearStateStorage(@NotNull String file) {
-    myStorageLock.lock();
+  override fun clearStateStorage(file: String) {
+    myStorageLock.lock()
     try {
-      myStorages.remove(file);
+      myStorages.remove(file)
     }
     finally {
-      myStorageLock.unlock();
+      myStorageLock.unlock()
     }
   }
 
-  @Nullable
-  protected StateStorage.Listener createStorageTopicListener() {
-    return null;
+  protected open fun createStorageTopicListener(): StateStorage.Listener? {
+    return null
   }
 
-  protected boolean isUseXmlProlog() {
-    return true;
+  protected open fun isUseXmlProlog(): Boolean = true
+
+  protected open fun beforeFileBasedStorageCreate() {
   }
 
-  protected void beforeFileBasedStorageCreate() {
+  override fun getStreamProvider(): StreamProvider? {
+    return myStreamProvider
   }
 
-  @Nullable
-  @Override
-  public final StreamProvider getStreamProvider() {
-    return myStreamProvider;
-  }
+  protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = myPathMacroSubstitutor
 
-  protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull String fileSpec) {
-    return myPathMacroSubstitutor;
-  }
+  protected abstract fun createStorageData(fileSpec: String, filePath: String): StorageData
 
-  @NotNull
-  protected abstract StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath);
-
-  private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
-
-  @Override
-  @NotNull
-  public synchronized String expandMacros(@NotNull String file) {
-    Matcher matcher = MACRO_PATTERN.matcher(file);
+  synchronized override fun expandMacros(file: String): String {
+    val matcher = MACRO_PATTERN.matcher(file)
     while (matcher.find()) {
-      String m = matcher.group(1);
+      val m = matcher.group(1)
       if (!myMacros.containsKey(m)) {
-        throw new IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file);
+        throw IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file)
       }
     }
 
-    String expanded = file;
-    for (Map.Entry<String, String> entry : myMacros.entrySet()) {
-      expanded = StringUtil.replace(expanded, entry.getKey(), entry.getValue());
+    var expanded = file
+    for (entry in myMacros.entrySet()) {
+      expanded = StringUtil.replace(expanded, entry.getKey(), entry.getValue())
     }
-    return expanded;
+    return expanded
   }
 
-  @NotNull
-  @Override
-  public String collapseMacros(@NotNull String path) {
-    String result = path;
-    for (Map.Entry<String, String> entry : myMacros.entrySet()) {
-      result = StringUtil.replace(result, entry.getValue(), entry.getKey());
+  override fun collapseMacros(path: String): String {
+    var result = path
+    for (entry in myMacros.entrySet()) {
+      result = StringUtil.replace(result, entry.getValue(), entry.getKey())
     }
-    return result;
+    return result
   }
 
-  @NotNull
-  @Override
-  public ExternalizationSession startExternalization() {
-    return new StateStorageManagerExternalizationSession();
-  }
+  override fun startExternalization() = StateStorageManagerExternalizationSession(this)
 
-  protected class StateStorageManagerExternalizationSession implements ExternalizationSession {
-    private final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
+  open class StateStorageManagerExternalizationSession(protected val storageManager: StateStorageManagerImpl) : StateStorageManager.ExternalizationSession {
+    private val mySessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
-    @Override
-    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
-      StateStorageChooserEx stateStorageChooser = component instanceof StateStorageChooserEx ? (StateStorageChooserEx)component : null;
-      for (Storage storageSpec : storageSpecs) {
-        Resolution resolution = stateStorageChooser == null ? Resolution.DO : stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE);
-        if (resolution == Resolution.SKIP) {
-          continue;
+    override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
+      val stateStorageChooser = if (component is StateStorageChooserEx) component else null
+      for (storageSpec in storageSpecs) {
+        val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE)
+        if (resolution === Resolution.SKIP) {
+          continue
         }
 
-        StateStorage stateStorage = getStateStorage(storageSpec);
-        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
-        if (session != null) {
-          // empty element as null state, so, will be deleted
-          session.setState(component, componentName, storageSpec.deprecated() || resolution == Resolution.CLEAR ? new Element("empty") : state, storageSpec);
-        }
+        val stateStorage = storageManager.getStateStorage(storageSpec)
+        val session = getExternalizationSession(stateStorage)
+        session?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state, storageSpec)
       }
     }
 
-    @Override
-    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
-      StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
+    override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
+      val stateStorage = storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)
       if (stateStorage != null) {
-        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
-        if (session != null) {
-          session.setState(component, componentName, state, null);
-        }
+        val session = getExternalizationSession(stateStorage)
+        session?.setState(component, componentName, state, null)
       }
     }
 
-    @Nullable
-    protected final StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStorage) {
-      StateStorage.ExternalizationSession session = mySessions.get(stateStorage);
+    protected fun getExternalizationSession(stateStorage: StateStorage): StateStorage.ExternalizationSession? {
+      var session: StateStorage.ExternalizationSession? = mySessions.get(stateStorage)
       if (session == null) {
-        session = stateStorage.startExternalization();
+        session = stateStorage.startExternalization()
         if (session != null) {
-          mySessions.put(stateStorage, session);
+          mySessions.put(stateStorage, session)
         }
       }
-      return session;
+      return session
     }
 
-    @NotNull
-    @Override
-    public List<SaveSession> createSaveSessions() {
+    override fun createSaveSessions(): List<SaveSession> {
       if (mySessions.isEmpty()) {
-        return Collections.emptyList();
+        return emptyList()
       }
 
-      List<SaveSession> saveSessions = null;
-      Collection<StateStorage.ExternalizationSession> externalizationSessions = mySessions.values();
-      for (StateStorage.ExternalizationSession session : externalizationSessions) {
-        SaveSession saveSession = session.createSaveSession();
+      var saveSessions: MutableList<SaveSession>? = null
+      val externalizationSessions = mySessions.values()
+      for (session in externalizationSessions) {
+        val saveSession = session.createSaveSession()
         if (saveSession != null) {
           if (saveSessions == null) {
             if (externalizationSessions.size() == 1) {
-              return Collections.singletonList(saveSession);
+              return listOf(saveSession)
             }
-            saveSessions = new SmartList<SaveSession>();
+            saveSessions = SmartList<SaveSession>()
           }
-          saveSessions.add(saveSession);
+          saveSessions.add(saveSession)
         }
       }
-      return ContainerUtil.notNullize(saveSessions);
+      return ContainerUtil.notNullize(saveSessions)
     }
   }
 
-  @Override
-  @Nullable
-  public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
-    String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
-    //noinspection deprecation
-    return oldStorageSpec == null ? null : getStateStorage(oldStorageSpec, component instanceof RoamingTypeDisabled ? RoamingType.DISABLED : RoamingType.PER_USER);
+  override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
+    val oldStorageSpec = getOldStorageSpec(component, componentName, operation)
+    @suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+    return if (oldStorageSpec == null) null else getStateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.PER_USER)
   }
 
-  @Nullable
-  protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
+  protected abstract fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String?
 
-  @Override
-  public void dispose() {
+  override fun dispose() {
   }
 
-  @Override
-  public void setStreamProvider(@Nullable StreamProvider streamProvider) {
-    myStreamProvider = streamProvider;
+  override fun setStreamProvider(streamProvider: StreamProvider?) {
+    myStreamProvider = streamProvider
   }
 }

@@ -13,56 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.StorageData
+import com.intellij.openapi.project.impl.ProjectImpl
+import org.jdom.Element
 
-public class ProjectStateStorageManager extends StateStorageManagerImpl {
-  protected final ProjectImpl myProject;
-  @NonNls protected static final String ROOT_TAG_NAME = "project";
-
-  public ProjectStateStorageManager(@NotNull TrackingPathMacroSubstitutor macroSubstitutor, @NotNull ProjectImpl project) {
-    super(macroSubstitutor, ROOT_TAG_NAME, project, project.getPicoContainer());
-    myProject = project;
+public class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, protected val myProject: ProjectImpl) : StateStorageManagerImpl(macroSubstitutor, ProjectStateStorageManager.ROOT_TAG_NAME, myProject, myProject.getPicoContainer()) {
+  companion object {
+    protected val ROOT_TAG_NAME: String = "project"
   }
 
-  @NotNull
-  @Override
-  protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
-    if (fileSpec.equals(StoragePathMacros.PROJECT_FILE)) {
-      return createIprStorageData(filePath);
+  override fun createStorageData(fileSpec: String, filePath: String): StorageData {
+    if (fileSpec == StoragePathMacros.PROJECT_FILE) {
+      return createIprStorageData(filePath)
     }
-    if (fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
-      return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
+    if (fileSpec == StoragePathMacros.WORKSPACE_FILE) {
+      return ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject)
     }
-    return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
+    return ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject)
   }
 
-  @NotNull
-  protected StorageData createIprStorageData(@NotNull String filePath) {
-    return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
-  }
+  protected fun createIprStorageData(filePath: String): StorageData = ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject)
 
-  @Nullable
-  @Override
-  protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
-    boolean workspace = myProject.isWorkspaceComponent(component.getClass());
-    String fileSpec = workspace ? StoragePathMacros.WORKSPACE_FILE : StoragePathMacros.PROJECT_FILE;
-    StateStorage storage = getStateStorage(fileSpec, workspace ? RoamingType.DISABLED : RoamingType.PER_USER);
-    if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class, false)) {
-      fileSpec = StoragePathMacros.PROJECT_FILE;
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
+    val workspace = myProject.isWorkspaceComponent(component.javaClass)
+    var fileSpec = if (workspace) StoragePathMacros.WORKSPACE_FILE else StoragePathMacros.PROJECT_FILE
+    val storage = getStateStorage(fileSpec, if (workspace) RoamingType.DISABLED else RoamingType.PER_USER)
+    if (operation === StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, javaClass<Element>(), false)) {
+      fileSpec = StoragePathMacros.PROJECT_FILE
     }
-    return fileSpec;
+    return fileSpec
   }
 
-  @NotNull
-  @Override
-  protected StateStorage.Listener createStorageTopicListener() {
-    return myProject.getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC);
-  }
+  override fun createStorageTopicListener() = myProject.getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC)
 }

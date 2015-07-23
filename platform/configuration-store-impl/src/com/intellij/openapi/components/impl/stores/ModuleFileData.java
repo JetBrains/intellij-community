@@ -13,109 +13,89 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.OptionManager;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jdom.Attribute;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.PathMacroSubstitutor
+import com.intellij.openapi.components.impl.stores.StorageData
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.OptionManager
+import com.intellij.openapi.util.text.StringUtil
+import org.jdom.Element
+import java.util.TreeMap
 
-import java.util.Set;
-import java.util.TreeMap;
+class ModuleFileData : BaseFileConfigurableStoreImpl.BaseStorageData, OptionManager {
+  private var options: TreeMap<String, String>? = null
+  private val module: Module
 
-final class ModuleFileData extends BaseFileConfigurableStoreImpl.BaseStorageData implements OptionManager {
-  private TreeMap<String, String> options;
-  private final Module myModule;
+  private var dirty = true
 
-  private boolean dirty = true;
+  override fun isDirty() = dirty
 
-  public ModuleFileData(@NotNull String rootElementName, @NotNull Module module) {
-    super(rootElementName);
-
-    myModule = module;
-    options = new TreeMap<String, String>();
+  public constructor(rootElementName: String, module: Module) : super(rootElementName) {
+    this.module = module
+    options = TreeMap<String, String>()
   }
 
-  @Override
-  public boolean isDirty() {
-    return dirty;
+  private constructor(storageData: ModuleFileData) : super(storageData) {
+    module = storageData.module
+    dirty = storageData.dirty
+    options = TreeMap(storageData.options)
   }
 
-  private ModuleFileData(@NotNull ModuleFileData storageData) {
-    super(storageData);
+  override fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
+    super<BaseFileConfigurableStoreImpl.BaseStorageData>.load(rootElement, pathMacroSubstitutor, intern)
 
-    myModule = storageData.myModule;
-    dirty = storageData.dirty;
-    options = new TreeMap<String, String>(storageData.options);
-  }
-
-  @Override
-  public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
-    super.load(rootElement, pathMacroSubstitutor, intern);
-
-    for (Attribute attribute : rootElement.getAttributes()) {
-      String name = attribute.getName();
-      if (!name.equals(BaseFileConfigurableStoreImpl.VERSION_OPTION) && !StringUtil.isEmpty(name)) {
-        options.put(name, attribute.getValue());
+    for (attribute in rootElement.getAttributes()) {
+      val name = attribute.getName()
+      if (name != VERSION_OPTION && !StringUtil.isEmpty(name)) {
+        options!!.put(name, attribute.getValue())
       }
     }
 
-    dirty = false;
+    dirty = false
   }
 
-  @Override
-  protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
-    if (!options.isEmpty()) {
-      for (String key : options.keySet()) {
-        String value = options.get(key);
+  override fun writeOptions(root: Element, versionString: String) {
+    if (!options!!.isEmpty()) {
+      for (key in options!!.keySet()) {
+        val value = options!!.get(key)
         if (value != null) {
-          root.setAttribute(key, value);
+          root.setAttribute(key, value)
         }
       }
     }
     // need be last for compat reasons
-    super.writeOptions(root, versionString);
+    super<BaseFileConfigurableStoreImpl.BaseStorageData>.writeOptions(root, versionString)
 
-    dirty = false;
+    dirty = false
   }
 
-  @Override
-  public StorageData clone() {
-    return new ModuleFileData(this);
+  override fun clone(): StorageData {
+    return ModuleFileData(this)
   }
 
-  @Nullable
-  @Override
-  public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
-    final ModuleFileData data = (ModuleFileData)newStorageData;
-    if (!options.equals(data.options)) {
-      return null;
+  override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
+    val data = newStorageData as ModuleFileData
+    if (options != data.options) {
+      return null
     }
 
-    return super.getChangedComponentNames(newStorageData, substitutor);
+    return super<BaseFileConfigurableStoreImpl.BaseStorageData>.getChangedComponentNames(newStorageData, substitutor)
   }
 
-  @Override
-  public void setOption(@NotNull String key, @NotNull String value) {
-    if (!value.equals(options.put(key, value))) {
-      dirty = true;
+  override fun setOption(key: String, value: String) {
+    if (value != options!!.put(key, value)) {
+      dirty = true
     }
   }
 
-  @Override
-  public void clearOption(@NotNull String key) {
-    if (options.remove(key) != null) {
-      dirty = true;
+  override fun clearOption(key: String) {
+    if (options!!.remove(key) != null) {
+      dirty = true
     }
   }
 
-  @Override
-  @Nullable
-  public String getOptionValue(@NotNull String key) {
-    return options.get(key);
+  override fun getOptionValue(key: String): String? {
+    return options!!.get(key)
   }
 }

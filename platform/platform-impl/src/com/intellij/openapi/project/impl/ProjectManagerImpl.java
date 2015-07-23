@@ -1003,9 +1003,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @Override
   public void loadState(Element state) {
     myDefaultProjectRootElement = state.getChild("defaultProject");
-    if (myDefaultProjectRootElement != null) {
-      myDefaultProjectRootElement.detach();
-    }
+    if (myDefaultProjectRootElement != null) myDefaultProjectRootElement.detach();
     myDefaultProjectConfigurationChanged = false;
   }
 

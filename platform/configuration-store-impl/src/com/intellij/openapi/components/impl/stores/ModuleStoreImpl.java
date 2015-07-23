@@ -13,43 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.ex.ProjectEx
 
-final class ModuleStoreImpl extends BaseFileConfigurableStoreImpl {
-  private final Module myModule;
+class ModuleStoreImpl(private val myModule: Module, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager) {
+  override fun getProject() = myModule.getProject()
 
-  public ModuleStoreImpl(@NotNull Module module, @NotNull PathMacroManager pathMacroManager) {
-    super(pathMacroManager);
+  override fun optimizeTestLoading() = (myModule.getProject() as ProjectEx).isOptimiseTestLoadSpeed()
 
-    myModule = module;
-  }
+  override fun getMessageBus() = myModule.getMessageBus()
 
-  @Override
-  protected Project getProject() {
-    return myModule.getProject();
-  }
-
-  @Override
-  protected boolean optimizeTestLoading() {
-    return ((ProjectEx)myModule.getProject()).isOptimiseTestLoadSpeed();
-  }
-
-  @NotNull
-  @Override
-  protected MessageBus getMessageBus() {
-    return myModule.getMessageBus();
-  }
-
-  @NotNull
-  @Override
-  protected StateStorageManager createStateStorageManager() {
-    return new ModuleStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myModule);
-  }
+  override fun createStateStorageManager() = ModuleStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myModule)
 }

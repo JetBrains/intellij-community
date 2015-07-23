@@ -13,649 +13,503 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.CompoundRuntimeException;
-import com.intellij.util.messages.MessageBus;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.highlighter.WorkspaceFileType
+import com.intellij.notification.Notifications
+import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.*
+import com.intellij.openapi.components.StateStorage.SaveSession
+import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.*
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
+import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.messages.MessageBus
+import org.jdom.Element
+import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
+import java.io.InputStreamReader
+import java.util.ArrayList
 
-import java.io.*;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.List;
+public open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager), IProjectStore {
+  private var myScheme = StorageScheme.DEFAULT
+  private var myPresentableUrl: String? = null
 
-public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
-  private static final Logger LOG = Logger.getInstance(ProjectStoreImpl.class);
-
-  private static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
-
-  @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
-
-  private static int originalVersion = -1;
-
-  protected ProjectImpl myProject;
-  @NotNull
-  private StorageScheme myScheme = StorageScheme.DEFAULT;
-  private String myPresentableUrl;
-
-  public ProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
-    super(pathMacroManager);
-
-    myProject = project;
+  SuppressWarnings("unused") //used in upsource
+  protected fun setStorageScheme(scheme: StorageScheme) {
+    myScheme = scheme
   }
 
-  @SuppressWarnings("unused") //used in upsource
-  protected void setStorageScheme(@NotNull StorageScheme scheme) {
-    myScheme = scheme;
-  }
-
-  @Override
-  public boolean checkVersion() {
+  override fun checkVersion(): Boolean {
     if (originalVersion >= 0 && originalVersion < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-      final VirtualFile projectFile = getProjectFile();
-      LOG.assertTrue(projectFile != null);
-      String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
-                                             ApplicationNamesInfo.getInstance().getProductName(),
-                                             projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension());
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
+      val projectFile = getProjectFile()
+      LOG.assertTrue(projectFile != null)
+      val message = ProjectBundle.message("project.convert.old.prompt", projectFile!!.getName(), ApplicationNamesInfo.getInstance().getProductName(), projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension())
+      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false
 
-      List<String> conversionProblems = getConversionProblemsStorage();
-      if (!ContainerUtil.isEmpty(conversionProblems)) {
-        StringBuilder buffer = new StringBuilder();
-        buffer.append(ProjectBundle.message("project.convert.problems.detected"));
-        for (String s : conversionProblems) {
-          buffer.append('\n');
-          buffer.append(s);
-        }
-        buffer.append(ProjectBundle.message("project.convert.problems.help"));
-        if (Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
-                                               ProjectBundle.message("project.convert.problems.help.button"),
-                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon()) == Messages.OK) {
-          HelpManager.getInstance().invokeHelp("project.migrationProblems");
-        }
-      }
+//      val conversionProblems = BaseFileConfigurableStoreImpl.conversionProblemsStorage
+//      if (!ContainerUtil.isEmpty(conversionProblems)) {
+//        val buffer = StringBuilder()
+//        buffer.append(ProjectBundle.message("project.convert.problems.detected"))
+//        for (s in conversionProblems) {
+//          buffer.append('\n')
+//          buffer.append(s)
+//        }
+//        buffer.append(ProjectBundle.message("project.convert.problems.help"))
+//        if (Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"), ProjectBundle.message("project.convert.problems.help.button"), CommonBundle.getCloseButtonText(), Messages.getWarningIcon()) == Messages.OK) {
+//          HelpManager.getInstance().invokeHelp("project.migrationProblems")
+//        }
+//      }
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
+      ApplicationManager.getApplication().runWriteAction(object : Runnable {
+        override fun run() {
           try {
-            VirtualFile projectDir = projectFile.getParent();
-            assert projectDir != null;
+            val projectDir = projectFile.getParent()
+            assert(projectDir != null)
 
-            backup(projectDir, projectFile);
+            backup(projectDir, projectFile)
 
-            VirtualFile workspaceFile = getWorkspaceFile();
+            val workspaceFile = getWorkspaceFile()
             if (workspaceFile != null) {
-              backup(projectDir, workspaceFile);
+              backup(projectDir, workspaceFile)
             }
           }
-          catch (IOException e) {
-            LOG.error(e);
+          catch (e: IOException) {
+            LOG.error(e)
           }
+
         }
 
-        private void backup(final VirtualFile projectDir, final VirtualFile vile) throws IOException {
-          final String oldName = vile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + vile.getExtension();
-          VfsUtil.saveText(projectDir.findOrCreateChildData(this, oldName), VfsUtilCore.loadText(vile));
+        throws(IOException::class)
+        private fun backup(projectDir: VirtualFile, vile: VirtualFile) {
+          val oldName = vile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + vile.getExtension()
+          VfsUtil.saveText(projectDir.findOrCreateChildData(this, oldName), VfsUtilCore.loadText(vile))
         }
-      });
+      })
     }
 
-    return originalVersion <= ProjectManagerImpl.CURRENT_FORMAT_VERSION ||
-           MessageDialogBuilder.yesNo(CommonBundle.getWarningTitle(),
-                                      ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName()))
-             .icon(Messages.getWarningIcon())
-             .project(myProject).is();
+    return originalVersion <= ProjectManagerImpl.CURRENT_FORMAT_VERSION || MessageDialogBuilder.yesNo(CommonBundle.getWarningTitle(), ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName())).icon(Messages.getWarningIcon()).project(myProject).`is`()
   }
 
-  @NotNull
-  @Override
-  public TrackingPathMacroSubstitutor[] getSubstitutors() {
-    return new TrackingPathMacroSubstitutor[] {getStateStorageManager().getMacroSubstitutor()};
+  override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
+    val substitutor = getStateStorageManager().getMacroSubstitutor()
+    return if (substitutor == null) emptyArray() else arrayOf(substitutor)
   }
 
-  @Override
-  protected boolean optimizeTestLoading() {
-    return myProject.isOptimiseTestLoadSpeed();
-  }
+  override fun optimizeTestLoading() = myProject.isOptimiseTestLoadSpeed()
 
-  @Override
-  protected Project getProject() {
-    return myProject;
-  }
+  override fun getProject() = myProject
 
-  @Override
-  public void setProjectFilePath(@NotNull final String filePath) {
-    final StateStorageManager stateStorageManager = getStateStorageManager();
-    final LocalFileSystem fs = LocalFileSystem.getInstance();
+  override fun setProjectFilePath(filePath: String) {
+    val stateStorageManager = getStateStorageManager()
+    val fs = LocalFileSystem.getInstance()
 
-    final File file = new File(filePath);
+    val file = File(filePath)
     if (isIprPath(file)) {
-      myScheme = StorageScheme.DEFAULT;
+      myScheme = StorageScheme.DEFAULT
 
-      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath);
+      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath)
 
-      final String workspacePath = composeWsPath(filePath);
-      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath);
+      val workspacePath = composeWsPath(filePath)
+      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath));
+      ApplicationManager.getApplication().invokeAndWait(object : Runnable {
+        override fun run() {
+          VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
         }
-      }, ModalityState.defaultModalityState());
+      }, ModalityState.defaultModalityState())
     }
     else {
-      myScheme = StorageScheme.DIRECTORY_BASED;
+      myScheme = StorageScheme.DIRECTORY_BASED
 
-      final File dirStore = file.isDirectory() ? new File(file, Project.DIRECTORY_STORE_FOLDER)
-                                               : new File(file.getParentFile(), Project.DIRECTORY_STORE_FOLDER);
-      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, new File(dirStore, "misc.xml").getPath());
+      val dirStore = if (file.isDirectory())
+        File(file, Project.DIRECTORY_STORE_FOLDER)
+      else
+        File(file.getParentFile(), Project.DIRECTORY_STORE_FOLDER)
+      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, File(dirStore, "misc.xml").getPath())
 
-      final File ws = new File(dirStore, "workspace.xml");
-      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, ws.getPath());
+      val ws = File(dirStore, "workspace.xml")
+      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, ws.getPath())
       if (!ws.exists() && !file.isDirectory()) {
-        useOldWsContent(filePath, ws);
+        useOldWsContent(filePath, ws)
       }
 
-      stateStorageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, dirStore.getPath());
+      stateStorageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, dirStore.getPath())
 
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByIoFile(dirStore));
+      ApplicationManager.getApplication().invokeAndWait(object : Runnable {
+        override fun run() {
+          VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByIoFile(dirStore))
         }
-      }, ModalityState.defaultModalityState());
+      }, ModalityState.defaultModalityState())
     }
 
-    myPresentableUrl = null;
+    myPresentableUrl = null
   }
 
-  private static boolean isIprPath(final File file) {
-    return FileUtilRt.extensionEquals(file.getName(), ProjectFileType.DEFAULT_EXTENSION);
+  override fun getProjectBaseDir(): VirtualFile? {
+    if (myProject.isDefault()) return null
+
+    val path = getProjectBasePath() ?: return null
+
+    return LocalFileSystem.getInstance().findFileByPath(path)
   }
 
-  private static String composeWsPath(String filePath) {
-    final int lastDot = filePath.lastIndexOf('.');
-    final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
-    return filePathWithoutExt + WorkspaceFileType.DOT_DEFAULT_EXTENSION;
-  }
+  override fun getProjectBasePath(): String? {
+    if (myProject.isDefault()) return null
 
-  private static void useOldWsContent(final String filePath, final File ws) {
-    final File oldWs = new File(composeWsPath(filePath));
-    if (oldWs.exists()) {
-      try {
-        final InputStream is = new FileInputStream(oldWs);
-        try {
-          final byte[] bytes = FileUtil.loadBytes(is, (int)oldWs.length());
-
-          final OutputStream os = new FileOutputStream(ws);
-          try {
-            os.write(bytes);
-          }
-          finally {
-            os.close();
-          }
-        }
-        finally {
-          is.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  @Override
-  public VirtualFile getProjectBaseDir() {
-    if (myProject.isDefault()) return null;
-
-    final String path = getProjectBasePath();
-    if (path == null) return null;
-
-    return LocalFileSystem.getInstance().findFileByPath(path);
-  }
-
-  @Override
-  public String getProjectBasePath() {
-    if (myProject.isDefault()) return null;
-
-    final String path = getProjectFilePath();
+    val path = getProjectFilePath()
     if (!StringUtil.isEmptyOrSpaces(path)) {
-      return getBasePath(new File(path));
+      return getBasePath(File(path))
     }
 
     //we are not yet initialized completely ("open directory", etc)
-    StateStorage storage = getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER);
-    if (!(storage instanceof FileBasedStorage)) {
-      return null;
+    val storage = getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER)
+    if (storage !is FileBasedStorage) {
+      return null
     }
 
-    return getBasePath(((FileBasedStorage)storage).getFile());
+    return getBasePath(storage.getFile())
   }
 
-  private String getBasePath(@NotNull File file) {
-    if (myScheme == StorageScheme.DEFAULT) {
-      return file.getParent();
+  private fun getBasePath(file: File): String? {
+    if (myScheme === StorageScheme.DEFAULT) {
+      return file.getParent()
     }
     else {
-      File parentFile = file.getParentFile();
-      return parentFile == null ? null : parentFile.getParent();
+      val parentFile = file.getParentFile()
+      return parentFile?.getParent()
     }
   }
 
-  @NotNull
-  @Override
-  public String getProjectName() {
-    if (myScheme == StorageScheme.DIRECTORY_BASED) {
-      final VirtualFile baseDir = getProjectBaseDir();
-      assert baseDir != null : "scheme=" + myScheme + " project file=" + getProjectFilePath();
+  override fun getProjectName(): String {
+    if (myScheme === StorageScheme.DIRECTORY_BASED) {
+      val baseDir = getProjectBaseDir()
+      assert(baseDir != null) { "scheme=" + myScheme + " project file=" + getProjectFilePath() }
 
-      final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+      val ideaDir = baseDir!!.findChild(Project.DIRECTORY_STORE_FOLDER)
       if (ideaDir != null && ideaDir.isValid()) {
-        final VirtualFile nameFile = ideaDir.findChild(ProjectImpl.NAME_FILE);
+        val nameFile = ideaDir.findChild(ProjectImpl.NAME_FILE)
         if (nameFile != null && nameFile.isValid()) {
           try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(nameFile.getInputStream(), CharsetToolkit.UTF8_CHARSET));
+            val `in` = BufferedReader(InputStreamReader(nameFile.getInputStream(), CharsetToolkit.UTF8_CHARSET))
             try {
-              final String name = in.readLine();
+              val name = `in`.readLine()
               if (name != null && !name.isEmpty()) {
-                return name.trim();
+                return name.trim()
               }
             }
             finally {
-              in.close();
+              `in`.close()
             }
           }
-          catch (IOException ignored) { }
+          catch (ignored: IOException) {
+          }
+
         }
       }
 
-      return baseDir.getName().replace(":", "");
+      return baseDir.getName().replace(":", "")
     }
     else {
-      String temp = PathUtilRt.getFileName(((FileBasedStorage)getProjectFileStorage()).getFilePath());
-      FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp);
-      if (fileType instanceof ProjectFileType) {
-        temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1);
+      var temp = PathUtilRt.getFileName((getProjectFileStorage() as FileBasedStorage).getFilePath())
+      val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
+      if (fileType is ProjectFileType) {
+        temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1)
       }
-      final int i = temp.lastIndexOf(File.separatorChar);
+      val i = temp.lastIndexOf(File.separatorChar)
       if (i >= 0) {
-        temp = temp.substring(i + 1, temp.length() - i + 1);
+        temp = temp.substring(i + 1, temp.length() - i + 1)
       }
-      return temp;
+      return temp
     }
   }
 
-  @NotNull
-  @Override
-  public StorageScheme getStorageScheme() {
-    return myScheme;
+  override fun getStorageScheme(): StorageScheme {
+    return myScheme
   }
 
-  @Override
-  public String getPresentableUrl() {
+  override fun getPresentableUrl(): String? {
     if (myProject.isDefault()) {
-      return null;
+      return null
     }
     if (myPresentableUrl == null) {
-      String url = myScheme == StorageScheme.DIRECTORY_BASED ? getProjectBasePath() : getProjectFilePath();
+      val url = if (myScheme === StorageScheme.DIRECTORY_BASED) getProjectBasePath() else getProjectFilePath()
       if (url != null) {
-        myPresentableUrl = FileUtil.toSystemDependentName(url);
+        myPresentableUrl = FileUtil.toSystemDependentName(url)
       }
     }
-    return myPresentableUrl;
+    return myPresentableUrl
   }
 
-  @Override
-  public VirtualFile getProjectFile() {
-    return myProject.isDefault() ? null : ((FileBasedStorage)getProjectFileStorage()).getVirtualFile();
+  override fun getProjectFile() = if (myProject.isDefault()) null else (getProjectFileStorage() as FileBasedStorage).getVirtualFile()
+
+  override fun getProjectFilePath() = if (myProject.isDefault()) "" else (getProjectFileStorage() as FileBasedStorage).getFilePath()
+
+  // XmlElementStorage if default project, otherwise FileBasedStorage
+  private fun getProjectFileStorage() = getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as XmlElementStorage
+
+  override fun getWorkspaceFile(): VirtualFile? {
+    if (myProject.isDefault()) return null
+    val storage = getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
+    assert(storage != null)
+    return storage!!.getVirtualFile()
   }
 
-  @NotNull
-  @Override
-  public String getProjectFilePath() {
-    return myProject.isDefault() ? "" : ((FileBasedStorage)getProjectFileStorage()).getFilePath();
+  override fun getWorkspaceFilePath(): String? {
+    if (myProject.isDefault()) return null
+    val storage = getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
+    assert(storage != null)
+    return storage!!.getFilePath()
   }
 
-  @NotNull
-  private XmlElementStorage getProjectFileStorage() {
-    // XmlElementStorage if default project, otherwise FileBasedStorage
-    XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER);
-    assert storage != null;
-    return storage;
-  }
+  override fun loadProjectFromTemplate(defaultProject: ProjectImpl) {
+    defaultProject.save()
 
-  @Override
-  public VirtualFile getWorkspaceFile() {
-    if (myProject.isDefault()) return null;
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED);
-    assert storage != null;
-    return storage.getVirtualFile();
-  }
-
-  @Nullable
-  @Override
-  public String getWorkspaceFilePath() {
-    if (myProject.isDefault()) return null;
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED);
-    assert storage != null;
-    return storage.getFilePath();
-  }
-
-  @Override
-  public void loadProjectFromTemplate(@NotNull ProjectImpl defaultProject) {
-    defaultProject.save();
-
-    Element element = ((DefaultProjectStoreImpl)defaultProject.getStateStore()).getStateCopy();
+    val element = (defaultProject.getStateStore() as DefaultProjectStoreImpl).getStateCopy()
     if (element != null) {
-      getProjectFileStorage().setDefaultState(element);
+      getProjectFileStorage().setDefaultState(element)
     }
   }
 
-  @NotNull
-  @Override
-  protected StateStorageManager createStateStorageManager() {
-    return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject);
+  override fun createStateStorageManager(): StateStorageManager {
+    return ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject)
   }
 
-  static class  ProjectStorageData extends BaseStorageData {
-    protected final Project myProject;
+  open class ProjectStorageData : BaseFileConfigurableStoreImpl.BaseStorageData {
+    protected val myProject: Project
 
-    ProjectStorageData(final String rootElementName, Project project) {
-      super(rootElementName);
-      myProject = project;
+    constructor(rootElementName: String, project: Project) : super(rootElementName) {
+      myProject = project
     }
 
-    protected ProjectStorageData(ProjectStorageData storageData) {
-      super(storageData);
-      myProject = storageData.myProject;
+    protected constructor(storageData: ProjectStorageData) : super(storageData) {
+      myProject = storageData.myProject
     }
 
-    @Override
-    public StorageData clone() {
-      return new ProjectStorageData(this);
+    override fun clone(): StorageData {
+      return ProjectStorageData(this)
     }
   }
 
-  static class WsStorageData extends ProjectStorageData {
-    WsStorageData(final String rootElementName, final Project project) {
-      super(rootElementName, project);
+  class WsStorageData : ProjectStorageData {
+    constructor(rootElementName: String, project: Project) : super(rootElementName, project) {
     }
 
-    private WsStorageData(final WsStorageData storageData) {
-      super(storageData);
+    private constructor(storageData: WsStorageData) : super(storageData) {
     }
 
-    @Override
-    public StorageData clone() {
-      return new WsStorageData(this);
+    override fun clone(): StorageData {
+      return WsStorageData(this)
     }
   }
 
-  static class IprStorageData extends ProjectStorageData {
-    IprStorageData(final String rootElementName, Project project) {
-      super(rootElementName, project);
+  class IprStorageData : ProjectStorageData {
+    constructor(rootElementName: String, project: Project) : super(rootElementName, project) {
     }
 
-    IprStorageData(final IprStorageData storageData) {
-      super(storageData);
+    constructor(storageData: IprStorageData) : super(storageData) {
     }
 
-    @Override
-    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
-      final String v = rootElement.getAttributeValue(VERSION_OPTION);
+    override fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
+      val v = rootElement.getAttributeValue(VERSION_OPTION)
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      originalVersion = v != null ? Integer.parseInt(v) : 0;
+      originalVersion = if (v != null) Integer.parseInt(v) else 0
 
       if (originalVersion != ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-        convert(rootElement, originalVersion);
+        convert(rootElement, originalVersion)
       }
 
-      super.load(rootElement, pathMacroSubstitutor, intern);
+      super.load(rootElement, pathMacroSubstitutor, intern)
     }
 
-    @SuppressWarnings("UnusedParameters")
-    protected void convert(Element root, int originalVersion) {
+    @suppress("UNUSED_PARAMETER")
+    protected fun convert(root: Element, originalVersion: Int) {
     }
 
-    @Override
-    public StorageData clone() {
-      return new IprStorageData(this);
+    override fun clone(): StorageData {
+      return IprStorageData(this)
     }
   }
 
-  @Override
-  protected final List<Throwable> doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles, @Nullable List<Throwable> errors) {
-    beforeSave(readonlyFiles);
+  override fun doSave(saveSessions: List<SaveSession>?, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+    var errors = prevErrors
+    beforeSave(readonlyFiles)
 
-    super.doSave(saveSessions, readonlyFiles, errors);
+    super<BaseFileConfigurableStoreImpl>.doSave(saveSessions, readonlyFiles, errors)
 
-    UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, myProject);
+    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), myProject)
     if (readonlyFiles.isEmpty()) {
-      if (notifications.length > 0) {
-        for (UnableToSaveProjectNotification notification : notifications) {
-          notification.expire();
+      if (notifications.size() > 0) {
+        for (notification in notifications) {
+          notification.expire()
         }
       }
-      return errors;
+      return errors
     }
 
-    if (notifications.length > 0) {
-      throw new SaveCancelledException();
+    if (notifications.size() > 0) {
+      throw IComponentStore.SaveCancelledException()
     }
 
-    ReadonlyStatusHandler.OperationStatus status;
-    AccessToken token = ReadAction.start();
+    val status: ReadonlyStatusHandler.OperationStatus
+    val token = ReadAction.start()
     try {
-      status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
+      status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(*getFilesList(readonlyFiles))
     }
     finally {
-      token.finish();
+      token.finish()
     }
 
     if (status.hasReadonlyFiles()) {
-      dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
-      throw new SaveCancelledException();
+      dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles())
+      throw IComponentStore.SaveCancelledException()
     }
-    List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
-    readonlyFiles.clear();
-    for (Pair<SaveSession, VirtualFile> entry : oldList) {
-      errors = executeSave(entry.first, readonlyFiles, errors);
+    val oldList = ArrayList(readonlyFiles)
+    readonlyFiles.clear()
+    for (entry in oldList) {
+      errors = ComponentStoreImpl.executeSave(entry.first, readonlyFiles, errors)
     }
 
     if (errors != null) {
-      CompoundRuntimeException.doThrow(errors);
+      CompoundRuntimeException.doThrow(errors)
     }
 
     if (!readonlyFiles.isEmpty()) {
-      dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
-      throw new SaveCancelledException();
+      dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles))
+      throw IComponentStore.SaveCancelledException()
     }
 
-    return errors;
+    return errors
   }
 
-  private static void dropUnableToSaveProjectNotification(@NotNull Project project, @NotNull VirtualFile[] readOnlyFiles) {
-    UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
-    if (notifications.length == 0) {
-      Notifications.Bus.notify(new UnableToSaveProjectNotification(project, readOnlyFiles), project);
-    }
-    else {
-      notifications[0].myFiles = readOnlyFiles;
-    }
+  protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
   }
 
-  protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-  }
-
-  @NotNull
-  private static VirtualFile[] getFilesList(List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-    final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
-    for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
-      files[i] = readonlyFiles.get(i).second;
-    }
-    return files;
-  }
-
-  private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
-    @NotNull
-    @Override
-    public Storage[] selectStorages(@NotNull Storage[] storages, @NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
-      if (operation == StateStorageOperation.READ) {
-        List<Storage> result = new SmartList<Storage>();
-        for (int i = storages.length - 1; i >= 0; i--) {
-          Storage storage = storages[i];
-          if (storage.scheme() == myScheme) {
-            result.add(storage);
+  private val myStateStorageChooser = object : StateStorageChooser<PersistentStateComponent<*>> {
+    override fun selectStorages(storages: Array<Storage>, component: PersistentStateComponent<*>, operation: StateStorageOperation): Array<Storage> {
+      if (operation === StateStorageOperation.READ) {
+        val result = SmartList<Storage>()
+        for (i in storages.indices.reversed()) {
+          val storage = storages[i]
+          if (storage.scheme === myScheme) {
+            result.add(storage)
           }
         }
 
-        for (Storage storage : storages) {
-          if (storage.scheme() == StorageScheme.DEFAULT && !result.contains(storage)) {
-            result.add(storage);
+        for (storage in storages) {
+          if (storage.scheme === StorageScheme.DEFAULT && !result.contains(storage)) {
+            result.add(storage)
           }
         }
 
-        return result.toArray(new Storage[result.size()]);
+        return result.toArray<Storage>(arrayOfNulls<Storage>(result.size()))
       }
-      else if (operation == StateStorageOperation.WRITE) {
-        List<Storage> result = new SmartList<Storage>();
-        for (Storage storage : storages) {
-          if (storage.scheme() == myScheme) {
-            result.add(storage);
+      else if (operation === StateStorageOperation.WRITE) {
+        val result = SmartList<Storage>()
+        for (storage in storages) {
+          if (storage.scheme === myScheme) {
+            result.add(storage)
           }
         }
 
         if (!result.isEmpty()) {
-          return result.toArray(new Storage[result.size()]);
+          return result.toArray<Storage>(arrayOfNulls<Storage>(result.size()))
         }
 
-        for (Storage storage : storages) {
-          if (storage.scheme() == StorageScheme.DEFAULT) {
-            result.add(storage);
+        for (storage in storages) {
+          if (storage.scheme === StorageScheme.DEFAULT) {
+            result.add(storage)
           }
         }
 
-        return result.toArray(new Storage[result.size()]);
+        return result.toArray<Storage>(arrayOfNulls<Storage>(result.size()))
       }
       else {
-        return new Storage[]{};
+        return arrayOf()
       }
     }
-  };
-
-  @Override
-  protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
-    return myStateStorageChooser;
   }
 
-  @NotNull
-  @Override
-  protected MessageBus getMessageBus() {
-    return myProject.getMessageBus();
+  override fun getDefaultStateStorageChooser(): StateStorageChooser<PersistentStateComponent<*>>? {
+    return myStateStorageChooser
   }
 
-  @NotNull
-  @Override
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> component,
-                                                   @NotNull State stateSpec,
-                                                   @NotNull StateStorageOperation operation) {
+  override fun getMessageBus(): MessageBus {
+    return myProject.getMessageBus()
+  }
+
+  override fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
-    Storage[] result = super.getComponentStorageSpecs(component, stateSpec, operation);
+    val result = super<BaseFileConfigurableStoreImpl>.getComponentStorageSpecs(component, stateSpec, operation)
     // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
-    for (Storage storage : result) {
-      if (storage.file().equals(StoragePathMacros.PROJECT_FILE)) {
-        return result;
+    for (storage in result) {
+      if (storage.file == StoragePathMacros.PROJECT_FILE) {
+        return result
+      }
+    }
+    return Array(result.size() + 1) { if (it == result.size()) DEFAULT_STORAGE_ANNOTATION else result[it] }
+  }
+
+  companion object {
+    private val DEFAULT_STORAGE_ANNOTATION = DefaultStorageAnnotation()
+
+    private val OLD_PROJECT_SUFFIX = "_old."
+
+    private var originalVersion = -1
+
+    private fun isIprPath(file: File) = FileUtilRt.extensionEquals(file.getName(), ProjectFileType.DEFAULT_EXTENSION)
+
+    private fun composeWsPath(filePath: String): String {
+      val lastDot = filePath.lastIndexOf('.')
+      val filePathWithoutExt = if (lastDot > 0) filePath.substring(0, lastDot) else filePath
+      return "$filePathWithoutExt${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
+    }
+
+    private fun useOldWsContent(filePath: String, ws: File) {
+      val oldWs = File(composeWsPath(filePath))
+      if (!oldWs.exists()) {
+        return
+      }
+
+      try {
+        FileUtil.copyContent(oldWs, ws)
+      }
+      catch (e: IOException) {
+        LOG.error(e)
       }
     }
 
-    Storage[] withProjectFileStorage = new Storage[result.length + 1];
-    System.arraycopy(result, 0, withProjectFileStorage, 0, result.length);
-    withProjectFileStorage[result.length] = DEFAULT_STORAGE_ANNOTATION;
-    return withProjectFileStorage;
-  }
-
-  @SuppressWarnings("ClassExplicitlyAnnotation")
-  private static class MyStorage implements Storage {
-    @Override
-    public String id() {
-      return "___Default___";
+    private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
+      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), project)
+      if (notifications.isEmpty()) {
+        Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
+      }
+      else {
+        notifications[0].myFiles = readOnlyFiles
+      }
     }
 
-    @Override
-    public boolean isDefault() {
-      return true;
-    }
-
-    @Override
-    public String file() {
-      return StoragePathMacros.PROJECT_FILE;
-    }
-
-    @Override
-    public StorageScheme scheme() {
-      return StorageScheme.DEFAULT;
-    }
-
-    @Override
-    public boolean deprecated() {
-      return true;
-    }
-
-    @Override
-    public RoamingType roamingType() {
-      return RoamingType.PER_USER;
-    }
-
-    @Override
-    public Class<? extends StateStorage> storageClass() {
-      return StateStorage.class;
-    }
-
-    @Override
-    public Class<StateSplitterEx> stateSplitter() {
-      return StateSplitterEx.class;
-    }
-
-    @NotNull
-    @Override
-    public Class<? extends Annotation> annotationType() {
-      throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
-    }
+    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size()) { readonlyFiles.get(it).second }
   }
 }
