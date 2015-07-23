@@ -7,9 +7,9 @@
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
-                        serviceImplementation="com.intellij.openapi.components.impl.stores.ApplicationStoreImpl"/>
+                        serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
-                        serviceImplementation="com.intellij.openapi.components.impl.ApplicationPathMacroManager"/>
+                        serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>
 
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"

@@ -55,7 +55,7 @@ public class StorageData extends StorageDataBase {
     myRootElementName = rootElementName;
   }
 
-  StorageData(@NotNull StorageData storageData) {
+  protected StorageData(@NotNull StorageData storageData) {
     myRootElementName = storageData.myRootElementName;
     myStates = new StateMap(storageData.myStates);
   }

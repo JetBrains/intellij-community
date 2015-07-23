@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 public interface MergeVersion {
@@ -120,12 +120,12 @@ public interface MergeVersion {
     }
 
     @Nullable
-    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, final Collection<VirtualFile> files) {
-      final Set<VirtualFile> vfs = new HashSet<VirtualFile>();
-      for (VirtualFile vf : files) {
-        if (vf != null && ! vf.isDirectory()) {
-          if (ProjectCoreUtil.isProjectOrWorkspaceFile(vf) || isProjectFile(vf)) {
-            vfs.add(vf);
+    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<VirtualFile> files) {
+      final Set<VirtualFile> vfs = new THashSet<VirtualFile>();
+      for (VirtualFile file : files) {
+        if (file != null && !file.isDirectory()) {
+          if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
+            vfs.add(file);
           }
         }
       }
@@ -168,8 +168,7 @@ public interface MergeVersion {
     @Override
     public byte[] getBytes() throws IOException {
       VirtualFile file = getFile();
-      if (file != null) return file.contentsToByteArray();
-      return myDocument.getText().getBytes();
+      return file != null ? file.contentsToByteArray() : myDocument.getText().getBytes();
     }
 
     @Override

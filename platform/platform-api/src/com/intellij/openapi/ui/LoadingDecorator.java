@@ -239,7 +239,16 @@ public class LoadingDecorator {
 
     @Override
     public Dimension getMinimumSize() {
-      return myContent != null ? myContent.getMinimumSize() : super.getMinimumSize();
+      return myContent != null && !isMinimumSizeSet()
+             ? myContent.getMinimumSize()
+             : super.getMinimumSize();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return myContent != null && !isPreferredSizeSet()
+             ? myContent.getPreferredSize()
+             : super.getPreferredSize();
     }
 
     @Override

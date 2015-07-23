@@ -19,13 +19,14 @@ import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.ApplicationPathMacroManager
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.impl.stores.StorageData
+import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.hamcrest.CoreMatchers.equalTo
@@ -40,7 +41,6 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
   private var testAppConfig: File? = null
   private var componentStore: MyComponentStore? = null
 
-  throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
@@ -56,7 +56,6 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
     componentStore = MyComponentStore(testAppConfig!!.getAbsolutePath())
   }
 
-  throws(Exception::class)
   override fun tearDown() {
     try {
       Disposer.dispose(componentStore!!)
@@ -119,7 +118,6 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
     assertThat(oldFile.exists(), equalTo(false))
   }
 
-  throws(IOException::class)
   private fun saveConfig(fileName: String, Language("XML") data: String): File {
     val file = File(testAppConfig, fileName)
     FileUtil.writeToFile(file, data)
@@ -160,16 +158,12 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
     init {
       val macroSubstitutor = ApplicationPathMacroManager().createTrackingSubstitutor()
       stateStorageManager = object : StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
-        override fun createStorageData(fileSpec: String, filePath: String): StorageData {
-          return StorageData("application")
-        }
+        override fun createStorageData(fileSpec: String, filePath: String) = StorageData("application")
 
-        override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-          return null
-        }
+        override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = null
 
         override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
-          if (fileSpec == StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + ".xml") {
+          if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
             return null
           }
           return super.getMacroSubstitutor(fileSpec)
@@ -179,16 +173,12 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
       stateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, testAppConfigPath)
     }
 
-    override fun getStateStorageManager(): StateStorageManager {
-      return stateStorageManager
-    }
+    override fun getStateStorageManager() = stateStorageManager
 
     override fun dispose() {
     }
 
-    override fun getMessageBus(): MessageBus {
-      return ApplicationManager.getApplication().getMessageBus()
-    }
+    override fun getMessageBus() = ApplicationManager.getApplication().getMessageBus()
   }
 
   abstract class Foo {
@@ -208,9 +198,7 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
 
   State(name = "HttpConfigurable", storages = arrayOf(Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true), Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")))
   class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
-    override fun getState(): ActualStorageLast? {
-      return this
-    }
+    override fun getState() = this
 
     override fun loadState(state: ActualStorageLast) {
       XmlSerializerUtil.copyBean(state, this)

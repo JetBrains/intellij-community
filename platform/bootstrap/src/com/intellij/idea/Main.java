@@ -143,25 +143,28 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
-  private static boolean checkBundledJava(File java) throws IOException {
+  private static boolean checkBundledJava(File java) throws Exception {
     String[] command = new String[]{java.getPath(), "-version"};
     try {
       Process process = Runtime.getRuntime().exec(command);
       String line = (new BufferedReader(new InputStreamReader(process.getErrorStream()))).readLine();
       if (line != null && (line.toLowerCase().startsWith("java version") || (line.toLowerCase().startsWith("openjdk version")))){
-        String[] javaVersion = line.split("\\.");
-        int i = 1;
-        if (javaVersion.length > i && Integer.parseInt(javaVersion[i]) > 5) {
-          return true;
+        int pos = line.indexOf('.');
+        if (pos > 0){
+          int majorVersion = Integer.parseInt(line.substring(pos-1, pos));
+          int minorVersion = Integer.parseInt(line.substring(pos+1, pos+2));
+          if (majorVersion > 1 || minorVersion > 5) {
+            return true;
+          }
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       System.out.println("updater: the java: " + command[0] + " is invalid.");
     }
     return false;
   }
 
-  private static String getBundledJava(String javaHome) throws IOException {
+  private static String getBundledJava(String javaHome) throws Exception {
     String javaHomeCopy = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/jre";
     File javaCopy = SystemInfoRt.isWindows ? new File(javaHomeCopy + "/bin/java.exe") : new File(javaHomeCopy + "/bin/java");
     if (javaCopy != null && javaCopy.isFile() && checkBundledJava(javaCopy)) {
@@ -177,7 +180,7 @@ public class Main {
     return javaHome;
   }
 
-  private static String getJava() throws IOException {
+  private static String getJava() throws Exception {
     String javaHome = System.getProperty("java.home");
     if (javaHome.toLowerCase().startsWith(PathManager.getHomePath().toLowerCase())) {
       System.out.println("Updater: uses bundled java.");
@@ -186,7 +189,7 @@ public class Main {
     return javaHome + "/bin/java";
   }
 
-  private static void installPatch() throws IOException {
+  private static void installPatch() throws Exception {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
