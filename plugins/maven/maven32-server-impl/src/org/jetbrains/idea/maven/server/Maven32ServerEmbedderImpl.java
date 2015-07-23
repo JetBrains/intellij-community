@@ -15,9 +15,6 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,19 +24,13 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.*;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
-import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
-import org.apache.maven.artifact.repository.MavenArtifactRepository;
-import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.*;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
@@ -509,14 +500,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
                         boolean alwaysUpdateSnapshots) throws RemoteException {
 
     try {
-      // replace some plexus components
-      myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
-      myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
-      myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
-      myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
-      myContainer.addComponent(getComponent(ModelInterpolator.class, "ide"), ModelInterpolator.class.getName());
-      myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
-                               org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
+      customizeComponents();
 
       ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomMaven32ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
@@ -534,6 +518,17 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     catch (Exception e) {
       throw rethrowException(e);
     }
+  }
+
+  public void customizeComponents() throws RemoteException {
+    // replace some plexus components
+    myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
+    myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
+    myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
+    myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
+    myContainer.addComponent(getComponent(ModelInterpolator.class, "ide"), ModelInterpolator.class.getName());
+    myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
+                             org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
   }
 
   private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
@@ -1212,32 +1207,9 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     // do nothing
   }
 
-  @NotNull
   @Override
-  public List<String> retrieveAvailableVersions(@NotNull String groupId, @NotNull String artifactId, @NotNull String remoteRepositoryUrl)
-    throws RemoteException {
-    try {
-      Artifact artifact =
-        new DefaultArtifact(groupId, artifactId, "", Artifact.SCOPE_COMPILE, "pom", null, new DefaultArtifactHandler("pom"));
-      ArtifactRepository remoteRepository = new MavenArtifactRepository(
-        "id",
-        remoteRepositoryUrl,
-        getComponent(ArtifactRepositoryLayout.class),
-        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN),
-        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN));
-      List<ArtifactVersion> versions = getComponent(ArtifactMetadataSource.class)
-        .retrieveAvailableVersions(artifact, myLocalRepository, Collections.singletonList(remoteRepository));
-      return Lists.newArrayList(Iterables.transform(versions, new Function<ArtifactVersion, String>() {
-        @Override
-        public String apply(ArtifactVersion version) {
-          return version.toString();
-        }
-      }));
-    }
-    catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
-    }
-    return Collections.emptyList();
+  protected ArtifactRepository getLocalRepository() {
+    return myLocalRepository;
   }
 
   public interface Computable<T> {

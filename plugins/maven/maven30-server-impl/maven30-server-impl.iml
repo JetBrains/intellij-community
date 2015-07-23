@@ -18,7 +18,10 @@
           <root url="file://$MODULE_DIR$/lib/maven3/lib" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://C:/maven/apache-maven-3.0.5/lib/aether-api-1.13.1-sources.jar!/" />
+          <root url="jar://C:/maven/apache-maven-3.0.5/lib/aether-impl-1.13.1-sources.jar!/" />
+        </SOURCES>
         <jarDirectory url="file://$MODULE_DIR$/lib/maven3/lib" recursive="false" />
       </library>
     </orderEntry>
