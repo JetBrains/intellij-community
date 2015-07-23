@@ -16,7 +16,6 @@
 package org.jetbrains.jps.devkit.builder
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtil.getFileName
@@ -33,7 +32,10 @@ import org.jetbrains.platform.loader.repository.PlatformRepository
 import org.jetbrains.platform.loader.repository.RuntimeModuleId
 import java.io.File
 import java.security.MessageDigest
-import java.util.*
+import java.util.ArrayList
+import java.util.HashMap
+import java.util.HashSet
+import java.util.LinkedHashMap
 
 /**
  * @author nik
@@ -69,8 +71,8 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
         continue
       }
 
-      val pluginXml = findPluginXml(pluginName, includedModules.keySet())
-      println("$pluginName (${pluginXml.getFirst()}):)")
+      val (pluginXml, mainModule) = findPluginXml(pluginName, includedModules.keySet())
+      println("$pluginName ($pluginXml):)")
       val md5 = MessageDigest.getInstance("MD5")
       val buffer = ByteArray(16 * 1024)
       val libraryName = includedModulesNames.flatMap { collectDependencies(repo, RuntimeModuleId.module(it.key)) }
@@ -92,10 +94,10 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
         println(" libraries:\n  ${includedLibraries.keySet().join("\n  ")}")
       }
       val afterTags = listOf("name", "id", "description", "version", "vendor")
-      val text = pluginXml.first.readText()
-      val pluginXmlRoot = JDOMUtil.load(pluginXml.first)
-      val modulesAndScopes = includedModules.mapTo(ArrayList<Pair<String, String?>>()) { Pair(it.key.getName(), getScope(it.value, pluginXmlRoot)) }
-      includedLibraries.mapTo(modulesAndScopes) { Pair(it.key, getScope(it.value, pluginXmlRoot))}
+      val text = pluginXml.readText()
+      val pluginXmlRoot = JDOMUtil.load(pluginXml)
+      val modulesAndScopes = includedModules.mapTo(ArrayList<Pair<String, String?>>()) { Pair(it.key.getName(), getScope(it.value, it.key, pluginXmlRoot, mainModule)) }
+      includedLibraries.mapTo(modulesAndScopes) { Pair(it.key, getScope(it.value, null, pluginXmlRoot, mainModule))}
       val modulesTag = "  <modules>\n${modulesAndScopes.map { "    <module${it.second?.let{" scope=\"$it\""}?:""}>${it.first}</module>" }.join("\n")}\n  </modules>\n"
 
       val insertStart: Int
@@ -106,13 +108,13 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
       }
       else {
         val insertAfter = afterTags.map { text.indexOf("</$it>") }.filter { it != -1 && !text.substring(0, it).contains("<extensions") }.max()
-            ?: throw RuntimeException("Cannot find place to insert modules in ${pluginXml.first}")
+            ?: throw RuntimeException("Cannot find place to insert modules in $pluginXml")
         insertStart = text.indexOf('\n', insertAfter) + 1
         insertEnd = insertStart
       }
       val modifiedText = text.replaceRange(insertStart, insertEnd, modulesTag)
-      if (pluginName == "GwtStudio") {
-        pluginXml.first.writeText(modifiedText)
+      if (pluginName in setOf("GwtStudio", "sass")) {
+        pluginXml.writeText(modifiedText)
       }
 
       pluginsProcessed++
@@ -125,7 +127,12 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
       project.getModules().firstOrNull { it.getName() == name } ?: throw RuntimeException("Module '$name' not found")
 }
 
-private fun getScope(jar: IntellijJarInfo, pluginXmlRoot: Element): String? {
+private fun getScope(jar: IntellijJarInfo, module: JpsModule?, pluginXmlRoot: Element, mainModule: JpsModule): String? {
+  if (module == mainModule) return null;
+
+  if (jar.getIncludedModules().any {it.getModuleId().getStringId() == mainModule.getName()}) {
+    return "embedded"
+  }
   val dir = jar.getJarFile().getParentFile()
   val includeInIde = dir.getName() == "lib" && dir.getParentFile().getName() == jar.getPluginName()
   val externalBuildJars = pluginXmlRoot.getChildren().flatMap { it.getChildren("compileServer.plugin") }.flatMap { it.getAttributeValue("classpath").split(',') }
@@ -158,7 +165,7 @@ private fun findPluginXml(pluginName: String, modules: Set<JpsModule>): Pair<Fil
           root.asTyped(JavaResourceRootType.RESOURCE)!!.getProperties().getRelativeOutputPath()
         val pluginXml = File(root.getFile(), StringUtil.trimStart(StringUtil.trimStart("META-INF/plugin.xml", prefix), "/"))
         if (pluginXml.isFile()) {
-          return Pair.create(pluginXml, module)
+          return Pair(pluginXml, module)
         }
       }
     }
