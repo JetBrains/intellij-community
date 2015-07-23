@@ -28,7 +28,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,13 +72,13 @@ public class RunInspectionAction extends GotoActionBase {
     final GotoInspectionModel model = new GotoInspectionModel(project);
     showNavigationPopup(e, model, new GotoActionCallback<Object>() {
       @Override
-      protected ChooseByNameFilter<Object> createFilter(@NotNull ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<Object> createFilter(@NotNull ChooseByNameViewModel popup) {
         popup.setSearchInAnyPlace(true);
         return super.createFilter(popup);
       }
 
       @Override
-      public void elementChosen(ChooseByNamePopup popup, final Object element) {
+      public void elementChosen(ChooseByNameViewModel popup, final Object element) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {

@@ -25,7 +25,7 @@ public interface ChooseByNameItemProvider {
   @NotNull
   List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern);
 
-  boolean filterElements(@NotNull ChooseByNameBase base,
+  boolean filterElements(@NotNull ChooseByNameViewModel base,
                          @NotNull String pattern,
                          boolean everywhere,
                          @NotNull ProgressIndicator cancelled,

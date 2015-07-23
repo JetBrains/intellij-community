@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -42,7 +42,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
+  public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull String pattern,
                                 boolean everywhere,
                                 @NotNull ProgressIndicator indicator,

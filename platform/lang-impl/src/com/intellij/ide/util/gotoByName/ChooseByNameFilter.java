@@ -43,7 +43,7 @@ public abstract class ChooseByNameFilter<T> {
   /**
    * a parent popup
    */
-  private final ChooseByNamePopup myParentPopup;
+  private final ChooseByNameViewModel myParentPopup;
   /**
    * action toolbar
    */
@@ -67,13 +67,12 @@ public abstract class ChooseByNameFilter<T> {
 
   /**
    * A constructor
-   *
-   * @param popup               a parent popup
+   *  @param popup               a parent popup
    * @param model               a model for popup
    * @param filterConfiguration storage for selected filter values
    * @param project             a context project
    */
-  public ChooseByNameFilter(@NotNull ChooseByNamePopup popup,
+  public ChooseByNameFilter(@NotNull ChooseByNameViewModel popup,
                             @NotNull FilteringGotoByModel<T> model,
                             @NotNull ChooseByNameFilterConfiguration<T> filterConfiguration,
                             @NotNull Project project) {

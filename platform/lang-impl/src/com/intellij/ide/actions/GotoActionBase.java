@@ -111,11 +111,11 @@ public abstract class GotoActionBase extends AnAction {
 
   protected abstract static class GotoActionCallback<T> {
     @Nullable
-    protected ChooseByNameFilter<T> createFilter(@NotNull ChooseByNamePopup popup) {
+    protected ChooseByNameFilter<T> createFilter(@NotNull ChooseByNameViewModel popup) {
       return null;
     }
 
-    public abstract void elementChosen(ChooseByNamePopup popup, Object element);
+    public abstract void elementChosen(ChooseByNameViewModel popup, Object element);
   }
 
   protected static Pair<String, Integer> getInitialText(boolean useEditorSelection, AnActionEvent e) {
@@ -196,20 +196,19 @@ public abstract class GotoActionBase extends AnAction {
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
     showNavigationPopup(callback, findUsagesTitle,
-                        ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
-                                                      mayRequestOpenInCurrentWindow,
-                                                      start.second), allowMultipleSelection);
+                        ChooseByNameViewModelProvider
+                          .createChooseByNameViewModel(model, itemProvider, project, mayRequestOpenInCurrentWindow, start), allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
-                                         final ChooseByNamePopup popup) {
+                                         final ChooseByNameViewModel popup) {
     showNavigationPopup(callback, findUsagesTitle, popup, true);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
-                                         final ChooseByNamePopup popup,
+                                         final ChooseByNameViewModel popup,
                                          final boolean allowMultipleSelection) {
 
     final Class startedAction = myInAction;
@@ -258,6 +257,12 @@ public abstract class GotoActionBase extends AnAction {
       }
     }, ModalityState.current(), allowMultipleSelection);
 
+    if (popup instanceof ChooseByNameBase) {
+      setupHistory((ChooseByNameBase)popup);
+    }
+  }
+
+  private void setupHistory(ChooseByNameBase popup) {
     final JTextField editor = popup.getTextField();
 
     final DocumentAdapter historyResetListener = new DocumentAdapter() {

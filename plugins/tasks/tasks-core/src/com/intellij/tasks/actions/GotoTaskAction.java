@@ -87,7 +87,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override
-      public void elementChosen(ChooseByNamePopup popup, Object element) {
+      public void elementChosen(ChooseByNameViewModel popup, Object element) {
         TaskManager taskManager = TaskManager.getManager(project);
         if (element instanceof TaskPsiElement) {
           Task task = ((TaskPsiElement)element).getTask();

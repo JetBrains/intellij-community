@@ -49,7 +49,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Override
-  public boolean filterElements(@NotNull final ChooseByNameBase base,
+  public boolean filterElements(@NotNull final ChooseByNameViewModel base,
                                 @NotNull final String pattern,
                                 boolean everywhere,
                                 @NotNull final ProgressIndicator indicator,
@@ -188,7 +188,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String getQualifierPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
+  private static String getQualifierPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     pattern = base.transformPattern(pattern);
     final String[] separators = base.getModel().getSeparators();
     int lastSeparatorOccurrence = 0;
@@ -203,7 +203,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
+  private static String getNamePattern(@NotNull ChooseByNameViewModel base, String pattern) {
     String transformedPattern = base.transformPattern(pattern);
     return getNamePattern(base.getModel(), transformedPattern);
   }
@@ -223,7 +223,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static List<String> split(@NotNull String s, @NotNull ChooseByNameBase base) {
+  private static List<String> split(@NotNull String s, @NotNull ChooseByNameViewModel base) {
     List<String> answer = new ArrayList<String>();
     for (String token : StringUtil.tokenize(s, StringUtil.join(base.getModel().getSeparators(), ""))) {
       if (!token.isEmpty()) {
@@ -235,7 +235,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   private static MatchResult matchQualifier(@NotNull Object element,
-                                            @NotNull final ChooseByNameBase base,
+                                            @NotNull final ChooseByNameViewModel base,
                                             @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
     final String name = base.getModel().getFullName(element);
     if (name == null) return null;
@@ -278,7 +278,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(@NotNull String qualifierPattern, @NotNull final ChooseByNameBase base) {
+  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(@NotNull String qualifierPattern, @NotNull final ChooseByNameViewModel base) {
     return ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
       @NotNull
       @Override
@@ -306,7 +306,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  private static void processNamesByPattern(@NotNull final ChooseByNameBase base,
+  private static void processNamesByPattern(@NotNull final ChooseByNameViewModel base,
                                             @NotNull final String[] names,
                                             @NotNull final String pattern,
                                             final ProgressIndicator indicator,
@@ -329,7 +329,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String convertToMatchingPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
+  private static String convertToMatchingPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     pattern = removeModelSpecificMarkup(base.getModel(), pattern);
 
     if (!base.canShowListForEmptyPattern()) {
@@ -340,7 +340,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameBase base, @NotNull String pattern) {
+  private static String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     String trimmedPattern;
     if (base.isSearchInAnyPlace() && !(trimmedPattern = pattern.trim()).isEmpty() && trimmedPattern.length() > 1) {
       pattern = "*" + pattern;
@@ -357,7 +357,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Nullable
-  private static MatchResult matches(@NotNull ChooseByNameBase base,
+  private static MatchResult matches(@NotNull ChooseByNameViewModel base,
                                      @NotNull String pattern,
                                      @NotNull MinusculeMatcher matcher,
                                      @Nullable String name) {

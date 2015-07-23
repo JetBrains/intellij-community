@@ -95,7 +95,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
     boolean hasDollar = namePattern.contains("$");
     if (hasDollar) {
-      Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(namePattern);
+      Matcher matcher = ChooseByNameBase.patternToDetectAnonymousClasses.matcher(namePattern);
       if (matcher.matches()) {
         namePattern = matcher.group(1);
         hasDollar = namePattern.contains("$");

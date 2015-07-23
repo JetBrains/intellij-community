@@ -17,10 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
-import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,12 +59,12 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     final GotoFileModel gotoFileModel = new GotoFileModel(project);
     GotoActionCallback<FileType> callback = new GotoActionCallback<FileType>() {
       @Override
-      protected ChooseByNameFilter<FileType> createFilter(@NotNull ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<FileType> createFilter(@NotNull ChooseByNameViewModel popup) {
         return new GotoFileFilter(popup, gotoFileModel, project);
       }
 
       @Override
-      public void elementChosen(final ChooseByNamePopup popup, final Object element) {
+      public void elementChosen(final ChooseByNameViewModel popup, final Object element) {
         if (element == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -93,7 +90,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
   }
 
   protected static class GotoFileFilter extends ChooseByNameFilter<FileType> {
-    GotoFileFilter(final ChooseByNamePopup popup, GotoFileModel model, final Project project) {
+    GotoFileFilter(final ChooseByNameViewModel popup, GotoFileModel model, final Project project) {
       super(popup, model, GotoFileConfiguration.getInstance(project), project);
     }
 

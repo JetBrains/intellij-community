@@ -74,14 +74,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
                                            " to open in current window" : null;
   }
 
-  public String getEnteredText() {
-    return myTextField.getText();
-  }
-
-  public int getSelectedIndex() {
-    return myList.getSelectedIndex();
-  }
-
   @Override
   protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
@@ -340,10 +332,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("([^:]+)(?::|@|,|)\\[?(\\d+)?(?:(?:\\D)(\\d+)?)?\\]?");
-  public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
-  private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
-
   @Override
   public String transformPattern(String pattern) {
     final ChooseByNameModel model = getModel();
@@ -380,61 +368,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return pattern;
   }
 
-  public int getLinePosition() {
-    return getLineOrColumn(true);
-  }
-
-  private int getLineOrColumn(final boolean line) {
-    final Matcher matcher = patternToDetectLinesAndColumns.matcher(getTrimmedText());
-    if (matcher.matches()) {
-      final int groupNumber = line ? 2 : 3;
-      try {
-        if (groupNumber <= matcher.groupCount()) {
-          final String group = matcher.group(groupNumber);
-          if (group != null) return Integer.parseInt(group) - 1;
-        }
-        if (!line && getLineOrColumn(true) != -1) return 0;
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-
-    return -1;
-  }
-
-  @Nullable
-  public String getPathToAnonymous() {
-    final Matcher matcher = patternToDetectAnonymousClasses.matcher(getTrimmedText());
-    if (matcher.matches()) {
-      String path = matcher.group(2);
-      if (path != null) {
-        path = path.trim();
-        if (path.endsWith("$") && path.length() >= 2) {
-          path = path.substring(0, path.length() - 2);
-        }
-        if (!path.isEmpty()) return path;
-      }
-    }
-
-    return null;
-  }
-
-  public int getColumnPosition() {
-    return getLineOrColumn(false);
-  }
-
-  @Nullable
-  public String getMemberPattern() {
-    final String enteredText = getTrimmedText();
-    final int index = enteredText.lastIndexOf('#');
-    if (index == -1) {
-      return null;
-    }
-
-    String name = enteredText.substring(index + 1).trim();
-    return StringUtil.isEmpty(name) ? null : name;
-  }
-
   public void registerAction(@NonNls String aActionName, KeyStroke keyStroke, Action aAction) {
     if (myInputMap == null) myInputMap = new InputMap();
     if (myActionMap == null) myActionMap = new ActionMap();
@@ -442,10 +375,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myActionMap.put(aActionName, aAction);
   }
 
+  @Override
   public String getAdText() {
     return myAdText;
   }
 
+  @Override
   public void setAdText(final String adText) {
     myAdText = adText;
   }

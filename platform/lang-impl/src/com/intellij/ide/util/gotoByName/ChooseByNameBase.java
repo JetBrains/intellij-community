@@ -34,34 +34,24 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
@@ -76,9 +66,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
@@ -101,16 +89,9 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public abstract class ChooseByNameBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
-  protected final Project myProject;
-  protected final ChooseByNameModel myModel;
-  protected ChooseByNameItemProvider myProvider;
-  protected final String myInitialText;
-  private boolean mySearchInAnyPlace = false;
+public abstract class ChooseByNameBase extends ChooseByNameViewModel {
 
   protected Component myPreviouslyFocusedComponent;
-  private boolean myInitialized;
 
   protected final JPanelProvider myTextFieldPanel = new JPanelProvider();// Located in the layered pane
   protected final MyTextField myTextField = new MyTextField();
@@ -125,64 +106,13 @@ public abstract class ChooseByNameBase {
   protected JScrollPane myListScrollPane; // Located in the layered pane
   private final MyListModel<Object> myListModel = new MyListModel<Object>();
   protected final JList myList = new JBList(myListModel);
-  private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
-  private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
-
-  protected ChooseByNamePopupComponent.Callback myActionListener;
-
-  protected final Alarm myAlarm = new Alarm();
 
   private final ListUpdater myListUpdater = new ListUpdater();
 
-  private boolean myDisposedFlag = false;
-  private ActionCallback myPostponedOkAction;
-
-  private final String[][] myNames = new String[2][];
-  private volatile CalcElementsThread myCalcElementsThread;
-  private static int VISIBLE_LIST_SIZE_LIMIT = 10;
-  private int myListSizeIncreasing = 30;
-  private int myMaximumListSizeLimit = 30;
-  @NonNls private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
-  @NonNls private static final String NOT_FOUND_CARD = "nfound";
-  @NonNls private static final String CHECK_BOX_CARD = "chkbox";
-  @NonNls private static final String SEARCHING_CARD = "searching";
-  private final int myRebuildDelay;
-
-  private final Alarm myHideAlarm = new Alarm();
-  private boolean myShowListAfterCompletionKeyStroke = false;
   protected JBPopup myTextPopup;
   protected JBPopup myDropdownPopup;
 
-  private boolean myClosedByShiftEnter = false;
-  protected final int myInitialIndex;
-  private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
-  protected boolean myInitIsDone;
-  static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
-  private boolean myFixLostTyping = true;
-  private boolean myAlwaysHasMore = false;
-
-  public boolean checkDisposed() {
-    if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
-      myPostponedOkAction.setRejected();
-    }
-
-    return myDisposedFlag;
-  }
-
-  public void setDisposed(boolean disposedFlag) {
-    myDisposedFlag = disposedFlag;
-    if (disposedFlag) {
-      setNamesSync(true, null);
-      setNamesSync(false, null);
-    }
-  }
-
-  private void setNamesSync(boolean checkboxState, @Nullable String[] value) {
-    synchronized (myNames) {
-      myNames[checkboxState ? 1 : 0] = value;
-    }
-  }
 
   /**
    * @param initialText initial text which will be in the lookup text field
@@ -207,36 +137,13 @@ public abstract class ChooseByNameBase {
                              @NotNull ChooseByNameItemProvider provider,
                              String initialText,
                              final int initialIndex) {
-    myProject = project;
-    myModel = model;
-    myInitialText = initialText;
+    super(project, model, provider, initialText, initialIndex);
     myProvider = provider;
-    myInitialIndex = initialIndex;
-    mySearchInAnyPlace = Registry.is("ide.goto.middle.matching") && model.useMiddleMatching();
-    myRebuildDelay = Registry.intValue("ide.goto.rebuild.delay");
-
     myTextField.setText(myInitialText);
-    myInitIsDone = true;
   }
 
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
     myShowListAfterCompletionKeyStroke = showListAfterCompletionKeyStroke;
-  }
-
-  public boolean isSearchInAnyPlace() {
-    return mySearchInAnyPlace;
-  }
-
-  public void setSearchInAnyPlace(boolean searchInAnyPlace) {
-    mySearchInAnyPlace = searchInAnyPlace;
-  }
-
-  public boolean isClosedByShiftEnter() {
-    return myClosedByShiftEnter;
-  }
-
-  public boolean isOpenInCurrentWindowRequested() {
-    return isClosedByShiftEnter();
   }
 
   /**
@@ -244,6 +151,7 @@ public abstract class ChooseByNameBase {
    *
    * @param toolArea a tool area component
    */
+  @Override
   public void setToolArea(JComponent toolArea) {
     if (myToolArea != null) {
       throw new IllegalStateException("Tool area is modifiable only before invoke()");
@@ -251,10 +159,7 @@ public abstract class ChooseByNameBase {
     myToolArea = toolArea;
   }
 
-  public void setFindUsagesTitle(@Nullable String findUsagesTitle) {
-    myFindUsagesTitle = findUsagesTitle;
-  }
-
+  @Override
   public void invoke(final ChooseByNamePopupComponent.Callback callback,
                      final ModalityState modalityState,
                      boolean allowMultipleSelection) {
@@ -365,6 +270,16 @@ public abstract class ChooseByNameBase {
       if (myHint == null || !myHint.isVisible()) return;
       PopupPositionManager.positionPopupInBestPosition(myHint, null, null);
     }
+  }
+
+  @Override
+  public String getEnteredText() {
+    return myTextField.getText();
+  }
+
+  @Override
+  public int getSelectedIndex() {
+    return myList.getSelectedIndex();
   }
 
   /**
@@ -720,28 +635,13 @@ public abstract class ChooseByNameBase {
     myCardContainer.add(wrapper, cardId);
   }
 
+  @Override
   public void setCheckBoxShortcut(ShortcutSet shortcutSet) {
     myCheckBoxShortcut = shortcutSet;
   }
 
-  @NotNull
-  private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
-    Set<KeyStroke> result = new HashSet<KeyStroke>();
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
-    if (shortcuts == null) {
-      return result;
-    }
-    for (Shortcut shortcut : shortcuts) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-        result.add(keyboardShortcut.getFirstKeyStroke());
-      }
-    }
-    return result;
-  }
-
-  private void hideHint() {
+  @Override
+  protected void hideHint() {
     if (!myTextFieldPanel.focusRequested()) {
       doClose(false);
       myTextFieldPanel.hideHint();
@@ -751,12 +651,14 @@ public abstract class ChooseByNameBase {
   /**
    * Default rebuild list. It uses {@link #myRebuildDelay} and current modality state.
    */
+  @Override
   public void rebuildList(boolean initial) {
     // TODO this method is public, because the chooser does not listed for the model.
     rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, ModalityState.current(), null);
   }
 
-  private void updateDocumentation() {
+  @Override
+  protected void updateDocumentation() {
     final JBPopup hint = myTextFieldPanel.getHint();
     final Object element = getChosenElement();
     if (hint != null) {
@@ -772,10 +674,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  public String transformPattern(String pattern) {
-    return pattern;
-  }
-
+  @Override
   protected void doClose(final boolean ok) {
     if (checkDisposed()) return;
 
@@ -789,10 +688,7 @@ public abstract class ChooseByNameBase {
     myListModel.clear();
   }
 
-  protected boolean closeForbidden(boolean ok) {
-    return false;
-  }
-
+  @Override
   protected void cancelListUpdater() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (checkDisposed()) return;
@@ -805,79 +701,10 @@ public abstract class ChooseByNameBase {
     myListUpdater.cancelAll();
   }
 
-  private boolean postponeCloseWhenListReady(boolean ok) {
-    if (!isToFixLostTyping()) return false;
-
-    final String text = getTrimmedText();
-    if (ok && myCalcElementsThread != null && !text.isEmpty()) {
-      myPostponedOkAction = new ActionCallback();
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(myPostponedOkAction);
-      return true;
-    }
-
-    return false;
-  }
-
+  @Override
   @NotNull public String getTrimmedText() {
     return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
-
-  public void setFixLostTyping(boolean fixLostTyping) {
-    myFixLostTyping = fixLostTyping;
-  }
-
-  protected boolean isToFixLostTyping() {
-    return myFixLostTyping && Registry.is("actionSystem.fixLostTyping");
-  }
-
-  @NotNull
-  private synchronized String[] ensureNamesLoaded(boolean checkboxState) {
-    String[] cached = getNamesSync(checkboxState);
-    if (cached != null) return cached;
-
-    if (checkboxState &&
-        myModel instanceof ContributorsBasedGotoByModel &&
-        ((ContributorsBasedGotoByModel)myModel).sameNamesForProjectAndLibraries() &&
-        getNamesSync(false) != null) {
-      // there is no way in indices to have different keys for project symbols vs libraries, we always have same ones
-      String[] allNames = getNamesSync(false);
-      setNamesSync(true, allNames);
-      return allNames;
-    }
-
-    String[] result = myModel.getNames(checkboxState);
-    //noinspection ConstantConditions
-    assert result != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
-    setNamesSync(checkboxState, result);
-
-    return result;
-  }
-
-  @NotNull
-  public String[] getNames(boolean checkboxState) {
-    if (ourLoadNamesEachTime) {
-      setNamesSync(checkboxState, null);
-      return ensureNamesLoaded(checkboxState);
-    }
-    return getNamesSync(checkboxState);
-  }
-
-  private String[] getNamesSync(boolean checkboxState) {
-    synchronized (myNames) {
-      return myNames[checkboxState ? 1 : 0];
-    }
-  }
-
-  @NotNull
-  protected Set<Object> filter(@NotNull Set<Object> elements) {
-    return elements;
-  }
-
-  protected abstract boolean isCheckboxVisible();
-
-  protected abstract boolean isShowListForEmptyPattern();
-
-  protected abstract boolean isCloseByFocusLost();
 
   protected void showTextFieldPanel() {
     final JLayeredPane layeredPane = getLayeredPane();
@@ -927,26 +754,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private JLayeredPane getLayeredPane() {
-    JLayeredPane layeredPane;
-    final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
-
-    Component parent = UIUtil.findUltimateParent(window);
-
-    if (parent instanceof JFrame) {
-      layeredPane = ((JFrame)parent).getLayeredPane();
-    }
-    else if (parent instanceof JDialog) {
-      layeredPane = ((JDialog)parent).getLayeredPane();
-    }
-    else {
-      throw new IllegalStateException("cannot find parent window: project=" + myProject +
-                                      (myProject != null ? "; open=" + myProject.isOpen() : "") +
-                                      "; window=" + window);
-    }
-    return layeredPane;
-  }
-
+  @Override
   protected void rebuildList(final int pos,
                              final int delay,
                              @NotNull final ModalityState modalityState,
@@ -1007,7 +815,8 @@ public abstract class ChooseByNameBase {
     });
   }
 
-  private void backgroundCalculationFinished(Collection<?> result, int toSelect) {
+  @Override
+  protected void backgroundCalculationFinished(Collection<?> result, int toSelect) {
     myCalcElementsThread = null;
     setElementsToList(toSelect, result);
     myList.repaint();
@@ -1018,18 +827,8 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  public void scheduleCalcElements(String text,
-                                   boolean checkboxState,
-                                   ModalityState modalityState,
-                                   Consumer<Set<?>> callback) {
-    new CalcElementsThread(text, checkboxState, callback, modalityState, false).scheduleThread();
-  }
-
-  private boolean isShowListAfterCompletionKeyStroke() {
-    return myShowListAfterCompletionKeyStroke;
-  }
-
-  private void setElementsToList(int pos, @NotNull Collection<?> elements) {
+  @Override
+  protected void setElementsToList(int pos, @NotNull Collection<?> elements) {
     myListUpdater.cancelAll();
     if (checkDisposed()) return;
     if (elements.isEmpty()) {
@@ -1066,7 +865,8 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private int detectBestStatisticalPosition() {
+  @Override
+  protected int detectBestStatisticalPosition() {
     if (myModel instanceof Comparator) {
       return 0;
     }
@@ -1188,35 +988,14 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private void clearPostponedOkAction(boolean success) {
-    if (myPostponedOkAction != null) {
-      if (success) {
-        myPostponedOkAction.setDone();
-      }
-      else {
-        myPostponedOkAction.setRejected();
-      }
-    }
-
-    myPostponedOkAction = null;
-  }
-
-  public boolean hasPostponedAction() {
-    return myPostponedOkAction != null;
-  }
-
-  protected abstract void showList();
-
-  protected abstract void hideList();
-
-  protected abstract void close(boolean isOk);
-
+  @Override
   @Nullable
   public Object getChosenElement() {
     final List<Object> elements = getChosenElements();
     return elements != null && elements.size() == 1 ? elements.get(0) : null;
   }
 
+  @Override
   protected List<Object> getChosenElements() {
     return ContainerUtil.filter(myList.getSelectedValues(), new Condition<Object>() {
       @Override
@@ -1224,9 +1003,6 @@ public abstract class ChooseByNameBase {
         return o != EXTRA_ELEM && o != NON_PREFIX_SEPARATOR;
       }
     });
-  }
-
-  protected void chosenElementMightChange() {
   }
 
   protected final class MyTextField extends JTextField implements PopupOwner, TypeSafeDataProvider {
@@ -1423,10 +1199,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  public ChooseByNameItemProvider getProvider() {
-    return myProvider;
-  }
-
+  @Override
   protected void handlePaste(String str) {
     if (!myInitIsDone) return;
     if (myModel instanceof GotoClassModel2 && isFileName(str)) {
@@ -1448,23 +1221,6 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private static boolean isFileName(String name) {
-    final int index = name.lastIndexOf('.');
-    if (index > 0) {
-      String ext = name.substring(index + 1);
-      if (ext.contains(":")) {
-        ext = ext.substring(0, ext.indexOf(':'));
-      }
-      if (FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(ext) != UnknownFileType.INSTANCE) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static final String EXTRA_ELEM = "...";
-  public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
-
   public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
@@ -1476,180 +1232,32 @@ public abstract class ChooseByNameBase {
     return panel;
   }
 
-  private class CalcElementsThread implements ReadTask {
-    private final String myPattern;
-    private volatile boolean myCheckboxState;
-    private volatile boolean myScopeExpanded;
-    private final Consumer<Set<?>> myCallback;
-    private final ModalityState myModalityState;
 
-    private final ProgressIndicator myProgress = new ProgressIndicatorBase();
-
-    CalcElementsThread(String pattern,
-                       boolean checkboxState,
-                       Consumer<Set<?>> callback,
-                       @NotNull ModalityState modalityState,
-                       boolean scopeExpanded) {
-      myPattern = pattern;
-      myCheckboxState = checkboxState;
-      myCallback = callback;
-      myModalityState = modalityState;
-      myScopeExpanded = scopeExpanded;
-    }
-
-    private final Alarm myShowCardAlarm = new Alarm();
-
-    void scheduleThread() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      myCalcElementsThread = this;
-      showCard(SEARCHING_CARD, 200);
-      ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, this);
-    }
-
-    @Override
-    public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-      if (myProject != null && myProject.isDisposed()) return;
-
-      final Set<Object> elements = new LinkedHashSet<Object>();
-
-      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
-      addElementsByPattern(myPattern, elements, myProgress, myCheckboxState);
-
-      if (myProgress.isCanceled()) {
-        myShowCardAlarm.cancelAllRequests();
-        return;
-      }
-
-      if (elements.isEmpty() && !myCheckboxState) {
-        myScopeExpanded = true;
-        myCheckboxState = true;
-        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
-        addElementsByPattern(myPattern, elements, myProgress, true);
-      }
-      final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
-      showCard(cardToShow, 0);
-
-      final boolean edt = myModel instanceof EdtSortingModel;
-      final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!checkDisposed() && !myProgress.isCanceled()) {
-            CalcElementsThread currentBgProcess = myCalcElementsThread;
-            LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
-            myCallback.consume(edt ? filter(elements) : filtered);
-          }
-        }
-      }, myModalityState);
-    }
-
-    @Override
-    public void onCanceled(@NotNull ProgressIndicator indicator) {
-      LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
-      new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded).scheduleThread();
-    }
-
-    private void addElementsByPattern(@NotNull String pattern,
-                                      @NotNull final Set<Object> elements,
-                                      @NotNull final ProgressIndicator indicator,
-                                      boolean everywhere) {
-      long start = System.currentTimeMillis();
-      myProvider.filterElements(
-        ChooseByNameBase.this, pattern, everywhere,
-        indicator,
-        new Processor<Object>() {
-          @Override
-          public boolean process(Object o) {
-            if (indicator.isCanceled()) return false;
-            elements.add(o);
-
-            if (isOverflow(elements)) {
-              elements.add(EXTRA_ELEM);
-              return false;
-            }
-            return true;
-          }
-        }
-      );
-      if (myAlwaysHasMore) {
-        elements.add(EXTRA_ELEM);
-      }
-      if (ContributorsBasedGotoByModel.LOG.isDebugEnabled()) {
-        long end = System.currentTimeMillis();
-        ContributorsBasedGotoByModel.LOG.debug("addElementsByPattern("+pattern+"): "+(end-start)+"ms; "+elements.size()+" elements");
-      }
-    }
-
-    private void showCard(final String card, final int delay) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      myShowCardAlarm.cancelAllRequests();
-      myShowCardAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (!myProgress.isCanceled()) {
-            myCard.show(myCardContainer, card);
-          }
-        }
-      }, delay, myModalityState);
-    }
-
-    protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
-      return elementsArray.size() >= myMaximumListSizeLimit;
-    }
-
-    private void cancel() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      myProgress.cancel();
-    }
-
-  }
-
-
-  public boolean canShowListForEmptyPattern() {
-    return isShowListForEmptyPattern() || isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion();
-  }
-
+  @Override
   protected boolean lastKeyStrokeIsCompletion() {
     return myTextField.isCompletionKeyStroke();
   }
 
-  private static Matcher buildPatternMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
-  }
-
-  private static class HintLabel extends JLabel {
-    private HintLabel(String text) {
+  protected static class HintLabel extends JLabel {
+    protected HintLabel(String text) {
       super(text, RIGHT);
       setForeground(Color.darkGray);
     }
   }
 
-  public int getMaximumListSizeLimit() {
-    return myMaximumListSizeLimit;
+  @Override
+  protected void doShowCard(final CalcElementsThread t, final String card, int delay) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    t.myShowCardAlarm.cancelAllRequests();
+    t.myShowCardAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (!t.myProgress.isCanceled()) {
+          myCard.show(myCardContainer, card);
+        }
+      }
+    }, delay, t.myModalityState);
   }
-
-  public void setMaximumListSizeLimit(final int maximumListSizeLimit) {
-    myMaximumListSizeLimit = maximumListSizeLimit;
-  }
-
-  public void setListSizeIncreasing(final int listSizeIncreasing) {
-    myListSizeIncreasing = listSizeIncreasing;
-  }
-
-  public boolean isAlwaysHasMore() {
-    return myAlwaysHasMore;
-  }
-
-  /**
-   * Display <tt>...</tt> item at the end of the list regardless of whether it was filled up or not.
-   * This option can be useful in cases, when it can't be said beforehand, that the next call to {@link ChooseByNameItemProvider}
-   * won't give new items.
-   */
-  public void setAlwaysHasMore(boolean enabled) {
-    myAlwaysHasMore = enabled;
-  }
-
-  private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends AnAction {
     public ShowFindUsagesAction() {
@@ -1779,6 +1387,7 @@ public abstract class ChooseByNameBase {
     public abstract Object[][] getElements();
   }
 
+  @Override
   public JTextField getTextField() {
     return myTextField;
   }

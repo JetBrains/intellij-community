@@ -20,9 +20,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
-import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,7 +59,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     GotoActionModel model = new GotoActionModel(project, component, editor, file);
     GotoActionCallback<Object> callback = new GotoActionCallback<Object>() {
       @Override
-      public void elementChosen(@NotNull ChooseByNamePopup popup, @NotNull Object element) {
+      public void elementChosen(@NotNull ChooseByNameViewModel popup, @NotNull Object element) {
         String enteredText = popup.getTrimmedText();
         openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, e);
       }

@@ -75,7 +75,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   @Override
-  public boolean filterElements(@NotNull final ChooseByNameBase base,
+  public boolean filterElements(@NotNull final ChooseByNameViewModel base,
                                 @NotNull final String pattern,
                                 boolean everywhere,
                                 @NotNull ProgressIndicator cancelled,

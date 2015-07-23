@@ -30,7 +30,7 @@ import java.util.*;
  * @author yole
  */
 public class ChooseByNameLanguageFilter extends ChooseByNameFilter<Language> {
-  public ChooseByNameLanguageFilter(@NotNull ChooseByNamePopup popup,
+  public ChooseByNameLanguageFilter(@NotNull ChooseByNameViewModel popup,
                                     @NotNull FilteringGotoByModel<Language> languageFilteringGotoByModel,
                                     @NotNull ChooseByNameFilterConfiguration<Language> languageChooseByNameFilterConfiguration,
                                     @NotNull Project project) {

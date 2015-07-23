@@ -87,12 +87,12 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     final GotoClassModel2 model = new GotoClassModel2(project);
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
-      protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {
+      protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNameViewModel popup) {
         return new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
       }
 
       @Override
-      public void elementChosen(ChooseByNamePopup popup, Object element) {
+      public void elementChosen(ChooseByNameViewModel popup, Object element) {
         AccessToken token = ReadAction.start();
         try {
           if (element instanceof PsiElement) {
@@ -188,7 +188,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   }
 
   @NotNull
-  private static PsiElement getElement(@NotNull PsiElement element, ChooseByNamePopup popup) {
+  private static PsiElement getElement(@NotNull PsiElement element, ChooseByNameViewModel popup) {
     final String path = popup.getPathToAnonymous();
     if (path != null) {
       final String[] classes = path.split("\\$");
