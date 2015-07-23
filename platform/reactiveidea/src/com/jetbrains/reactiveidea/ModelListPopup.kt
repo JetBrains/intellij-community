@@ -133,6 +133,7 @@ public open class ModelListPopup(val aStep: ListPopupStep<Any>,
         action as MapModel
         val finalChoice = (action["finalChoice"] as PrimitiveModel<Boolean>).value
         handleSelect(finalChoice)
+        clearPopupModel()
       };
     }
   }
