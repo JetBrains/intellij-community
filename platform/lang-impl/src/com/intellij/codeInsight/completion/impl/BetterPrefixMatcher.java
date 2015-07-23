@@ -18,18 +18,24 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.completion.CompletionResult;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class BetterPrefixMatcher extends PrefixMatcher {
   private final PrefixMatcher myOriginal;
+  @Nullable private final CamelHumpMatcher myHumpMatcher;
   private final int myMinMatchingDegree;
 
   public BetterPrefixMatcher(PrefixMatcher original, int minMatchingDegree) {
     super(original.getPrefix());
     myOriginal = original;
+    myHumpMatcher = original instanceof CamelHumpMatcher ? (CamelHumpMatcher)original : null;
     myMinMatchingDegree = minMatchingDegree;
   }
 
@@ -47,6 +53,14 @@ public class BetterPrefixMatcher extends PrefixMatcher {
   
   @Override
   public boolean prefixMatches(@NotNull String name) {
+    if (myHumpMatcher != null) {
+      FList<TextRange> fragments = myHumpMatcher.matchingFragments(name);
+      if (fragments == null || !MinusculeMatcher.isStartMatch(fragments)) {
+        return false;
+      }
+      return myHumpMatcher.matchingDegree(name, fragments) >= myMinMatchingDegree;
+    }
+
     if (!myOriginal.prefixMatches(name) || !myOriginal.isStartMatch(name)) {
       return false;
     }
