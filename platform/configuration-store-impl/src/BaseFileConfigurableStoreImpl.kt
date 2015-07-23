@@ -19,66 +19,58 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StorageData
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import org.jdom.Element
+import kotlin.properties.Delegates
 
-val VERSION_OPTION: String = "version"
+abstract class BaseFileConfigurableStoreImpl(protected val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  val storageManager by Delegates.lazy { createStorageManager() }
 
-abstract class BaseFileConfigurableStoreImpl(protected val myPathMacroManager: PathMacroManager) : ComponentStoreImpl() {
-  private var myStateStorageManager: StateStorageManager? = null
+  override fun getStateStorageManager() = storageManager
 
-  public open class BaseStorageData : StorageData {
-    private var myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION
+  override fun getPathMacroManagerForDefaults() = pathMacroManager
 
-    public constructor(rootElementName: String) : super(rootElementName) {
-    }
+  protected abstract fun createStorageManager(): StateStorageManager
+}
 
-    protected constructor(storageData: BaseStorageData) : super(storageData) {
-    }
-
-    override fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
-      super.load(rootElement, pathMacroSubstitutor, intern)
-
-      val v = rootElement.getAttributeValue(VERSION_OPTION)
-      myVersion = if (v == null) ProjectManagerImpl.CURRENT_FORMAT_VERSION else Integer.parseInt(v)
-    }
-
-    override fun save(newLiveStates: Map<String, Element>): Element {
-      var root = super.save(newLiveStates)
-      if (root == null) {
-        root = Element(myRootElementName)
-      }
-      writeOptions(root, Integer.toString(myVersion))
-      return root
-    }
-
-    protected open fun writeOptions(root: Element, versionString: String) {
-      root.setAttribute(VERSION_OPTION, versionString)
-    }
-
-    override fun clone(): StorageData {
-      return BaseStorageData(this)
-    }
-
-    override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
-      val data = newStorageData as BaseStorageData
-      if (myVersion != data.myVersion) {
-        return null
-      }
-      return super.getChangedComponentNames(newStorageData, substitutor)
-    }
+open class ProjectStorageData : StorageData {
+  companion object {
+    val CURRENT_FORMAT_VERSION = 4
+    val VERSION_OPTION: String = "version"
   }
 
-  override fun getPathMacroManagerForDefaults(): PathMacroManager {
-    return myPathMacroManager
+  private var version = CURRENT_FORMAT_VERSION
+
+  constructor(rootElementName: String) : super(rootElementName) {
   }
 
-  override fun getStateStorageManager(): StateStorageManager {
-    if (myStateStorageManager == null) {
-      myStateStorageManager = createStateStorageManager()
+  protected constructor(storageData: ProjectStorageData) : super(storageData) {
+  }
+
+  override fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
+    super.load(rootElement, pathMacroSubstitutor, intern)
+
+    version = rootElement.getAttributeValue(VERSION_OPTION)?.toInt() ?: CURRENT_FORMAT_VERSION
+  }
+
+  override fun save(newLiveStates: Map<String, Element>): Element {
+    var root = super.save(newLiveStates)
+    if (root == null) {
+      root = Element(myRootElementName)
     }
-    return myStateStorageManager!!
+    writeOptions(root, Integer.toString(version))
+    return root
   }
 
-  protected abstract fun createStateStorageManager(): StateStorageManager
+  override fun clone() = ProjectStorageData(this)
+
+  protected open fun writeOptions(root: Element, versionString: String) {
+    root.setAttribute(VERSION_OPTION, "4")
+  }
+
+  override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
+    if (version != (newStorageData as ProjectStorageData).version) {
+      return null
+    }
+    return super.getChangedComponentNames(newStorageData, substitutor)
+  }
 }

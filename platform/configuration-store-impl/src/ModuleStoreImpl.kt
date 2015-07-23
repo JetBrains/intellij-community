@@ -26,5 +26,5 @@ class ModuleStoreImpl(private val myModule: Module, pathMacroManager: PathMacroM
 
   override fun getMessageBus() = myModule.getMessageBus()
 
-  override fun createStateStorageManager() = ModuleStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myModule)
+  override fun createStorageManager() = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), myModule)
 }

@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jdom.Element
 import java.util.TreeMap
 
-class ModuleFileData : BaseFileConfigurableStoreImpl.BaseStorageData, OptionManager {
+class ModuleFileData : ProjectStorageData, OptionManager {
   private var options: TreeMap<String, String>? = null
   private val module: Module
 
@@ -43,11 +43,11 @@ class ModuleFileData : BaseFileConfigurableStoreImpl.BaseStorageData, OptionMana
   }
 
   override fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
-    super<BaseFileConfigurableStoreImpl.BaseStorageData>.load(rootElement, pathMacroSubstitutor, intern)
+    super<ProjectStorageData>.load(rootElement, pathMacroSubstitutor, intern)
 
     for (attribute in rootElement.getAttributes()) {
       val name = attribute.getName()
-      if (name != VERSION_OPTION && !StringUtil.isEmpty(name)) {
+      if (name != ProjectStorageData.VERSION_OPTION && !StringUtil.isEmpty(name)) {
         options!!.put(name, attribute.getValue())
       }
     }
@@ -65,14 +65,12 @@ class ModuleFileData : BaseFileConfigurableStoreImpl.BaseStorageData, OptionMana
       }
     }
     // need be last for compat reasons
-    super<BaseFileConfigurableStoreImpl.BaseStorageData>.writeOptions(root, versionString)
+    super<ProjectStorageData>.writeOptions(root, versionString)
 
     dirty = false
   }
 
-  override fun clone(): StorageData {
-    return ModuleFileData(this)
-  }
+  override fun clone() = ModuleFileData(this)
 
   override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
     val data = newStorageData as ModuleFileData
@@ -80,7 +78,7 @@ class ModuleFileData : BaseFileConfigurableStoreImpl.BaseStorageData, OptionMana
       return null
     }
 
-    return super<BaseFileConfigurableStoreImpl.BaseStorageData>.getChangedComponentNames(newStorageData, substitutor)
+    return super<ProjectStorageData>.getChangedComponentNames(newStorageData, substitutor)
   }
 
   override fun setOption(key: String, value: String) {
@@ -95,7 +93,5 @@ class ModuleFileData : BaseFileConfigurableStoreImpl.BaseStorageData, OptionMana
     }
   }
 
-  override fun getOptionValue(key: String): String? {
-    return options!!.get(key)
-  }
+  override fun getOptionValue(key: String) = options!!.get(key)
 }

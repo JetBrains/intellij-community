@@ -62,6 +62,8 @@ public abstract class ComponentStoreImpl : IComponentStore {
   private val myComponents = Collections.synchronizedMap(THashMap<String, Any>())
   private val mySettingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
 
+  protected open val defaultStorageChooser: StateStorageChooser<PersistentStateComponent<*>>? = null
+
   override fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
       mySettingsSavingComponents.add(component)
@@ -135,8 +137,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.doThrow(errors)
   }
 
-  TestOnly
-  override fun saveApplicationComponent(component: Any) {
+  override TestOnly fun saveApplicationComponent(component: Any) {
     val externalizationSession = getStateStorageManager().startExternalization() ?: return
 
     commitComponent(externalizationSession, component, null)
@@ -247,9 +248,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   }
 
-  protected open fun getProject(): Project? {
-    return null
-  }
+  protected open fun getProject(): Project? = null
 
   private fun <T> initPersistentComponent(component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
     val stateSpec = StoreUtil.getStateSpec(component)
@@ -302,9 +301,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     return name
   }
 
-  protected open fun getPathMacroManagerForDefaults(): PathMacroManager? {
-    return null
-  }
+  protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
   protected fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val url = DecodeDefaultsUtil.getDefaults(component, componentName) ?: return null
@@ -324,7 +321,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   protected open fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     val storages = stateSpec.storages
-    if (storages.size() == 1) {
+    if (storages.size() == 1 || component is StateStorageChooserEx) {
       return storages
     }
     assert(!storages.isEmpty())
@@ -336,13 +333,9 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return stateStorageChooser.selectStorages(storages, component, operation)
     }
 
-    val defaultStateStorageChooser = getDefaultStateStorageChooser()
-    if (defaultStateStorageChooser != null) {
-      return defaultStateStorageChooser.selectStorages(storages, component, operation)
-    }
-
-    if (component is StateStorageChooserEx) {
-      return storages
+    val defaultChooser = defaultStorageChooser
+    if (defaultChooser != null) {
+      return defaultChooser.selectStorages(storages, component, operation)
     }
 
     var actualStorageCount = 0
@@ -381,13 +374,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     return sorted
   }
 
-  protected open fun optimizeTestLoading(): Boolean {
-    return false
-  }
-
-  protected open fun getDefaultStateStorageChooser(): StateStorageChooser<PersistentStateComponent<*>>? {
-    return null
-  }
+  protected open fun optimizeTestLoading(): Boolean = false
 
   override fun isReloadPossible(componentNames: Set<String>): Boolean {
     for (componentName in componentNames) {

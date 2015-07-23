@@ -158,16 +158,12 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
     init {
       val macroSubstitutor = ApplicationPathMacroManager().createTrackingSubstitutor()
       stateStorageManager = object : StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
-        override fun createStorageData(fileSpec: String, filePath: String): StorageData {
-          return StorageData("application")
-        }
+        override fun createStorageData(fileSpec: String, filePath: String) = StorageData("application")
 
-        override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-          return null
-        }
+        override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = null
 
         override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
-          if (fileSpec == StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + ".xml") {
+          if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
             return null
           }
           return super.getMacroSubstitutor(fileSpec)

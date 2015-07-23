@@ -25,14 +25,14 @@ import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 
-public class DefaultProjectStoreImpl(project: ProjectImpl, private val projectManager: ProjectManagerImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+class DefaultProjectStoreImpl(project: ProjectImpl, private val projectManager: ProjectManagerImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   fun getStateCopy(): Element? {
     val element = projectManager.getDefaultProjectRootElement()
     return element?.clone()
   }
 
-  protected override fun createStateStorageManager(): StateStorageManager {
-    val storage = DefaultProjectStorage(this, myPathMacroManager, projectManager)
+  override protected fun createStorageManager(): StateStorageManager {
+    val storage = DefaultProjectStorage(this, pathMacroManager, projectManager)
     //noinspection deprecation
     return object : StateStorageManager {
       override fun addMacro(macro: String, expansion: String) = throw UnsupportedOperationException("Method addMacro not implemented in " + javaClass)

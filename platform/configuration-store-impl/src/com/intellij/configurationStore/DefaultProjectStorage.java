@@ -49,6 +49,6 @@ public class DefaultProjectStorage extends XmlElementStorage {
   @Override
   @NotNull
   protected StorageData createStorageData() {
-    return new BaseFileConfigurableStoreImpl.BaseStorageData(myRootElementName);
+    return new StorageData(myRootElementName);
   }
 }

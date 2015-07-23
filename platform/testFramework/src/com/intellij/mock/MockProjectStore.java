@@ -37,11 +37,6 @@ import java.util.Set;
  */
 public class MockProjectStore implements IProjectStore {
   @Override
-  public boolean checkVersion() {
-    throw new UnsupportedOperationException("Method checkVersion is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   public void setProjectFilePath(@NotNull final String filePath) {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
   }

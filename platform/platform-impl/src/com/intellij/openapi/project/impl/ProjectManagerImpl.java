@@ -79,8 +79,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ProjectManagerImpl extends ProjectManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
-  public static final int CURRENT_FORMAT_VERSION = 4;
-
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
   private static final Key<MultiMap<StateStorage, VirtualFile>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
 
@@ -427,12 +425,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
     }
 
-    final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) {
+    if (!addToOpened(project)) {
       return false;
     }
-
-    if (!addToOpened(project)) return false;
 
     fireProjectOpened(project);
     DumbService.getInstance(project).queueTask(new DumbModeTask() {

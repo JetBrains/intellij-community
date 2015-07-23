@@ -20,16 +20,23 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 
-public class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
+  override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
+    return if (isDefaultProject) javaClass<DefaultProjectStoreImpl>() else javaClass<ProjectWithModulesStoreImpl>()
+  }
+}
 
+class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   override fun reinitComponent(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     if (super.reinitComponent(componentName, changedStorages)) {
       return true
@@ -37,13 +44,9 @@ public class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager:
 
     for (module in getPersistentModules()) {
       // we have to reinit all modules for component because we don't know affected module
-      getComponentStore(module).reinitComponent(componentName, changedStorages)
+      module.stateStore.reinitComponent(componentName, changedStorages)
     }
     return true
-  }
-
-  private fun getComponentStore(module: Module): IComponentStore {
-    return module.getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore
   }
 
   override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
@@ -51,10 +54,9 @@ public class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager:
     ContainerUtil.addIfNotNull(result, getStateStorageManager().getMacroSubstitutor())
 
     for (module in getPersistentModules()) {
-      ContainerUtil.addIfNotNull(result, getComponentStore(module).getStateStorageManager().getMacroSubstitutor())
+      ContainerUtil.addIfNotNull(result, module.stateStore.getStateStorageManager().getMacroSubstitutor())
     }
-
-    return result.toArray<TrackingPathMacroSubstitutor>(arrayOfNulls<TrackingPathMacroSubstitutor>(result.size()))
+    return result.toTypedArray()
   }
 
   override fun isReloadPossible(componentNames: Set<String>): Boolean {
@@ -63,7 +65,7 @@ public class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager:
     }
 
     for (module in getPersistentModules()) {
-      if (!getComponentStore(module).isReloadPossible(componentNames)) {
+      if (!module.stateStore.isReloadPossible(componentNames)) {
         return false
       }
     }
@@ -71,16 +73,13 @@ public class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager:
     return true
   }
 
-  protected fun getPersistentModules(): Array<Module> {
-    val moduleManager = ModuleManager.getInstance(myProject)
-    return if (moduleManager == null) Module.EMPTY_ARRAY else moduleManager.getModules()
-  }
+  private fun getPersistentModules() = ModuleManager.getInstance(myProject)?.getModules() ?: Module.EMPTY_ARRAY
 
   override protected fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
     super.beforeSave(readonlyFiles)
 
     for (module in getPersistentModules()) {
-      getComponentStore(module).save(readonlyFiles)
+      module.stateStore.save(readonlyFiles)
     }
   }
 }

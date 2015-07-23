@@ -26,50 +26,48 @@ import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.DirectoryStorageData
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StorageData
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.messages.MessageBus
 
-public class ApplicationPathMacroManager : BasePathMacroManager(null)
+class ApplicationPathMacroManager : BasePathMacroManager(null)
 
-class ApplicationStoreImpl(private val myApplication: ApplicationImpl, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
-  private val myStateStorageManager: StateStorageManager
+class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  private val stateStorageManager: StateStorageManager
+
+  companion object {
+    private val DEFAULT_STORAGE_SPEC = "${StoragePathMacros.APP_CONFIG}/${PathManager.DEFAULT_OPTIONS_FILE_NAME}${DirectoryStorageData.DEFAULT_EXT}"
+  }
 
   init {
-    myStateStorageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, myApplication, myApplication.getPicoContainer()) {
-      private var myConfigDirectoryRefreshed: Boolean = false
+    stateStorageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), "application", application, application.getPicoContainer()) {
+      private var configDirectoryRefreshed = false
 
-      override fun createStorageTopicListener(): StateStorage.Listener? {
-        return myApplication.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC)
-      }
+      override fun createStorageTopicListener() = application.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC)
 
-      override fun createStorageData(fileSpec: String, filePath: String): StorageData {
-        return StorageData(ROOT_ELEMENT_NAME)
-      }
+      override fun createStorageData(fileSpec: String, filePath: String) = StorageData(rootTagName)
 
       override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
         if (component is NamedJDOMExternalizable) {
-          return StoragePathMacros.APP_CONFIG + '/' + component.getExternalFileName() + DirectoryStorageData.DEFAULT_EXT
+          return "${StoragePathMacros.APP_CONFIG}/${component.getExternalFileName()}${DirectoryStorageData.DEFAULT_EXT}"
         }
         else {
           return DEFAULT_STORAGE_SPEC
         }
       }
 
-      override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == StoragePathMacros.APP_CONFIG + '/' + PathMacrosImpl.EXT_FILE_NAME + DirectoryStorageData.DEFAULT_EXT) null else super.getMacroSubstitutor(fileSpec)
+      override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}${DirectoryStorageData.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
 
       override fun isUseXmlProlog() = false
 
       override fun beforeFileBasedStorageCreate() {
-        if (myConfigDirectoryRefreshed || (!myApplication.isUnitTestMode() && !myApplication.isDispatchThread())) {
+        if (configDirectoryRefreshed || (!application.isUnitTestMode() && !application.isDispatchThread())) {
           return
         }
 
         try {
-          val configPath = getMacrosValue(StoragePathMacros.ROOT_CONFIG)
-          if (configPath == null) {
+          val configPath = expandMacros(StoragePathMacros.ROOT_CONFIG)
+          if (configPath == StoragePathMacros.ROOT_CONFIG) {
             LOG.warn("Macros ROOT_CONFIG is not defined")
             return
           }
@@ -80,24 +78,13 @@ class ApplicationStoreImpl(private val myApplication: ApplicationImpl, pathMacro
           }
         }
         finally {
-          myConfigDirectoryRefreshed = true
+          configDirectoryRefreshed = true
         }
       }
     }
   }
 
-  override fun getMessageBus(): MessageBus {
-    return myApplication.getMessageBus()
-  }
+  override fun getMessageBus() = application.getMessageBus()
 
-  override fun getStateStorageManager(): StateStorageManager {
-    return myStateStorageManager
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance(javaClass<ApplicationStoreImpl>())
-
-    private val DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT
-    private val ROOT_ELEMENT_NAME = "application"
-  }
+  override fun getStateStorageManager() = stateStorageManager
 }
