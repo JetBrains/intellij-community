@@ -107,6 +107,12 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     return myStubSerializationHelper.intern(string);
   }
 
+  @Override
+  public void reinitializeNameStorage() {
+    nameStorageCrashed();
+    repairNameStorage();
+  }
+
   protected void nameStorageCrashed() {
     myNameStorageCrashed.set(true);
   }
