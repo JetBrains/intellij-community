@@ -39,6 +39,9 @@ public class HistoryHost(val reactiveModel: ReactiveModel,
                          val path: Path,
                          val lifetime: Lifetime,
                          init: Initializer) : Host {
+  var list: List<PlaceInfo> = emptyList()
+  var head: Int? = null
+
   init {
     val gson = GsonBuilder()
         .registerTypeAdapter(javaClass<PlaceInfo>(), object : JsonSerializer<PlaceInfo>, JsonDeserializer<PlaceInfo> {
@@ -63,18 +66,17 @@ public class HistoryHost(val reactiveModel: ReactiveModel,
 
     val listPath = path / "list"
     val headPath = path / "head"
-    init += { m ->
-      // nothing now cause it not persistent
-      val headModel = m.getIn(headPath) as? PrimitiveModel<*>
-      if(headModel != null) {
-        head = (headModel.value as String).toInt()
-      }
-      val listModel = m.getIn(listPath) as? PrimitiveModel<*>
-      if(listModel != null) {
-        list = gson.fromJson(listModel.value as String, object: TypeToken<ArrayList<PlaceInfo>>(){}.getType())
-      }
-      m
+
+    // nothing now cause it not persistent
+    val headModel = reactiveModel.root.getIn(headPath) as? PrimitiveModel<*>
+    if (headModel != null) {
+      head = (headModel.value as String).toInt()
     }
+    val listModel = reactiveModel.root.getIn(listPath) as? PrimitiveModel<*>
+    if (listModel != null) {
+      list = gson.fromJson(listModel.value as String, object : TypeToken<ArrayList<PlaceInfo>>() {}.getType())
+    }
+
     lifetime += {
       reactiveModel.transaction { m ->
         var model = m
@@ -87,8 +89,5 @@ public class HistoryHost(val reactiveModel: ReactiveModel,
       }
     }
   }
-
-  var list: List<PlaceInfo> = emptyList()
-  var head: Int? = null
 }
 
