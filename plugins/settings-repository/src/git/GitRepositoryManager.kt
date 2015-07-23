@@ -36,6 +36,7 @@ import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.File
 import java.io.IOException
+import kotlin.concurrent.write
 import kotlin.properties.Delegates
 
 class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: File) : BaseRepositoryManager(dir) {
@@ -106,11 +107,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator?): Boolean {
-    synchronized (lock) {
-      return commit(this, indicator)
-    }
-  }
+  override fun commit(indicator: ProgressIndicator?) = lock.write { commit(this, indicator) }
 
   override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
 
@@ -170,7 +167,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       override var definitelySkipPush = false
 
       override fun merge(): UpdateResult? {
-        synchronized (lock) {
+        lock.write {
           val committed = commit(pullTask.indicator)
           if (refToMerge == null && !committed && getAheadCommitsCount() == 0) {
             definitelySkipPush = true
