@@ -52,7 +52,8 @@ public class MinusculeMatcher implements Matcher {
   private final boolean[] isWordSeparator;
   private final char[] toUpperCase;
   private final char[] toLowerCase;
-  private final boolean myHasWildCards;
+  private final char[] myMeaningfulCharacters;
+  private final int myMinNameLength;
 
   /**
    * Constructs a matcher by a given pattern.
@@ -79,6 +80,7 @@ public class MinusculeMatcher implements Matcher {
     isWordSeparator = new boolean[myPattern.length];
     toUpperCase = new char[myPattern.length];
     toLowerCase = new char[myPattern.length];
+    StringBuilder meaningful = new StringBuilder();
     for (int k = 0; k < myPattern.length; k++) {
       char c = myPattern[k];
       isLowerCase[k] = Character.isLowerCase(c);
@@ -86,13 +88,18 @@ public class MinusculeMatcher implements Matcher {
       isWordSeparator[k] = isWordSeparator(c);
       toUpperCase[k] = StringUtil.toUpperCase(c);
       toLowerCase[k] = StringUtil.toLowerCase(c);
+      if (!isWildcard(k)) {
+        meaningful.append(toLowerCase[k]);
+        meaningful.append(toUpperCase[k]);
+      }
     }
     int i = 0;
     while (isWildcard(i)) i++;
     myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase);
     myHasSeparators = hasFlag(i, isWordSeparator);
     myHasDots = hasDots(i);
-    myHasWildCards = hasWildCards();
+    myMeaningfulCharacters = meaningful.toString().toCharArray();
+    myMinNameLength = myMeaningfulCharacters.length / 2;
   }
 
   private static boolean isWordSeparator(char c) {
@@ -122,15 +129,6 @@ public class MinusculeMatcher implements Matcher {
       return start + 1; //treat each digit as a separate hump
     }
     return NameUtil.nextWord(name, start);
-  }
-
-  private boolean hasWildCards() {
-    for (int i = 0; i < myPattern.length; i++) {
-      if (isWildcard(i)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private boolean hasFlag(int start, boolean[] flags) {
@@ -234,16 +232,34 @@ public class MinusculeMatcher implements Matcher {
 
   @Override
   public boolean matches(@NotNull String name) {
-    // optimisation: name too short for this pattern
-    if (!myHasWildCards && name.length() < myPattern.length) return false;
-
     return matchingFragments(name) != null;
   }
 
   @Nullable
   public FList<TextRange> matchingFragments(@NotNull String name) {
+    if (name.length() < myMinNameLength) {
+      return null;
+    }
+
+    int length = name.length();
+    int patternIndex = 0;
+    boolean isAscii = true;
+    for (int i = 0; i < length; ++i) {
+      char c = name.charAt(i);
+      if (c >= 128) {
+        isAscii = false;
+      }
+      if (patternIndex < myMeaningfulCharacters.length &&
+          (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1])) {
+        patternIndex += 2;
+      }
+    }
+    if (patternIndex < myMinNameLength) {
+      return null;
+    }
+
     MatchingState state = myMatchingState.get();
-    state.initializeState(name);
+    state.initializeState(isAscii, length);
     try {
       return matchWildcards(name, 0, 0, state);
     }
@@ -254,7 +270,7 @@ public class MinusculeMatcher implements Matcher {
 
   /**
    * After a wildcard (* or space), search for the first non-wildcard pattern character in the name starting from nameIndex
-   * and try to {@link #matchFragment(String, int, int, com.intellij.psi.codeStyle.MinusculeMatcher.MatchingState)} for it.
+   * and try to {@link #matchFragment(String, int, int, MinusculeMatcher.MatchingState)} for it.
    */
   @Nullable
   private FList<TextRange> matchWildcards(@NotNull String name,
@@ -298,7 +314,7 @@ public class MinusculeMatcher implements Matcher {
 
   /**
    * Enumerates places in name that could be matched by the pattern at patternIndex position
-   * and invokes {@link #matchFragment(String, int, int, com.intellij.psi.codeStyle.MinusculeMatcher.MatchingState)} at those candidate positions
+   * and invokes {@link #matchFragment(String, int, int, MinusculeMatcher.MatchingState)} at those candidate positions
    */
   @Nullable
   private FList<TextRange> matchSkippingWords(@NotNull String name,
@@ -513,11 +529,11 @@ public class MinusculeMatcher implements Matcher {
     private boolean isAsciiName;
     private final BitSet myTable = new BitSet();
 
-    void initializeState(String name) {
+    void initializeState(boolean isAscii, int length) {
       assert !myBusy;
       myBusy = true;
-      myNameLength = name.length();
-      isAsciiName = IOUtil.isAscii(name);
+      myNameLength = length;
+      isAsciiName = isAscii;
       myTable.clear();
     }
 
