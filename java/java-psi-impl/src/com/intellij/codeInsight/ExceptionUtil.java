@@ -370,10 +370,18 @@ public class ExceptionUtil {
       }
 
       @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        if (ArrayUtil.find(elements, expression) >= 0) {
+          visitElement(expression);
+        }
+      }
+
+      @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-        if (ArrayUtil.find(elements, expression) < 0) return;
-        addExceptions(array, getUnhandledExceptions(expression, null));
-        visitElement(expression);
+        if (ArrayUtil.find(elements, expression) >= 0) {
+          addExceptions(array, getUnhandledExceptions(expression, null));
+          visitElement(expression);
+        }
       }
 
       @Override
@@ -387,6 +395,9 @@ public class ExceptionUtil {
         addExceptions(array, getUnhandledCloserExceptions(resource, null));
         visitElement(resource);
       }
+
+      @Override
+      public void visitClass(PsiClass aClass) { }
     };
 
     for (PsiElement element : elements) {

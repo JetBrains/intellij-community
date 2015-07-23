@@ -15,11 +15,11 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.StoreUtil

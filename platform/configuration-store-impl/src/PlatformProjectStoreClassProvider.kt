@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl;
+package com.intellij.configurationStore
 
-/**
- * @author mike
- */
-public class ApplicationPathMacroManager extends BasePathMacroManager {
-  public ApplicationPathMacroManager() {
-    super(null);
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.project.impl.ProjectStoreClassProvider
+
+class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
+  override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
+    return if (isDefaultProject) javaClass<DefaultProjectStoreImpl>() else javaClass<ProjectStoreImpl>()
   }
 }
