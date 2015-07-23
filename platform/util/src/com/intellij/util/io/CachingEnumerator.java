@@ -53,7 +53,7 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
     int valueHashCode =-1;
     int stripe = -1;
 
-    if (myHashcodeToIdCache != null && value != null) {
+    if (value != null) {
       valueHashCode = myDataDescriptor.getHashCode(value);
       stripe = Math.abs(valueHashCode) & STRIPE_MASK;
 
@@ -112,18 +112,16 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
 
   @Nullable
   public Data valueOf(int idx) throws IOException {
-    int stripe = -1;
-    if (myIdToStringCache != null) {
-      stripe = idStripe(idx);
-      myStripeLocks[stripe].lock();
-      try {
-        Data s = myIdToStringCache[stripe].get(idx);
-        if (s != null) return s;
-      }
-      finally {
-        myStripeLocks[stripe].unlock();
-      }
+    int stripe = idStripe(idx);
+    myStripeLocks[stripe].lock();
+    try {
+      Data s = myIdToStringCache[stripe].get(idx);
+      if (s != null) return s;
     }
+    finally {
+      myStripeLocks[stripe].unlock();
+    }
+
     Data s = myBase.valueOf(idx);
 
     if (stripe != -1 && s != null) {
@@ -138,7 +136,11 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
     return s;
   }
 
-  public void close() throws IOException {
+  public void close() {
+    clear();
+  }
+
+  public void clear() {
     for(int i = 0; i < myIdToStringCache.length; ++i) {
       myStripeLocks[i].lock();
       myIdToStringCache[i].clear();
