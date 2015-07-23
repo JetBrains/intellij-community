@@ -17,16 +17,18 @@ package com.jetbrains.reactiveidea
 
 import com.github.krukow.clj_ds.PersistentMap
 import com.github.krukow.clj_lang.PersistentHashMap
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerAdapter
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
@@ -39,19 +41,20 @@ import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.get
 import com.jetbrains.reactivemodel.util.host
 
-public class DocumentsSynchronizer(val project: Project, val serverEditorTracker: ServerEditorTracker) : ProjectComponent {
+public class ReactiveModelsManager() : ApplicationComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
-  val startupManager = StartupManager.getInstance(project)
   // TODO need to think about synchronization
   val reactiveModels: VariableSignal<PersistentMap<String, ReactiveModel>>
       = VariableSignal(lifetime, "reactive models", PersistentHashMap.emptyMap<String, ReactiveModel>())
 
+  public fun modelsForProject(project: Project) : Signal<List<ReactiveModel>> =
+    reaction(true, "models for project ${project.getName()}", reactiveModels) {
+      it.values().filter { (it.root.meta.host() as ProjectHost).project == project }
+    }
 
   override fun getComponentName(): String = "DocumentsSynchronizer"
 
   override fun initComponent() {
-    initTracker()
-
     serverModel(lifetime.lifetime, 12346, reactiveModels) { reactiveModel ->
       UIUtil.invokeLaterIfNeeded {
         reactiveModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel, model ->
@@ -74,7 +77,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           val psiPtr = path.getIn(model)!!.meta["psi"]
           if (psiPtr is SmartPsiElementPointer<*>) {
             EdtInvocationManager.getInstance().invokeLater {
-              FileEditorManager.getInstance(project).openFile(psiPtr.getVirtualFile(), true)
+              FileEditorManager.getInstance(psiPtr.getProject()).openFile(psiPtr.getVirtualFile(), true)
             }
           }
           model
@@ -86,7 +89,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           val editorHost = mapModel.meta.host() as EditorHost
           val actionManager = EditorActionManager.getInstance()
 
-          CommandProcessor.getInstance().executeCommand(project, object : Runnable {
+          CommandProcessor.getInstance().executeCommand(editorHost.editor.getProject(), object : Runnable {
             override fun run() {
               CommandProcessor.getInstance().setCurrentCommandGroupId(editorHost.editor.getDocument())
               val dataContext = ServerDataManagerImpl.getInstance().getDataContext(path, reactiveModel)
@@ -98,82 +101,19 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           model
         }
 
-        reactiveModel.host(Path(), { path, lifetime, initializer ->
-          ProjectHost(path, lifetime, initializer, project)
+        ProjectManager.getInstance().addProjectManagerListener(object : ProjectManagerAdapter() {
+          override fun projectOpened(project: Project?) {
+            reactiveModel.host(Path(), { path, lifetime, initializer ->
+              ProjectHost(path, lifetime, initializer, project!!, reactiveModel)
+            })
+          }
         })
-
-        startupManager.runWhenProjectIsInitialized {
-          reactiveModel.host(Path("project-view")) { path, lifetime, initializer ->
-            ProjectViewHost(project, reactiveModel, path, lifetime, initializer)
-          }
-        }
-        reactiveModel.host(Path("tab-view")) { path, lifetime, initializer ->
-          TabViewHost(project, reactiveModel, path)
-        }
       }
     }
-  }
-
-
-  public fun initTracker() {
-    var activeList: VariableSignal<List<Signal<Model?>>> =
-        reaction(true, "models", reactiveModels) { map ->
-          map.values().map {
-            it.subscribe(it.lifetime, Path("tab-view"))
-          }
-        }
-
-    var signalList: VariableSignal<Signal<List<Model?>>> = reaction(true, "editor models", activeList) { list ->
-      unlist(list)
-    }
-
-    var flattenList: VariableSignal<List<Model?>?> = flatten(signalList)
-
-    var activeEditorModls = reaction(true, "tabs", flattenList) { list: List<Model?>? ->
-      if (list != null) {
-        list.map { model -> model?.meta?.valAt("host") as? TabViewHost }
-            .filterNotNull()
-            .map { host ->
-              host.reactiveModel.subscribe(lifetime.lifetime, host.path / TabViewHost.editorsPath)
-            };
-      } else {
-        emptyList()
-      }
-    }
-
-    var activeEditors: VariableSignal<List<Editor>> = reaction(true, "editors", activeEditorModls) { tabs ->
-      tabs.filter { it.value != null }
-          .flatMap { editors ->
-            val value = editors.value as MapModel
-            value.values().filter {
-              it as MapModel
-              val isActive = (it[EditorHost.activePath] as PrimitiveModel<*>?)?.value
-              if (isActive == null) false else isActive as Boolean
-            }.map {
-              (it!!.meta["host"] as EditorHost).editor
-            }
-          }
-    }
-
-    serverEditorTracker.setActiveEditors(activeEditors)
   }
 
   override fun disposeComponent() {
     lifetime.terminate()
   }
-
-  override fun projectOpened() {
-  }
-
-  override fun projectClosed() {
-  }
 }
 
-class ProjectHost(path: Path, lifetime: Lifetime, initializer: Initializer, val project: Project): Host, DataProvider {
-  override fun getData(dataId: String?): Any? {
-    if (CommonDataKeys.PROJECT.`is`(dataId)) {
-      return project
-    }
-    return null
-  }
-}

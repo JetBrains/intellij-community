@@ -26,32 +26,52 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl
 import com.intellij.util.EventDispatcher
-import com.jetbrains.reactivemodel.VariableSignal
-import com.jetbrains.reactivemodel.reaction
+import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.util.host
 import org.jetbrains.annotations.NonNls
-import java.util.Collections
 import java.util.HashMap
 
-public class ServerEditorTracker(project: Project, editorFactory: EditorFactory, manager: SmartPointerManager) : AbstractProjectComponent(project), EditorTracker {
-  private val myEditorFactory: EditorFactory
+public class ServerEditorTracker(project: Project,
+                                 val editorFactory: EditorFactory,
+                                 manager: SmartPointerManager,
+                                 docSync: ReactiveModelsManager) : AbstractProjectComponent(project), EditorTracker {
   private val mySmartPointerManager: SmartPointerManagerImpl
-  private val myDispatcher = EventDispatcher.create(javaClass<EditorTrackerListener>())
-  volatile private var myActiveEditors: VariableSignal<List<Editor>>? = null
+  private val dispatcher = EventDispatcher.create(javaClass<EditorTrackerListener>())
+
+  private val activeEditors: Signal<List<Editor>> =
+      reaction(true, "filter active", reaction(true, "flatmap", flatten(reaction(true, "editors", docSync.reactiveModels) { models ->
+        unlist(models.map {
+          it.value.subscribe(it.value.lifetime, com.jetbrains.reactivemodel.editorsTag)
+        })
+      })) {
+        it?.flatten()
+      }) {
+        (if (it != null) {
+          it.filter {
+            val isActive = (it[EditorHost.activePath] as PrimitiveModel<*>?)?.value
+            if (isActive == null) false
+            else isActive as Boolean
+          }
+        } else emptyList()).map { (it.meta.host() as EditorHost).editor }
+      }
 
   init {
-    myEditorFactory = editorFactory
     mySmartPointerManager = manager as SmartPointerManagerImpl
+
+    reaction(false, "active editor changed", activeEditors) {
+      dispatchChanged()
+    }
   }
 
   public override fun projectOpened() {
     val myEditorFactoryListener = MyEditorFactoryListener()
-    myEditorFactory.addEditorFactoryListener(myEditorFactoryListener, myProject)
+    editorFactory.addEditorFactoryListener(myEditorFactoryListener, myProject)
     Disposer.register(myProject, object : Disposable {
       public override fun dispose() {
         myEditorFactoryListener.executeOnRelease(null)
@@ -60,23 +80,16 @@ public class ServerEditorTracker(project: Project, editorFactory: EditorFactory,
   }
 
   private fun dispatchChanged() {
-    myDispatcher.getMulticaster().activeEditorsChanged(getActiveEditors())
+    dispatcher.getMulticaster().activeEditorsChanged(getActiveEditors())
   }
 
   public override fun getActiveEditors(): List<Editor> {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    return myActiveEditors?.value ?: emptyList()
+    return activeEditors.value
   }
 
   public override fun addEditorTrackerListener(listener: EditorTrackerListener, parentDisposable: Disposable) {
-    myDispatcher.addListener(listener, parentDisposable)
-  }
-
-  public fun setActiveEditors(activeEditors: VariableSignal<List<Editor>>) {
-    myActiveEditors = activeEditors
-    reaction(false, "active editor changed", activeEditors) {
-      dispatchChanged()
-    }
+    dispatcher.addListener(listener, parentDisposable)
   }
 
   NonNls

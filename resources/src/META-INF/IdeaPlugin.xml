@@ -51,6 +51,12 @@
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.jetbrains.reactiveidea.DocumentsSynchronizer</interface-class>
+      <implementation-class>com.jetbrains.reactiveidea.DocumentsSynchronizer</implementation-class>
+    </component>
+
   </application-components>
 
   <project-components>
@@ -62,12 +68,6 @@
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
-
-    <component>
-      <interface-class>com.jetbrains.reactiveidea.DocumentsSynchronizer</interface-class>
-      <implementation-class>com.jetbrains.reactiveidea.DocumentsSynchronizer</implementation-class>
-    </component>
-
   </project-components>
 
   <extensionPoints>
