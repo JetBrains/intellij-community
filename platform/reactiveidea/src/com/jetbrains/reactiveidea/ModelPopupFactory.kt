@@ -104,7 +104,8 @@ public class ModelPopupFactory : JBPopupFactory() {
 
 
   class ActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, showNumbers: Boolean, useAlphaAsNumbers: Boolean, showDisabledActions: Boolean, honorActionMnemonics: Boolean, disposeCallback: Runnable?, maxRowCount: Int, preselectActionCondition: Condition<AnAction>?, actionPlace: String?) :
-      ModelListPopup(ActionGroupPopup.createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, preselectActionCondition, actionPlace), ReactiveModel.current(), Path("popup")) {
+      ModelListPopup(ActionGroupPopup.createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, preselectActionCondition, actionPlace) as ListPopupStep<Any>,
+          ReactiveModel.current()!!, Path("popup")) {
 
     companion object {
       private fun itemsHaveMnemonics(items: List<PopupFactoryImpl.ActionItem>): Boolean {
@@ -158,7 +159,7 @@ public class ModelPopupFactory : JBPopupFactory() {
     println("step = [${step}]")
     val reactiveModel = ReactiveModel.current()
     if (reactiveModel != null) {
-      return ModelListPopup(step, reactiveModel, Path("popup"))
+      return ModelListPopup(step as ListPopupStep<Any>, reactiveModel, Path("popup"))
     }
     return ListPopupImpl(step)
   }

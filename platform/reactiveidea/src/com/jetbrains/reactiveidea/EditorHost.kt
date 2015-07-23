@@ -77,11 +77,18 @@ public class EditorHost(val reactiveModel: ReactiveModel,
 
     val project = editor.getProject()
     if (dataId != null && project != null) {
-      return FileEditorManager.getInstance(project).getData(dataId, editor, editor.getCaretModel().getPrimaryCaret())
+      val dat = FileEditorManager.getInstance(project).getData(dataId, editor, editor.getCaretModel().getPrimaryCaret())
+      if (dat != null) {
+        return dat
+      }
     }
 
     if (CommonDataKeys.EDITOR.`is`(dataId)) {
       return editor
+    }
+
+    if (CommonDataKeys.PROJECT.`is`(dataId)) {
+      return project
     }
     return null
   }

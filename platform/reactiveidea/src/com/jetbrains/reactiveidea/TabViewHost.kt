@@ -24,21 +24,15 @@ import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import gnu.trove.TObjectIntHashMap
 
-class TabViewHost(val project: Project, reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveModel, path) {
+class TabViewHost(val project: Project,
+                  val reactiveModel: ReactiveModel,
+                  val path: Path) : Host {
   companion object {
     val editorsPath = "editors"
   }
 
-  init {
-    initModel()
-  }
-
   val fileToEditorIdx = TObjectIntHashMap<VirtualFile>()
   var currentIdx = 0
-
-  override fun buildMeta(): Map<String, Any> = super.buildMeta()
-      .plus("project" to project)
-
 
   fun addEditor(editor: TextEditor, file: VirtualFile) {
     reactiveModel.host(path / editorsPath / currentIdx.toString()) { path, lifetime, init ->

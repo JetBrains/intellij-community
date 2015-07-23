@@ -67,9 +67,9 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
   override fun initComponent() {
     initTracker()
 
-    serverModel(lifetime.lifetime, 12346, reactiveModels) { serverModel ->
+    serverModel(lifetime.lifetime, 12346, reactiveModels) { reactiveModel ->
       UIUtil.invokeLaterIfNeeded {
-        serverModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel, model ->
+        reactiveModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel, model ->
           val actionName = (args["name"] as PrimitiveModel<*>).value as String
           val contextHint = args["context"] as MapModel
           val anAction = ActionManager.getInstance().getAction(actionName)
@@ -84,7 +84,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           model
         }
 
-        serverModel.registerHandler(lifetime.lifetime, "open-file") { args: MapModel, model ->
+        reactiveModel.registerHandler(lifetime.lifetime, "open-file") { args: MapModel, model ->
           val path = toPath(args["path"] as ListModel)
           val psiPtr = path.getIn(model)!!.meta["psi"]
           if (psiPtr is SmartPsiElementPointer<*>) {
@@ -95,7 +95,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           model
         }
 
-        serverModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
+        reactiveModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
           val path = toPath((args["path"] as ListModel))
           val mapModel = path.getIn(model) as MapModel
           val editorHost = mapModel.meta.host() as EditorHost
@@ -104,7 +104,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           CommandProcessor.getInstance().executeCommand(project, object : Runnable {
             override fun run() {
               CommandProcessor.getInstance().setCurrentCommandGroupId(editorHost.editor.getDocument())
-              val dataContext = ServerDataManagerImpl.getInstance().getDataContext(path, serverModel)
+              val dataContext = ServerDataManagerImpl.getInstance().getDataContext(path, reactiveModel)
               ActionManagerEx.getInstanceEx().fireBeforeEditorTyping('a', dataContext)
               actionManager.getTypedAction().actionPerformed(editorHost.editor, 'a', dataContext)
             }
@@ -114,13 +114,13 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         }
 
         startupManager.runWhenProjectIsInitialized {
-          val projectView = ProjectView.getInstance(project)
-          val viewPane = projectView.getProjectViewPaneById(ProjectViewPane.ID) as AbstractProjectViewPSIPane
-          val treeStructure = viewPane.createStructure()
-          ProjectViewHost(project, projectView, serverModel, Path("project-view"), treeStructure, viewPane)
+          reactiveModel.host(Path("project-view")) { path, lifetime, initializer ->
+            ProjectViewHost(project, reactiveModel, path, lifetime, initializer)
+          }
         }
-
-        TabViewHost(project, serverModel, Path("tab-view"))
+        reactiveModel.host(Path("tab-view")) { path, lifetime, initializer ->
+          TabViewHost(project, reactiveModel, path)
+        }
       }
     }
   }

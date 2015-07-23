@@ -18,8 +18,10 @@ package com.jetbrains.reactiveidea
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
+import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.AbstractTreeStructure
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -32,8 +34,22 @@ import com.jetbrains.reactivemodel.util.*
 import java.util.HashMap
 
 
-public class ProjectViewHost(val project: Project, val projectView: ProjectView?, reactiveModel: ReactiveModel,
-                             p: Path, val treeStructure: AbstractTreeStructure, val viewPane: AbstractProjectViewPSIPane) : MetaHost(reactiveModel, p) {
+public class ProjectViewHost(val project: Project,
+                             val reactiveModel: ReactiveModel,
+                             val path: Path,
+                             val lifetime: Lifetime,
+                             init: Initializer) : Host, DataProvider {
+  override fun getData(dataId: String?): Any? {
+    if (CommonDataKeys.PROJECT.`is`(dataId)){
+      return project
+    }
+    return null
+  }
+
+  val projectView = ProjectView.getInstance(project)
+  val viewPane = projectView.getProjectViewPaneById(ProjectViewPane.ID) as AbstractProjectViewPSIPane
+  val treeStructure = viewPane.createStructure()
+
 
   val paneId = viewPane.getId()
   val comp = GroupByTypeComparator(projectView, paneId)
@@ -44,17 +60,16 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
     private val LOG = Logger.getInstance("#com.jetbrains.reactiveidea.ProjectViewHost")
   }
 
-  override fun buildMeta(): Map<String, Any> = super.buildMeta()
-      .plus("project" to project)
-
   init {
-    initModel { m ->
+
+    init += {
       val root = treeStructure.getRootElement();
       val descriptor = treeStructure.createDescriptor(root, null) as AbstractTreeNode<*>
       val current = path / paneId
       val rootNode = createNode(descriptor, lifetime, current, 0)
-      current.putIn(m, MapModel(mapOf(root.toString() to rootNode)))
+      current.putIn(it, MapModel(mapOf(root.toString() to rootNode)))
     }
+
     val psiTreeChangeListener = object : PsiTreeChangeAdapter() {
       override fun childAdded(event: PsiTreeChangeEvent) {
         handle(event)
