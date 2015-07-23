@@ -679,8 +679,12 @@ public class EquivalenceChecker {
     if (classReference1 == null || classReference2 == null) {
       return false;
     }
-    final String text = classReference1.getText();
-    if (!text.equals(classReference2.getText())) {
+    final PsiElement target1 = classReference1.resolve();
+    if (target1 == null) {
+      return false;
+    }
+    final PsiElement target2 = classReference2.resolve();
+    if (!target1.equals(target2)) {
       return false;
     }
     final PsiExpression[] arrayDimensions1 =
