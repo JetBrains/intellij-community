@@ -45,8 +45,8 @@ import java.util.ArrayList
 
 open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager), IProjectStore {
   // protected setter used in upsource
-  private var scheme = StorageScheme.DEFAULT
-    protected set
+  // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
+  var scheme = StorageScheme.DEFAULT
 
   private var presentableUrl: String? = null
 

@@ -137,6 +137,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myArranger = arranger;
     myPresentableArranger = arranger;
 
+    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
+
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
 
@@ -666,8 +668,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       hide();
       return false;
     }
-
-    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
     return true;
   }

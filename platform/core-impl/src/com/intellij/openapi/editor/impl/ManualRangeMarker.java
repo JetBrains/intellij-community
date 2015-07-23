@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
@@ -67,8 +66,8 @@ public class ManualRangeMarker {
     return Pair.create(range, linesCols);
   }
 
-  public boolean applyEvents(List<DocumentEvent> events) {
-    if (!myValid) return false;
+  public void applyEvents(List<DocumentEvent> events) {
+    if (!myValid) return;
 
     Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(events);
     if (pair != null) {
@@ -77,11 +76,14 @@ public class ManualRangeMarker {
     } else {
       myValid = false;
     }
-    return myValid;
   }
 
   @Nullable
   public ProperTextRange getRange() {
     return myValid ? myRange : null;
+  }
+
+  public boolean isValid() {
+    return myValid;
   }
 }

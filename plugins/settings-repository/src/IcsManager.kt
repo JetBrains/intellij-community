@@ -261,6 +261,19 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
       }
     }
 
+    val repositoryManager = icsManager.repositoryManager
+    if (repositoryManager.isRepositoryExists()) {
+      repositoryManager.renameDirectory(linkedMapOf(
+        Pair("\$ROOT_CONFIG$", null),
+        Pair("_mac/\$ROOT_CONFIG$", "_mac"),
+        Pair("_windows/\$ROOT_CONFIG$", "_windows"),
+        Pair("_linux/\$ROOT_CONFIG$", "_linux"),
+        Pair("_freebsd/\$ROOT_CONFIG$", "_freebsd"),
+        Pair("_unix/\$ROOT_CONFIG$", "_unix"),
+        Pair("_unknown/\$ROOT_CONFIG$", "_unknown")
+      ))
+    }
+
     icsManager.beforeApplicationLoaded(application)
   }
 }
