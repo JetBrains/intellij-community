@@ -58,7 +58,7 @@ public class ServerEditorTracker(project: Project,
             if (isActive == null) false
             else isActive as Boolean
           }
-        } else emptyList()).map { (it.meta.host() as EditorHost).editor }
+        } else emptyList()).map { it.meta.host<EditorHost>().editor }
       }
 
   init {

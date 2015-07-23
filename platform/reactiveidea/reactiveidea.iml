@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="editor-ui-ex" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>

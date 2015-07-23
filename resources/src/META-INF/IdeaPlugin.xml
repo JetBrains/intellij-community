@@ -53,8 +53,8 @@
     </component>
 
     <component>
-      <interface-class>com.jetbrains.reactiveidea.DocumentsSynchronizer</interface-class>
-      <implementation-class>com.jetbrains.reactiveidea.DocumentsSynchronizer</implementation-class>
+      <interface-class>com.jetbrains.reactiveidea.ReactiveModelsManager</interface-class>
+      <implementation-class>com.jetbrains.reactiveidea.ReactiveModelsManager</implementation-class>
     </component>
 
   </application-components>

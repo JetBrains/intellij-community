@@ -134,9 +134,9 @@ public class ModelPopupFactory : JBPopupFactory() {
     init {
       addListSelectionListener(object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
-          val list = e.getSource() as JList<Any>
-          val actionItem = list.getSelectedValue() as PopupFactoryImpl.ActionItem ?: return
-          val action = actionItem!!.getAction()
+          val list = e.getSource() as JList<*>
+          val actionItem = list.getSelectedValue() as? PopupFactoryImpl.ActionItem ?: return
+          val action = actionItem.getAction()
           val presentation = Presentation()
           presentation.setDescription(action.getTemplatePresentation().getDescription())
           val actualActionPlace = actionPlace ?: ActionPlaces.UNKNOWN

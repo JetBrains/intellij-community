@@ -32,6 +32,8 @@ import com.intellij.openapi.project.ProjectManagerAdapter
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.reactiveidea.history.host.HistoryHost
+import com.jetbrains.reactiveidea.history.host.historyPath
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
@@ -47,12 +49,12 @@ public class ReactiveModelsManager() : ApplicationComponent {
   val reactiveModels: VariableSignal<PersistentMap<String, ReactiveModel>>
       = VariableSignal(lifetime, "reactive models", PersistentHashMap.emptyMap<String, ReactiveModel>())
 
-  public fun modelsForProject(project: Project) : Signal<List<ReactiveModel>> =
-    reaction(true, "models for project ${project.getName()}", reactiveModels) {
-      it.values().filter { (it.root.meta.host() as ProjectHost).project == project }
-    }
+  public fun modelsForProject(project: Project): Signal<List<ReactiveModel>> =
+      reaction(true, "models for project ${project.getName()}", reactiveModels) {
+        it.values().filter { it.root.meta.host<ProjectHost>().project == project }
+      }
 
-  override fun getComponentName(): String = "DocumentsSynchronizer"
+  override fun getComponentName(): String = "ReactiveModelsManager"
 
   override fun initComponent() {
     serverModel(lifetime.lifetime, 12346, reactiveModels) { reactiveModel ->
@@ -86,7 +88,7 @@ public class ReactiveModelsManager() : ApplicationComponent {
         reactiveModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
           val path = (args["path"] as ListModel).toPath()
           val mapModel = path.getIn(model) as MapModel
-          val editorHost = mapModel.meta.host() as EditorHost
+          val editorHost = mapModel.meta.host<EditorHost>()
           val actionManager = EditorActionManager.getInstance()
 
           CommandProcessor.getInstance().executeCommand(editorHost.editor.getProject(), object : Runnable {
@@ -116,4 +118,3 @@ public class ReactiveModelsManager() : ApplicationComponent {
     lifetime.terminate()
   }
 }
-

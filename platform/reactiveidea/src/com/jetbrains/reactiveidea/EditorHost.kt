@@ -134,6 +134,7 @@ public class EditorHost(val reactiveModel: ReactiveModel,
 
       if (!caretGuard.locked) {
         caretGuard.lock {
+
           CommandProcessor.getInstance().executeCommand(editor.getProject(), {
             try {
               if (caret != null) {

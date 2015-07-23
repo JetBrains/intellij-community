@@ -35,6 +35,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
 
     private var cur: ReactiveModel? = null
     public fun current(): ReactiveModel? {
+
       return cur;
     }
   }

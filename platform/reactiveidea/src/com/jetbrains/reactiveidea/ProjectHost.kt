@@ -19,6 +19,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.jetbrains.reactiveidea.history.host.HistoryHost
+import com.jetbrains.reactiveidea.history.host.historyPath
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.util.Lifetime
 
@@ -33,6 +36,10 @@ class ProjectHost(path: Path, lifetime: Lifetime, initializer: Initializer, val 
     }
     reactiveModel.host(path / "tab-view") { path, lifetime, initializer ->
       TabViewHost(project, reactiveModel, path)
+    }
+
+    reactiveModel.host(historyPath) { path, lifetime, initializer ->
+      HistoryHost(reactiveModel, path, lifetime, initializer)
     }
   }
 
