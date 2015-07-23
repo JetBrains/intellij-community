@@ -2652,32 +2652,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return tasks;
   }
 
-  private static void iterateRecursively(@Nullable final VirtualFile root,
-                                         @NotNull final ContentIterator processor,
-                                         @Nullable final ProgressIndicator indicator,
-                                         @Nullable final Set<VirtualFile> visitedRoots,
-                                         @Nullable final ProjectFileIndex projectFileIndex) {
-    if (root == null) {
-      return;
-    }
-
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
-          return false; // avoid visiting files more than once, e.g. additional indexed roots intersect sometimes
-        }
-        if (projectFileIndex != null && projectFileIndex.isExcluded(file)) {
-          return false;
-        }
-        if (indicator != null) indicator.checkCanceled();
-
-        processor.processFile(file);
-        return true;
-      }
-    });
-  }
-
   @SuppressWarnings({"WhileLoopSpinsOnField", "SynchronizeOnThis"})
   private static class StorageGuard {
     private int myHolds = 0;
