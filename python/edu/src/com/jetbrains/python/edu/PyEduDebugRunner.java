@@ -7,9 +7,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.util.containers.Predicate;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -20,12 +19,27 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLineBreakpointType;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyImportStatement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
 
 public class PyEduDebugRunner extends PyDebugRunner {
+
+  public static final Predicate<PsiElement> IS_NOTHING = new Predicate<PsiElement>() {
+    @Override
+    public boolean apply(@Nullable PsiElement input) {
+      return (input instanceof PsiComment) ||
+             (input instanceof PyImportStatement) ||
+             (input instanceof PsiWhiteSpace) ||
+             (isDocString(input));
+    }
+  };
 
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
@@ -44,7 +58,7 @@ public class PyEduDebugRunner extends PyDebugRunner {
 
     List<PsiElement> psiElements = CollectHighlightsUtil.getElementsInRange(psiFile, 0, psiFile.getTextLength());
     for (PsiElement element : psiElements) {
-      if (PyEduUtils.isFirstCodeLine(element)) {
+      if (PyEduUtils.isFirstCodeLine(element, IS_NOTHING)) {
         int offset = element.getTextRange().getStartOffset();
         Document document = FileDocumentManager.getInstance().getDocument(file);
         assert document != null;
@@ -54,11 +68,22 @@ public class PyEduDebugRunner extends PyDebugRunner {
         PyLineBreakpointType type = new PyLineBreakpointType();
         XBreakpointProperties properties = type.createBreakpointProperties(file, line);
         LineBreakpointState<XBreakpointProperties>
-          breakpointState = new LineBreakpointState<XBreakpointProperties>(true, type.getId(), file.getUrl(), line, false, file.getTimeStamp());
+          breakpointState =
+          new LineBreakpointState<XBreakpointProperties>(true, type.getId(), file.getUrl(), line, false, file.getTimeStamp());
         pyDebugProcess.addBreakpoint(sourcePosition, new XLineBreakpointImpl<XBreakpointProperties>(type,
-                                                                             ((XBreakpointManagerImpl)breakpointManager),
-                                                                             properties, breakpointState));
+                                                                                                    ((XBreakpointManagerImpl)breakpointManager),
+                                                                                                    properties, breakpointState));
       }
     }
+  }
+
+  private static boolean isDocString(PsiElement element) {
+    if (element instanceof PyExpressionStatement) {
+      element = ((PyExpressionStatement)element).getExpression();
+    }
+    if (element instanceof PyExpression) {
+      return DocStringUtil.isDocStringExpression((PyExpression)element);
+    }
+    return false;
   }
 }
