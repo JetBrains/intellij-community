@@ -51,7 +51,9 @@ public class ReactiveModelsManager() : ApplicationComponent {
 
   public fun modelsForProject(project: Project): Signal<List<ReactiveModel>> =
       reaction(true, "models for project ${project.getName()}", reactiveModels) {
-        it.values().filter { it.root.meta.host<ProjectHost>().project == project }
+        it.values().filter {
+          it.root.meta.host<ProjectHost?>()?.project == project
+        }
       }
 
   override fun getComponentName(): String = "ReactiveModelsManager"
