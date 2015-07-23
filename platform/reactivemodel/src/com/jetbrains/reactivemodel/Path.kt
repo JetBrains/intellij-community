@@ -32,6 +32,10 @@ fun Path.isPrefixOf(path: Path): Boolean =
         .all { it.first == it.second }
 
 fun<M : AssocModel<K, M>, K> Path.putIn(mapModel: M, model: Model): M {
+  if (components.isEmpty()) {
+    return model as M
+  }
+
   val first = components.first() as K
   val child = if (first is Last) null
   else mapModel.find(first as K)

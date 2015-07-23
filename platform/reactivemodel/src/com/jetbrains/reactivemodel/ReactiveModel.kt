@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
-  public var root: MapModel = MapModel(meta = createMeta("lifetime", lifetime, INDEX_FIELD, PersistentHashMap.emptyMap<String, PersistentHashSet<Path>>()))
+  public var root: MapModel = MapModel()
   public val name: String = "ReactiveModel" + counter.incrementAndGet()
   private val subscriptions: MultiMap<Path, ModelSignal> = MultiMap.create()
   private val tagSubs: MultiMap<String, TagSignal<*>> = MultiMap.create()
@@ -243,7 +243,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
 
 @suppress("UNCHECKED_CAST")
 private fun IPersistentMap<String, *>.index(): PersistentHashMap<String, PersistentHashSet<Path>> =
-    this.valAt(ReactiveModel.INDEX_FIELD) as PersistentHashMap<String, PersistentHashSet<Path>>
+    valAt(ReactiveModel.INDEX_FIELD) as? PersistentHashMap<String, PersistentHashSet<Path>> ?: PersistentHashMap.emptyMap()
 
 fun test() {
   val mirror = ReactiveModel(Lifetime.Eternal, {

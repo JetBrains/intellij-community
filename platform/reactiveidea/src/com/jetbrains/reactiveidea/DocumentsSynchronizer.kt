@@ -17,13 +17,7 @@ package com.jetbrains.reactiveidea
 
 import com.github.krukow.clj_ds.PersistentMap
 import com.github.krukow.clj_lang.PersistentHashMap
-import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
-import com.intellij.ide.projectView.impl.ProjectViewPane
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ProjectComponent
@@ -40,6 +34,7 @@ import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.models.toPath
 import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.get
 import com.jetbrains.reactivemodel.util.host
@@ -54,16 +49,6 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
 
   override fun getComponentName(): String = "DocumentsSynchronizer"
 
-  private fun guessDataContext(contextHint: MapModel, model: MapModel): DataContext {
-    if (contextHint.get("editor") == null) {
-      return DataContext.EMPTY_CONTEXT;
-    }
-
-    val path = toPath((contextHint.get("editor") as ListModel))
-
-    return ServerDataManagerImpl.Companion.getInstance().getDataContext(path, ReactiveModel.current()!!)
-  }
-
   override fun initComponent() {
     initTracker()
 
@@ -71,10 +56,10 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
       UIUtil.invokeLaterIfNeeded {
         reactiveModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel, model ->
           val actionName = (args["name"] as PrimitiveModel<*>).value as String
-          val contextHint = args["context"] as MapModel
+          val contextPath = (args["context"] as ListModel).toPath()
           val anAction = ActionManager.getInstance().getAction(actionName)
           if (anAction != null) {
-            val dataContext = guessDataContext(contextHint, model)
+            val dataContext = ServerDataManagerImpl.getInstance().getDataContext(contextPath, reactiveModel)
             EdtInvocationManager.getInstance().invokeLater {
               anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
             }
@@ -85,7 +70,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         }
 
         reactiveModel.registerHandler(lifetime.lifetime, "open-file") { args: MapModel, model ->
-          val path = toPath(args["path"] as ListModel)
+          val path = (args["path"] as ListModel).toPath()
           val psiPtr = path.getIn(model)!!.meta["psi"]
           if (psiPtr is SmartPsiElementPointer<*>) {
             EdtInvocationManager.getInstance().invokeLater {
@@ -96,7 +81,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         }
 
         reactiveModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
-          val path = toPath((args["path"] as ListModel))
+          val path = (args["path"] as ListModel).toPath()
           val mapModel = path.getIn(model) as MapModel
           val editorHost = mapModel.meta.host() as EditorHost
           val actionManager = EditorActionManager.getInstance()
@@ -113,6 +98,10 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           model
         }
 
+        reactiveModel.host(Path(), { path, lifetime, initializer ->
+          ProjectHost(path, lifetime, initializer, project)
+        })
+
         startupManager.runWhenProjectIsInitialized {
           reactiveModel.host(Path("project-view")) { path, lifetime, initializer ->
             ProjectViewHost(project, reactiveModel, path, lifetime, initializer)
@@ -125,7 +114,6 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
     }
   }
 
-  private fun toPath(listModel: ListModel) = listModel.map { (it as PrimitiveModel<*>).value }.drop(1).fold(Path(), { path, part -> path / part })
 
   public fun initTracker() {
     var activeList: VariableSignal<List<Signal<Model?>>> =
@@ -178,5 +166,14 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
   }
 
   override fun projectClosed() {
+  }
+}
+
+class ProjectHost(path: Path, lifetime: Lifetime, initializer: Initializer, val project: Project): Host, DataProvider {
+  override fun getData(dataId: String?): Any? {
+    if (CommonDataKeys.PROJECT.`is`(dataId)) {
+      return project
+    }
+    return null
   }
 }

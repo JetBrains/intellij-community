@@ -55,7 +55,7 @@ public fun ReactiveModel.host<U : Host>(path: Path, h: (Path, Lifetime, Initiali
     }
   }
   if (parentLifetime == null) {
-    throw RuntimeException("Shouldn't happen!")
+    parentLifetime = lifetime
   }
   val lifetimeDefinition = Lifetime.create(parentLifetime)
 

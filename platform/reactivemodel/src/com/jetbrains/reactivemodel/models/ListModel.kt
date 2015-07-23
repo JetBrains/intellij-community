@@ -54,3 +54,4 @@ public data class ListDiff(val nueu: List<Model>, val index: Int): Diff<ListMode
     override fun <T> acceptVisitor(visitor: DiffVisitor<T>): T = visitor.visitListDiff(this)
 }
 
+public fun ListModel.toPath(): Path = map { (it as PrimitiveModel<*>).value }.drop(1).fold(Path(), { path, part -> path / part })
