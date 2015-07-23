@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,34 +29,15 @@ public class EquivalenceChecker {
   private EquivalenceChecker() {}
 
   public static boolean statementsAreEquivalent(@Nullable PsiStatement statement1, @Nullable PsiStatement statement2) {
+    statement1 = ControlFlowUtils.stripBraces(statement1);
+    statement2 = ControlFlowUtils.stripBraces(statement2);
     if (statement1 == null) {
       return statement2 == null;
     } else if (statement2 == null) {
       return false;
     }
     if (statement1.getClass() != statement2.getClass()) {
-      if (statement1 instanceof PsiBlockStatement && !(statement2 instanceof PsiBlockStatement)) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)statement1;
-        final PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
-        if (statements.length != 1) {
-          return false;
-        }
-        statement1 = statements[0];
-      }
-      else if (!(statement1 instanceof PsiBlockStatement) && statement2 instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)statement2;
-        final PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
-        if (statements.length != 1) {
-          return false;
-        }
-        statement2 = statements[0];
-      }
-      else {
         return false;
-      }
-      if (statement1.getClass() != statement2.getClass()) {
-        return false;
-      }
     }
     if (statement1 instanceof PsiAssertStatement) {
       return assertStatementsAreEquivalent((PsiAssertStatement)statement1, (PsiAssertStatement)statement2);
