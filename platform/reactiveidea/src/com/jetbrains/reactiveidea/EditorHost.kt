@@ -149,7 +149,7 @@ public class EditorHost(val reactiveModel: ReactiveModel,
               }
             } catch(e: Throwable) {
             }
-            IdeDocumentHistory.getInstance(editor.getProject()).onSelectionChanged()
+            (IdeDocumentHistory.getInstance(editor.getProject()) as IdeDocumentHistoryImpl).onSelectionChanged()
           }, updateCaretAndSelectionCommand, DocCommandGroupId.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument())
         }
       }

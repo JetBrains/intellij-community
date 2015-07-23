@@ -54,7 +54,7 @@ import java.util.HashMap
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-public class ServerFileEditorManager(val myProject: Project) : FileEditorManagerEx(), ProjectComponent {
+public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(), ProjectComponent {
   companion object {
     private val EMPTY_EDITOR_ARRAY = arrayOf<FileEditor>()
     private val EMPTY_PROVIDER_ARRAY = arrayOf<FileEditorProvider>()
@@ -85,7 +85,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
             val file = editor.meta.host<EditorHost>().file
             file to
                 (Pair.create(arrayOf(editor.meta.host<EditorHost>().textEditor as FileEditor)
-                    , FileEditorProviderManager.getInstance().getProviders(myProject, file)))
+                    , FileEditorProviderManager.getInstance().getProviders(proj, file)))
           }.toTypedArray())
         }
       })
@@ -132,10 +132,10 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         }
 
         reaction(false, "active editors change", notNull) { editor ->
-          CommandProcessor.getInstance().executeCommand(myProject, object : Runnable {
+          CommandProcessor.getInstance().executeCommand(proj, object : Runnable {
             override fun run() {
               println("command $editor")
-              (IdeDocumentHistory.getInstance(myProject) as IdeDocumentHistoryImpl).onSelectionChanged()
+              (IdeDocumentHistory.getInstance(proj) as IdeDocumentHistoryImpl).onSelectionChanged()
             }
           }, null, null)
         }
@@ -147,7 +147,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
 
   init {
-    myListenerList = MessageListenerList(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER)
+    myListenerList = MessageListenerList(proj.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER)
 
     if (Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME).size() > 0) {
       myListenerList.add(object : FileEditorManagerAdapter() {
@@ -330,11 +330,11 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   private val myBusyObject = BusyObject.Impl.Simple()
 
   override fun notifyPublisher(runnable: Runnable): ActionCallback {
-    val focusManager = IdeFocusManager.getInstance(myProject)
+    val focusManager = IdeFocusManager.getInstance(proj)
     val done = ActionCallback()
     return myBusyObject.execute(object : ActiveRunnable() {
       override fun run(): ActionCallback {
-        focusManager.doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(myProject) {
+        focusManager.doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(proj) {
           override fun run() {
             runnable.run()
             done.setDone()
@@ -458,7 +458,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
     }
 
     val result = SmartList<FileEditor>()
-    CommandProcessor.getInstance().executeCommand(myProject, object : Runnable {
+    CommandProcessor.getInstance().executeCommand(proj, object : Runnable {
       override fun run() {
         val file = descriptor.getFile()
         val editors = openFile(file, focusEditor, !descriptor.isUseCurrentWindow())
@@ -490,7 +490,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun getProject(): Project {
-    return myProject
+    return proj
   }
 
   override fun setSelectedEditor(file: VirtualFile, fileEditorProviderId: String) {
@@ -518,7 +518,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
     var builders: Array<AsyncFileEditorProvider.Builder?>
     // File is not opened yet. In this case we have to create editors
     // and select the created EditorComposite.
-    newProviders = FileEditorProviderManager.getInstance().getProviders(myProject, file)
+    newProviders = FileEditorProviderManager.getInstance().getProviders(proj, file)
     if (newProviders!!.size() == 0) {
       return Pair.create(EMPTY_EDITOR_ARRAY, EMPTY_PROVIDER_ARRAY)
     }
@@ -529,11 +529,11 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         val provider = newProviders[i]
         builders[i] = ApplicationManager.getApplication().runReadAction(object : Computable<AsyncFileEditorProvider.Builder> {
           override fun compute(): AsyncFileEditorProvider.Builder? {
-            if (myProject.isDisposed() || !file.isValid()) {
+            if (proj.isDisposed() || !file.isValid()) {
               return null
             }
-            LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file)
-            return if (provider is AsyncFileEditorProvider) provider.createEditorAsync(myProject, file) else null
+            LOG.assertTrue(provider.accept(proj, file), "Provider " + provider + " doesn't accept file " + file)
+            return if (provider is AsyncFileEditorProvider) provider.createEditorAsync(proj, file) else null
           }
         })
       } catch (e: ProcessCanceledException) {
@@ -548,7 +548,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
     val newEditors: Array<FileEditor?> = arrayOfNulls(newProviders.size())
     UIUtil.invokeAndWaitIfNeeded(object : Runnable {
       override fun run() {
-        if (myProject.isDisposed() || !file.isValid()) {
+        if (proj.isDisposed() || !file.isValid()) {
           return
         }
 
@@ -559,7 +559,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         for (i in newProviders.indices) {
           try {
             val provider = newProviders[i]
-            val editor = if (builders[i] == null) provider.createEditor(myProject, file) else builders[i]?.build()
+            val editor = if (builders[i] == null) provider.createEditor(proj, file) else builders[i]?.build()
             newEditors[i] = editor
           } catch (e: Exception) {
             LOG.error(e)
@@ -583,7 +583,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
         //[jeka] this is a hack to support back-forward navigation
         // previously here was incorrect call to fireSelectionChanged() with a side-effect
-        IdeDocumentHistory.getInstance(myProject).onSelectionChanged()
+        (IdeDocumentHistory.getInstance(proj) as IdeDocumentHistoryImpl).onSelectionChanged()
       }
     })
     return myVirtualFile2Editor[file]
@@ -602,7 +602,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         val tabs = host.path.dropLast(2).getIn(m)!!.meta["host"] as? TabViewHost
         val model = tabs?.setActiveEditor(m, host.path.components.last().toString()) ?: m
 
-        IdeDocumentHistory.getInstance(myProject).onSelectionChanged()
+        (IdeDocumentHistory.getInstance(proj) as IdeDocumentHistoryImpl).onSelectionChanged()
         model
       }
     }
