@@ -2,7 +2,6 @@ package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.impl.stores.DefaultProjectStoreImpl;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
