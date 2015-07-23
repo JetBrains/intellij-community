@@ -162,11 +162,14 @@ public class MinusculeMatcher implements Matcher {
   }
 
   public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch) {
-    FList<TextRange> iterable = matchingFragments(name);
-    if (iterable == null) return Integer.MIN_VALUE;
-    if (iterable.isEmpty()) return 0;
+    return matchingDegree(name, valueStartCaseMatch, matchingFragments(name));
+  }
 
-    final TextRange first = iterable.getHead();
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
+    if (fragments == null) return Integer.MIN_VALUE;
+    if (fragments.isEmpty()) return 0;
+
+    final TextRange first = fragments.getHead();
     boolean startMatch = first.getStartOffset() == 0;
 
     int matchingCase = 0;
@@ -175,7 +178,7 @@ public class MinusculeMatcher implements Matcher {
     int integral = 0; // -sum of matching-char-count * hump-index over all matched humps; favors longer fragments matching earlier words
     int humpIndex = 1;
     int nextHumpStart = 0;
-    for (TextRange range : iterable) {
+    for (TextRange range : fragments) {
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
         boolean isHumpStart = false;
         while (nextHumpStart <= i) {
@@ -198,7 +201,7 @@ public class MinusculeMatcher implements Matcher {
         if (c == myPattern[p]) {
           if (isUpperCase[p]) matchingCase += 50; // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
           else if (i == 0 && startMatch) matchingCase += 15; // the very first letter case distinguishes classes in Java etc
-          else if (isHumpStart) matchingCase += 1; // if a lowercase matches lowercase hump start, that also means something 
+          else if (isHumpStart) matchingCase += 1; // if a lowercase matches lowercase hump start, that also means something
         } else if (isHumpStart) {
           // disfavor hump starts where pattern letter case doesn't match name case
           matchingCase -= 1;
@@ -209,25 +212,24 @@ public class MinusculeMatcher implements Matcher {
     int startIndex = first.getStartOffset();
     boolean afterSeparator = StringUtil.indexOfAny(name, myHardSeparators, 0, startIndex) >= 0;
     boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
-    boolean finalMatch = iterable.get(iterable.size() - 1).getEndOffset() == name.length();
+    boolean finalMatch = fragments.get(fragments.size() - 1).getEndOffset() == name.length();
 
-    return (wordStart ? 1000 : 0) + 
-           integral * 10 + 
+    return (wordStart ? 1000 : 0) +
+           integral * 10 +
            matchingCase * (startMatch && valueStartCaseMatch ? 10 : 1) +
-           (afterSeparator ? 0 : 2) + 
+           (afterSeparator ? 0 : 2) +
            (startMatch ? 1 : 0) +
            (finalMatch ? 1 : 0);
   }
 
   public boolean isStartMatch(@NotNull String name) {
-    Iterable<TextRange> fragments = matchingFragments(name);
-    if (fragments != null) {
-      Iterator<TextRange> iterator = fragments.iterator();
-      if (!iterator.hasNext() || iterator.next().getStartOffset() == 0) {
-        return true;
-      }
-    }
-    return false;
+    FList<TextRange> fragments = matchingFragments(name);
+    return fragments != null && isStartMatch(fragments);
+  }
+
+  public static boolean isStartMatch(@NotNull Iterable<TextRange> fragments) {
+    Iterator<TextRange> iterator = fragments.iterator();
+    return !iterator.hasNext() || iterator.next().getStartOffset() == 0;
   }
 
   @Override
