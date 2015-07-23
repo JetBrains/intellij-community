@@ -39,13 +39,13 @@ import java.util.HashMap
 
 public class ServerEditorTracker(project: Project,
                                  val editorFactory: EditorFactory,
-                                 manager: SmartPointerManager,
-                                 docSync: ReactiveModelsManager) : AbstractProjectComponent(project), EditorTracker {
-  private val mySmartPointerManager: SmartPointerManagerImpl
+                                 spmanager: SmartPointerManager,
+                                 modelsManager: ReactiveModelsManager) : AbstractProjectComponent(project), EditorTracker {
+  private val smartPointerManager = spmanager as SmartPointerManagerImpl
   private val dispatcher = EventDispatcher.create(javaClass<EditorTrackerListener>())
 
   private val activeEditors: Signal<List<Editor>> =
-      reaction(true, "filter active", reaction(true, "flatmap", flatten(reaction(true, "editors", docSync.modelsForProject(project)) { models ->
+      reaction(true, "filter active", reaction(true, "flatmap", flatten(reaction(true, "editors", modelsManager.modelsForProject(project)) { models ->
         unlist(models.map {
           it.subscribe(it.lifetime, com.jetbrains.reactivemodel.editorsTag)
         })
@@ -62,8 +62,6 @@ public class ServerEditorTracker(project: Project,
       }
 
   init {
-    mySmartPointerManager = manager as SmartPointerManagerImpl
-
     reaction(false, "active editor changed", activeEditors) {
       dispatchChanged()
     }
@@ -109,13 +107,13 @@ public class ServerEditorTracker(project: Project,
         override fun run() {
           // allow range markers in smart pointers to be collected
           if (virtualFile != null) {
-            mySmartPointerManager.unfastenBelts(virtualFile, 0)
+            smartPointerManager.unfastenBelts(virtualFile, 0)
           }
         }
       })
       // materialize all range markers and do not let them to be collected to improve responsiveness
       if (virtualFile != null) {
-        mySmartPointerManager.fastenBelts(virtualFile, 0, null)
+        smartPointerManager.fastenBelts(virtualFile, 0, null)
       }
     }
 
