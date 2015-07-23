@@ -17,29 +17,25 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.SettingsSavingComponent
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
-import org.picocontainer.PicoContainer
 import java.io.File
 
 public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
 
-  abstract val picoContainer: PicoContainer
+  abstract val componentManager: ComponentManager
 
   override final fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
-    val storageManager = (picoContainer.getComponentInstance(javaClass<IComponentStore>()) as IComponentStore).getStateStorageManager()
+    val storageManager = componentManager.stateStore.getStateStorageManager()
 
     val path = normalizeDirectoryName(directoryName)
-    val manager = SchemeManagerImpl<T, E>(path, processor, roamingType, storageManager.getStreamProvider(), pathToFile(path, storageManager))
+    val manager = SchemeManagerImpl<T, E>(path, processor, roamingType, storageManager.getStreamProvider(), pathToFile(path, storageManager), componentManager)
     @suppress("CAST_NEVER_SUCCEEDS")
     managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager
@@ -76,8 +72,8 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
 }
 
 private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
-  override val picoContainer: PicoContainer
-    get() = ApplicationManager.getApplication().getPicoContainer()
+  override val componentManager: ComponentManager
+    get() = ApplicationManager.getApplication()
 
   override fun normalizeDirectoryName(directoryName: String) = if (directoryName.startsWith('$')) directoryName else "${StoragePathMacros.ROOT_CONFIG}/$directoryName"
 
@@ -85,8 +81,7 @@ private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
 }
 
 private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
-  override val picoContainer: PicoContainer
-    get() = project.getPicoContainer()
+  override val componentManager = project
 
   override fun pathToFile(path: String, storageManager: StateStorageManager) = File(project.getBasePath(), if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
 }
