@@ -18,12 +18,14 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.*;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.io.DataOutputStream;
@@ -36,7 +38,7 @@ import java.util.concurrent.ScheduledFuture;
 public class TestDiscoveryIndex implements ProjectComponent {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
 
-  private static final String REMOVED_MARKER = "-removed-";
+  private static final int REMOVED_MARKER = -1;
   private final Object ourLock = new Object();
   private final Project myProject;
   private volatile Holder myHolder;
@@ -47,7 +49,23 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
   public Collection<String> getTestsByMethodName(String classFQName, String methodName) throws IOException {
     synchronized (ourLock) {
-      return getHolder().myMethodQNameToTestNames.get(Pair.create(classFQName, methodName));
+      Holder holder = null;
+      try {
+        holder = getHolder();
+        final TIntArrayList list = holder.myMethodQNameToTestNames.get(
+          createKey(
+            holder.myClassEnumerator.enumerate(classFQName),
+            holder.myMethodEnumerator.enumerate(methodName)
+          )
+        );
+        if (list == null) return Collections.emptyList();
+        final ArrayList<String> result = new ArrayList<String>(list.size());
+        for (int testNameId : list.toNativeArray()) result.add(holder.myTestNameEnumerator.valueOf(testNameId));
+        return result;
+      } catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
+        return Collections.emptyList();
+      }
     }
   }
 
@@ -96,72 +114,98 @@ public class TestDiscoveryIndex implements ProjectComponent {
   public void projectClosed() {
   }
 
-  private static final int VERSION = 1;
+  private static final int VERSION = 2;
 
   private final class Holder {
-    final PersistentHashMap<Pair<String, String>, Collection<String>> myMethodQNameToTestNames;
-    final PersistentHashMap<String, Map<String, List<String>>> myTestNameToUsedClassesAndMethodMap;
+    final PersistentHashMap<Long, TIntArrayList> myMethodQNameToTestNames;
+    final PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> myTestNameToUsedClassesAndMethodMap;
+    final PersistentStringEnumerator myClassEnumerator;
+    final CachingEnumerator<String> myClassEnumeratorCache;
+    final PersistentStringEnumerator myMethodEnumerator;
+    final CachingEnumerator<String> myMethodEnumeratorCache;
+    final PersistentStringEnumerator myTestNameEnumerator;
+    final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<PersistentEnumeratorDelegate>(4);
+
     private ScheduledFuture<?> myFlushingFuture;
     private boolean myDisposed;
 
     Holder() {
-      String path = myProject != null ?
-                    TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject) :
-                    "out";
-      final File versionFile = new File(path + File.separator + "index.version");
+      String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
+      final File versionFile = getVersionFile(path);
       final File methodQNameToTestNameFile = new File(path + File.separator + "methodQNameToTestName.data");
-      final File testNameToUsedClassesAndMethodMapFile = new File(path + File.separator + "testToCalledMethodNames");
+      final File testNameToUsedClassesAndMethodMapFile = new File(path + File.separator + "testToCalledMethodNames.data");
+      final File classNameEnumeratorFile = new File(path + File.separator + "classNameEnumerator.data");
+      final File methodNameEnumeratorFile = new File(path + File.separator + "methodNameEnumerator.data");
+      final File testNameEnumeratorFile = new File(path + File.separator + "testNameEnumerator.data");
 
       try {
         int version = readVersion(versionFile);
         if (version != VERSION) {
           LOG.info("TestDiscoveryIndex was rewritten due to version change");
-          IOUtil.deleteAllFilesStartingWith(methodQNameToTestNameFile);
-          IOUtil.deleteAllFilesStartingWith(testNameToUsedClassesAndMethodMapFile);
+          deleteAllIndexDataFiles(methodQNameToTestNameFile, testNameToUsedClassesAndMethodMapFile, classNameEnumeratorFile, methodNameEnumeratorFile, testNameEnumeratorFile);
 
           writeVersion(versionFile);
         }
 
-        PersistentHashMap<Pair<String, String>, Collection<String>> methodQNameToTestNames = null;
-        PersistentHashMap<String, Map<String, List<String>>> testNameToUsedClassesAndMethodMap = null;
+        PersistentHashMap<Long, TIntArrayList> methodQNameToTestNames;
+        PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> testNameToUsedClassesAndMethodMap;
+        PersistentStringEnumerator classNameEnumerator;
+        PersistentStringEnumerator methodNameEnumerator;
+        PersistentStringEnumerator testNameEnumerator;
 
-        for(int i = 0; i < 2; ++i) {
+        int iterations = 0;
+
+        while(true) {
+          ++iterations;
+
           try {
-            methodQNameToTestNames = new PersistentHashMap<Pair<String, String>, Collection<String>>(
+            methodQNameToTestNames = new PersistentHashMap<Long, TIntArrayList>(
               methodQNameToTestNameFile,
-              new StringPairKeyDescriptor(),
+              new MethodQNameSerializer(),
               new TestNamesExternalizer()
             );
-          } catch (Throwable throwable) {
-            LOG.info("TestDiscoveryIndex problem", throwable);
-            IOUtil.deleteAllFilesStartingWith(methodQNameToTestNameFile);
-            IOUtil.deleteAllFilesStartingWith(testNameToUsedClassesAndMethodMapFile);
-            continue; // try another time
-          }
-          try {
-            testNameToUsedClassesAndMethodMap = new PersistentHashMap<String, Map<String, List<String>>>(
+            myConstructedDataFiles.add(methodQNameToTestNames);
+
+            testNameToUsedClassesAndMethodMap = new PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>>(
               testNameToUsedClassesAndMethodMapFile,
-              EnumeratorStringDescriptor.INSTANCE,
+              EnumeratorIntegerDescriptor.INSTANCE,
               new ClassesAndMethodsMapDataExternalizer()
             );
+            myConstructedDataFiles.add(testNameToUsedClassesAndMethodMap);
+
+            classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile);
+            myConstructedDataFiles.add(classNameEnumerator);
+
+            methodNameEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile);
+            myConstructedDataFiles.add(methodNameEnumerator);
+
+            testNameEnumerator = new PersistentStringEnumerator(testNameEnumeratorFile);
+            myConstructedDataFiles.add(testNameEnumerator);
+
+            break;
           } catch (Throwable throwable) {
-            LOG.info("TestDiscoveryIndex problem2", throwable);
-            try {
-              methodQNameToTestNames.close();
-              methodQNameToTestNames = null;
-            } catch (Throwable ignore) {}
-            IOUtil.deleteAllFilesStartingWith(methodQNameToTestNameFile);
-            IOUtil.deleteAllFilesStartingWith(testNameToUsedClassesAndMethodMapFile);
+            LOG.info("TestDiscoveryIndex problem", throwable);
+            closeAllConstructedFiles(true);
+            myConstructedDataFiles.clear();
+
+            deleteAllIndexDataFiles(methodQNameToTestNameFile, testNameToUsedClassesAndMethodMapFile, classNameEnumeratorFile, methodNameEnumeratorFile,
+                                    testNameEnumeratorFile);
             // try another time
           }
 
-          if (testNameToUsedClassesAndMethodMap != null) break;
+          if (iterations >= 3) {
+            LOG.error("Unexpected circular initialization problem");
+            assert false;
+          }
         }
 
-        assert testNameToUsedClassesAndMethodMap != null;
-        assert methodQNameToTestNameFile != null;
         myMethodQNameToTestNames = methodQNameToTestNames;
         myTestNameToUsedClassesAndMethodMap = testNameToUsedClassesAndMethodMap;
+        myClassEnumerator = classNameEnumerator;
+        myMethodEnumerator = methodNameEnumerator;
+        myTestNameEnumerator = testNameEnumerator;
+        myMethodEnumeratorCache = new CachingEnumerator<String>(methodNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
+        myClassEnumeratorCache = new CachingEnumerator<String>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
 
         myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
           @Override
@@ -171,12 +215,13 @@ public class TestDiscoveryIndex implements ProjectComponent {
                 myFlushingFuture.cancel(false);
                 return;
               }
-              if (myMethodQNameToTestNames.isDirty()) {
-                myMethodQNameToTestNames.force();
+              for(PersistentEnumeratorDelegate dataFile:myConstructedDataFiles) {
+                if (dataFile.isDirty()) {
+                  dataFile.force();
+                }
               }
-              if (myTestNameToUsedClassesAndMethodMap.isDirty()) {
-                myTestNameToUsedClassesAndMethodMap.force();
-              }
+              myClassEnumeratorCache.clear();
+              myMethodEnumeratorCache.clear();
             }
           }
         });
@@ -184,6 +229,26 @@ public class TestDiscoveryIndex implements ProjectComponent {
       catch (IOException ex) {
         throw new RuntimeException(ex);
       }
+    }
+
+    private void closeAllConstructedFiles(boolean ignoreCloseProblem) {
+      for(Closeable closeable:myConstructedDataFiles) {
+        try {
+          closeable.close();
+        } catch (Throwable throwable) {
+          if (!ignoreCloseProblem) throw new RuntimeException(throwable);
+        }
+      }
+    }
+
+    private void deleteAllIndexDataFiles(File methodQNameToTestNameFile,
+                                         File testNameToUsedClassesAndMethodMapFile,
+                                         File classNameEnumeratorFile, File methodNameEnumeratorFile, File testNameEnumeratorFile) {
+      IOUtil.deleteAllFilesStartingWith(methodQNameToTestNameFile);
+      IOUtil.deleteAllFilesStartingWith(testNameToUsedClassesAndMethodMapFile);
+      IOUtil.deleteAllFilesStartingWith(classNameEnumeratorFile);
+      IOUtil.deleteAllFilesStartingWith(methodNameEnumeratorFile);
+      IOUtil.deleteAllFilesStartingWith(testNameEnumeratorFile);
     }
 
     private void writeVersion(File versionFile) throws IOException {
@@ -211,87 +276,105 @@ public class TestDiscoveryIndex implements ProjectComponent {
     void dispose() {
       assert Thread.holdsLock(ourLock);
       try {
-        myMethodQNameToTestNames.close();
-        myTestNameToUsedClassesAndMethodMap.close();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+        closeAllConstructedFiles(false);
       }
       finally {
         myDisposed = true;
       }
     }
 
-    private class TestNamesExternalizer implements DataExternalizer<Collection<String>> {
-      public void save(@NotNull DataOutput dataOutput, Collection<String> strings) throws IOException {
-        for (String string : strings) IOUtil.writeUTF(dataOutput, string);
+    private class TestNamesExternalizer implements DataExternalizer<TIntArrayList> {
+      public void save(@NotNull DataOutput dataOutput, TIntArrayList testNameIds) throws IOException {
+        for (int testNameId : testNameIds.toNativeArray()) DataInputOutputUtil.writeINT(dataOutput, testNameId);
       }
 
-      public Collection<String> read(@NotNull DataInput dataInput) throws IOException {
-        Set<String> result = new THashSet<String>();
+      public TIntArrayList read(@NotNull DataInput dataInput) throws IOException {
+        TIntHashSet result = new TIntHashSet();
 
         while (((InputStream)dataInput).available() > 0) {
-          String string = IOUtil.readUTF(dataInput);
-          if (REMOVED_MARKER.equals(string)) {
-            string = IOUtil.readUTF(dataInput);
-            result.remove(string);
+          int id = DataInputOutputUtil.readINT(dataInput);
+          if (REMOVED_MARKER == id) {
+            id = DataInputOutputUtil.readINT(dataInput);
+            result.remove(id);
           }
           else {
-            result.add(string);
+            result.add(id);
           }
         }
 
-        return result;
+        return new TIntArrayList(result.toArray());
       }
     }
 
-    private class ClassesAndMethodsMapDataExternalizer implements DataExternalizer<Map<String, List<String>>> {
-      public void save(@NotNull DataOutput dataOutput, Map<String, List<String>> classAndMethodsMap)
+    private class ClassesAndMethodsMapDataExternalizer implements DataExternalizer<TIntObjectHashMap<TIntArrayList>> {
+      public void save(@NotNull final DataOutput dataOutput, TIntObjectHashMap<TIntArrayList> classAndMethodsMap)
         throws IOException {
         DataInputOutputUtil.writeINT(dataOutput, classAndMethodsMap.size());
-        for (Map.Entry<String, List<String>> e : classAndMethodsMap.entrySet()) {
-          IOUtil.writeUTF(dataOutput, e.getKey());
-          DataInputOutputUtil.writeINT(dataOutput, e.getValue().size());
-          for (String methodName : e.getValue()) IOUtil.writeUTF(dataOutput, methodName);
+        final int[] classNameIds = classAndMethodsMap.keys();
+        Arrays.sort(classNameIds);
+
+        int prevClassNameId = 0;
+        for(int classNameId:classNameIds) {
+          DataInputOutputUtil.writeINT(dataOutput, classNameId - prevClassNameId);
+          TIntArrayList value = classAndMethodsMap.get(classNameId);
+          DataInputOutputUtil.writeINT(dataOutput, value.size());
+
+          final int[] methodNameIds = value.toNativeArray();
+          Arrays.sort(methodNameIds);
+          int prevMethodNameId = 0;
+          for (int methodNameId : methodNameIds) {
+            DataInputOutputUtil.writeINT(dataOutput, methodNameId - prevMethodNameId);
+            prevMethodNameId = methodNameId;
+          }
+          prevClassNameId = classNameId;
         }
       }
 
-      public Map<String, List<String>> read(@NotNull DataInput dataInput) throws IOException {
+      public TIntObjectHashMap<TIntArrayList> read(@NotNull DataInput dataInput) throws IOException {
         int numberOfClasses = DataInputOutputUtil.readINT(dataInput);
-        THashMap<String, List<String>> result = new THashMap<String, List<String>>(numberOfClasses);
+        TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<TIntArrayList>();
+        int prevClassNameId = 0;
+
         while (numberOfClasses-- > 0) {
-          String className = IOUtil.readUTF(dataInput);
+          int classNameId = DataInputOutputUtil.readINT(dataInput) + prevClassNameId;
           int numberOfMethods = DataInputOutputUtil.readINT(dataInput);
-          ArrayList<String> methods = new ArrayList<String>(numberOfMethods);
-          while (numberOfMethods-- > 0) methods.add(IOUtil.readUTF(dataInput));
-          result.put(className, methods);
+          TIntArrayList methodNameIds = new TIntArrayList(numberOfMethods);
+
+          int prevMethodNameId = 0;
+          while (numberOfMethods-- > 0) {
+            final int methodNameId = DataInputOutputUtil.readINT(dataInput) + prevMethodNameId;
+            methodNameIds.add(methodNameId);
+            prevMethodNameId = methodNameId;
+          }
+
+          result.put(classNameId, methodNameIds);
+          prevClassNameId = classNameId;
         }
         return result;
       }
     }
   }
 
-  private static class StringPairKeyDescriptor implements KeyDescriptor<Pair<String, String>> {
-    public static final StringPairKeyDescriptor INSTANCE = new StringPairKeyDescriptor();
+  private static class MethodQNameSerializer implements KeyDescriptor<Long> {
+    public static final MethodQNameSerializer INSTANCE = new MethodQNameSerializer();
 
     @Override
-    public void save(@NotNull DataOutput out, Pair<String, String> value) throws IOException {
-      IOUtil.writeUTF(out, value.first);
-      IOUtil.writeUTF(out, value.second);
+    public void save(@NotNull DataOutput out, Long value) throws IOException {
+      out.writeLong(value);
     }
 
     @Override
-    public Pair<String, String> read(@NotNull DataInput in) throws IOException {
-      return Pair.create(IOUtil.readUTF(in), IOUtil.readUTF(in));
+    public Long read(@NotNull DataInput in) throws IOException {
+      return in.readLong();
     }
 
     @Override
-    public int getHashCode(Pair<String, String> value) {
+    public int getHashCode(Long value) {
       return value.hashCode();
     }
 
     @Override
-    public boolean isEqual(Pair<String, String> val1, Pair<String, String> val2) {
+    public boolean isEqual(Long val1, Long val2) {
       return val1.equals(val2);
     }
   }
@@ -306,88 +389,111 @@ public class TestDiscoveryIndex implements ProjectComponent {
     synchronized (ourLock) {
       Holder holder = getHolder();
       if (holder.myDisposed) return;
-      Map<String, List<String>> classData = loadClassAndMethodsMap(file);
-      Map<String, List<String>> previousClassData = holder.myTestNameToUsedClassesAndMethodMap.get(testName);
+      try {
+        final int testNameId = holder.myTestNameEnumerator.enumerate(testName);
+        TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, holder);
+        TIntObjectHashMap<TIntArrayList> previousClassData = holder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
 
-      ValueDiff valueDiff = new ValueDiff(classData, previousClassData);
+        ValueDiff valueDiff = new ValueDiff(classData, previousClassData);
 
-      if (valueDiff.hasRemovedDelta()) {
-        for (String classQName : valueDiff.myRemovedClassData.keySet()) {
-          for (String methodName : valueDiff.myRemovedClassData.get(classQName)) {
-            holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
-                                                       new PersistentHashMap.ValueDataAppender() {
-                                                         @Override
-                                                         public void append(DataOutput dataOutput) throws IOException {
-                                                           IOUtil.writeUTF(dataOutput, REMOVED_MARKER);
-                                                           IOUtil.writeUTF(dataOutput, testName);
+        if (valueDiff.hasRemovedDelta()) {
+          for (int classQName : valueDiff.myRemovedClassData.keys()) {
+            for (int methodName : valueDiff.myRemovedClassData.get(classQName).toNativeArray()) {
+              holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
+                                                         new PersistentHashMap.ValueDataAppender() {
+                                                           @Override
+                                                           public void append(DataOutput dataOutput) throws IOException {
+                                                             DataInputOutputUtil.writeINT(dataOutput, REMOVED_MARKER);
+                                                             DataInputOutputUtil.writeINT(dataOutput, testNameId);
+                                                           }
                                                          }
-                                                       }
-            );
+              );
+            }
           }
         }
-      }
 
-      if (valueDiff.hasAddedDelta()) {
-        for (String classQName : valueDiff.myAddedOrChangedClassData.keySet()) {
-          for (String methodName : valueDiff.myAddedOrChangedClassData.get(classQName)) {
-            holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
-                                                       new PersistentHashMap.ValueDataAppender() {
-                                                         @Override
-                                                         public void append(DataOutput dataOutput) throws IOException {
-                                                           IOUtil.writeUTF(dataOutput, testName);
-                                                         }
-                                                       });
+        if (valueDiff.hasAddedDelta()) {
+          for (int classQName : valueDiff.myAddedOrChangedClassData.keys()) {
+            for (int methodName : valueDiff.myAddedOrChangedClassData.get(classQName).toNativeArray()) {
+              holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
+                                                         new PersistentHashMap.ValueDataAppender() {
+                                                           @Override
+                                                           public void append(DataOutput dataOutput) throws IOException {
+                                                             DataInputOutputUtil.writeINT(dataOutput, testNameId);
+                                                           }
+                                                         });
+            }
           }
         }
-      }
 
-      if (valueDiff.hasAddedDelta() || valueDiff.hasRemovedDelta()) {
-        holder.myTestNameToUsedClassesAndMethodMap.put(testName, classData);
+        if (valueDiff.hasAddedDelta() || valueDiff.hasRemovedDelta()) {
+          holder.myTestNameToUsedClassesAndMethodMap.put(testNameId, classData);
+        }
+      } catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
       }
     }
   }
 
-  private static Pair<String, String> createKey(String classQName, String methodName) {
-    return Pair.create(classQName, methodName);
+  @NotNull
+  private static File getVersionFile(String path) {
+    return new File(path + File.separator + "index.version");
+  }
+
+  private void thingsWentWrongLetsReinitialize(@Nullable Holder holder, Throwable throwable) throws IOException {
+    LOG.error("Unexpected problem", throwable);
+    if (holder != null) holder.dispose();
+    String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
+    final File versionFile = getVersionFile(path);
+    FileUtil.delete(versionFile);
+
+    myHolder = null;
+    if (throwable instanceof IOException) throw (IOException) throwable;
+  }
+
+  private static long createKey(int classQName, int methodName) {
+    return ((long)classQName << 32) | methodName;
   }
 
   static class ValueDiff {
-    final Map<String, List<String>> myAddedOrChangedClassData;
-    final Map<String, List<String>> myRemovedClassData;
+    final TIntObjectHashMap<TIntArrayList> myAddedOrChangedClassData;
+    final TIntObjectHashMap<TIntArrayList> myRemovedClassData;
 
-    ValueDiff(Map<String, List<String>> classData, Map<String, List<String>> previousClassData) {
-      Map<String, List<String>> addedOrChangedClassData = classData;
-      Map<String, List<String>> removedClassData = previousClassData;
+    ValueDiff(TIntObjectHashMap<TIntArrayList> classData, TIntObjectHashMap<TIntArrayList> previousClassData) {
+      TIntObjectHashMap<TIntArrayList> addedOrChangedClassData = classData;
+      TIntObjectHashMap<TIntArrayList> removedClassData = previousClassData;
 
       if (previousClassData != null && !previousClassData.isEmpty()) {
-        removedClassData = new THashMap<String, List<String>>();
-        addedOrChangedClassData = new THashMap<String, List<String>>();
+        removedClassData = new TIntObjectHashMap<TIntArrayList>();
+        addedOrChangedClassData = new TIntObjectHashMap<TIntArrayList>();
 
-        for (String classQName : classData.keySet()) {
-          List<String> currentMethods = classData.get(classQName);
-          List<String> previousMethods = previousClassData.get(classQName);
+        for (int classQName : classData.keys()) {
+          TIntArrayList currentMethods = classData.get(classQName);
+          TIntArrayList previousMethods = previousClassData.get(classQName);
 
           if (previousMethods == null) {
             addedOrChangedClassData.put(classQName, currentMethods);
             continue;
           }
 
-          THashSet<String> previousMethodsSet = new THashSet<String>(previousMethods);
-          THashSet<String> currentMethodsSet = new THashSet<String>(currentMethods);
-          currentMethodsSet.removeAll(previousMethods);
-          previousMethodsSet.removeAll(currentMethods);
+          final int[] previousMethodIds = previousMethods.toNativeArray();
+          TIntHashSet previousMethodsSet = new TIntHashSet(previousMethodIds);
+          final int[] currentMethodIds = currentMethods.toNativeArray();
+          TIntHashSet currentMethodsSet = new TIntHashSet(currentMethodIds);
+          currentMethodsSet.removeAll(previousMethodIds);
+          previousMethodsSet.removeAll(currentMethodIds);
 
           if (!currentMethodsSet.isEmpty()) {
-            addedOrChangedClassData.put(classQName, new ArrayList<String>(currentMethodsSet));
+            addedOrChangedClassData.put(classQName, new TIntArrayList(currentMethodsSet.toArray()));
           }
           if (!previousMethodsSet.isEmpty()) {
-            removedClassData.put(classQName, new ArrayList<String>(previousMethodsSet));
+            removedClassData.put(classQName, new TIntArrayList(previousMethodsSet.toArray()));
           }
         }
-        for (String classQName : previousClassData.keySet()) {
+        for (int classQName : previousClassData.keys()) {
           if (classData.containsKey(classQName)) continue;
 
-          List<String> previousMethods = previousClassData.get(classQName);
+          TIntArrayList previousMethods = previousClassData.get(classQName);
           removedClassData.put(classQName, previousMethods);
         }
       }
@@ -406,25 +512,25 @@ public class TestDiscoveryIndex implements ProjectComponent {
   }
 
   @NotNull
-  private static Map<String, List<String>> loadClassAndMethodsMap(File file) throws IOException {
+  private static TIntObjectHashMap<TIntArrayList> loadClassAndMethodsMap(File file, Holder holder) throws IOException {
     DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(file), 64 * 1024));
     byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 
     try {
       int numberOfClasses = DataInputOutputUtil.readINT(inputStream);
-      Map<String, List<String>> classData = new THashMap<String, List<String>>(numberOfClasses, 0.5f);
+      TIntObjectHashMap<TIntArrayList> classData = new TIntObjectHashMap<TIntArrayList>(numberOfClasses);
       while (numberOfClasses-- > 0) {
         String classQName = IOUtil.readUTFFast(buffer, inputStream);
+        int classId = holder.myClassEnumeratorCache.enumerate(classQName);
         int numberOfMethods = DataInputOutputUtil.readINT(inputStream);
-        List<String> methodsList;
-        classData.put(classQName, methodsList = new ArrayList<String>(numberOfMethods));
-        //System.out.println(classQName + "," + numberOfMethods);
+        TIntArrayList methodsList = new TIntArrayList(numberOfMethods);
 
         while (numberOfMethods-- > 0) {
           String methodName = IOUtil.readUTFFast(buffer, inputStream);
-          methodsList.add(methodName);
-          //System.out.println(methodName);
+          methodsList.add(holder.myMethodEnumeratorCache.enumerate(methodName));
         }
+
+        classData.put(classId, methodsList);
       }
       return classData;
     }
