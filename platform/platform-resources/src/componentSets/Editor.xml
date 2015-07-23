@@ -24,7 +24,7 @@
     </component>
     <component>
       <interface-class>com.intellij.openapi.fileEditor.ex.IdeDocumentHistory</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
+      <implementation-class>com.jetbrains.reactiveidea.history.ServerIdeDocumentHistory</implementation-class>
     </component>
   </project-components>
 </components>

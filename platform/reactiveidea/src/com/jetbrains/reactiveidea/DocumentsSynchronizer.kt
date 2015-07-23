@@ -27,9 +27,12 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.reactiveidea.history.host.HistoryHost
+import com.jetbrains.reactiveidea.history.host.historyPath
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
@@ -39,7 +42,8 @@ import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.get
 import com.jetbrains.reactivemodel.util.host
 
-public class DocumentsSynchronizer(val project: Project, val serverEditorTracker: ServerEditorTracker) : ProjectComponent {
+public class DocumentsSynchronizer(val project: Project, val serverEditorTracker: ServerEditorTracker,
+                                   val vfManager: VirtualFileManager) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
   val startupManager = StartupManager.getInstance(project)
   // TODO need to think about synchronization
@@ -83,7 +87,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         reactiveModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
           val path = (args["path"] as ListModel).toPath()
           val mapModel = path.getIn(model) as MapModel
-          val editorHost = mapModel.meta.host() as EditorHost
+          val editorHost = mapModel.meta.host<EditorHost>()
           val actionManager = EditorActionManager.getInstance()
 
           CommandProcessor.getInstance().executeCommand(project, object : Runnable {
@@ -107,8 +111,12 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
             ProjectViewHost(project, reactiveModel, path, lifetime, initializer)
           }
         }
+
         reactiveModel.host(Path("tab-view")) { path, lifetime, initializer ->
           TabViewHost(project, reactiveModel, path)
+        }
+        reactiveModel.host(historyPath) { path, lifetime, initializer ->
+          HistoryHost(reactiveModel, path, lifetime, vfManager, initializer)
         }
       }
     }

@@ -134,6 +134,7 @@ public class EditorHost(val reactiveModel: ReactiveModel,
 
       if (!caretGuard.locked) {
         caretGuard.lock {
+
           CommandProcessor.getInstance().executeCommand(editor.getProject(), {
             try {
               if (caret != null) {
@@ -148,7 +149,7 @@ public class EditorHost(val reactiveModel: ReactiveModel,
               }
             } catch(e: Throwable) {
             }
-            (IdeDocumentHistory.getInstance(editor.getProject()) as IdeDocumentHistoryImpl).onSelectionChanged()
+            IdeDocumentHistory.getInstance(editor.getProject()).onSelectionChanged()
           }, updateCaretAndSelectionCommand, DocCommandGroupId.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument())
         }
       }

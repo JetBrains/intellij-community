@@ -82,9 +82,9 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         val editorSignal = m.subscribe(m.lifetime, editorsTag)
         reaction(true, "editors reaction", editorSignal) { editors ->
           hashMapOf(*editors.map { editor ->
-            val file = (editor.meta.host() as EditorHost).file
+            val file = editor.meta.host<EditorHost>().file
             file to
-                (Pair.create(arrayOf((editor.meta.host() as EditorHost).textEditor as FileEditor)
+                (Pair.create(arrayOf(editor.meta.host<EditorHost>().textEditor as FileEditor)
                     , FileEditorProviderManager.getInstance().getProviders(myProject, file)))
           }.toTypedArray())
         }
@@ -101,7 +101,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
         val editorSignal = m.subscribe(m.lifetime, editorsTag)
         val subs = reaction(true, "selected editor reaction", editorSignal) { editors ->
           editors.map { editor: MapModel ->
-            val host = editor.meta.host() as EditorHost
+            val host = editor.meta.host<EditorHost>()
             val sub = m.subscribe(editor.meta.lifetime()!!, host.path / "selected")
             reaction(true, "sub resction", sub) {
               host.editor to it
@@ -583,8 +583,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
         //[jeka] this is a hack to support back-forward navigation
         // previously here was incorrect call to fireSelectionChanged() with a side-effect
-        (IdeDocumentHistory.getInstance(myProject) as IdeDocumentHistoryImpl).onSelectionChanged()
-        IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation()
+        IdeDocumentHistory.getInstance(myProject).onSelectionChanged()
       }
     })
     return myVirtualFile2Editor[file]
@@ -601,7 +600,10 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
       val host = editor.getUserData(EditorHost.editorHostKey)
       host.reactiveModel.transaction { m ->
         val tabs = host.path.dropLast(2).getIn(m)!!.meta["host"] as? TabViewHost
-        tabs?.setActiveEditor(m, host.path.components.last().toString()) ?: m
+        val model = tabs?.setActiveEditor(m, host.path.components.last().toString()) ?: m
+
+        IdeDocumentHistory.getInstance(myProject).onSelectionChanged()
+        model
       }
     }
   }
