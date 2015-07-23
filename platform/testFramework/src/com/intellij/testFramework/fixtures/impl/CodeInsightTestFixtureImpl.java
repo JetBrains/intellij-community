@@ -1943,7 +1943,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void assertPreferredCompletionItems(final int selected, @NotNull @NonNls final String... expected) {
     final LookupImpl lookup = getLookup();
-    Assert.assertNotNull(lookup);
+    Assert.assertNotNull("No lookup is shown", lookup);
 
     final JList list = lookup.getList();
     List<String> strings = getLookupElementStrings();
