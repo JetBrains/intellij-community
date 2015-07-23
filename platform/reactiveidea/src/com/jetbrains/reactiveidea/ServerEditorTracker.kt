@@ -45,9 +45,9 @@ public class ServerEditorTracker(project: Project,
   private val dispatcher = EventDispatcher.create(javaClass<EditorTrackerListener>())
 
   private val activeEditors: Signal<List<Editor>> =
-      reaction(true, "filter active", reaction(true, "flatmap", flatten(reaction(true, "editors", docSync.reactiveModels) { models ->
+      reaction(true, "filter active", reaction(true, "flatmap", flatten(reaction(true, "editors", docSync.modelsForProject(project)) { models ->
         unlist(models.map {
-          it.value.subscribe(it.value.lifetime, com.jetbrains.reactivemodel.editorsTag)
+          it.subscribe(it.lifetime, com.jetbrains.reactivemodel.editorsTag)
         })
       })) {
         it?.flatten()
