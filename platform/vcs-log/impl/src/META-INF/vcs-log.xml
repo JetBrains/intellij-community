@@ -74,6 +74,8 @@
             text="Regex"/>
     <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction" id="Vcs.Log.MatchCaseAction"
             text="Match Case"/>
+    <action class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction" id="Vcs.Log.OpenRepositoryVersion"
+            use-shortcut-of="EditSource"/>
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
@@ -104,6 +106,7 @@
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
