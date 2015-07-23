@@ -204,12 +204,16 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public int getLineStartOffset(int line) {
+    if (line == 0) return 0; // otherwise it crashed for zero-length document
     return myLineSet.getLineStart(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
-    return myLineSet.getLineEnd(line);
+    if (getTextLength() == 0 && line == 0) return 0;
+    int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
+    assert result >= 0;
+    return result;
   }
 
   @Override
