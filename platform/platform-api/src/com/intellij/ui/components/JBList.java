@@ -205,16 +205,16 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     myExpandableItemsHandler.setEnabled(enabled);
   }
 
-  @Override
-  public void setCellRenderer(final ListCellRenderer cellRenderer) {
-    // myExpandableItemsHandler may not yeb be initialized
-    //noinspection ConstantConditions
-    if (myExpandableItemsHandler == null) {
-      super.setCellRenderer(cellRenderer);
-      return;
-    }
-    super.setCellRenderer(new ExpandedItemListCellRendererWrapper(cellRenderer, myExpandableItemsHandler));
-  }
+  //@Override
+  //public void setCellRenderer(final ListCellRenderer cellRenderer) {
+  //  // myExpandableItemsHandler may not yeb be initialized
+  //  //noinspection ConstantConditions
+  //  if (myExpandableItemsHandler == null) {
+  //    super.setCellRenderer(cellRenderer);
+  //    return;
+  //  }
+  //  super.setCellRenderer(new ExpandedItemListCellRendererWrapper(cellRenderer, myExpandableItemsHandler));
+  //}
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {
     setCellRenderer(new DefaultListCellRenderer() {
