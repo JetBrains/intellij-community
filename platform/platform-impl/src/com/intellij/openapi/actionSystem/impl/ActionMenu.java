@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -29,6 +30,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -119,6 +121,18 @@ public final class ActionMenu extends JMenu {
       myPresentation.removePropertyChangeListener(myMenuItemSynchronizer);
       myMenuItemSynchronizer = null;
     }
+  }
+
+  private JPopupMenu mySpecialMenu = null;
+  @Override
+  public JPopupMenu getPopupMenu() {
+    if (mySpecialMenu == null) {
+      mySpecialMenu = new JBPopupMenu();
+      mySpecialMenu.setInvoker(this);
+      popupListener = createWinListener(mySpecialMenu);
+      ReflectionUtil.setField(JMenu.class, this, JPopupMenu.class, "popupMenu", mySpecialMenu);
+    }
+    return super.getPopupMenu();
   }
 
   @Override
