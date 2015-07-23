@@ -164,17 +164,25 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 3, 9), t.withRoot(1).expand(IS_ODD).filter(IS_ODD).toList());
   }
 
-  public void testExpandSkipFilter() {
+  public void testSkipExpandedDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    // note: 9, 11 ..etc are expanded
-    assertEquals(Arrays.asList(2, 8, 10, 4), t.withRoot(1).expand(IS_ODD).skipExpanded(true).toList());
+    assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).leavesOnly(true).leavesTraversal().toList());
+  }
+
+  public void testSkipExpandedBfs() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).leavesOnly(true).leavesBreadthFirstTraversal().toList());
   }
 
   public void testExpandSkipFilterReset() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    // note: reset clears skipExpanded
     assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), t.withRoot(1).expand(IS_ODD).
-      skipExpanded(true).reset().filter(IS_ODD).toList());
+      leavesOnly(true).reset().filter(IS_ODD).toList());
+  }
+
+  public void testFilterChildren() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), t.withRoot(1).children(IS_ODD).toList());
   }
 
   public void testEndlessGraph() {

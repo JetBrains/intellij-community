@@ -3,6 +3,7 @@ package com.intellij.psi;
 import com.intellij.lang.*;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteredTraverserBase;
@@ -67,9 +68,15 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     this.api = api;
   }
 
+  @NotNull
   @Override
   protected SyntaxTraverser<T> newInstance(Meta<T> meta) {
     return new SyntaxTraverser<T>(api, meta);
+  }
+
+  @Override
+  protected boolean isAlwaysLeaf(@NotNull T node) {
+    return super.isAlwaysLeaf(node) && !(api.typeOf(node) instanceof IFileElementType);
   }
 
   @Nullable
@@ -288,8 +295,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     @Nullable
     @Override
     public PsiElement parent(@NotNull PsiElement node) {
-      PsiElement parent = node.getParent();
-      return parent instanceof PsiFile ? null : parent;
+      return node instanceof PsiFile ? null : node.getParent();
     }
   }
 
