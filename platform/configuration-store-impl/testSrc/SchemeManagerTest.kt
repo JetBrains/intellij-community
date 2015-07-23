@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
@@ -143,25 +142,30 @@ class SchemeManagerTest {
     assertThat("first2", equalTo(scheme.getName()))
   }
 
+  fun TestScheme.save(file: File) {
+    FileUtil.writeToFile(file, serialize().toByteArray())
+  }
+
   public Test fun `different extensions`() {
     val dir = tempDirManager.newDirectory()
-    FileUtil.copyDir(File("${getTestDataPath()}/different-extensions"), dir, false)
+
+    val scheme = TestScheme("local", "true")
+    scheme.save(File(dir, "1.icls"))
+    TestScheme("local", "false").save(File(dir, "1.xml"))
+
     val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, object: TestSchemesProcessor() {
       override fun isUpgradeNeeded() = true
 
       override fun getSchemeExtension() = ".icls"
     }, RoamingType.PER_USER, null, dir)
     schemesManager.loadSchemes()
-    val schemes = schemesManager.getAllSchemes()
-    assertThat(schemes.size(), equalTo(1))
-    val scheme = schemes.get(0)
-    assertThat(scheme.data, equalTo("true"))
+    assertThat(schemesManager.getAllSchemes(), equalTo(listOf(scheme)))
 
     assertThat(File(dir, "1.icls"), exists())
     assertThat(File(dir, "1.xml"), exists())
 
     scheme.data = "newTrue"
-    save(schemesManager)
+    schemesManager.save()
 
     assertThat(File(dir, "1.icls"), exists())
     assertThat(File(dir, "1.xml"), not(exists()))
@@ -169,27 +173,27 @@ class SchemeManagerTest {
 
   public Test fun setSchemes() {
     val dir = tempDirManager.newDirectory()
-    val schemesManager = createSchemeManager(dir)
-    schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes().isEmpty(), equalTo(true))
+    val schemeManager = createSchemeManager(dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.getAllSchemes().isEmpty(), equalTo(true))
 
     val scheme = TestScheme("s1")
-    schemesManager.setSchemes(listOf(scheme))
+    schemeManager.setSchemes(listOf(scheme))
 
-    val schemes = schemesManager.getAllSchemes()
+    val schemes = schemeManager.getAllSchemes()
     assertThat(schemes.size(), equalTo(1))
     assertThat(schemes.get(0), sameInstance(scheme))
 
     assertThat(File(dir, "s1.xml"), not(exists()))
 
     scheme.data = "newTrue"
-    save(schemesManager)
+    schemeManager.save()
 
     assertThat(File(dir, "s1.xml"), exists())
 
-    schemesManager.setSchemes(emptyList())
+    schemeManager.setSchemes(emptyList())
 
-    save(schemesManager)
+    schemeManager.save()
 
     assertThat(dir, not(exists()))
   }
@@ -205,10 +209,10 @@ class SchemeManagerTest {
     val customScheme = TestScheme("default")
     assertThat(schemes.get(0), equalTo(customScheme))
 
-    save(schemeManager)
+    schemeManager.save()
     assertThat(dir, not(exists()))
 
-    save(schemeManager)
+    schemeManager.save()
     schemeManager.setSchemes(listOf(customScheme))
     assertThat(dir, not(exists()))
 
@@ -217,7 +221,7 @@ class SchemeManagerTest {
     assertThat(schemes.get(0), sameInstance(customScheme))
 
     customScheme.data = "foo"
-    save(schemeManager)
+    schemeManager.save()
     val schemeFile = File(dir, "default.xml")
     assertThat(schemeFile, exists())
 
@@ -233,21 +237,21 @@ class SchemeManagerTest {
 
   public Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {
     val dir = tempDirManager.newDirectory()
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
+    val schemeManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
 
     val scheme = TestScheme("s1")
-    schemesManager.setSchemes(listOf(scheme))
+    schemeManager.setSchemes(listOf(scheme))
 
-    save(schemesManager)
+    schemeManager.save()
 
     val schemeFile = File(dir, "s1.xml")
     assertThat(schemeFile.exists(), equalTo(true))
 
-    schemesManager.setSchemes(emptyList())
+    schemeManager.setSchemes(emptyList())
 
     FileUtil.writeToFile(File(dir, "empty"), byteArrayOf())
 
-    save(schemesManager)
+    schemeManager.save()
 
     assertThat(schemeFile.exists(), equalTo(false))
     assertThat(dir.exists(), equalTo(true))
@@ -255,36 +259,30 @@ class SchemeManagerTest {
 
   public Test fun rename() {
     val dir = tempDirManager.newDirectory()
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
-    schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes().isEmpty(), equalTo(true))
+    val schemeManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.getAllSchemes().isEmpty(), equalTo(true))
 
     val scheme = TestScheme("s1")
-    schemesManager.setSchemes(listOf(scheme))
+    schemeManager.setSchemes(listOf(scheme))
 
-    val schemes = schemesManager.getAllSchemes()
+    val schemes = schemeManager.getAllSchemes()
     assertThat(schemes.size(), equalTo(1))
     assertThat(schemes.get(0), sameInstance(scheme))
 
     assertThat(File(dir, "s1.xml").exists(), equalTo(false))
 
     scheme.data = "newTrue"
-    save(schemesManager)
+    schemeManager.save()
 
     assertThat(File(dir, "s1.xml").exists(), equalTo(true))
 
     scheme.setName("s2")
 
-    save(schemesManager)
+    schemeManager.save()
 
     assertThat(File(dir, "s1.xml").exists(), equalTo(false))
     assertThat(File(dir, "s2.xml").exists(), equalTo(true))
-  }
-
-  private fun save(schemeManager: SchemeManagerImpl<TestScheme, TestScheme>) {
-    invokeAndWaitIfNeed {
-      schemeManager.save()
-    }
   }
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {

@@ -23,28 +23,16 @@ public class TestNGTestDiscoveryListener extends TestDiscoveryListener implement
   }
 
   public void onTestSuccess(ITestResult result) {
-    onTestEnded(result);
+    testFinished(result.getTestClass().getName(), result.getName(), true);
   }
 
-  public void onTestFailure(ITestResult result) {
-    onTestEnded(result);
-  }
-
-  public void onTestSkipped(ITestResult result) {
-    onTestEnded(result);
-  }
-
-  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
-    onTestEnded(result);
-  }
+  public void onTestFailure(ITestResult result) {}
+  public void onTestSkipped(ITestResult result) {}
+  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
 
   public void onStart(ITestContext context) {}
 
   public void onFinish(ITestContext context) {}
-
-  private void onTestEnded(ITestResult result) {
-    testFinished(result.getTestClass().getName(), result.getName());
-  }
 
   public void onStart(ISuite suite) {
     testRunStarted(suite.getName());

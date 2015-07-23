@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -234,17 +233,7 @@ public class XValueHint extends AbstractValueHint {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            int start = 0, end = 0;
-            if (getCurrentRange() != null) {
-              start = getCurrentRange().getStartOffset();
-              end = getCurrentRange().getEndOffset();
-            }
-            HintManager.getInstance().showErrorHint(getEditor(), errorMessage, start,
-                                                    end, HintManager.ABOVE,
-                                                    HintManager.HIDE_BY_ESCAPE
-                                                    | HintManager.HIDE_BY_TEXT_CHANGE
-                                                    | HintManager.HIDE_BY_SCROLLING,
-                                                    0);
+            showHint(HintUtil.createErrorLabel(errorMessage));
           }
         });
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);

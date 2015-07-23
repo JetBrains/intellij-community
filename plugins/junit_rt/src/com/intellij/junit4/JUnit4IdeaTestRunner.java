@@ -22,6 +22,7 @@ import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
 import org.junit.runner.*;
 import org.junit.runner.manipulation.Filter;
+import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 import java.lang.reflect.Field;
@@ -68,12 +69,32 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
         final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
         runner.addListener(new RunListener() {
+          private boolean mySuccess;
           public void testStarted(Description description) throws Exception {
+            mySuccess = true;
             junitListener.testStarted(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
           }
 
+          public void testFailure(Failure failure) throws Exception {
+            mySuccess = false;
+          }
+
+          public void testAssumptionFailure(Failure failure) {
+            mySuccess = false;
+          }
+
+          public void testIgnored(Description description) throws Exception {
+            mySuccess = false;
+          }
+
           public void testFinished(Description description) throws Exception {
-            junitListener.testFinished(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
+            final String className = JUnit4ReflectionUtil.getClassName(description);
+            final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+            if (junitListener instanceof IDEAJUnitListenerEx) {
+              ((IDEAJUnitListenerEx)junitListener).testFinished(className, methodName, mySuccess);
+            } else {
+              junitListener.testFinished(className, methodName);
+            }
           }
 
           public void testRunStarted(Description description) throws Exception {

@@ -204,7 +204,6 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               storage.scheme() == StorageScheme.DEFAULT &&
               !StringUtil.isEmpty(storage.file()) &&
               storage.file().startsWith(StoragePathMacros.APP_CONFIG)) {
-            File file = new File(storageManager.expandMacros(storage.file()));
 
             File additionalExportFile = null;
             if (!StringUtil.isEmpty(stateAnnotation.additionalExportFile())) {
@@ -219,6 +218,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               }
             }
 
+            File file = new File(storageManager.expandMacros(storage.file()));
             boolean fileExists = !onlyExisting || file.exists();
             if (fileExists || additionalExportFile != null) {
               File[] files;

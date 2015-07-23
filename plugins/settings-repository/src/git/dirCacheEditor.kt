@@ -172,7 +172,7 @@ public class DeleteFile(path: ByteArray) : PathEdit(path) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
-public class DeleteDirectory(entryPath: String) : PathEdit(encodePath(if (entryPath.endsWith('/') || entryPath.length() == 0) entryPath else "$entryPath/")) {
+public class DeleteDirectory(entryPath: String) : PathEdit(encodePath(if (entryPath.endsWith('/') || entryPath.isEmpty()) entryPath else "$entryPath/")) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 

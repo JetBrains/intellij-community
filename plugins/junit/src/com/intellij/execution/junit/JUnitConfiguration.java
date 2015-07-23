@@ -456,6 +456,12 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return new JUnitConsoleProperties(this, executor);
   }
 
+  @NotNull
+  @Override
+  public String getFrameworkPrefix() {
+    return "j";
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;

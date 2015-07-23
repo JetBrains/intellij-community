@@ -83,6 +83,20 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     });
   }
 
+  public void customizeForGetVersions() {
+    perform(new Retriable<Object>() {
+      @Override
+      public Object execute() throws RemoteException {
+        doCustomizeComponents();
+        return null;
+      }
+    });
+  }
+
+  private synchronized void doCustomizeComponents() throws RemoteException {
+    getOrCreateWrappee().customizeComponents();
+  }
+
   private synchronized void doCustomize() throws RemoteException {
     getOrCreateWrappee().customize(myCustomization.workspaceMap,
                                    myCustomization.failOnUnresolvedDependency,

@@ -191,6 +191,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         mySettings.select(configurable);
       }
     };
+    myEditor.setPreferredSize(JBUI.size(800, 600));
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
     mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));

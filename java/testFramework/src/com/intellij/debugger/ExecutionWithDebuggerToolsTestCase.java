@@ -144,7 +144,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             }
             catch (AssertionError e) {
               addException(e);
-              paused(suspendContext);
+              resume(suspendContext);
             }
 
             if (myScriptRunnables.isEmpty()) {

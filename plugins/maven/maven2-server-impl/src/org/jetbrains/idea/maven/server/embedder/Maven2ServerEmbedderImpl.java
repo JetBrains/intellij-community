@@ -664,6 +664,10 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return Collections.emptyList();
   }
 
+  @Override
+  public void customizeComponents() throws RemoteException {
+  }
+
   private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
     myConsoleWrapper.setWrappee(console);
     myCurrentIndicator = indicator;

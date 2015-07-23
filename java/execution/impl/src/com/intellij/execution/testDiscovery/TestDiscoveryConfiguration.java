@@ -219,7 +219,4 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
   public String getChangeList() {
     return myChangeList;
   }
-
-  @NotNull
-  public abstract String getFrameworkPrefix();
 }

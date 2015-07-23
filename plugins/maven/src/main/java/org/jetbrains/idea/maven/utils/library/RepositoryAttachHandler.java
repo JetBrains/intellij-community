@@ -352,7 +352,8 @@ public class RepositoryAttachHandler {
                                               @NotNull final String artifactId,
                                               @NotNull final String remoteRepository) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
-    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_GET_VERSIONS);
+    embedder.customizeForGetVersions();
     try {
       List<String> versions = embedder.retrieveVersions(groupId, artifactId, remoteRepository);
       Collections.sort(versions, new Comparator<String>() {

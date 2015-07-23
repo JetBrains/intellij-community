@@ -22,4 +22,8 @@ public class JUnitTestDiscoveryListener extends TestDiscoveryListener implements
   public String getFrameworkId() {
     return "j";
   }
+
+  public void testFinished(String className, String methodName) {
+    testFinished(className, methodName, true);
+  }
 }

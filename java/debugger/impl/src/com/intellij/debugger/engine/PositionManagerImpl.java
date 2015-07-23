@@ -213,8 +213,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     private PsiElement remapElement(PsiElement element) {
-      PsiClass aClass = getEnclosingClass(element);
-      if (!Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
+      String name = JVMNameUtil.getClassVMName(getEnclosingClass(element));
+      if (name != null && !name.equals(myExpectedClassName)) {
         return null;
       }
       PsiElement method = DebuggerUtilsEx.getContainingMethod(element);

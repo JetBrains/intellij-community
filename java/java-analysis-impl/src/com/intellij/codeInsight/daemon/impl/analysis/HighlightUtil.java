@@ -798,16 +798,17 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiElement element) {
-    if (!FileTypeUtils.isInServerPageFile(element)) {
-      return HighlightInfoType.UNHANDLED_EXCEPTION;
+  private static HighlightInfoType getUnhandledExceptionHighlightType(PsiElement element) {
+    // JSP top level errors are handled by UnhandledExceptionInJSP inspection
+    if (FileTypeUtils.isInServerPageFile(element)) {
+      PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiLambdaExpression.class);
+      if (targetMethod instanceof SyntheticElement) {
+        return null;
+      }
     }
-    PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (!(targetMethod instanceof SyntheticElement)) return HighlightInfoType.UNHANDLED_EXCEPTION;
-    // ignore JSP top level errors - it handled by UnhandledExceptionInJSP inspection
-    return null;
-  }
 
+    return HighlightInfoType.UNHANDLED_EXCEPTION;
+  }
 
   @Nullable
   static HighlightInfo checkBreakOutsideLoop(@NotNull PsiBreakStatement statement) {
