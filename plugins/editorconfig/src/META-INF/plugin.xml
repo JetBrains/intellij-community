@@ -7,6 +7,10 @@
   <description><![CDATA[
       A JetBrains IDE plugin supporting the EditorConfig standard
       ]]></description>
+  <modules>
+    <module>editorconfig</module>
+    <module>lib.editorconfig.editorconfig-core-java.jar</module>
+  </modules>
 
   <idea-version since-build="138.1293"/>
 

@@ -8,6 +8,15 @@
 
   <version>1.4</version>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>xslt-debugger</module>
+    <module>xslt-debugger-engine</module>
+    <module scope="runtime">xslt-debugger-engine-impl</module>
+    <module>lib.xslt-debugger-engine.RMI Stubs</module>
+    <module scope="runtime">lib.xslt-debugger-engine-impl.Saxon-9HE</module>
+    <module scope="runtime">lib.xslt-debugger-engine-impl.Xalan-2.7.1</module>
+    <module scope="runtime">lib.xslt-debugger-engine-impl.Saxon-6.5.5</module>
+  </modules>
   <idea-version since-build="96.1"/>
 
   <depends>XPathView</depends>

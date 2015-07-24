@@ -16,6 +16,13 @@
         </ul>
       ]]>
    </description>
+  <modules>
+    <module>javacvs-src</module>
+    <module>smartcvs-src</module>
+    <module>cvs-core</module>
+    <module>cvs-plugin</module>
+    <module>lib.cvs-core.trilead-ssh2</module>
+  </modules>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.vcs</depends>

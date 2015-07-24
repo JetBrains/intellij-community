@@ -3,6 +3,11 @@
     <description>TestNG Integration</description>
     <version>8.0</version>
     <vendor>Theory In Practice, JetBrains</vendor>
+    <modules>
+        <module>testng</module>
+        <module scope="embedded">testng_rt</module>
+        <module>lib.TestNG</module>
+    </modules>
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>

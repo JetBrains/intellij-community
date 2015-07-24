@@ -6,6 +6,16 @@
   <description>For Subversion 1.7 and older versions</description>
   <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>svn4idea</module>
+    <module>lib.svn4idea.svnkit.jar</module>
+    <module>lib.svn4idea.trilead-ssh2</module>
+    <module>lib.svn4idea.jsch.agentproxy.svnkit-trilead-ssh2.jar</module>
+    <module>lib.svn4idea.sqljet.jar</module>
+    <module>lib.svn4idea.sequence-library.jar</module>
+    <module>lib.svn4idea.svnkit-javahl.jar</module>
+    <module>lib.svn4idea.antlr.jar</module>
+  </modules>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
   <project-components>
     <component>

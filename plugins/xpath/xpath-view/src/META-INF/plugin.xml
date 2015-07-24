@@ -20,6 +20,10 @@
   <version>4</version>
 
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>xpath</module>
+    <module scope="runtime">xslt-rt</module>
+  </modules>
 
   <change-notes>
     <![CDATA[

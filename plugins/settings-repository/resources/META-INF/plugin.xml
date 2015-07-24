@@ -6,6 +6,11 @@
   <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>
   <p>See <a href="https://github.com/develar/settings-repository">project page</a> for more info.</p>]]></description>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>settings-repository</module>
+    <module>lib.settings-repository.jackson</module>
+    <module>lib.settings-repository.jgit</module>
+  </modules>
 
   <!-- otherwise plugin will be not loaded in tests -->
   <depends>com.intellij.modules.xml</depends>

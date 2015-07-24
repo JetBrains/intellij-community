@@ -16,6 +16,13 @@
   <version>8.1</version>
   <category>VCS Integration</category>
   <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/">JetBrains</vendor>
+  <modules>
+    <module>git4idea</module>
+    <module>remote-servers-git</module>
+    <module>git4idea-rt</module>
+    <module>lib.git4idea-rt.trilead-ssh2</module>
+    <module>lib.git4idea.ini4j-0.5.2-patched</module>
+  </modules>
 
   <resource-bundle>git4idea.i18n.GitBundle</resource-bundle>
 

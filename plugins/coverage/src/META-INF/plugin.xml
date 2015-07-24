@@ -16,6 +16,16 @@
       ]]>
    </description>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>coverage_rt</module>
+    <module scope="embedded">coverage-common</module>
+    <module>coverage</module>
+    <module>lib.coverage_rt.Coverage</module>
+    <module>lib.JaCoCo</module>
+    <module>lib.coverage.CoverageReport</module>
+    <module>lib.asm5</module>
+    <module>lib.coverage-common.Coverage</module>
+  </modules>
 
   <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">

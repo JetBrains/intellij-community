@@ -2,6 +2,10 @@
   <name>UI Designer</name>
   <id>com.intellij.uiDesigner</id>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>ui-designer</module>
+    <module scope="build">ui-designer-jps-plugin</module>
+  </modules>
   <resource-bundle>messages.UIDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.properties</depends>

@@ -5,6 +5,10 @@
   <idea-version since-build="6.0"/>
   <description>Editing, maintaining and running ANT build scripts inside IntelliJ IDEA.</description>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module scope="IDE,build">ant-jps-plugin</module>
+    <module>ant</module>
+  </modules>
 
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
   <depends>com.intellij.properties</depends>

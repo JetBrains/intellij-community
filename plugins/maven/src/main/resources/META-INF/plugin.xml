@@ -18,6 +18,39 @@
       ]]>
    </description>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>maven-server-api</module>
+    <module>maven32-server-impl</module>
+    <module>maven2-server-impl</module>
+    <module>maven-artifact-resolver-m31</module>
+    <module>maven-jps-plugin</module>
+    <module>maven-artifact-resolver-m2</module>
+    <module>maven</module>
+    <module>maven30-server-impl</module>
+    <module>maven-artifact-resolver-m3</module>
+    <module>maven3-server-common</module>
+    <module>lib.maven.plexus-archiver-2.4.4.jar</module>
+    <module>lib.maven-server-api.lucene-core-2.4.1.jar</module>
+    <module>lib.maven.wadl-core.jar</module>
+    <module scope="build">lib.maven-jps-plugin.plexus-utils-2.0.6.jar</module>
+    <module scope="runtime">lib.maven3-server-common.archetype-catalog-2.2.jar</module>
+    <module scope="runtime">lib.maven3-server-common.nexus-indexer-artifact-1.0.1.jar</module>
+    <module scope="runtime">lib.maven3-server-common.nexus-indexer-3.0.4.jar</module>
+    <module scope="runtime">lib.maven3-server-common.maven-dependency-tree-1.2.jar</module>
+    <module scope="runtime">lib.maven3-server-common.archetype-common-2.2.jar</module>
+    <module scope="runtime">lib.maven2-server-impl.nexus-indexer-1.2.3.jar</module>
+    <module scope="runtime">lib.maven2-server-impl.plexus-utils-1.5.5.jar</module>
+    <module scope="runtime">lib.maven2-server-impl.archetype-common-2.0-alpha-4-SNAPSHOT.jar</module>
+    <module scope="runtime">lib.maven.JAXB</module>
+    <module scope="runtime">lib.maven2-server-impl.mercury-artifact-1.0-alpha-6.jar</module>
+    <module scope="runtime">lib.maven2-server-impl.activation-1.1.jar</module>
+    <module scope="runtime">lib.maven2-server-impl.commons-beanutils.jar</module>
+    <module scope="runtime">lib.maven-artifact-resolver-m3.aether-api-1.13.1.jar</module>
+    <module scope="runtime">lib.maven-artifact-resolver-m3.plexus-component-annotations-1.5.5.jar</module>
+    <module scope="runtime">lib.maven-artifact-resolver-m3.maven-core-3.0.5.jar</module>
+    <module scope="runtime">lib.maven-artifact-resolver-m3.maven-artifact-3.0.5.jar</module>
+    <module scope="runtime">lib.maven-artifact-resolver-m2.maven-2.2.1-uber.jar</module>
+  </modules>
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>

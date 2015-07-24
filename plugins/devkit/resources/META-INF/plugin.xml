@@ -9,6 +9,13 @@
 
   <category>inspection</category>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>devkit-jps-plugin</module>
+    <module>devkit</module>
+    <module>devkit-jps-model</module>
+    <module scope="build">platform-module-descriptors-generator</module>
+    <module>lib.devkit.DTDParser</module>
+  </modules>
 
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.java-i18n</depends>

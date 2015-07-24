@@ -19,6 +19,15 @@
   <description>Plugin for Groovy language support, including Groovy++, Grape, Gant and Griffon</description>
   <version>9.0</version>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>jetgroovy</module>
+    <module scope="embedded">groovy-psi</module>
+    <module scope="embedded">structuralsearch-groovy</module>
+    <module>groovy-jps-plugin</module>
+    <module>groovy_rt</module>
+    <module>duplicates-groovy</module>
+    <module>groovy-rt-constants</module>
+  </modules>
   <depends>com.intellij.properties</depends>
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>

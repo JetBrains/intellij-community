@@ -4,6 +4,10 @@
   <version>0.1</version>
   <vendor>JetBrains</vendor>
   <description>Embedded Terminal</description>
+  <modules>
+    <module>terminal</module>
+    <module>lib.terminal.jediterm-pty</module>
+  </modules>
   <depends>com.intellij.modules.platform</depends>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>

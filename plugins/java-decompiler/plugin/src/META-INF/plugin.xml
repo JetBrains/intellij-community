@@ -8,6 +8,10 @@
   </description>
   <version>0.2</version>
   <vendor email="support@jetbrains.com" url="https://www.jetbrains.com">JetBrains</vendor>
+  <modules>
+    <module scope="embedded">java-decompiler-engine</module>
+    <module>java-decompiler-plugin</module>
+  </modules>
 
   <idea-version since-build="143.381"/>
 

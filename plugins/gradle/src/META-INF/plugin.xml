@@ -36,6 +36,21 @@
 
       ]]>
   </description>
+  <modules>
+    <module>gradle</module>
+    <module scope="IDE,build">gradle-jps-plugin</module>
+    <module>gradle-tooling-extension-impl</module>
+    <module>gradle-tooling-extension-api</module>
+    <module>lib.Kryo</module>
+    <module>lib.gradle-tooling-extension-api.Gradle</module>
+    <module>lib.gradle-tooling-extension-impl.GradleGuava</module>
+    <module>lib.gradle.GradleJnaPosix</module>
+    <module>lib.gradle.Gradle</module>
+    <module>lib.gradle-jps-plugin.Gradle</module>
+    <module>lib.gradle.commons-io</module>
+    <module>lib.gradle-tooling-extension-impl.Gradle</module>
+    <module>lib.gradle.Jsr305</module>
+  </modules>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>

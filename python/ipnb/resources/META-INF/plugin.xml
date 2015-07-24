@@ -4,6 +4,11 @@
   <version>0.1</version>
   <vendor>JetBrains</vendor>
   <description>IPython Notebook support</description>
+  <modules>
+    <module>ipnb</module>
+    <module>lib.ipnb.SnuggleTeX</module>
+    <module>lib.ipnb.java_websocket.jar</module>
+  </modules>
   <depends>com.intellij.modules.platform</depends>
   <depends optional="true">Pythonid</depends>
   <depends optional="true">com.intellij.modules.python</depends>

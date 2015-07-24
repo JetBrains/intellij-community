@@ -4,6 +4,16 @@
   <description>Enables task and context management</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module>tasks-api</module>
+    <module>tasks-core</module>
+    <module>jira</module>
+    <module>tasks-java</module>
+    <module>lib.tasks-core.axis-1.4</module>
+    <module>lib.tasks-core.commons-discovery-0.4.jar</module>
+    <module>lib.tasks-core.json-path-0.8.0.jar</module>
+    <module>lib.tasks-core.json-smart-1.1.1.jar</module>
+  </modules>
 
   <!--fake dependency for Web IDE-->
   <depends>com.intellij.modules.xml</depends>

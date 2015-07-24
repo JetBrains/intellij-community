@@ -17,6 +17,11 @@
 
   <version>3.0</version>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <modules>
+    <module>eclipse</module>
+    <module>eclipse-jps-plugin</module>
+    <module>common-eclipse-util</module>
+  </modules>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>

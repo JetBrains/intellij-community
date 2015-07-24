@@ -6,6 +6,11 @@
     This plugin enables smart editing of properties files.
   </description>
   <vendor>JetBrains</vendor>
+  <modules>
+    <module scope="embedded">properties-psi-api</module>
+    <module scope="embedded">properties-psi-impl</module>
+    <module>properties</module>
+  </modules>
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider" interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"/>
