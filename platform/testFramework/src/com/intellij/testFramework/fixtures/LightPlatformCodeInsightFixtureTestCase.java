@@ -40,15 +40,11 @@ import java.io.File;
 @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
 public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTestCase {
 
-  public LightPlatformCodeInsightFixtureTestCase() {
-    this(true);
-  }
+  public LightPlatformCodeInsightFixtureTestCase() { }
 
-  /**
-   * @deprecated call {@link #LightPlatformCodeInsightFixtureTestCase()} instead
-   */
-  protected LightPlatformCodeInsightFixtureTestCase(boolean autodetect) {
-  }
+  /** @deprecated call {@link #LightPlatformCodeInsightFixtureTestCase()} instead (to be removed in IDEA 16) */
+  @SuppressWarnings("unused")
+  protected LightPlatformCodeInsightFixtureTestCase(boolean autodetect) { }
 
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;

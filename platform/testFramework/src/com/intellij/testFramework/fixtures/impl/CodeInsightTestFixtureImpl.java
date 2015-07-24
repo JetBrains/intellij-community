@@ -187,7 +187,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String path = fromFile.getAbsolutePath();
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       VfsRootAccess.allowRootAccess(path);
-      Disposer.register(myTestRootDisposable, new Disposable() {
+      Disposer.register(getTestRootDisposable(), new Disposable() {
         @Override
         public void dispose() {
           VfsRootAccess.disallowRootAccess(path);
@@ -1018,7 +1018,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(epName);
     extensionPoint.registerExtension(extension);
-    disposeOnTearDown(new Disposable() {
+    Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         extensionPoint.unregisterExtension(extension);

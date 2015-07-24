@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.util.ui.UIUtil;
 import org.junit.Assert;
 
-/*
+/**
  * @author max
  */
 public class BaseFixture implements IdeaTestFixture {
-  private boolean myDisposed;
   private boolean myInitialized;
+  private boolean myDisposed;
+  private final Disposable myTestRootDisposable = Disposer.newDisposable();
 
   @Override
   public void setUp() throws Exception {
@@ -58,16 +59,12 @@ public class BaseFixture implements IdeaTestFixture {
       throw new RuntimeException(e);
     }
 
-    if (aClass == BaseFixture.class) return;
-    resetClassFields(aClass.getSuperclass());
+    if (aClass != BaseFixture.class) {
+      resetClassFields(aClass.getSuperclass());
+    }
   }
 
-  protected final Disposable myTestRootDisposable = Disposer.newDisposable();
   public Disposable getTestRootDisposable() {
     return myTestRootDisposable;
-  }
-  protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
-    Disposer.register(myTestRootDisposable, disposable);
-    return disposable;
   }
 }
