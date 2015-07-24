@@ -545,7 +545,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
 
         if (file == null) {
-          file = DirectoryBasedStorage.getFile(fileName, dir, this)
+          file = StorageUtil.getFile(fileName, dir, this)
         }
 
         runWriteAction {
