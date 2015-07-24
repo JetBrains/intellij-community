@@ -40,6 +40,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,7 +55,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDocumentListener, FoldingListener,
                                           PropertyChangeListener, Dumpable, Disposable
 {
 
@@ -570,6 +571,18 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return;
     }
     myApplianceManager.documentChanged(event);
+  }
+
+  @Override
+  public void moveTextHappened(int start, int end, int base) {
+    if (myBulkUpdateInProgress) {
+      return;
+    }
+    if (!isSoftWrappingEnabled()) {
+      myDirty = true;
+      return;
+    }
+    myApplianceManager.recalculate(Arrays.asList(new TextRange(start, end), new TextRange(base, base + end - start)));
   }
 
   void onBulkDocumentUpdateStarted() {
