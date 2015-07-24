@@ -15,9 +15,11 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.*;
@@ -45,9 +47,53 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
   public TestDiscoveryIndex(Project project) {
     myProject = project;
+    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
+            if (!new File(path).exists()) return;
+
+            getHolder(); // proactively init with maybe io costly compact
+          }
+        });
+      }
+    });
   }
 
-  public Collection<String> getTestsByMethodName(String classFQName, String methodName) throws IOException {
+  public boolean hasTestTrace(@NotNull String testName) throws IOException {
+    synchronized (ourLock) {
+      Holder holder = null;
+      try {
+        holder = getHolder();
+        final int testNameId = holder.myTestNameEnumerator.tryEnumerate(testName);
+        if (testNameId == 0) return false;
+        return holder.myTestNameToUsedClassesAndMethodMap.get(testNameId) != null;
+      } catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
+        return false;
+      }
+    }
+  }
+
+  public void removeTestTrace(@NotNull String testName) throws IOException {
+    synchronized (ourLock) {
+      Holder holder = null;
+      try {
+        holder = getHolder();
+
+        final int testNameId = holder.myTestNameEnumerator.tryEnumerate(testName);
+        if (testNameId == 0) return;
+        doUpdateFromDiff(holder, testNameId, null, holder.myTestNameToUsedClassesAndMethodMap.get(testNameId));
+      } catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
+      }
+    }
+  }
+
+  public Collection<String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName) throws IOException {
     synchronized (ourLock) {
       Holder holder = null;
       try {
@@ -379,7 +425,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
     }
   }
   
-  public void updateFromTestTrace(File file) throws IOException {
+  public void updateFromTestTrace(@NotNull File file) throws IOException {
     int fileNameDotIndex = file.getName().lastIndexOf('.');
     final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
     doUpdateFromTestTrace(file, testName);
@@ -394,43 +440,54 @@ public class TestDiscoveryIndex implements ProjectComponent {
         TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, holder);
         TIntObjectHashMap<TIntArrayList> previousClassData = holder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
 
-        ValueDiff valueDiff = new ValueDiff(classData, previousClassData);
-
-        if (valueDiff.hasRemovedDelta()) {
-          for (int classQName : valueDiff.myRemovedClassData.keys()) {
-            for (int methodName : valueDiff.myRemovedClassData.get(classQName).toNativeArray()) {
-              holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
-                                                         new PersistentHashMap.ValueDataAppender() {
-                                                           @Override
-                                                           public void append(DataOutput dataOutput) throws IOException {
-                                                             DataInputOutputUtil.writeINT(dataOutput, REMOVED_MARKER);
-                                                             DataInputOutputUtil.writeINT(dataOutput, testNameId);
-                                                           }
-                                                         }
-              );
-            }
-          }
-        }
-
-        if (valueDiff.hasAddedDelta()) {
-          for (int classQName : valueDiff.myAddedOrChangedClassData.keys()) {
-            for (int methodName : valueDiff.myAddedOrChangedClassData.get(classQName).toNativeArray()) {
-              holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
-                                                         new PersistentHashMap.ValueDataAppender() {
-                                                           @Override
-                                                           public void append(DataOutput dataOutput) throws IOException {
-                                                             DataInputOutputUtil.writeINT(dataOutput, testNameId);
-                                                           }
-                                                         });
-            }
-          }
-        }
-
-        if (valueDiff.hasAddedDelta() || valueDiff.hasRemovedDelta()) {
-          holder.myTestNameToUsedClassesAndMethodMap.put(testNameId, classData);
-        }
+        doUpdateFromDiff(holder, testNameId, classData, previousClassData);
       } catch (Throwable throwable) {
         thingsWentWrongLetsReinitialize(holder, throwable);
+      }
+    }
+  }
+
+  private void doUpdateFromDiff(Holder holder,
+                                final int testNameId,
+                                @Nullable TIntObjectHashMap<TIntArrayList> classData,
+                                @Nullable TIntObjectHashMap<TIntArrayList> previousClassData) throws IOException {
+    ValueDiff valueDiff = new ValueDiff(classData, previousClassData);
+
+    if (valueDiff.hasRemovedDelta()) {
+      for (int classQName : valueDiff.myRemovedClassData.keys()) {
+        for (int methodName : valueDiff.myRemovedClassData.get(classQName).toNativeArray()) {
+          holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
+                                                     new PersistentHashMap.ValueDataAppender() {
+                                                       @Override
+                                                       public void append(DataOutput dataOutput) throws IOException {
+                                                         DataInputOutputUtil.writeINT(dataOutput, REMOVED_MARKER);
+                                                         DataInputOutputUtil.writeINT(dataOutput, testNameId);
+                                                       }
+                                                     }
+          );
+        }
+      }
+    }
+
+    if (valueDiff.hasAddedDelta()) {
+      for (int classQName : valueDiff.myAddedOrChangedClassData.keys()) {
+        for (int methodName : valueDiff.myAddedOrChangedClassData.get(classQName).toNativeArray()) {
+          holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
+                                                     new PersistentHashMap.ValueDataAppender() {
+                                                       @Override
+                                                       public void append(DataOutput dataOutput) throws IOException {
+                                                         DataInputOutputUtil.writeINT(dataOutput, testNameId);
+                                                       }
+                                                     });
+        }
+      }
+    }
+
+    if ((valueDiff.hasAddedDelta() || valueDiff.hasRemovedDelta())) {
+      if(classData != null) {
+        holder.myTestNameToUsedClassesAndMethodMap.put(testNameId, classData);
+      } else {
+        holder.myTestNameToUsedClassesAndMethodMap.remove(testNameId);
       }
     }
   }
@@ -459,7 +516,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
     final TIntObjectHashMap<TIntArrayList> myAddedOrChangedClassData;
     final TIntObjectHashMap<TIntArrayList> myRemovedClassData;
 
-    ValueDiff(TIntObjectHashMap<TIntArrayList> classData, TIntObjectHashMap<TIntArrayList> previousClassData) {
+    ValueDiff(@Nullable TIntObjectHashMap<TIntArrayList> classData, @Nullable TIntObjectHashMap<TIntArrayList> previousClassData) {
       TIntObjectHashMap<TIntArrayList> addedOrChangedClassData = classData;
       TIntObjectHashMap<TIntArrayList> removedClassData = previousClassData;
 
@@ -467,27 +524,29 @@ public class TestDiscoveryIndex implements ProjectComponent {
         removedClassData = new TIntObjectHashMap<TIntArrayList>();
         addedOrChangedClassData = new TIntObjectHashMap<TIntArrayList>();
 
-        for (int classQName : classData.keys()) {
-          TIntArrayList currentMethods = classData.get(classQName);
-          TIntArrayList previousMethods = previousClassData.get(classQName);
+        if (classData != null) {
+          for (int classQName : classData.keys()) {
+            TIntArrayList currentMethods = classData.get(classQName);
+            TIntArrayList previousMethods = previousClassData.get(classQName);
 
-          if (previousMethods == null) {
-            addedOrChangedClassData.put(classQName, currentMethods);
-            continue;
-          }
+            if (previousMethods == null) {
+              addedOrChangedClassData.put(classQName, currentMethods);
+              continue;
+            }
 
-          final int[] previousMethodIds = previousMethods.toNativeArray();
-          TIntHashSet previousMethodsSet = new TIntHashSet(previousMethodIds);
-          final int[] currentMethodIds = currentMethods.toNativeArray();
-          TIntHashSet currentMethodsSet = new TIntHashSet(currentMethodIds);
-          currentMethodsSet.removeAll(previousMethodIds);
-          previousMethodsSet.removeAll(currentMethodIds);
+            final int[] previousMethodIds = previousMethods.toNativeArray();
+            TIntHashSet previousMethodsSet = new TIntHashSet(previousMethodIds);
+            final int[] currentMethodIds = currentMethods.toNativeArray();
+            TIntHashSet currentMethodsSet = new TIntHashSet(currentMethodIds);
+            currentMethodsSet.removeAll(previousMethodIds);
+            previousMethodsSet.removeAll(currentMethodIds);
 
-          if (!currentMethodsSet.isEmpty()) {
-            addedOrChangedClassData.put(classQName, new TIntArrayList(currentMethodsSet.toArray()));
-          }
-          if (!previousMethodsSet.isEmpty()) {
-            removedClassData.put(classQName, new TIntArrayList(previousMethodsSet.toArray()));
+            if (!currentMethodsSet.isEmpty()) {
+              addedOrChangedClassData.put(classQName, new TIntArrayList(currentMethodsSet.toArray()));
+            }
+            if (!previousMethodsSet.isEmpty()) {
+              removedClassData.put(classQName, new TIntArrayList(previousMethodsSet.toArray()));
+            }
           }
         }
         for (int classQName : previousClassData.keys()) {

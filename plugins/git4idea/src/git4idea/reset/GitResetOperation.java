@@ -40,6 +40,7 @@ import git4idea.branch.GitSmartOperationDialog;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +112,9 @@ public class GitResetOperation {
     int choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "reset", "&Hard Reset");
     if (choice == GitSmartOperationDialog.SMART_EXIT_CODE) {
       final Ref<GitCommandResult> result = Ref.create();
-      new GitPreservingProcess(myProject, myFacade, myGit, Collections.singleton(repository), "reset", target, myIndicator, new Runnable() {
+      new GitPreservingProcess(myProject, myFacade, myGit, Collections.singleton(repository.getRoot()), "reset", target,
+                               GitVcsSettings.UpdateChangesPolicy.STASH, myIndicator,
+                               new Runnable() {
         @Override
         public void run() {
           result.set(myGit.reset(repository, myMode, target));

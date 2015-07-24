@@ -23,11 +23,8 @@ import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Executes an action surrounding it with freezing-unfreezing operations.
- * It is a simple linear alternative to {@link git4idea.update.GitComplexProcess} performing tasks in a single method instead of
- * using continuations logic.
- *
- * @author Kirill Likhodedov
+ * Executes an action surrounding it with freezing-unfreezing of the ChangeListManager
+ * and blocking/unblocking save/sync on frame de/activation.
  */
 public class GitFreezingProcess {
 

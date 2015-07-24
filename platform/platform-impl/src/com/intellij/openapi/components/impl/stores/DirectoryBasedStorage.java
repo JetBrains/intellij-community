@@ -142,23 +142,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     if (parentVirtualFile == null) {
       throw new StateStorageException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
     }
-    return getFile(ioDir.getName(), parentVirtualFile, requestor);
-  }
-
-  @NotNull
-  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parent, @NotNull Object requestor) throws IOException {
-    VirtualFile file = parent.findChild(fileName);
-    if (file != null) {
-      return file;
-    }
-
-    AccessToken token = WriteAction.start();
-    try {
-      return parent.createChildData(requestor, fileName);
-    }
-    finally {
-      token.finish();
-    }
+    return StorageUtil.getFile(ioDir.getName(), parentVirtualFile, requestor);
   }
 
   private static class MySaveSession extends SaveSessionBase {
@@ -258,7 +242,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
               storeElement.setAttribute(StorageData.NAME, componentName);
               storeElement.addContent(element);
 
-              VirtualFile file = getFile(fileName, dir, MySaveSession.this);
+              VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);
               StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()));
             }
             catch (IOException e) {

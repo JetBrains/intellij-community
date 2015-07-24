@@ -29,6 +29,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import org.gradle.initialization.BuildLayoutParameters;
+import org.gradle.internal.nativeintegration.services.NativeServices;
+import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -49,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -132,8 +136,14 @@ public class GradleExecutionHelper {
     jvmArgs.addAll(extraJvmArgs);
 
     if (!jvmArgs.isEmpty()) {
+      // merge gradle args e.g. defined in gradle.properties
+      BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
+      Collection<String> merged = buildEnvironment != null
+                                  ? mergeJvmArgs(settings.getServiceDirectory(), buildEnvironment.getJava().getJvmArguments(), jvmArgs)
+                                  : jvmArgs;
+
       // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(jvmArgs, new Function<String, String>() {
+      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, new Function<String, String>() {
         @Override
         public String fun(String s) {
           return StringUtil.isEmpty(s) ? null : s;
@@ -282,6 +292,15 @@ public class GradleExecutionHelper {
         // ignore
       }
     }
+  }
+
+  private static List<String> mergeJvmArgs(String serviceDirectory, Iterable<String> jvmArgs1, Iterable<String> jvmArgs2) {
+    File gradleUserHomeDir = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
+    LOG.debug("Gradle home: " + gradleUserHomeDir);
+    NativeServices.initialize(gradleUserHomeDir, false);
+    JvmOptions jvmOptions = new JvmOptions(null);
+    jvmOptions.setAllJvmArgs(ContainerUtil.concat(jvmArgs1, jvmArgs2));
+    return jvmOptions.getAllJvmArgs();
   }
 
   /**

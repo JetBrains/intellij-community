@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
-import com.intellij.xdebugger.impl.ui.XDebuggerMultilineEditor;
+import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +36,14 @@ import java.awt.*;
  * @author nik
  */
 public class CodeFragmentInputComponent extends EvaluationInputComponent {
-  private final XDebuggerMultilineEditor myMultilineEditor;
+  private final XDebuggerExpressionEditor myMultilineEditor;
   private final JPanel myMainPanel;
 
   public CodeFragmentInputComponent(final @NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider,
                                     final @Nullable XSourcePosition sourcePosition, @Nullable XExpression statements, Disposable parentDisposable) {
     super(XDebuggerBundle.message("dialog.title.evaluate.code.fragment"));
-    myMultilineEditor = new XDebuggerMultilineEditor(project, editorsProvider, "evaluateCodeFragment", sourcePosition, statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT);
+    myMultilineEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateCodeFragment", sourcePosition,
+                                                      statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true);
     myMainPanel = new JPanel(new BorderLayout());
     JPanel editorPanel = new JPanel(new BorderLayout());
     editorPanel.add(myMultilineEditor.getComponent(), BorderLayout.CENTER);
@@ -50,7 +51,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     group.add(new HistoryNavigationAction(false, IdeActions.ACTION_PREVIOUS_OCCURENCE, parentDisposable));
     group.add(new HistoryNavigationAction(true, IdeActions.ACTION_NEXT_OCCURENCE, parentDisposable));
     editorPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent(), BorderLayout.EAST);
-    myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.label.text.code.fragment")), BorderLayout.NORTH);
+    //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.label.text.code.fragment")), BorderLayout.NORTH);
     myMainPanel.add(editorPanel, BorderLayout.CENTER);
     if (statements != null) {
       myMultilineEditor.setExpression(statements);

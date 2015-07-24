@@ -129,13 +129,16 @@ public class DeleteHandler {
         @Override
         public void run(final SafeDeleteDialog dialog) {
           if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
-          SafeDeleteProcessor.createInstance(project, new Runnable() {
+
+          SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, new Runnable() {
             @Override
             public void run() {
               exit.set(true);
               dialog.close(DialogWrapper.OK_EXIT_CODE);
             }
-          }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
+          }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+
+          DumbService.getInstance(project).allowStartingDumbModeInside(DumbService.DumbModePermission.MAY_START_BACKGROUND, processor);
         }
       }) {
         @Override

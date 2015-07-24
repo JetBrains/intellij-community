@@ -262,7 +262,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     }
 
     val repositoryManager = icsManager.repositoryManager
-    if (repositoryManager.isRepositoryExists()) {
+    if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {
       repositoryManager.renameDirectory(linkedMapOf(
         Pair("\$ROOT_CONFIG$", null),
         Pair("_mac/\$ROOT_CONFIG$", "_mac"),

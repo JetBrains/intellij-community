@@ -706,11 +706,12 @@ public class GitUtil {
 
   @NotNull
   public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
-    Collection<VirtualFile> roots = new ArrayList<VirtualFile>(repositories.size());
-    for (GitRepository repository : repositories) {
-      roots.add(repository.getRoot());
-    }
-    return roots;
+    return ContainerUtil.map(repositories, new Function<GitRepository, VirtualFile>() {
+      @Override
+      public VirtualFile fun(@NotNull GitRepository repository) {
+        return repository.getRoot();
+      }
+    });
   }
 
   @NotNull

@@ -18,50 +18,31 @@ package com.intellij.openapi.vcs.checkout;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
- * @author yole
+ * Proposes to create a new project from the checked out sources.
  */
-public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
+public class NewProjectCheckoutListener implements CheckoutListener {
   @Override
-  public boolean processCheckedOutDirectory(Project project, File directory, VcsKey vcsKey) {
+  public boolean processCheckedOutDirectory(Project project, File directory) {
     int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt",
                                                                  ProjectCheckoutListener.getProductNameWithArticle(),
                                                                  directory.getAbsolutePath()),
                                       VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
     if (rc == Messages.YES) {
-      final ProjectManager pm = ProjectManager.getInstance();
-      final Project[] projects = pm.getOpenProjects();
-      final Set<VirtualFile> files = projectsLocationSet(projects);
       VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(directory);
       AddModuleWizard wizard = createImportWizard(file);
       if (wizard == null) return false;
       if (wizard.showAndGet()) {
         ImportModuleAction.createFromWizard(null, wizard);
-      }
-      final Project[] projectsAfter = pm.getOpenProjects();
-
-      for (Project project1 : projectsAfter) {
-        if (project1.getBaseDir() != null && ! files.contains(project1.getBaseDir())) {
-          final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project1);
-          vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", vcsKey.getName())));
-          break;
-        }
       }
       return true;
     }
@@ -73,13 +54,7 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
     return ImportModuleAction.createImportWizard(null, null, file, ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions());
   }
 
-  private static Set<VirtualFile> projectsLocationSet(Project[] projects) {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
-    for (Project project1 : projects) {
-      if (project1.getBaseDir() != null) {
-        files.add(project1.getBaseDir());
-      }
-    }
-    return files;
+  @Override
+  public void processOpenedProject(Project lastOpenedProject) {
   }
 }
