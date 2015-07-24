@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -43,9 +44,8 @@ public class JCiPUtil {
     if (annotation != null) {
       return true;
     }
-    final ImmutableTagVisitor visitor = new ImmutableTagVisitor();
-    aClass.accept(visitor);
-    return visitor.isFound();
+    PsiDocComment comment = aClass.getDocComment();
+    return comment != null && comment.findTagByName("@Immutable") != null;
   }
 
   @Nullable
@@ -137,23 +137,6 @@ public class JCiPUtil {
     @Nullable
     public String getGuardString() {
       return guardString;
-    }
-  }
-
-  private static class ImmutableTagVisitor extends JavaRecursiveElementWalkingVisitor {
-    private boolean found = false;
-
-    @Override
-    public void visitDocTag(PsiDocTag tag) {
-      super.visitDocTag(tag);
-      final String text = tag.getText();
-      if (text.startsWith("@Immutable")) {
-        found = true;
-      }
-    }
-
-    public boolean isFound() {
-      return found;
     }
   }
 }
