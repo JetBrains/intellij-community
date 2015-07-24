@@ -36,14 +36,14 @@ public class CommandLineWrapperUtilTest {
     final File tempDirectory = FileUtil.createTempDirectory("dirWithClasses", "suffix");
     File jarFile = null;
     try {
-      final List<String> paths = Arrays.asList(tempDirectory.getAbsolutePath(), "/directory with spaces/some.jar");
+      final List<String> paths = Arrays.asList(tempDirectory.getAbsolutePath(), tempDirectory.getAbsolutePath() + "/directory with spaces/some.jar");
       jarFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), paths);
       final JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
       final Manifest manifest = inputStream.getManifest();
       final String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
       final String tempDirectoryUrl = tempDirectory.toURI().toURL().toString();
       assertTrue(tempDirectoryUrl, tempDirectoryUrl.endsWith("/"));
-      assertEquals(tempDirectoryUrl + " file:/directory%20with%20spaces/some.jar", classPath);
+      assertEquals(tempDirectoryUrl + " " + tempDirectoryUrl +"directory%20with%20spaces/some.jar", classPath);
     }
     finally {
       FileUtil.delete(tempDirectory);
