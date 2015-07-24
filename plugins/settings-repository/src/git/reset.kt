@@ -18,7 +18,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
 
     indicator.checkCanceled()
 
-    val commitMessage = "Reset to ${if (toTheirs) manager.getUpstream() else "my"}"
+    val commitMessage = commitMessageFormatter.message(if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local")
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
     val firstMergeResult = pull(mergeStrategy, commitMessage)
