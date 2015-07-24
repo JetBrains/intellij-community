@@ -104,8 +104,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @Override
       public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
         LafManager.getInstance().updateUI();
-        EditorFactory.getInstance().refreshAllEditors();
-
         fireChanges(mySchemesManager.getCurrentScheme());
       }
 
@@ -238,6 +236,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
+    EditorFactory.getInstance().refreshAllEditors();
     mySchemesManager.setCurrent(scheme == null ? getDefaultScheme() : scheme);
   }
 
