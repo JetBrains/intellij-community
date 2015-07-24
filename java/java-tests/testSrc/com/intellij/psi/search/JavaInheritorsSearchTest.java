@@ -21,7 +21,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,10 +71,7 @@ public class JavaInheritorsSearchTest extends LightCodeInsightFixtureTestCase {
     doTest("I", "", true, "A", "B");
   }
 
-  private void doTest(String className, String packageScopeName, boolean deep, String... expected) {
-    PsiClass aClass = myFixture.getJavaFacade().findClass(className);
-    assertNotNull(aClass);
-
+  private void doTest(String className, @Nullable String packageScopeName, boolean deep, String... expected) {
     SearchScope scope;
     if (packageScopeName != null) {
       PsiPackage aPackage = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage(packageScopeName);
@@ -81,15 +82,35 @@ public class JavaInheritorsSearchTest extends LightCodeInsightFixtureTestCase {
       scope = GlobalSearchScope.projectScope(myFixture.getProject());
     }
 
-    List<String> result = ProgressManager.getInstance().runProcess(
+    assertSameElements(getInheritorNames(className, deep, scope), expected);
+  }
+
+  private List<String> getInheritorNames(String className, boolean deep, SearchScope scope) {
+    PsiClass aClass = myFixture.getJavaFacade().findClass(className);
+    assertNotNull(aClass);
+
+    return ProgressManager.getInstance().runProcess(
       () -> streamOf(ClassInheritorsSearch.search(aClass, scope, deep)).map(PsiClass::getQualifiedName).collect(Collectors.toList()),
       null
     );
-
-    assertSameElements(result, expected);
   }
 
   private static <T> Stream<T> streamOf(Iterable<T> iterable) {
     return StreamSupport.stream(iterable.spliterator(), false);
   }
+
+  public void testEnum() {
+    myFixture.addClass("enum MyEnum {}");
+    List<String> names = getInheritorNames(Enum.class.getName(), true, GlobalSearchScope.allScope(getProject()));
+    assertTrue(names.toString(), names.contains("MyEnum"));
+    assertTrue(names.toString(), names.contains(RetentionPolicy.class.getName()));
+  }
+
+  public void testAnnotation() {
+    myFixture.addClass("@interface MyAnnotation {}");
+    List<String> names = getInheritorNames(Annotation.class.getName(), true, GlobalSearchScope.allScope(getProject()));
+    assertTrue(names.toString(), names.contains("MyAnnotation"));
+    assertTrue(names.toString(), names.contains(Retention.class.getName()));
+  }
+
 }
