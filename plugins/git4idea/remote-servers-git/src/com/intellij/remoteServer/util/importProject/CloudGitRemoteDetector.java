@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.remoteServer.util.importProject;
 
-import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -29,10 +28,12 @@ import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
 import com.intellij.ide.wizard.Step;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -61,20 +62,15 @@ import java.util.Map;
 /**
  * @author michael.golubev
  */
-public class CloudGitRemoteDetector extends AbstractProjectComponent implements GitRepositoryChangeListener {
-
-  private final GitRepositoryManager myRepositoryManager;
-  private final RunManagerEx myRunManager;
+public class CloudGitRemoteDetector {
+  private final Project myProject;
 
   private final CloudNotifier myNotifier;
 
   private final List<CloudTypeDelegate> myDelegates;
 
-  public CloudGitRemoteDetector(Project project, GitRepositoryManager repositoryManager, RunManager runManager) {
-    super(project);
-    myRepositoryManager = repositoryManager;
-    myRunManager = (RunManagerEx)runManager;
-
+  public CloudGitRemoteDetector(@NotNull Project project) {
+    myProject = project;
     myNotifier = new CloudNotifier("Git remotes detector");
 
     myDelegates = new ArrayList<CloudTypeDelegate>();
@@ -83,22 +79,36 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
     }
   }
 
-  @Override
-  public void projectOpened() {
-    myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
+  private static CloudGitRemoteDetector getInstance() {
+    return ServiceManager.getService(CloudGitRemoteDetector.class);
+  }
 
-    myRunManager.addRunManagerListener(new RunManagerAdapter() {
-
-      @Override
-      public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
-        onRunConfigurationAddedOrChanged(settings);
+  static final class MyStartUpActivity implements StartupActivity, DumbAware {
+    @Override
+    public void runActivity(@NotNull final Project project) {
+      if (project.isDefault()) {
+        return;
       }
 
-      @Override
-      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-        onRunConfigurationAddedOrChanged(settings);
-      }
-    });
+      project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+        @Override
+        public void repositoryChanged(@NotNull GitRepository repository) {
+          getInstance().repositoryChanged(repository);
+        }
+      });
+
+      RunManagerEx.getInstanceEx(project).addRunManagerListener(new RunManagerAdapter() {
+        @Override
+        public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+          getInstance().onRunConfigurationAddedOrChanged(settings);
+        }
+
+        @Override
+        public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+          getInstance().onRunConfigurationAddedOrChanged(settings);
+        }
+      });
+    }
   }
 
   private void onRunConfigurationAddedOrChanged(RunnerAndConfigurationSettings settings) {
@@ -108,8 +118,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
     }
   }
 
-  @Override
-  public void repositoryChanged(@NotNull GitRepository repository) {
+  private void repositoryChanged(@NotNull GitRepository repository) {
     for (CloudTypeDelegate delegate : myDelegates) {
       delegate.repositoryChanged(repository);
     }
@@ -148,7 +157,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     private boolean hasRunConfig4Repository(GitRepository repository) {
       List<RunConfiguration> runConfigurations
-        = myRunManager.getConfigurationsList(DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(getCloudType()));
+        = RunManagerEx.getInstanceEx(myProject).getConfigurationsList(DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(getCloudType()));
 
       VirtualFile repositoryRoot = repository.getRoot();
 
@@ -184,7 +193,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
         return;
       }
 
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(contentRoot);
+      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(contentRoot);
       if (repository == null) {
         return;
       }
