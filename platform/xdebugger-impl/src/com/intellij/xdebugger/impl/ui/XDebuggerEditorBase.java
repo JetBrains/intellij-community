@@ -143,6 +143,10 @@ public abstract class XDebuggerEditorBase {
 
   public abstract JComponent getComponent();
 
+  public JComponent getEditorComponent() {
+    return getComponent();
+  }
+
   protected abstract void doSetText(XExpression text);
 
   public void setExpression(@Nullable XExpression text) {

@@ -114,7 +114,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         }
       };
       popup.getList().setFont(EditorUtil.getEditorFont());
-      popup.showUnderneathOf(myExpressionEditor.getComponent());
+      popup.showUnderneathOf(myExpressionEditor.getEditorComponent());
     }
   }
 

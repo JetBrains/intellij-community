@@ -84,6 +84,11 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   }
 
   @Override
+  public JComponent getEditorComponent() {
+    return myEditorTextField;
+  }
+
+  @Override
   protected void doSetText(XExpression text) {
     myExpression = text;
     Language language = text.getLanguage();
