@@ -63,7 +63,36 @@ public class TestDiscoveryIndex implements ProjectComponent {
     });
   }
 
-  public Collection<String> getTestsByMethodName(String classFQName, String methodName) throws IOException {
+  public boolean hasTestTrace(@NotNull String testName) throws IOException {
+    synchronized (ourLock) {
+      Holder holder = null;
+      try {
+        holder = getHolder();
+        final int testNameId = holder.myTestNameEnumerator.tryEnumerate(testName);
+        if (testNameId == 0) return false;
+        return holder.myTestNameToUsedClassesAndMethodMap.get(testNameId) != null;
+      } catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
+        return false;
+      }
+    }
+  }
+
+  public void removeTestTrace(@NotNull String testName) throws IOException {
+    synchronized (ourLock) {
+      Holder holder = null;
+      try {
+        holder = getHolder();
+        final int testNameId = holder.myTestNameEnumerator.tryEnumerate(testName);
+        if (testNameId == 0) return;
+        holder.myTestNameToUsedClassesAndMethodMap.remove(testNameId);
+      } catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
+      }
+    }
+  }
+
+  public Collection<String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName) throws IOException {
     synchronized (ourLock) {
       Holder holder = null;
       try {
@@ -395,7 +424,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
     }
   }
   
-  public void updateFromTestTrace(File file) throws IOException {
+  public void updateFromTestTrace(@NotNull File file) throws IOException {
     int fileNameDotIndex = file.getName().lastIndexOf('.');
     final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
     doUpdateFromTestTrace(file, testName);
