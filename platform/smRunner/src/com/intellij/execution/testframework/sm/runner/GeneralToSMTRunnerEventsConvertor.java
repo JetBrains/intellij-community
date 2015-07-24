@@ -41,7 +41,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
-  private final TestSuiteStack mySuitesStack = new TestSuiteStack();
+  private final TestSuiteStack mySuitesStack;
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
   private final String myTestFrameworkName;
 
@@ -53,6 +53,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
                                            @NotNull String testFrameworkName) {
     super(project);
     myTestsRootNode = testsRootNode;
+    mySuitesStack = new TestSuiteStack(testFrameworkName);
     myTestFrameworkName = testFrameworkName;
   }
 
