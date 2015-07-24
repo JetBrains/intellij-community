@@ -703,8 +703,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public String dumpState() {
-    return String.format("appliance manager state: %s; soft wraps mapping info: %s",
-                         myApplianceManager.dumpState(), myDataMapper.dumpState());
+    return String.format("appliance manager state: %s; soft wraps mapping info: %s; soft wraps: %s",
+                         myApplianceManager.dumpState(), myDataMapper.dumpState(), myStorage.dumpState());
   }
 
   @Override
