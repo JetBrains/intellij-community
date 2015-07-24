@@ -84,7 +84,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   }
 
   private void scheduleOnStartCheck(@NotNull Application app) {
-    if (!mySettings.isCheckNeeded() || mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
+    if (!mySettings.isCheckNeeded()) {
       return;
     }
 
