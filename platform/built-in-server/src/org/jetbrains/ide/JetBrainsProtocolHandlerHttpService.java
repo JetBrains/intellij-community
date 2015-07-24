@@ -1,7 +1,10 @@
 package org.jetbrains.ide;
 
 import com.google.gson.stream.JsonReader;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
+import com.intellij.openapi.application.ModalityState;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -36,9 +39,17 @@ public class JetBrainsProtocolHandlerHttpService extends RestService {
     final String name = reader.nextName();
     final String url = reader.nextString();
     reader.endObject();
+
     if (URL_PARAM_NAME.equals(name) && url != null && url.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          JBProtocolCommand.handleCurrentCommand();
+        }
+      }, ModalityState.any());
     }
+
     sendOk(request, context);
     return null;
   }

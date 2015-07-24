@@ -43,4 +43,16 @@ public abstract class JBProtocolCommand {
     }
     return null;
   }
+
+  public static void handleCurrentCommand() {
+    JBProtocolCommand command = findCommand(JetBrainsProtocolHandler.getCommand());
+    if (command != null) {
+      try {
+        command.perform(JetBrainsProtocolHandler.getMainParameter(), JetBrainsProtocolHandler.getParameters());
+      }
+      finally {
+        JetBrainsProtocolHandler.clear();
+      }
+    }
+  }
 }

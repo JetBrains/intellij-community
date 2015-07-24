@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.JBProtocolCommand;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -88,7 +87,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            handleJetBrainsProtocolCommand();
+            JBProtocolCommand.handleCurrentCommand();
           }
         });
       }
@@ -130,18 +129,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         FlatWelcomeFrame.this.dispose();
       }
     });
-  }
-
-  private static void handleJetBrainsProtocolCommand() {
-    JBProtocolCommand command = JBProtocolCommand.findCommand(JetBrainsProtocolHandler.getCommand());
-    if (command != null) {
-      try {
-        command.perform(JetBrainsProtocolHandler.getMainParameter(), JetBrainsProtocolHandler.getParameters());
-      }
-      finally {
-        JetBrainsProtocolHandler.clear();
-      }
-    }
   }
 
   @Override
