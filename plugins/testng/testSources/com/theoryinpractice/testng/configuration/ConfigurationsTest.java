@@ -64,7 +64,7 @@ public class ConfigurationsTest {
   public void setUp() throws Exception {
     JavaTestFixtureFactory.getFixtureFactory();   // registers Java module fixture builder
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder(getClass().getSimpleName());
     myFixture = fixtureFactory.createTempDirTestFixture();
     myFixture.setUp();
 

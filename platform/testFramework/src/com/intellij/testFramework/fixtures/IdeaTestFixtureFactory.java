@@ -40,11 +40,6 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract void registerFixtureBuilder(@NotNull Class<? extends ModuleFixtureBuilder> aClass, @NotNull String implClassName);
 
-  /** @deprecated use {@link IdeaTestFixtureFactory#createFixtureBuilder(String)} */
-  public final TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
-    return createFixtureBuilder("");
-  }
-
   @NotNull
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name);
 

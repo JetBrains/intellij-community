@@ -60,7 +60,7 @@ public class CreateClassFixTest extends UsefulTestCase{
         try {
           CreateClassFixTest.super.setUp();
           final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
-          final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
+          final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = JavaTestFixtureFactory.createFixtureBuilder(getClass().getSimpleName());
           myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
           myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("devkit") + "/testData");
 
