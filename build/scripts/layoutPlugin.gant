@@ -43,7 +43,7 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
   rootTag.getChildren("modules").each {
     it.getChildren("module").each {
       def moduleName = it.getTextTrim()
-      def scope = it.getAttributeValue("scope") ?: "IDE"
+      def scope = it.getAttributeValue("scope") ?: moduleName == mainModuleName ? "embedded" : "IDE"
       if (!moduleName.startsWith("lib.")) {
         modulesWithScopes.add(Pair.create(moduleName, scope))
       }
@@ -62,10 +62,14 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
 
   List<Pair<String, File>> runtimeResources = modulesWithScopes.collectMany {getRuntimeResources(findModule(it.first))}
 
+  String mainJarName = "${mainModuleName}.jar"
+  if (librariesWithScopes.any {it.first.any {it.name.equalsIgnoreCase(mainJarName)}}) {
+    mainJarName = "${mainModuleName}-plugin.jar"
+  }
   dir(mainModuleName) {
     dir("lib") {
       def embeddedModules = modulesWithScopes.findAll { it.second == "embedded" }.collect { it.first }
-      jar("${mainModuleName}.jar") {
+      jar(mainJarName) {
         embeddedModules.each {
           noResources(it)
         }

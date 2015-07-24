@@ -113,9 +113,9 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
         insertEnd = insertStart
       }
       val modifiedText = text.replaceRange(insertStart, insertEnd, modulesTag)
-      if (pluginName in setOf("GwtStudio", "sass")) {
-        pluginXml.writeText(modifiedText)
-      }
+//      if (pluginName in setOf("GwtStudio", "sass")) {
+//      }
+      pluginXml.writeText(modifiedText)
 
       pluginsProcessed++
     }
