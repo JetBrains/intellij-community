@@ -82,7 +82,7 @@ public class VcsRepositoryManagerTest extends UsefulTestCase {
       point.registerExtension(myMockCreator);
 
       myGlobalRepositoryManager = new VcsRepositoryManager(myProject, myProjectLevelVcsManager);
-      myGlobalRepositoryManager.initComponent();
+      myGlobalRepositoryManager.addListener(myProject);
     }
     catch (Exception e) {
       tearDown();
@@ -126,18 +126,16 @@ public class VcsRepositoryManagerTest extends UsefulTestCase {
     FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        myProjectLevelVcsManager
-          .setDirectoryMappings(
-            VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), myProjectRoot.getPath(), myVcs.getName()));
+        myProjectLevelVcsManager.setDirectoryMappings(VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), myProjectRoot.getPath(), myVcs.getName()));
         return !myGlobalRepositoryManager.getRepositories().isEmpty();
       }
     });
-    new Thread(modifyRepositoryMapping,"vcs modify").start();
+    new Thread(modifyRepositoryMapping, "vcs modify").start();
 
     //wait until modification starts
     assertTrue(LOCK_ERROR_TEXT, READY_TO_READ.await(1, TimeUnit.SECONDS));
 
-    new Thread(readExistingRepo,"vcs read").start();
+    new Thread(readExistingRepo, "vcs read").start();
     assertNotNull(readExistingRepo.get(1, TimeUnit.SECONDS));
     CONTINUE_MODIFY.countDown();
     assertTrue(modifyRepositoryMapping.get(1, TimeUnit.SECONDS));

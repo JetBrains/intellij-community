@@ -21,7 +21,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +36,7 @@ public class VcsPushAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsRepositoryManager manager = ServiceManager.getService(project, VcsRepositoryManager.class);
+    VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
     Collection<Repository> repositories = e.getData(CommonDataKeys.EDITOR) != null
                                           ? ContainerUtil.<Repository>emptyList()
                                           : collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
@@ -65,6 +64,6 @@ public class VcsPushAction extends DumbAwareAction {
     super.update(e);
     Project project = e.getProject();
     e.getPresentation()
-      .setEnabledAndVisible(project != null && !ServiceManager.getService(project, VcsRepositoryManager.class).getRepositories().isEmpty());
+      .setEnabledAndVisible(project != null && !VcsRepositoryManager.getInstance(project).getRepositories().isEmpty());
   }
 }
