@@ -53,6 +53,9 @@ public class TestDiscoveryIndex implements ProjectComponent {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
+            String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
+            if (!new File(path).exists()) return;
+
             getHolder(); // proactively init with maybe io costly compact
           }
         });
