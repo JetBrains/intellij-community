@@ -30,10 +30,14 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
   </actions>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.dvcs.repo.VcsRepositoryManager</implementation-class>
+    </component>
+  </project-components>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
-    <projectService serviceImplementation="com.intellij.dvcs.repo.VcsRepositoryManager"/>
-    <postStartupActivity implementation="com.intellij.dvcs.repo.VcsRepositoryManager$MyStartUpActivity"/>
   </extensions>
 </idea-plugin>
 

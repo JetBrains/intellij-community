@@ -15,13 +15,13 @@
  */
 package com.intellij.dvcs.repo;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
@@ -31,56 +31,53 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * VcsRepositoryManager creates, stores and updates all Repositories information using registered {@link VcsRepositoryCreator}
+ * VcsRepositoryManager creates,stores and updates all Repositories information using registered {@link VcsRepositoryCreator}
  * extension point in a thread safe way.
  */
-public class VcsRepositoryManager {
+public class VcsRepositoryManager extends AbstractProjectComponent implements Disposable, VcsListener {
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  @NotNull private final ReentrantReadWriteLock repoLock = new ReentrantReadWriteLock();
-  @NotNull private final ReentrantReadWriteLock.WriteLock modifyLock = new ReentrantReadWriteLock().writeLock();
+  @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
+  @NotNull private final ReentrantReadWriteLock.WriteLock MODIFY_LOCK = new ReentrantReadWriteLock().writeLock();
 
   @NotNull private final Map<VirtualFile, Repository> myRepositories = ContainerUtil.newHashMap();
   @NotNull private final Map<VirtualFile, Repository> myExternalRepositories = ContainerUtil.newHashMap();
   @NotNull private final List<VcsRepositoryCreator> myRepositoryCreators;
 
+  private volatile boolean myDisposed;
+
   public VcsRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
+    super(project);
     myVcsManager = vcsManager;
     myRepositoryCreators = Arrays.asList(Extensions.getExtensions(VcsRepositoryCreator.EXTENSION_POINT_NAME, project));
   }
 
-  public static VcsRepositoryManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsRepositoryManager.class);
+  @Override
+  public void initComponent() {
+    Disposer.register(myProject, this);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
   }
 
-  public static final class MyStartUpActivity implements StartupActivity, DumbAware {
-    @Override
-    public void runActivity(@NotNull final Project project) {
-      if (!project.isDefault() && !ApplicationManager.getApplication().isUnitTestMode()) {
-        project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
-          @Override
-          public void directoryMappingChanged() {
-            getInstance(project).checkAndUpdateRepositoriesCollection(null);
-          }
-        });
-      }
+  @Override
+  public void dispose() {
+    myDisposed = true;
+    try {
+      REPO_LOCK.writeLock().lock();
+      myRepositories.clear();
+    }
+    finally {
+      REPO_LOCK.writeLock().unlock();
     }
   }
 
-  @TestOnly
-  public void addListener(@NotNull Project project) {
-    project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
-      @Override
-      public void directoryMappingChanged() {
-        checkAndUpdateRepositoriesCollection(null);
-      }
-    });
+  @Override
+  public void directoryMappingChanged() {
+    checkAndUpdateRepositoriesCollection(null);
   }
 
   @Nullable
@@ -104,23 +101,26 @@ public class VcsRepositoryManager {
     if (root == null) return null;
     Repository result;
     try {
-      repoLock.readLock().lock();
+      REPO_LOCK.readLock().lock();
+      if (myDisposed) {
+        throw new ProcessCanceledException();
+      }
       Repository repo = myRepositories.get(root);
       result = repo != null ? repo : myExternalRepositories.get(root);
     }
     finally {
-      repoLock.readLock().unlock();
+      REPO_LOCK.readLock().unlock();
     }
     // if we didn't find appropriate repository, request update mappings if needed and try again
     // may be this should not be called  from several places (for example: branch widget updating from edt).
     if (updateIfNeeded && result == null && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
       checkAndUpdateRepositoriesCollection(root);
       try {
-        repoLock.readLock().lock();
+        REPO_LOCK.readLock().lock();
         return myRepositories.get(root);
       }
       finally {
-        repoLock.readLock().unlock();
+        REPO_LOCK.readLock().unlock();
       }
     }
     else {
@@ -129,43 +129,43 @@ public class VcsRepositoryManager {
   }
 
   public void addExternalRepository(@NotNull VirtualFile root, @NotNull Repository repository) {
-    repoLock.writeLock().lock();
+    REPO_LOCK.writeLock().lock();
     try {
       myExternalRepositories.put(root, repository);
     }
     finally {
-      repoLock.writeLock().unlock();
+      REPO_LOCK.writeLock().unlock();
     }
   }
 
   public void removeExternalRepository(@NotNull VirtualFile root) {
-    repoLock.writeLock().lock();
+    REPO_LOCK.writeLock().lock();
     try {
       myExternalRepositories.remove(root);
     }
     finally {
-      repoLock.writeLock().unlock();
+      REPO_LOCK.writeLock().unlock();
     }
   }
 
   public boolean isExternal(@NotNull Repository repository) {
     try {
-      repoLock.readLock().lock();
+      REPO_LOCK.readLock().lock();
       return !myRepositories.containsValue(repository) && myExternalRepositories.containsValue(repository);
     }
     finally {
-      repoLock.readLock().unlock();
+      REPO_LOCK.readLock().unlock();
     }
   }
 
   @NotNull
   public Collection<Repository> getRepositories() {
     try {
-      repoLock.readLock().lock();
+      REPO_LOCK.readLock().lock();
       return Collections.unmodifiableCollection(myRepositories.values());
     }
     finally {
-      repoLock.readLock().unlock();
+      REPO_LOCK.readLock().unlock();
     }
   }
 
@@ -173,16 +173,14 @@ public class VcsRepositoryManager {
   private void checkAndUpdateRepositoriesCollection(@Nullable VirtualFile checkedRoot) {
     Map<VirtualFile, Repository> repositories;
     try {
-      modifyLock.lock();
+      MODIFY_LOCK.lock();
       try {
-        repoLock.readLock().lock();
-        if (myRepositories.containsKey(checkedRoot)) {
-          return;
-        }
+        REPO_LOCK.readLock().lock();
+        if (myRepositories.containsKey(checkedRoot)) return;
         repositories = ContainerUtil.newHashMap(myRepositories);
       }
       finally {
-        repoLock.readLock().unlock();
+        REPO_LOCK.readLock().unlock();
       }
 
       Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.keySet());
@@ -190,17 +188,19 @@ public class VcsRepositoryManager {
       Map<VirtualFile, Repository> newRoots = findNewRoots(repositories.keySet());
       repositories.putAll(newRoots);
 
-      repoLock.writeLock().lock();
+      REPO_LOCK.writeLock().lock();
       try {
-        myRepositories.clear();
-        myRepositories.putAll(repositories);
+        if (!myDisposed) {
+          myRepositories.clear();
+          myRepositories.putAll(repositories);
+        }
       }
       finally {
-        repoLock.writeLock().unlock();
+        REPO_LOCK.writeLock().unlock();
       }
     }
     finally {
-      modifyLock.unlock();
+      MODIFY_LOCK.unlock();
     }
   }
 
