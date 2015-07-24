@@ -15,9 +15,11 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.*;
@@ -45,6 +47,17 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
   public TestDiscoveryIndex(Project project) {
     myProject = project;
+    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            getHolder(); // proactively init with maybe io costly compact
+          }
+        });
+      }
+    });
   }
 
   public Collection<String> getTestsByMethodName(String classFQName, String methodName) throws IOException {
