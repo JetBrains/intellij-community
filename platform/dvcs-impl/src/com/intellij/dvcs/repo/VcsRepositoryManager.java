@@ -40,7 +40,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * extension point in a thread safe way.
  */
 public class VcsRepositoryManager extends AbstractProjectComponent implements Disposable, VcsListener {
-
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
@@ -58,11 +57,13 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
     myRepositoryCreators = Arrays.asList(Extensions.getExtensions(VcsRepositoryCreator.EXTENSION_POINT_NAME, project));
   }
 
+  @Override
   public void initComponent() {
     Disposer.register(myProject, this);
     myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     try {
@@ -74,6 +75,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
     }
   }
 
+  @Override
   public void directoryMappingChanged() {
     checkAndUpdateRepositoriesCollection(null);
   }
