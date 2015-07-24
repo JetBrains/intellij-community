@@ -15,6 +15,8 @@ import java.io.IOException;
  * @author Konstantin Bulenkov
  */
 public class JetBrainsProtocolHandlerHttpService extends RestService {
+  private static final String URL_PARAM_NAME = "url";
+
   @NotNull
   @Override
   protected String getServiceName() {
@@ -34,7 +36,7 @@ public class JetBrainsProtocolHandlerHttpService extends RestService {
     final String name = reader.nextName();
     final String url = reader.nextString();
     reader.endObject();
-    if ("url".equals(name) && url != null && url.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
+    if (URL_PARAM_NAME.equals(name) && url != null && url.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
     }
     sendOk(request, context);
