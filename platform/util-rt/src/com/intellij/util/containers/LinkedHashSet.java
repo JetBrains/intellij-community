@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 @SuppressWarnings("ClassNameSameAsAncestorName")
 class LinkedHashSet<E> extends java.util.LinkedHashSet<E> {
   public LinkedHashSet() { }
 
-  public LinkedHashSet(Collection<? extends E> collection) {
+  public LinkedHashSet(@NotNull Collection<? extends E> collection) {
     super(collection);
   }
 
