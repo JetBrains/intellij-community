@@ -83,11 +83,6 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     scheduleOnStartCheck(app);
   }
 
-  @Override
-  public void initComponent() {
-    PluginsAdvertiser.ensureDeleted();
-  }
-
   private void scheduleOnStartCheck(@NotNull Application app) {
     if (!mySettings.isCheckNeeded() || mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
       return;
@@ -111,6 +106,11 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   private void queueNextCheck(long interval) {
     myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
+  }
+
+  @Override
+  public void initComponent() {
+    PluginsAdvertiser.ensureDeleted();
   }
 
   @Override

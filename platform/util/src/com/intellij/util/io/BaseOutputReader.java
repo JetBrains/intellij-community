@@ -143,8 +143,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
     myReader.close();
   }
 
-  protected void onBufferExhaustion() {
-  }
+  protected void onBufferExhaustion() { }
 
   protected abstract void onTextAvailable(@NotNull String text);
 }

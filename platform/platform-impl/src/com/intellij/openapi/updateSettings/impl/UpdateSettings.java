@@ -37,25 +37,11 @@ import java.util.List;
   }
 )
 public class UpdateSettings implements PersistentStateComponent<UpdateSettings.State>, UserUpdateSettings {
-  private State myState = new State();
-
-  public UpdateSettings() {
-    updateDefaultChannel();
-  }
-
-  public static UpdateSettings getInstance() {
-    return ServiceManager.getService(UpdateSettings.class);
-  }
-
-  static class State {
-    @CollectionBean
-    public final List<String> pluginHosts = new SmartList<String>();
-    @CollectionBean
-    public final List<String> knownUpdateChannels = new SmartList<String>();
-    @CollectionBean
-    public final List<String> ignoredBuildNumbers = new SmartList<String>();
-    @CollectionBean
-    public final List<String> outdatedPlugins = new SmartList<String>();
+  public static class State {
+    @CollectionBean public final List<String> pluginHosts = new SmartList<String>();
+    @CollectionBean public final List<String> knownUpdateChannels = new SmartList<String>();
+    @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<String>();
+    @CollectionBean public final List<String> outdatedPlugins = new SmartList<String>();
 
     public boolean CHECK_NEEDED = true;
     public long LAST_TIME_CHECKED = 0;
@@ -63,6 +49,16 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     public String LAST_BUILD_CHECKED;
     public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
     public boolean SECURE_CONNECTION = true;
+  }
+
+  public static UpdateSettings getInstance() {
+    return ServiceManager.getService(UpdateSettings.class);
+  }
+
+  private State myState = new State();
+
+  public UpdateSettings() {
+    updateDefaultChannel();
   }
 
   @Nullable
@@ -115,13 +111,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     }
   }
 
+  @NotNull
   @Override
   public State getState() {
     return myState;
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
     myState.LAST_BUILD_CHECKED = StringUtil.nullize(myState.LAST_BUILD_CHECKED);
     updateDefaultChannel();
