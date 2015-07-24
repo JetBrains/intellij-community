@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -149,6 +150,12 @@ public class SwitchTaskAction extends BaseTaskAction {
           manager.activateTask(task, !shiftPressed.get());
         }
       });
+      group.add(new AnAction("&Edit") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          EditTaskDialog.editTask(task, project);
+        }
+      });
     }
     final AnAction remove = new AnAction("&Remove") {
       @Override
@@ -161,6 +168,7 @@ public class SwitchTaskAction extends BaseTaskAction {
         }
       }
     };
+    remove.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)), null);
     group.add(remove);
 
     return group;
