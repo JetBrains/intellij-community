@@ -23,10 +23,29 @@ import java.util.LinkedHashMap;
  * @author peter
  */
 public abstract class Classifier<T> {
-  public abstract void addElement(T t, ProcessingContext context);
+  protected final Classifier<T> myNext;
+
+  protected Classifier(Classifier<T> next) {
+    myNext = next;
+  }
+
+  public void addElement(T t, ProcessingContext context) {
+    if (myNext != null) {
+      myNext.addElement(t, context);
+    }
+  }
 
   public abstract Iterable<T> classify(Iterable<T> source, ProcessingContext context);
 
-  public abstract void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context);
+  public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
+    if (myNext != null) {
+      myNext.describeItems(map, context);
+    }
+  }
 
+  public void removeElement(T element, ProcessingContext context) {
+    if (myNext != null) {
+      myNext.removeElement(element, context);
+    }
+  }
 }

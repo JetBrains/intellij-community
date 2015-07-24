@@ -28,7 +28,6 @@ import java.util.*;
  * @author peter
  */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
-  protected final Classifier<T> myNext;
   protected final String myName;
   private final boolean myNegated;
 
@@ -37,18 +36,13 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   }
 
   protected ComparingClassifier(Classifier<T> next, String name, boolean negated) {
-    myNext = next;
+    super(next);
     myName = name;
     myNegated = negated;
   }
 
   @Nullable
   public abstract Comparable getWeight(T t, ProcessingContext context);
-
-  @Override
-  public void addElement(T t, ProcessingContext context) {
-    myNext.addElement(t, context);
-  }
 
   @Override
   public Iterable<T> classify(final Iterable<T> source, final ProcessingContext context) {
@@ -100,6 +94,6 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
         builder.append(myName).append("=").append(weights.get(t));
       }
     }
-    myNext.describeItems(map, context);
+    super.describeItems(map, context);
   }
 }

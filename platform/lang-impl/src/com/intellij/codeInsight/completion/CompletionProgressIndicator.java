@@ -677,6 +677,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+      closeAndFinish(true);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      new CodeCompletionHandlerBase(myParameters.getCompletionType()).invokeCompletion(getProject(), myEditor, myParameters.getInvocationCount());
+      return;
+    }
+
     cancel();
 
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();

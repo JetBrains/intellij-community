@@ -36,7 +36,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
@@ -75,6 +77,8 @@ public class CompletionLookupArranger extends LookupArranger {
       }
     });
   }
+  private final int myLimit = Registry.intValue("ide.completion.variant.limit");
+  private boolean myOverflow;
 
   private final CompletionLocation myLocation;
   private final CompletionParameters myParameters;
@@ -143,9 +147,48 @@ public class CompletionLookupArranger extends LookupArranger {
     if (classifier == null) {
       myClassifiers.put(sorter, classifier = sorter.buildClassifier(new AlphaClassifier((LookupImpl)lookup)));
     }
-    classifier.addElement(element, createContext(true));
+    ProcessingContext context = createContext(true);
+    classifier.addElement(element, context);
 
     super.addElement(lookup, element, presentation);
+
+    trimToLimit(lookup, context);
+  }
+
+  private void trimToLimit(Lookup lookup, ProcessingContext context) {
+    if (myItems.size() <= myLimit * 2) return;
+
+    List<LookupElement> items = getMatchingItems();
+    Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
+
+    final Set<LookupElement> retainedSet = ContainerUtil.newIdentityTroveSet();
+    retainedSet.addAll(getPrefixItems(true));
+    retainedSet.addAll(getPrefixItems(false));
+    retainedSet.addAll(myFrozenItems);
+    while (retainedSet.size() < myLimit && iterator.hasNext()) {
+      retainedSet.add(iterator.next());
+    }
+
+    if (!iterator.hasNext()) return;
+
+    List<LookupElement> removed = retainItems(retainedSet, lookup);
+    for (LookupElement element : removed) {
+      removeItem(element, context);
+    }
+
+    if (!myOverflow) {
+      myOverflow = true;
+      myProcess.addAdvertisement("Not all variants are shown, please type more letters to see the rest", null);
+
+      // restart completion on any prefix change
+      myProcess.addWatchedPrefix(0, StandardPatterns.string());
+    }
+  }
+
+  private void removeItem(LookupElement element, ProcessingContext context) {
+    CompletionSorterImpl sorter = obtainSorter(element);
+    Classifier<LookupElement> classifier = myClassifiers.get(sorter);
+    classifier.removeElement(element, context);
   }
 
   @NotNull
@@ -524,11 +567,8 @@ public class CompletionLookupArranger extends LookupArranger {
     private final LookupImpl myLookup;
 
     private AlphaClassifier(LookupImpl lookup) {
+      super(null);
       myLookup = lookup;
-    }
-
-    @Override
-    public void addElement(LookupElement element, ProcessingContext context) {
     }
 
     @Override
@@ -536,8 +576,5 @@ public class CompletionLookupArranger extends LookupArranger {
       return sortByPresentation(source, myLookup);
     }
 
-    @Override
-    public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
-    }
   }
 }
