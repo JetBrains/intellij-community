@@ -51,9 +51,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -64,13 +61,10 @@ import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,10 +98,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
   private JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
-  private final MyListModel<Object> myListModel = new MyListModel<Object>();
   protected final JList myList = new JBList(myListModel);
-
-  private final ListUpdater myListUpdater = new ListUpdater();
 
   protected JBPopup myTextPopup;
   protected JBPopup myDropdownPopup;
@@ -337,7 +328,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     searching.add(new AsyncProcessIcon("searching"), BorderLayout.WEST);
     searching.add(new HintLabel(IdeBundle.message("label.choosebyname.searching")), BorderLayout.CENTER);
     addCard(searching, SEARCHING_CARD);
-    myCard.show(myCardContainer, CHECK_BOX_CARD);
+    showCardImpl(CHECK_BOX_CARD);
 
     if (isCheckboxVisible()) {
       hBox.add(myCardContainer);
@@ -412,7 +403,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
         new AnAction("change goto check box", null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            myCheckBox.setSelected(!myCheckBox.isSelected());
+            myCheckBox.setSelected(!isCheckboxSelected());
           }
         }.registerCustomShortcutSet(myCheckBoxShortcut, myTextField);
       }
@@ -629,6 +620,11 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     }
   }
 
+  @Override
+  protected void showCardImpl(String card) {
+    myCard.show(myCardContainer, card);
+  }
+
   private void addCard(JComponent comp, String cardId) {
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(comp, BorderLayout.EAST);
@@ -644,8 +640,13 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
   protected void hideHint() {
     if (!myTextFieldPanel.focusRequested()) {
       doClose(false);
-      myTextFieldPanel.hideHint();
+      doHideHint();
     }
+  }
+
+  @Override
+  protected void doHideHint() {
+    myTextFieldPanel.hideHint();
   }
 
   /**
@@ -672,33 +673,6 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
         }
       }
     }
-  }
-
-  @Override
-  protected void doClose(final boolean ok) {
-    if (checkDisposed()) return;
-
-    if (closeForbidden(ok)) return;
-    if (postponeCloseWhenListReady(ok)) return;
-
-    cancelListUpdater();
-    close(ok);
-
-    clearPostponedOkAction(ok);
-    myListModel.clear();
-  }
-
-  @Override
-  protected void cancelListUpdater() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (checkDisposed()) return;
-
-    final CalcElementsThread calcElementsThread = myCalcElementsThread;
-    if (calcElementsThread != null) {
-      calcElementsThread.cancel();
-      backgroundCalculationFinished(Collections.emptyList(), 0);
-    }
-    myListUpdater.cancelAll();
   }
 
   @Override
@@ -755,64 +729,27 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
   }
 
   @Override
-  protected void rebuildList(final int pos,
-                             final int delay,
-                             @NotNull final ModalityState modalityState,
-                             @Nullable final Runnable postRunnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!myInitialized) {
-      return;
-    }
+  @NotNull
+  protected ModalityState getModalityStateForTextBox() {
+    return ModalityState.stateForComponent(myTextField);
+  }
 
-    myAlarm.cancelAllRequests();
+  @Override
+  protected boolean isCheckboxSelected() {
+    return myCheckBox.isSelected();
+  }
 
-    if (delay > 0) {
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          rebuildList(pos, 0, modalityState, postRunnable);
-        }
-      }, delay, ModalityState.stateForComponent(myTextField));
-      return;
-    }
-
-    myListUpdater.cancelAll();
-
-    final CalcElementsThread calcElementsThread = myCalcElementsThread;
-    if (calcElementsThread != null) {
-      calcElementsThread.cancel();
-    }
-
-    final String text = getTrimmedText();
-    if (!canShowListForEmptyPattern() && text.isEmpty()) {
-      myListModel.clear();
-      hideList();
-      myTextFieldPanel.hideHint();
-      myCard.show(myCardContainer, CHECK_BOX_CARD);
-      return;
-    }
-
+  @Override
+  protected void configureListRenderer() {
     ListCellRenderer cellRenderer = myList.getCellRenderer();
     if (cellRenderer instanceof ExpandedItemListCellRendererWrapper) {
       cellRenderer = ((ExpandedItemListCellRendererWrapper)cellRenderer).getWrappee();
     }
     if (cellRenderer instanceof MatcherHolder) {
-      final String pattern = transformPattern(text);
+      final String pattern = transformPattern(getTrimmedText());
       final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
     }
-
-    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
-      @Override
-      public void consume(Set<?> elements) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        backgroundCalculationFinished(elements, pos);
-
-        if (postRunnable != null) {
-          postRunnable.run();
-        }
-      }
-    });
   }
 
   @Override
@@ -823,169 +760,31 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     chosenElementMightChange();
 
     if (result.isEmpty()) {
-      myTextFieldPanel.hideHint();
+      doHideHint();
     }
   }
 
   @Override
-  protected void setElementsToList(int pos, @NotNull Collection<?> elements) {
-    myListUpdater.cancelAll();
-    if (checkDisposed()) return;
-    if (elements.isEmpty()) {
-      myListModel.clear();
-      myTextField.setForeground(JBColor.red);
-      myListUpdater.cancelAll();
-      hideList();
-      clearPostponedOkAction(false);
-      return;
-    }
+  protected void setHasResults(boolean b) {
+    myTextField.setForeground(b ? UIUtil.getTextFieldForeground() : JBColor.red);
+  }
 
-    Object[] oldElements = myListModel.toArray();
-    Object[] newElements = elements.toArray();
-    List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
-    if (commands == null) {
-      myListUpdater.doPostponedOkIfNeeded();
-      return; // Nothing changed
-    }
-
-    myTextField.setForeground(UIUtil.getTextFieldForeground());
-    if (commands.isEmpty()) {
-      if (pos <= 0) {
-        pos = detectBestStatisticalPosition();
-      }
-
+  @Override
+  protected void selectItem(int selectionPos) {
+    if (!myListModel.isEmpty()) {
+      int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
       ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
-      myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-      showList();
-      myTextFieldPanel.repositionHint();
-    }
-    else {
-      showList();
-      myListUpdater.appendToModel(commands, pos);
     }
   }
 
   @Override
-  protected int detectBestStatisticalPosition() {
-    if (myModel instanceof Comparator) {
-      return 0;
-    }
-
-    int best = 0;
-    int bestPosition = 0;
-    int bestMatch = Integer.MIN_VALUE;
-    final int count = myListModel.getSize();
-
-    Matcher matcher = buildPatternMatcher(transformPattern(getTrimmedText()));
-
-    final String statContext = statisticsContext();
-    for (int i = 0; i < count; i++) {
-      final Object modelElement = myListModel.getElementAt(i);
-      String text = EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement) ? null : myModel.getFullName(modelElement);
-      if (text != null) {
-        String shortName = myModel.getElementName(modelElement);
-        int match = shortName != null && matcher instanceof MinusculeMatcher
-                    ? ((MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
-        int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
-        if (match > bestMatch || match == bestMatch && stats > best) {
-          best = stats;
-          bestPosition = i;
-          bestMatch = match;
-        }
-      }
-    }
-
-    if (bestPosition < count - 1 && myListModel.getElementAt(bestPosition) == NON_PREFIX_SEPARATOR) {
-      bestPosition++;
-    }
-
-    return bestPosition;
+  protected void repositionHint() {
+    myTextFieldPanel.repositionHint();
   }
 
-  @NotNull
-  @NonNls
-  protected String statisticsContext() {
-    return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
-  }
-
-  private static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
-    @Override
-    public void addToModel(int idx, T element) {
-      if (idx < size()) {
-        add(idx, element);
-      }
-      else {
-        addElement(element);
-      }
-    }
-
-    @Override
-    public void removeRangeFromModel(int start, int end) {
-      if (start < size() && size() != 0) {
-        removeRange(start, Math.min(end, size()-1));
-      }
-    }
-  }
-
-  private class ListUpdater {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private static final int DELAY = 10;
-    private static final int MAX_BLOCKING_TIME = 30;
-    private final List<ModelDiff.Cmd> myCommands = Collections.synchronizedList(new ArrayList<ModelDiff.Cmd>());
-
-    public void cancelAll() {
-      myCommands.clear();
-      myAlarm.cancelAllRequests();
-    }
-
-    public void appendToModel(@NotNull List<ModelDiff.Cmd> commands, final int selectionPos) {
-      myAlarm.cancelAllRequests();
-      myCommands.addAll(commands);
-
-      if (myCommands.isEmpty() || checkDisposed()) {
-        return;
-      }
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (checkDisposed()) {
-            return;
-          }
-          final long startTime = System.currentTimeMillis();
-          while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME) {
-            final ModelDiff.Cmd cmd = myCommands.remove(0);
-            cmd.apply();
-          }
-
-          myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-
-          if (!myCommands.isEmpty()) {
-            myAlarm.addRequest(this, DELAY);
-          }
-          else {
-            doPostponedOkIfNeeded();
-          }
-          if (!checkDisposed()) {
-            showList();
-            myTextFieldPanel.repositionHint();
-
-            if (!myListModel.isEmpty()) {
-              int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
-              ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
-            }
-          }
-        }
-      }, DELAY);
-    }
-
-    private void doPostponedOkIfNeeded() {
-      if (myPostponedOkAction != null) {
-        if (getChosenElement() != null) {
-          doClose(true);
-        }
-        clearPostponedOkAction(checkDisposed());
-      }
-    }
+  @Override
+  protected void updateVisibleRowCount() {
+    myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
   }
 
   @Override
@@ -1128,7 +927,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
         return;
       }
 
-      final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(myCheckBox.isSelected()), pattern);
+      final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(isCheckboxSelected()), pattern);
 
       if (isComplexPattern(pattern)) return; //TODO: support '*'
       final String oldText = getTrimmedText();
@@ -1253,7 +1052,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
       @Override
       public void run() {
         if (!t.myProgress.isCanceled()) {
-          myCard.show(myCardContainer, card);
+          showCardImpl(card);
         }
       }
     }, delay, t.myModalityState);
@@ -1284,7 +1083,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
       fillUsages(Arrays.asList(elements[0]), usages, targets, false);
       fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
-        final boolean everywhere = myCheckBox.isSelected();
+        final boolean everywhere = isCheckboxSelected();
         final Set<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
         final Set<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
         hideHint();

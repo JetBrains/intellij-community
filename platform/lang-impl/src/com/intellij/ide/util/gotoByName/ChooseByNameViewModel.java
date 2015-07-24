@@ -36,7 +36,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -77,6 +80,8 @@ public abstract class ChooseByNameViewModel {
   protected final int myRebuildDelay;
   protected final Alarm myHideAlarm = new Alarm();
   protected final int myInitialIndex;
+  protected final ListUpdater myListUpdater = new ListUpdater();
+  protected final MyListModel myListModel = new MyListModel();
   private final String[][] myNames = new String[2][];
   protected ChooseByNameItemProvider myProvider;
   protected boolean mySearchInAnyPlace = false;
@@ -258,9 +263,13 @@ public abstract class ChooseByNameViewModel {
 
   public abstract int getSelectedIndex();
 
+  protected abstract void showCardImpl(String card);
+
   public abstract void setCheckBoxShortcut(ShortcutSet shortcutSet);
 
   protected abstract void hideHint();
+
+  protected abstract void doHideHint();
 
   abstract void rebuildList(boolean initial);
 
@@ -270,13 +279,34 @@ public abstract class ChooseByNameViewModel {
     return pattern;
   }
 
-  protected abstract void doClose(boolean ok);
+  protected void doClose(final boolean ok) {
+    if (checkDisposed()) return;
+
+    if (closeForbidden(ok)) return;
+    if (postponeCloseWhenListReady(ok)) return;
+
+    cancelListUpdater();
+    close(ok);
+
+    clearPostponedOkAction(ok);
+    myListModel.clear();
+  }
 
   protected boolean closeForbidden(boolean ok) {
     return false;
   }
 
-  protected abstract void cancelListUpdater();
+  protected void cancelListUpdater() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (checkDisposed()) return;
+
+    final CalcElementsThread calcElementsThread = myCalcElementsThread;
+    if (calcElementsThread != null) {
+      calcElementsThread.cancel();
+      backgroundCalculationFinished(Collections.emptyList(), 0);
+    }
+    myListUpdater.cancelAll();
+  }
 
   protected boolean postponeCloseWhenListReady(boolean ok) {
     if (!isToFixLostTyping()) return false;
@@ -371,7 +401,64 @@ public abstract class ChooseByNameViewModel {
     return layeredPane;
   }
 
-  protected abstract void rebuildList(int pos, int delay, @NotNull ModalityState modalityState, @Nullable Runnable postRunnable);
+  protected void rebuildList(final int pos,
+                             final int delay,
+                             @NotNull final ModalityState modalityState,
+                             @Nullable final Runnable postRunnable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!myInitialized) {
+      return;
+    }
+
+    myAlarm.cancelAllRequests();
+
+    if (delay > 0) {
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          rebuildList(pos, 0, modalityState, postRunnable);
+        }
+      }, delay, getModalityStateForTextBox());
+      return;
+    }
+
+    myListUpdater.cancelAll();
+
+    final CalcElementsThread calcElementsThread = myCalcElementsThread;
+    if (calcElementsThread != null) {
+      calcElementsThread.cancel();
+    }
+
+    final String text = getTrimmedText();
+    if (!canShowListForEmptyPattern() && text.isEmpty()) {
+      myListModel.clear();
+      hideList();
+      doHideHint();
+      showCardImpl(CHECK_BOX_CARD);
+      return;
+    }
+
+    configureListRenderer();
+
+    scheduleCalcElements(text, isCheckboxSelected(), modalityState, new Consumer<Set<?>>() {
+      @Override
+      public void consume(Set<?> elements) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        backgroundCalculationFinished(elements, pos);
+
+        if (postRunnable != null) {
+          postRunnable.run();
+        }
+      }
+    });
+  }
+
+  @NotNull
+  protected abstract ModalityState getModalityStateForTextBox();
+
+  protected abstract boolean isCheckboxSelected();
+
+  protected abstract void configureListRenderer();
 
   protected abstract void backgroundCalculationFinished(Collection<?> result, int toSelect);
 
@@ -386,9 +473,76 @@ public abstract class ChooseByNameViewModel {
     return myShowListAfterCompletionKeyStroke;
   }
 
-  protected abstract void setElementsToList(int pos, @NotNull Collection<?> elements);
+  protected void setElementsToList(int pos, @NotNull Collection<?> elements) {
+    myListUpdater.cancelAll();
+    if (checkDisposed()) return;
+    if (elements.isEmpty()) {
+      myListModel.clear();
+      setHasResults(false);
+      myListUpdater.cancelAll();
+      hideList();
+      clearPostponedOkAction(false);
+      return;
+    }
 
-  protected abstract int detectBestStatisticalPosition();
+    Object[] oldElements = myListModel.toArray();
+    Object[] newElements = elements.toArray();
+    List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
+    if (commands == null) {
+      myListUpdater.doPostponedOkIfNeeded();
+      return; // Nothing changed
+    }
+
+    setHasResults(true);
+    if (commands.isEmpty()) {
+      selectItem(pos);
+      updateVisibleRowCount();
+      showList();
+      repositionHint();
+    }
+    else {
+      showList();
+      myListUpdater.appendToModel(commands, pos);
+    }
+  }
+
+  protected abstract void setHasResults(boolean b);
+
+  protected int detectBestStatisticalPosition() {
+    if (myModel instanceof Comparator) {
+      return 0;
+    }
+
+    int best = 0;
+    int bestPosition = 0;
+    int bestMatch = Integer.MIN_VALUE;
+    final int count = myListModel.getSize();
+
+    Matcher matcher = buildPatternMatcher(transformPattern(getTrimmedText()));
+
+    final String statContext = statisticsContext();
+    for (int i = 0; i < count; i++) {
+      final Object modelElement = myListModel.getElementAt(i);
+      String text = EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement) ? null : myModel.getFullName(modelElement);
+      if (text != null) {
+        String shortName = myModel.getElementName(modelElement);
+        int match = shortName != null && matcher instanceof MinusculeMatcher
+                    ? ((MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
+        int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
+        if (match > bestMatch || match == bestMatch && stats > best) {
+          best = stats;
+          bestPosition = i;
+          bestMatch = match;
+        }
+      }
+    }
+
+    if (bestPosition < count - 1 && myListModel.getElementAt(bestPosition) == NON_PREFIX_SEPARATOR) {
+      bestPosition++;
+    }
+
+    return bestPosition;
+  }
 
   protected void clearPostponedOkAction(boolean success) {
     if (myPostponedOkAction != null) {
@@ -412,6 +566,18 @@ public abstract class ChooseByNameViewModel {
   protected abstract void hideList();
 
   protected abstract void close(boolean isOk);
+
+  @NotNull
+  @NonNls
+  protected String statisticsContext() {
+    return "choose_by_name#" + myModel.getPromptText() + "#" + isCheckboxSelected() + "#" + getTrimmedText();
+  }
+
+  protected abstract void selectItem(int selectionPos);
+
+  protected abstract void repositionHint();
+
+  protected abstract void updateVisibleRowCount();
 
   @Nullable
   abstract Object getChosenElement();
@@ -461,6 +627,25 @@ public abstract class ChooseByNameViewModel {
   protected abstract void doShowCard(CalcElementsThread t, String card, int delay);
 
   abstract JTextField getTextField();
+
+  protected static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
+    @Override
+    public void addToModel(int idx, T element) {
+      if (idx < size()) {
+        add(idx, element);
+      }
+      else {
+        addElement(element);
+      }
+    }
+
+    @Override
+    public void removeRangeFromModel(int start, int end) {
+      if (start < size() && size() != 0) {
+        removeRange(start, Math.min(end, size()-1));
+      }
+    }
+  }
 
   protected class CalcElementsThread implements ReadTask {
     private final String myPattern;
@@ -579,5 +764,63 @@ public abstract class ChooseByNameViewModel {
       myProgress.cancel();
     }
 
+  }
+
+  protected class ListUpdater {
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private static final int DELAY = 10;
+    private static final int MAX_BLOCKING_TIME = 30;
+    private final List<ModelDiff.Cmd> myCommands = Collections.synchronizedList(new ArrayList<ModelDiff.Cmd>());
+
+    public void cancelAll() {
+      myCommands.clear();
+      myAlarm.cancelAllRequests();
+    }
+
+    public void appendToModel(@NotNull List<ModelDiff.Cmd> commands, final int selectionPos) {
+      myAlarm.cancelAllRequests();
+      myCommands.addAll(commands);
+
+      if (myCommands.isEmpty() || checkDisposed()) {
+        return;
+      }
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          if (checkDisposed()) {
+            return;
+          }
+          final long startTime = System.currentTimeMillis();
+          while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME) {
+            final ModelDiff.Cmd cmd = myCommands.remove(0);
+            cmd.apply();
+          }
+
+          updateVisibleRowCount();
+
+          if (!myCommands.isEmpty()) {
+            myAlarm.addRequest(this, DELAY);
+          }
+          else {
+            doPostponedOkIfNeeded();
+          }
+          if (!checkDisposed()) {
+            showList();
+            repositionHint();
+
+            selectItem(selectionPos);
+          }
+        }
+      }, DELAY);
+    }
+
+    protected void doPostponedOkIfNeeded() {
+      if (myPostponedOkAction != null) {
+        if (getChosenElement() != null) {
+          doClose(true);
+        }
+        clearPostponedOkAction(checkDisposed());
+      }
+    }
   }
 }
