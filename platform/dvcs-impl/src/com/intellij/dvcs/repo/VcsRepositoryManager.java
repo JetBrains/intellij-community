@@ -59,7 +59,7 @@ public class VcsRepositoryManager {
     return ServiceManager.getService(project, VcsRepositoryManager.class);
   }
 
-  static final class MyStartUpActivity implements StartupActivity, DumbAware {
+  public static final class MyStartUpActivity implements StartupActivity, DumbAware {
     @Override
     public void runActivity(@NotNull final Project project) {
       if (!project.isDefault() && !ApplicationManager.getApplication().isUnitTestMode()) {

@@ -18,7 +18,6 @@ package git4idea.repo;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
+
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final Project myProject;
 
@@ -36,10 +36,6 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
     super(vcsRepositoryManager, platformFacade.getVcs(project), GitUtil.DOT_GIT);
     myProject = project;
     myPlatformFacade = platformFacade;
-  }
-
-  public static GitRepositoryManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 
   @Override

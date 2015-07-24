@@ -7,7 +7,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectStructureDetector implementation="com.intellij.remoteServer.util.importProject.CloudGitProjectStructureDetector"/>
-    <postStartupActivity implementation="com.intellij.remoteServer.util.importProject.CloudGitRemoteDetector$MyStartUpActivity"/>
-    <projectService serviceImplementation="com.intellij.remoteServer.util.importProject.CloudGitRemoteDetector"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.remoteServer.util.importProject.CloudGitRemoteDetector</implementation-class>
+    </component>
+  </project-components>
+
 </idea-plugin>
