@@ -19,9 +19,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 
 /**
@@ -206,6 +209,11 @@ public class JBUI {
 
     public static Border customLine(Color color, int thickness) {
       return customLine(color, thickness, thickness, thickness, thickness);
+    }
+
+    public static Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {
+      if (source == null) return extra;
+      return new CompoundBorder(extraIsOutside ? extra : source, extraIsOutside? source : extra);
     }
   }
 
