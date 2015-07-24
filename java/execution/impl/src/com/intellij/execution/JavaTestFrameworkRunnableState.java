@@ -47,14 +47,12 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -251,7 +249,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
         if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
-          writer.println(PathUtil.getJarPathForClass(CommandLineWrapper.class));
+          writer.println("use classpath jar");
         }
         else {
           writer.println("");

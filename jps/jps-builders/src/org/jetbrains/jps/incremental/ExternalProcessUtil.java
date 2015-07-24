@@ -105,8 +105,6 @@ public class ExternalProcessUtil {
             final String classpathFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), classpath).getAbsolutePath();
             commandLineWrapperArgs = Arrays.asList(
               "-classpath",
-              ClasspathBootstrap.getResourcePath(wrapperClass) + File.pathSeparator + classpathFile,
-              wrapperClass.getName(),
               classpathFile
             );
           }
