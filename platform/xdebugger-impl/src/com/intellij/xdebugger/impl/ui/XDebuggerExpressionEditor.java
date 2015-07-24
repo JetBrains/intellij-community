@@ -52,11 +52,11 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
                                    final boolean multiline) {
     super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myExpression = XExpressionImpl.changeMode(text, getMode());
-    myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
+    myEditorTextField =
+      new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
-        editor.setOneLineMode(!multiline);
         editor.setVerticalScrollbarVisible(multiline);
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
@@ -71,11 +71,6 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
           return PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument());
         }
         return super.getData(dataId);
-      }
-
-      @Override
-      protected boolean isOneLineMode() {
-        return !multiline;
       }
     };
     myEditorTextField.setFontInheritedFromLAF(false);
