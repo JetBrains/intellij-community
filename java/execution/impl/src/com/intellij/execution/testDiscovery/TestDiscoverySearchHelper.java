@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -49,43 +50,58 @@ public class TestDiscoverySearchHelper {
       catch (IOException ignore) {
       }
     }
-    else {
-      final List<VirtualFile> files = getAffectedFiles(changeList, project);
-      final PsiManager psiManager = PsiManager.getInstance(project);
-
-      for (final VirtualFile file : files) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PsiFile psiFile = psiManager.findFile(file);
-            if (psiFile != null) {
-              try {
-                final List<TextRange> changedTextRanges = FormatChangedTextUtil.getChangedTextRanges(project, psiFile);
-                for (TextRange textRange : changedTextRanges) {
-                  final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
-                  final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
-                  final PsiElement parent = PsiTreeUtil.findCommonParent(new PsiElement[]{start, end});
-                  final Collection<PsiMethod> methods = new ArrayList<PsiMethod>(
-                    PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
-                  final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-                  if (containingMethod != null) {
-                    methods.add(containingMethod);
+    final List<VirtualFile> files = getAffectedFiles(changeList, project);
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
+    for (final VirtualFile file : files) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          final PsiFile psiFile = psiManager.findFile(file);
+          if (psiFile instanceof PsiClassOwner) {
+            if (position != null) {
+              final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
+              if (classes.length == 0 || TestFrameworks.detectFramework(classes[0]) == null) return;
+            }
+            try {
+              final List<TextRange> changedTextRanges = FormatChangedTextUtil.getChangedTextRanges(project, psiFile);
+              for (TextRange textRange : changedTextRanges) {
+                final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
+                final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
+                final PsiElement parent = PsiTreeUtil.findCommonParent(new PsiElement[]{start, end});
+                final Collection<PsiMethod> methods = new ArrayList<PsiMethod>(PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
+                final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+                if (containingMethod != null) {
+                  methods.add(containingMethod);
+                }
+                for (PsiMethod changedMethod : methods) {
+                  final LinkedHashSet<String> detectedPatterns = position == null ? collectPatterns(changedMethod, frameworkPrefix) : null;
+                  if (detectedPatterns != null) {
+                    patterns.addAll(detectedPatterns);
                   }
-                  for (PsiMethod changedMethod : methods) {
-                    final LinkedHashSet<String> detectedPatterns = collectPatterns(changedMethod, frameworkPrefix);
-                    if (detectedPatterns != null) {
-                      patterns.addAll(detectedPatterns);
+                  final PsiClass containingClass = changedMethod.getContainingClass();
+                  if (containingClass != null && containingClass.getParent() == psiFile) {
+                    final String classQualifiedName = containingClass.getQualifiedName();
+                    final String changedMethodName = changedMethod.getName();
+                    try {
+                      if (classQualifiedName != null &&
+                          (position == null && TestFrameworks.detectFramework(containingClass) != null || 
+                           position != null && !discoveryIndex.hasTestTrace(frameworkPrefix + classQualifiedName + "-" + changedMethodName))) {
+                        patterns.add(classQualifiedName + "," + changedMethodName);
+                      }
                     }
+                    catch (IOException ignore) {}
                   }
                 }
               }
-              catch (FilesTooBigForDiffException ignore) {
-              }
+            }
+            catch (FilesTooBigForDiffException ignore) {
             }
           }
-        });
-      }
+        }
+      });
     }
+
     return patterns;
   }
 
@@ -94,8 +110,8 @@ public class TestDiscoverySearchHelper {
                                       final String classFQName,
                                       final String methodName,
                                       final String frameworkId) throws IOException {
-    final Collection<String> testsByMethodName = TestDiscoveryIndex
-      .getInstance(project).getTestsByMethodName(classFQName, methodName);
+    final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
+    final Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName);
     if (testsByMethodName != null) {
       for (String pattern : ContainerUtil.filter(testsByMethodName, new Condition<String>() {
         @Override
