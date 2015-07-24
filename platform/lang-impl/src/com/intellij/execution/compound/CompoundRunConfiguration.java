@@ -131,7 +131,6 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    initIfNeed();
     for (RunConfiguration configuration : getSetToRun()) {
       Element child = new Element("toRun");
       child.setAttribute("type", configuration.getType().getId());
