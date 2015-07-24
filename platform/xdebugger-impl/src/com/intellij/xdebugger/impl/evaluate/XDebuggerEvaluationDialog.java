@@ -180,7 +180,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         XDebugSessionTab tab = ((XDebugSessionImpl)mySession).getSessionTab();
         if (tab != null) {
           tab.getWatchesView().addWatchExpression(expression, -1, true);
-          requestFocusInEditor();
+          getInputEditor().requestFocusInEditor();
         }
       }
     }
@@ -238,14 +238,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     setTitle(myInputComponent.getTitle());
     mySwitchModeAction.putValue(Action.NAME, getSwitchButtonText(mode));
-    requestFocusInEditor();
-  }
-
-  private void requestFocusInEditor() {
-    JComponent preferredFocusedComponent = getInputEditor().getPreferredFocusedComponent();
-    if (preferredFocusedComponent != null) {
-      IdeFocusManager.getInstance(mySession.getProject()).requestFocus(preferredFocusedComponent, true);
-    }
+    getInputEditor().requestFocusInEditor();
   }
 
   private XDebuggerEditorBase getInputEditor() {

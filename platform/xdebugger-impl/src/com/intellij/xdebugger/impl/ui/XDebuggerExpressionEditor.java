@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -38,22 +39,27 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
+public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final EditorTextField myEditorTextField;
   private XExpression myExpression;
 
-  public XDebuggerMultilineEditor(Project project,
+  public XDebuggerExpressionEditor(Project project,
                                    XDebuggerEditorsProvider debuggerEditorsProvider,
                                    @Nullable @NonNls String historyId,
-                                   @Nullable XSourcePosition sourcePosition, @NotNull XExpression text) {
-    super(project, debuggerEditorsProvider, EvaluationMode.CODE_FRAGMENT, historyId, sourcePosition);
+                                   @Nullable XSourcePosition sourcePosition,
+                                   @NotNull XExpression text,
+                                   final boolean multiline) {
+    super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
-        editor.setVerticalScrollbarVisible(true);
+        editor.setOneLineMode(!multiline);
+        editor.setVerticalScrollbarVisible(multiline);
+        editor.getColorsScheme().setEditorFontName(getFont().getFontName());
+        editor.getColorsScheme().setEditorFontSize(getFont().getSize());
         return editor;
       }
 
@@ -69,11 +75,12 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
 
       @Override
       protected boolean isOneLineMode() {
-        return false;
+        return !multiline;
       }
     };
     myEditorTextField.setFontInheritedFromLAF(false);
-    myComponent = addChooseFactoryLabel(myEditorTextField, true);
+    myEditorTextField.setFont(EditorUtil.getEditorFont());
+    myComponent = addChooseFactoryLabel(myEditorTextField, multiline);
   }
 
   @Override
@@ -91,7 +98,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), EvaluationMode.CODE_FRAGMENT);
+    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), getMode());
   }
 
   @Override

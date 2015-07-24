@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
+import com.intellij.util.ui.JBUI;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -43,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
@@ -76,8 +77,8 @@ public abstract class XDebuggerEditorBase {
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
 
-    myChooseFactory.setToolTipText("Click to change the language");
-    myChooseFactory.setBorder(new EmptyBorder(0, 3, 0, 3));
+    myChooseFactory.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.language.hint"));
+    myChooseFactory.setBorder(JBUI.Borders.empty(0, 3, 0, 3));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -104,7 +105,7 @@ public abstract class XDebuggerEditorBase {
         public void actionPerformed(@NotNull AnActionEvent e) {
           XExpression currentExpression = getExpression();
           setExpression(new XExpressionImpl(currentExpression.getExpression(), language, currentExpression.getCustomInfo()));
-          IdeFocusManager.getInstance(getProject()).requestFocus(getComponent(), true);
+          requestFocusInEditor();
         }
       });
     }
@@ -190,12 +191,19 @@ public abstract class XDebuggerEditorBase {
   @Nullable
   public abstract JComponent getPreferredFocusedComponent();
 
+  public void requestFocusInEditor() {
+    JComponent preferredFocusedComponent = getPreferredFocusedComponent();
+    if (preferredFocusedComponent != null) {
+      IdeFocusManager.getInstance(myProject).requestFocus(preferredFocusedComponent, true);
+    }
+  }
+
   public abstract void selectAll();
 
   protected void onHistoryChanged() {
   }
 
-  protected List<XExpression> getRecentExpressions() {
+  public List<XExpression> getRecentExpressions() {
     if (myHistoryId != null) {
       return XDebuggerHistoryManager.getInstance(myProject).getRecentExpressions(myHistoryId);
     }
