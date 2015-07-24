@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
@@ -215,7 +216,8 @@ class GitMergeOperation extends GitBranchOperation {
 
   private boolean doSmartMerge(@NotNull final Collection<GitRepository> repositories) {
     final AtomicBoolean success = new AtomicBoolean();
-    myPreservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, repositories, "merge", myBranchToMerge, getIndicator(),
+    myPreservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, GitUtil.getRootsFromRepositories(repositories), "merge",
+                                                   myBranchToMerge, GitVcsSettings.UpdateChangesPolicy.STASH, getIndicator(),
       new Runnable() {
         @Override
         public void run() {
@@ -309,7 +311,9 @@ class GitMergeOperation extends GitBranchOperation {
   private GitCompoundResult smartRollback(@NotNull final Collection<GitRepository> repositories) {
     LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, repositories, "merge", myBranchToMerge,
+    Collection<VirtualFile> roots = GitUtil.getRootsFromRepositories(repositories);
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, roots, "merge",
+                                                                      myBranchToMerge, GitVcsSettings.UpdateChangesPolicy.STASH,
                                                                       getIndicator(),
       new Runnable() {
         @Override public void run() {

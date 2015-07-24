@@ -16,7 +16,6 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NotNullLazyValue
@@ -43,7 +42,6 @@ import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import org.jetbrains.settingsRepository.RepositoryService
 import java.io.File
 import java.io.IOException
-import java.net.InetAddress
 import kotlin.concurrent.write
 import kotlin.properties.Delegates
 
@@ -195,7 +193,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   override fun canCommit() = repository.getRepositoryState().canCommit()
 
-  override fun renameDirectory(pairs: Map<String, String?>) {
+  fun renameDirectory(pairs: Map<String, String?>) {
     val addCommand = AddCommand(repository)
     val toDelete = SmartList<DeleteDirectory>()
     var added = false
@@ -245,13 +243,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       return
     }
 
-    val builder = StringBuilder()
-    builder.append(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName())
-    builder.append(' ').append('<').append(System.getProperty("user.name", "unknown-user")).append('@').append(InetAddress.getLocalHost().getHostName())
-    builder.append(' ')
-
-    builder.append("Get rid of \$ROOT_CONFIG$")
-    repository.commit(builder.toString())
+    repository.commit(IdeaCommitMessageFormatter().prependMessage().append("Get rid of \$ROOT_CONFIG$").toString())
   }
 }
 

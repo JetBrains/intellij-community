@@ -2391,19 +2391,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static String formatVersionToMajorMinorPatchString(String version) {
-    if (version.matches("(\\d+\\.)*\\d+")) {
-      String[] parts = version.split("\\.", 3);
-      String major = parts.length > 0 ? parts[0] : "0";
-      String minor = parts.length > 1 ? parts[1] : "0";
-      String patch = parts.length > 2 ? parts[2] : "0";
-      version = major + '.' + minor + '.' + patch;
-    }
-
-    return version;
-  }
-
-  @Contract(pure = true)
   public static int compareVersionNumbers(@Nullable String v1, @Nullable String v2) {
     // todo duplicates com.intellij.util.text.VersionComparatorUtil.compare
     // todo please refactor next time you make changes here

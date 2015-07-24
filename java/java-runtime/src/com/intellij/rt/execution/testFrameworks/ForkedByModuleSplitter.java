@@ -20,6 +20,10 @@ import com.intellij.rt.execution.CommandLineWrapper;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipOutputStream;
 
 public abstract class ForkedByModuleSplitter {
   protected final ForkedDebuggerHelper myForkedDebuggerHelper = new ForkedDebuggerHelper();
@@ -79,26 +83,8 @@ public abstract class ForkedByModuleSplitter {
     builder.add("-classpath");
     if (myDynamicClasspath.length() > 0) {
       try {
-        final File classpathFile = File.createTempFile("classpath", null);
-        classpathFile.deleteOnExit();
-        final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(classpathFile), "UTF-8"));
-        try {
-          int idx = 0;
-          while (idx < classpath.length()) {
-            final int endIdx = classpath.indexOf(File.pathSeparator, idx);
-            if (endIdx < 0) {
-              writer.println(classpath.substring(idx));
-              break;
-            }
-            writer.println(classpath.substring(idx, endIdx));
-            idx = endIdx + File.pathSeparator.length();
-          }
-        }
-        finally {
-          writer.close();
-        }
-
-        builder.add(myDynamicClasspath);
+        final File classpathFile = createClasspathJarFile(new Manifest(), classpath);
+        builder.add(myDynamicClasspath + File.pathSeparator + classpathFile.getAbsolutePath());
         builder.add(CommandLineWrapper.class.getName());
         builder.add(classpathFile.getAbsolutePath());
       }
@@ -172,4 +158,41 @@ public abstract class ForkedByModuleSplitter {
   
   protected void sendTime(long time) {}
   protected void sendTree(Object rootDescription) {}
+
+  public static File createClasspathJarFile(Manifest manifest, String classpath) throws IOException {
+    final Attributes attributes = manifest.getMainAttributes();
+    attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+
+    String classpathForManifest = "";
+    int idx = 0;
+    int endIdx = 0;
+    while (endIdx >= 0) {
+      endIdx = classpath.indexOf(File.pathSeparator, idx);
+      String path = endIdx < 0 ? classpath.substring(idx) : classpath.substring(idx, endIdx);
+      if (classpathForManifest.length() > 0) {
+        classpathForManifest += " ";
+      }
+      try {
+        //noinspection Since15
+        classpathForManifest += new File(path).toURI().toURL().toString();
+      }
+      catch (NoSuchMethodError e) {
+        classpathForManifest += new File(path).toURL().toString();
+      }
+      idx = endIdx + File.pathSeparator.length();
+    }
+    attributes.put(Attributes.Name.CLASS_PATH, classpathForManifest);
+
+    File jarFile = File.createTempFile("classpath", ".jar");
+    ZipOutputStream jarPlugin = null;
+    try {
+      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));
+      jarPlugin = new JarOutputStream(out, manifest);
+    }
+    finally {
+      if (jarPlugin != null) jarPlugin.close();
+    }
+    jarFile.deleteOnExit();
+    return jarFile;
+  }
 }

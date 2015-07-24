@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
@@ -1115,6 +1116,16 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     verifySoftWrapPositions(12);
     assertEquals(1, myEditor.offsetToVisualPosition(19).line);
+  }
+  
+  public void testMoveWithFoldRegionInside() throws Exception {
+    initText("abc\ndef\nghi\n");
+    configureSoftWraps(100);
+    addCollapsedFoldRegion(0, 4, "...");
+
+    ((DocumentEx)myEditor.getDocument()).moveText(0, 4, 12);
+
+    assertEquals(new LogicalPosition(2, 0), myEditor.visualToLogicalPosition(new VisualPosition(2, 1)));
   }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {

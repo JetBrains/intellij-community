@@ -202,7 +202,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         ModalityState modality = ModalityState.current();
         final DumbModePermission permission = getDumbModePermission(modality);
         if (permission == null) {
-          LOG.error("Dumb mode not permitted in modal envirnonment; please use DumbService.allowStartingDumbModeInside in your dialog or invokeLater(..., NON_MODAL)", trace);
+          LOG.error("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation. Current modality: " + modality + ", all premissions: " + myPermissions, trace);
         }
 
         myProgresses.put(task, new ProgressIndicatorBase());

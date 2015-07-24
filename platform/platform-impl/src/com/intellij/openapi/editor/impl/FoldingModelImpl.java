@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -47,7 +44,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener, Dumpable {
+public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   
   private static final Key<LogicalPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
@@ -517,6 +514,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
     finally {
       myDocumentChangeProcessed = true;
+    }
+  }
+
+  @Override
+  public void moveTextHappened(int start, int end, int base) {
+    if (!myEditor.getDocument().isInBulkUpdate()) {
+      myFoldTree.rebuild();
     }
   }
 

@@ -35,6 +35,18 @@ public class TestSuiteStack {
   @NonNls private static final String EMPTY = "empty";
 
   private final Stack<SMTestProxy> myStack = new Stack<SMTestProxy>();
+  private final String myTestFrameworkName;
+
+  /**
+   * @deprecated use {@link #TestSuiteStack(String)} instead, to be removed in IDEA 16
+   */
+  public TestSuiteStack() {
+    this("<unspecified>");
+  }
+
+  public TestSuiteStack(@NotNull String testFrameworkName) {
+    myTestFrameworkName = testFrameworkName;
+  }
 
   public void pushSuite(@NotNull final SMTestProxy suite) {
     myStack.push(suite);
@@ -67,6 +79,11 @@ public class TestSuiteStack {
       return null;
     }
     final SMTestProxy topSuite = myStack.peek();
+    if (suiteName == null) {
+      String msg = "Pop error: undefined suite name. Rest of stack: " + getSuitePathPresentation();
+      GeneralToSMTRunnerEventsConvertor.logProblem(LOG, msg, true, myTestFrameworkName);
+      return null;
+    }
 
     if (!suiteName.equals(topSuite.getName())) {
       if (SMTestRunnerConnectionUtil.isInDebugMode()) {

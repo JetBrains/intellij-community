@@ -22,6 +22,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
@@ -88,19 +89,25 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   protected void doOKAction() {
     final LibraryCompositionSettings settings = myPanel.apply();
     if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
-      if (myModifiableRootModel == null) {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull final Result result) {
-            addLibraries(model, settings);
-            model.commit();
+      DumbService.getInstance(myModule.getProject()).allowStartingDumbModeInside(DumbService.DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+        @Override
+        public void run() {
+          if (myModifiableRootModel == null) {
+            final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+            new WriteAction() {
+              @Override
+              protected void run(@NotNull final Result result) {
+                addLibraries(model, settings);
+                model.commit();
+              }
+            }.execute();
           }
-        }.execute();
-      }
-      else {
-        addLibraries(myModifiableRootModel, settings);
-      }
+          else {
+            addLibraries(myModifiableRootModel, settings);
+          }
+
+        }
+      });
       super.doOKAction();
     }
   }

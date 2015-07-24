@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
@@ -34,7 +35,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 29, 2010 3:04:20 PM
  */
-public class SoftWrapsStorage {
+public class SoftWrapsStorage implements Dumpable {
 
   private final List<SoftWrapImpl>        myWraps     = new ArrayList<SoftWrapImpl>();
   private final List<SoftWrapImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
@@ -203,5 +204,11 @@ public class SoftWrapsStorage {
     for (SoftWrapChangeListener listener : myListeners) {
       listener.softWrapsChanged();
     }
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return myWraps.toString();
   }
 }

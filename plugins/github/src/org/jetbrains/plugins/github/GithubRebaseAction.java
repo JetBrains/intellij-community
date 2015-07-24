@@ -31,6 +31,7 @@ import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.commands.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
@@ -232,15 +234,15 @@ public class GithubRebaseAction extends DumbAwareAction {
     final GitPlatformFacade facade = ServiceManager.getService(project, GitPlatformFacade.class);
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
-      GitPreservingProcess process =
-        new GitPreservingProcess(project, facade, git, Collections.singletonList(gitRepository), "Rebasing", "upstream/master", indicator,
-                                 new Runnable() {
-                                   @Override
-                                   public void run() {
-                                     doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
-                                   }
-                                 }
-        );
+      List<VirtualFile> rootsToSave = Collections.singletonList(gitRepository.getRoot());
+      GitPreservingProcess process = new GitPreservingProcess(project, facade, git, rootsToSave, "Rebasing", "upstream/master",
+                                                              GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
+        new Runnable() {
+          @Override
+          public void run() {
+            doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
+          }
+        });
       process.execute();
     }
     finally {

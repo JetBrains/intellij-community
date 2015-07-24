@@ -29,30 +29,24 @@ import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.newIdentityHashMap;
 import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
+import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 /**
 * @author peter
 */
 public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings = new TreeSet<String>();
-  private final MultiMap<String, LookupElement> myElements = MultiMap.createSmart();
-  private final MultiMap<LookupElement, LookupElement> myToLift = new MultiMap<LookupElement, LookupElement>() {
-    @NotNull
-    @Override
-    protected Map<LookupElement, Collection<LookupElement>> createMap() {
-      return newIdentityHashMap();
-    }
-  };
-  private final WeakInterner<Collection<LookupElement>> myListInterner = new WeakInterner<Collection<LookupElement>>();
+  private final MultiMap<String, LookupElement> myElements = createMultiMap(false);
+  private final MultiMap<LookupElement, LookupElement> myToLift = createMultiMap(true);
+  private final MultiMap<LookupElement, LookupElement> myReversedToLift = createMultiMap(true);
   private final String myName;
-  private final Classifier<LookupElement> myNext;
   private final LiftingCondition myCondition;
   private final boolean myLiftBefore;
   private int myCount = 0;
 
   public LiftShorterItemsClassifier(String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
+    super(next);
     myName = name;
-    myNext = next;
     myCondition = condition;
     myLiftBefore = liftBefore;
   }
@@ -76,7 +70,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         }
       }
     }
-    myNext.addElement(added, context);
+    super.addElement(added, context);
 
     calculateToLift(added);
   }
@@ -84,32 +78,21 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private void updateLongerItem(LookupElement shorter, LookupElement longer) {
     if (myCondition.shouldLift(shorter, longer)) {
       myToLift.putValue(longer, shorter);
-      internListToLift(longer);
+      myReversedToLift.putValue(shorter, longer);
     }
   }
 
-  private void internListToLift(LookupElement longer) {
-    final Collection<LookupElement> elements = myToLift.get(longer);
-    if (elements.size() > 10) return;
-    
-    myToLift.put(longer, myListInterner.intern(elements));
-  }
-
   private void calculateToLift(LookupElement element) {
-    boolean hasChanges = false;
     for (String string : CompletionUtil.iterateLookupStrings(element)) {
       for (int len = 1; len < string.length(); len++) {
         String prefix = string.substring(0, len);
         for (LookupElement shorterElement : myElements.get(prefix)) {
           if (myCondition.shouldLift(shorterElement, element)) {
-            hasChanges = true;
             myToLift.putValue(element, shorterElement);
+            myReversedToLift.putValue(shorterElement, element);
           }
         }
       }
-    }
-    if (hasChanges) {
-      internListToLift(element);
     }
   }
 
@@ -144,7 +127,33 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         builder.append(myName).append("=").append(lifted.contains(element));
       }
     }
-    myNext.describeItems(map, context);
+    super.describeItems(map, context);
+  }
+
+  @Override
+  public void removeElement(LookupElement element, ProcessingContext context) {
+    for (String s : CompletionUtil.iterateLookupStrings(element)) {
+      myElements.remove(s, element);
+      if (myElements.get(s).isEmpty()) {
+        mySortedStrings.remove(s);
+      }
+    }
+
+    removeFromMap(element, myToLift, myReversedToLift);
+    removeFromMap(element, myReversedToLift, myToLift);
+
+    super.removeElement(element, context);
+  }
+
+  private static void removeFromMap(LookupElement key,
+                                    MultiMap<LookupElement, LookupElement> mainMap,
+                                    MultiMap<LookupElement, LookupElement> inverseMap) {
+    Collection<LookupElement> removed = mainMap.remove(key);
+    if (removed == null) return;
+
+    for (LookupElement reference : ContainerUtil.newArrayList(removed)) {
+      inverseMap.remove(reference, key);
+    }
   }
 
   public static class LiftingCondition {
@@ -219,5 +228,32 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
       };
     }
+  }
+
+  @NotNull
+  private static <K, V> MultiMap<K, V> createMultiMap(final boolean identityKeys) {
+    return new MultiMap<K, V>() {
+      @NotNull
+      @Override
+      protected Map<K, Collection<V>> createMap() {
+        if (identityKeys) return newIdentityHashMap();
+        return newTroveMap();
+      }
+
+      @Override
+      public boolean remove(K key, V value) {
+        List<V> elements = (List<V>)get(key);
+        int i = ContainerUtil.indexOfIdentity(elements, value);
+        if (i >= 0) {
+          elements.remove(i);
+          if (elements.isEmpty()) {
+            remove(key);
+          }
+          return true;
+        }
+        return false;
+      }
+
+    };
   }
 }

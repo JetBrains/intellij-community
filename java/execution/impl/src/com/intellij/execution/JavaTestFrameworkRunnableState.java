@@ -251,12 +251,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
         if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
-          String classpath = PathUtil.getJarPathForClass(CommandLineWrapper.class);
-          final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
-          if (!classpath.equals(utilRtPath)) {
-            classpath += File.pathSeparator + utilRtPath;
-          }
-          writer.println(classpath);
+          writer.println(PathUtil.getJarPathForClass(CommandLineWrapper.class));
         }
         else {
           writer.println("");

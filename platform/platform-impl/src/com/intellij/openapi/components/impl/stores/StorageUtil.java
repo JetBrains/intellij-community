@@ -356,4 +356,20 @@ public class StorageUtil {
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
     return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals(StoragePathMacros.MODULE_FILE);
   }
+
+  @NotNull
+  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parent, @NotNull Object requestor) throws IOException {
+    VirtualFile file = parent.findChild(fileName);
+    if (file != null) {
+      return file;
+    }
+
+    AccessToken token = WriteAction.start();
+    try {
+      return parent.createChildData(requestor, fileName);
+    }
+    finally {
+      token.finish();
+    }
+  }
 }
