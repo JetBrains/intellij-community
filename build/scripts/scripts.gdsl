@@ -3,6 +3,7 @@ def ctx = context(scope: scriptScope(), filetypes : ["gant"])
 contributor ([ctx], {
   method name:"loadProject", type:"void", params:[:]
   method name:"isDefined", type:"boolean", params:[key:"String"]
+  method name:"findModule", type:"org.jetbrains.jps.model.module.JpsModule", params:[name:"String"]
   method name:"requireProperty", type:"String", params:[key:"String"]
   method name:"requireProperty", type:"String", params:[key:"String", defaultValue:"String"]
   method name:"printUnusedModules", type:"void", params:[usedModules:"java.util.Set<String>"]
