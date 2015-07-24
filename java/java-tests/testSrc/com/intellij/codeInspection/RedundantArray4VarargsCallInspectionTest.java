@@ -17,61 +17,31 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.*;
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
- * User: anna
- * Date: 11/13/10
+ * @author anna
+ * @since 13.11.2010
  */
-public class RedundantArray4VarargsCallInspectionTest extends UsefulTestCase {
-  protected CodeInsightTestFixture myFixture;
-  private RedundantArrayForVarargsCallInspection myInspection;
-
+public class RedundantArray4VarargsCallInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    new LightTempDirTestFixtureImpl(true));
-    myInspection = new RedundantArrayForVarargsCallInspection();
-    myFixture.setUp();
-    myFixture.enableInspections(myInspection);
-    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.enableInspections(new RedundantArrayForVarargsCallInspection());
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    try {
-      myFixture.tearDown();
-    }
-    finally {
-      myFixture = null;
-      myInspection = null;
-      super.tearDown();
-    }
-  }
-
-  public void testPreserveComments() {
-    doTest();
-  }
-
-  public void testRemoveTailingCommas() {
-    doTest();
-  }
-
-  private void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions(InspectionsBundle.message("inspection.redundant.array.creation.quickfix"))));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
-  }
-
-
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantArrayForVarargs/quickFix";
   }
 
+  public void testPreserveComments() { doTest(); }
+  public void testRemoveTailingCommas() { doTest(); }
+
+  private void doTest() {
+    String name = getTestName(false);
+    myFixture.configureByFile(name + ".java");
+    myFixture.launchAction(myFixture.findSingleIntention(InspectionsBundle.message("inspection.redundant.array.creation.quickfix")));
+    myFixture.checkResultByFile(name + "_after.java");
+  }
 }
