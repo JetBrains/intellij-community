@@ -23,15 +23,16 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -214,11 +215,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   }
 
   private static void deduceServiceDirectory(@NotNull TextFieldWithBrowseButton serviceDirectoryPathField) {
-    String path = System.getenv().get(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY);
-    if (StringUtil.isEmpty(path)) {
-      path = new File(System.getProperty("user.home"), ".gradle").getAbsolutePath();
-    }
-    serviceDirectoryPathField.setText(path);
+    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    serviceDirectoryPathField.setText(FileUtil.toSystemIndependentName(gradleUserHomeDir.getPath()));
     serviceDirectoryPathField.getTextField().setForeground(LocationSettingType.DEDUCED.getColor());
   }
 
