@@ -57,4 +57,7 @@ public abstract class IdeaTestFixtureFactory {
 
   @NotNull
   public abstract TempDirTestFixture createTempDirTestFixture();
+
+  @NotNull
+  public abstract BareTestFixture createBareFixture();
 }
