@@ -62,6 +62,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
                                                        expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false);
     myMainPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
     JButton historyButton = new FixedSizeButton(myExpressionEditor.getComponent());
+    historyButton.setFocusable(true);
     historyButton.setIcon(AllIcons.General.MessageHistory);
     historyButton.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.history.hint"));
     historyButton.addActionListener(new ActionListener() {
