@@ -32,6 +32,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -301,7 +302,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
     myFacetsConfigurator.applyEditors();
 
-    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbService.DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -357,26 +358,31 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final ProjectBuilder builder = runModuleWizard(parent, anImport);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<Module>();
-      final List<Module> commitedModules;
-      if (builder instanceof ProjectImportBuilder<?>) {
-        final ModifiableArtifactModel artifactModel =
-            ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
-        commitedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
-      }
-      else {
-        commitedModules = builder.commit(myProject, myModuleModel, this);
-      }
-      if (commitedModules != null) {
-        modules.addAll(commitedModules);
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-         @Override
-         public void run() {
-           for (Module module : modules) {
-             getOrCreateModuleEditor(module);
-           }
-         }
-       });
+      DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+        @Override
+        public void run() {
+          final List<Module> committedModules;
+          if (builder instanceof ProjectImportBuilder<?>) {
+            final ModifiableArtifactModel artifactModel =
+              ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+            committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, ModulesConfigurator.this, artifactModel);
+          }
+          else {
+            committedModules = builder.commit(myProject, myModuleModel, ModulesConfigurator.this);
+          }
+          if (committedModules != null) {
+            modules.addAll(committedModules);
+          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              for (Module module : modules) {
+                getOrCreateModuleEditor(module);
+              }
+            }
+          });
+        }
+      });
       return modules;
     }
     return null;
