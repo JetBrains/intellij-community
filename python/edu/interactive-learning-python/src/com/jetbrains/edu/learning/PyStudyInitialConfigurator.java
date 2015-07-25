@@ -16,19 +16,19 @@ import java.io.File;
 import java.io.IOException;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
-public class StudyInitialConfigurator {
-  private static final Logger LOG = Logger.getInstance(StudyInitialConfigurator.class.getName());
+public class PyStudyInitialConfigurator {
+  private static final Logger LOG = Logger.getInstance(PyStudyInitialConfigurator.class.getName());
   @NonNls private static final String CONFIGURED_V1 = "StudyPyCharm.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V11 = "StudyPyCharm.InitialConfiguration1.1";
 
   /**
    * @noinspection UnusedParameters
    */
-  public StudyInitialConfigurator(MessageBus bus,
-                                  CodeInsightSettings codeInsightSettings,
-                                  final PropertiesComponent propertiesComponent,
-                                  FileTypeManager fileTypeManager,
-                                  final ProjectManagerEx projectManager) {
+  public PyStudyInitialConfigurator(MessageBus bus,
+                                    CodeInsightSettings codeInsightSettings,
+                                    final PropertiesComponent propertiesComponent,
+                                    FileTypeManager fileTypeManager,
+                                    final ProjectManagerEx projectManager) {
     final File file = new File(getCoursesRoot(), "introduction_course.zip");
     if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
       final File newCourses = new File(PathManager.getConfigPath(), "courses");
@@ -64,7 +64,7 @@ public class StudyInitialConfigurator {
   }
 
   private static File getCoursesRoot() {
-    @NonNls String jarPath = PathUtil.getJarPathForClass(StudyInitialConfigurator.class);
+    @NonNls String jarPath = PathUtil.getJarPathForClass(PyStudyInitialConfigurator.class);
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);
 
