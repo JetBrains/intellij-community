@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
@@ -55,13 +56,14 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
       final String taskText = task.getText();
 
       final JTextPane taskTextPane = new JTextPane();
+      JBScrollPane scrollPane = new JBScrollPane(taskTextPane);
       taskTextPane.setContentType("text/html");
       taskTextPane.setEditable(false);
       taskTextPane.setText(taskText);
       taskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
       taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
-      setContent(taskTextPane);
+      setContent(scrollPane);
 
       final FileEditorManagerListener listener = new StudyFileEditorManagerListener(project, taskTextPane);
       project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
