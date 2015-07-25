@@ -27,9 +27,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -41,6 +39,7 @@ import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
@@ -336,10 +335,25 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
         ((BaseStructureConfigurable)each).checkCanApply();
       }
     }
-    for (Configurable each : myName2Config) {
-      if (each.isModified()) {
-        each.apply();
+    final Ref<ConfigurationException> exceptionRef = Ref.create();
+    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        try {
+          for (Configurable each : myName2Config) {
+            if (each.isModified()) {
+              each.apply();
+            }
+          }
+        }
+        catch (ConfigurationException e) {
+          exceptionRef.set(e);
+        }
       }
+    });
+
+    if (!exceptionRef.isNull()) {
+      throw exceptionRef.get();
     }
 
     myContext.getDaemonAnalyzer().clearCaches();
