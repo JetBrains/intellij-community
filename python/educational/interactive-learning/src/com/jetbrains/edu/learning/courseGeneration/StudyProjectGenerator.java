@@ -246,6 +246,13 @@ public class StudyProjectGenerator {
     File cacheFile = new File(myCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
     try {
+      if (!myCoursesDir.exists()) {
+        final boolean created = myCoursesDir.mkdirs();
+        if (!created) {
+          LOG.error("Cannot flush courses cache. Can't create courses directory");
+          return;
+        }
+      }
       if (!cacheFile.exists()) {
         final boolean created = cacheFile.createNewFile();
         if (!created) {
