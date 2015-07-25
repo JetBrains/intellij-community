@@ -22,6 +22,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -89,7 +90,7 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   protected void doOKAction() {
     final LibraryCompositionSettings settings = myPanel.apply();
     if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
-      DumbService.getInstance(myModule.getProject()).allowStartingDumbModeInside(DumbService.DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      DumbService.getInstance(myModule.getProject()).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
         @Override
         public void run() {
           if (myModifiableRootModel == null) {
