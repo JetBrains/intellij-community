@@ -35,10 +35,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -182,7 +179,7 @@ public class PyCharmEduInitialConfigurator {
 
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
-          || "Structure".equals(ep.id)) {
+          || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {
         rootArea.getExtensionPoint(ToolWindowEP.EP_NAME).unregisterExtension(ep);
       }
     }
@@ -208,9 +205,17 @@ public class PyCharmEduInitialConfigurator {
   }
 
   private static void patchProjectAreaExtensions(@NotNull final Project project) {
+    ExtensionsArea projectArea = Extensions.getArea(project);
+
     for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId())) {
-        Extensions.getArea(project).getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
+        projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
+      }
+    }
+
+    for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
+      if (ToolWindowId.STRUCTURE_VIEW.equals(target.getToolWindowId())) {
+        projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
       }
     }
   }
