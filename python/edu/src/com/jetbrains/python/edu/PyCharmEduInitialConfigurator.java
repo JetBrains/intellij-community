@@ -22,6 +22,8 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
@@ -211,6 +213,12 @@ public class PyCharmEduInitialConfigurator {
     for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId())) {
         projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
+      }
+    }
+
+    for (AbstractProjectViewPane pane : Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, project)) {
+      if (pane.getId().equals(ScopeViewPane.ID)) {
+        projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);
       }
     }
 
