@@ -49,7 +49,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     Logger.setFactory(TestLoggerFactory.class);
   }
 
-  private static final Logger LOG = Logger.getInstance(GitPlatformTest.class);
+  protected static final Logger LOG = Logger.getInstance(GitPlatformTest.class);
 
   protected Project myProject;
   protected VirtualFile myProjectRoot;
