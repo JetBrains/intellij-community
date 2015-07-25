@@ -40,6 +40,7 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.*;
@@ -211,20 +212,16 @@ public class PyCharmEduInitialConfigurator {
     ExtensionsArea projectArea = Extensions.getArea(project);
 
     for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
-      if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId())) {
+      if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId()) ||
+          ToolWindowId.STRUCTURE_VIEW.equals(target.getToolWindowId())) {
         projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
       }
     }
 
     for (AbstractProjectViewPane pane : Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, project)) {
       if (pane.getId().equals(ScopeViewPane.ID)) {
+        Disposer.dispose(pane);
         projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);
-      }
-    }
-
-    for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
-      if (ToolWindowId.STRUCTURE_VIEW.equals(target.getToolWindowId())) {
-        projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
       }
     }
   }
