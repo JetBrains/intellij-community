@@ -47,7 +47,7 @@ public class StudyProjectGenerator {
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
-  private static final Pattern CACHE_PATTERN = Pattern.compile("name=(.*) description=(.*) folder=(.*) (instructor=(.*))+");
+  private static final Pattern CACHE_PATTERN = Pattern.compile("name=(.*) description=(.*) folder=(.*) (instructor=(.*))*");
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
