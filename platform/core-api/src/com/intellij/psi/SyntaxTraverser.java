@@ -91,8 +91,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   private UserDataHolder getUserDataHolder() {
-    T o = getRoot();
-    return o instanceof UserDataHolder ? (UserDataHolder)o : ((LighterASTApi)api).builder;
+    return api instanceof LighterASTApi ? ((LighterASTApi)api).builder : (UserDataHolder)parents(getRoot()).last();
   }
 
   @NotNull
