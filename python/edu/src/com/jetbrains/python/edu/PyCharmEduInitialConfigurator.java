@@ -89,6 +89,7 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
+      uiSettings.SHOW_NAVIGATION_BAR = false;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
       Registry.get("ide.new.settings.dialog").setValue(true);
