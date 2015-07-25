@@ -29,7 +29,7 @@ public class PyStudyInitialConfigurator {
                                     final PropertiesComponent propertiesComponent,
                                     FileTypeManager fileTypeManager,
                                     final ProjectManagerEx projectManager) {
-    final File file = new File(getCoursesRoot(), "introduction_course.zip");
+    final File file = new File(getCoursesRoot(), "Introduction to Python.zip");
     if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
       final File newCourses = new File(PathManager.getConfigPath(), "courses");
       try {
