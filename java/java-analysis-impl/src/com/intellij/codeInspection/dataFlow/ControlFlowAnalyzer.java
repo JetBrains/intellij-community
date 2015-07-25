@@ -1528,7 +1528,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
-    final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {
       return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
         @Nullable
@@ -1537,6 +1536,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
           if (text != null) {
             try {
+              final int paramCount = method.getParameterList().getParametersCount();
               List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text), new Condition<MethodContract>() {
                 @Override
                 public boolean value(MethodContract contract) {
