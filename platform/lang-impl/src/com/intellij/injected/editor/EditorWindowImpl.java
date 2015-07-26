@@ -833,6 +833,11 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   @Override
+  public void setPlaceholderAttributes(@Nullable TextAttributes attributes) {
+    myDelegate.setPlaceholderAttributes(attributes);
+  }
+
+  @Override
   public void setShowPlaceholderWhenFocused(boolean show) {
     myDelegate.setShowPlaceholderWhenFocused(show);
   }
