@@ -158,9 +158,9 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     initUI(callback, modalityState, allowMultipleSelection);
   }
 
-  @NotNull
-  public ChooseByNameModel getModel() {
-    return myModel;
+  @Override
+  public void repaintList() {
+    myList.repaint();
   }
 
   public class JPanelProvider extends JPanel implements DataProvider {
@@ -676,11 +676,6 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     }
   }
 
-  @Override
-  @NotNull public String getTrimmedText() {
-    return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
-  }
-
   protected void showTextFieldPanel() {
     final JLayeredPane layeredPane = getLayeredPane();
     final Dimension preferredTextFieldPanelSize = myTextFieldPanel.getPreferredSize();
@@ -750,18 +745,6 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
       final String pattern = transformPattern(getTrimmedText());
       final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
-    }
-  }
-
-  @Override
-  protected void backgroundCalculationFinished(Collection<?> result, int toSelect) {
-    myCalcElementsThread = null;
-    setElementsToList(toSelect, result);
-    myList.repaint();
-    chosenElementMightChange();
-
-    if (result.isEmpty()) {
-      doHideHint();
     }
   }
 
@@ -1043,20 +1026,6 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
       super(text, RIGHT);
       setForeground(Color.darkGray);
     }
-  }
-
-  @Override
-  protected void doShowCard(final CalcElementsThread t, final String card, int delay) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    t.myShowCardAlarm.cancelAllRequests();
-    t.myShowCardAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!t.myProgress.isCanceled()) {
-          showCardImpl(card);
-        }
-      }
-    }, delay, t.myModalityState);
   }
 
   private abstract class ShowFindUsagesAction extends AnAction {

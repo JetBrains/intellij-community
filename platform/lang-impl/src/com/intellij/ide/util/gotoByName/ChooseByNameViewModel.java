@@ -260,6 +260,8 @@ public abstract class ChooseByNameViewModel {
 
   public void setAdText(String adText) {}
 
+  abstract void repaintList();
+
   public abstract String getEnteredText();
 
   public abstract int getSelectedIndex();
@@ -322,8 +324,9 @@ public abstract class ChooseByNameViewModel {
     return false;
   }
 
-  @NotNull
-  public abstract String getTrimmedText();
+  @NotNull public String getTrimmedText() {
+    return StringUtil.trimLeading(StringUtil.notNullize(getEnteredText()));
+  }
 
   public void setFixLostTyping(boolean fixLostTyping) {
     myFixLostTyping = fixLostTyping;
@@ -461,7 +464,16 @@ public abstract class ChooseByNameViewModel {
 
   protected abstract void configureListRenderer();
 
-  protected abstract void backgroundCalculationFinished(Collection<?> result, int toSelect);
+  protected void backgroundCalculationFinished(Collection<?> result, int toSelect) {
+    myCalcElementsThread = null;
+    setElementsToList(toSelect, result);
+    repaintList();
+    chosenElementMightChange();
+
+    if (result.isEmpty()) {
+      doHideHint();
+    }
+  }
 
   public void scheduleCalcElements(String text,
                                    boolean checkboxState,
@@ -625,7 +637,18 @@ public abstract class ChooseByNameViewModel {
     myAlwaysHasMore = enabled;
   }
 
-  protected abstract void doShowCard(CalcElementsThread t, String card, int delay);
+  protected void doShowCard(final CalcElementsThread t, final String card, int delay) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    t.myShowCardAlarm.cancelAllRequests();
+    t.myShowCardAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (!t.myProgress.isCanceled()) {
+          showCardImpl(card);
+        }
+      }
+    }, delay, t.myModalityState);
+  }
 
   abstract JTextField getTextField();
 

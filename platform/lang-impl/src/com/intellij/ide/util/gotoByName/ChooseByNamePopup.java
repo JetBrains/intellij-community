@@ -395,7 +395,4 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return index > -1 ? myList.getModel().getElementAt(index) : null;
   }
 
-  public void repaintList() {
-    myList.repaint();
-  }
 }
