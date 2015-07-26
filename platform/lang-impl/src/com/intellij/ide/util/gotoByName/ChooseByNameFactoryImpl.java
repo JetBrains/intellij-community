@@ -16,9 +16,10 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.actions.GotoActionBase;
+import com.intellij.ide.actions.ChooseByNameFactory;
+import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Pair;
 
 /**
  * User: anna
@@ -32,7 +33,10 @@ public class ChooseByNameFactoryImpl extends ChooseByNameFactory {
   }
 
   @Override
-  public ChooseByNamePopup createChooseByNamePopupComponent(@NotNull final ChooseByNameModel model) {
-    return ChooseByNamePopup.createPopup(myProject, model, GotoActionBase.getPsiContext(myProject));  
+  public ChooseByNamePopup createChooseByName(ChooseByNameModel model,
+                                              ChooseByNameItemProvider itemProvider,
+                                              boolean mayRequestOpenInCurrentWindow,
+                                              Pair<String, Integer> start) {
+    return ChooseByNamePopup.createPopup(myProject, model, itemProvider, start.first, mayRequestOpenInCurrentWindow, start.second);
   }
 }

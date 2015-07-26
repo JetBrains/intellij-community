@@ -1,7 +1,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
-import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
+import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;

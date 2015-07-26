@@ -257,7 +257,7 @@
     <projectService serviceInterface="com.intellij.analysis.AnalysisUIOptions"
                     serviceImplementation="com.intellij.analysis.AnalysisUIOptions"/>
 
-    <projectService serviceInterface="com.intellij.ide.util.gotoByName.ChooseByNameFactory"
+    <projectService serviceInterface="com.intellij.ide.actions.ChooseByNameFactory"
                     serviceImplementation="com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"

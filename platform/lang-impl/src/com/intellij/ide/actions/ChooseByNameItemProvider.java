@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.gotoByName;
+package com.intellij.ide.actions;
 
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;

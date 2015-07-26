@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.gotoByName;
+package com.intellij.ide.actions;
 
+import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Pair;
 
 /**
  * User: anna
@@ -28,5 +30,8 @@ public abstract class ChooseByNameFactory {
     return ServiceManager.getService(project, ChooseByNameFactory.class);
   }
 
-  public abstract ChooseByNamePopupComponent createChooseByNamePopupComponent(@NotNull ChooseByNameModel model);
-}
+  public abstract ChooseByNameViewModel createChooseByName(ChooseByNameModel model,
+                                              ChooseByNameItemProvider itemProvider,
+                                              boolean mayRequestOpenInCurrentWindow,
+                                              Pair<String, Integer> start) ;
+  }

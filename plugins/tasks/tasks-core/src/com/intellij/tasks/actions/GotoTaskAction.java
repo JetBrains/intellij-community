@@ -1,6 +1,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;

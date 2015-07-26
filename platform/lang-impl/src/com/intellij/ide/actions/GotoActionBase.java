@@ -53,23 +53,23 @@ import java.util.Map;
 public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
-  protected static Class myInAction = null;
+  protected static Class ourInAction = null;
   private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
   private static final Map<Class, List<String>> ourHistory = ContainerUtil.newHashMap();
   private int myHistoryIndex = 0;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    LOG.assertTrue(!getClass().equals(myInAction));
+    LOG.assertTrue(!getClass().equals(ourInAction));
     try {
-      myInAction = getClass();
-      List<String> strings = ourHistory.get(myInAction);
-      myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(myInAction) ? 0 : 1;
+      ourInAction = getClass();
+      List<String> strings = ourHistory.get(ourInAction);
+      myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(ourInAction) ? 0 : 1;
       gotoActionPerformed(e);
     }
     catch (Throwable t) {
       LOG.error(t);
-      myInAction = null;
+      ourInAction = null;
     }
   }
 
@@ -80,7 +80,7 @@ public abstract class GotoActionBase extends AnAction {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    presentation.setEnabled(!getClass().equals (myInAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
+    presentation.setEnabled(!getClass().equals (ourInAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
     presentation.setVisible(hasContributors(dataContext));
   }
 
@@ -146,8 +146,8 @@ public abstract class GotoActionBase extends AnAction {
       }
     }
 
-    if (myInAction != null) {
-      final Pair<String, Integer> lastString = ourLastStrings.get(myInAction);
+    if (ourInAction != null) {
+      final Pair<String, Integer> lastString = ourLastStrings.get(ourInAction);
       if (lastString != null) {
         return lastString;
       }
@@ -196,8 +196,9 @@ public abstract class GotoActionBase extends AnAction {
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
     showNavigationPopup(callback, findUsagesTitle,
-                        ChooseByNameViewModelProvider
-                          .createChooseByNameViewModel(model, itemProvider, project, mayRequestOpenInCurrentWindow, start), allowMultipleSelection);
+                        ChooseByNameFactory.getInstance(project)
+                          .createChooseByName(model, itemProvider, mayRequestOpenInCurrentWindow, start),
+                        allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
@@ -211,7 +212,7 @@ public abstract class GotoActionBase extends AnAction {
                                          final ChooseByNameViewModel popup,
                                          final boolean allowMultipleSelection) {
 
-    final Class startedAction = myInAction;
+    final Class startedAction = ourInAction;
     LOG.assertTrue(startedAction != null);
 
     popup.setCheckBoxShortcut(getShortcutSet());
@@ -229,11 +230,12 @@ public abstract class GotoActionBase extends AnAction {
       @Override
       public void onClose() {
         //noinspection ConstantConditions
-        if (startedAction != null && startedAction.equals(myInAction)) {
+        if (startedAction != null && startedAction.equals(ourInAction)) {
           String text = popup.getEnteredText();
-          ourLastStrings.put(myInAction, Pair.create(text, popup.getSelectedIndex()));
+          ourLastStrings.put(ourInAction, Pair.create(text, popup.getSelectedIndex()));
           updateHistory(text);
-          myInAction = null;
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourInAction = null;
         }
         if (filter != null) {
           filter.close();
@@ -242,12 +244,12 @@ public abstract class GotoActionBase extends AnAction {
 
       private void updateHistory(@Nullable String text) {
         if (!StringUtil.isEmptyOrSpaces(text)) {
-          List<String> history = ourHistory.get(myInAction);
+          List<String> history = ourHistory.get(ourInAction);
           if (history == null) history = ContainerUtil.newArrayList();
           if (!text.equals(ContainerUtil.getFirstItem(history))) {
             history.add(0, text);
           }
-          ourHistory.put(myInAction, history);
+          ourHistory.put(ourInAction, history);
         }
       }
 
@@ -292,7 +294,7 @@ public abstract class GotoActionBase extends AnAction {
     new HistoryAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        List<String> strings = ourHistory.get(myInAction);
+        List<String> strings = ourHistory.get(ourInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex >= strings.size() - 1 ? 0 : myHistoryIndex + 1;
       }
@@ -302,7 +304,7 @@ public abstract class GotoActionBase extends AnAction {
     new HistoryAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        List<String> strings = ourHistory.get(myInAction);
+        List<String> strings = ourHistory.get(ourInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
@@ -310,6 +312,6 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   private static boolean historyEnabled() {
-    return !ContainerUtil.isEmpty(ourHistory.get(myInAction));
+    return !ContainerUtil.isEmpty(ourHistory.get(ourInAction));
   }
 }
