@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,5 +33,5 @@ public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
    *    if this method returns a set which includes a folder containing f.txt, or the file f.txt itself.</p>
    */
   @NotNull
-  Collection<VirtualFile> getFiles();
+  Collection<FilePath> getFiles();
 }

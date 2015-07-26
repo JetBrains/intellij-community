@@ -17,6 +17,8 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -96,30 +98,51 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> collectRoots(@NotNull Collection<VirtualFile> files,
-                                                                                         @NotNull Set<VirtualFile> roots) {
+  private static Pair<Set<VirtualFile>, MultiMap<VirtualFile, FilePath>> collectRoots(@NotNull Collection<FilePath> files,
+                                                                                      @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
-    MultiMap<VirtualFile, VirtualFile> selectedFiles = new MultiMap<VirtualFile, VirtualFile>();
+    MultiMap<VirtualFile, FilePath> selectedFiles = new MultiMap<VirtualFile, FilePath>();
 
-    for (VirtualFile file : files) {
-      if (roots.contains(file)) {
-        selectedRoots.add(file);
-      }
+    for (FilePath filePath : files) {
       VirtualFile candidateAncestorRoot = null;
-      for (VirtualFile root : roots) {
-        if (root.equals(file)) continue;
-        if (VfsUtilCore.isAncestor(root, file, false)) {
-          if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
-            candidateAncestorRoot = root;
+
+      VirtualFile virtualFile = filePath.getVirtualFile();
+      if (virtualFile != null) {
+        if (roots.contains(virtualFile)) {
+          selectedRoots.add(virtualFile);
+        }
+
+        for (VirtualFile root : roots) {
+          if (root.equals(virtualFile)) continue;
+          if (VfsUtilCore.isAncestor(root, virtualFile, false)) {
+            if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
+              candidateAncestorRoot = root;
+            }
+          }
+          else if (VfsUtilCore.isAncestor(virtualFile, root, false)) {
+            selectedRoots.add(root);
           }
         }
-        else if (VfsUtilCore.isAncestor(file, root, false)) {
-          selectedRoots.add(root);
+      }
+      else {
+        VirtualFile virtualFileParent = ChangesUtil.findValidParentAccurately(filePath);
+        if (virtualFileParent != null) {
+          for (VirtualFile root : roots) {
+            if (root.equals(virtualFileParent)) {
+              candidateAncestorRoot = virtualFileParent; // cant find anything better
+              break;
+            }
+            if (VfsUtilCore.isAncestor(root, virtualFileParent, false)) {
+              if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
+                candidateAncestorRoot = root;
+              }
+            }
+          }
         }
       }
 
       if (candidateAncestorRoot != null) {
-        selectedFiles.putValue(candidateAncestorRoot, file);
+        selectedFiles.putValue(candidateAncestorRoot, filePath);
       }
     }
 
@@ -145,7 +168,7 @@ public class VcsLogUtil {
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
+      Pair<Set<VirtualFile>, MultiMap<VirtualFile, FilePath>> rootsAndFiles =
         collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
       fromStructureFilter = ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
     }
@@ -161,13 +184,13 @@ public class VcsLogUtil {
   // same if root is invisible as a whole
   // so check that before calling this method
   @NotNull
-  public static Set<VirtualFile> getFilteredFilesForRoot(@NotNull VirtualFile root, VcsLogFilterCollection filterCollection) {
+  public static Set<FilePath> getFilteredFilesForRoot(@NotNull VirtualFile root, VcsLogFilterCollection filterCollection) {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
 
-    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
+    Pair<Set<VirtualFile>, MultiMap<VirtualFile, FilePath>> rootsAndFiles =
       collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
 
-    return new HashSet<VirtualFile>(rootsAndFiles.second.get(root));
+    return new HashSet<FilePath>(rootsAndFiles.second.get(root));
   }
 
   // If this method stumbles on LoadingDetails instance it returns empty list

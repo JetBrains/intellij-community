@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -484,12 +485,12 @@ public class GitLogProvider implements VcsLogProvider {
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (filterCollection.getStructureFilter() != null) {
-      Collection<VirtualFile> files = filterCollection.getStructureFilter().getFiles();
+      Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
       if (!files.isEmpty()) {
         filterParameters.add("--full-history");
         filterParameters.add("--simplify-merges");
         filterParameters.add("--");
-        for (VirtualFile file : files) {
+        for (FilePath file : files) {
           filterParameters.add(file.getPath());
         }
       }
