@@ -3,6 +3,7 @@ package com.jetbrains.python.edu;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
+import com.jetbrains.python.edu.debugger.PyEduDebugExecutor;
 
 public class PyDebugCurrentFileAction extends PyRunConfigurationForFileAction {
 

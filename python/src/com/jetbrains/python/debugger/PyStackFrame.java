@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -108,9 +109,16 @@ public class PyStackFrame extends XStackFrame {
       @Override
       public void run() {
         try {
-          final XValueChildrenList values = myDebugProcess.loadFrame();
+          XValueChildrenList values = myDebugProcess.loadFrame();
           if (!node.isObsolete()) {
-            node.addChildren(values != null ? values : XValueChildrenList.EMPTY, true);
+            if (values == null) {
+              node.addChildren(XValueChildrenList.EMPTY, true);
+              return;
+            }
+            for (PyDebugValueTransformer transformer : Extensions.getExtensions(PyDebugValueTransformer.EP_NAME)) {
+              values = transformer.getTransformedChildren(values);
+            }
+            node.addChildren(values, true);
           }
         }
         catch (PyDebuggerException e) {

@@ -1,4 +1,4 @@
-package com.jetbrains.python.edu;
+package com.jetbrains.python.edu.debugger;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;

@@ -1,4 +1,4 @@
-package com.jetbrains.python.edu;
+package com.jetbrains.python.edu.debugger;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.execution.configurations.RunProfile;
@@ -20,6 +20,7 @@ import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLineBreakpointType;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.edu.PyEduUtils;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyImportStatement;
