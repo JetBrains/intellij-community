@@ -25,6 +25,7 @@
     <refactoring.elementListenerProvider implementation="com.jetbrains.edu.coursecreator.CCRefactoringElementListenerProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <renameHandler implementation="com.jetbrains.edu.coursecreator.CCRenameHandler"/>
+    <renameInputValidator implementation="com.jetbrains.edu.coursecreator.CCRenameInputValidator"/>
   </extensions>
 
   <application-components>

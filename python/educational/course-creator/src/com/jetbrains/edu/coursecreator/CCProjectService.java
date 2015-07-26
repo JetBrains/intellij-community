@@ -103,9 +103,10 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     myDocumentListeners.remove(document);
   }
 
-  public boolean isTaskFile(VirtualFile file) {
+  @Nullable
+  public Task getTask(VirtualFile file) {
     if (myCourse == null || file == null) {
-      return false;
+      return null;
     }
     VirtualFile taskDir = file.getParent();
     if (taskDir != null) {
@@ -117,20 +118,30 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
           int lessonIndex = EduUtils.getIndex(lessonDirName, EduNames.LESSON);
           List<Lesson> lessons = myCourse.getLessons();
           if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
-            return false;
+            return null;
           }
           Lesson lesson = lessons.get(lessonIndex);
           int taskIndex = EduUtils.getIndex(taskDirName, EduNames.TASK);
           List<Task> tasks = lesson.getTaskList();
           if (!EduUtils.indexIsValid(taskIndex, tasks)) {
-            return false;
+            return null;
           }
-          Task task = tasks.get(taskIndex);
-          return task.isTaskFile(file.getName());
+          return tasks.get(taskIndex);
         }
       }
     }
-    return false;
+    return null;
+  }
+
+  public boolean isAnswerFile(VirtualFile file) {
+    Task task = getTask(file);
+    String fileName = getRealTaskFileName(file.getName());
+    return task != null && fileName != null && task.isTaskFile(fileName);
+  }
+
+  public boolean isTaskFile(VirtualFile file) {
+    Task task = getTask(file);
+    return task != null && task.isTaskFile(file.getName());
   }
 
   @Nullable
@@ -179,5 +190,4 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
   public static CCProjectService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, CCProjectService.class);
   }
-
 }
