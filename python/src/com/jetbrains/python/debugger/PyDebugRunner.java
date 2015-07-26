@@ -98,14 +98,22 @@ public class PyDebugRunner extends GenericProgramRunner {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PyDebugProcess pyDebugProcess =
-            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
-                               pyState.isMultiprocessDebug());
+            createDebugProcess(session, serverSocket, result, pyState);
 
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
           initDebugProcess(((PythonRunConfiguration)environment.getRunProfile()).getScriptName(), pyDebugProcess);
           return pyDebugProcess;
         }
       });
+  }
+
+  @NotNull
+  protected PyDebugProcess createDebugProcess(@NotNull XDebugSession session,
+                                              ServerSocket serverSocket,
+                                              ExecutionResult result,
+                                              PythonCommandLineState pyState) {
+    return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
+                              pyState.isMultiprocessDebug());
   }
 
   protected void initDebugProcess(String name, PyDebugProcess pyDebugProcess) {

@@ -36,6 +36,7 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pyDebugValueTransformer implementation="com.jetbrains.python.edu.debugger.PyEduDebugTransformer"/>
+    <pyFramesTransformer implementation="com.jetbrains.python.edu.debugger.PyEduFramesTransformer"/>
   </extensions>
 
   <actions>

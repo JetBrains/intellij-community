@@ -1,7 +1,10 @@
 package com.jetbrains.python.edu.debugger;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -9,25 +12,25 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.Predicate;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
-import com.jetbrains.python.debugger.PyDebugProcess;
-import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.debugger.PyLineBreakpointType;
-import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.edu.PyEduUtils;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.net.ServerSocket;
 import java.util.List;
 
 public class PyEduDebugRunner extends PyDebugRunner {
@@ -45,6 +48,17 @@ public class PyEduDebugRunner extends PyDebugRunner {
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return executorId.equals(PyEduDebugExecutor.ID);
+  }
+
+  @NotNull
+  @Override
+  protected PyDebugProcess createDebugProcess(@NotNull XDebugSession session,
+                                              ServerSocket serverSocket,
+                                              ExecutionResult result,
+                                              PythonCommandLineState pyState) {
+
+    return new PyEduDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
+                                 pyState.isMultiprocessDebug());
   }
 
   @Override
@@ -86,5 +100,20 @@ public class PyEduDebugRunner extends PyDebugRunner {
       return DocStringUtil.isDocStringExpression((PyExpression)element);
     }
     return false;
+  }
+
+  private class PyEduDebugProcess extends PyDebugProcess {
+    public PyEduDebugProcess(@NotNull XDebugSession session,
+                             @NotNull ServerSocket serverSocket,
+                             @NotNull ExecutionConsole executionConsole,
+                             @Nullable ProcessHandler processHandler, boolean multiProcess) {
+      super(session, serverSocket, executionConsole, processHandler, multiProcess);
+    }
+
+    @Override
+    public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
+      return new PyEduStackFrame(getSession().getProject(), this, frameInfo,
+                                 getPositionConverter().convertFromPython(frameInfo.getPosition()));
+    }
   }
 }

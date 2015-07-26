@@ -599,6 +599,7 @@
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyDebugValueTransformer" interface="com.jetbrains.python.debugger.PyDebugValueTransformer"/>
+    <extensionPoint qualifiedName="Pythonid.pyFramesTransformer" interface="com.jetbrains.python.debugger.PyFramesTransformer"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

@@ -97,9 +97,13 @@ public class PyStackFrame extends XStackFrame {
       return attributes;
     }
     else {
-      return (attributes.getStyle() & SimpleTextAttributes.STYLE_ITALIC) != 0
-             ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+      return getGrayAttributes(attributes);
     }
+  }
+
+  protected static SimpleTextAttributes getGrayAttributes(SimpleTextAttributes attributes) {
+    return (attributes.getStyle() & SimpleTextAttributes.STYLE_ITALIC) != 0
+           ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
   }
 
   @Override
