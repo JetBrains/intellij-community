@@ -15,6 +15,8 @@
  */
 package git4idea.stash;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -61,11 +63,16 @@ public class GitShelveUtils {
     refreshFilesBeforeUnshelve(project, shelvedChangeList, projectPath);
 
     LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
+    final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
     // we pass null as target change list for Patch Applier to do NOTHING with change lists
-    List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
     shelveManager.unshelveChangeList(shelvedChangeList, changes, shelvedChangeList.getBinaryFiles(), null, false, true,
                                      true, leftConflictTitle, rightConflictTitle);
-    markUnshelvedFilesNonUndoable(project, changes);
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        markUnshelvedFilesNonUndoable(project, changes);
+      }
+    }, ModalityState.defaultModalityState());
   }
 
   @CalledInAwt
