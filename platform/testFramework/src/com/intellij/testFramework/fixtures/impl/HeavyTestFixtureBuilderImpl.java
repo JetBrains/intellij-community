@@ -48,7 +48,7 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
   private <M extends ModuleFixtureBuilder> M createModuleBuilder(Class<M> key) {
     Class<? extends ModuleFixtureBuilder> implClass = myProviders.get(key);
     Assert.assertNotNull(key.toString(), implClass);
-    final ConstructorInjectionComponentAdapter adapter = new ConstructorInjectionComponentAdapter(implClass, implClass);
+    final ConstructorInjectionComponentAdapter adapter = new ConstructorInjectionComponentAdapter(implClass, implClass, null, true);
     return (M)adapter.getComponentInstance(myContainer);
   }
 
