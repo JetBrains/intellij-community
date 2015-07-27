@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -143,10 +144,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return mySelectedScheme;
   }
 
-  public EditorColorsScheme getOriginalSelectedScheme() {
-    return mySelectedScheme == null ? null : mySelectedScheme.getOriginalScheme();
-  }
-
   public EditorSchemeAttributeDescriptor[] getCurrentDescriptions() {
     return mySelectedScheme.getDescriptors();
   }
@@ -244,11 +241,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         }
         result.add(scheme.getOriginalScheme());
       }
-      myColorsManager.setSchemes(result);
-
       EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
-      myColorsManager.setGlobalScheme(originalScheme);
-      if (originalScheme != null && DarculaLaf.NAME.equals(originalScheme.getName()) && !UIUtil.isUnderDarcula()) {
+      ((EditorColorsManagerImpl)myColorsManager).getSchemeManager().setSchemes(result, originalScheme);
+      if (DarculaLaf.NAME.equals(originalScheme.getName()) && !UIUtil.isUnderDarcula()) {
         if (Messages.showYesNoDialog(
           "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
           "Darcula Look and Feel",
@@ -1072,6 +1067,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return null;
     }
 
+    @NotNull
     public EditorColorsScheme getOriginalScheme() {
       return myParentScheme;
     }
