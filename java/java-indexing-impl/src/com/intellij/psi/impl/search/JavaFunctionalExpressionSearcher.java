@@ -44,7 +44,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Set;
 
 public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
@@ -92,7 +91,12 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
                                                      final Processor<PsiFunctionalExpression> consumer, 
                                                      final Set<Module> highLevelModules) {
     final Project project = PsiUtilCore.getProjectInReadAction(aClass);
-    final GlobalSearchScope scope = prepareScopeToProcessFiles(highLevelModules, aClass, searchScope,  project);
+    final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      @Override
+      public GlobalSearchScope compute() {
+        return prepareScopeToProcessFiles(highLevelModules, aClass, searchScope, project);
+      }
+    });
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
     CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files) {
@@ -124,18 +128,8 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
                                                                 final PsiClass aClass,
                                                                 final SearchScope searchScope,
                                                                 final Project project) {
-    final SearchScope classScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return aClass.getUseScope();
-      }
-    });
-    final SearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return searchScope.intersectWith(classScope);
-      }
-    });
+    final SearchScope useScope = searchScope.intersectWith(aClass.getUseScope());
+      
     final GlobalSearchScope scope;
     if (useScope instanceof GlobalSearchScope) {
       scope = (GlobalSearchScope)useScope;
