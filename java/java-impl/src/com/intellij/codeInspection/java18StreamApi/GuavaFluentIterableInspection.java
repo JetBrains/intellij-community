@@ -66,7 +66,7 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
     if (fluentIterable == null) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new JavaRecursiveElementVisitor() {
+    return new JavaElementVisitor() {
       private final SmartPointerManager mySmartPointerManager = SmartPointerManager.getInstance(holder.getProject());
       private final Set<PsiMethodCallExpression> myMethodCallsToIgnore =
         new THashSet<PsiMethodCallExpression>(new TObjectIdentityHashingStrategy<PsiMethodCallExpression>());
