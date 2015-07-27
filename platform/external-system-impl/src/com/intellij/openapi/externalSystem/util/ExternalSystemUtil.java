@@ -861,62 +861,6 @@ public class ExternalSystemUtil {
   }
 
   /**
-   * Allows to answer if given ide project has 1-1 mapping with the given external project, i.e. the ide project has been
-   * imported from external system and no other external projects have been added.
-   * <p/>
-   * This might be necessary in a situation when project-level setting is changed (e.g. project name). We don't want to rename
-   * ide project if it doesn't completely corresponds to the given ide project then.
-   *
-   * @param ideProject       target ide project
-   * @param externalProject  target external project
-   * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
-   *                         <code>false</code> otherwise
-   */
-  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
-    String linkedExternalProjectPath = null;
-    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
-      ProjectSystemId externalSystemId = manager.getSystemId();
-      AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(ideProject, externalSystemId);
-      Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
-      int linkedProjectsNumber = projectsSettings.size();
-      if (linkedProjectsNumber > 1) {
-        // More than one external project of the same external system type is linked to the given ide project.
-        return false;
-      }
-      else if (linkedProjectsNumber == 1) {
-        if (linkedExternalProjectPath == null) {
-          // More than one external project of different external system types is linked to the current ide project.
-          linkedExternalProjectPath = ((ExternalProjectSettings)projectsSettings.iterator().next()).getExternalProjectPath();
-        }
-        else {
-          return false;
-        }
-      }
-    }
-    
-    ProjectData projectData = externalProject.getData();
-    if (linkedExternalProjectPath != null && !linkedExternalProjectPath.equals(projectData.getLinkedExternalProjectPath())) {
-      // New external project is being linked.
-      return false;
-    }
-
-    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
-    for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE)) {
-      externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
-    }
-    externalModulePaths.remove(linkedExternalProjectPath);
-    
-    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    for (Module module : platformFacade.getModules(ideProject)) {
-      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
-        return false;
-      }
-    }
-    return externalModulePaths.isEmpty();
-  }
-
-  /**
    * Tries to obtain external project info implied by the given settings and link that external project to the given ide project. 
    * 
    * @param externalSystemId         target external system

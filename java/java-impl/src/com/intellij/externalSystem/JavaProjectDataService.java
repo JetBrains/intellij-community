@@ -17,7 +17,10 @@ package com.intellij.externalSystem;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
@@ -38,7 +41,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 4/15/13 12:09 PM
  */
-public class JavaProjectDataService implements ProjectDataService<JavaProjectData, Project> {
+public class JavaProjectDataService extends AbstractProjectDataService<JavaProjectData, Project> {
 
   @NotNull
   @Override
@@ -47,17 +50,31 @@ public class JavaProjectDataService implements ProjectDataService<JavaProjectDat
   }
 
   @Override
-  public void importData(@NotNull Collection<DataNode<JavaProjectData>> toImport, @NotNull Project project, boolean synchronous) {
-    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
+  public void importData(@NotNull final Collection<DataNode<JavaProjectData>> toImport,
+                         @Nullable final ProjectData projectData,
+                         @NotNull final Project project,
+                         @NotNull final PlatformFacade platformFacade,
+                         final boolean synchronous) {
+    if (toImport.isEmpty() || projectData == null) {
       return;
     }
+
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
-    JavaProjectData projectData = toImport.iterator().next().getData();
+
+    final DataNode<JavaProjectData> javaProjectDataNode = toImport.iterator().next();
+    final DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(javaProjectDataNode, ProjectKeys.PROJECT);
+
+    assert projectDataNode != null;
+    if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode)) {
+      return;
+    }
+
+    JavaProjectData javaProjectData = javaProjectDataNode.getData();
 
     // JDK.
-    JavaSdkVersion version = projectData.getJdkVersion();
+    JavaSdkVersion version = javaProjectData.getJdkVersion();
     JavaSdk javaSdk = JavaSdk.getInstance();
     ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
     Sdk sdk = rootManager.getProjectSdk();
@@ -76,7 +93,7 @@ public class JavaProjectDataService implements ProjectDataService<JavaProjectDat
       }
     }
     // Language level.
-    setLanguageLevel(projectData.getLanguageLevel(), project, synchronous);
+    setLanguageLevel(javaProjectData.getLanguageLevel(), project, synchronous);
   }
 
   @Nullable
@@ -94,10 +111,6 @@ public class JavaProjectDataService implements ProjectDataService<JavaProjectDat
       }
     }
     return candidate;
-  }
-
-  @Override
-  public void removeData(@NotNull Collection<? extends Project> toRemove, @NotNull Project project, boolean synchronous) {
   }
 
   @SuppressWarnings("MethodMayBeStatic")

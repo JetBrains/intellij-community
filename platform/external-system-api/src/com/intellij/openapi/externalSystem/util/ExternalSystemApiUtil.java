@@ -20,23 +20,24 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
@@ -553,26 +554,62 @@ public class ExternalSystemApiUtil {
   }
 
   /**
-   * We can divide all 'import from external system' use-cases into at least as below:
-   * <pre>
-   * <ul>
-   *   <li>this is a new project being created (import project from external model);</li>
-   *   <li>a new module is being imported from an external project into an existing ide project;</li>
-   * </ul>
-   * </pre>
-   * This method allows to differentiate between them (e.g. we don't want to change language level when new module is imported to
-   * an existing project).
+   * Allows to answer if given ide project has 1-1 mapping with the given external project, i.e. the ide project has been
+   * imported from external system and no other external projects have been added.
+   * <p/>
+   * This might be necessary in a situation when project-level setting is changed (e.g. project name). We don't want to rename
+   * ide project if it doesn't completely corresponds to the given ide project then.
    *
-   * @return    <code>true</code> if new project is being imported; <code>false</code> if new module is being imported
+   * @param ideProject       target ide project
+   * @param externalProject  target external project
+   * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
+   *                         <code>false</code> otherwise
    */
-  public static boolean isNewProjectConstruction() {
-    return ProjectManager.getInstance().getOpenProjects().length == 0;
-  }
+  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
+    String linkedExternalProjectPath = null;
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : getAllManagers()) {
+      ProjectSystemId externalSystemId = manager.getSystemId();
+      AbstractExternalSystemSettings systemSettings = getSettings(ideProject, externalSystemId);
+      Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
+      int linkedProjectsNumber = projectsSettings.size();
+      if (linkedProjectsNumber > 1) {
+        // More than one external project of the same external system type is linked to the given ide project.
+        return false;
+      }
+      else if (linkedProjectsNumber == 1) {
+        if (linkedExternalProjectPath == null) {
+          // More than one external project of different external system types is linked to the current ide project.
+          linkedExternalProjectPath = ((ExternalProjectSettings)projectsSettings.iterator().next()).getExternalProjectPath();
+        }
+        else {
+          return false;
+        }
+      }
+    }
 
-//  @NotNull
-//  public static String getLastUsedExternalProjectPath(@NotNull ProjectSystemId externalSystemId) {
-//    return PropertiesComponent.getInstance().getValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), "");
-//  }
+    ProjectData projectData = externalProject.getData();
+    if (linkedExternalProjectPath != null && !linkedExternalProjectPath.equals(projectData.getLinkedExternalProjectPath())) {
+      // New external project is being linked.
+      return false;
+    }
+
+    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
+    for (DataNode<ModuleData> moduleNode : findAll(externalProject, ProjectKeys.MODULE)) {
+      if(!moduleNode.isIgnored()) {
+        externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
+      }
+    }
+    externalModulePaths.remove(linkedExternalProjectPath);
+
+    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    for (Module module : platformFacade.getModules(ideProject)) {
+      String path = getExternalProjectPath(module);
+      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
+        return false;
+      }
+    }
+    return externalModulePaths.isEmpty();
+  }
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
