@@ -181,6 +181,9 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
 
+    <applicationService serviceInterface="com.intellij.psi.util.PsiEditorUtil"
+                        serviceImplementation="com.intellij.psi.util.PsiUtilBase"/>
+
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
