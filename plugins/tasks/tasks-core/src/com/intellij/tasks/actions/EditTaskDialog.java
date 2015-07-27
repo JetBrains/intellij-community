@@ -33,6 +33,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -56,7 +58,7 @@ public class EditTaskDialog extends DialogWrapper {
   protected EditTaskDialog(Project project, LocalTaskImpl task) {
     super(project);
     myTask = task;
-    setTitle("Edit Task " + task.getId());
+    setTitle("Edit Task " + (task.isIssue() ? task.getId() : ""));
 
 //    mySummary.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, "");
     mySummary.setText(task.getSummary());
@@ -71,11 +73,15 @@ public class EditTaskDialog extends DialogWrapper {
     else {
       ChangeListManager changeListManager = ChangeListManager.getInstance(project);
       List<LocalChangeList> changeLists = changeListManager.getChangeLists();
+      changeLists.add(null);
       myChangelist.setModel(new CollectionComboBoxModel<LocalChangeList>(changeLists));
       final List<ChangeListInfo> lists = task.getChangeLists();
       if (!lists.isEmpty()) {
         LocalChangeList list = changeListManager.getChangeList(lists.get(0).id);
         myChangelist.setSelectedItem(list);
+      }
+      else {
+        myChangelist.setSelectedItem(null);
       }
 
       VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
@@ -85,7 +91,9 @@ public class EditTaskDialog extends DialogWrapper {
       }
       else {
         VcsTaskHandler.TaskInfo[] tasks = handlers[0].getAllExistingTasks();
-        myBranch.setModel(new DefaultComboBoxModel(tasks));
+        ArrayList<VcsTaskHandler.TaskInfo> infos = new ArrayList<VcsTaskHandler.TaskInfo>(Arrays.asList(tasks));
+        infos.add(null);
+        myBranch.setModel(new CollectionComboBoxModel<VcsTaskHandler.TaskInfo>(infos));
         final List<BranchInfo> branches = task.getBranches();
         if (!branches.isEmpty()) {
           VcsTaskHandler.TaskInfo info = ContainerUtil.find(tasks, new Condition<VcsTaskHandler.TaskInfo>() {
@@ -95,6 +103,9 @@ public class EditTaskDialog extends DialogWrapper {
             }
           });
           myBranch.setSelectedItem(info);
+        }
+        else {
+          myBranch.setSelectedItem(null);
         }
       }
     }
@@ -113,7 +124,13 @@ public class EditTaskDialog extends DialogWrapper {
       }
     }
     if (myBranch.isVisible()) {
-      // todo
+      List<BranchInfo> branches = myTask.getBranches();
+      branches.clear();
+      VcsTaskHandler.TaskInfo branch = (VcsTaskHandler.TaskInfo)myBranch.getSelectedItem();
+      if (branch != null) {
+        List<BranchInfo> infos = BranchInfo.fromTaskInfo(branch, false);
+        branches.addAll(infos);
+      }
     }
     close(OK_EXIT_CODE);
   }
