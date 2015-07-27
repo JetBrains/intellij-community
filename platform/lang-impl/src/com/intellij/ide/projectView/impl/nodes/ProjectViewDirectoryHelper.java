@@ -20,9 +20,9 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,8 +72,12 @@ public class ProjectViewDirectoryHelper {
   @Nullable
   public String getLocationString(@NotNull PsiDirectory psiDirectory) {
     final VirtualFile directory = psiDirectory.getVirtualFile();
-    final VirtualFile contentRootForFile = ProjectRootManager.getInstance(myProject)
-      .getFileIndex().getContentRootForFile(directory);
+    
+    if (ProjectRootsUtil.isLibraryRoot(directory, psiDirectory.getProject())) {
+      return "library home";
+    }
+    
+    final VirtualFile contentRootForFile = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(directory);
     if (Comparing.equal(contentRootForFile, psiDirectory)) {
       return directory.getPresentableUrl();
     }
