@@ -54,7 +54,6 @@ public class OnePixelDivider extends Divider {
     mySwitchOrientationEnabled = false;
     setFocusable(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    setOpaque(false);
     setOrientation(vertical);
     setBackground(BACKGROUND);
   }
@@ -71,11 +70,13 @@ public class OnePixelDivider extends Divider {
           bounds.y += insets.top;
           bounds.width -= insets.left + insets.right;
           bounds.height -= insets.top + insets.bottom;
+          g.setColor(getBackground());
+          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+          return;
         }
       }
     }
-    g.setColor(getBackground());
-    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    super.paint(g);
   }
 
   @Override

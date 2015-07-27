@@ -25,7 +25,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class OnePixelSplitter extends JBSplitter {
-
   private Producer<Insets> myBlindZone;
 
   public OnePixelSplitter() {
@@ -63,12 +62,11 @@ public class OnePixelSplitter extends JBSplitter {
   }
 
   public void setBlindZone(Producer<Insets> blindZone) {
+    myDivider.setOpaque(blindZone == null);
     myBlindZone = blindZone;
   }
 
   public Producer<Insets> getBlindZone() {
     return myBlindZone;
   }
-
-  public enum BlindZone {TOP, BOTTOM, LEFT, RIGHT}
 }
