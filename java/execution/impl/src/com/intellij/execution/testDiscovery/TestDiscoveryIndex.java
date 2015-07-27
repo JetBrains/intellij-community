@@ -47,20 +47,22 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
   public TestDiscoveryIndex(Project project) {
     myProject = project;
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
-            if (!new File(path).exists()) return;
 
-            getHolder(); // proactively init with maybe io costly compact
-          }
-        });
-      }
-    });
+    String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
+
+    if (new File(path).exists()) {
+      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              getHolder(); // proactively init with maybe io costly compact
+            }
+          });
+        }
+      });
+    }
   }
 
   public boolean hasTestTrace(@NotNull String testName) throws IOException {
