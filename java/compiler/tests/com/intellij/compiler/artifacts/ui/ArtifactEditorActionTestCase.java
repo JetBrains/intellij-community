@@ -2,7 +2,6 @@ package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -52,7 +51,7 @@ public abstract class ArtifactEditorActionTestCase extends ArtifactEditorTestCas
   private static AnActionEvent createActionEvent(AnAction action) {
     final Presentation presentation = new Presentation();
     presentation.copyFrom(action.getTemplatePresentation());
-    return new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", presentation, ActionManager.getInstance(), 0);
+    return AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext());
   }
 
   protected abstract AnAction createAction(final ArtifactEditorEx artifactEditor);
