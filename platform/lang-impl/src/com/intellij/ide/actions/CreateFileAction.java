@@ -24,6 +24,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
@@ -35,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,16 +223,24 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
 
     @Override
-    public boolean canClose(String inputString) {
+    public boolean canClose(final String inputString) {
       if (inputString.length() == 0) {
         return super.canClose(inputString);
       }
 
       final PsiDirectory psiDirectory = getDirectory();
 
-      final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(new FakeVirtualFile(psiDirectory.getVirtualFile(), getFileName(inputString)),
-                                                                        psiDirectory.getProject());
-      return type != null && super.canClose(getFileName(inputString));
+      final Project project = psiDirectory.getProject();
+      final boolean[] result = {false};
+      DumbService.getInstance(project).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+        @Override
+        public void run() {
+          final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(new FakeVirtualFile(psiDirectory.getVirtualFile(), getFileName(inputString)),
+                                                                            project);
+          result[0] = type != null && MyValidator.super.canClose(getFileName(inputString));
+        }
+      });
+      return result[0];
     }
   }
 }
