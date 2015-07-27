@@ -55,6 +55,7 @@ import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.ComboBoxModelEditor;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.UIUtil;
@@ -84,7 +85,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   };
 
-  private final KeymapListModelEditor<Keymap> myEditor = new KeymapListModelEditor<Keymap>(new ListItemEditor<Keymap>() {
+  // Name editor calls "setName" to apply new name. It is scheme name, not presentable name —
+  // but only bundled scheme name could be different from presentable and bundled scheme is not editable (could not be renamed). So, it is ok.
+  private final ComboBoxModelEditor<Keymap> myEditor = new ComboBoxModelEditor<Keymap>(new ListItemEditor<Keymap>() {
     @NotNull
     @Override
     public String getName(@NotNull Keymap item) {

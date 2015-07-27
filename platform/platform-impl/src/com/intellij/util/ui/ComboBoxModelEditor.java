@@ -13,30 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap.impl.ui;
+package com.intellij.util.ui;
 
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.MutableCollectionComboBoxModel;
-import com.intellij.util.ui.ListItemEditor;
-import com.intellij.util.ui.ListModelEditorBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
-public class KeymapListModelEditor<T extends Keymap> extends ListModelEditorBase<T> {
+public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
   private final ComboBox comboBox;
 
-  public KeymapListModelEditor(@NotNull final ListItemEditor<T> itemEditor) {
+  public ComboBoxModelEditor(@NotNull ListItemEditor<T> itemEditor) {
     super(itemEditor);
 
     comboBox = new ComboBox((ComboBoxModel)model);
-    comboBox.setEditor(new MyEditor());
+    comboBox.setEditor(new NameEditor());
     comboBox.setRenderer(new MyListCellRenderer());
   }
 
@@ -51,17 +48,17 @@ public class KeymapListModelEditor<T extends Keymap> extends ListModelEditorBase
     return comboBox;
   }
 
-  private class MyEditor extends FixedComboBoxEditor {
+  private class NameEditor extends FixedComboBoxEditor {
     private T item = null;
     private boolean mutated;
 
-    public MyEditor() {
+    public NameEditor() {
       getField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
-          if (item != null && item.canModify()) {
+          if (item != null && itemEditor.isEditable(item)) {
             String newName = getField().getText();
-            if (newName.equals(item.getName())) {
+            if (newName.equals(itemEditor.getName(item))) {
               return;
             }
 
