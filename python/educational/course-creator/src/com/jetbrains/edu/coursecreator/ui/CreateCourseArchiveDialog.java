@@ -2,6 +2,8 @@ package com.jetbrains.edu.coursecreator.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +17,10 @@ public class CreateCourseArchiveDialog extends DialogWrapper {
 
   public CreateCourseArchiveDialog(@NotNull final  Project project, CCCreateCourseArchive action) {
     super(project);
+    Course course = CCProjectService.getInstance(project).getCourse();
+    assert course != null;
     setTitle("Create Course Archive");
-    myPanel = new CreateCourseArchivePanel(project, this);
+    myPanel = new CreateCourseArchivePanel(project, this, course.getName());
     myAction = action;
     init();
   }
