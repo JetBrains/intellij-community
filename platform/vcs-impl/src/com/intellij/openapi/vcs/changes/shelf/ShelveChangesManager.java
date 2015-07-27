@@ -26,6 +26,8 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -78,6 +80,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
 
+  @NotNull private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final SchemesManager<ShelvedChangeList, ShelvedChangeList> mySchemeManager;
 
   public static ShelveChangesManager getInstance(Project project) {
@@ -95,7 +98,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   public ShelveChangesManager(final Project project, final MessageBus bus) {
     super(project);
-
+    myPathMacroSubstitutor = PathMacroManager.getInstance(myProject).createTrackingSubstitutor();
     myBus = bus;
     mySchemeManager =
       SchemesManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new BaseSchemeProcessor<ShelvedChangeList>() {
@@ -109,6 +112,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         public Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
           Element child = new Element(ELEMENT_CHANGELIST);
           scheme.writeExternal(child);
+          myPathMacroSubstitutor.collapsePaths(child);
           return child;
         }
       });
@@ -118,8 +122,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @NotNull
-  private static ShelvedChangeList readOneShelvedChangeList(@NotNull Element element) throws InvalidDataException {
+  private ShelvedChangeList readOneShelvedChangeList(@NotNull Element element) throws InvalidDataException {
     ShelvedChangeList data = new ShelvedChangeList();
+    myPathMacroSubstitutor.expandPaths(element);
     data.readExternal(element);
     return data;
   }
