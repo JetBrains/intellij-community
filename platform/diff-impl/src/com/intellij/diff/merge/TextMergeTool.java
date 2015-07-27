@@ -533,7 +533,12 @@ public class TextMergeTool implements MergeTool {
       }
 
       public void onChangeResolved(@NotNull TextMergeChange change) {
-        onChangeRemoved(change);
+        if (change.isResolved()) {
+          onChangeRemoved(change);
+        }
+        else {
+          onChangeAdded(change);
+        }
         if (getChangesCount() == 0 && getConflictsCount() == 0) {
           LOG.assertTrue(getFirstUnresolvedChange(true, null) == null);
           ApplicationManager.getApplication().invokeLater(new Runnable() {

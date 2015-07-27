@@ -135,6 +135,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     if (isResolved()) return;
     myResolved[0] = true;
     myResolved[1] = true;
+
     myViewer.onChangeResolved(this);
     myViewer.reinstallHighlighter(this);
   }
@@ -143,6 +144,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   public void markResolved(@NotNull Side side) {
     if (isResolved(side)) return;
     myResolved[side.getIndex()] = true;
+
     if (isResolved()) myViewer.onChangeResolved(this);
     myViewer.reinstallHighlighter(this);
   }
