@@ -236,11 +236,10 @@ class SchemeManagerTest {
     assertThat(schemes.get(0), equalTo(customScheme))
   }
 
-  private fun createSchemeManager(dir: File) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
 
   public Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {
     val dir = tempDirManager.newDirectory()
-    val schemeManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
+    val schemeManager = createSchemeManager(dir)
 
     val scheme = TestScheme("s1")
     schemeManager.setSchemes(listOf(scheme))
@@ -280,7 +279,7 @@ class SchemeManagerTest {
 
   public Test fun rename() {
     val dir = tempDirManager.newDirectory()
-    val schemeManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
+    val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.getAllSchemes().isEmpty(), equalTo(true))
 
@@ -305,6 +304,8 @@ class SchemeManagerTest {
     assertThat(File(dir, "s1.xml").exists(), equalTo(false))
     assertThat(File(dir, "s2.xml").exists(), equalTo(true))
   }
+
+  private fun createSchemeManager(dir: File) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
