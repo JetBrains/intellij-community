@@ -1741,10 +1741,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
 
+    boolean updateCalculated = false;
     try {
       // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
       // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
       final Computable<Boolean> update = index.update(inputId, currentFC);
+      updateCalculated = true;
 
       scheduleUpdate(indexId,
                      createUpdateComputableWithBufferingDisabled(update),
@@ -1752,7 +1754,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       );
     } catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
-      if (causeToRebuildIndex != null) {
+      if (causeToRebuildIndex != null && (updateCalculated || causeToRebuildIndex instanceof IOException)) {
         LOG.error("Exception in update single index:" + exception);
         requestRebuild(indexId, exception);
         return;
