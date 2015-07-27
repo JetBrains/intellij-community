@@ -229,6 +229,14 @@ public interface EditorEx extends Editor {
   void setPlaceholder(@Nullable CharSequence text);
 
   /**
+   * Sets text attributes for a placeholder. Font style and color are currently supported. 
+   * <code>null</code> means default values should be used.
+   * 
+   * @see #setPlaceholder(CharSequence)
+   */
+  void setPlaceholderAttributes(@Nullable TextAttributes attributes);
+  
+  /**
    * Controls whether <code>'placeholder text'</code> is visible when editor is focused.
    *
    * @param show   flag indicating whether placeholder is visible when editor is focused.

@@ -37,8 +37,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,23 +91,8 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
                                                      final SearchScope searchScope,
                                                      final Processor<PsiFunctionalExpression> consumer, 
                                                      final Set<Module> highLevelModules) {
-    final SearchScope classScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return aClass.getUseScope();
-      }
-    });
-    final SearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return searchScope.intersectWith(classScope);
-      }
-    });
-
     final Project project = PsiUtilCore.getProjectInReadAction(aClass);
-    final GlobalSearchScope scope = new ModulesScope(highLevelModules, project)
-      .intersectWith(useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project));
-   
+    final GlobalSearchScope scope = prepareScopeToProcessFiles(highLevelModules, aClass, searchScope,  project);
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
     CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files) {
@@ -130,6 +117,44 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       })) return false;
     }
     return true;
+  }
+
+  @NotNull
+  protected static GlobalSearchScope prepareScopeToProcessFiles(final Set<Module> highLevelModules,
+                                                                final PsiClass aClass,
+                                                                final SearchScope searchScope,
+                                                                final Project project) {
+    final SearchScope classScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return aClass.getUseScope();
+      }
+    });
+    final SearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return searchScope.intersectWith(classScope);
+      }
+    });
+    final GlobalSearchScope scope;
+    if (useScope instanceof GlobalSearchScope) {
+      scope = (GlobalSearchScope)useScope;
+    }
+    else if (useScope instanceof LocalSearchScope) {
+      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      ContainerUtil.addAllNotNull(files, ContainerUtil.map(((LocalSearchScope)useScope).getScope(), new Function<PsiElement, VirtualFile>() {
+        @Override
+        public VirtualFile fun(PsiElement element) {
+          return PsiUtilCore.getVirtualFile(element);
+        }
+      }));
+      scope = GlobalSearchScope.filesScope(project, files);
+    }
+    else {
+      scope = new ModulesScope(highLevelModules, project).intersectWith(new EverythingGlobalScope(project));
+    }
+
+    return new ModulesScope(highLevelModules, project).intersectWith(scope);
   }
 
   private static boolean processFileWithFunctionalInterfaces(final PsiClass aClass,

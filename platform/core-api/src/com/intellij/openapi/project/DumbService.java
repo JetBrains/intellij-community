@@ -279,15 +279,6 @@ public abstract class DumbService {
    */
   public abstract void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable);
 
-  /**
-   * Permits the dumb mode to start at a specific moment, either modally or in background.
-   * @see #allowStartingDumbModeInside(DumbModePermission, Runnable)
-   */
-  public enum DumbModePermission {
-    MAY_START_MODAL,
-    MAY_START_BACKGROUND
-  }
-
 
   /**
    * @see #DUMB_MODE

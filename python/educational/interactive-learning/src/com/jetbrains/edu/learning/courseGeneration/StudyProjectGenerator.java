@@ -47,7 +47,6 @@ public class StudyProjectGenerator {
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
-  private static final Pattern CACHE_PATTERN = Pattern.compile("name=(.*) description=(.*) folder=(.*) (instructor=(.*))+");
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
@@ -246,22 +245,13 @@ public class StudyProjectGenerator {
     File cacheFile = new File(myCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
     try {
-      if (!cacheFile.exists()) {
-        final boolean created = cacheFile.createNewFile();
-        if (!created) {
-          LOG.error("Cannot flush courses cache. Can't create " + CACHE_NAME + " file");
-          return;
-        }
-      }
+      if (!createCacheFile(cacheFile)) return;
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
       writer = new PrintWriter(cacheFile);
       for (CourseInfo courseInfo : myCourses) {
-        final List<CourseInfo.Instructor> instructors = courseInfo.getInstructors();
-        StringBuilder builder = new StringBuilder("name=").append(courseInfo.getName()).append(" ").append("description=").
-          append(courseInfo.getDescription()).append(" ").append("folder=").append(courseInfo.getName()).append(" ");
-        for (CourseInfo.Instructor instructor : instructors) {
-          builder.append("instructor=").append(instructor.getName()).append(" ");
-        }
-        writer.println(builder.toString());
+        final String json = gson.toJson(courseInfo);
+        writer.println(json);
       }
     }
     catch (FileNotFoundException e) {
@@ -273,6 +263,24 @@ public class StudyProjectGenerator {
     finally {
       StudyUtils.closeSilently(writer);
     }
+  }
+
+  private boolean createCacheFile(File cacheFile) throws IOException {
+    if (!myCoursesDir.exists()) {
+      final boolean created = myCoursesDir.mkdirs();
+      if (!created) {
+        LOG.error("Cannot flush courses cache. Can't create courses directory");
+        return false;
+      }
+    }
+    if (!cacheFile.exists()) {
+      final boolean created = cacheFile.createNewFile();
+      if (!created) {
+        LOG.error("Cannot flush courses cache. Can't create " + CACHE_NAME + " file");
+        return false;
+      }
+    }
+    return true;
   }
 
   public List<CourseInfo> getCourses(boolean force) {
@@ -312,22 +320,9 @@ public class StudyProjectGenerator {
         try {
           String line;
           while ((line = reader.readLine()) != null) {
-            Matcher matcher = CACHE_PATTERN.matcher(line);
-            if (matcher.matches()) {
-              String courseName = matcher.group(1);
-              final CourseInfo courseInfo = new CourseInfo();
-              courseInfo.setName(courseName);
-
-              courseInfo.setDescription(matcher.group(2));
-              courses.add(courseInfo);
-
-              final int groupCount = matcher.groupCount();
-              final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
-              for (int i = 5; i <= groupCount; i++) {
-                instructors.add(new CourseInfo.Instructor(matcher.group(i)));
-              }
-              courseInfo.setInstructors(instructors);
-            }
+            Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+            final CourseInfo courseInfo = gson.fromJson(line, CourseInfo.class);
+            courses.add(courseInfo);
           }
         }
         catch (IOException e) {

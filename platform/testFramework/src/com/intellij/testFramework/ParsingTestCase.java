@@ -57,23 +57,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
+/** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
 public abstract class ParsingTestCase extends PlatformLiteFixture {
 
   protected String myFilePrefix = "";
   protected String myFileExt;
-  @NonNls protected final String myFullDataPath;
+  protected final String myFullDataPath;
   protected PsiFile myFile;
   private MockPsiManager myPsiManager;
   private PsiFileFactoryImpl myFileFactory;
   protected Language myLanguage;
-  @NotNull private final ParserDefinition[] myDefinitions;
+  private final ParserDefinition[] myDefinitions;
   private final boolean myLowercaseFirstLetter;
 
-  public ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
+  protected ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
     this(dataPath, fileExt, false, definitions);
   }
 
-  public ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, final boolean lowercaseFirstLetter, @NotNull ParserDefinition... definitions) {
+  protected ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, boolean lowercaseFirstLetter, @NotNull ParserDefinition... definitions) {
     myDefinitions = definitions;
     myFullDataPath = getTestDataPath() + "/" + dataPath;
     myFileExt = fileExt;
@@ -101,7 +102,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myProject = new MockProjectEx(getTestRootDisposable());
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
-    final MutablePicoContainer appContainer = getApplication().getPicoContainer();
+    MutablePicoContainer appContainer = getApplication().getPicoContainer();
     registerComponentInstance(appContainer, MessageBus.class, MessageBusFactory.newMessageBus(getApplication()));
     registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
     final MockEditorFactory editorFactory = new MockEditorFactory();
@@ -113,8 +114,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       }
     }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
     registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
-    myLanguage = myLanguage == null && myDefinitions.length > 0? myDefinitions[0].getFileNodeType().getLanguage() : myLanguage;
-    registerComponentInstance(appContainer, FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
+
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
@@ -126,6 +126,17 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     for (ParserDefinition definition : myDefinitions) {
       addExplicitExtension(LanguageParserDefinitions.INSTANCE, definition.getFileNodeType().getLanguage(), definition);
     }
+    if (myDefinitions.length > 0) {
+      configureFromParserDefinition(myDefinitions[0], myFileExt);
+    }
+  }
+
+  public void configureFromParserDefinition(ParserDefinition definition, String extension) {
+    myLanguage = definition.getFileNodeType().getLanguage();
+    myFileExt = extension;
+    addExplicitExtension(LanguageParserDefinitions.INSTANCE, myLanguage, definition);
+    registerComponentInstance(getApplication().getPicoContainer(), FileTypeManager.class,
+                              new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
   }
 
   protected <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
@@ -248,7 +259,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges());
   }
 
-  public static void doCheckResult(String myFullDataPath,
+  public static void doCheckResult(String testDataDir,
                                    PsiFile file,
                                    boolean checkAllPsiRoots,
                                    String targetDataName,
@@ -258,36 +269,41 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     Set<Language> languages = provider.getLanguages();
 
     if (!checkAllPsiRoots || languages.size() == 1) {
-      doCheckResult(myFullDataPath, targetDataName + ".txt", toParseTreeText(file, skipSpaces, printRanges).trim());
+      doCheckResult(testDataDir, targetDataName + ".txt", toParseTreeText(file, skipSpaces, printRanges).trim());
       return;
     }
 
     for (Language language : languages) {
       PsiFile root = provider.getPsi(language);
       String expectedName = targetDataName + "." + language.getID() + ".txt";
-      doCheckResult(myFullDataPath, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
+      doCheckResult(testDataDir, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
     }
   }
 
-  protected void checkResult(@TestDataFile @NonNls String targetDataName, final String text) throws IOException {
-    doCheckResult(myFullDataPath, targetDataName, text);
+  protected void checkResult(String actual) throws IOException {
+    String name = getTestName(myLowercaseFirstLetter);
+    doCheckResult(myFullDataPath, myFilePrefix + name + ".txt", actual);
   }
 
-  public static void doCheckResult(String fullPath, String targetDataName, String text) throws IOException {
+  protected void checkResult(@TestDataFile @NonNls String targetDataName, String actual) throws IOException {
+    doCheckResult(myFullDataPath, targetDataName, actual);
+  }
+
+  public static void doCheckResult(String fullPath, String targetDataName, String actual) throws IOException {
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
-    UsefulTestCase.assertSameLinesWithFile(expectedFileName, text);
+    UsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
   }
 
-  protected static String toParseTreeText(final PsiElement file,  boolean skipSpaces, boolean printRanges) {
+  protected static String toParseTreeText(PsiElement file,  boolean skipSpaces, boolean printRanges) {
     return DebugUtil.psiToString(file, skipSpaces, printRanges);
   }
 
   protected String loadFile(@NonNls @TestDataFile String name) throws IOException {
-    return doLoadFile(myFullDataPath, name);
+    return loadFileDefault(myFullDataPath, name);
   }
 
-  private static String doLoadFile(String myFullDataPath, String name) throws IOException {
-    return FileUtil.loadFile(new File(myFullDataPath, name), CharsetToolkit.UTF8, true).trim();
+  public static String loadFileDefault(String dir, String name) throws IOException {
+    return FileUtil.loadFile(new File(dir, name), CharsetToolkit.UTF8, true).trim();
   }
 
   public static void ensureParsed(PsiFile file) {

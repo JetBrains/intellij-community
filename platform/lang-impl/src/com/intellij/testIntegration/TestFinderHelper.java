@@ -36,16 +36,16 @@ public class TestFinderHelper {
     return null;
   }
 
-  public static List<PsiElement> findTestsForClass(PsiElement element) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+  public static Collection<PsiElement> findTestsForClass(PsiElement element) {
+    Collection<PsiElement> result = new LinkedHashSet<PsiElement>();
     for (TestFinder each : getFinders()) {
       result.addAll(each.findTestsForClass(element));
     }
     return result;
   }
 
-  public static List<PsiElement> findClassesForTest(PsiElement element) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+  public static Collection<PsiElement> findClassesForTest(PsiElement element) {
+    Collection<PsiElement> result = new LinkedHashSet<PsiElement>();
     for (TestFinder each : getFinders()) {
       result.addAll(each.findClassesForTest(element));
     }

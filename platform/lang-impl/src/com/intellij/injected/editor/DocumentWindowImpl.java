@@ -775,8 +775,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Override
   public boolean containsRange(int start, int end) {
     synchronized (myLock) {
-      Segment hostRangeMarker = myShreds.get(0).getHostRangeMarker();
-      if (hostRangeMarker == null || end - start > hostRangeMarker.getEndOffset() - hostRangeMarker.getStartOffset()) return false;
       ProperTextRange query = new ProperTextRange(start, end);
       for (PsiLanguageInjectionHost.Shred shred : myShreds) {
         Segment hostRange = shred.getHostRangeMarker();

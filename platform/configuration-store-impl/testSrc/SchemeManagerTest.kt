@@ -47,6 +47,9 @@ import java.io.File
 
 val FILE_SPEC = "REMOTE"
 
+/**
+ * Functionality without stream provider covered, ICS has own test suite
+ */
 class SchemeManagerTest {
   private val fixtureManager = FixtureRule()
   public Rule fun getFixtureManager(): FixtureRule = fixtureManager
@@ -255,6 +258,24 @@ class SchemeManagerTest {
 
     assertThat(schemeFile.exists(), equalTo(false))
     assertThat(dir.exists(), equalTo(true))
+  }
+
+  public Test fun `remove empty directory only if some file was deleted`() {
+    val dir = tempDirManager.newDirectory()
+    val schemeManager = createSchemeManager(dir)
+    schemeManager.loadSchemes()
+
+    assertThat(dir.mkdirs(), equalTo(true))
+    schemeManager.save()
+    assertThat(dir, exists())
+
+    schemeManager.addScheme(TestScheme("test"))
+    schemeManager.save()
+    assertThat(dir, exists())
+
+    schemeManager.setSchemes(emptyList())
+    schemeManager.save()
+    assertThat(dir, not(exists()))
   }
 
   public Test fun rename() {

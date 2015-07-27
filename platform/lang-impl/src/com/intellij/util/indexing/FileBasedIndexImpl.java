@@ -1521,15 +1521,23 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       final Runnable rebuildRunnable = new Runnable() {
         @Override
         public void run() {
-          try {
-            doClearIndex(indexId);
+          final Ref<Boolean> success = Ref.create(true);
+          new Task.Modal(null, "Updating index", false) {
+            @Override
+            public void run(@NotNull final ProgressIndicator indicator) {
+              indicator.setIndeterminate(true);
+              try {
+                doClearIndex(indexId);
+              }
+              catch (StorageException e) {
+                success.set(false);
+                requestRebuild(indexId);
+                LOG.info(e);
+              }
+            }
+          }.queue();
+          if (success.get()) {
             scheduleIndexRebuild("checkRebuild");
-          }
-          catch (StorageException e) {
-            requestRebuild(indexId);
-            LOG.info(e);
-          }
-          finally {
             status.compareAndSet(REQUIRES_REBUILD, OK);
           }
         }
@@ -1541,18 +1549,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         // we do invoke later since we can have read lock acquired
         //noinspection SSBasedInspection
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            new Task.Modal(null, "Updating index", false) {
-              @Override
-              public void run(@NotNull final ProgressIndicator indicator) {
-                indicator.setIndeterminate(true);
-                rebuildRunnable.run();
-              }
-            }.queue();
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(rebuildRunnable, ModalityState.NON_MODAL);
       }
     }
   }

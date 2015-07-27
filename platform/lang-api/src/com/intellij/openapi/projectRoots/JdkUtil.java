@@ -173,7 +173,8 @@ public class JdkUtil {
           final Manifest manifest = new Manifest();
           manifest.getMainAttributes().putValue("Created-By", 
                                                 ApplicationNamesInfo.getInstance().getFullProductName());
-          if (javaParameters.isDynamicVMOptions() && useDynamicVMOptions()) {
+          final boolean writeDynamicVMOptions = javaParameters.isDynamicVMOptions() && useDynamicVMOptions();
+          if (writeDynamicVMOptions) {
             List<String> dParams = new ArrayList<String>();
             for (String param : vmParametersList.getList()) {
               if (param.startsWith("-D")) {
@@ -193,11 +194,16 @@ public class JdkUtil {
           final List<String> classPathList = javaParameters.getClassPath().getPathList();
           final String jarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, classPathList, notEscape).getAbsolutePath();
           commandLine.addParameter("-classpath");
-          commandLine.addParameter(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator + jarFile);
-
-          appendEncoding(javaParameters, commandLine, vmParametersList);
-          commandLine.addParameter(commandLineWrapper.getName());
-          commandLine.addParameter(jarFile);
+          if (writeDynamicVMOptions) {
+            commandLine.addParameter(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator + jarFile);
+            appendEncoding(javaParameters, commandLine, vmParametersList);
+            commandLine.addParameter(commandLineWrapper.getName());
+            commandLine.addParameter(jarFile);
+          }
+          else {
+            commandLine.addParameters(jarFile);
+            appendEncoding(javaParameters, commandLine, vmParametersList);
+          }
         }
         catch (IOException e) {
           LOG.error(e);

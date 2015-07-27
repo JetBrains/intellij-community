@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -216,7 +217,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           @Override
           public void execute() {
             DumbService.getInstance(myProject).allowStartingDumbModeInside(
-              DumbService.DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+              DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
                 public void run() {
                   ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
                     @Override

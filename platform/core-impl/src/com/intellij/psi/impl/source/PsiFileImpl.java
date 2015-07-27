@@ -184,12 +184,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileElement treeElement = createFileElement(viewProvider.getContents());
     treeElement.setPsi(this);
 
-    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument);
+    final StubTree stub = derefStub();
+    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument, stub);
 
     synchronized (PsiLock.LOCK) {
       FileElement existing = derefTreeElement();
       if (existing != null) {
         return existing;
+      }
+
+      if (stub != null) {
+        treeElement.putUserData(STUB_TREE_IN_PARSED_TREE, new SoftReference<StubTree>(stub));
       }
 
       switchFromStubToAst(bindings);
@@ -239,8 +244,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  private List<Pair<StubBasedPsiElementBase, CompositeElement>> calcStubAstBindings(final ASTNode root, final Document cachedDocument) {
-    final StubTree stubTree = derefStub();
+  private List<Pair<StubBasedPsiElementBase, CompositeElement>> calcStubAstBindings(final ASTNode root,
+                                                                                    final Document cachedDocument, final StubTree stubTree) {
     if (stubTree == null) {
       return Collections.emptyList();
     }

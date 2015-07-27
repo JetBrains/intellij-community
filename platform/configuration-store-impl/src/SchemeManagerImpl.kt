@@ -426,10 +426,12 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       }
     }
 
-    deleteFiles(errors)
-
-    if (!hasSchemes && (provider == null || !provider.enabled)) {
-      removeDirectoryIfEmpty(errors)
+    if (!filesToDelete.isEmpty()) {
+      deleteFiles(errors)
+      // remove empty directory only if some file was deleted - avoid check on each save
+      if (!hasSchemes && (provider == null || !provider.enabled)) {
+        removeDirectoryIfEmpty(errors)
+      }
     }
   }
 
@@ -589,10 +591,6 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private fun deleteFiles(errors: MutableList<Throwable>) {
-    if (filesToDelete.isEmpty()) {
-      return
-    }
-
     val deleteUsingIo: Boolean
     if (provider != null && provider.enabled) {
       deleteUsingIo = false

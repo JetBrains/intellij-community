@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -60,7 +61,9 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myExpressionEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateExpression", sourcePosition,
                                                        expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false);
     myMainPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
-    JButton historyButton = new JButton(AllIcons.General.MessageHistory);
+    JButton historyButton = new FixedSizeButton(myExpressionEditor.getComponent());
+    historyButton.setFocusable(true);
+    historyButton.setIcon(AllIcons.General.MessageHistory);
     historyButton.setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.history.hint"));
     historyButton.addActionListener(new ActionListener() {
       @Override

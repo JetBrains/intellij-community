@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.containers;
+package com.intellij.openapi.project;
 
-import com.intellij.util.Function;
-
-public class FilteredTraverser<T> extends FilteredTraverserBase<T, FilteredTraverser<T>> {
-
-  public FilteredTraverser(Function<T, ? extends Iterable<? extends T>> treeStructure) {
-    super(null, treeStructure);
-  }
-
-  protected FilteredTraverser(Meta<T> meta, Function<T, ? extends Iterable<? extends T>> treeStructure) {
-    super(meta, treeStructure);
-  }
-
-  @Override
-  protected FilteredTraverser<T> newInstance(Meta<T> meta) {
-    return new FilteredTraverser<T>(meta, treeStructure);
-  }
+/**
+ * Permits the dumb mode to start at a specific moment, either modally or in background.
+ * @see DumbService#allowStartingDumbModeInside(DumbModePermission, Runnable)
+ */
+public enum DumbModePermission {
+  MAY_START_MODAL,
+  MAY_START_BACKGROUND
 }

@@ -29,7 +29,7 @@
 
   <application-components>
     <component>
-      <implementation-class>com.jetbrains.edu.learning.StudyInitialConfigurator</implementation-class>
+      <implementation-class>com.jetbrains.edu.learning.PyStudyInitialConfigurator</implementation-class>
       <headless-implementation-class/>
     </component>
   </application-components>

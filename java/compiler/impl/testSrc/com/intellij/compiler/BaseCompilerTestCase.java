@@ -288,7 +288,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
     final long start = System.currentTimeMillis();
     while (!semaphore.waitFor(10)) {
-      if (System.currentTimeMillis() - start > 60 * 1000) {
+      if (System.currentTimeMillis() - start > 5 * 60 * 1000) {
         throw new RuntimeException("timeout");
       }
       if (SwingUtilities.isEventDispatchThread()) {

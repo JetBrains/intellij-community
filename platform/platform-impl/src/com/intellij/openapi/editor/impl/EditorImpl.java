@@ -282,6 +282,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable
   private CharSequence myPlaceholderText;
+  @Nullable private TextAttributes myPlaceholderAttributes;
   private int myLastPaintedPlaceholderWidth;
   private boolean myShowPlaceholderWhenFocused;
 
@@ -2244,6 +2245,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlaceholderText = text;
   }
 
+  @Override
+  public void setPlaceholderAttributes(@Nullable TextAttributes attributes) {
+    myPlaceholderAttributes = attributes;
+  }
+
   public CharSequence getPlaceholder() {
     return myPlaceholderText;
   }
@@ -3086,8 +3092,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       hintText = SwingUtilities.layoutCompoundLabel(g.getFontMetrics(), hintText.toString(), null, 0, 0, 0, 0,
                                                     myEditorComponent.getBounds(), new Rectangle(), new Rectangle(), 0);
       myLastPaintedPlaceholderWidth = drawString(
-        g, hintText, 0, hintText.length(), new Point(0, 0), clip, null, null, Font.PLAIN,
-        myFoldingModel.getPlaceholderAttributes().getForegroundColor(), PAINT_NO_WHITESPACE
+        g, hintText, 0, hintText.length(), new Point(0, 0), clip, null, null, 
+        myPlaceholderAttributes == null ? Font.PLAIN : myPlaceholderAttributes.getFontType(),
+        myPlaceholderAttributes == null ? myFoldingModel.getPlaceholderAttributes().getForegroundColor() : 
+                                          myPlaceholderAttributes.getForegroundColor(), 
+        PAINT_NO_WHITESPACE
       );
       flushCachedChars(g);
       return true;

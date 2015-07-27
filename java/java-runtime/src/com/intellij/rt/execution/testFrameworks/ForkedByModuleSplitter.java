@@ -15,8 +15,6 @@
  */
 package com.intellij.rt.execution.testFrameworks;
 
-import com.intellij.rt.execution.CommandLineWrapper;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,10 +81,7 @@ public abstract class ForkedByModuleSplitter {
     builder.add("-classpath");
     if (myDynamicClasspath.length() > 0) {
       try {
-        final File classpathFile = createClasspathJarFile(new Manifest(), classpath);
-        builder.add(myDynamicClasspath + File.pathSeparator + classpathFile.getAbsolutePath());
-        builder.add(CommandLineWrapper.class.getName());
-        builder.add(classpathFile.getAbsolutePath());
+        builder.add(createClasspathJarFile(new Manifest(), classpath).getAbsolutePath());
       }
       catch (Throwable e) {
         builder.add(classpath);

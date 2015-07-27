@@ -30,6 +30,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -95,6 +96,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setBackground(ERROR_BACKGROUND);
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
+    Disposer.register(this, myCardPanel);
     ActionManager.getInstance().addAnActionListener(this, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {

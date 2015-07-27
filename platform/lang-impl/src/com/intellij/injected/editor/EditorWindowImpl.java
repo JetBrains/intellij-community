@@ -162,23 +162,15 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @NotNull
   public LogicalPosition injectedToHost(@NotNull LogicalPosition pos) {
     assert isValid();
-    // beware the virtual space
-    int column = pos.column;
-    int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
-    int lineEndOffset = myDocumentWindow.getLineEndOffset(pos.line);
-    if (column > lineEndOffset - lineStartOffset) {
-      // in virtual space, calculate the host pos as an offset from the line end
-      int delta = column - (lineEndOffset - lineStartOffset);
-
-      int baseOffsetInHost = myDocumentWindow.injectedToHost(lineEndOffset);
-      LogicalPosition lineStartPosInHost = myDelegate.offsetToLogicalPosition(baseOffsetInHost);
-      return new LogicalPosition(lineStartPosInHost.line, lineStartPosInHost.column + delta);
-    }
-    else {
-      int offset = lineStartOffset + column;
-      int hostOffset = getDocument().injectedToHost(offset);
-      return myDelegate.offsetToLogicalPosition(hostOffset);
-    }
+    
+    int offset = logicalPositionToOffset(pos);
+    LogicalPosition samePos = offsetToLogicalPosition(offset);
+    
+    int virtualSpaceDelta = offset < myDocumentWindow.getTextLength() && samePos.line == pos.line && samePos.column < pos.column ? 
+                            pos.column - samePos.column : 0;
+    
+    LogicalPosition hostPos = myDelegate.offsetToLogicalPosition(myDocumentWindow.injectedToHost(offset));
+    return new LogicalPosition(hostPos.line, hostPos.column + virtualSpaceDelta);
   }
 
   private void dispose() {
@@ -416,27 +408,11 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return hostToInjected(hostPos);
   }
 
-  private LogicalPosition fitInsideEditor(LogicalPosition pos) {
-    int lineCount = myDocumentWindow.getLineCount();
-    if (pos.line >= lineCount) {
-      pos = new LogicalPosition(lineCount-1, pos.column);
-    }
-    int lineLength = myDocumentWindow.getLineEndOffset(pos.line) - myDocumentWindow.getLineStartOffset(pos.line);
-    if (pos.column >= lineLength) {
-      pos = new LogicalPosition(pos.line, Math.max(0, lineLength-1));
-    }
-    return pos;
-  }
-
   @Override
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     assert isValid();
-    LogicalPosition trimmedPos = fitInsideEditor(pos);
-    LogicalPosition hostPos = injectedToHost(trimmedPos);
-    if (!trimmedPos.equals(pos)) {
-      hostPos = new LogicalPosition(hostPos.line + (pos.line - trimmedPos.line), hostPos.column + (pos.column - trimmedPos.column));
-    }
+    LogicalPosition hostPos = injectedToHost(pos);
     return myDelegate.logicalPositionToXY(hostPos);
   }
 
@@ -830,6 +806,11 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   public void setPlaceholder(@Nullable CharSequence text) {
     myDelegate.setPlaceholder(text);
+  }
+
+  @Override
+  public void setPlaceholderAttributes(@Nullable TextAttributes attributes) {
+    myDelegate.setPlaceholderAttributes(attributes);
   }
 
   @Override

@@ -28,7 +28,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -130,10 +133,32 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       selectInTree(toSelect, true);
     }
 
-    show();
+    Runnable showRunnable = new Runnable() {
+      @Override
+      public void run() {
+        show();
+      }
+    };
+    // file chooser calls VFS refresh which might lead to rootsChanged in any open project and dumb mode that the clients don't expect.
+    // so if reindexing has to happen, let it happen under a modal progress and be finished before the file chooser returns.
+    // this hack should be gone if file chooser doesn't use VFS (https://youtrack.jetbrains.com/issue/IDEA-101218)
+    for (final Project eachProject : ProjectManager.getInstance().getOpenProjects()) {
+      showRunnable = allowModalDumbModeInside(showRunnable, eachProject);
+    }
+    showRunnable.run();
+
     return myChosenFiles;
   }
 
+  @NotNull
+  private static Runnable allowModalDumbModeInside(final @NotNull Runnable runnable, @NotNull final Project eachProject) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        DumbService.getInstance(eachProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, runnable);
+      }
+    };
+  }
 
   @NotNull
   @Override

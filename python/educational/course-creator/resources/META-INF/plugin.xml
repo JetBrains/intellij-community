@@ -24,6 +24,8 @@
     <treeStructureProvider implementation="com.jetbrains.edu.coursecreator.projectView.CCTreeStructureProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.edu.coursecreator.CCRefactoringElementListenerProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <renameHandler implementation="com.jetbrains.edu.coursecreator.CCRenameHandler"/>
+    <renameInputValidator implementation="com.jetbrains.edu.coursecreator.CCRenameInputValidator"/>
   </extensions>
 
   <application-components>
@@ -66,12 +68,6 @@
     </action>
     <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
-    </action>
-    <action id="RenameLesson" class="com.jetbrains.edu.coursecreator.actions.CCRenameLesson">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
-    </action>
-    <action id="RenameTask" class="com.jetbrains.edu.coursecreator.actions.CCRenameTask">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
     </action>
     <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
       <add-to-group group-id="MainToolBar" anchor="last" />

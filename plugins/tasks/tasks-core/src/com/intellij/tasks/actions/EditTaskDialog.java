@@ -107,9 +107,9 @@ public class EditTaskDialog extends DialogWrapper {
     if (myChangelist.isVisible()) {
       List<ChangeListInfo> changeLists = myTask.getChangeLists();
       changeLists.clear();
-      ChangeListInfo item = (ChangeListInfo)myChangelist.getSelectedItem();
+      LocalChangeList item = (LocalChangeList)myChangelist.getSelectedItem();
       if (item != null) {
-        changeLists.add(item);
+        changeLists.add(new ChangeListInfo(item));
       }
     }
     if (myBranch.isVisible()) {

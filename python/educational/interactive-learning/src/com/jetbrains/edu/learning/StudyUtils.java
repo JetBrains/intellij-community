@@ -140,7 +140,7 @@ public class StudyUtils {
     throws IOException {
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final Course course = taskManager.getCourse();
-    int taskNum = task.getIndex() + 1;
+    int taskNum = task.getIndex();
     int lessonNum = task.getLesson().getIndex();
     assert course != null;
     final String pathToResource = FileUtil.join(course.getCourseDirectory(), EduNames.LESSON + lessonNum, EduNames.TASK + taskNum);

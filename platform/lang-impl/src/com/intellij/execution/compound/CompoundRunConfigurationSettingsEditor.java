@@ -20,6 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration>{
+public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
   @NotNull private final Project myProject;
   private final CheckBoxList<RunConfiguration> myList;
   private List<RunConfiguration> myChecked = new ArrayList<RunConfiguration>();
@@ -53,6 +54,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   private void updateModel(@NotNull CompoundRunConfiguration s) {
     List<RunConfiguration> list = myRunManager.getAllConfigurationsList();
     Collections.sort(list, CompoundRunConfiguration.COMPARATOR);
+    myList.clear();
     for (RunConfiguration configuration : list) {
       if (canBeAdded(configuration, s)) {
         myList.addItem(configuration, configuration.getName(), myChecked.contains(configuration));
@@ -60,8 +62,8 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     }
   }
 
-  private  boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
-    if (candidate == root) return false;
+  private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
+    if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
     List<BeforeRunTask> tasks = myRunManager.getBeforeRunTasks(candidate);
     for (BeforeRunTask task : tasks) {
       if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
@@ -83,10 +85,10 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   }
 
   @Override
-  protected void resetEditorFrom(CompoundRunConfiguration s) {
+  protected void resetEditorFrom(CompoundRunConfiguration compoundRunConfiguration) {
     myChecked.clear();
-    myChecked.addAll(s.getSetToRun());
-    updateModel(s);
+    myChecked.addAll(compoundRunConfiguration.getSetToRun());
+    updateModel(compoundRunConfiguration);
   }
 
   @Override
@@ -94,7 +96,11 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     Set<RunConfiguration> checked = new HashSet<RunConfiguration>();
     for (int i = 0; i < myList.getItemsCount(); i++) {
       RunConfiguration configuration = myList.getItemAt(i);
+      if (configuration == null) continue;
       if (myList.isItemSelected(configuration)) {
+        String message =
+          LangBundle.message("compound.run.configuration.cycle", configuration.getType().getDisplayName(), configuration.getName());
+        if (!canBeAdded(configuration, s)) throw new ConfigurationException(message);
         checked.add(configuration);
       }
     }
@@ -106,6 +112,6 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @NotNull
   @Override
   protected JComponent createEditor() {
-    return myList;//new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    return myList;
   }
 }

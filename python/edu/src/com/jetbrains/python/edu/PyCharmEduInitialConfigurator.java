@@ -22,6 +22,8 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
@@ -35,12 +37,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.*;
@@ -92,6 +92,7 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
+      uiSettings.SHOW_NAVIGATION_BAR = false;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
       Registry.get("ide.new.settings.dialog").setValue(true);
@@ -182,7 +183,7 @@ public class PyCharmEduInitialConfigurator {
 
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
-          || "Structure".equals(ep.id)) {
+          || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {
         rootArea.getExtensionPoint(ToolWindowEP.EP_NAME).unregisterExtension(ep);
       }
     }
@@ -208,9 +209,19 @@ public class PyCharmEduInitialConfigurator {
   }
 
   private static void patchProjectAreaExtensions(@NotNull final Project project) {
+    ExtensionsArea projectArea = Extensions.getArea(project);
+
     for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
-      if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId())) {
-        Extensions.getArea(project).getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
+      if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId()) ||
+          ToolWindowId.STRUCTURE_VIEW.equals(target.getToolWindowId())) {
+        projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
+      }
+    }
+
+    for (AbstractProjectViewPane pane : Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, project)) {
+      if (pane.getId().equals(ScopeViewPane.ID)) {
+        Disposer.dispose(pane);
+        projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);
       }
     }
   }
