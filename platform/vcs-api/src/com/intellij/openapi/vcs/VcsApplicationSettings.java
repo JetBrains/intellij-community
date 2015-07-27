@@ -28,6 +28,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 public class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
   public String PATCH_STORAGE_LOCATION = null;
   public boolean SHOW_WHITESPACES_IN_LST = false;
+  public boolean SHOW_LST_GUTTER_MARKERS = true;
 
   public static VcsApplicationSettings getInstance() {
     return ServiceManager.getService(VcsApplicationSettings.class);

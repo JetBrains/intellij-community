@@ -318,7 +318,9 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   @NotNull
   private static LineStatusTracker.Mode getMode() {
-    return VcsApplicationSettings.getInstance().SHOW_WHITESPACES_IN_LST ? LineStatusTracker.Mode.SMART : LineStatusTracker.Mode.DEFAULT;
+    VcsApplicationSettings vcsApplicationSettings = VcsApplicationSettings.getInstance();
+    if (!vcsApplicationSettings.SHOW_LST_GUTTER_MARKERS) return LineStatusTracker.Mode.SILENT;
+    return vcsApplicationSettings.SHOW_WHITESPACES_IN_LST ? LineStatusTracker.Mode.SMART : LineStatusTracker.Mode.DEFAULT;
   }
 
   private void startAlarm(@NotNull final Document document, @NotNull final VirtualFile virtualFile) {

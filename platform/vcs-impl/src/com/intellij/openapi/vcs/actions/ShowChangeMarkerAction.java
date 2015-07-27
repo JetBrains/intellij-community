@@ -96,6 +96,12 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
 
   @Override
   protected void update(VcsContext context, Presentation presentation) {
+    LineStatusTracker tracker = myChangeMarkerContext.getLineStatusTracker(context);
+    if (tracker == null || tracker.isSilentMode()) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
     boolean active = isActive(context);
     presentation.setEnabled(active);
     presentation.setVisible(myChangeMarkerContext.getEditor(context) != null || ActionPlaces.isToolbarPlace(context.getPlace()));
