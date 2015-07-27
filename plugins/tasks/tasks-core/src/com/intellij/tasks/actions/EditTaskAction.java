@@ -40,7 +40,7 @@ public class EditTaskAction extends BaseTaskAction {
     Presentation presentation = event.getPresentation();
     Project project = getEventProject(event);
     if (project != null && presentation.isEnabled()) {
-      presentation.setText("Edit '" + TaskManager.getManager(project).getActiveTask().getPresentableName());
+      presentation.setText("Edit '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "'");
     }
   }
 }
