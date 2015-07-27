@@ -65,7 +65,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       public void run() {
         myTestsRootNode.setState(State.RUNNING, GeneralIdBasedToSMTRunnerEventsConvertor.this);
         myTestsRootProxy.setStarted();
-        myEventPublisher.onTestingStarted(myTestsRootProxy);
+        fireOnTestingStarted(myTestsRootProxy);
       }
     });
   }
@@ -74,7 +74,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onTestsReporterAttached() {
     addToInvokeLater(new Runnable() {
       public void run() {
-        myTestsRootProxy.setTestsReporterAttached();
+        fireOnTestsReporterAttached(myTestsRootProxy);
       }
     });
   }
@@ -104,7 +104,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         myNodeByIdMap.clear();
         myRunningTestNodes.clear();
 
-        myEventPublisher.onTestingFinished(myTestsRootProxy);
+        fireOnTestingFinished(myTestsRootProxy);
       }
     });
     stopEventProcessing();
@@ -200,7 +200,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
           SMTestProxy testProxy = node.getProxy();
           testProxy.setDuration(testFinishedEvent.getDuration());
           testProxy.setFinished();
-          myEventPublisher.onTestFinished(testProxy);
+          fireOnTestFinished(testProxy);
           terminateNode(node, State.FINISHED);
         }
       }
@@ -214,7 +214,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         if (node != null) {
           SMTestProxy suiteProxy = node.getProxy();
           suiteProxy.setFinished();
-          myEventPublisher.onSuiteFinished(suiteProxy);
+          fireOnSuiteFinished(suiteProxy);
           terminateNode(node, State.FINISHED);
         }
       }
@@ -259,40 +259,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     });
   }
 
-  public void onCustomProgressTestsCategory(@Nullable final String categoryName,
-                                            final int testCount) {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
-      }
-    });
-  }
-
-  public void onCustomProgressTestStarted() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestStarted();
-      }
-    });
-  }
-
-  @Override
-  public void onCustomProgressTestFinished() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestFinished();
-      }
-    });
-  }
-
-  public void onCustomProgressTestFailed() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestFailed();
-      }
-    });
-  }
-
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     addToInvokeLater(new Runnable() {
       public void run() {
@@ -325,7 +291,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         }
 
         // fire event
-        myEventPublisher.onTestFailed(testProxy);
+        fireOnTestFailed(testProxy);
 
         terminateNode(node, State.FAILED);
       }
@@ -340,7 +306,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
           SMTestProxy testProxy = node.getProxy();
           testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
           // fire event
-          myEventPublisher.onTestIgnored(testProxy);
+          fireOnTestIgnored(testProxy);
           terminateNode(node, State.IGNORED);
         }
       }
@@ -369,7 +335,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onTestsCountInSuite(final int count) {
     addToInvokeLater(new Runnable() {
       public void run() {
-        myEventPublisher.onTestsCountInSuite(count);
+        fireOnTestsCountInSuite(count);
       }
     });
   }
@@ -425,10 +391,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
       if (proxy.isSuite()) {
-        myEventPublisher.onSuiteStarted(proxy);
+        fireOnSuiteStarted(proxy);
       } else {
         myRunningTestNodes.add(lowestNode);
-        myEventPublisher.onTestStarted(proxy);
+        fireOnTestStarted(proxy);
       }
       node = node.getParentNode();
     }

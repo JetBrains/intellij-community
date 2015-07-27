@@ -69,7 +69,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         myTestsRootNode.setStarted();
 
         //fire
-        myEventPublisher.onTestingStarted(myTestsRootNode);
+        fireOnTestingStarted(myTestsRootNode);
       }
     });
   }
@@ -78,7 +78,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onTestsReporterAttached() {
     addToInvokeLater(new Runnable() {
       public void run() {
-        myTestsRootNode.setTestsReporterAttached();
+        fireOnTestsReporterAttached(myTestsRootNode);
       }
     });
   }
@@ -105,7 +105,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
 
         //fire events
-        myEventPublisher.onTestingFinished(myTestsRootNode);
+        fireOnTestingFinished(myTestsRootNode);
       }
     });
     stopEventProcessing();
@@ -138,6 +138,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         }
         getCurrentSuite().addChild(testProxy);
         myEventPublisher.onSuiteTreeNodeAdded(testProxy);
+        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+          adapter.onSuiteTreeNodeAdded(testProxy);
+        }
       }
     });
   }
@@ -158,6 +161,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         mySuitesStack.pushSuite(newSuite);
 
         myEventPublisher.onSuiteTreeStarted(newSuite);
+        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+          adapter.onSuiteTreeStarted(newSuite);
+        }
       }
     });
   }
@@ -213,7 +219,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setStarted();
 
         //fire events
-        myEventPublisher.onTestStarted(testProxy);
+        fireOnTestStarted(testProxy);
       }
     });
   }
@@ -243,7 +249,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         newSuite.setStarted();
 
         //fire event
-        myEventPublisher.onSuiteStarted(newSuite);
+        fireOnSuiteStarted(newSuite);
       }
     });
   }
@@ -278,7 +284,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         myRunningTestsFullNameToProxy.remove(fullTestName);
 
         //fire events
-        myEventPublisher.onTestFinished(testProxy);
+        fireOnTestFinished(testProxy);
       }
     });
   }
@@ -292,7 +298,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
           mySuite.setFinished();
 
           //fire events
-          myEventPublisher.onSuiteFinished(mySuite);
+          fireOnSuiteFinished(mySuite);
         }
       }
     });
@@ -324,40 +330,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       }
     });
   }
-
-  public void onCustomProgressTestsCategory(@Nullable final String categoryName,
-                                            final int testCount) {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
-      }
-    });
-  }
-
-  public void onCustomProgressTestStarted() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestStarted();
-      }
-    });
-  }
-
-  public void onCustomProgressTestFinished() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestFinished();
-      }
-    });
-  }
-
-
-  public void onCustomProgressTestFailed() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestFailed();
-      }
-    });
-  }
+  
 
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     addToInvokeLater(new Runnable() {
@@ -424,7 +397,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         myFailedTestsSet.add(testProxy);
 
         // fire event
-        myEventPublisher.onTestFailed(testProxy);
+        fireOnTestFailed(testProxy);
       }
     });
   }
@@ -461,7 +434,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setTestIgnored(ignoreComment, stackTrace);
 
         // fire event
-        myEventPublisher.onTestIgnored(testProxy);
+        fireOnTestIgnored(testProxy);
       }
     });
   }
@@ -494,7 +467,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onTestsCountInSuite(final int count) {
      addToInvokeLater(new Runnable() {
        public void run() {
-         myEventPublisher.onTestsCountInSuite(count);
+         fireOnTestsCountInSuite(count);
        }
      });
   }

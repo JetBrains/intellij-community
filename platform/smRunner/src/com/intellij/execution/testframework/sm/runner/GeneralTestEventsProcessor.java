@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
         return true;
       }
     }, getDisposedCondition(), 300);
-  private HashMap<SMTRunnerEventsListener, MessageBusConnection> myListenerAdapters = new HashMap<SMTRunnerEventsListener, MessageBusConnection>();
+  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<SMTRunnerEventsListener>();
 
   public GeneralTestEventsProcessor(Project project) {
     myProject = project;
@@ -72,28 +73,86 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   // progress events
 
   public abstract void onStartTesting();
+  protected void fireOnTestingStarted(SMTestProxy.SMRootTestProxy node) {
+    myEventPublisher.onTestingStarted(node);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestingStarted(node);
+    }
+  }
 
   public abstract void onTestsCountInSuite(final int count);
+  protected void fireOnTestsCountInSuite(int count) {
+    myEventPublisher.onTestsCountInSuite(count);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestsCountInSuite(count);
+    }
+  }
 
   public abstract void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
+  protected void fireOnTestStarted(SMTestProxy testProxy) {
+    myEventPublisher.onTestStarted(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestStarted(testProxy);
+    }
+  }
 
   public abstract void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
+  protected void fireOnTestFinished(SMTestProxy testProxy) {
+    myEventPublisher.onTestFinished(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestFinished(testProxy);
+    }
+  }
 
   public abstract void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
+  protected void fireOnTestFailed(SMTestProxy testProxy) {
+    myEventPublisher.onTestFailed(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestFailed(testProxy);
+    }
+  }
 
   public abstract void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
+  protected void fireOnTestIgnored(SMTestProxy testProxy) {
+    myEventPublisher.onTestIgnored(testProxy);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestIgnored(testProxy);
+    }
+  }
 
   public abstract void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
 
   public abstract void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
-
+  protected void fireOnSuiteStarted(SMTestProxy newSuite) {
+    myEventPublisher.onSuiteStarted(newSuite);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onSuiteStarted(newSuite);
+    }
+  }
+  
   public abstract void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
+  protected void fireOnSuiteFinished(SMTestProxy mySuite) {
+    myEventPublisher.onSuiteFinished(mySuite);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onSuiteFinished(mySuite);
+    }
+  }
 
   public abstract void onUncapturedOutput(@NotNull String text, Key outputType);
 
   public abstract void onError(@NotNull String localizedMessage, @Nullable String stackTrace, boolean isCritical);
 
+  protected static void fireOnTestsReporterAttached(SMTestProxy.SMRootTestProxy rootNode) {
+    rootNode.setTestsReporterAttached();
+  }
+
   public abstract void onFinishTesting();
+  protected void fireOnTestingFinished(SMTestProxy.SMRootTestProxy root) {
+    myEventPublisher.onTestingFinished(root);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onTestingFinished(root);
+    }
+  }
 
   // custom progress statistics
 
@@ -102,13 +161,50 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
    *                     If name is null statistics will be switched to normal mode
    * @param testCount    0 will be considered as unknown tests number
    */
-  public abstract void onCustomProgressTestsCategory(@Nullable String categoryName, int testCount);
+  public void onCustomProgressTestsCategory(@Nullable final String categoryName,
+                                            final int testCount) {
+    addToInvokeLater(new Runnable() {
+      public void run() {
+        myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
+        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+          adapter.onCustomProgressTestsCategory(categoryName, testCount);
+        }
+      }
+    });
+  }
 
-  public abstract void onCustomProgressTestStarted();
+  public void onCustomProgressTestStarted() {
+    addToInvokeLater(new Runnable() {
+      public void run() {
+        myEventPublisher.onCustomProgressTestStarted();
+        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+          adapter.onCustomProgressTestStarted();
+        }
+      }
+    });
+  }
 
-  public abstract void onCustomProgressTestFinished();
+  public void onCustomProgressTestFinished() {
+    addToInvokeLater(new Runnable() {
+      public void run() {
+        myEventPublisher.onCustomProgressTestFinished();
+        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+          adapter.onCustomProgressTestFinished();
+        }
+      }
+    });
+  }
 
-  public abstract void onCustomProgressTestFailed();
+  public void onCustomProgressTestFailed() {
+    addToInvokeLater(new Runnable() {
+      public void run() {
+        myEventPublisher.onCustomProgressTestFailed();
+        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+          adapter.onCustomProgressTestFailed();
+        }
+      }
+    });
+  }
 
   // workflow/service methods
 
@@ -117,9 +213,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   public abstract void setLocator(@NotNull SMTestLocator locator);
 
   public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
-    final MessageBusConnection connection = myProject.getMessageBus().connect();
-    myListenerAdapters.put(listener, connection);
-    connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, listener);
+    myListenerAdapters.add(listener);
   }
 
   public abstract void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
@@ -137,9 +231,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   protected void disconnectListeners() {
-    for (MessageBusConnection connection : myListenerAdapters.values()) {
-      connection.disconnect();
-    }
+    myListenerAdapters.clear();
   }
 
   public Condition getDisposedCondition() {
