@@ -623,12 +623,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (!auxCopy(file, newParent, copyName)) {
       try {
         File ioFile = convertToIOFile(file);
-        if (attributes.isDirectory()) {
-          FileUtil.copyDir(ioFile, ioTarget);
-        }
-        else {
-          FileUtil.copy(ioFile, ioTarget);
-        }
+        FileUtil.copyFileOrDir(ioFile, ioTarget, attributes.isDirectory());
       }
       catch (IOException e) {
         FileUtil.delete(ioTarget);

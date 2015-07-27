@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ import javax.swing.*;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
+
   @NotNull
   @Override
+  @SuppressWarnings("InstanceofCatchParameter")
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
@@ -35,7 +37,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     try {
-      if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
+      boolean dispatchThread = application.isDispatchThread();
+      if (!dispatchThread && application.isReadAccessAllowed()) {
         LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
       }
       Runnable runnable = new Runnable() {
@@ -49,7 +52,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
           });
         }
       };
-      if (application.isDispatchThread()) {
+      if (dispatchThread) {
         runnable.run();
       }
       else if (application.isReadAccessAllowed()) {
@@ -68,6 +71,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
         throw new Error(e);
       }
     }
+
     return result;
   }
 

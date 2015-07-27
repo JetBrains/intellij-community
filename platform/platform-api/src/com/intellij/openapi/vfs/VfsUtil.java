@@ -533,6 +533,18 @@ public class VfsUtil extends VfsUtilCore {
     return children == null ? VirtualFile.EMPTY_ARRAY : children;
   }
 
+  @NotNull
+  public static List<VirtualFile> getChildren(@NotNull VirtualFile dir, @NotNull VirtualFileFilter filter) {
+    List<VirtualFile> result = null;
+    for (VirtualFile child : dir.getChildren()) {
+      if (filter.accept(child)) {
+        if (result == null) result = ContainerUtil.newSmartList();
+        result.add(child);
+      }
+    }
+    return result != null ? result : ContainerUtil.<VirtualFile>emptyList();
+  }
+
   /**
    * @param url Url for virtual file
    * @return url for parent directory of virtual file

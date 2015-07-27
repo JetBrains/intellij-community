@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
-
 public class RunResult<T> extends Result<T> {
-
   private BaseActionRunnable<T> myActionRunnable;
-
   private Throwable myThrowable;
 
-  protected RunResult() {
-  }
+  protected RunResult() { }
 
   public RunResult(@NotNull BaseActionRunnable<T> action) {
     myActionRunnable = action;
@@ -38,18 +35,13 @@ public class RunResult<T> extends Result<T> {
       myActionRunnable.run(this);
     }
     catch (ProcessCanceledException e) {
-      throw e; // this exception may occur from time to time and it shouldn't be catched
+      throw e; // this exception may occur from time to time and it shouldn't be caught
     }
-    catch (Throwable throwable) {
-      myThrowable = throwable;
+    catch (Throwable t) {
+      myThrowable = t;
       if (!myActionRunnable.isSilentExecution()) {
-        if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
-        if (throwable instanceof Error) {
-          throw (Error)throwable;
-        }
-        else {
-          throw new RuntimeException(myThrowable);
-        }
+        ExceptionUtil.rethrowUnchecked(t);
+        throw new RuntimeException(myThrowable);
       }
     }
     finally {
@@ -65,7 +57,7 @@ public class RunResult<T> extends Result<T> {
 
   @NotNull
   public RunResult logException(Logger logger) {
-    if (hasException()) {
+    if (myThrowable != null) {
       logger.error(myThrowable);
     }
 
@@ -74,16 +66,11 @@ public class RunResult<T> extends Result<T> {
 
   @NotNull
   public RunResult<T> throwException() throws RuntimeException, Error {
-    if (hasException()) {
-      if (myThrowable instanceof RuntimeException) {
-        throw (RuntimeException)myThrowable;
-      }
-      if (myThrowable instanceof Error) {
-        throw (Error)myThrowable;
-      }
-
+    if (myThrowable != null) {
+      ExceptionUtil.rethrowUnchecked(myThrowable);
       throw new RuntimeException(myThrowable);
     }
+
     return this;
   }
 
