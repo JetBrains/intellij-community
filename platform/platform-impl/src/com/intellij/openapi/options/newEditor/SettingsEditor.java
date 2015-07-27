@@ -355,6 +355,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myEditor.getApplyAction().setEnabled(!myFilter.myContext.getModified().isEmpty());
       myEditor.getResetAction().setEnabled(myFilter.myContext.isModified(configurable) || exception != null);
       myEditor.setError(exception);
+      myEditor.revalidate();
     }
     if (configurable != null) {
       new Alarm().addRequest(new Runnable() {
