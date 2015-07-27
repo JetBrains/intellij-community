@@ -34,7 +34,7 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
 
   test fun getRootByEntry() {
     val root = fs.getRootByEntry(entry)!!
-    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getRootByEntry()", 500, {
+    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getRootByEntry()", 50, {
       for (i in 0..100000) {
         assertEquals(root, fs.getRootByEntry(entry))
       }
@@ -43,7 +43,7 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
 
   test fun getLocalByEntry() {
     val local = fs.getLocalByEntry(entry)!!
-    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getLocalByEntry()", 700, {
+    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getLocalByEntry()", 50, {
       for (i in 0..100000) {
         assertEquals(local, fs.getLocalByEntry(entry))
       }

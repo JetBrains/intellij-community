@@ -90,7 +90,7 @@ public class VfsUtil extends VfsUtilCore {
    *
    * @param file to copy to
    * @param resourceUrl url of the resource to be copied
-   * @throws java.io.IOException if resource not found or copying failed
+   * @throws IOException if resource not found or copying failed
    */
   public static void copyFromResource(@NotNull VirtualFile file, @NonNls @NotNull String resourceUrl) throws IOException {
     InputStream out = VfsUtil.class.getResourceAsStream(resourceUrl);
@@ -542,7 +542,7 @@ public class VfsUtil extends VfsUtilCore {
     if (url == null) {
       return null;
     }
-    final int index = url.lastIndexOf(VfsUtil.VFS_SEPARATOR_CHAR);
+    final int index = url.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
     return index < 0 ? null : url.substring(0, index);
   }
 
@@ -555,7 +555,7 @@ public class VfsUtil extends VfsUtilCore {
     if (urlOrPath == null) {
       return null;
     }
-    final int index = urlOrPath.lastIndexOf(VfsUtil.VFS_SEPARATOR_CHAR);
+    final int index = urlOrPath.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
     return index < 0 ? null : urlOrPath.substring(index+1);
   }
 
@@ -587,5 +587,15 @@ public class VfsUtil extends VfsUtilCore {
     List<VirtualFile> list = markDirty(recursive, reloadChildren, files);
     if (list.isEmpty()) return;
     LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);
+  }
+
+  @NotNull
+  public static VirtualFile getRootFile(@NotNull VirtualFile file) {
+    while (true) {
+      VirtualFile parent = file.getParent();
+      if (parent == null) break;
+      file = parent;
+    }
+    return file;
   }
 }

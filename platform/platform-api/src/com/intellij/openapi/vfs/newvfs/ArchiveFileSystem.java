@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,8 @@ import java.io.OutputStream;
  * @since 138.100
  */
 public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
+  private static final Key<VirtualFile> LOCAL_FILE = Key.create("vfs.archive.local.file");
+
   /**
    * Returns a root entry of an archive hosted by a given local file
    * (i.e.: file:///path/to/jar.jar => jar:///path/to/jar.jar!/),
@@ -52,9 +56,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    */
   @Nullable
   public VirtualFile getRootByEntry(@NotNull VirtualFile entry) {
-    if (entry.getFileSystem() != this) return null;
-    String rootPath = extractRootPath(entry.getPath());
-    return findFileByPath(rootPath);
+    return entry.getFileSystem() != this ? null : VfsUtil.getRootFile(entry);
   }
 
   /**
@@ -65,8 +67,17 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   @Nullable
   public VirtualFile getLocalByEntry(@NotNull VirtualFile entry) {
     if (entry.getFileSystem() != this) return null;
-    String localPath = extractLocalPath(extractRootPath(entry.getPath()));
-    return LocalFileSystem.getInstance().findFileByPath(localPath);
+
+    VirtualFile root = getRootByEntry(entry);
+    assert root != null : entry;
+
+    VirtualFile local = LOCAL_FILE.get(root);
+    if (local == null) {
+      String localPath = extractLocalPath(extractRootPath(entry.getPath()));
+      local = LocalFileSystem.getInstance().findFileByPath(localPath);
+      if (local != null) LOCAL_FILE.set(root, local);
+    }
+    return local;
   }
 
   /**
