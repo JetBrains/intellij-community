@@ -35,11 +35,8 @@ import org.jetbrains.jgit.dirCache.DeleteDirectory
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.keychain.CredentialsStore
-import org.jetbrains.settingsRepository.AuthenticationException
-import org.jetbrains.settingsRepository.BaseRepositoryManager
-import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
-import org.jetbrains.settingsRepository.RepositoryService
 import java.io.File
 import java.io.IOException
 import kotlin.concurrent.write
@@ -172,7 +169,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     return object : Updater {
       override var definitelySkipPush = false
 
-      override fun merge() = lock.write {
+      // KT-8632
+      override fun merge(): UpdateResult? = lock.write {
         val committed = commit(pullTask.indicator)
         if (refToMerge == null && !committed && getAheadCommitsCount() == 0) {
           definitelySkipPush = true
