@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.Disposable;
@@ -32,6 +33,8 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,7 +106,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @Override
       public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
         LafManager.getInstance().updateUI();
-        EditorFactory.getInstance().refreshAllEditors();
+        schemeChangedOrSwitched();
 
         fireChanges(mySchemeManager.getCurrentScheme());
       }
@@ -148,6 +151,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
     }
     setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
+  }
+
+  public static void schemeChangedOrSwitched() {
+    EditorFactory.getInstance().refreshAllEditors();
+    // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
   }
 
   static class ReadOnlyColorsSchemeImpl extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
