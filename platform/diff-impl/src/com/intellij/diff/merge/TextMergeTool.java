@@ -605,11 +605,30 @@ public class TextMergeTool implements MergeTool {
       // Modification operations
       //
 
+      @CalledInAwt
+      public void markResolved(@NotNull TextMergeChange change) {
+        if (change.isResolved()) return;
+        change.setResolved(Side.LEFT, true);
+        change.setResolved(Side.RIGHT, true);
+
+        onChangeResolved(change);
+        reinstallHighlighter(change);
+      }
+
+      @CalledInAwt
+      public void markResolved(@NotNull TextMergeChange change, @NotNull Side side) {
+        if (change.isResolved(side)) return;
+        change.setResolved(side, true);
+
+        if (change.isResolved()) onChangeResolved(change);
+        reinstallHighlighter(change);
+      }
+
       @CalledWithWriteLock
       public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side) {
         if (change.isResolved(side)) return;
         if (!change.isChange(side)) {
-          change.markResolved();
+          markResolved(change);
           return;
         }
 
@@ -631,7 +650,7 @@ public class TextMergeTool implements MergeTool {
             moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
           }
 
-          change.markResolved();
+          markResolved(change);
         }
         finally {
           exitBulkChangeUpdateBlock();
@@ -664,10 +683,10 @@ public class TextMergeTool implements MergeTool {
 
           if (!change.isConflict() ||
               change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) { // conflict modification-deletion
-            change.markResolved();
+            markResolved(change);
           }
           else {
-            change.markResolved(side);
+            markResolved(change, side);
           }
         }
         finally {
@@ -844,7 +863,7 @@ public class TextMergeTool implements MergeTool {
         @Override
         protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
           for (TextMergeChange change : changes) {
-            change.markResolved();
+            markResolved(change);
           }
         }
       }

@@ -131,22 +131,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   @CalledInAwt
-  public void markResolved() {
-    if (isResolved()) return;
-    myResolved[0] = true;
-    myResolved[1] = true;
-
-    myViewer.onChangeResolved(this);
-    myViewer.reinstallHighlighter(this);
-  }
-
-  @CalledInAwt
-  public void markResolved(@NotNull Side side) {
-    if (isResolved(side)) return;
-    myResolved[side.getIndex()] = true;
-
-    if (isResolved()) myViewer.onChangeResolved(this);
-    myViewer.reinstallHighlighter(this);
+  public void setResolved(@NotNull Side side, boolean value) {
+    myResolved[side.getIndex()] = value;
   }
 
   public boolean isResolved() {
@@ -202,7 +188,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     boolean rangeAffected = oldLine2 >= line1 && oldLine1 <= line2; // RangeMarker can be updated in a different way
 
     if (newRange.startLine == newRange.endLine && getDiffType() == TextDiffType.DELETED) {
-      markResolved();
+      myViewer.markResolved(this);
     }
 
     return newRange.damaged || rangeAffected;
@@ -336,7 +322,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, new Runnable() {
       @Override
       public void run() {
-        markResolved();
+        myViewer.markResolved(TextMergeChange.this);
       }
     });
   }
