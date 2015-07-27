@@ -17,23 +17,29 @@ package com.intellij.vcs.log.ui.history;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.ui.frame.CommitSelectionListenerForDiff;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.frame.CommitSelectionListenerForDiff;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -49,6 +55,7 @@ import java.util.List;
 import java.util.Set;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
+  private static final Logger LOG = Logger.getInstance(FileHistoryPanel.class);
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
@@ -158,8 +165,33 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       return ArrayUtil.toObjectArray(mySelectedChanges, Change.class);
     }
-    if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
+    else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUi.getProperties();
+    }
+    else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
+      return createRevisionForFirstSelectedCommit();
+    }
+    else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
+      VcsLogFileRevision revision = createRevisionForFirstSelectedCommit();
+      if (revision != null) {
+        return revision.getPath().isDirectory()
+               ? new VcsVirtualFolder(revision.getPath().getPath(), null, VcsFileSystem.getInstance())
+               : new VcsVirtualFile(revision.getPath().getPath(), revision, VcsFileSystem.getInstance());
+      }
+    }
+    return null;
+  }
+
+  private VcsLogFileRevision createRevisionForFirstSelectedCommit() {
+    VcsFullCommitDetails details = ContainerUtil.getFirstItem(myUi.getVcsLog().getSelectedDetails());
+    if (details != null && !(details instanceof LoadingDetails)) {
+      List<Change> changes = collectRelevantChanges(details.getChanges());
+      Change change = ObjectUtils.notNull(ContainerUtil.getFirstItem(changes));
+      if (change.getAfterRevision() == null) {
+        LOG.error("After revision for commit " + details.getId() + " change " + change + " is null.");
+        return null;
+      }
+      return new VcsLogFileRevision(details, change, change.getAfterRevision().getFile());
     }
     return null;
   }
@@ -206,6 +238,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   private class MyCommitSelectionListenerForDiff extends CommitSelectionListenerForDiff {
+
     protected MyCommitSelectionListenerForDiff() {
       super(myLogData, FileHistoryPanel.this.myGraphTable);
     }
