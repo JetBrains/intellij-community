@@ -31,6 +31,9 @@ public class JBProgressBar extends JProgressBar {
     boolean nativeLaf = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
     if (nativeLaf) {
       ui = new DarculaProgressBarUI();
+      if (UIUtil.isUnderGTKLookAndFeel()) {
+        setBorder(JBUI.Borders.empty());
+      }
     }
     super.setUI(ui);
     if (nativeLaf) {
