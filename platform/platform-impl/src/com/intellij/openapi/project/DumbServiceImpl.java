@@ -18,7 +18,10 @@ package com.intellij.openapi.project;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
@@ -201,11 +204,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         ModalityState modality = ModalityState.current();
         final DumbModePermission permission = getDumbModePermission(modality);
-        if (permission == null) {
-          LOG.error("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation." +
-                    "\n Current modality: " + modality +
-                    "\n all permissions: " + myPermissions, trace);
-        }
 
         myProgresses.put(task, new ProgressIndicatorBase());
         Disposer.register(task, new Disposable() {
@@ -218,6 +216,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myUpdatesQueue.addLast(task);
         // ok to test and set the flag like this, because the change is always done from dispatch thread
         if (!myDumb) {
+          if (permission == null) {
+            LOG.error("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation." +
+                      "\n Current modality: " + modality +
+                      "\n all permissions: " + myPermissions, trace);
+          }
+
           // always change dumb status inside write action.
           // This will ensure all active read actions are completed before the app goes dumb
           application.runWriteAction(new Runnable() {
