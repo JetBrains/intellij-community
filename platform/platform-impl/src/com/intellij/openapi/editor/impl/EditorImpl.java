@@ -4799,9 +4799,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           originalG.fillRect(x, y, mySettings.getLineCursorWidth(), lineHeight);
         }
         else {
-          for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
-            UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
-          }
+          g.fillRect(x, y, JBUI.scale(mySettings.getLineCursorWidth()), lineHeight);
         }
       }
       else {

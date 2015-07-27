@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -144,6 +145,69 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(element);
     assertTrue(element instanceof PsiClass);
     assertTrue(element.isValid());
+  }
+
+  public void testRetrieveOnUncommittedDocument() {
+    PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
+    assertNotNull(aClass);
+
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
+    document.insertString(0, "/******/");
+
+    SmartPointerEx pointer = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(aClass.getNameIdentifier());
+
+    //noinspection UnusedAssignment
+    aClass = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getCachedElement());
+
+    assertNotNull(pointer.getElement());
+
+    document.insertString(0, "/**/");
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    PsiElement element = pointer.getElement();
+    assertNotNull(element);
+    assertTrue(element.getParent() instanceof PsiClass);
+    assertTrue(element.isValid());
+  }
+
+  public void testNoAstLoadingWithoutDocumentChanges() {
+    PsiClass aClass = myJavaFacade.findClass("Test",GlobalSearchScope.allScope(getProject()));
+    assertNotNull(aClass);
+    PsiFileImpl file = (PsiFileImpl)aClass.getContainingFile();
+
+    createEditor(file.getVirtualFile());
+    assertFalse(file.isContentsLoaded());
+
+    SmartPointerEx pointer = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(aClass);
+    assertFalse(file.isContentsLoaded());
+
+    //noinspection UnusedAssignment
+    aClass = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getCachedElement());
+
+    assertNotNull(pointer.getElement());
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testTextFileClearingDoesNotCrash() {
+    configureByText(PlainTextFileType.INSTANCE, "foo bar goo\n");
+    SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(myFile.getFirstChild());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertEquals(myFile.getFirstChild(), pointer.getElement());
+
+    Document document = myFile.getViewProvider().getDocument();
+    document.deleteString(0, document.getTextLength());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertEquals(myFile.getFirstChild(), pointer.getElement());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getElement());
   }
 
   public void testChangeInPsi() {

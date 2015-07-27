@@ -654,7 +654,7 @@ class EditorPainter {
       Caret caret = location.myCaret;
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-        int lineWidth = settings.getLineCursorWidth();
+        int lineWidth = JBUI.scale(settings.getLineCursorWidth());
         g.fillRect(x, y, lineWidth, lineHeight);
         if (myDocument.getTextLength() > 0 && caret != null && !myView.getLineLayout(caret.getLogicalPosition().line).isLtr()) {
           g.fillPolygon(new int[]{

@@ -25,6 +25,9 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.ActionUrl;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
@@ -37,6 +40,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
+import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -48,13 +52,20 @@ import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.Set;
 
 /**
@@ -65,6 +76,7 @@ public class PyCharmEduInitialConfigurator {
   @NonNls private static final String DISPLAYED_PROPERTY = "PyCharmEDU.initialConfigurationShown";
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
+  @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -84,15 +96,22 @@ public class PyCharmEduInitialConfigurator {
                                        final PropertiesComponent propertiesComponent,
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
+    final UISettings uiSettings = UISettings.getInstance();
+    if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
+      patchMainMenu();
+      uiSettings.SHOW_NAVIGATION_BAR = false;
+      propertiesComponent.setValue(CONFIGURED_V1, "true");
+    }
+
     if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
-      UISettings uiSettings = UISettings.getInstance();
+
       uiSettings.HIDE_TOOL_STRIPES = false;
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
-      uiSettings.SHOW_NAVIGATION_BAR = false;
+
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
       Registry.get("ide.new.settings.dialog").setValue(true);
@@ -176,6 +195,49 @@ public class PyCharmEduInitialConfigurator {
         });
       }
     });
+  }
+
+  private static void patchMainMenu() {
+    final CustomActionsSchema schema = new CustomActionsSchema();
+
+    final JTree actionsTree = new Tree();
+    Group rootGroup = new Group("root", null, null);
+    final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
+    DefaultTreeModel model = new DefaultTreeModel(root);
+    actionsTree.setModel(model);
+
+    schema.fillActionGroups(root);
+    hideActionFromMainMenu(root, schema);
+
+    CustomActionsSchema.getInstance().copyFrom(schema);
+  }
+
+  private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
+                                             @NotNull final CustomActionsSchema schema){
+    final TreeNode mainMenu = root.getFirstChild();
+    final TreeNode fileMenu = mainMenu.getChildAt(0);
+    final String[] fileItems = {"Print/Export Actions"};
+    for (String item : fileItems) {
+      hideAction(schema, root, fileMenu, item);
+    }
+
+    final String[] menuItems = {"Tools", "VCS", "Refactor", "Navigate", "Code", "Window", "View"};
+    for (String item : menuItems) {
+      hideAction(schema, root, mainMenu, item);
+    }
+  }
+
+  private static void hideAction(@NotNull final CustomActionsSchema schema, @NotNull final DefaultMutableTreeNode root,
+                                 @NotNull final TreeNode actionGroup, @NotNull final String actionId) {
+    for(int i = 0; i < actionGroup.getChildCount(); i++){
+      final DefaultMutableTreeNode child = (DefaultMutableTreeNode)actionGroup.getChildAt(i);
+      final String childId = child.getUserObject() instanceof Group ? ((Group)child.getUserObject()).getName() : null;
+      if (childId != null && childId.equals(actionId)){
+        final TreePath treePath = TreeUtil.getPath(root, child);
+        final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
+        schema.addAction(url);
+      }
+    }
   }
 
   private static void patchRootAreaExtensions() {
