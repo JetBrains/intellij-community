@@ -179,11 +179,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   public boolean processBaseChange(int oldLine1, int oldLine2, int shift) {
     int line1 = getStartLine(ThreeSide.BASE);
     int line2 = getEndLine(ThreeSide.BASE);
-    int baseIndex = ThreeSide.BASE.getIndex();
 
     UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift);
-    myStartLines[baseIndex] = newRange.startLine;
-    myEndLines[baseIndex] = newRange.endLine;
+    setStartLine(ThreeSide.BASE, newRange.startLine);
+    setEndLine(ThreeSide.BASE, newRange.endLine);
 
     boolean rangeAffected = oldLine2 >= line1 && oldLine1 <= line2; // RangeMarker can be updated in a different way
 
@@ -369,5 +368,69 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
         return tooltipText;
       }
     };
+  }
+
+  //
+  // State
+  //
+
+  @NotNull
+  public State storeState() {
+    return new State(
+      myStartLines[0],
+      myStartLines[1],
+      myStartLines[2],
+
+      myEndLines[0],
+      myEndLines[1],
+      myEndLines[2],
+
+      myResolved[0],
+      myResolved[1]
+    );
+  }
+
+  public void restoreState(@NotNull State state) {
+    myStartLines[0] = state.myStartLine1;
+    myStartLines[1] = state.myStartLine2;
+    myStartLines[2] = state.myStartLine3;
+
+    myEndLines[0] = state.myEndLine1;
+    myEndLines[1] = state.myEndLine2;
+    myEndLines[2] = state.myEndLine3;
+
+    myResolved[0] = state.myResolved1;
+    myResolved[1] = state.myResolved2;
+  }
+
+  public static class State {
+    private final int myStartLine1;
+    private final int myStartLine2;
+    private final int myStartLine3;
+
+    private final int myEndLine1;
+    private final int myEndLine2;
+    private final int myEndLine3;
+
+    private final boolean myResolved1;
+    private final boolean myResolved2;
+
+    public State(int startLine1,
+                 int startLine2,
+                 int startLine3,
+                 int endLine1,
+                 int endLine2,
+                 int endLine3,
+                 boolean resolved1,
+                 boolean resolved2) {
+      myStartLine1 = startLine1;
+      myStartLine2 = startLine2;
+      myStartLine3 = startLine3;
+      myEndLine1 = endLine1;
+      myEndLine2 = endLine2;
+      myEndLine3 = endLine3;
+      myResolved1 = resolved1;
+      myResolved2 = resolved2;
+    }
   }
 }
