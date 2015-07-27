@@ -64,16 +64,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   private final EventDispatcher<EditorColorsListener> myListeners = EventDispatcher.create(EditorColorsListener.class);
 
-  private final DefaultColorSchemesManager myDefaultColorSchemesManager;
+  private final DefaultColorSchemesManager myDefaultColorSchemeManager;
   private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
   static final String FILE_SPEC = "colors";
 
   private State myState = new State();
 
-  public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManagerFactory schemesManagerFactory) {
-    myDefaultColorSchemesManager = defaultColorSchemesManager;
+  public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemesManagerFactory schemeManagerFactory) {
+    myDefaultColorSchemeManager = defaultColorSchemeManager;
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
+    mySchemesManager = schemeManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
       @NotNull
       @Override
       public EditorColorsSchemeImpl readScheme(@NotNull Element element) {
@@ -122,7 +122,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
     }, RoamingType.PER_USER);
 
-    addDefaultSchemes();
+    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
+      mySchemesManager.addScheme(defaultScheme);
+    }
 
     // Load default schemes from providers
     if (!isUnitTestOrHeadlessMode()) {
@@ -212,12 +214,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     mySchemesManager.setSchemes(schemes);
   }
 
-  private void addDefaultSchemes() {
-    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemesManager.getAllSchemes()) {
-      mySchemesManager.addScheme(defaultScheme);
-    }
-  }
-
   @NotNull
   @Override
   public EditorColorsScheme[] getAllSchemes() {
@@ -247,7 +243,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @NotNull
   private DefaultColorsScheme getDefaultScheme() {
-    return myDefaultColorSchemesManager.getFirstScheme();
+    return myDefaultColorSchemeManager.getFirstScheme();
   }
 
   @NotNull
