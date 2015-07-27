@@ -123,6 +123,8 @@ public class ZipHandler extends ArchiveHandler {
       if (entry != null) {
         InputStream stream = zip.getInputStream(entry);
         if (stream != null) {
+          // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks
+          // no sense to create BufferedInputStream
           try {
             return FileUtil.loadBytes(stream, (int)entry.getSize());
           }
