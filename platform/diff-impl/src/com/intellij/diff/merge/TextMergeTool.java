@@ -34,16 +34,14 @@ import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -51,10 +49,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -202,6 +202,7 @@ public class TextMergeTool implements MergeTool {
       // all changes - both applied and unapplied ones
       @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
       private boolean myInitialRediffDone;
+      @Nullable private MergeCommandAction myCurrentMergeCommand;
 
       private int myBulkChangeUpdateDepth;
 
@@ -493,10 +494,34 @@ public class TextMergeTool implements MergeTool {
         int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
         int shift = DiffUtil.countLinesShift(e);
 
+        final List<Pair<TextMergeChange, TextMergeChange.State>> corruptedStates = ContainerUtil.newArrayList();
         for (TextMergeChange change : myAllMergeChanges) {
-          if (change.processBaseChange(line1, line2, shift)) {
+          TextMergeChange.State oldState = change.processBaseChange(line1, line2, shift);
+          if (oldState != null) {
+            if (myCurrentMergeCommand == null) {
+              corruptedStates.add(Pair.create(change, oldState));
+            }
             reinstallHighlighter(change); // document state is not updated yet - can't reinstall range here
           }
+        }
+
+        if (!corruptedStates.isEmpty()) {
+          // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
+          // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
+          UndoManager.getInstance(getProject()).undoableActionPerformed(new BasicUndoableAction(getEditor(ThreeSide.BASE).getDocument()) {
+            @Override
+            public void undo() throws UnexpectedUndoException {
+              enterBulkChangeUpdateBlock();
+              for (Pair<TextMergeChange, TextMergeChange.State> pair : corruptedStates) {
+                restoreChangeState(pair.first, pair.second);
+              }
+              exitBulkChangeUpdateBlock();
+            }
+
+            @Override
+            public void redo() throws UnexpectedUndoException {
+            }
+          });
         }
       }
 
@@ -611,6 +636,111 @@ public class TextMergeTool implements MergeTool {
       // Modification operations
       //
 
+      private void restoreChangeState(@NotNull TextMergeChange change, @NotNull TextMergeChange.State state) {
+        boolean wasResolved = change.isResolved();
+        change.restoreState(state);
+        reinstallHighlighter(change);
+        if (wasResolved != change.isResolved()) onChangeResolved(change);
+      }
+
+      private abstract class MergeCommandAction extends DiffUtil.DiffCommandAction {
+        @Nullable private final List<TextMergeChange> myAffectedChanges;
+
+        public MergeCommandAction(@Nullable Project project,
+                                  @Nullable String commandName,
+                                  @Nullable List<TextMergeChange> changes) {
+          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName);
+          myAffectedChanges = collectAffectedChanges(changes);
+        }
+
+        public MergeCommandAction(@Nullable Project project,
+                                  @Nullable String commandName,
+                                  @Nullable String commandGroupId,
+                                  @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                  @Nullable List<TextMergeChange> changes) {
+          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName, commandGroupId, confirmationPolicy);
+          myAffectedChanges = collectAffectedChanges(changes);
+        }
+
+        @Override
+        @CalledWithWriteLock
+        protected final void execute() {
+          LOG.assertTrue(myCurrentMergeCommand == null);
+
+          // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
+          // Undo actions are performed in backward order, while redo actions are performed in forward order.
+          // Thus we should register two UndoableActions.
+
+          myCurrentMergeCommand = this;
+          registerUndoRedo(true);
+          enterBulkChangeUpdateBlock();
+          try {
+            doExecute();
+          }
+          finally {
+            exitBulkChangeUpdateBlock();
+            registerUndoRedo(false);
+            myCurrentMergeCommand = null;
+          }
+        }
+
+        private void registerUndoRedo(final boolean undo) {
+          List<TextMergeChange> affectedChanges = getAffectedChanges();
+          final List<TextMergeChange.State> states = new ArrayList<TextMergeChange.State>(affectedChanges.size());
+          for (TextMergeChange change : affectedChanges) {
+            states.add(change.storeState());
+          }
+
+          UndoManager.getInstance(getProject()).undoableActionPerformed(new BasicUndoableAction(myDocument) {
+            @Override
+            public void undo() throws UnexpectedUndoException {
+              if (undo) restoreStates(states);
+            }
+
+            @Override
+            public void redo() throws UnexpectedUndoException {
+              if (!undo) restoreStates(states);
+            }
+          });
+        }
+
+        private void restoreStates(@NotNull List<TextMergeChange.State> states) {
+          List<TextMergeChange> affectedChanges = getAffectedChanges();
+
+          enterBulkChangeUpdateBlock();
+          for (int i = 0; i < affectedChanges.size(); i++) {
+            restoreChangeState(affectedChanges.get(i), states.get(i));
+          }
+          exitBulkChangeUpdateBlock();
+        }
+
+        @NotNull
+        private List<TextMergeChange> getAffectedChanges() {
+          return myAffectedChanges != null ? myAffectedChanges : myAllMergeChanges;
+        }
+
+        @CalledWithWriteLock
+        protected abstract void doExecute();
+      }
+
+      /*
+       * affected changes should be sorted
+       */
+      public void executeMergeCommand(@Nullable String commandName,
+                                      @Nullable List<TextMergeChange> affected,
+                                      @NotNull final Runnable task) {
+        new MergeCommandAction(getProject(), commandName, affected) {
+          @Override
+          protected void doExecute() {
+            task.run();
+          }
+        }.run();
+      }
+
+      public void executeMergeCommand(@Nullable String commandName, @NotNull final Runnable task) {
+        executeMergeCommand(commandName, null, task);
+      }
+
       @CalledInAwt
       public void markResolved(@NotNull TextMergeChange change) {
         if (change.isResolved()) return;
@@ -632,6 +762,7 @@ public class TextMergeTool implements MergeTool {
 
       @CalledWithWriteLock
       public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side) {
+        LOG.assertTrue(myCurrentMergeCommand != null);
         if (change.isResolved(side)) return;
         if (!change.isChange(side)) {
           markResolved(change);
@@ -665,6 +796,7 @@ public class TextMergeTool implements MergeTool {
 
       @CalledWithWriteLock
       public void appendChange(@NotNull TextMergeChange change, @NotNull Side side) {
+        LOG.assertTrue(myCurrentMergeCommand != null);
         if (change.isResolved(side)) return;
         if (!change.isChange(side)) return;
 
@@ -709,6 +841,7 @@ public class TextMergeTool implements MergeTool {
       private void moveChangesAfterInsertion(@NotNull TextMergeChange change,
                                              int newOutputStartLine,
                                              int newOutputEndLine) {
+        LOG.assertTrue(myCurrentMergeCommand != null);
         if (change.getStartLine(ThreeSide.BASE) != newOutputStartLine ||
             change.getEndLine(ThreeSide.BASE) != newOutputEndLine) {
           change.setStartLine(ThreeSide.BASE, newOutputStartLine);
@@ -735,6 +868,50 @@ public class TextMergeTool implements MergeTool {
             reinstallHighlighter(otherChange);
           }
         }
+      }
+
+      /*
+       * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
+       *
+       * null means all changes could be affected
+       */
+      @Nullable
+      private List<TextMergeChange> collectAffectedChanges(@Nullable List<TextMergeChange> directChanges) {
+        if (directChanges == null || directChanges.isEmpty()) return null;
+
+        List<TextMergeChange> result = new ArrayList<TextMergeChange>(directChanges.size());
+
+        int directIndex = 0;
+        int otherIndex = 0;
+        while (directIndex < directChanges.size() && otherIndex < myAllMergeChanges.size()) {
+          TextMergeChange directChange = directChanges.get(directIndex);
+          TextMergeChange otherChange = myAllMergeChanges.get(otherIndex);
+
+          if (directChange == otherChange) {
+            result.add(directChange);
+            otherIndex++;
+            continue;
+          }
+
+          int directStart = directChange.getStartLine(ThreeSide.BASE);
+          int directEnd = directChange.getEndLine(ThreeSide.BASE);
+          int otherStart = otherChange.getStartLine(ThreeSide.BASE);
+          int otherEnd = otherChange.getEndLine(ThreeSide.BASE);
+          if (otherEnd < directStart) {
+            otherIndex++;
+            continue;
+          }
+          if (otherStart > directEnd) {
+            directIndex++;
+            continue;
+          }
+
+          result.add(otherChange);
+          otherIndex++;
+        }
+
+        LOG.assertTrue(directChanges.size() <= result.size());
+        return result;
       }
 
       //
@@ -783,13 +960,11 @@ public class TextMergeTool implements MergeTool {
           final List<TextMergeChange> selectedChanges = getSelectedChanges(side);
           if (selectedChanges.isEmpty()) return;
 
-          DocumentEx document = getEditor(ThreeSide.BASE).getDocument();
           String title = e.getPresentation().getText() + " in merge";
 
           getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(true);
-          enterBulkChangeUpdateBlock();
           try {
-            DiffUtil.executeWriteCommand(document, e.getProject(), title, new Runnable() {
+            executeMergeCommand(title, selectedChanges, new Runnable() {
               @Override
               public void run() {
                 apply(side, selectedChanges);
@@ -797,7 +972,6 @@ public class TextMergeTool implements MergeTool {
             });
           }
           finally {
-            exitBulkChangeUpdateBlock();
             getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(false);
           }
         }
@@ -829,8 +1003,7 @@ public class TextMergeTool implements MergeTool {
           List<TextMergeChange> changes = getChanges();
 
           List<TextMergeChange> affectedChanges = new ArrayList<TextMergeChange>();
-          for (int i = changes.size() - 1; i >= 0; i--) {
-            TextMergeChange change = changes.get(i);
+          for (TextMergeChange change : changes) {
             if (!isEnabled(change)) continue;
             int line1 = change.getStartLine(side);
             int line2 = change.getEndLine(side);
@@ -896,8 +1069,8 @@ public class TextMergeTool implements MergeTool {
 
         @Override
         protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-          for (TextMergeChange change : changes) {
-            replaceChange(change, mySide);
+          for (int i = changes.size() - 1; i >= 0; i--) {
+            replaceChange(changes.get(i), mySide);
           }
         }
       }
@@ -924,8 +1097,8 @@ public class TextMergeTool implements MergeTool {
 
         @Override
         protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-          for (TextMergeChange change : changes) {
-            appendChange(change, mySide);
+          for (int i = changes.size() - 1; i >= 0; i--) {
+            appendChange(changes.get(i), mySide);
           }
         }
       }
@@ -936,12 +1109,9 @@ public class TextMergeTool implements MergeTool {
         }
 
         public void actionPerformed(AnActionEvent e) {
-          DocumentEx document = getEditor(ThreeSide.BASE).getDocument();
-
           getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(true);
-          enterBulkChangeUpdateBlock();
           try {
-            DiffUtil.executeWriteCommand(document, getProject(), "Apply Non Conflicted Changes", new Runnable() {
+            executeMergeCommand("Apply Non Conflicted Changes", new Runnable() {
               @Override
               public void run() {
                 doPerform();
@@ -949,7 +1119,6 @@ public class TextMergeTool implements MergeTool {
             });
           }
           finally {
-            exitBulkChangeUpdateBlock();
             getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(false);
           }
 

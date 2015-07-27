@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
@@ -176,21 +177,26 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // Shift
   //
 
-  public boolean processBaseChange(int oldLine1, int oldLine2, int shift) {
+  @Nullable
+  public State processBaseChange(int oldLine1, int oldLine2, int shift) {
     int line1 = getStartLine(ThreeSide.BASE);
     int line2 = getEndLine(ThreeSide.BASE);
 
     UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift);
-    setStartLine(ThreeSide.BASE, newRange.startLine);
-    setEndLine(ThreeSide.BASE, newRange.endLine);
 
-    boolean rangeAffected = oldLine2 >= line1 && oldLine1 <= line2; // RangeMarker can be updated in a different way
+    boolean rangeAffected = newRange.damaged ||
+                            (oldLine2 >= line1 && oldLine1 <= line2); // RangeMarker can be updated in a different way
+    State oldState = rangeAffected ? storeState() : null;
 
-    if (newRange.startLine == newRange.endLine && getDiffType() == TextDiffType.DELETED) {
+    if (newRange.startLine == newRange.endLine && getDiffType() == TextDiffType.DELETED && !isResolved()) {
+      if (oldState == null) oldState = storeState();
       myViewer.markResolved(this);
     }
 
-    return newRange.damaged || rangeAffected;
+    setStartLine(ThreeSide.BASE, newRange.startLine);
+    setEndLine(ThreeSide.BASE, newRange.endLine);
+
+    return oldState;
   }
 
   //
@@ -289,8 +295,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), AllIcons.Diff.Arrow, new Runnable() {
       @Override
       public void run() {
-        final Document document = myViewer.getEditor(ThreeSide.BASE).getDocument();
-        DiffUtil.executeWriteCommand(document, myViewer.getProject(), "Apply change", new Runnable() {
+        myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
             myViewer.replaceChange(TextMergeChange.this, side);
@@ -305,8 +310,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.append.change.action.name"), AllIcons.Diff.ArrowLeftDown, new Runnable() {
       @Override
       public void run() {
-        final Document document = myViewer.getEditor(ThreeSide.BASE).getDocument();
-        DiffUtil.executeWriteCommand(document, myViewer.getProject(), "Apply change", new Runnable() {
+        myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
             myViewer.appendChange(TextMergeChange.this, side);
@@ -321,7 +325,12 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, new Runnable() {
       @Override
       public void run() {
-        myViewer.markResolved(TextMergeChange.this);
+        myViewer.executeMergeCommand(null, Collections.singletonList(TextMergeChange.this), new Runnable() {
+          @Override
+          public void run() {
+            myViewer.markResolved(TextMergeChange.this);
+          }
+        });
       }
     });
   }
