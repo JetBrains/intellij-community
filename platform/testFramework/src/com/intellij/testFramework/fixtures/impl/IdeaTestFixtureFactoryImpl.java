@@ -99,7 +99,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     return new BareTestFixtureImpl();
   }
 
-  private static class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {
+  public static class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {
     public MyEmptyModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
       super(testFixtureBuilder);
     }
