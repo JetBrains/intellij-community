@@ -31,28 +31,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBUI {
-  private static boolean IS_HIDPI = calculateHiDPI();
   private static float SCALE_FACTOR = calculateScaleFactor();
-
-  private static boolean calculateHiDPI() {
-    if (SystemInfo.isMac) {
-      return false;
-    }
-
-    if (SystemProperties.is("hidpi")) {
-      return true;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      return false;
-    }
-
-    if (SystemInfo.isWindows && getSystemDPI() > 144) {
-      return true;
-    }
-
-    return false;
-  }
 
   private static float calculateScaleFactor() {
     if (SystemInfo.isMac) {
