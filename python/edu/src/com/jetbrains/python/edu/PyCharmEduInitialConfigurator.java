@@ -215,6 +215,12 @@ public class PyCharmEduInitialConfigurator {
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
                                              @NotNull final CustomActionsSchema schema){
     final TreeNode mainMenu = root.getFirstChild();
+    final TreeNode fileMenu = mainMenu.getChildAt(0);
+    final String[] fileItems = {"Print/Export Actions"};
+    for (String item : fileItems) {
+      hideAction(schema, root, fileMenu, item);
+    }
+
     final String[] menuItems = {"Tools", "VCS", "Refactor", "Navigate", "Code", "Window", "View"};
     for (String item : menuItems) {
       hideAction(schema, root, mainMenu, item);

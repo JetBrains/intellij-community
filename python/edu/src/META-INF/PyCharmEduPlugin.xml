@@ -32,7 +32,6 @@
   </extensions>
 
   <actions>
-    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="PrintExportGroup"/>
     <group overrides="true" id="FileMainSettingsGroup">
       <reference id="ShowSettings"/>
       <separator/>
