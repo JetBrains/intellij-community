@@ -16,6 +16,9 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBUI;
@@ -69,8 +72,22 @@ public class IdeBackgroundUtil {
     Image centerImage = url == null ? null : ImageLoader.loadFromUrl(url);
 
     if (centerImage != null) {
-      painters.addPainter(PaintersHelper.newImagePainter(centerImage, PaintersHelper.FillType.TOP_CENTER, 1.0f, JBUI.insets(5, 0, 0, 0)), null);
+      painters.addPainter(PaintersHelper.newImagePainter(centerImage, PaintersHelper.FillType.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
     }
+    painters.addPainter(new AbstractPainter() {
+      EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
+
+      @Override
+      public boolean needsRepaint() {
+        return true;
+      }
+
+      @Override
+      public void executePaint(Component component, Graphics2D g) {
+        p.paintEmptyText((JComponent)component, g);
+      }
+    }, null);
+
   }
 
   @Nullable

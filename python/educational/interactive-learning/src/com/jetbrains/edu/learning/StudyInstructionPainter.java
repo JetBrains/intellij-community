@@ -5,13 +5,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.PairFunction;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.actions.*;
 
@@ -24,7 +22,7 @@ import java.awt.*;
  */
 public class StudyInstructionPainter extends EditorEmptyTextPainter {
   @Override
-  public void paintEmptyText(final EditorsSplitters splitters, Graphics g) {
+  public void paintEmptyText(final JComponent splitters, Graphics g) {
     boolean isDarkBackground = UIUtil.isUnderDarcula();
     UISettings.setupAntialiasing(g);
 
