@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
@@ -63,6 +64,10 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       }
     }
     catch (Exception e) {
+      if (e instanceof InvocationTargetException) {
+        Throwable cause = e.getCause();
+        e = cause instanceof Exception ? (Exception)cause : new RuntimeException(e);
+      }
       if (isSilentExecution()) {
         result.setThrowable(e);
       }
