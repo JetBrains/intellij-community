@@ -106,7 +106,7 @@ public class TextMergeTool implements MergeTool {
       myDiffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
                                             getDiffContents(myMergeRequest),
                                             getDiffContentTitles(myMergeRequest));
-      myDiffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
+      myDiffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
 
       myViewer = new MyThreesideViewer(myDiffContext, myDiffRequest);
     }
@@ -342,6 +342,10 @@ public class TextMergeTool implements MergeTool {
       private void doRediff() {
         myStatusPanel.setBusy(true);
 
+        // This is made to reduce unwanted modifications before rediff is finished.
+        // It could happen between this init() EDT chunk and invokeLater().
+        getEditor(ThreeSide.BASE).setViewer(true);
+
         setInitialOutputContent();
 
         // we have to collect contents here, because someone can modify document while we're starting rediff
@@ -442,8 +446,6 @@ public class TextMergeTool implements MergeTool {
             myContentPanel.repaintDividers();
             myStatusPanel.update();
 
-            // Editor was viewer because of FORCE_READ_ONLY flag. This is made to reduce unwanted modifications before rediff is finished.
-            // It could happen between this init() EDT chunk and invokeLater().
             getEditor(ThreeSide.BASE).setViewer(false);
           }
         };
