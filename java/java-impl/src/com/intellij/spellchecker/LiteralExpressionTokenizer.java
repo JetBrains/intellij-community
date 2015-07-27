@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierListOwner;
@@ -38,6 +39,10 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl)element;
     if (literalExpression.getLiteralElementType() != JavaTokenType.STRING_LITERAL) return;  // not a string literal
 
+    String text = literalExpression.getInnerText();
+    if (StringUtil.isEmpty(text) || text.length() <= 2) { // optimisation to avoid expensive injection check
+      return;
+    }
     if (InjectedLanguageUtil.hasInjections(literalExpression)) return;
 
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
@@ -45,10 +50,6 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
       return;
     }
 
-    String text = literalExpression.getInnerText();
-    if (text == null) {
-      return;
-    }
     if (!text.contains("\\")) {
       consumer.consumeToken(element, PlainTextSplitter.getInstance());
     }
