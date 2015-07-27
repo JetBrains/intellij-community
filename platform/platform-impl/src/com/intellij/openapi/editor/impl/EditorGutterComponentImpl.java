@@ -1395,9 +1395,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     if (clickAction != null) {
       if (checkActionNotBlocked(clickAction, project)) {
-        clickAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION", clickAction.getTemplatePresentation(),
-                                                      ActionManager.getInstance(),
-                                                      e.getModifiers()));
+        clickAction.actionPerformed(AnActionEvent.createFromAnAction(clickAction, e, "ICON_NAVIGATION", myEditor.getDataContext()));
         repaint();
       }
       e.consume();
@@ -1568,9 +1566,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           AnAction rightButtonAction = renderer.getRightButtonClickAction();
           if (rightButtonAction != null) {
             if (checkActionNotBlocked(rightButtonAction, myEditor.getProject())) {
-              rightButtonAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION_SECONDARY_BUTTON", rightButtonAction.getTemplatePresentation(),
-                                                                  ActionManager.getInstance(),
-                                                                  e.getModifiers()));
+              rightButtonAction.actionPerformed(AnActionEvent.createFromAnAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext()));
             }
             e.consume();
           }

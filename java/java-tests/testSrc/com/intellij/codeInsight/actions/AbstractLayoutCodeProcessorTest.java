@@ -33,7 +33,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -188,30 +187,22 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
   }
 
   protected AnActionEvent createEventFor(AnAction action, final VirtualFile[] files, final Project project) {
-    return new AnActionEvent(null, new DataContext() {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files;
-        if (CommonDataKeys.PROJECT.is(dataId)) return project;
-        return null;
-      }
-    }, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    return AnActionEvent.createFromAnAction(action, null, "", dataId -> {
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files;
+      if (CommonDataKeys.PROJECT.is(dataId)) return project;
+      return null;
+    });
   }
 
   protected AnActionEvent createEventFor(AnAction action, final List<VirtualFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
-    return new AnActionEvent(null, new DataContext() {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(new VirtualFile[files.size()]);
-        if (CommonDataKeys.PROJECT.is(dataId)) return project;
-        if (CommonDataKeys.EDITOR.is(dataId)) return eventInfo.getEditor();
-        if (LangDataKeys.MODULE_CONTEXT.is(dataId)) return eventInfo.getModule();
-        if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return eventInfo.getElement();
-        return null;
-      }
-    }, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    return AnActionEvent.createFromAnAction(action, null, "", dataId -> {
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(new VirtualFile[files.size()]);
+      if (CommonDataKeys.PROJECT.is(dataId)) return project;
+      if (CommonDataKeys.EDITOR.is(dataId)) return eventInfo.getEditor();
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) return eventInfo.getModule();
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return eventInfo.getElement();
+      return null;
+    });
   }
 
 

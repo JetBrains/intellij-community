@@ -1451,15 +1451,9 @@ public abstract class ChooseByNameBase {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          final GotoFileAction gotoFile = new GotoFileAction();
-          AnActionEvent event = new AnActionEvent(null,
-                                                  DataManager.getInstance().getDataContext(myTextField),
-                                                  ActionPlaces.UNKNOWN,
-                                                  gotoFile.getTemplatePresentation(),
-                                                  ActionManager.getInstance(),
-                                                  0);
-          event.setInjectedContext(gotoFile.isInInjectedContext());
-          gotoFile.actionPerformed(event);
+          GotoFileAction gotoFile = new GotoFileAction();
+          DataContext context = DataManager.getInstance().getDataContext(myTextField);
+          gotoFile.actionPerformed(AnActionEvent.createFromAnAction(gotoFile, null, ActionPlaces.UNKNOWN, context));
         }
       });
     }

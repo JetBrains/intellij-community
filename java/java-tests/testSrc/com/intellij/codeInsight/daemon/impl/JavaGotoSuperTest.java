@@ -110,13 +110,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
   public void testSiblingInheritanceGoDown() throws Throwable {
     configureByFile(getBasePath() + "SiblingInheritance.after.java");
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION);
-    AnActionEvent event = new AnActionEvent(
-      null,
-      DataManager.getInstance().getDataContextFromFocus().getResultSync(),
-      "",
-      action.getTemplatePresentation(),
-      ActionManager.getInstance(),
-      0);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
     action.update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);

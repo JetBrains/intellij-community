@@ -53,9 +53,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
         ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, checkBox);
         DataContext dataContext =
           actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(checkBox);
-        CheckboxAction.this.actionPerformed(new AnActionEvent(null, dataContext,
-                                                              ActionPlaces.UNKNOWN, CheckboxAction.this.getTemplatePresentation(),
-                                                              ActionManager.getInstance(), 0));
+        CheckboxAction.this.actionPerformed(AnActionEvent.createFromAnAction(CheckboxAction.this, null, ActionPlaces.UNKNOWN, dataContext));
       }
     });
     updateCustomComponent(checkBox, presentation);

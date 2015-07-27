@@ -90,11 +90,9 @@ public class EditorTestUtil {
   }
 
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId, boolean assertActionIsEnabled) {
-    ActionManager actionManager = ActionManager.getInstance();
-    AnAction action = actionManager.getAction(actionId);
+    AnAction action = ActionManager.getInstance().getAction(actionId);
     assertNotNull(action);
-    DataContext dataContext = createEditorContext(editor);
-    AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), actionManager, 0);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
     action.beforeActionPerformedUpdate(event);
     if (!event.getPresentation().isEnabled()) {
       assertFalse("Action " + actionId + " is disabled", assertActionIsEnabled);

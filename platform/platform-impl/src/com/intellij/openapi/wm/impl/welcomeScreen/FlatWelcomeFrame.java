@@ -243,9 +243,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       AnAction register = ActionManager.getInstance().getAction("Register");
       boolean registeredVisible = false;
       if (register != null) {
-        Presentation presentation = register.getTemplatePresentation();
-        register.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
-                                          ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+        AnActionEvent e =
+          AnActionEvent.createFromAnAction(register, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
+        register.update(e);
+        Presentation presentation = e.getPresentation();
         if (presentation.isEnabled()) {
           ActionLink registerLink = new ActionLink("Register", register);
           registerLink.setNormalColor(getLinkNormalColor());
@@ -309,9 +310,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         JPanel button = new JPanel(new BorderLayout());
         button.setOpaque(false);
         button.setBorder(JBUI.Borders.empty(8, 20));
-        Presentation presentation = action.getTemplatePresentation();
-        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
-                                        ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+        AnActionEvent e =
+          AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
+        action.update(e);
+        Presentation presentation = e.getPresentation();
         if (presentation.isVisible()) {
           String text = presentation.getText();
           if (text != null && text.endsWith("...")) {
@@ -469,12 +471,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
                 event = new MouseEvent(link, MouseEvent.MOUSE_CLICKED, e.getWhen(), e.getModifiers(), 0, 0, 1, false, MouseEvent.BUTTON1);
               }
             }
-            action.actionPerformed(new AnActionEvent(event,
-                                                     DataManager.getInstance().getDataContext(),
-                                                     ActionPlaces.WELCOME_SCREEN,
-                                                     action.getTemplatePresentation().clone(),
-                                                     ActionManager.getInstance(),
-                                                     0));
+            action.actionPerformed(AnActionEvent.createFromAnAction(action, event, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext()));
           } else if (e.getKeyCode() == prevKeyCode) {
             focusPrev(comp);
           } else if (e.getKeyCode() == nextKeyCode) {

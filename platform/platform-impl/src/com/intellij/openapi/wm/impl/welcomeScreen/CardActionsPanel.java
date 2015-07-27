@@ -87,7 +87,7 @@ public class CardActionsPanel extends JPanel {
     PresentationFactory factory = new PresentationFactory();
 
     for (AnAction action : actions) {
-      Presentation presentation = action.getTemplatePresentation();
+      Presentation presentation = action.getTemplatePresentation().clone();
       if (!USE_ICONS) {
         presentation.setIcon(null);
       }

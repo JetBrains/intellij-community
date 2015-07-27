@@ -17,7 +17,6 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -83,9 +82,7 @@ public class PyFillParagraphTest extends PyTestCase {
         @Override
         public void run() {
           FillParagraphAction action = new FillParagraphAction();
-          action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "",
-                                                   action.getTemplatePresentation(),
-                                                   ActionManager.getInstance(), 0));
+          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
         }
       }, "", null);
       myFixture.checkResultByFile(baseName + "_after.py", true);

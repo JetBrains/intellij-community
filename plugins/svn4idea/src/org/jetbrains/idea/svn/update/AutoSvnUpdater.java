@@ -56,8 +56,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
 
     updater.getTemplatePresentation().setText(title);
     updater.actionPerformed(
-      new AnActionEvent(null, DataManager.getInstance().getDataContext(frame), ActionPlaces.UNKNOWN, updater.getTemplatePresentation(),
-                        ActionManager.getInstance(), 0)
+      AnActionEvent.createFromAnAction(updater, null, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext(frame))
     );
   }
 

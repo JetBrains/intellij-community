@@ -101,9 +101,8 @@ public abstract class ActionManagerEx extends ActionManager {
   public void fireBeforeActionPerformed(String actionId, InputEvent event) {
     final AnAction action = getAction(actionId);
     if (action != null) {
-      final DataContext context = DataManager.getInstance().getDataContext();
-      final AnActionEvent e = new AnActionEvent(event, context, ActionPlaces.UNKNOWN, action.getTemplatePresentation(), this, 0);
-      fireBeforeActionPerformed(action, context, e);
+      AnActionEvent e = AnActionEvent.createFromAnAction(action, event, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext());
+      fireBeforeActionPerformed(action, DataManager.getInstance().getDataContext(), e);
     }
   }
 }

@@ -657,7 +657,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myFile = e.getData(CommonDataKeys.PSI_FILE);
     }
     if (e == null && myFocusOwner != null) {
-      e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
+      e = AnActionEvent.createFromAnAction(this, me, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext(myFocusOwner));
     }
     if (e == null) return;
     final Project project = e.getProject();
@@ -1966,7 +1966,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
                                                 myActionEvent.getDataContext(),
                                                 myActionEvent.getPlace(),
-                                                action.getTemplatePresentation(),
+                                                action.getTemplatePresentation().clone(),
                                                 myActionEvent.getActionManager(),
                                                 myActionEvent.getModifiers());
 

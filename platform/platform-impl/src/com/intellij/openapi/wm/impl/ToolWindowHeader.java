@@ -542,10 +542,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null;
-      final AnActionEvent event =
-        new AnActionEvent(inputEvent, dataContext, ActionPlaces.TOOLWINDOW_TITLE, action.getTemplatePresentation(),
-                          ActionManager.getInstance(),
-                          0);
+      final AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.TOOLWINDOW_TITLE, dataContext);
       actionManager.fireBeforeActionPerformed(action, dataContext, event);
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component != null && !component.isShowing()) {

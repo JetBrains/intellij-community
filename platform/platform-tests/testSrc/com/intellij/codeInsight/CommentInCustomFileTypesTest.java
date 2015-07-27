@@ -18,7 +18,6 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction;
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -54,25 +53,11 @@ public class CommentInCustomFileTypesTest extends LightPlatformCodeInsightTestCa
 
   private void performBlockCommentAction() {
     CommentByBlockCommentAction action = new CommentByBlockCommentAction();
-    action.actionPerformed(new AnActionEvent(
-      null,
-      DataManager.getInstance().getDataContext(),
-      "",
-      action.getTemplatePresentation(),
-      ActionManager.getInstance(),
-      0)
-    );
+    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
   }
 
   private void performLineCommentAction() {
     CommentByLineCommentAction action = new CommentByLineCommentAction();
-    action.actionPerformed(new AnActionEvent(
-      null,
-      DataManager.getInstance().getDataContext(),
-      "",
-      action.getTemplatePresentation(),
-      ActionManager.getInstance(),
-      0)
-    );
+    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
   }
 }
