@@ -47,6 +47,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
@@ -62,6 +63,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author egor
@@ -525,7 +527,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               try {
                 PsiExpression psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
                 if (psiExpression != null) {
-                  return TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                  XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                  // add runtime imports if any
+                  Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
+                  if (imports != null && res != null) {
+                    if (res.getCustomInfo() != null) {
+                      imports.add(res.getCustomInfo());
+                    }
+                    res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
+                  }
+                  return res;
                 }
               }
               catch (EvaluateException e) {
