@@ -53,7 +53,7 @@ public class DefaultSchemasConfigurable implements Configurable {
   @NotNull
   private String getDoctype() {
     if (myHtml4RadioButton.isSelected()) {
-      return XmlUtil.XHTML_URI;
+      return XmlUtil.XHTML4_SCHEMA_LOCATION;
     }
     if (myHtml5RadioButton.isSelected()) {
       return Html5SchemaProvider.getHtml5SchemaLocation();
