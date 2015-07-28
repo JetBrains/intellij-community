@@ -1184,7 +1184,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public int getLineMarkerFreePaintersAreaOffset() {
     return getLineMarkerAreaOffset() + myIconsAreaWidth + GAP_BETWEEN_ICONS_AND_FREE_PAINTERS_AREA;
   }
-  
+
   @Override
   public int getIconsAreaWidth() {
     return myIconsAreaWidth;
@@ -1386,7 +1386,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     GutterIconRenderer renderer = getGutterRenderer(e);
     final Project project = myEditor.getProject();
-    
+
     AnAction clickAction = null;
     if (renderer != null && e.getButton() < 4) {
       clickAction = (InputEvent.BUTTON2_MASK & e.getModifiers()) > 0
@@ -1395,7 +1395,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     if (clickAction != null) {
       if (checkActionNotBlocked(clickAction, project)) {
-        clickAction.actionPerformed(AnActionEvent.createFromAnAction(clickAction, e, "ICON_NAVIGATION", myEditor.getDataContext()));
+        performAction(clickAction, e, "ICON_NAVIGATION", myEditor.getDataContext());
         repaint();
       }
       e.consume();
@@ -1414,6 +1414,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (project == null || !DumbService.isDumb(project) || action.isDumbAware()) return true;
     DumbService.getInstance(project).showDumbModeNotification("Action is not available during indexing");
     return false;
+  }
+
+  private static void performAction(@NotNull AnAction action, @NotNull InputEvent e, @NotNull String place, @NotNull DataContext context) {
+    AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
+    action.update(actionEvent);
+    if (actionEvent.getPresentation().isEnabledAndVisible()) action.actionPerformed(actionEvent);
   }
 
   @Nullable
@@ -1566,7 +1572,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           AnAction rightButtonAction = renderer.getRightButtonClickAction();
           if (rightButtonAction != null) {
             if (checkActionNotBlocked(rightButtonAction, myEditor.getProject())) {
-              rightButtonAction.actionPerformed(AnActionEvent.createFromAnAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext()));
+              performAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext());
             }
             e.consume();
           }
