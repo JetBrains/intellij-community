@@ -200,7 +200,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NotNull
   @Override
   public IProjectStore getStateStore() {
-    return (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    return (IProjectStore)ComponentsPackage.getStateStore(this);
   }
 
   @Override

@@ -2,6 +2,8 @@ package org.jetbrains.settingsRepository.actions
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.DialogWrapper
@@ -54,7 +56,7 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
 
   override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
     val project = dataContext.getProject()
-    return project is ProjectEx && project.getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory() && isProjectConfigFile(file, dataContext.getProject()!!)
+    return project is ProjectEx && (project.stateStore as IProjectStore).getStorageScheme() == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory() && isProjectConfigFile(file, dataContext.getProject()!!)
   }
 
   override fun prepareRootsForCommit(roots: Array<out FilePath>, project: Project) = roots as Array<FilePath>

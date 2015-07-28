@@ -23,6 +23,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -233,7 +234,7 @@ public class ProjectUtil {
   }
 
   private static boolean isSameProject(String path, Project p) {
-    final IProjectStore projectStore = ((ProjectEx)p).getStateStore();
+    final IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(p);
 
     String toOpen = FileUtil.toSystemIndependentName(path);
     String existing = FileUtil.toSystemIndependentName(projectStore.getProjectFilePath());
@@ -287,6 +288,6 @@ public class ProjectUtil {
   }
 
   public static boolean isDirectoryBased(@NotNull Project project) {
-    return project instanceof ProjectEx && StorageScheme.DIRECTORY_BASED.equals(((ProjectEx)project).getStateStore().getStorageScheme());
+    return project instanceof ProjectEx && StorageScheme.DIRECTORY_BASED.equals(((IProjectStore)ComponentsPackage.getStateStore(project)).getStorageScheme());
   }
 }

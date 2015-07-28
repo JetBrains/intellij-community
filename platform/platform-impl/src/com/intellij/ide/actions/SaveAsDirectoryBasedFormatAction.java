@@ -18,11 +18,11 @@ package com.intellij.ide.actions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -50,7 +50,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
 
     File ideaDir = new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER + File.separatorChar);
     if ((ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir)) {
-      IProjectStore projectStore = ((ProjectEx)project).getStateStore();
+      IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(project);
 
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
 

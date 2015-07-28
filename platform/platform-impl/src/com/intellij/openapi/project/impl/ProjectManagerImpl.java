@@ -33,7 +33,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.impl.stores.StoreUtil.ReloadComponentStoreStatus;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +43,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -622,7 +623,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
 
       CHANGED_FILES_KEY.set(project, null);
-      if (!changes.isEmpty() && StoreUtil.reloadStore(changes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED) {
+      if (!changes.isEmpty() && StoreUtil.reloadStore(changes, ComponentsPackage.getStateStore(project)) == ReloadComponentStoreStatus.RESTART_AGREED) {
         projectsToReload.add(project);
       }
     }
@@ -694,7 +695,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
-    StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+    StateStorageManager storageManager = ComponentsPackage.getStateStore(project).getStateStorageManager();
     String fileSpec = storageManager.collapseMacros(file.getPath());
     Couple<Collection<FileBasedStorage>> storages = storageManager.getCachedFileStateStorages(Collections.singletonList(fileSpec), Collections.<String>emptyList());
     FileBasedStorage storage = ContainerUtil.getFirstItem(storages.first);

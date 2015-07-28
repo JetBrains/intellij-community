@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl;
 
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,7 +40,7 @@ public class ProjectStoreImplIdeaDirTest extends ProjectStoreBaseTestCase {
     ((ProjectEx)myProject).setOptimiseTestLoadSpeed(false);
 
     final TestIprComponent testIprComponent = new TestIprComponent();
-    ((ProjectEx)myProject).getStateStore().initComponent(testIprComponent, false);
+    ComponentsPackage.getStateStore(myProject).initComponent(testIprComponent, false);
     assertNotNull(testIprComponent.myState);
   }
 }

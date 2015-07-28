@@ -189,24 +189,17 @@ open class ProjectStoreImpl(override protected val project: ProjectImpl, pathMac
   // XmlElementStorage if default project, otherwise FileBasedStorage
   private fun getProjectFileStorage() = getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as XmlElementStorage
 
-  override fun getWorkspaceFile(): VirtualFile? {
-    if (project.isDefault()) return null
-    val storage = getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
-    assert(storage != null)
-    return storage!!.getVirtualFile()
-  }
+  override fun getWorkspaceFile() = workspaceStorage?.getVirtualFile()
 
-  override fun getWorkspaceFilePath(): String? {
-    if (project.isDefault()) {
-      return null
-    }
-    return (getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?)!!.getFilePath()
-  }
+  override fun getWorkspaceFilePath() = workspaceStorage?.getFilePath()
+
+  private val workspaceStorage: FileBasedStorage?
+    get() = if (project.isDefault()) null else getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
 
   override fun loadProjectFromTemplate(defaultProject: ProjectImpl) {
     defaultProject.save()
 
-    val element = (defaultProject.getStateStore() as DefaultProjectStoreImpl).getStateCopy()
+    val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy()
     if (element != null) {
       getProjectFileStorage().setDefaultState(element)
     }
