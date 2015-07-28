@@ -64,6 +64,7 @@ public class RefreshSessionImpl extends RefreshSession {
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
     myModalityState = modalityState;
+    LOG.assertTrue(modalityState != ModalityState.any(), "Refresh session should have a specific modality");
   }
 
   public RefreshSessionImpl(@NotNull List<VFileEvent> events) {
