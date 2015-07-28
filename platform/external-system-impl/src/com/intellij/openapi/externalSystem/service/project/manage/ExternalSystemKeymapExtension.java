@@ -119,16 +119,26 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     createActions(project, taskData);
   }
 
-  private static void createActions(Project project, Collection<DataNode<TaskData>> taskData) {
+  public static ExternalSystemAction registerAction(Project project, String group, TaskData taskData) {
+    ExternalSystemTaskAction action = new ExternalSystemTaskAction(project, group, taskData);
     ActionManager manager = ActionManager.getInstance();
-    if (manager != null) {
-      for (DataNode<TaskData> each : taskData) {
+    manager.registerAction(action.getId(), action);
+    return action;
+  }
+
+  private static void createActions(Project project, Collection<DataNode<TaskData>> taskNodes) {
+    ActionManager actionManager = ActionManager.getInstance();
+    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();
+    if (actionManager != null) {
+      for (DataNode<TaskData> each : taskNodes) {
         final DataNode<ModuleData> moduleData = ExternalSystemApiUtil.findParent(each, ProjectKeys.MODULE);
         if (moduleData == null || moduleData.isIgnored()) continue;
-        ExternalSystemTaskAction eachAction = new ExternalSystemTaskAction(project, moduleData.getData().getInternalName(), each.getData());
-
-        manager.unregisterAction(eachAction.getId());
-        manager.registerAction(eachAction.getId(), eachAction);
+        TaskData taskData = each.getData();
+        ExternalSystemTaskAction eachAction = new ExternalSystemTaskAction(project, moduleData.getData().getInternalName(), taskData);
+        actionManager.unregisterAction(eachAction.getId());
+        if (shortcutsManager.hasShortcuts(taskData.getLinkedExternalProjectPath(), taskData.getName())) {
+          actionManager.registerAction(eachAction.getId(), eachAction);
+        }
       }
     }
   }
@@ -143,11 +153,14 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   }
 
   public static void clearActions(Project project, Collection<DataNode<TaskData>> taskData) {
-    ActionManager manager = ActionManager.getInstance();
-    if (manager != null) {
+    ActionManager actionManager = ActionManager.getInstance();
+    if (actionManager != null) {
       for (DataNode<TaskData> each : taskData) {
-        for (String eachAction : manager.getActionIds(getActionPrefix(project, each.getData().getLinkedExternalProjectPath()))) {
-          manager.unregisterAction(eachAction);
+        for (String eachAction : actionManager.getActionIds(getActionPrefix(project, each.getData().getLinkedExternalProjectPath()))) {
+          AnAction action = actionManager.getAction(eachAction);
+          if (!(action instanceof ExternalSystemRunConfigurationAction)) {
+            actionManager.unregisterAction(eachAction);
+          }
         }
       }
     }
@@ -161,19 +174,37 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     final AbstractExternalSystemTaskConfigurationType configurationType = ExternalSystemUtil.findConfigurationType(systemId);
     if (configurationType == null) return;
 
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String eachAction : actionManager.getActionIds(getActionPrefix(project, null))) {
+      AnAction action = actionManager.getAction(eachAction);
+      if (action instanceof ExternalSystemRunConfigurationAction) {
+        actionManager.unregisterAction(eachAction);
+      }
+    }
+
     Set<RunnerAndConfigurationSettings> settings = new THashSet<RunnerAndConfigurationSettings>(
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
-    ActionManager manager = ActionManager.getInstance();
-    if (manager != null) {
-      for (RunnerAndConfigurationSettings configurationSettings : settings) {
-        ExternalSystemRunConfigurationAction runConfigurationAction =
-          new ExternalSystemRunConfigurationAction(project, configurationSettings);
-        String id = runConfigurationAction.getId();
-        manager.unregisterAction(id);
-        manager.registerAction(id, runConfigurationAction);
+    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();
+    for (RunnerAndConfigurationSettings configurationSettings : settings) {
+      ExternalSystemRunConfigurationAction runConfigurationAction =
+        new ExternalSystemRunConfigurationAction(project, configurationSettings);
+      String id = runConfigurationAction.getId();
+      actionManager.unregisterAction(id);
+      if (shortcutsManager.hasShortcuts(id)) {
+        actionManager.registerAction(id, runConfigurationAction);
       }
     }
+  }
+
+  public static ExternalSystemAction registerAction(Project project, RunnerAndConfigurationSettings configurationSettings) {
+    ActionManager manager = ActionManager.getInstance();
+    ExternalSystemRunConfigurationAction runConfigurationAction =
+      new ExternalSystemRunConfigurationAction(project, configurationSettings);
+    String id = runConfigurationAction.getId();
+    manager.unregisterAction(id);
+    manager.registerAction(id, runConfigurationAction);
+    return runConfigurationAction;
   }
 
   private abstract static class MyExternalSystemAction extends ExternalSystemAction {
