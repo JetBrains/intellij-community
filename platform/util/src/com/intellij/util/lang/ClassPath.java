@@ -165,6 +165,11 @@ public class ClassPath {
     return myLoaders.get(i);
   }
 
+  /**
+   * Used in 
+   * @see com.intellij.openapi.projectRoots.JdkUtil#isClassPathJarEnabled(java.util.List, java.lang.String)
+   * as condition that UrlClassLoader supports classpath jars. Please modify it accordingly
+   */
   private void initLoaders(final URL url, boolean lastOne, int index) throws IOException {
     String path;
 
