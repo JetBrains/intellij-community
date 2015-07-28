@@ -46,7 +46,6 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
     CommonCodeStyleSettings.WRAP_AS_NEEDED, 
     CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
   })
-
   public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
 
   public JsonCodeStyleSettings(CodeStyleSettings container) {

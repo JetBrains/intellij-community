@@ -2,6 +2,7 @@ package com.intellij.json;
 
 import com.intellij.json.formatter.JsonCodeStyleSettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.TestDataPath;
@@ -19,13 +20,18 @@ public abstract class JsonTestCase extends LightCodeInsightFixtureTestCase {
   }
 
   @NotNull
+  protected CodeStyleSettings getCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject());
+  }
+
+  @NotNull
   protected CommonCodeStyleSettings getCommonCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JsonLanguage.INSTANCE);
+    return getCodeStyleSettings().getCommonSettings(JsonLanguage.INSTANCE);
   }
 
   @NotNull
   protected JsonCodeStyleSettings getCustomCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JsonCodeStyleSettings.class);
+    return getCodeStyleSettings().getCustomSettings(JsonCodeStyleSettings.class);
   }
 
   @NotNull
