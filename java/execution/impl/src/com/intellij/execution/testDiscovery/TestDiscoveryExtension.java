@@ -163,7 +163,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     final String tracesDirectory = getTracesDirectory(configuration);
     final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     synchronized (ourTracesLock) {
-      final File[] testMethodTraces = new File(tracesDirectory).listFiles(new FilenameFilter() {
+      final File tracesDirectoryFile = new File(tracesDirectory);
+      final File[] testMethodTraces = tracesDirectoryFile.listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
           return name.endsWith(".tr");
@@ -179,6 +180,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
             LOG.error("Can not load " + testMethodTrace, e);
           }
         }
+
+        if (tracesDirectoryFile.list() == null) FileUtil.delete(tracesDirectoryFile);
       }
     }
   }
