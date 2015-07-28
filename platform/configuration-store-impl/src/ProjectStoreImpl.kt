@@ -43,7 +43,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.ArrayList
 
-open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager), IProjectStore {
+open class ProjectStoreImpl(override protected val project: ProjectImpl, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -55,9 +55,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
     return if (substitutor == null) emptyArray() else arrayOf(substitutor)
   }
 
-  override fun optimizeTestLoading() = myProject.isOptimiseTestLoadSpeed()
-
-  override fun getProject() = myProject
+  override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
 
   override fun setProjectFilePath(filePath: String) {
     val stateStorageManager = getStateStorageManager()
@@ -102,7 +100,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
   }
 
   override fun getProjectBaseDir(): VirtualFile? {
-    if (myProject.isDefault()) {
+    if (project.isDefault()) {
       return null
     }
     val path = getProjectBasePath() ?: return null
@@ -110,7 +108,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
   }
 
   override fun getProjectBasePath(): String? {
-    if (myProject.isDefault()) {
+    if (project.isDefault()) {
       return null
     }
 
@@ -172,7 +170,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
   override fun getStorageScheme() = scheme
 
   override fun getPresentableUrl(): String? {
-    if (myProject.isDefault()) {
+    if (project.isDefault()) {
       return null
     }
     if (presentableUrl == null) {
@@ -184,22 +182,22 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
     return presentableUrl
   }
 
-  override fun getProjectFile() = if (myProject.isDefault()) null else (getProjectFileStorage() as FileBasedStorage).getVirtualFile()
+  override fun getProjectFile() = if (project.isDefault()) null else (getProjectFileStorage() as FileBasedStorage).getVirtualFile()
 
-  override fun getProjectFilePath() = if (myProject.isDefault()) "" else (getProjectFileStorage() as FileBasedStorage).getFilePath()
+  override fun getProjectFilePath() = if (project.isDefault()) "" else (getProjectFileStorage() as FileBasedStorage).getFilePath()
 
   // XmlElementStorage if default project, otherwise FileBasedStorage
   private fun getProjectFileStorage() = getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as XmlElementStorage
 
   override fun getWorkspaceFile(): VirtualFile? {
-    if (myProject.isDefault()) return null
+    if (project.isDefault()) return null
     val storage = getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
     assert(storage != null)
     return storage!!.getVirtualFile()
   }
 
   override fun getWorkspaceFilePath(): String? {
-    if (myProject.isDefault()) {
+    if (project.isDefault()) {
       return null
     }
     return (getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?)!!.getFilePath()
@@ -214,7 +212,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
     }
   }
 
-  override fun createStorageManager(): StateStorageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), myProject)
+  override fun createStorageManager(): StateStorageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
 
   override fun doSave(saveSessions: List<SaveSession>?, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
     var errors = prevErrors
@@ -222,7 +220,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
 
     super<BaseFileConfigurableStoreImpl>.doSave(saveSessions, readonlyFiles, errors)
 
-    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), myProject)
+    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), project)
     if (readonlyFiles.isEmpty()) {
       for (notification in notifications) {
         notification.expire()
@@ -237,14 +235,14 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
     val status: ReadonlyStatusHandler.OperationStatus
     val token = ReadAction.start()
     try {
-      status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(*getFilesList(readonlyFiles))
+      status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles))
     }
     finally {
       token.finish()
     }
 
     if (status.hasReadonlyFiles()) {
-      dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles())
+      dropUnableToSaveProjectNotification(project, status.getReadonlyFiles())
       throw IComponentStore.SaveCancelledException()
     }
     val oldList = ArrayList(readonlyFiles)
@@ -258,7 +256,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
     }
 
     if (!readonlyFiles.isEmpty()) {
-      dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles))
+      dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
       throw IComponentStore.SaveCancelledException()
     }
 
@@ -278,7 +276,7 @@ open class ProjectStoreImpl(protected var myProject: ProjectImpl, pathMacroManag
       return _defaultStorageChooser
     }
 
-  override fun getMessageBus() = myProject.getMessageBus()
+  override fun getMessageBus() = project.getMessageBus()
 
   override fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,

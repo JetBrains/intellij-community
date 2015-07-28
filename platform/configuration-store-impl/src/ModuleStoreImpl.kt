@@ -17,10 +17,12 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 
 class ModuleStoreImpl(private val myModule: Module, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager) {
-  override fun getProject() = myModule.getProject()
+  override val project: Project?
+    get() = myModule.getProject()
 
   override fun optimizeTestLoading() = (myModule.getProject() as ProjectEx).isOptimiseTestLoadSpeed()
 

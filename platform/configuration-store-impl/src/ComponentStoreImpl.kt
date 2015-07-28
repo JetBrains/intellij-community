@@ -64,6 +64,9 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   protected open val defaultStorageChooser: StateStorageChooser<PersistentStateComponent<*>>? = null
 
+  protected open val project: Project?
+    get() = null
+
   override fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
       mySettingsSavingComponents.add(component)
@@ -73,26 +76,14 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return
     }
 
+    val componentNameIfStateExists: String?
     val token = ReadAction.start()
     try {
-      val componentNameIfStateExists: String?
-      if (component is PersistentStateComponent<*>) {
-        componentNameIfStateExists = initPersistentComponent(component, null, false)
+      componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
+        initPersistentComponent(component, null, false)
       }
       else {
-        componentNameIfStateExists = initJdomExternalizable(component as JDOMExternalizable)
-      }
-
-      // if not service, so, component manager will check it later for all components
-      if (componentNameIfStateExists != null && service) {
-        val project = getProject()
-        val app = ApplicationManager.getApplication()
-        if (project != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && project.isInitialized()) {
-          val substitutor = getStateStorageManager().getMacroSubstitutor()
-          if (substitutor != null) {
-            StorageUtil.notifyUnknownMacros(substitutor, project, componentNameIfStateExists)
-          }
-        }
+        initJdomExternalizable(component as JDOMExternalizable)
       }
     }
     catch (e: StateStorageException) {
@@ -103,9 +94,22 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
     catch (e: Exception) {
       LOG.error(e)
+      return
     }
     finally {
       token.finish()
+    }
+
+    // if not service, so, component manager will check it later for all components
+    if (componentNameIfStateExists != null && service) {
+      val project = this.project
+      val app = ApplicationManager.getApplication()
+      if (project != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && project.isInitialized()) {
+        val substitutor = getStateStorageManager().getMacroSubstitutor()
+        if (substitutor != null) {
+          StorageUtil.notifyUnknownMacros(substitutor, project, componentNameIfStateExists)
+        }
+      }
     }
   }
 
@@ -247,8 +251,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
 
   }
-
-  protected open fun getProject(): Project? = null
 
   private fun <T> initPersistentComponent(component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
     val stateSpec = StoreUtil.getStateSpec(component)

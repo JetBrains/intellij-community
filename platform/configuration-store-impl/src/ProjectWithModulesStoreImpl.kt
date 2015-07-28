@@ -73,7 +73,7 @@ class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMa
     return true
   }
 
-  private fun getPersistentModules() = ModuleManager.getInstance(myProject)?.getModules() ?: Module.EMPTY_ARRAY
+  private fun getPersistentModules() = ModuleManager.getInstance(project)?.getModules() ?: Module.EMPTY_ARRAY
 
   override protected fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
     super.beforeSave(readonlyFiles)
