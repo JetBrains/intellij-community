@@ -60,6 +60,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.UsageViewManager.UsageViewStateListener;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -95,6 +96,11 @@ public class FindUsagesManager {
 
   private PsiElement2UsageTargetComposite myLastSearchInFileData; // EDT only
   private final UsageHistory myHistory = new UsageHistory();
+
+  private volatile UsageViewStateListener listener;
+  public void setListener(UsageViewStateListener listener) {
+    this.listener = listener;
+  }
 
   public FindUsagesManager(@NotNull Project project, @NotNull com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
@@ -440,7 +446,7 @@ public class FindUsagesManager {
       public UsageSearcher create() {
         return createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
       }
-    }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), null);
+    }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), listener);
     myHistory.add(targets[0]);
   }
 

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-class UsageNodeTreeBuilder {
+public class UsageNodeTreeBuilder {
   private final GroupNode myRoot;
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;

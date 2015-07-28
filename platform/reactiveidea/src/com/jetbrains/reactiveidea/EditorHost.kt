@@ -104,13 +104,6 @@ public class EditorHost(val reactiveModel: ReactiveModel,
     editor.putUserData(editorHostKey, this)
     editor.putUserData(pathKey, path)
 
-    init += {
-      var editorsModel: List<Model?> = (path.dropLast(1).getIn(it) as? MapModel)
-          ?.values()
-          ?.filter { (it as MapModel).isNotEmpty() } ?: emptyList()
-      it.putIn(path / activePath, PrimitiveModel(editorsModel.isEmpty()))
-    }
-
     lifetime += {
       val project = editor.getProject()
       if (project != null) {

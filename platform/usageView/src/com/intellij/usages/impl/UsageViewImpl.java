@@ -413,7 +413,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
+  public static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>(providers.length);
     for (UsageFilteringRuleProvider provider : providers) {
@@ -422,7 +422,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
 
-  private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
+  public static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {

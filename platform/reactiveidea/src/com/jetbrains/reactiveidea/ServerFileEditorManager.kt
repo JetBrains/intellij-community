@@ -42,8 +42,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.reactiveidea.tabs.TabViewHost
 import com.jetbrains.reactivemodel.*
-import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.get
@@ -578,8 +578,7 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
         })
         val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
         val textEditor = newEditors[0] as TextEditor
-        tabHost.addEditor(textEditor, file)
-        setActive(file)
+        tabHost.addEditor(textEditor, file, active = true)
 
         //[jeka] this is a hack to support back-forward navigation
         // previously here was incorrect call to fireSelectionChanged() with a side-effect

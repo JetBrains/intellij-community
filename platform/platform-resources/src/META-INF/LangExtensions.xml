@@ -252,7 +252,7 @@
                     serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
 
     <projectService serviceInterface="com.intellij.usages.UsageViewManager"
-                    serviceImplementation="com.intellij.usages.impl.UsageViewManagerImpl"/>
+                    serviceImplementation="com.intellij.usages.impl.ServerUsageViewManager"/>
 
     <projectService serviceInterface="com.intellij.analysis.AnalysisUIOptions"
                     serviceImplementation="com.intellij.analysis.AnalysisUIOptions"/>

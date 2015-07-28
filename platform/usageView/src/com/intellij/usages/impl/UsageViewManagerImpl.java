@@ -122,7 +122,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener) {
     final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
-    final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
+    final AtomicReference<UsageView> usageViewRef = new AtomicReference<UsageView>();
 
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
