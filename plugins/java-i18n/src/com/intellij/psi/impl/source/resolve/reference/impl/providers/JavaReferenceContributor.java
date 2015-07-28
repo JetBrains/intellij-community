@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.documentation.ArbitraryPlaceUrlReferenceProvider;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider;
 import com.intellij.psi.javadoc.PsiDocToken;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,8 +55,5 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
       }
     })), filePathReferenceProvider);
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocToken.class), ArbitraryPlaceUrlReferenceProvider.INSTANCE);
-    // todo register for all ?
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiComment.class), ArbitraryPlaceUrlReferenceProvider.INSTANCE);
-    registrar.registerReferenceProvider(xmlAttributeValue(), ArbitraryPlaceUrlReferenceProvider.INSTANCE, PsiReferenceRegistrar.LOWER_PRIORITY);
   }
 }

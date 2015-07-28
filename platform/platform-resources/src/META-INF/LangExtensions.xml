@@ -765,6 +765,7 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
+    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceContributor"/>
 
     <projectConfigurable groupId="editor"
                          groupWeight="140"
@@ -841,6 +842,7 @@
 
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter"/>
 
+    <documentationProvider implementation="com.intellij.openapi.paths.WebReferenceDocumentationProvider"/>
     <documentationProvider implementation="com.intellij.openapi.paths.WebReferenceDocumentationProvider"/>
 
     <refactoring.moveDirectoryWithClassesHelper
