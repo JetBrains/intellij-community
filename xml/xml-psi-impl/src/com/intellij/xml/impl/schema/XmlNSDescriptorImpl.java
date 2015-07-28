@@ -345,11 +345,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return myFile;
   }
 
-  @Override
-  public boolean isHierarhyEnabled() {
-    return true;
-  }
-
   public String getDefaultNamespace(){
     return myTargetNamespace != null ? myTargetNamespace : "";
   }

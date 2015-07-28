@@ -36,6 +36,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -585,13 +586,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     Keymap keymap = createKeymapCopyIfNeeded();
 
     MouseShortcut mouseShortcut = shortcut instanceof MouseShortcut ? (MouseShortcut)shortcut : null;
-
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
     MouseShortcutDialog dialog = new MouseShortcutDialog(
       this,
       mouseShortcut,
       keymap,
       actionId,
-      myActionsTree.getMainGroup(),
+      ActionsTreeUtil.createMainGroup(project, keymap, myQuickLists, null, true, null),
       restrictions
     );
     if (!dialog.showAndGet()) {

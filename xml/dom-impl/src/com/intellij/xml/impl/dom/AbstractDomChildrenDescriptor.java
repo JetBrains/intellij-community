@@ -217,11 +217,6 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
       }
 
       @Override
-      public boolean isHierarhyEnabled() {
-        throw new UnsupportedOperationException("Method isHierarhyEnabled not implemented in " + getClass());
-      }
-
-      @Override
       @Nullable
       public PsiElement getDeclaration() {
         throw new UnsupportedOperationException("Method getDeclaration not implemented in " + getClass());

@@ -221,11 +221,6 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   }
 
   @Override
-  public boolean isHierarhyEnabled() {
-    return false;
-  }
-
-  @Override
   public synchronized PsiElement getDeclaration() {
     if (!myElement.isValid() || !myFile.isValid()) {
       if (myUrl != null) {

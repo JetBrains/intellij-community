@@ -41,6 +41,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
@@ -500,16 +501,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.canSetValue() ? new JavaValueModifier(this) : null;
   }
 
-  private volatile String evaluationExpression = null;
+  private volatile XExpression evaluationExpression = null;
 
   @NotNull
   @Override
-  public Promise<String> calculateEvaluationExpression() {
+  public Promise<XExpression> calculateEvaluationExpression() {
     if (evaluationExpression != null) {
       return Promise.resolve(evaluationExpression);
     }
     else {
-      final AsyncPromise<String> res = new AsyncPromise<String>();
+      final AsyncPromise<XExpression> res = new AsyncPromise<XExpression>();
       myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {
@@ -518,13 +519,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         @Override
         public void contextAction() throws Exception {
-          evaluationExpression = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          evaluationExpression = ApplicationManager.getApplication().runReadAction(new Computable<XExpression>() {
             @Override
-            public String compute() {
+            public XExpression compute() {
               try {
                 PsiExpression psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
                 if (psiExpression != null) {
-                  return new TextWithImportsImpl(psiExpression).getText();
+                  return TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
                 }
               }
               catch (EvaluateException e) {

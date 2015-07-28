@@ -34,6 +34,4 @@ public interface XmlNSDescriptor extends PsiMetaData {
 
   @Nullable
   XmlFile getDescriptorFile();
-
-  boolean isHierarhyEnabled();
 }

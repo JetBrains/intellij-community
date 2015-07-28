@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.text.MergingCharSequence;
+import gnu.trove.TByteArrayList;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -35,10 +36,10 @@ public class LineSet{
   private static final int SEPARATOR_MASK = 0x3;
 
   private final int[] myStarts;
-  private final int[] myFlags;
+  private final byte[] myFlags;
   private final int myLength;
 
-  private LineSet(int[] starts, int[] flags, int length) {
+  private LineSet(int[] starts, byte[] flags, int length) {
     myStarts = starts;
     myFlags = flags;
     myLength = length;
@@ -50,12 +51,12 @@ public class LineSet{
 
   private static LineSet createLineSet(CharSequence text, boolean markModified) {
     TIntArrayList starts = new TIntArrayList();
-    TIntArrayList flags = new TIntArrayList();
+    TByteArrayList flags = new TByteArrayList();
 
     LineTokenizer lineTokenizer = new LineTokenizer(text);
     while (!lineTokenizer.atEnd()) {
       starts.add(lineTokenizer.getOffset());
-      flags.add(lineTokenizer.getLineSeparatorLength() | (markModified ? MODIFIED_MASK : 0));
+      flags.add((byte) (lineTokenizer.getLineSeparatorLength() | (markModified ? MODIFIED_MASK : 0)));
       lineTokenizer.advance();
     }
     return new LineSet(starts.toNativeArray(), flags.toNativeArray(), text.length());
@@ -117,7 +118,7 @@ public class LineSet{
 
     int newLineCount = myStarts.length + lineShift;
     int[] starts = new int[newLineCount];
-    int[] flags = new int[newLineCount];
+    byte[] flags = new byte[newLineCount];
 
     for (int i = 0; i < startLine; i++) {
       starts[i] = myStarts[i];
@@ -177,13 +178,13 @@ public class LineSet{
   final LineSet setModified(int index) {
     if (isLastEmptyLine(index) || isModified(index)) return this;
 
-    int[] flags = myFlags.clone();
+    byte[] flags = myFlags.clone();
     flags[index] |= MODIFIED_MASK;
     return new LineSet(myStarts, flags, myLength);
   }
 
   LineSet clearModificationFlags() {
-    int[] flags = myFlags.clone();
+    byte[] flags = myFlags.clone();
     for (int i = 0; i < flags.length; i++) {
       flags[i] &= ~MODIFIED_MASK;
     }
