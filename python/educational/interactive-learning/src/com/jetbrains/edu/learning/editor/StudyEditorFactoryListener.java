@@ -4,8 +4,11 @@ package com.jetbrains.edu.learning.editor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,14 +16,44 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.EduDocumentListener;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 
 public class StudyEditorFactoryListener implements EditorFactoryListener {
+
+  private static class WindowSelectionListener extends EditorMouseAdapter {
+    private final TaskFile myTaskFile;
+    private AnswerPlaceholder myAnswerPlaceholderWithSelection;
+
+    WindowSelectionListener(@NotNull final TaskFile taskFile) {
+      myTaskFile = taskFile;
+    }
+
+    @Override
+    public void mouseClicked(EditorMouseEvent e) {
+      final Editor editor = e.getEditor();
+      final Point point = e.getMouseEvent().getPoint();
+      final LogicalPosition pos = editor.xyToLogicalPosition(point);
+      final AnswerPlaceholder answerPlaceholder = myTaskFile.getAnswerPlaceholder(editor.getDocument(), pos);
+      if (answerPlaceholder != null) {
+       if (myAnswerPlaceholderWithSelection != null && myAnswerPlaceholderWithSelection == answerPlaceholder) {
+         editor.getSelectionModel().removeSelection();
+         myAnswerPlaceholderWithSelection = null;
+       } else {
+         int startOffset = answerPlaceholder.getRealStartOffset(editor.getDocument());
+         editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getLength());
+         myAnswerPlaceholderWithSelection = answerPlaceholder;
+       }
+      }
+    }
+  }
 
   @Override
   public void editorCreated(@NotNull final EditorFactoryEvent event) {
@@ -46,7 +79,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                   StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
                   WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
                   StudyUtils.drawAllWindows(editor, taskFile);
-
+                  editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
                   if (studyToolWindow != null) {
                     StudyUtils.updateStudyToolWindow(project);

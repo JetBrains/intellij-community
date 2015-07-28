@@ -77,5 +77,6 @@
     <highlightErrorFilter implementation="com.jetbrains.edu.learning.editor.StudyHighlightErrorFilter"/>
     <projectService serviceInterface="com.jetbrains.edu.learning.StudyTaskManager"
                     serviceImplementation="com.jetbrains.edu.learning.StudyTaskManager"/>
+     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.AnswerPlaceholderExtendWordHandler"/>
   </extensions>
 </idea-plugin>

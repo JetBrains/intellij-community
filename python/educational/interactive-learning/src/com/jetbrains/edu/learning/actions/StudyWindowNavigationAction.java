@@ -38,6 +38,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
               return;
             }
             StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, nextAnswerPlaceholder, selectedTaskFile);
+            selectedEditor.getSelectionModel().removeSelection();
             selectedTaskFile.setSelectedAnswerPlaceholder(nextAnswerPlaceholder);
             }
           }
