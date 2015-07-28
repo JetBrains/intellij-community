@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -27,6 +28,8 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.vcs.DirectoryData;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,7 +37,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class VfsUtilTest extends PlatformTestCase {
@@ -75,19 +78,12 @@ public class VfsUtilTest extends PlatformTestCase {
     VirtualFile file0 = VfsUtil.findFileByURL(file1.toURI().toURL());
     assertNotNull(file0);
     assertTrue(file0.isDirectory());
-    final VirtualFile[] children = file0.getChildren();
-    List<VirtualFile> list = new ArrayList<VirtualFile>();
-    final VirtualFileFilter fileFilter = new VirtualFileFilter() {
+    List<VirtualFile> list = VfsUtil.getChildren(file0, new VirtualFileFilter() {
       @Override
       public boolean accept(VirtualFile file) {
         return !file.getName().endsWith(".new");
       }
-    };
-    for (VirtualFile child : children) {
-      if (fileFilter.accept(child)) {
-        list.add(child);
-      }
-    }
+    });
     assertEquals(2, list.size());     // "CVS" dir ignored
 
     File file2 = new File(file1, "test.zip");
@@ -108,7 +104,7 @@ public class VfsUtilTest extends PlatformTestCase {
     String content = VfsUtilCore.loadText(file0);
     assertNotNull(file0);
     assertFalse(file0.isDirectory());
-    assertEquals(content, "test text");
+    assertEquals("test text", content);
   }
 
   public void testRelativePath() throws Exception {
@@ -301,5 +297,51 @@ public class VfsUtilTest extends PlatformTestCase {
     assertNull(vDir.findChild("/xxx/extFiles"));
     assertNull(vDir.findChild("xxx/extFiles"));
     assertNull(vDir.findChild("xxx//extFiles"));
+  }
+
+  public void testRenameDuringFullRefresh() throws IOException { doRenameAndRefreshTest(true); }
+  public void testRenameDuringPartialRefresh() throws IOException { doRenameAndRefreshTest(false); }
+
+  private void doRenameAndRefreshTest(boolean full) throws IOException {
+    assertFalse(ApplicationManager.getApplication().isDispatchThread());
+
+    File tempDir = createTempDirectory();
+    assertTrue(new File(tempDir, "child").createNewFile());
+
+    VirtualFile parent = refreshAndFindFile(tempDir);
+    assertNotNull(parent);
+    if (full) {
+      assertEquals(1, parent.getChildren().length);
+    }
+    final VirtualFile child = parent.findChild("child");
+    assertNotNull(child);
+
+    List<VirtualFile> files = Collections.singletonList(parent);
+
+    final Semaphore semaphore = new Semaphore();
+    for (int i = 0; i < 1000; i++) {
+      semaphore.down();
+      VfsUtil.markDirty(true, false, parent);
+      LocalFileSystem.getInstance().refreshFiles(files, true, true, new Runnable() {
+        @Override
+        public void run() {
+          semaphore.up();
+        }
+      });
+
+      assertTrue(child.isValid());
+      final String newName = "name" + i;
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          child.rename(this, newName);
+        }
+      }.execute();
+      assertTrue(child.isValid());
+
+      TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
+    }
+
+    assertTrue(semaphore.waitFor(10000));
   }
 }
