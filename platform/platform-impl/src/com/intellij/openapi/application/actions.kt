@@ -17,11 +17,18 @@ package com.intellij.openapi.application
 
 import javax.swing.SwingUtilities
 
-/**
- * @exclude Internal use only
- */
 public inline fun runWriteAction(runnable: () -> Unit) {
   val token = WriteAction.start()
+  try {
+    runnable()
+  }
+  finally {
+    token.finish()
+  }
+}
+
+public inline fun runReadAction(runnable: () -> Unit) {
+  val token = ReadAction.start()
   try {
     runnable()
   }

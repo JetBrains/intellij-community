@@ -47,10 +47,11 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   volatile protected var lastCallFrame: CallFrame? = null
   volatile protected var isForceStep: Boolean = false
   volatile protected var disableDoNotStepIntoLibraries: Boolean = false
+    private set
 
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
-  private var processBreakpointConditionsAtIdeSide: Boolean = false
+  private var processBreakpointConditionsAtIdeSide = false
 
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by Delegates.lazy { createBreakpointHandlers() }
 
@@ -73,16 +74,16 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
     })
   }
 
-  protected fun getRealProcessHandler(): ProcessHandler? = executionResult?.getProcessHandler()
+  protected final fun getRealProcessHandler(): ProcessHandler? = executionResult?.getProcessHandler()
 
   override final fun getSmartStepIntoHandler() = smartStepIntoHandler
 
   override final fun getBreakpointHandlers() = _breakpointHandlers
 
-  override fun getEditorsProvider() = editorsProvider
+  override final fun getEditorsProvider() = editorsProvider
 
-  public fun setProcessBreakpointConditionsAtIdeSide(processBreakpointConditionsAtIdeSide: Boolean) {
-    this.processBreakpointConditionsAtIdeSide = processBreakpointConditionsAtIdeSide
+  public fun setProcessBreakpointConditionsAtIdeSide(value: Boolean) {
+    processBreakpointConditionsAtIdeSide = value
   }
 
   public fun getVm(): Vm? = connection.getVm()
@@ -90,38 +91,29 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   protected abstract fun createBreakpointHandlers(): Array<XBreakpointHandler<*>>
 
   private fun updateLastCallFrame() {
-    val vm = getVm()
-    if (vm != null) {
-      val context = vm.getSuspendContextManager().getContext()
-      if (context != null) {
-        lastCallFrame = context.getTopFrame()
-        return
-      }
-    }
-
-    lastCallFrame = null
+    lastCallFrame = getVm()?.getSuspendContextManager()?.getContext()?.getTopFrame()
   }
 
-  override fun checkCanPerformCommands() = getVm() != null
+  override final fun checkCanPerformCommands() = getVm() != null
 
-  override fun isValuesCustomSorted() = true
+  override final fun isValuesCustomSorted() = true
 
-  override fun startStepOver() {
+  override final fun startStepOver() {
     updateLastCallFrame()
     continueVm(StepAction.OVER)
   }
 
-  override fun startForceStepInto() {
+  override final fun startForceStepInto() {
     isForceStep = true
     startStepInto()
   }
 
-  override fun startStepInto() {
+  override final fun startStepInto() {
     updateLastCallFrame()
     continueVm(StepAction.IN)
   }
 
-  override fun startStepOut() {
+  override final fun startStepOut() {
     if (isVmStepOutCorrect()) {
       lastCallFrame = null
     }
@@ -134,7 +126,11 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   // some VM (firefox for example) doesn't implement step out correctly, so, we need to fix it
   protected open fun isVmStepOutCorrect(): Boolean = true
 
-  protected fun continueVm(stepAction: StepAction) {
+  override final fun resume() {
+    continueVm(StepAction.CONTINUE)
+  }
+
+  protected final fun continueVm(stepAction: StepAction) {
     val suspendContextManager = getVm()!!.getSuspendContextManager()
     if (stepAction === StepAction.CONTINUE) {
       if (suspendContextManager.getContext() == null) {
@@ -153,51 +149,52 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
     suspendContextManager.continueVm(stepAction, 1)
   }
 
-  protected fun setOverlay() {
+  protected final fun setOverlay() {
     getVm()!!.getSuspendContextManager().setOverlayMessage("Paused in debugger")
   }
 
-  protected fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
-    val conditionExpression = breakpoint.getConditionExpression()
-    val condition = conditionExpression?.getExpression()
+  protected final fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
+    val condition = breakpoint.getConditionExpression()?.getExpression()
     if (!processBreakpointConditionsAtIdeSide || condition == null) {
       processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
     }
     else {
-      xSuspendContext.evaluateExpression(condition).done(object : ContextDependentAsyncResultConsumer<String>(suspendContext) {
-        override fun consume(evaluationResult: String, vm: Vm) {
-          if ("false" == evaluationResult) {
-            resume()
+      xSuspendContext.evaluateExpression(condition)
+        .done(object : ContextDependentAsyncResultConsumer<String>(suspendContext) {
+          override fun consume(evaluationResult: String, vm: Vm) {
+            if ("false" == evaluationResult) {
+              resume()
+            }
+            else {
+              processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
+            }
           }
-          else {
+        })
+        .rejected(object : ContextDependentAsyncResultConsumer<Throwable>(suspendContext) {
+          override fun consume(failure: Throwable, vm: Vm) {
             processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
           }
-        }
-      }).rejected(object : ContextDependentAsyncResultConsumer<Throwable>(suspendContext) {
-        override fun consume(failure: Throwable, vm: Vm) {
-          processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
-        }
-      })
+        })
     }
   }
 
   private fun processBreakpointLogExpressionAndSuspend(breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl, suspendContext: SuspendContext) {
-    val logExpressionObject = breakpoint.getLogExpressionObject()
-    val logExpression = logExpressionObject?.getExpression()
-
+    val logExpression = breakpoint.getLogExpressionObject()?.getExpression()
     if (logExpression == null) {
       breakpointReached(breakpoint, null, xSuspendContext)
     }
     else {
-      xSuspendContext.evaluateExpression(logExpression).done(object : ContextDependentAsyncResultConsumer<String>(suspendContext) {
-        override fun consume(logResult: String, vm: Vm) {
-          breakpointReached(breakpoint, logResult, xSuspendContext)
-        }
-      }).rejected(object : ContextDependentAsyncResultConsumer<Throwable>(suspendContext) {
-        override fun consume(logResult: Throwable, vm: Vm) {
-          breakpointReached(breakpoint, "Failed to evaluate expression: " + logExpression, xSuspendContext)
-        }
-      })
+      xSuspendContext.evaluateExpression(logExpression)
+        .done(object : ContextDependentAsyncResultConsumer<String>(suspendContext) {
+          override fun consume(logResult: String, vm: Vm) {
+            breakpointReached(breakpoint, logResult, xSuspendContext)
+          }
+        })
+        .rejected(object : ContextDependentAsyncResultConsumer<Throwable>(suspendContext) {
+          override fun consume(logResult: Throwable, vm: Vm) {
+            breakpointReached(breakpoint, "Failed to evaluate expression: " + logExpression, xSuspendContext)
+          }
+        })
     }
   }
 
@@ -210,27 +207,15 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
     }
   }
 
-  override fun startPausing() {
+  override final fun startPausing() {
     connection.getVm().getSuspendContextManager().suspend().rejected(RejectErrorReporter(getSession(), "Cannot pause"))
   }
 
-  override fun getCurrentStateMessage(): String {
-    return connection.getState().getMessage()
-  }
+  override final fun getCurrentStateMessage() = connection.getState().getMessage()
 
-  override fun getCurrentStateHyperlinkListener(): HyperlinkListener? {
-    return connection.getState().getMessageLinkListener()
-  }
+  override final fun getCurrentStateHyperlinkListener() = connection.getState().getMessageLinkListener()
 
-  override fun doGetProcessHandler(): ProcessHandler {
-    return if (executionResult == null) SilentDestroyDebugProcessHandler() else executionResult.getProcessHandler()
-  }
-
-  private class SilentDestroyDebugProcessHandler : DefaultDebugProcessHandler() {
-    override fun isSilentlyDestroyOnClose(): Boolean {
-      return true
-    }
-  }
+  override fun doGetProcessHandler() = executionResult?.getProcessHandler() ?: object : DefaultDebugProcessHandler() { override fun isSilentlyDestroyOnClose() = true }
 
   public fun saveResolvedFile(url: Url, file: VirtualFile) {
     urlToFileCache.putIfAbsent(url, file)
