@@ -70,7 +70,7 @@ public class DefaultSchemasConfigurable implements Configurable {
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return "reference.default.schemas";
   }
 
   @Nullable
