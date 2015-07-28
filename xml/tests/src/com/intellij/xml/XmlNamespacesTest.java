@@ -166,7 +166,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
 
   public void testPrefixesInTagValues() throws Exception {
     myFixture.configureByText("a.xml",
-                              "<<info descr=\"Namespace '' is not bound\">nodeTypes</info> xmlns:nt=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://www.jcp.org/jcr/nt/1.0</error>\" xmlns:customns=\"<error descr=\"URI is not registered (Settings | Project Settings | Schemas and DTDs)\">http://customurl</error>\">\n" +
+                              "<<info descr=\"Namespace '' is not bound\">nodeTypes</info> xmlns:nt=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://www.jcp.org/jcr/nt/1.0</error>\" xmlns:customns=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://customurl</error>\">\n" +
                               "<nodeType name=\"customns:item\" isMixin=\"false\" hasOrderableChildNodes=\"false\">\n" +
                               "   <supertypes>\n" +
                               "      <supertype>nt:folder</supertype>\n" +
