@@ -33,7 +33,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertTrue(new UnInjectLanguageAction().isAvailable(getProject(), myFixture.getEditor(), myFixture.getFile()));
 
     myFixture.configureByText("bar.xml",
-                              "<foo xmlns=\"<error descr=\"URI is not registered (Settings | Project Settings | Schemas and DTDs)\">http://foo.bar</error>\" \n" +
+                              "<foo xmlns=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://foo.bar</error>\" \n" +
                               "     xxx=\"<error descr=\"Cannot resolve file 'bar'\">b<caret>ar</error>\"/>");
     myFixture.testHighlighting();
 
