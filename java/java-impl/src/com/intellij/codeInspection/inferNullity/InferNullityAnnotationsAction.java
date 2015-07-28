@@ -121,55 +121,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      final Library annotationsLib = LibraryUtil.findLibraryByClass(defaultNullable, project);
-      if (annotationsLib != null) {
-        String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
-        message += StringUtil.join(modulesWithoutAnnotations, new Function<Module, String>() {
-          @Override
-          public String fun(Module module) {
-            return module.getName();
-          }
-        }, ", ");
-        message += (modulesWithoutAnnotations.size() == 1 ? " doesn't" : " don't");
-        message += " refer to the existing '" +
-                   annotationsLib.getName() +
-                   "' library with IDEA nullity annotations. Would you like to add the dependenc";
-        message += (modulesWithoutAnnotations.size() == 1 ? "y" : "ies") + " now?";
-        if (Messages.showOkCancelDialog(project, message, INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) ==
-            Messages.OK) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              for (Module module : modulesWithoutAnnotations) {
-                ModuleRootModificationUtil.addDependency(module, annotationsLib);
-              }
-            }
-          });
-          restartAnalysis(project, scope);
-        }
-      }
-      else if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
-                                                    " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
-                                                    "It is possible to configure custom JAR in e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
-                                                    " IntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",
-                                           INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == Messages.OK) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final String path = OrderEntryFix.locateAnnotationsJar(modulesWithoutAnnotations.iterator().next());
-            if (path != null) {
-              new WriteCommandAction(project) {
-                @Override
-                protected void run(@NotNull final Result result) throws Throwable {
-                  for (Module module : modulesWithoutAnnotations) {
-                    OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
-                  }
-                }
-              }.execute();
-              restartAnalysis(project, scope);
-            }
-          }
-        });
+      if (addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable, INFER_NULLITY_ANNOTATIONS)) {
+        restartAnalysis(project, scope);
       }
       return;
     }
@@ -188,6 +141,58 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     else {
       showUsageView(project, usageInfos, scope);
     }
+  }
+
+  public static boolean addAnnotationsDependency(@NotNull final Project project,
+                                                 @NotNull final Set<Module> modulesWithoutAnnotations,
+                                                 @NotNull String annoFQN, final String title) {
+    final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
+    if (annotationsLib != null) {
+      String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
+      message += StringUtil.join(modulesWithoutAnnotations, new Function<Module, String>() {
+        @Override
+        public String fun(Module module) {
+          return module.getName();
+        }
+      }, ", ");
+      message += (modulesWithoutAnnotations.size() == 1 ? " doesn't" : " don't");
+      message += " refer to the existing '" +
+                 annotationsLib.getName() +
+                 "' library with IntelliJ IDEA nullity annotations. Would you like to add the dependenc";
+      message += (modulesWithoutAnnotations.size() == 1 ? "y" : "ies") + " now?";
+      if (Messages.showOkCancelDialog(project, message, title, Messages.getErrorIcon()) == Messages.OK) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (Module module : modulesWithoutAnnotations) {
+              ModuleRootModificationUtil.addDependency(module, annotationsLib);
+            }
+          }
+        });
+        return true;
+      }
+      return false;
+    }
+    
+    if (Messages.showOkCancelDialog(project, "It is required that JetBrains annotations" +
+                                             " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
+                                             "It is possible to configure custom JAR\nin e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
+                                             "\nIntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license.\nWould you like to do it now?",
+                                    title, Messages.getErrorIcon()) == Messages.OK) {
+      final String path = OrderEntryFix.locateAnnotationsJar(modulesWithoutAnnotations.iterator().next());
+      if (path != null) {
+        new WriteCommandAction(project) {
+          @Override
+          protected void run(@NotNull final Result result) throws Throwable {
+            for (Module module : modulesWithoutAnnotations) {
+              OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
+            }
+          }
+        }.execute();
+        return true;
+      }
+    }
+    return false;
   }
 
   private UsageInfo[] findUsages(@NotNull final Project project,
