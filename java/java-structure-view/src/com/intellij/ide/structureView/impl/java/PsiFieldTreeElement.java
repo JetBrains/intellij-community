@@ -17,14 +17,16 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+
+import static com.intellij.psi.util.PsiFormatUtil.*;
 
 public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> implements SortableTreeElement {
   public PsiFieldTreeElement(PsiField field, boolean isInherited) {
@@ -39,9 +41,13 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> impl
 
   @Override
   public String getPresentableText() {
-    return StringUtil.replace(PsiFormatUtil.formatVariable(
-      getElement(),
-      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_INITIALIZER,
+    final PsiField field = getElement();
+    if (field == null) return "";
+    
+    final boolean dumb = DumbService.isDumb(field.getProject());
+    return StringUtil.replace(formatVariable(
+      field,
+      SHOW_NAME | (dumb ? 0 : SHOW_TYPE) | TYPE_AFTER | (dumb ? 0 : SHOW_INITIALIZER),
       PsiSubstitutor.EMPTY
     ), ":", ": ");
   }

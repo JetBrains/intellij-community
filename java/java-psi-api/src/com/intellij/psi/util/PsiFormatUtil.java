@@ -38,13 +38,13 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY})
   public @interface FormatClassOptions { }
 
-  public static String formatVariable(PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor) {
+  public static String formatVariable(@NotNull PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
     formatVariable(variable, options, substitutor, buffer);
     return buffer.toString();
   }
 
-  private static void formatVariable(PsiVariable variable,
+  private static void formatVariable(@NotNull PsiVariable variable,
                                      @FormatVariableOptions int options,
                                      PsiSubstitutor substitutor,
                                      @NotNull StringBuilder buffer) {
@@ -116,15 +116,15 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-  public static String formatMethod(PsiMethod method,
-                                    PsiSubstitutor substitutor,
+  public static String formatMethod(@NotNull PsiMethod method,
+                                    @NotNull PsiSubstitutor substitutor,
                                     @FormatMethodOptions int options,
                                     @FormatVariableOptions int parameterOptions) {
     return formatMethod(method, substitutor, options, parameterOptions, MAX_PARAMS_TO_SHOW);
   }
 
-  public static String formatMethod(PsiMethod method,
-                                    PsiSubstitutor substitutor,
+  public static String formatMethod(@NotNull PsiMethod method,
+                                    @NotNull PsiSubstitutor substitutor,
                                     @FormatMethodOptions int options,
                                     @FormatVariableOptions int parameterOptions,
                                     int maxParametersToShow) {
@@ -133,8 +133,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return buffer.toString();
   }
 
-  private static void formatMethod(PsiMethod method,
-                                   PsiSubstitutor substitutor,
+  private static void formatMethod(@NotNull PsiMethod method,
+                                   @NotNull PsiSubstitutor substitutor,
                                    @FormatMethodOptions int options,
                                    @FormatVariableOptions int parameterOptions,
                                    int maxParametersToShow,
