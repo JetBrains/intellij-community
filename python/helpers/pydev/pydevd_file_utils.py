@@ -96,35 +96,51 @@ def set_ide_os(os):
 DEBUG_CLIENT_SERVER_TRANSLATION = False
 
 #caches filled as requested during the debug session
-NORM_FILENAME_CONTAINER = {}
-NORM_FILENAME_AND_BASE_CONTAINER = {}
+NORM_PATHS_CONTAINER = {}
+NORM_PATHS_AND_BASE_CONTAINER = {}
 NORM_FILENAME_TO_SERVER_CONTAINER = {}
 NORM_FILENAME_TO_CLIENT_CONTAINER = {}
 
 
-
-
 def _NormFile(filename):
-    try:
-        return NORM_FILENAME_CONTAINER[filename]
-    except KeyError:
-        r = normcase(rPath(filename))
-        #cache it for fast access later
-        ind = r.find('.zip')
-        if ind == -1:
-            ind = r.find('.egg')
-        if ind != -1:
-            ind+=4
-            zip_path = r[:ind]
-            if r[ind] == "!":
-                ind+=1
-            inner_path = r[ind:]
-            if inner_path.startswith('/') or inner_path.startswith('\\'):
-                inner_path = inner_path[1:]
-            r = zip_path + "/" + inner_path
+    abs_path, real_path = _NormPaths(filename)
+    return real_path
 
-        NORM_FILENAME_CONTAINER[filename] = r
-        return r
+
+def _AbsFile(filename):
+    abs_path, real_path = _NormPaths(filename)
+    return abs_path
+
+
+# Returns tuple of absolute path and real path for given filename
+def _NormPaths(filename):
+    try:
+        return NORM_PATHS_CONTAINER[filename]
+    except KeyError:
+        abs_path = _NormPath(filename, os.path.abspath)
+        real_path = _NormPath(filename, rPath)
+
+        NORM_PATHS_CONTAINER[filename] = abs_path, real_path
+        return abs_path, real_path
+
+
+def _NormPath(filename, normpath):
+    r = normcase(normpath(filename))
+    #cache it for fast access later
+    ind = r.find('.zip')
+    if ind == -1:
+        ind = r.find('.egg')
+    if ind != -1:
+        ind+=4
+        zip_path = r[:ind]
+        if r[ind] == "!":
+            ind+=1
+        inner_path = r[ind:]
+        if inner_path.startswith('/') or inner_path.startswith('\\'):
+            inner_path = inner_path[1:]
+        r = zip_path + "/" + inner_path
+    return r
+
 
 ZIP_SEARCH_CACHE = {}
 def exists(file):
@@ -180,24 +196,26 @@ try:
 
         NORM_SEARCH_CACHE = {}
 
-        initial_norm_file = _NormFile
-        def _NormFile(filename):  #Let's redefine _NormFile to work with paths that may be incorrect
+        initial_norm_paths = _NormPaths
+        def _NormPaths(filename):  #Let's redefine _NormPaths to work with paths that may be incorrect
             try:
                 return NORM_SEARCH_CACHE[filename]
             except KeyError:
-                ret = initial_norm_file(filename)
-                if not exists(ret):
+                abs_path, real_path = initial_norm_paths(filename)
+                if not exists(real_path):
                     #We must actually go on and check if we can find it as if it was a relative path for some of the paths in the pythonpath
                     for path in sys.path:
-                        ret = initial_norm_file(join(path, filename))
-                        if exists(ret):
+                        abs_path, real_path = initial_norm_paths(join(path, filename))
+                        if exists(real_path):
                             break
                     else:
                         sys.stderr.write('pydev debugger: Unable to find real location for: %s\n' % (filename,))
-                        ret = filename
+                        abs_path = filename
+                        real_path = filename
 
-                NORM_SEARCH_CACHE[filename] = ret
-                return ret
+                NORM_SEARCH_CACHE[filename] = abs_path, real_path
+                return abs_path, real_path
+
 except:
     #Don't fail if there's something not correct here -- but at least print it to the user so that we can correct that
     traceback.print_exc()
@@ -290,21 +308,32 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
 
 else:
     #no translation step needed (just inline the calls)
-    NormFileToClient = _NormFile
+    NormFileToClient = _AbsFile
     NormFileToServer = _NormFile
 
 
-def GetFileNameAndBaseFromFile(f):
+# For given file f returns tuple of its absolute path, real path and base name
+def GetNormPathsAndBaseFromFile(f):
     try:
-        return NORM_FILENAME_AND_BASE_CONTAINER[f]
+        return NORM_PATHS_AND_BASE_CONTAINER[f]
     except KeyError:
-        filename = _NormFile(f)
-        base = basename(filename)
-        NORM_FILENAME_AND_BASE_CONTAINER[f] = filename, base
-        return filename, base
+        abs_path, real_path = _NormPaths(f)
+        base = basename(real_path)
+        NORM_PATHS_AND_BASE_CONTAINER[f] = abs_path, real_path, base
+        return abs_path, real_path, base
+
+
+def GetFileNameAndBaseFromFile(f):
+    abs_path, real_path, base = GetNormPathsAndBaseFromFile(f)
+    return real_path, base
 
 
 def GetFilenameAndBase(frame):
+    abs_path, real_path, base = GetNormPathsAndBase(frame)
+    return real_path, base
+
+
+def GetNormPathsAndBase(frame):
     #This one is just internal (so, does not need any kind of client-server translation)
     f = frame.f_code.co_filename
     if f is not None and f.startswith('build/bdist.'):
@@ -312,5 +341,4 @@ def GetFilenameAndBase(frame):
         f = frame.f_globals['__file__']
         if f.endswith('.pyc'):
             f = f[:-1]
-    return GetFileNameAndBaseFromFile(f)
-
+    return GetNormPathsAndBaseFromFile(f)
