@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -70,7 +71,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
                                    @NotNull XDebuggerEvaluator evaluator,
                                    @NotNull XExpression text,
                                    @Nullable XSourcePosition sourcePosition) {
-    super(session.getProject(), true);
+    super(WindowManager.getInstance().getFrame(session.getProject()), true);
     mySession = session;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
