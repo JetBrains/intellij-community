@@ -102,6 +102,13 @@ public class MavenKeymapExtension implements KeymapExtension {
     createActions(project, mavenProjects);
   }
 
+  public static MavenAction registerAction(MavenProject mavenProject, String actionId, String goal) {
+    MavenGoalAction mavenGoalAction = new MavenGoalAction(mavenProject, goal);
+    ActionManager manager = ActionManager.getInstance();
+    manager.registerAction(actionId, mavenGoalAction);
+    return mavenGoalAction;
+  }
+
   private static void createActions(Project project, List<MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
@@ -109,7 +116,9 @@ public class MavenKeymapExtension implements KeymapExtension {
       for (MavenGoalAction eachAction : collectActions(eachProject)) {
         String id = actionIdPrefix + eachAction.getGoal();
         manager.unregisterAction(id);
-        manager.registerAction(id, eachAction);
+        if(MavenShortcutsManager.getInstance(project).hasShortcuts(eachProject, eachAction.getGoal())) {
+          manager.registerAction(id, eachAction);
+        }
       }
     }
   }
