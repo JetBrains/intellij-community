@@ -54,36 +54,36 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @NotNull
   public JBIterable<T> rawIterable() {
-    return meta.skipExpanded ? leavesTraversal() : preOrderTraversal();
+    return meta.skipExpanded ? leavesOnlyDfsTraversal() : preOrderDfsTraversal();
   }
 
   @NotNull
-  public final JBIterable<T> preOrderTraversal() {
+  public final JBIterable<T> preOrderDfsTraversal() {
     return adjust(preOrderDfsTraversal(getRoots()));
   }
 
   @NotNull
-  public final JBIterable<T> postOrderTraversal() {
+  public final JBIterable<T> postOrderDfsTraversal() {
     return adjust(postOrderDfsTraversal(getRoots()));
   }
 
   @NotNull
-  public final JBIterable<T> leavesTraversal() {
+  public final JBIterable<T> leavesOnlyDfsTraversal() {
     return adjust(leavesOnlyDfsTraversal(getRoots()));
   }
 
   @NotNull
-  public final JBIterable<T> breadthFirstTraversal() {
+  public final JBIterable<T> bfsTraversal() {
     return adjust(bfsTraversal(getRoots()));
   }
 
   @NotNull
-  public final JBIterable<T> tracingBreadthFirstTraversal() {
+  public final JBIterable<T> tracingBfsTraversal() {
     return adjust(tracingBfsTraversal(getRoots()));
   }
 
   @NotNull
-  public final JBIterable<T> leavesBreadthFirstTraversal() {
+  public final JBIterable<T> leavesOnlyBfsTraversal() {
     return adjust(leavesOnlyBfsTraversal(getRoots()));
   }
 

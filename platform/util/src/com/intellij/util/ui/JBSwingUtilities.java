@@ -17,8 +17,8 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
+import com.intellij.util.containers.FilteredTraverser;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.TreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,8 +64,8 @@ public class JBSwingUtilities {
   }
 
   @NotNull
-  public static TreeTraverser<Component> uiTraverser() {
-    return new TreeTraverser<Component>(COMPONENT_CHILDREN);
+  public static FilteredTraverser<Component> uiTraverser() {
+    return new FilteredTraverser<Component>(COMPONENT_CHILDREN);
   }
 
   private static final Function<Component, Iterable<Component>> COMPONENT_CHILDREN = new Function<Component, Iterable<Component>>() {
