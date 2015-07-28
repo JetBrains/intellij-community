@@ -104,7 +104,7 @@ public abstract class ToolbarUpdater implements Activatable {
       final IdeFocusManager fm = IdeFocusManager.getInstance(null);
 
       if (!app.isHeadlessEnvironment()) {
-        if (app.isDispatchThread()) {
+        if (app.isDispatchThread() && myComponent.isShowing()) {
           fm.doWhenFocusSettlesDown(updateRunnable);
         }
         else {
