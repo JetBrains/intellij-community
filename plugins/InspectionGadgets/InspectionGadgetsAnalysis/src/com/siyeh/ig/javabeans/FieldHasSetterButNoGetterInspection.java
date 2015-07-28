@@ -15,11 +15,10 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -54,16 +53,29 @@ public class FieldHasSetterButNoGetterInspection extends BaseInspection {
     public void visitField(@NotNull PsiField field) {
       final String propertyName = PropertyUtil.suggestPropertyName(field);
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+      PsiType fieldType = field.getType();
       final PsiClass containingClass = field.getContainingClass();
-      final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propertyName, isStatic, false);
-      if (setter == null) {
-        return;
-      }
-      final PsiMethod getter = PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false);
-      if (getter != null) {
-        return;
-      }
+      if (containingClass == null || containsAccessor(propertyName, fieldType, containingClass, isStatic)) return;
       registerFieldError(field);
+    }
+
+    private static boolean containsAccessor(@NotNull String propertyName,
+                                            @NotNull PsiType fieldType,
+                                            @NotNull PsiClass containingClass,
+                                            boolean isStatic) {
+      String getterName = PropertyUtil.suggestGetterName(propertyName, fieldType);
+      if (containingClass.findMethodsByName(getterName, false).length != 0 &&
+          PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false) != null) {
+        return true;
+      }
+
+      String setterName = PropertyUtil.suggestSetterName(propertyName);
+      if (containingClass.findMethodsByName(setterName, false).length != 0 &&
+          PropertyUtil.findPropertySetter(containingClass, propertyName, isStatic, false) != null) {
+        return true;
+      }
+
+      return false;
     }
   }
 }
