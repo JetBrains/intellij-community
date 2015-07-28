@@ -127,34 +127,22 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     return getSymbolReplacementTarget(el) != null;
   }
 
-  @SuppressWarnings({"unchecked", "ConstantConditions"})
+  @SuppressWarnings({"ConstantConditions"})
   private void handleModifierList(final PsiElement el, final PsiElement replacement) throws IncorrectOperationException {
     // We want to copy all comments, including doc comments and modifier lists
     // that are present in matched nodes but not present in search/replace
 
     Map<String, String> newNameToSearchPatternNameMap = myContext.getNewName2PatternNameMap();
 
-    ModifierListOwnerCollector collector = new ModifierListOwnerCollector();
-    el.accept(collector);
-    Map<String, PsiNamedElement> originalNamedElements = (Map<String, PsiNamedElement>)collector.namedElements.clone();
-    collector.namedElements.clear();
-
-    replacement.accept(collector);
-    Map<String, PsiNamedElement> replacedNamedElements = (Map<String, PsiNamedElement>)collector.namedElements.clone();
-    collector.namedElements.clear();
+    Map<String, PsiNamedElement> originalNamedElements = Collector.collectNamedElements(el);
+    Map<String, PsiNamedElement> replacedNamedElements = Collector.collectNamedElements(replacement);
 
     if (originalNamedElements.size() == 0 && replacedNamedElements.size() == 0) {
       Replacer.handleComments(el, replacement, myContext);
       return;
     }
 
-    final PsiStatement[] statements = getCodeBlock().getStatements();
-    if (statements.length > 0) {
-      statements[0].getParent().accept(collector);
-    }
-
-    Map<String, PsiNamedElement> searchedNamedElements = (Map<String, PsiNamedElement>)collector.namedElements.clone();
-    collector.namedElements.clear();
+    Map<String, PsiNamedElement> searchedNamedElements = Collector.collectNamedElements(getCodeBlock());
 
     for (String name : originalNamedElements.keySet()) {
       PsiNamedElement originalNamedElement = originalNamedElements.get(name);
@@ -536,8 +524,14 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     return text.getFirstChild();
   }
 
-  private static class ModifierListOwnerCollector extends JavaRecursiveElementWalkingVisitor {
-    HashMap<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>(1);
+  private static class Collector extends JavaRecursiveElementWalkingVisitor {
+    private final HashMap<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>(1);
+
+    public static  Map<String, PsiNamedElement> collectNamedElements(PsiElement context) {
+      final Collector collector = new Collector();
+      context.accept(collector);
+      return collector.namedElements;
+    }
 
     @Override
     public void visitClass(PsiClass aClass) {
