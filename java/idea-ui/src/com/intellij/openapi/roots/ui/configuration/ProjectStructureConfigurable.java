@@ -208,8 +208,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     mySplitter.setSecondComponent(myDetails);
 
     myComponent.add(mySplitter, BorderLayout.CENTER);
-    myErrorsComponent = new ConfigurationErrorsComponent(myProject);
     if (!Registry.is("ide.new.project.settings")) {
+      myErrorsComponent = new ConfigurationErrorsComponent(myProject);
       myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
     }
 
@@ -432,7 +432,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();
 
-    Disposer.dispose(myErrorsComponent);
+    if (myErrorsComponent != null) {
+      Disposer.dispose(myErrorsComponent);
+    }
 
     myUiInitialized = false;
   }
@@ -703,9 +705,4 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public JComponent getPreferredFocusedComponent() {
     return myToFocus;
   }
-
-  protected void hideErrorsComponent() {
-    myErrorsComponent.setVisible(false);
-  }
-
 }
