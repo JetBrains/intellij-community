@@ -264,22 +264,15 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private void updateSearchComponent() {
     final int oldCaretPosition = mySearchTextComponent != null ? mySearchTextComponent.getCaretPosition() : 0;
     boolean wasNull = mySearchTextComponent == null;
-    String textToSet = mySearchTextComponent != null && !StringUtil.isEmpty(mySearchTextComponent.getText())
-                       ? mySearchTextComponent.getText()
-                       : myFindModel.getStringToFind();
-
+    String textToSet = myFindModel.getStringToFind();
     if (!updateTextComponent(true)) {
-      if (!mySearchTextComponent.getText().equals(textToSet)) {
-        mySearchTextComponent.setText(textToSet);
-      }
+      mySearchTextComponent.setText(textToSet);
       return;
     }
 
-    if (textToSet != null && !mySearchTextComponent.getText().equals(textToSet)) {
-      mySearchTextComponent.setText(textToSet);
-      if (wasNull) {
-        mySearchTextComponent.selectAll();
-      }
+    mySearchTextComponent.setText(textToSet);
+    if (wasNull) {
+      mySearchTextComponent.selectAll();
     }
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -342,14 +335,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private void updateReplaceComponent() {
     final int oldCaretPosition = myReplaceTextComponent != null ? myReplaceTextComponent.getCaretPosition() : 0;
-    String oldText = myReplaceTextComponent != null ? myReplaceTextComponent.getText() : myFindModel.getStringToReplace();
-
     if (!updateTextComponent(false)) {
       return;
     }
-    if (oldText != null) {
-      myReplaceTextComponent.setText(oldText);
-    }
+    myReplaceTextComponent.setText(myFindModel.getStringToReplace());
 
     myReplaceTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
