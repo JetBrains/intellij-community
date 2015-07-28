@@ -7,7 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static com.intellij.json.JsonParserDefinition.JSON_COMMENTARIES;
 
@@ -178,5 +181,33 @@ public class JsonPsiUtil {
       count++;
     }
     return count % 2 != 0;
+  }
+
+  /**
+   * Add new property and necessary comma either at the beginning of the object literal or at its end.
+   *
+   * @param object   object literal
+   * @param property new property, probably created via {@link JsonElementGenerator}
+   * @param first    if true make new property first in the object, otherwise append in the end of property list
+   * @return property as returned by {@link PsiElement#addAfter(PsiElement, PsiElement)}
+   */
+  @NotNull
+  public static PsiElement addProperty(@NotNull JsonObject object, @NotNull JsonProperty property, boolean first) {
+    final List<JsonProperty> propertyList = object.getPropertyList();
+    if (!first) {
+      final JsonProperty lastProperty = ContainerUtil.getLastItem(propertyList);
+      if (lastProperty != null) {
+        final PsiElement addedProperty = object.addAfter(property, lastProperty);
+        object.addBefore(new JsonElementGenerator(object.getProject()).createComma(), addedProperty);
+        return addedProperty;
+      }
+    }
+    final PsiElement leftBrace = object.getFirstChild();
+    assert hasElementType(leftBrace, JsonElementTypes.L_CURLY);
+    final PsiElement addedProperty = object.addAfter(property, leftBrace);
+    if (!propertyList.isEmpty()) {
+      object.addAfter(new JsonElementGenerator(object.getProject()).createComma(), addedProperty);
+    }
+    return addedProperty;
   }
 }

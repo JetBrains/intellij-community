@@ -5,6 +5,7 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,9 +30,23 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
    */
   public int PROPERTY_ALIGNMENT = PropertyAlignment.DO_NOT_ALIGN.getId();
 
+  @MagicConstant(flags = {
+    CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_ALWAYS,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED, 
+    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+  })
   public int OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+  
   // This was default policy for array elements wrapping in JavaScript's JSON.
   // CHOP_DOWN_IF_LONG seems more appropriate however for short arrays.
+  @MagicConstant(flags = {
+    CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_ALWAYS,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED, 
+    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+  })
+
   public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
 
   public JsonCodeStyleSettings(CodeStyleSettings container) {
