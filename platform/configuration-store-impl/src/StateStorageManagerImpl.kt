@@ -190,16 +190,14 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     private val mySessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
-      val stateStorageChooser = if (component is StateStorageChooserEx) component else null
+      val stateStorageChooser = component as? StateStorageChooserEx
       for (storageSpec in storageSpecs) {
         val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE)
-        if (resolution === Resolution.SKIP) {
+        if (resolution == Resolution.SKIP) {
           continue
         }
 
-        val stateStorage = storageManager.getStateStorage(storageSpec)
-        val session = getExternalizationSession(stateStorage)
-        session?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state, storageSpec)
+        getExternalizationSession(storageManager.getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state, storageSpec)
       }
     }
 
@@ -212,12 +210,9 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     }
 
     protected fun getExternalizationSession(stateStorage: StateStorage): StateStorage.ExternalizationSession? {
-      var session: StateStorage.ExternalizationSession? = mySessions.get(stateStorage)
-      if (session == null) {
-        session = stateStorage.startExternalization()
-        if (session != null) {
-          mySessions.put(stateStorage, session)
-        }
+      var session = mySessions.get(stateStorage) ?: stateStorage.startExternalization()
+      if (session != null) {
+        mySessions.put(stateStorage, session)
       }
       return session
     }
