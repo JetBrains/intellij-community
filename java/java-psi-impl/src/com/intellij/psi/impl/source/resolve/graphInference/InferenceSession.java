@@ -710,7 +710,9 @@ public class InferenceSession {
       }
       final int i = ArrayUtilRt.find(args, arg);
       if (i < 0) return null;
-      return getParameterType(parameters, i, substitutor, varargs);
+      final PsiType parameterType = getParameterType(parameters, i, substitutor, varargs);
+      final boolean isRaw = substitutor != null && PsiUtil.isRawSubstitutor((PsiMethod)parentMethod, substitutor);
+      return isRaw ? TypeConversionUtil.erasure(parameterType) : parameterType;
     }
     return null;
   }
