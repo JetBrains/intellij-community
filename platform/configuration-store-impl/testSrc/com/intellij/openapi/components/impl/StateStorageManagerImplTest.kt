@@ -39,10 +39,6 @@ public class StateStorageManagerImplTest : LightPlatformTestCase() {
     super.setUp()
     val substitutor = PathMacroManager.getInstance(LightPlatformTestCase.getProject()).createTrackingSubstitutor()
     myStateStorageManager = object : StateStorageManagerImpl(substitutor, "foo", myTestRootDisposable, ApplicationManager.getApplication().getPicoContainer()) {
-      override fun createStorageData(fileSpec: String, filePath: String): StorageData {
-        throw UnsupportedOperationException("Method createStorageData not implemented in " + javaClass)
-      }
-
       override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
         throw UnsupportedOperationException("Method getOldStorageSpec not implemented in " + javaClass)
       }

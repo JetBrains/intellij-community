@@ -45,8 +45,6 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
 
       override fun createStorageTopicListener() = application.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC)
 
-      override fun createStorageData(fileSpec: String, filePath: String) = StorageData(rootTagName)
-
       override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
         if (component is NamedJDOMExternalizable) {
           return "${StoragePathMacros.APP_CONFIG}/${component.getExternalFileName()}${DirectoryStorageData.DEFAULT_EXT}"
@@ -58,7 +56,8 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
 
       override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}${DirectoryStorageData.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
 
-      override fun isUseXmlProlog() = false
+      override protected val isUseXmlProlog: Boolean
+        get() = false
 
       override fun beforeFileBasedStorageCreate() {
         if (configDirectoryRefreshed || (!application.isUnitTestMode() && !application.isDispatchThread())) {

@@ -47,6 +47,9 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
 
   private var streamProvider: StreamProvider? = null
 
+  protected open val isUseXmlProlog: Boolean
+    get() = true
+
   init {
     Disposer.register(parentDisposable, this)
   }
@@ -129,9 +132,9 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
     beforeFileBasedStorageCreate()
     return object : FileBasedStorage(file, fileSpec, effectiveRoamingType, getMacroSubstitutor(fileSpec), rootTagName, this@StateStorageManagerImpl, createStorageTopicListener(), streamProvider) {
-      override fun createStorageData() = this@StateStorageManagerImpl.createStorageData(myFileSpec, getFilePath())
+      override fun createStorageData() = createStorageData(myFileSpec, getFilePath())
 
-      override fun isUseXmlProlog() = this@StateStorageManagerImpl.isUseXmlProlog()
+      override fun isUseXmlProlog() = isUseXmlProlog
     }
   }
 
@@ -141,14 +144,12 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
 
   protected open fun createStorageTopicListener(): StateStorage.Listener? = null
 
-  protected open fun isUseXmlProlog(): Boolean = true
-
   protected open fun beforeFileBasedStorageCreate() {
   }
 
   protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = pathMacroSubstitutor
 
-  protected abstract fun createStorageData(fileSpec: String, filePath: String): StorageData
+  protected open fun createStorageData(fileSpec: String, filePath: String): StorageData = StorageData(rootTagName)
 
   synchronized override final fun expandMacros(file: String): String {
     val matcher = MACRO_PATTERN.matcher(file)
