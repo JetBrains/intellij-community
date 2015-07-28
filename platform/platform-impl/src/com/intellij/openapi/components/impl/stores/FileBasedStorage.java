@@ -56,6 +56,10 @@ public class FileBasedStorage extends XmlElementStorage {
                           @Nullable StreamProvider streamProvider) {
     super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
 
+    if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(file.getPath(), '$')) {
+      throw new AssertionError("It seems like some macros were not expanded for path: " + file);
+    }
+
     myFile = file;
 
     if (listener != null) {
@@ -98,17 +102,13 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(storageData);
   }
 
-  private class FileSaveSession extends XmlElementStorageSaveSession {
+  protected class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);
     }
 
     @Override
     protected void doSave(@Nullable Element element) throws IOException {
-      if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(myFile.getPath(), '$')) {
-        throw new IOException("It seems like some macros were not expanded for path: " + myFile);
-      }
-
       if (LOG.isDebugEnabled() && myFileSpec.equals(StoragePathMacros.MODULE_FILE)) {
         LOG.debug("doSave " + getFilePath());
       }

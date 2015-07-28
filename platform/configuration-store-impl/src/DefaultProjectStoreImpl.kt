@@ -15,24 +15,33 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StreamProvider
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
-import org.jdom.Element
+import java.io.File
+import kotlin.properties.Delegates
 
 class DefaultProjectStoreImpl(project: ProjectImpl, private val projectManager: ProjectManagerImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  fun getStateCopy(): Element? {
-    val element = projectManager.getDefaultProjectRootElement()
-    return element?.clone()
+  companion object {
+    val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
   }
 
+  init {
+    service<DefaultProjectExportableAndSaveTrigger>()!!.project = project
+  }
+
+  private val storage: DefaultProjectStorage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager, projectManager) }
+
+  fun getStateCopy() = storage.loadLocalData()
+
   override protected fun createStorageManager(): StateStorageManager {
-    val storage = DefaultProjectStorage(this, pathMacroManager, projectManager)
     //noinspection deprecation
     return object : StateStorageManager {
       override fun addMacro(macro: String, expansion: String) = throw UnsupportedOperationException("Method addMacro not implemented in " + javaClass)
@@ -77,5 +86,16 @@ class DefaultProjectStoreImpl(project: ProjectImpl, private val projectManager: 
     }
 
     override fun createSaveSessions() = ContainerUtil.createMaybeSingletonList(externalizationSession.createSaveSession())
+  }
+}
+
+// ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
+State(name = "ProjectManager", storages = arrayOf(Storage(file = DefaultProjectStoreImpl.FILE_SPEC)))
+private class DefaultProjectExportableAndSaveTrigger : SettingsSavingComponent {
+  volatile var project: Project? = null;
+
+  override fun save() {
+    // we must trigger save
+    project?.save()
   }
 }

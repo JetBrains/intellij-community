@@ -28,7 +28,10 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.*;
@@ -60,7 +63,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,10 +75,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@State(name = "ProjectManager", storages = @Storage(
-  file = StoragePathMacros.APP_CONFIG + "/project.default.xml"
-))
-public class ProjectManagerImpl extends ProjectManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
+public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
@@ -84,9 +83,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
-  private boolean myDefaultProjectConfigurationChanged;
 
   private Project[] myOpenProjects = {}; // guarded by lock
   private final Object lock = new Object();
@@ -195,10 +191,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     Disposer.dispose(myChangedFilesAlarm);
     if (myDefaultProject != null) {
@@ -391,11 +384,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       });
     }
     return myDefaultProject;
-  }
-
-  @Nullable
-  public Element getDefaultProjectRootElement() {
-    return myDefaultProjectRootElement;
   }
 
   @Override
@@ -974,55 +962,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
     }
     return Messages.showYesNoDialog(project, message.toString(), "Unsaved Project", Messages.getWarningIcon()) == Messages.YES;
-  }
-
-
-  @Nullable
-  @Override
-  public Element getState() {
-    if (myDefaultProject != null) {
-      myDefaultProject.save();
-    }
-
-    if (!myDefaultProjectConfigurationChanged) {
-      // we are not ready to save
-      return null;
-    }
-
-    Element element = new Element("state");
-    myDefaultProjectRootElement.detach();
-    element.addContent(myDefaultProjectRootElement);
-    return element;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    myDefaultProjectRootElement = state.getChild("defaultProject");
-    if (myDefaultProjectRootElement != null) myDefaultProjectRootElement.detach();
-    myDefaultProjectConfigurationChanged = false;
-  }
-
-  public void setDefaultProjectRootElement(@NotNull Element defaultProjectRootElement) {
-    myDefaultProjectRootElement = defaultProjectRootElement;
-    myDefaultProjectConfigurationChanged = true;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ProjectManager";
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("project.default")};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return ProjectBundle.message("project.default.settings");
   }
 
   public static class UnableToSaveProjectNotification extends Notification {
