@@ -433,12 +433,12 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     if (object instanceof XValueNodeImpl[]) {
       final XValueNodeImpl[] nodes = (XValueNodeImpl[])object;
       for (XValueNodeImpl node : nodes) {
-        node.getValueContainer().calculateEvaluationExpression().done(new Consumer<String>() {
+        node.getValueContainer().calculateEvaluationExpression().done(new Consumer<XExpression>() {
           @Override
-          public void consume(String expression) {
+          public void consume(XExpression expression) {
             if (expression != null) {
               //noinspection ConstantConditions
-              addWatchExpression(XExpressionImpl.fromText(expression), -1, false);
+              addWatchExpression(expression, -1, false);
             }
           }
         });
