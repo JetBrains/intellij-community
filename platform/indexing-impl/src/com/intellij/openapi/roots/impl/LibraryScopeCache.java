@@ -20,10 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SdkResolveScopeProvider;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
@@ -67,7 +64,13 @@ public class LibraryScopeCache {
       return calcLibraryScope(key);
     }
   };
-
+  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache = new ConcurrentFactoryMap<List<OrderEntry>, GlobalSearchScope>() {
+    @Nullable
+    @Override
+    protected GlobalSearchScope create(@NotNull List<OrderEntry> key) {
+      return calcLibraryUseScope(key);
+    }
+  };
 
   public LibraryScopeCache(Project project) {
     myProject = project;
@@ -77,6 +80,7 @@ public class LibraryScopeCache {
     myLibraryScopes.clear();
     mySdkScopes.clear();
     myLibraryResolveScopeCache.clear();
+    myLibraryUseScopeCache.clear();
   }
 
   @NotNull
@@ -91,7 +95,7 @@ public class LibraryScopeCache {
       return scope;
     }
     GlobalSearchScope newScope = modulesLibraryIsUsedIn.length == 0
-                                 ? new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject))
+                                 ? new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject), myProject)
                                  : new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
     return ConcurrencyUtil.cacheOrGet(myLibraryScopes, modulesLibraryIsUsedIn, newScope);
   }
@@ -104,6 +108,16 @@ public class LibraryScopeCache {
   @NotNull
   public GlobalSearchScope getLibraryScope(@NotNull List<OrderEntry> orderEntries) {
     return myLibraryResolveScopeCache.get(orderEntries);
+  }
+
+  /** 
+   * Returns a scope containing all modules depending on the library transitively plus all the project's libraries
+   * @param orderEntries the order entries that reference a particular SDK/library
+   * @return a cached use scope
+   */
+  @NotNull
+  public GlobalSearchScope getLibraryUseScope(@NotNull List<OrderEntry> orderEntries) {
+    return myLibraryUseScopeCache.get(orderEntries);
   }
 
   @NotNull
@@ -161,6 +175,7 @@ public class LibraryScopeCache {
     if (jdkName == null) return GlobalSearchScope.allScope(myProject);
     GlobalSearchScope scope = mySdkScopes.get(jdkName);
     if (scope == null) {
+      //noinspection deprecation
       for (SdkResolveScopeProvider provider : SdkResolveScopeProvider.EP_NAME.getExtensions()) {
         scope = provider.getScope(myProject, jdkOrderEntry);
 
@@ -176,17 +191,28 @@ public class LibraryScopeCache {
     return scope;
   }
 
+  private GlobalSearchScope calcLibraryUseScope(List<OrderEntry> entries) {
+    List<GlobalSearchScope> united = ContainerUtil.newArrayList();
+    united.add(getLibrariesOnlyScope());
+    for (OrderEntry entry : entries) {
+      united.add(GlobalSearchScope.moduleWithDependentsScope(entry.getOwnerModule()));
+    }
+    return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[united.size()]));
+  }
+
   private static class LibrariesOnlyScope extends GlobalSearchScope {
     private final GlobalSearchScope myOriginal;
+    private final ProjectFileIndex myIndex;
 
-    private LibrariesOnlyScope(@NotNull GlobalSearchScope original) {
-      super(original.getProject());
+    private LibrariesOnlyScope(@NotNull GlobalSearchScope original, @NotNull Project project) {
+      super(project);
+      myIndex = ProjectRootManager.getInstance(project).getFileIndex();
       myOriginal = original;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myOriginal.contains(file);
+      return myOriginal.contains(file) && !myIndex.isInContent(file);
     }
 
     @Override
