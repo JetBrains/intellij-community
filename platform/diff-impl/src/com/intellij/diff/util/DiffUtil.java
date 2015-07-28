@@ -75,10 +75,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -785,33 +782,62 @@ public class DiffUtil {
   // Writable
   //
 
-  @CalledInAwt
-  public static void executeWriteCommand(@NotNull final Document document,
-                                         @Nullable final Project project,
-                                         @Nullable final String name,
-                                         @NotNull final Runnable task) {
-    if (!makeWritable(project, document)) return;
+  public static abstract class DiffCommandAction implements Runnable {
+    @Nullable protected final Project myProject;
+    @NotNull protected final Document myDocument;
+    @Nullable private final String myCommandName;
+    @Nullable private final String myCommandGroupId;
+    @NotNull private final UndoConfirmationPolicy myConfirmationPolicy;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(project, task, name, null, document);
-      }
-    });
+    public DiffCommandAction(@Nullable Project project,
+                             @NotNull Document document,
+                             @Nullable String commandName) {
+      this(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT);
+    }
+
+    public DiffCommandAction(@Nullable Project project,
+                             @NotNull Document document,
+                             @Nullable String commandName,
+                             @Nullable String commandGroupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
+      myDocument = document;
+      myProject = project;
+      myCommandName = commandName;
+      myCommandGroupId = commandGroupId;
+      myConfirmationPolicy = confirmationPolicy;
+    }
+
+    @CalledInAwt
+    public final void run() {
+      if (!makeWritable(myProject, myDocument)) return;
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            @Override
+            public void run() {
+              execute();
+            }
+          }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
+        }
+      });
+    }
+
+    @CalledWithWriteLock
+    protected abstract void execute();
   }
 
   @CalledInAwt
   public static void executeWriteCommand(@NotNull final Document document,
                                          @Nullable final Project project,
                                          @Nullable final String name,
-                                         @NotNull final UndoConfirmationPolicy confirmationPolicy,
                                          @NotNull final Runnable task) {
-    if (!makeWritable(project, document)) return;
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(project, task, name, null, confirmationPolicy, document);
+    new DiffCommandAction(project, document, name) {
+      @Override
+      protected void execute() {
+        task.run();
       }
-    });
+    }.run();
   }
 
   public static boolean isEditable(@NotNull Editor editor) {
