@@ -128,7 +128,7 @@ public class FileBasedStorage extends XmlElementStorage {
           myCachedVirtualFile = null;
         }
         else {
-          myCachedVirtualFile = StorageUtil.writeFile(myFile, this, virtualFile, element, isUseXmlProlog() ? myLineSeparator : null);
+          myCachedVirtualFile = StorageUtil.writeFile(myFile, this, virtualFile, element, isUseXmlProlog() ? myLineSeparator : LineSeparator.LF, isUseXmlProlog());
         }
       }
     }

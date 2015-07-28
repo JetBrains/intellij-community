@@ -243,7 +243,8 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
               storeElement.addContent(element);
 
               VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);
-              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()));
+              // we don't write xml prolog due to historical reasons (and should not in any case)
+              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
             }
             catch (IOException e) {
               LOG.error(e);

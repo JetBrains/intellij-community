@@ -141,7 +141,8 @@ public class StorageUtil {
                                       @NotNull Object requestor,
                                       @Nullable VirtualFile virtualFile,
                                       @NotNull Element element,
-                                      @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+                                      @NotNull LineSeparator lineSeparator,
+                                      boolean prependXmlProlog) throws IOException {
     final VirtualFile result;
     if (file != null && (virtualFile == null || !virtualFile.isValid())) {
       result = getOrCreateVirtualFile(requestor, file);
@@ -152,9 +153,8 @@ public class StorageUtil {
     }
 
     if (LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
-      BufferExposingByteArrayOutputStream content =
-        writeToBytes(element, (lineSeparatorIfPrependXmlProlog == null ? LineSeparator.LF : lineSeparatorIfPrependXmlProlog).getSeparatorString());
-      if (isEqualContent(result, lineSeparatorIfPrependXmlProlog, content)) {
+      BufferExposingByteArrayOutputStream content = writeToBytes(element, lineSeparator.getSeparatorString());
+      if (isEqualContent(result, lineSeparator, content)) {
         if (result.getName().equals("project.default.xml")) {
           LOG.warn("todo fix project.default.xml");
           return result;
@@ -168,28 +168,28 @@ public class StorageUtil {
       }
     }
 
-    doWrite(requestor, result, element, lineSeparatorIfPrependXmlProlog);
+    doWrite(requestor, result, element, lineSeparator, prependXmlProlog);
     return result;
   }
 
   private static void doWrite(@NotNull final Object requestor,
                               @NotNull final VirtualFile file,
                               @NotNull Object content,
-                              @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+                              @NotNull final LineSeparator lineSeparator,
+                              final boolean prependXmlProlog) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Save " + file.getPresentableUrl());
     }
-    String lineSeparator = (lineSeparatorIfPrependXmlProlog == null ? LineSeparator.LF : lineSeparatorIfPrependXmlProlog).getSeparatorString();
     AccessToken token = WriteAction.start();
     try {
       OutputStream out = file.getOutputStream(requestor);
       try {
-        if (lineSeparatorIfPrependXmlProlog != null) {
+        if (prependXmlProlog) {
           out.write(XML_PROLOG);
-          out.write(lineSeparatorIfPrependXmlProlog.getSeparatorBytes());
+          out.write(lineSeparator.getSeparatorBytes());
         }
         if (content instanceof Element) {
-          JDOMUtil.writeParent((Element)content, out, lineSeparator);
+          JDOMUtil.writeParent((Element)content, out, lineSeparator.getSeparatorString());
         }
         else {
           ((BufferExposingByteArrayOutputStream)content).writeTo(out);
@@ -201,11 +201,11 @@ public class StorageUtil {
     }
     catch (FileNotFoundException e) {
       // may be element is not long-lived, so, we must write it to byte array
-      final BufferExposingByteArrayOutputStream byteArray = content instanceof Element ? writeToBytes((Element)content, lineSeparator) : ((BufferExposingByteArrayOutputStream)content);
+      final BufferExposingByteArrayOutputStream byteArray = content instanceof Element ? writeToBytes((Element)content, lineSeparator.getSeparatorString()) : ((BufferExposingByteArrayOutputStream)content);
       throw new ReadOnlyModificationException(file, e, new StateStorage.SaveSession() {
         @Override
         public void save() throws IOException {
-          doWrite(requestor, file, byteArray, lineSeparatorIfPrependXmlProlog);
+          doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog);
         }
       });
     }
