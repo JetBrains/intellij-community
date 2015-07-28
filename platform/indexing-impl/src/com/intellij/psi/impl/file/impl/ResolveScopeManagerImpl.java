@@ -85,6 +85,10 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       boolean includeTests = projectFileIndex.isInTestSourceContent(vFile);
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
+
+    if (!projectFileIndex.isInLibrarySource(vFile) && !projectFileIndex.isInLibraryClasses(vFile)) {
+      return GlobalSearchScope.allScope(myProject);
+    }
     
     return LibraryScopeCache.getInstance(myProject).getLibraryScope(projectFileIndex.getOrderEntriesForFile(vFile));
   }
