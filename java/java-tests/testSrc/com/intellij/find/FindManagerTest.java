@@ -619,6 +619,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     List<Usage> usages = FindUtil.findAll(myProject, myEditor, model);
     assertNotNull(usages);
     assertEquals(2, usages.size());
+
+    configureByText(FileTypes.PLAIN_TEXT, "myproperty=@AspectJ");
+    model = new FindModel();
+    model.setStringToFind("@AspectJ");
+    model.setWholeWordsOnly(true);
+    usages = FindUtil.findAll(myProject, myEditor, model);
+    assertNotNull(usages);
+    assertEquals(1, usages.size());
   }
 
   public void testFindInCurrentFileOutsideProject() throws Exception {

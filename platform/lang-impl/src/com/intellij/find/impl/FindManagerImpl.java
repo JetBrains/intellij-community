@@ -401,10 +401,10 @@ public class FindManagerImpl extends FindManager {
     if (startOffset != 0) {
       boolean previousCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) &&
                                               (startOffset <= 1 || text.charAt(startOffset - 2) != '\\');
-      boolean previousCharacterIsWhitespace = Character.isWhitespace(text.charAt(startOffset - 1));
+      boolean previousCharacterIsSameAsNext = text.charAt(startOffset - 1) == text.charAt(startOffset);
 
       boolean firstCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset));
-      isWordStart = !firstCharacterIsIdentifier && (previousCharacterIsIdentifier || previousCharacterIsWhitespace) ||
+      isWordStart = !firstCharacterIsIdentifier && !previousCharacterIsSameAsNext ||
                     firstCharacterIsIdentifier && !previousCharacterIsIdentifier;
     } else {
       isWordStart = true;
@@ -414,11 +414,11 @@ public class FindManagerImpl extends FindManager {
 
     if (endOffset != text.length()) {
       boolean nextCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(endOffset));
-      boolean nextCharacterIsWhitespace = Character.isWhitespace(text.charAt(endOffset));
+      boolean nextCharacterIsSameAsPrevious = endOffset > 0 && text.charAt(endOffset) == text.charAt(endOffset - 1);
       boolean lastSearchedCharacterIsIdentifier = endOffset  > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
 
       isWordEnd = lastSearchedCharacterIsIdentifier && !nextCharacterIsIdentifier ||
-                  !lastSearchedCharacterIsIdentifier && (nextCharacterIsIdentifier || nextCharacterIsWhitespace);
+                  !lastSearchedCharacterIsIdentifier && !nextCharacterIsSameAsPrevious;
     } else {
       isWordEnd = true;
     }
