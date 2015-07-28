@@ -47,7 +47,6 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -65,8 +64,6 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -669,7 +666,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     list.setBackground(getProjectsBackground());
     list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
       final JLabel label = new JLabel();
-      Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
 
       {
         label.setBorder(JBUI.Borders.empty(3, 7));
@@ -680,14 +676,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       public JComponent fun(AnAction action) {
         label.setText(action.getTemplatePresentation().getText());
         Icon icon = action.getTemplatePresentation().getIcon();
-        if (icon.getIconHeight() == 32) {
-          Icon scaledIcon = scaled.get(icon);
-          if (scaledIcon == null) {
-            scaledIcon = IconUtil.scale(icon, 0.5);
-            scaled.put(icon, scaledIcon);
-          }
-          icon = scaledIcon;
-        }
         label.setIcon(icon);
         return label;
       }
