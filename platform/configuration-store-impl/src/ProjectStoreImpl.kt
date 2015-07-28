@@ -51,24 +51,24 @@ open class ProjectStoreImpl(override protected val project: ProjectImpl, pathMac
   private var presentableUrl: String? = null
 
   override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
-    val substitutor = getStateStorageManager().getMacroSubstitutor()
+    val substitutor = storageManager.getMacroSubstitutor()
     return if (substitutor == null) emptyArray() else arrayOf(substitutor)
   }
 
   override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
 
   override fun setProjectFilePath(filePath: String) {
-    val stateStorageManager = getStateStorageManager()
+    val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
 
     val file = File(filePath)
     if (isIprPath(file)) {
       scheme = StorageScheme.DEFAULT
 
-      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath)
+      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath)
 
       val workspacePath = composeWsPath(filePath)
-      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
+      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
       ApplicationManager.getApplication().invokeAndWait(object : Runnable {
         override fun run() {
@@ -80,11 +80,11 @@ open class ProjectStoreImpl(override protected val project: ProjectImpl, pathMac
       scheme = StorageScheme.DIRECTORY_BASED
 
       val dirStore = File(if (file.isDirectory()) file else file.getParentFile(), Project.DIRECTORY_STORE_FOLDER)
-      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, File(dirStore, "misc.xml").getPath())
-      stateStorageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, dirStore.getPath())
+      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, File(dirStore, "misc.xml").getPath())
+      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, dirStore.getPath())
 
       val workspace = File(dirStore, "workspace.xml")
-      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.getPath())
+      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.getPath())
       if (!workspace.exists() && !file.isDirectory()) {
         useOldWorkspaceContent(filePath, workspace)
       }
@@ -118,7 +118,7 @@ open class ProjectStoreImpl(override protected val project: ProjectImpl, pathMac
     }
 
     //we are not yet initialized completely ("open directory", etc)
-    val storage = getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER)
+    val storage = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER)
     return if (storage is FileBasedStorage) getBasePath(storage.getFile()) else null
   }
 
@@ -187,14 +187,14 @@ open class ProjectStoreImpl(override protected val project: ProjectImpl, pathMac
   override fun getProjectFilePath() = if (project.isDefault()) "" else (getProjectFileStorage() as FileBasedStorage).getFilePath()
 
   // XmlElementStorage if default project, otherwise FileBasedStorage
-  private fun getProjectFileStorage() = getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as XmlElementStorage
+  private fun getProjectFileStorage() = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as XmlElementStorage
 
   override fun getWorkspaceFile() = workspaceStorage?.getVirtualFile()
 
   override fun getWorkspaceFilePath() = workspaceStorage?.getFilePath()
 
   private val workspaceStorage: FileBasedStorage?
-    get() = if (project.isDefault()) null else getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
+    get() = if (project.isDefault()) null else storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
 
   override fun loadProjectFromTemplate(defaultProject: ProjectImpl) {
     defaultProject.save()

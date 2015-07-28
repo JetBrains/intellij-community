@@ -51,7 +51,7 @@ class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMa
 
   override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
     val result = SmartList<TrackingPathMacroSubstitutor>()
-    ContainerUtil.addIfNotNull(result, getStateStorageManager().getMacroSubstitutor())
+    ContainerUtil.addIfNotNull(result, storageManager.getMacroSubstitutor())
 
     for (module in getPersistentModules()) {
       ContainerUtil.addIfNotNull(result, module.stateStore.getStateStorageManager().getMacroSubstitutor())

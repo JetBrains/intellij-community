@@ -55,46 +55,36 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     private val MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)")
   }
 
-  override fun getStreamProvider() = streamProvider
+  override final fun getStreamProvider() = streamProvider
 
-  override fun setStreamProvider(value: StreamProvider?) {
+  override final fun setStreamProvider(value: StreamProvider?) {
     streamProvider = value
   }
 
-  override fun getMacroSubstitutor() = pathMacroSubstitutor
+  override final fun getMacroSubstitutor() = pathMacroSubstitutor
 
   synchronized override fun addMacro(macro: String, expansion: String) {
     assert(!macro.isEmpty())
     macros.put(macro, expansion)
   }
 
-  override fun getStateStorage(storageSpec: Storage): StateStorage {
-    @suppress("USELESS_CAST")
-    val storageClass = storageSpec.storageClass.java as Class<out StateStorage>
-    val key = if (storageClass == javaClass<StateStorage>()) storageSpec.file else storageClass.getName()
+  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType, storageSpec.storageClass.java as Class<out StateStorage>, storageSpec.stateSplitter.java)
 
+  override final fun getStateStorage(fileSpec: String, roamingType: RoamingType) = getOrCreateStorage(fileSpec, roamingType)
+
+  fun getOrCreateStorage(fileSpec: String, roamingType: RoamingType, storageClass: Class<out StateStorage> = javaClass<StateStorage>(), SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = javaClass<StateSplitterEx>()): StateStorage {
+    val key = if (storageClass == javaClass<StateStorage>()) fileSpec else storageClass.getName()
     storageLock.withLock {
-      var stateStorage: StateStorage? = storages.get(key)
+      var stateStorage = storages.get(key)
       if (stateStorage == null) {
-        stateStorage = createStateStorage(storageClass, storageSpec.file, storageSpec.roamingType, storageSpec.stateSplitter.java)
+        stateStorage = createStateStorage(storageClass, fileSpec, roamingType, stateSplitter)
         storages.put(key, stateStorage)
       }
       return stateStorage
     }
   }
 
-  override fun getStateStorage(fileSpec: String, roamingType: RoamingType): StateStorage? {
-    storageLock.withLock {
-      var stateStorage: StateStorage? = storages.get(fileSpec)
-      if (stateStorage == null) {
-        stateStorage = createStateStorage(javaClass<StateStorage>(), fileSpec, roamingType, javaClass<StateSplitterEx>())
-        storages.put(fileSpec, stateStorage)
-      }
-      return stateStorage
-    }
-  }
-
-  override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>) = storageLock.withLock { Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
+  override final fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>) = storageLock.withLock { Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
 
   fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileBasedStorage> {
     if (fileSpecs.isEmpty()) {
@@ -114,10 +104,10 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     return result ?: emptyList<FileBasedStorage>()
   }
 
-  override fun getStorageFileNames() = storageLock.withLock { storages.keySet() }
+  override final fun getStorageFileNames() = storageLock.withLock { storages.keySet() }
 
   // overridden in upsource
-  protected fun createStateStorage(storageClass: Class<out StateStorage>, fileSpec: String, roamingType: RoamingType, SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter>): StateStorage {
+  protected open fun createStateStorage(storageClass: Class<out StateStorage>, fileSpec: String, roamingType: RoamingType, SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter>): StateStorage {
     if (storageClass != javaClass<StateStorage>()) {
       val key = UUID.randomUUID().toString()
       (picoContainer as MutablePicoContainer).registerComponentImplementation(key, storageClass)
@@ -145,7 +135,7 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     }
   }
 
-  override fun clearStateStorage(file: String) {
+  override final fun clearStateStorage(file: String) {
     storageLock.withLock { storages.remove(file) }
   }
 
@@ -160,7 +150,7 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
 
   protected abstract fun createStorageData(fileSpec: String, filePath: String): StorageData
 
-  synchronized override fun expandMacros(file: String): String {
+  synchronized override final fun expandMacros(file: String): String {
     val matcher = MACRO_PATTERN.matcher(file)
     while (matcher.find()) {
       val m = matcher.group(1)
@@ -176,7 +166,7 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     return expanded
   }
 
-  override fun collapseMacros(path: String): String {
+  override final fun collapseMacros(path: String): String {
     var result = path
     for (entry in macros.entrySet()) {
       result = StringUtil.replace(result, entry.getValue(), entry.getKey())
@@ -204,15 +194,17 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
       val stateStorage = storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)
       if (stateStorage != null) {
-        val session = getExternalizationSession(stateStorage)
-        session?.setState(component, componentName, state, null)
+        getExternalizationSession(stateStorage)?.setState(component, componentName, state, null)
       }
     }
 
     protected fun getExternalizationSession(stateStorage: StateStorage): StateStorage.ExternalizationSession? {
-      var session = mySessions.get(stateStorage) ?: stateStorage.startExternalization()
-      if (session != null) {
-        mySessions.put(stateStorage, session)
+      var session: StateStorage.ExternalizationSession? = mySessions.get(stateStorage)
+      if (session == null) {
+        session = stateStorage.startExternalization()
+        if (session != null) {
+          mySessions.put(stateStorage, session)
+        }
       }
       return session
     }

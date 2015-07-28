@@ -276,24 +276,22 @@ public abstract class ComponentStoreImpl : IComponentStore {
         continue
       }
 
-      val stateStorage = getStateStorageManager().getStateStorage(storageSpec)
-      if (stateStorage != null) {
-        var forcedState = false
-        if (!stateStorage.hasState(component, name, stateClass, reloadData)) {
-          forcedState = changedStorages != null && changedStorages.contains(stateStorage)
-          if (!forcedState) {
-            continue
-          }
+      val storage = getStateStorageManager().getStateStorage(storageSpec)
+      var forcedState = false
+      if (!storage.hasState(component, name, stateClass, reloadData)) {
+        forcedState = changedStorages != null && changedStorages.contains(storage)
+        if (!forcedState) {
+          continue
         }
-
-        state = stateStorage.getState(component, name, stateClass, state)
-        if (state == null && forcedState) {
-          // state will be null if file deleted
-          // we must create empty (initial) state to reinit component
-          state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)
-        }
-        break
       }
+
+      state = storage.getState(component, name, stateClass, state)
+      if (state == null && forcedState) {
+        // state will be null if file deleted
+        // we must create empty (initial) state to reinit component
+        state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)
+      }
+      break
     }
 
     if (state != null) {

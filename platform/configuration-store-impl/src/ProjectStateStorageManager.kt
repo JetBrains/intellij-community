@@ -25,8 +25,8 @@ class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     val workspace = project.isWorkspaceComponent(component.javaClass)
     var fileSpec = if (workspace) StoragePathMacros.WORKSPACE_FILE else StoragePathMacros.PROJECT_FILE
-    val storage = getStateStorage(fileSpec, if (workspace) RoamingType.DISABLED else RoamingType.PER_USER)
-    if (operation === StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, javaClass<Element>(), false)) {
+    val storage = getOrCreateStorage(fileSpec, if (workspace) RoamingType.DISABLED else RoamingType.PER_USER)
+    if (operation === StateStorageOperation.READ && workspace && !storage.hasState(component, componentName, javaClass<Element>(), false)) {
       fileSpec = StoragePathMacros.PROJECT_FILE
     }
     return fileSpec
