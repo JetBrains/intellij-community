@@ -152,21 +152,22 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     }
 
     return new VcsRevisionDescriptionImpl(new SvnRevisionNumber(svnInfo.getCommittedRevision()), svnInfo.getCommittedDate(),
-                                          svnInfo.getAuthor(), getCommitMessage(path, svnInfo.getCommittedRevision()));
+                                          svnInfo.getAuthor(), getCommitMessage(path, svnInfo));
   }
 
   @Nullable
-  private String getCommitMessage(@NotNull File path, @Nullable SVNRevision revision) {
+  private String getCommitMessage(@NotNull File path, @NotNull Info info) {
     String result;
 
     try {
       PropertyValue property =
-        myVcs.getFactory(path).createPropertyClient().getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, revision);
+        myVcs.getFactory(path).createPropertyClient()
+          .getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, info.getCommittedRevision());
 
       result = PropertyValue.toString(property);
     }
     catch (VcsException e) {
-      LOG.info(e);
+      LOG.info("Failed to get commit message for file " + path + ", " + info.getCommittedRevision() + ", " + info.getRevision(), e);
       result = "";
     }
 
