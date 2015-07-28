@@ -296,4 +296,21 @@ public abstract class DumbService {
     void exitDumbMode();
 
   }
+
+  /**
+   * Executes {@link #allowStartingDumbModeInside(DumbModePermission, Runnable)} for all given projects.
+   */
+  public static void allowStartingDumbModeInside(@NotNull final DumbModePermission permission, @NotNull Project[] projects, @NotNull Runnable runnable) {
+    for (final Project project : projects) {
+      final Runnable prevRunnable = runnable;
+      runnable = new Runnable() {
+        @Override
+        public void run() {
+          getInstance(project).allowStartingDumbModeInside(permission, prevRunnable);
+        }
+      };
+    }
+    runnable.run();
+  }
+
 }

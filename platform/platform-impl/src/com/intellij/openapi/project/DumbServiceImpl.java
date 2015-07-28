@@ -114,6 +114,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(!myProject.isDefault(), "Don't call allowStartingDumbModeInside for default project");
+    
     ModalityState modality = ModalityState.current();
     DumbModePermission prev = myPermissions.put(modality, permission);
     try {
