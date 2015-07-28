@@ -46,6 +46,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
   private JBLabel myMultiprojectBuildFailPolicyLabel;
   private JCheckBox alwaysUpdateSnapshotsCheckBox;
   private JTextField threadsEditor;
+  private JCheckBox enableKeymapOptions;
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
@@ -113,6 +114,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
     data.beginUpdate();
 
     data.setWorkOffline(checkboxWorkOffline.isSelected());
+    data.setEnableKeymapOptions(enableKeymapOptions.isSelected());
     mavenPathsForm.setData(data);
 
     data.setPrintErrorStackTraces(checkboxProduceExceptionErrorMessages.isSelected());
@@ -138,6 +140,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
     alwaysUpdateSnapshotsCheckBox.setSelected(data.isAlwaysUpdateSnapshots());
+    enableKeymapOptions.setSelected(data.isEnableKeymapOptions());
     threadsEditor.setText(StringUtil.notNullize(data.getThreads()));
 
     ComboBoxUtil.select(outputLevelComboModel, data.getOutputLevel());
