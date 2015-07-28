@@ -17,14 +17,19 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
+
+val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
 
 public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
@@ -72,7 +77,7 @@ private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
   override val componentManager: ComponentManager
     get() = ApplicationManager.getApplication()
 
-  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros("${StoragePathMacros.ROOT_CONFIG}/$path"))
+  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros("$ROOT_CONFIG/$path"))
 }
 
 private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {

@@ -47,6 +47,11 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
+  public void load() throws IOException {
+    load(null);
+  }
+
+  @Override
   public boolean isLoaded() {
     return true;
   }

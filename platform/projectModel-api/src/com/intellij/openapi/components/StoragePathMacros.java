@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,10 @@ import org.jetbrains.annotations.NotNull;
  * @since 5/2/12 12:57 PM
  */
 public class StoragePathMacros {
-  /**
-   * Points to the application-level settings root directory.
-   */
-  @NonNls @NotNull public static final String ROOT_CONFIG = "$ROOT_CONFIG$";
+  @Deprecated @NotNull public static final String ROOT_CONFIG = "$ROOT_CONFIG$";
 
   /**
-   * Points to {@link #ROOT_CONFIG}/options by default. Should be used to store single files and {@link #ROOT_CONFIG} to store subdirectories with many files.
+   * Points to the application-level options root directory.
    */
   @NonNls @NotNull public static final String APP_CONFIG = "$APP_CONFIG$";
 

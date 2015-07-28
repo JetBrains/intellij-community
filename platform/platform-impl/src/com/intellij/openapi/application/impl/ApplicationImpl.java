@@ -452,11 +452,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(@Nullable String optionsPath) throws IOException {
-    load(PathManager.getConfigPath(), optionsPath == null ? PathManager.getOptionsPath() : optionsPath);
+  public void load() throws IOException {
+    load(null);
   }
 
-  public void load(@NotNull final String configPath, @NotNull final String optionsPath) throws IOException {
+  @Override
+  public void load(@Nullable final String configPath) throws IOException {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       long t = System.currentTimeMillis();
@@ -472,8 +473,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
           StateStorageManager storageManager = ComponentsPackage.getStateStore(ApplicationImpl.this).getStateStorageManager();
-          storageManager.addMacro(StoragePathMacros.APP_CONFIG, optionsPath);
-          storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
+
+          String effectiveConfigPath = configPath == null ? PathManager.getConfigPath() : configPath;
+          //noinspection deprecation
+          storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, effectiveConfigPath);
+          storageManager.addMacro(StoragePathMacros.APP_CONFIG, effectiveConfigPath + "/options");
 
           for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
             try {

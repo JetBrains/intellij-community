@@ -166,7 +166,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @NotNull
   public static IdeaTestApplication initApplication() {
-    ourApplication = IdeaTestApplication.getInstance(null);
+    ourApplication = IdeaTestApplication.getInstance();
     return ourApplication;
   }
 

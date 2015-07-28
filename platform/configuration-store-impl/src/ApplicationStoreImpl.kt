@@ -66,8 +66,8 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
         }
 
         try {
-          val configPath = expandMacros(StoragePathMacros.ROOT_CONFIG)
-          if (configPath == StoragePathMacros.ROOT_CONFIG) {
+          val configPath = expandMacros(ROOT_CONFIG)
+          if (configPath == ROOT_CONFIG) {
             LOG.warn("Macros ROOT_CONFIG is not defined")
             return
           }

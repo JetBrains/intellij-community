@@ -210,6 +210,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               String expandedPath = storageManager.expandMacros(stateAnnotation.additionalExportFile());
               additionalExportFile = new File(expandedPath);
               if (!additionalExportFile.exists()) {
+                //noinspection deprecation
                 additionalExportFile = new File(storageManager.expandMacros(StoragePathMacros.ROOT_CONFIG) + '/' + expandedPath);
               }
 

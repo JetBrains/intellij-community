@@ -21,6 +21,9 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SchemesManagerFactory {
+  /**
+   * directoryName — like "keymaps".
+   */
   @NotNull
   public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String directoryName,
                                                                                                                @NotNull SchemeProcessor<E> processor,

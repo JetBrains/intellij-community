@@ -96,7 +96,7 @@ public class GitCucumberWorld {
 
   @Before
   public void setUp() throws Throwable {
-    IdeaTestApplication.getInstance(null);
+    IdeaTestApplication.getInstance();
 
     myTestName = createTestName();
     myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(myTestName).getFixture();

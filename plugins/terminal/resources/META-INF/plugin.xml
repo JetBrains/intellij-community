@@ -6,6 +6,7 @@
   <description>Embedded Terminal</description>
   <depends>com.intellij.modules.platform</depends>
 
+  <resource-bundle>messages.TerminalBundle</resource-bundle>
   <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">

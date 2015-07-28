@@ -178,8 +178,7 @@ public class IdeaApplication {
 
   public void run() {
     try {
-      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      app.load(PathManager.getOptionsPath());
+      ApplicationManagerEx.getApplicationEx().load();
       myLoaded = true;
 
       myStarter.main(myArgs);
