@@ -91,11 +91,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return myDescriptorFile;
   }
 
-  @Override
-  public boolean isHierarhyEnabled() {
-    return false;
-  }
-
   public XmlElementDescriptor[] getElements() {
     final Collection<XmlElementDescriptor> declarations = buildDeclarationMap().values();
     return declarations.toArray(new XmlElementDescriptor[declarations.size()]);
