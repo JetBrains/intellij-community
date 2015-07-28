@@ -95,7 +95,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(myChangesBrowser);
     myGraphTable.getSelectionModel().addListSelectionListener(selectionChangeListener);
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
-    updateWhenDetailsAreLoaded(selectionChangeListener);
+    updateWhenDetailsAreLoaded();
 
     // layout
     myToolbar = createActionsToolbar();
@@ -143,10 +143,11 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }
 
-  private void updateWhenDetailsAreLoaded(final CommitSelectionListener selectionChangeListener) {
+  private void updateWhenDetailsAreLoaded() {
     myLogDataHolder.getMiniDetailsGetter().addDetailsLoadedListener(new Runnable() {
       @Override
       public void run() {
+        myGraphTable.initColumnSize();
         myGraphTable.repaint();
       }
     });
