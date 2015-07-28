@@ -96,7 +96,6 @@ public class TextMergeTool implements MergeTool {
     @NotNull private final MyThreesideViewer myViewer;
 
     private boolean myConflictResolved;
-    private int myBulkChangeUpdateDepth;
 
     public TextMergeViewer(@NotNull MergeContext context, @NotNull TextMergeRequest request) {
       myMergeContext = context;
@@ -173,7 +172,6 @@ public class TextMergeTool implements MergeTool {
     @Override
     public void dispose() {
       Disposer.dispose(myViewer);
-      LOG.assertTrue(myBulkChangeUpdateDepth == 0);
       if (!isConflictResolved()) myMergeRequest.applyResult(MergeResult.CANCEL);
     }
 
@@ -205,6 +203,8 @@ public class TextMergeTool implements MergeTool {
       @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
       private boolean myInitialRediffDone;
 
+      private int myBulkChangeUpdateDepth;
+
       private final Set<TextMergeChange> myChangesToUpdate = new HashSet<TextMergeChange>();
 
       public MyThreesideViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
@@ -223,6 +223,12 @@ public class TextMergeTool implements MergeTool {
       protected void onInit() {
         super.onInit();
         myModifierProvider.init();
+      }
+
+      @Override
+      protected void onDispose() {
+        LOG.assertTrue(myBulkChangeUpdateDepth == 0);
+        super.onDispose();
       }
 
       @NotNull
