@@ -78,10 +78,12 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Mikhail Golubev
  */
-
 @State(
   name = "CertificateManager",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/certificates.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
 
