@@ -129,17 +129,17 @@ public class TreeTraverserTest extends TestCase {
 
   public void testSimplePreOrderDfs() {
     TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), t.preOrderTraversal(1).toList());
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), t.preOrderDfsTraversal(1).toList());
   }
 
   public void testSimplePostOrderDfs() {
     TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(5, 6, 7, 2, 8, 9, 10, 3, 11, 12, 13, 4, 1), t.postOrderTraversal(1).toList());
+    assertEquals(Arrays.asList(5, 6, 7, 2, 8, 9, 10, 3, 11, 12, 13, 4, 1), t.postOrderDfsTraversal(1).toList());
   }
 
   public void testSimpleBfs() {
     TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), t.breadthFirstTraversal(1).toList());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), t.bfsTraversal(1).toList());
   }
 
   // FilteredTraverser ----------------------------------------------

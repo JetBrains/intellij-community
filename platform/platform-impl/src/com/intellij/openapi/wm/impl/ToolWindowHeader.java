@@ -30,7 +30,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.*;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.BitUtil;
@@ -209,7 +212,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       @Override
       protected void updateActionTooltips() {
-        for (ActionButton actionButton : JBSwingUtilities.uiTraverser().preOrderTraversal(myButtonPanel).filter(ActionButton.class)) {
+        for (ActionButton actionButton : JBSwingUtilities.uiTraverser().preOrderDfsTraversal(myButtonPanel).filter(ActionButton.class)) {
           actionButton.updateTooltip();
         }
       }

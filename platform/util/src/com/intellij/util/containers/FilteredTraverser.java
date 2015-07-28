@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 public class FilteredTraverser<T> extends FilteredTraverserBase<T, FilteredTraverser<T>> {
 
@@ -27,6 +28,7 @@ public class FilteredTraverser<T> extends FilteredTraverserBase<T, FilteredTrave
     super(meta, treeStructure);
   }
 
+  @NotNull
   @Override
   protected FilteredTraverser<T> newInstance(Meta<T> meta) {
     return new FilteredTraverser<T>(meta, treeStructure);

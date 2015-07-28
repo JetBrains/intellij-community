@@ -231,7 +231,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
    */
   public static void updateComponentTreeUI(@Nullable Component c) {
     if (c == null) return;
-    for (Component component : uiTraverser().postOrderTraversal(c)) {
+    for (Component component : uiTraverser().postOrderDfsTraversal(c)) {
       if (component instanceof JComponent) ((JComponent)component).updateUI();
     }
     c.invalidate();

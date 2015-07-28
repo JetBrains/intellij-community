@@ -107,7 +107,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @NotNull
   private static Iterable<ActionToolbar> iterateToolbars(JComponent root) {
-    return JBSwingUtilities.uiTraverser().preOrderTraversal(root).filter(ActionToolbar.class);
+    return JBSwingUtilities.uiTraverser().preOrderDfsTraversal(root).filter(ActionToolbar.class);
   }
 
   private static class OptionsGroup extends ActionGroup implements DumbAware {
