@@ -29,13 +29,15 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.FrozenDocument;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -664,7 +666,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     final Document document = event.getDocument();
     if (document instanceof DocumentImpl) {
-      myUncommittedInfos.get(document).addEvent(event);
+      myUncommittedInfos.get(document).myEvents.add(event);
     }
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -769,7 +771,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private UncommittedInfo clearUncommittedInfo(@NotNull Document document) {
     UncommittedInfo info = myUncommittedInfos.remove(document);
     if (info != null) {
-      ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).updatePointers(document, info.myEvents);
+      ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).updatePointers(document, info.myFrozen, info.myEvents);
     }
     return info;
   }
@@ -876,9 +878,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       myFrozen = original.freeze();
     }
 
-    void addEvent(DocumentEvent e) {
-      myEvents.add(new DocumentEventImpl(myOriginal.freeze(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp(), e.isWholeTextReplaced()));
-    }
   }
 
 }

@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
@@ -49,6 +50,14 @@ public class FrozenDocument implements DocumentEx {
     myLineSet = lineSet;
     myStamp = stamp;
     myTextString = textString == null ? null : new SoftReference<String>(textString);
+  }
+
+  public FrozenDocument applyEvent(DocumentEvent event, int newStamp) {
+    final int offset = event.getOffset();
+    final int oldEnd = offset + event.getOldLength();
+    final ImmutableText newText = myText.delete(offset, oldEnd).insert(offset, event.getNewFragment());
+    final LineSet newLineSet = myLineSet.update(myText, offset, oldEnd, event.getNewFragment(), event.isWholeTextReplaced());
+    return new FrozenDocument(newText, newLineSet, newStamp, null);
   }
 
   @Override

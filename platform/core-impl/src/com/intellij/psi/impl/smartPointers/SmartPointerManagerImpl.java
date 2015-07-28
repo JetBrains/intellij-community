@@ -23,10 +23,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -281,18 +285,27 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
   }
 
-  public void updatePointers(Document document, List<DocumentEvent> events) {
+  public void updatePointers(Document document, FrozenDocument frozen, List<DocumentEvent> events) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return;
 
-    THashSet<ManualRangeMarker> processedMarkers = ContainerUtil.newIdentityTroveSet();
-
-    for (SmartPsiElementPointerImpl pointer : getAlivePointers(file)) {
-      SmartPointerElementInfo info = pointer.getElementInfo();
-      if (info instanceof SelfElementInfo) {
-        ((SelfElementInfo)info).updateRange(events, processedMarkers);
+    List<SelfElementInfo> infos = ContainerUtil.mapNotNull(getAlivePointers(file), new Function<SmartPsiElementPointerImpl, SelfElementInfo>() {
+      @Override
+      public SelfElementInfo fun(SmartPsiElementPointerImpl pointer) {
+        final SmartPointerElementInfo info = pointer.getElementInfo();
+        return info instanceof SelfElementInfo ? (SelfElementInfo)info : null;
       }
+    });
 
+    for (DocumentEvent event : events) {
+      THashSet<ManualRangeMarker> processedMarkers = ContainerUtil.newIdentityTroveSet();
+      
+      frozen = frozen.applyEvent(event, 0);
+      final DocumentEvent corrected = SelfElementInfo.withFrozen(frozen, event);
+      
+      for (SelfElementInfo info : infos) {
+        info.updateRange(corrected, processedMarkers);
+      }
     }
   }
 

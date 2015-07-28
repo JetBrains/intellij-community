@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -31,7 +33,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -168,11 +169,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     myPsiRange = null;
   }
 
-  public void updateRange(@NotNull List<DocumentEvent> events, @NotNull Set<ManualRangeMarker> processedMarkers) {
+  public void updateRange(@NotNull DocumentEvent event, @NotNull Set<ManualRangeMarker> processedMarkers) {
     assert myPsiRange == null;
     if (myRangeMarker != null) {
       if (processedMarkers.add(myRangeMarker)) {
-        myRangeMarker.applyEvents(events);
+        myRangeMarker.applyEvent(event);
       }
       if (!myRangeMarker.isValid()) {
         myRangeMarker = null;
@@ -273,11 +274,23 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     if (myRangeMarker != null) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        return myRangeMarker.getUpdatedRange(getDocumentManager().getEventsSinceCommit(document));
+        FrozenDocument frozen = getDocumentManager().getLastCommittedDocument(document);
+        ManualRangeMarker marker = myRangeMarker;
+        for (DocumentEvent event : getDocumentManager().getEventsSinceCommit(document)) {
+          frozen = frozen.applyEvent(event, 0);
+          marker = marker.getUpdatedRange(withFrozen(frozen, event));
+          if (marker == null) return null;
+        }
+        return marker.getRange();
       }
       return myRangeMarker.getRange();
     }
     return myPsiRange;
+  }
+
+  @NotNull
+  static DocumentEventImpl withFrozen(FrozenDocument frozen, DocumentEvent e) {
+    return new DocumentEventImpl(frozen, e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp(), e.isWholeTextReplaced());
   }
 
   @NotNull

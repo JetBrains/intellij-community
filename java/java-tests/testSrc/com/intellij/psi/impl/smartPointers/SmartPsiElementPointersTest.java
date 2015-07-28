@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -698,5 +699,25 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertFalse(manager.areBeltsFastened(virtualFile));
 
     assertEquals(file.getClasses()[0], pointer.getElement()); // retain pointer from gc
+  }
+
+  public void testLargeFileWithManyChanges() {
+    configureByText(PlainTextFileType.INSTANCE, StringUtil.repeat("foo foo \n", 50000));
+    final TextRange range = TextRange.from(10, 10);
+    final SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, range);
+
+    final Document document = myFile.getViewProvider().getDocument();
+    assertNotNull(document);
+    
+    for (int i = 0; i < 10000; i++) {
+      document.insertString(i * 20 + 100, "x\n");
+      assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+      if (i % 500 == 0) {
+        assertEquals(range, pointer.getRange());
+      }
+    }
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(range, pointer.getRange());
   }
 }

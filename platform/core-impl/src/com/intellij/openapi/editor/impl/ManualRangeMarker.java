@@ -21,10 +21,8 @@ import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
- * A range marker that has to be manually updated with {@link #applyEvents(List)}. Can hold PSI-based range and be updated when the document is committed.
+ * A range marker that has to be manually updated with {@link #applyEvent(DocumentEvent)}. Can hold PSI-based range and be updated when the document is committed.
  */
 public class ManualRangeMarker {
   private ProperTextRange myRange;
@@ -34,42 +32,40 @@ public class ManualRangeMarker {
   private PersistentRangeMarker.LinesCols myLinesCols;
 
   public ManualRangeMarker(@NotNull FrozenDocument document, @NotNull ProperTextRange range, boolean greedyLeft, boolean greedyRight, boolean surviveOnExternalChange) {
+    this(range, greedyLeft, greedyRight, surviveOnExternalChange ? PersistentRangeMarker.storeLinesAndCols(range, document) : null);
+  }
+
+  private ManualRangeMarker(ProperTextRange range,
+                           boolean greedyLeft,
+                           boolean greedyRight,
+                           PersistentRangeMarker.LinesCols linesCols) {
     myRange = range;
     myGreedyLeft = greedyLeft;
     myGreedyRight = greedyRight;
-    myLinesCols = surviveOnExternalChange ? PersistentRangeMarker.storeLinesAndCols(range, document) : null;
+    myLinesCols = linesCols;
   }
 
   @Nullable
-  public ProperTextRange getUpdatedRange(@NotNull List<DocumentEvent> events) {
-    Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(events);
-    return pair == null ? null : pair.first;
+  public ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event) {
+    Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(event);
+    return pair == null ? null : new ManualRangeMarker(pair.first, myGreedyLeft, myGreedyRight, pair.second);
   }
 
   @Nullable
-  private Pair<ProperTextRange, PersistentRangeMarker.LinesCols> getUpdatedState(@NotNull List<DocumentEvent> events) {
-    ProperTextRange range = myRange;
-    PersistentRangeMarker.LinesCols linesCols = myLinesCols;
-    for (DocumentEvent event : events) {
-      if (linesCols != null) {
-        Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = PersistentRangeMarker
-          .applyChange(event, range, range.getStartOffset(), range.getEndOffset(), myGreedyLeft, myGreedyRight, linesCols);
-        if (pair == null) return null;
-
-        range = pair.first;
-        linesCols = pair.second;
-      } else {
-        range = RangeMarkerImpl.applyChange(event, range.getStartOffset(), range.getEndOffset(), myGreedyLeft, myGreedyRight);
-        if (range == null) return null;
-      }
+  private Pair<ProperTextRange, PersistentRangeMarker.LinesCols> getUpdatedState(@NotNull DocumentEvent event) {
+    if (myLinesCols != null) {
+      return PersistentRangeMarker
+        .applyChange(event, myRange, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight, myLinesCols);
     }
-    return Pair.create(range, linesCols);
+    
+    ProperTextRange range = RangeMarkerImpl.applyChange(event, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight);
+    return range == null ? null : new Pair<ProperTextRange, PersistentRangeMarker.LinesCols>(range, null);
   }
 
-  public void applyEvents(List<DocumentEvent> events) {
+  public void applyEvent(@NotNull DocumentEvent event) {
     if (!myValid) return;
 
-    Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(events);
+    Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(event);
     if (pair != null) {
       myRange = pair.first;
       myLinesCols = pair.second;
