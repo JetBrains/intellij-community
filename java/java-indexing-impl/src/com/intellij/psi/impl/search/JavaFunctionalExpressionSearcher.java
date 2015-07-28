@@ -180,7 +180,11 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
 
                                          private boolean canBeFunctional(JavaFunctionalExpressionIndex.IndexHolder holder) {
                                            final int paramIdx = holder.getFunctionExpressionIndex();
-                                           final PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(parameters[paramIdx].getType());
+                                           PsiType paramType = parameters[paramIdx >= parametersCount ? parametersCount - 1 : paramIdx].getType();
+                                           if (paramType instanceof PsiEllipsisType) {
+                                             paramType = ((PsiEllipsisType)paramType).getComponentType();
+                                           }
+                                           final PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(paramType);
                                            return functionalCandidate instanceof PsiTypeParameter ||
                                                   LambdaUtil.isFunctionalClass(functionalCandidate);
                                          }
