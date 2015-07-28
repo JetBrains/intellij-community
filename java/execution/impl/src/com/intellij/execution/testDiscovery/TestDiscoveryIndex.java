@@ -180,6 +180,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
     Holder() {
       String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
       final File versionFile = getVersionFile(path);
+      versionFile.getParentFile().mkdirs();
       final File methodQNameToTestNameFile = new File(path + File.separator + "methodQNameToTestName.data");
       final File testNameToUsedClassesAndMethodMapFile = new File(path + File.separator + "testToCalledMethodNames.data");
       final File classNameEnumeratorFile = new File(path + File.separator + "classNameEnumerator.data");
