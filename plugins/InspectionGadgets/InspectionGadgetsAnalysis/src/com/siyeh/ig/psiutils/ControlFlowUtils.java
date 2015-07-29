@@ -453,9 +453,11 @@ public class ControlFlowUtils {
   }
 
   private static boolean statementIsLastInBlock(@NotNull PsiCodeBlock block, @NotNull PsiStatement statement) {
-    final PsiStatement[] statements = block.getStatements();
-    for (int i = statements.length - 1; i >= 0; i--) {
-      final PsiStatement childStatement = statements[i];
+    for (PsiElement child = block.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (!(child instanceof PsiStatement)) {
+        continue;
+      }
+      final PsiStatement childStatement = (PsiStatement)child;
       if (statement.equals(childStatement)) {
         return true;
       }
