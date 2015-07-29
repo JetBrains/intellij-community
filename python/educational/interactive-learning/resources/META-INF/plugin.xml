@@ -27,13 +27,6 @@
     </component>
   </project-components>
 
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.edu.learning.PyStudyInitialConfigurator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
-
   <extensionPoints>
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
     <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
