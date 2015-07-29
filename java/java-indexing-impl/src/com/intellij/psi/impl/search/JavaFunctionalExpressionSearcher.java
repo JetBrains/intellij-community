@@ -88,6 +88,100 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     }), consumer, highLevelModules);
   }
 
+  public static boolean collectFunctionalExpressions(final PsiClass aClass,
+                                                     final SearchScope searchScope,
+                                                     final Processor<PsiFunctionalExpression> consumer, 
+                                                     final Set<Module> highLevelModules) {
+    final Project project = PsiUtilCore.getProjectInReadAction(aClass);
+    final ModulesScope modulesScope = new ModulesScope(highLevelModules, project);
+    final GlobalSearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      @Override
+      public GlobalSearchScope compute() {
+        return modulesScope.intersectWith(convertToGlobalScope(project, searchScope.intersectWith(aClass.getUseScope())));
+      }
+    });
+
+    //collect all files with '::' and '->' in useScope 
+    final GlobalSearchScope filesScope = getFilesWithFunctionalExpressionsScope(project, useScope);
+
+    //collect all methods with parameter of functional interface or free type parameter type
+    final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope);
+
+    final LinkedHashSet<VirtualFile> filesToProcess = new LinkedHashSet<VirtualFile>();
+    final MethodSignature functionalInterfaceMethod = ApplicationManager.getApplication().runReadAction(new Computable<MethodSignature>() {
+      @Override
+      public MethodSignature compute() {
+        return LambdaUtil.getFunction(aClass);
+      }
+    });
+    LOG.assertTrue(functionalInterfaceMethod != null);
+    final int expectedFunExprParamsCount = functionalInterfaceMethod.getParameterTypes().length;
+    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    
+    //find all usages of method candidates in files with functional expressions
+    for (final PsiMethod psiMethod : methodCandidates) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          if (!psiMethod.isValid()) return;
+          final int parametersCount = psiMethod.getParameterList().getParametersCount();
+          final boolean varArgs = psiMethod.isVarArgs();
+          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+          final GlobalSearchScope methodUseScope = modulesScope.intersectWith(convertToGlobalScope(project, psiMethod.getUseScope()));
+          fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null,
+                                       //functional expressions checker: number and type of parameters at call site should correspond to
+                                       //candidate method currently check
+                                       new SuitableFilesProcessor(filesToProcess,
+                                                                  expectedFunExprParamsCount,
+                                                                  parametersCount,
+                                                                  varArgs,
+                                                                  parameters),
+                                       useScope.intersectWith(methodUseScope));
+        }
+      });
+    }
+
+    //search for functional expressions in non-call contexts
+    collectFilesWithTypeOccurrencesAndFieldAssignments(aClass, filesScope, filesToProcess);
+
+    LOG.info("#usage files: " + filesToProcess.size());
+    return ContainerUtil.process(filesToProcess, new ReadActionProcessor<VirtualFile>() {
+      @Override
+      public boolean processInReadAction(VirtualFile file) {
+        //resolve functional expressions to ensure that functional expression type is appropriate
+        return processFileWithFunctionalInterfaces(aClass, expectedFunExprParamsCount, consumer, file);
+      }
+    });
+  }
+
+  private static Collection<PsiMethod> getCandidateMethodsWithSuitableParams(final PsiClass aClass,
+                                                                             final Project project,
+                                                                             final GlobalSearchScope useScope) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
+        @Override
+        public Collection<PsiMethod> compute() {
+          final String functionalInterfaceName = aClass.getName();
+          JavaMethodParameterTypesIndex parameterTypesIndex = JavaMethodParameterTypesIndex.getInstance();
+         
+          LinkedHashSet<PsiMethod> methods = new LinkedHashSet<PsiMethod>(parameterTypesIndex.get(functionalInterfaceName, project, useScope));
+         
+          methods.addAll(parameterTypesIndex.get(JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project,
+                                                 GlobalSearchScope.allScope(project)));
+          return methods;
+        }
+      });
+  }
+
+  @NotNull
+  private static GlobalSearchScope getFilesWithFunctionalExpressionsScope(Project project, GlobalSearchScope useScope) {
+    final PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
+    final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+    final CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files);
+    helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "::", processor);
+    helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "->", processor);
+
+    return GlobalSearchScope.filesScope(project, files);
+  }
+
   @NotNull
   private static GlobalSearchScope convertToGlobalScope(Project project, SearchScope useScope) {
     final GlobalSearchScope scope;
@@ -109,102 +203,7 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     }
     return scope;
   }
-
-  public static boolean collectFunctionalExpressions(final PsiClass aClass,
-                                                     final SearchScope searchScope,
-                                                     final Processor<PsiFunctionalExpression> consumer, 
-                                                     final Set<Module> highLevelModules) {
-    final Project project = PsiUtilCore.getProjectInReadAction(aClass);
-    final ModulesScope modulesScope = new ModulesScope(highLevelModules, project);
-    final GlobalSearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope compute() {
-        return modulesScope.intersectWith(convertToGlobalScope(project, searchScope.intersectWith(aClass.getUseScope())));
-      }
-    });
-
-    final PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
-    final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
-    final CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files);
-    helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "::", processor);
-    helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "->", processor);
-
-    final GlobalSearchScope filesScope = GlobalSearchScope.filesScope(project, files);
-
-    final Collection<PsiMethod> lambdaCandidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
-      @Override
-      public Collection<PsiMethod> compute() {
-        final String functionalInterfaceName = aClass.getName();
-        JavaMethodParameterTypesIndex parameterTypesIndex = JavaMethodParameterTypesIndex.getInstance();
-       
-        LinkedHashSet<PsiMethod> methods = new LinkedHashSet<PsiMethod>(parameterTypesIndex.get(functionalInterfaceName, project, useScope));
-       
-        methods.addAll(parameterTypesIndex.get(JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project,
-                                               GlobalSearchScope.allScope(project)));
-        return methods;
-      }
-    });
-    
-    final LinkedHashSet<VirtualFile> usageFiles = new LinkedHashSet<VirtualFile>();
-    final MethodSignature functionalInterfaceMethod = ApplicationManager.getApplication().runReadAction(new Computable<MethodSignature>() {
-      @Override
-      public MethodSignature compute() {
-        return LambdaUtil.getFunction(aClass);
-      }
-    });
-    LOG.assertTrue(functionalInterfaceMethod != null);
-    final int expectedFunExprParamsCount = functionalInterfaceMethod.getParameterTypes().length;
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    for (final PsiMethod psiMethod : lambdaCandidates) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          if (!psiMethod.isValid()) return;
-          final int parametersCount = psiMethod.getParameterList().getParametersCount();
-          final boolean varArgs = psiMethod.isVarArgs();
-          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          final GlobalSearchScope methodUseScope = modulesScope.intersectWith(convertToGlobalScope(project, psiMethod.getUseScope()));
-          fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null,
-                                       new FileBasedIndex.ValueProcessor<Collection<JavaFunctionalExpressionIndex.IndexHolder>>() {
-                                         @Override
-                                         public boolean process(VirtualFile file, Collection<JavaFunctionalExpressionIndex.IndexHolder> holders) {
-                                           for (JavaFunctionalExpressionIndex.IndexHolder holder : holders) {
-                                             if (holder.getLambdaParamsNumber() == expectedFunExprParamsCount &&
-                                                 (varArgs ? holder.getMethodArgsLength() >= parametersCount - 1 : holder.getMethodArgsLength() == parametersCount) &&
-                                                 canBeFunctional(holder)
-                                               ) {
-                                               usageFiles.add(file);
-                                               break;
-                                             }
-                                           }
-                                           return true;
-                                         }
-
-                                         private boolean canBeFunctional(JavaFunctionalExpressionIndex.IndexHolder holder) {
-                                           final int paramIdx = holder.getFunctionExpressionIndex();
-                                           PsiType paramType = parameters[paramIdx >= parametersCount ? parametersCount - 1 : paramIdx].getType();
-                                           if (paramType instanceof PsiEllipsisType) {
-                                             paramType = ((PsiEllipsisType)paramType).getComponentType();
-                                           }
-                                           final PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(paramType);
-                                           return functionalCandidate instanceof PsiTypeParameter ||
-                                                  LambdaUtil.isFunctionalClass(functionalCandidate);
-                                         }
-                                       }, useScope.intersectWith(methodUseScope));
-        }
-      });
-    }
-
-    collectFilesWithAssignments(aClass, filesScope, usageFiles);
-
-    LOG.info("#usage files: " + usageFiles.size());
-    return ContainerUtil.process(usageFiles, new ReadActionProcessor<VirtualFile>() {
-      @Override
-      public boolean processInReadAction(VirtualFile file) {
-        return processFileWithFunctionalInterfaces(aClass, expectedFunExprParamsCount, consumer, file);
-      }
-    });
-  }
-
+  
   /**
    * Collect files where:
    *  aClass is used, e.g. in type declaration or method return type;
@@ -221,9 +220,9 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     }
     </pre>
    */
-  private static void collectFilesWithAssignments(PsiClass aClass,
-                                                  GlobalSearchScope filesScope,
-                                                  final LinkedHashSet<VirtualFile> usageFiles) {
+  private static void collectFilesWithTypeOccurrencesAndFieldAssignments(PsiClass aClass,
+                                                                         GlobalSearchScope filesScope,
+                                                                         final LinkedHashSet<VirtualFile> usageFiles) {
     final Set<PsiField> fields = new LinkedHashSet<PsiField>();
     for (final PsiReference reference : ReferencesSearch.search(aClass, filesScope)) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -303,5 +302,56 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       if (!ref.get()) return false;
     }
     return true;
+  }
+
+  private static class SuitableFilesProcessor implements FileBasedIndex.ValueProcessor<Collection<JavaFunctionalExpressionIndex.IndexHolder>> {
+    private final LinkedHashSet<VirtualFile> myFilesToProcess;
+    private final int myExpectedFunExprParamsCount;
+    private final int myParametersCount;
+    private final boolean myVarArgs;
+    private final PsiParameter[] myParameters;
+
+    public SuitableFilesProcessor(LinkedHashSet<VirtualFile> filesToProcess,
+                                  int expectedFunExprParamsCount,
+                                  int parametersCount,
+                                  boolean varArgs,
+                                  PsiParameter[] parameters) {
+      myFilesToProcess = filesToProcess;
+      myExpectedFunExprParamsCount = expectedFunExprParamsCount;
+      myParametersCount = parametersCount;
+      myVarArgs = varArgs;
+      myParameters = parameters;
+    }
+
+    @Override
+    public boolean process(VirtualFile file, Collection<JavaFunctionalExpressionIndex.IndexHolder> holders) {
+      for (JavaFunctionalExpressionIndex.IndexHolder holder : holders) {
+        if (holder.getLambdaParamsNumber() == myExpectedFunExprParamsCount) {
+          final boolean suitableParamNumbers;
+          if (myVarArgs) {
+            suitableParamNumbers = holder.getMethodArgsLength() >= myParametersCount - 1;
+          }
+          else {
+            suitableParamNumbers = holder.getMethodArgsLength() == myParametersCount;
+          }
+          if (suitableParamNumbers && canBeFunctional(holder)) {
+            myFilesToProcess.add(file);
+            break;
+          }
+        }
+      }
+      return true;
+    }
+
+    private boolean canBeFunctional(JavaFunctionalExpressionIndex.IndexHolder holder) {
+      final int paramIdx = holder.getFunctionExpressionIndex();
+      PsiType paramType = myParameters[paramIdx >= myParametersCount ? myParametersCount - 1 : paramIdx].getType();
+      if (paramType instanceof PsiEllipsisType) {
+        paramType = ((PsiEllipsisType)paramType).getComponentType();
+      }
+      final PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(paramType);
+      return functionalCandidate instanceof PsiTypeParameter ||
+             LambdaUtil.isFunctionalClass(functionalCandidate);
+    }
   }
 }
