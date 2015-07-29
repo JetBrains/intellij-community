@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
@@ -94,7 +95,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   protected abstract DebuggerTree createTreeView();
 
   @Override
-  protected void rebuild(int event) {
+  protected void rebuild(DebuggerSession.Event event) {
     myRebuildAlarm.cancelAndRequest();
   }
 

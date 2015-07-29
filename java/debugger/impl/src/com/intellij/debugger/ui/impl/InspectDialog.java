@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
     init();
 
     session.getContextManager().addListener(this);
-    getInspectView().rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
+    getInspectView().rebuildIfVisible(DebuggerSession.Event.CONTEXT);
   }
 
   protected JComponent createCenterPanel() {
@@ -77,8 +77,8 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
     return myInspectView;
   }
 
-  public void changeEvent(DebuggerContextImpl newContext, int event) {
-    if(event == DebuggerSession.EVENT_DETACHED) {
+  public void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+    if(event == DebuggerSession.Event.DETACHED) {
       close(CANCEL_EXIT_CODE);
     }
   }

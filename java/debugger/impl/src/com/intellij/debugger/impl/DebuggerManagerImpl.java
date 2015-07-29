@@ -82,29 +82,29 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
   private final DebuggerContextListener mySessionListener = new DebuggerContextListener() {
     @Override
-    public void changeEvent(DebuggerContextImpl newContext, int event) {
+    public void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
 
       final DebuggerSession session = newContext.getDebuggerSession();
-      if (event == DebuggerSession.EVENT_PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
+      if (event == DebuggerSession.Event.PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
         // if paused in non-active session; switch current session
-        myDebuggerStateManager.setState(newContext, session != null? session.getState() : DebuggerSession.STATE_DISPOSED, event, null);
+        myDebuggerStateManager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, event, null);
         return;
       }
 
       if (myDebuggerStateManager.myDebuggerSession == session) {
         myDebuggerStateManager.fireStateChanged(newContext, event);
       }
-      if (event == DebuggerSession.EVENT_ATTACHED) {
+      if (event == DebuggerSession.Event.ATTACHED) {
         myDispatcher.getMulticaster().sessionAttached(session);
       }
-      else if (event == DebuggerSession.EVENT_DETACHED) {
+      else if (event == DebuggerSession.Event.DETACHED) {
         myDispatcher.getMulticaster().sessionDetached(session);
       }
-      else if (event == DebuggerSession.EVENT_DISPOSE) {
+      else if (event == DebuggerSession.Event.DISPOSE) {
         dispose(session);
         if (myDebuggerStateManager.myDebuggerSession == session) {
           myDebuggerStateManager
-            .setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_DISPOSE, null);
+            .setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.DISPOSE, null);
         }
       }
     }
@@ -256,7 +256,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     session.getContextManager().addListener(mySessionListener);
     getContextManager()
       .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
-                session.getState(), DebuggerSession.EVENT_CONTEXT, null);
+                session.getState(), DebuggerSession.Event.CONTEXT, null);
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
 
@@ -614,7 +614,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
 
     @Override
-    public void setState(final DebuggerContextImpl context, int state, int event, String description) {
+    public void setState(final DebuggerContextImpl context, DebuggerSession.State state, DebuggerSession.Event event, String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       myDebuggerSession = context.getDebuggerSession();
       if (myDebuggerSession != null) {
