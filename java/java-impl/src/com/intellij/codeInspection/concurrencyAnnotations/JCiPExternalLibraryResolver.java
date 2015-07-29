@@ -15,14 +15,16 @@
  */
 package com.intellij.codeInspection.concurrencyAnnotations;
 
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import net.jcip.annotations.GuardedBy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.Collections;
 import java.util.List;
