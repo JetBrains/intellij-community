@@ -257,6 +257,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
+      params.setUseClasspathJar(true);
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       
       final int classPathType = JavaParametersUtil.getClasspathType(module,

@@ -166,6 +166,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
+    javaParameters.setUseClasspathJar(true);
     final Module module = getConfiguration().getConfigurationModule().getModule();
 
     Project project = getConfiguration().getProject();

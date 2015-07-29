@@ -174,7 +174,7 @@ public class JdkUtil {
     final Class commandLineWrapper;
     if ((commandLineWrapper = getCommandLineWrapperClass()) != null) {
       if (forceDynamicClasspath && !vmParametersList.hasParameter("-classpath") && !vmParametersList.hasParameter("-cp")) {
-        if (isClassPathJarEnabled(javaParameters.getClassPath().getPathList(), PathUtil.getJarPathForClass(ClassPath.class))) {
+        if (isClassPathJarEnabled(javaParameters, PathUtil.getJarPathForClass(ClassPath.class))) {
           appendJarClasspathParams(javaParameters, commandLine, vmParametersList, commandLineWrapper);
         }
         else {
@@ -324,27 +324,30 @@ public class JdkUtil {
     }
   }
 
-  private static boolean isClassPathJarEnabled(List<String> paths, String currentPath) {
-    try {
-      final ArrayList<URL> urls = new ArrayList<URL>();
-      for (String path : paths) {
-        if (!path.equals(currentPath)) {
-          try {
-            urls.add(new File(path).toURI().toURL());
+  private static boolean isClassPathJarEnabled(SimpleJavaParameters javaParameters, String currentPath) {
+    if (javaParameters.isUseClasspathJar() && useClasspathJar()) {
+      try {
+        final ArrayList<URL> urls = new ArrayList<URL>();
+        for (String path : javaParameters.getClassPath().getPathList()) {
+          if (!path.equals(currentPath)) {
+            try {
+              urls.add(new File(path).toURI().toURL());
+            }
+            catch (MalformedURLException ignore) {}
           }
-          catch (MalformedURLException ignore) {}
+        }
+        final Class<?> aClass = Class.forName("com.intellij.util.lang.ClassPath", false, UrlClassLoader.build().urls(urls).get());
+        try {
+          aClass.getDeclaredMethod("initLoaders", URL.class, boolean.class, int.class);
+        }
+        catch (NoSuchMethodException e) {
+          return false;
         }
       }
-      final Class<?> aClass = Class.forName("com.intellij.util.lang.ClassPath", false, UrlClassLoader.build().urls(urls).get());
-      try {
-        aClass.getDeclaredMethod("initLoaders", URL.class, boolean.class, int.class);
-      }
-      catch (NoSuchMethodException e) {
-        return false;
-      }
+      catch (Throwable ignore) {}
+      return true;
     }
-    catch (Throwable ignore) {}
-    return true;
+    return false;
   }
 
   private static void appendParamsEncodingClasspath(SimpleJavaParameters javaParameters,
@@ -396,5 +399,9 @@ public class JdkUtil {
 
   public static boolean useDynamicVMOptions() {
     return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit("dynamic.vmoptions", "true")).booleanValue();
+  }
+  
+  public static boolean useClasspathJar() {
+    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit("classpath.jar", "true")).booleanValue();
   }
 }
