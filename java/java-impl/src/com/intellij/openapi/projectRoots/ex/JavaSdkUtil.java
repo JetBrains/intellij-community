@@ -26,7 +26,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,13 +45,6 @@ public class JavaSdkUtil {
     else {
       pathsList.addTail(ideaRtJarPath);
     }
-  }
-
-  /**
-   * @deprecated use {@link #getJUnit4JarPaths()} instead
-   */
-  public static String getJunit4JarPath() {
-    return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
   }
 
   public static String getJunit3JarPath() {
