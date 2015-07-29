@@ -599,20 +599,12 @@ public class FileManagerImpl implements FileManager {
         return;
       }
 
-      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-      event.setParent(file);
-      event.setFile(file);
-      if (file instanceof PsiFileImpl && ((PsiFileImpl)file).isContentsLoaded()) {
-        event.setOffset(0);
-        event.setOldLength(file.getTextLength());
+      FileViewProvider viewProvider = file.getViewProvider();
+      if (viewProvider instanceof SingleRootFileViewProvider) {
+        ((SingleRootFileViewProvider)viewProvider).onContentReload();
+      } else {
+        LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
       }
-      myManager.beforeChildrenChange(event);
-
-      if (file instanceof PsiFileEx) {
-        ((PsiFileEx)file).onContentReload();
-      }
-
-      myManager.childrenChanged(event);
     }
   }
 }

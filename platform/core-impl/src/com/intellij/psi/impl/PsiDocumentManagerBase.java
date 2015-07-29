@@ -750,19 +750,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
       @Override
       public void run() {
-        psiFile.getViewProvider().beforeContentsSynchronized();
-        synchronized (PsiLock.LOCK) {
-          final int oldLength = prevInfo.myFrozen.getTextLength();
-          PsiManagerImpl manager = (PsiManagerImpl)psiFile.getManager();
-          BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, true);
-          BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, false);
-          if (psiFile instanceof PsiFileImpl) {
-            ((PsiFileImpl)psiFile).onContentReload();
-          }
-          BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, false);
-          BlockSupportImpl.sendAfterChildrenChangedEvent(manager, psiFile, oldLength, true);
+        FileViewProvider viewProvider = psiFile.getViewProvider();
+        if (viewProvider instanceof SingleRootFileViewProvider) {
+          ((SingleRootFileViewProvider)viewProvider).onContentReload();
+        } else {
+          LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
         }
-        psiFile.getViewProvider().contentsSynchronized();
       }
     });
   }

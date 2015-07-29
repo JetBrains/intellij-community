@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -107,9 +108,20 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     return myRoots.get(target);
   }
 
+  @Override
+  public List<PsiFile> getCachedPsiFiles() {
+    return ContainerUtil.mapNotNull(myRoots.keySet(), new NullableFunction<Language, PsiFile>() {
+      @Nullable
+      @Override
+      public PsiFile fun(Language language) {
+        return getCachedPsi(language);
+      }
+    });
+  }
+
   @NotNull
   @Override
-  public FileElement[] getKnownTreeRoots() {
+  public List<FileElement> getKnownTreeRoots() {
     List<FileElement> files = new ArrayList<FileElement>(myRoots.size());
     for (PsiFile file : myRoots.values()) {
       final FileElement treeElement = ((PsiFileImpl)file).getTreeElement();
@@ -118,7 +130,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
       }
     }
 
-    return files.toArray(new FileElement[files.size()]);
+    return files;
   }
 
   @TestOnly

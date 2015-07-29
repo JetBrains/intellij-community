@@ -349,28 +349,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return treeElement;
   }
 
-  public void unloadContent() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    clearCaches();
-    myViewProvider.beforeContentsSynchronized();
-    synchronized (PsiLock.LOCK) {
-      FileElement treeElement = derefTreeElement();
-      DebugUtil.startPsiModification("unloadContent");
-      try {
-        if (treeElement != null) {
-          myTreeElementPointer = null;
-          treeElement.detachFromFile();
-          DebugUtil.onInvalidated(treeElement);
-        }
-        clearStub("unloadContent");
-      }
-      finally {
-        DebugUtil.finishPsiModification();
-      }
-    }
-    myViewProvider.contentsSynchronized();
-  }
-
   private void clearStub(@NotNull String reason) {
     StubTree stubHolder = SoftReference.dereference(myStub);
     if (stubHolder != null) {
@@ -633,10 +611,22 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void onContentReload() {
-    subtreeChanged(); // important! otherwise cached information is not released
-    if (isContentsLoaded()) {
-      unloadContent();
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    FileElement treeElement = derefTreeElement();
+    DebugUtil.startPsiModification("onContentReload");
+    try {
+      if (treeElement != null) {
+        myTreeElementPointer = null;
+        treeElement.detachFromFile();
+        DebugUtil.onInvalidated(treeElement);
+      }
+      clearStub("onContentReload");
     }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
+    clearCaches();
   }
 
   @Nullable
