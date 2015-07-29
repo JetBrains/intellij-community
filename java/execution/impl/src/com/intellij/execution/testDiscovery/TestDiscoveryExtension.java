@@ -181,7 +181,10 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           }
         }
 
-        if (tracesDirectoryFile.list() == null) FileUtil.delete(tracesDirectoryFile);
+        final String[] filesInTracedDirectories = tracesDirectoryFile.list();
+        if (filesInTracedDirectories == null || filesInTracedDirectories.length == 0) {
+          FileUtil.delete(tracesDirectoryFile);
+        }
       }
     }
   }
