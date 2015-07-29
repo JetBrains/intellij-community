@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -99,8 +100,23 @@ public class ProjectBytecodeAnalysis {
     });
   }
 
+  /**
+   * Ignore inside android.jar because all class files there are dummy and contain no code at all.
+   * Rely on the fact that it's always located at .../platforms/android-.../android.jar!/
+   */
+  private static boolean isInsideDummyAndroidJar(@Nullable PsiFile psiFile) {
+    VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
+    if (file == null) return false;
+
+    String path = file.getPath();
+    int index = path.indexOf("/android.jar!/");
+    return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
+  }
+
   @NotNull
   private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
+    if (isInsideDummyAndroidJar(listOwner.getContainingFile())) return PsiAnnotation.EMPTY_ARRAY;
+
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       HKey primaryKey = getKey(listOwner, md);
