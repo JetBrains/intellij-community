@@ -100,10 +100,10 @@ public class JavaDebugProcess extends XDebugProcess {
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(final DebuggerContextImpl newContext, int event) {
-        if (event == DebuggerSession.EVENT_PAUSE
-            || event == DebuggerSession.EVENT_CONTEXT
-            || event == DebuggerSession.EVENT_REFRESH
+      public void changeEvent(final DebuggerContextImpl newContext, DebuggerSession.Event event) {
+        if (event == DebuggerSession.Event.PAUSE
+            || event == DebuggerSession.Event.CONTEXT
+            || event == DebuggerSession.Event.REFRESH
                && myJavaSession.isPaused()) {
           if (getSession().getSuspendContext() != newContext.getSuspendContext()) {
             process.getManagerThread().schedule(new DebuggerContextCommandImpl(newContext) {
@@ -129,7 +129,7 @@ public class JavaDebugProcess extends XDebugProcess {
             });
           }
         }
-        else if (event == DebuggerSession.EVENT_ATTACHED) {
+        else if (event == DebuggerSession.Event.ATTACHED) {
           getSession().rebuildViews(); // to refresh variables views message
         }
       }
@@ -301,7 +301,7 @@ public class JavaDebugProcess extends XDebugProcess {
               if (threadsContent.isSelected()) {
                 panel.setUpdateEnabled(true);
                 if (panel.isRefreshNeeded()) {
-                  panel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
+                  panel.rebuildIfVisible(DebuggerSession.Event.CONTEXT);
                 }
               }
               else {

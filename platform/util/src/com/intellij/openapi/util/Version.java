@@ -1,5 +1,6 @@
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,28 @@ public class Version {
     this.bugfix = bugfix;
     this.minor = minor;
     this.major = major;
+  }
+
+  @Nullable
+  public static Version parseVersion(@NotNull String versionString) {
+    String[] versions = versionString.split("\\.");
+    String version = versions[0];
+    int major = StringUtil.parseInt(version, -1);
+    if (major < 0) {
+      return null;
+    }
+
+    int minor = (versions.length > 1) ? StringUtil.parseInt(versions[1], -1) : 0;
+    if (minor < 0) {
+      return null;
+    }
+
+    int patch = (versions.length > 2) ? StringUtil.parseInt(versions[2], -1) : 0;
+    if (patch < 0) {
+      return null;
+    }
+
+    return new Version(major, minor, patch);
   }
 
   public boolean is(@Nullable Integer major) {

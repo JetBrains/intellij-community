@@ -46,7 +46,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,8 +68,8 @@ public final class UpdateChecker {
   public static final NotificationGroup NOTIFICATIONS =
     new NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true);
 
-  @NonNls private static final String INSTALLATION_UID = "installation.uid";
-  @NonNls private static final String DISABLED_UPDATE = "disabled_update.txt";
+  private static final String INSTALLATION_UID = "installation.uid";
+  private static final String DISABLED_UPDATE = "disabled_update.txt";
 
   private static Set<String> ourDisabledToUpdatePlugins;
   private static final Map<String, String> ourAdditionalRequestOptions = ContainerUtil.newHashMap();

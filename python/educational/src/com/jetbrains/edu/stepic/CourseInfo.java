@@ -20,8 +20,10 @@ public class CourseInfo {
   @SerializedName("course_format")
   //course type in format "pycharm <language>"
   private String myType = "pycharm Python";
-  @SerializedName("instructors")
+
+  @SerializedName("instructors_deprecated")
   List<Instructor> myInstructors = new ArrayList<Instructor>();
+  int id;
 
   public static CourseInfo INVALID_COURSE = new CourseInfo();
 

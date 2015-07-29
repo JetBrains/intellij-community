@@ -19,6 +19,8 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -153,7 +155,12 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() {
-    ProjectRootManager.getInstance(myProject).setProjectSdk(getSelectedProjectJdk());
+    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        ProjectRootManager.getInstance(myProject).setProjectSdk(getSelectedProjectJdk());
+      }
+    });
   }
 
   @Override

@@ -50,7 +50,6 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,17 +64,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
     myResolveCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new MyCacheBuilder(this), false);
-  }
-
-  @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
-  protected PsiJavaFileBaseImpl clone() {
-    PsiFileImpl clone = super.clone();
-    if (!(clone instanceof PsiJavaFileBaseImpl)) {
-      throw new AssertionError("Java file cloned as text: " + getTextLength() + "; " + getViewProvider());
-    }
-    clone.clearCaches();
-    return (PsiJavaFileBaseImpl)clone;
   }
 
   @Override

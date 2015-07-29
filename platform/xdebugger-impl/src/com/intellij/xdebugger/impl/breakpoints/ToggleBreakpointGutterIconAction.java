@@ -15,15 +15,15 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 
 /**
 * @author nik
 */
-class ToggleBreakpointGutterIconAction extends AnAction {
+class ToggleBreakpointGutterIconAction extends DumbAwareAction {
   private XBreakpoint<?> myBreakpoint;
 
   ToggleBreakpointGutterIconAction(XBreakpoint<?> breakpoint) {

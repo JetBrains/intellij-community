@@ -63,10 +63,12 @@ public class ActionButtonWithText extends ActionButton {
     int x2 = Math.max(iconR.x + iconR.width, textR.x + textR.width);
     int y1 = Math.min(iconR.y, textR.y);
     int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
-    Dimension rv = new Dimension(x2 - x1, y2 - y1);
+    Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
-    rv.width = Math.max(rv.width += dx, basicSize.width);
-    rv.height = Math.max(rv.height += dy, basicSize.height);
+    rv.width += Math.max(basicSize.height - rv.height, 0);
+
+    rv.width = Math.max(rv.width, basicSize.width);
+    rv.height = Math.max(rv.height, basicSize.height);
     return rv;
   }
 

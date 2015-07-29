@@ -20,7 +20,10 @@ import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.history.integration.ui.actions.LocalHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -44,13 +47,17 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     document = FileDocumentManager.getInstance().getDocument(f);
     document.setText("foo");
 
-    editor = getEditorFactory().createEditor(document);
+    editor = getEditorFactory().createEditor(document, myProject);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    getEditorFactory().releaseEditor(editor);
-    super.tearDown();
+    try {
+      getEditorFactory().releaseEditor(editor);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static EditorFactory getEditorFactory() {
@@ -131,6 +138,6 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
         return null;
       }
     };
-    return new AnActionEvent(null, dc, "", a.getTemplatePresentation(), ActionManager.getInstance(), -1);
+    return AnActionEvent.createFromAnAction(a, null, "", dc);
   }
 }

@@ -95,7 +95,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         AccessToken token = ReadAction.start();
         try {
-          if (element instanceof PsiElement) {
+          if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
             PsiElement psiElement = getElement(((PsiElement)element), popup);
             psiElement = psiElement.getNavigationElement();
             VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);

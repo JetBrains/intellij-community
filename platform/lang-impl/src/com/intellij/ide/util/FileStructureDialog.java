@@ -46,6 +46,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.docking.DockManager;
@@ -488,6 +490,17 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   private static SpeedSearchComparator createSpeedSearchComparator() {
-    return new SpeedSearchComparator(false);
+    return new SpeedSearchComparator(false) {
+      @NotNull
+      @Override
+      protected MinusculeMatcher createMatcher(@NotNull String pattern) {
+        return createFileStructureMatcher(pattern);
+      }
+    };
+  }
+
+  @NotNull
+  public static MinusculeMatcher createFileStructureMatcher(@NotNull String pattern) {
+    return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE, " ()");
   }
 }

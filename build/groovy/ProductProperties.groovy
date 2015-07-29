@@ -33,7 +33,6 @@ public abstract class ProductProperties {
 
   abstract def String systemSelector()
 
-  String exe_selector = null
   String exe_launcher_properties
   String exe64_launcher_properties
   String platformPrefix = null

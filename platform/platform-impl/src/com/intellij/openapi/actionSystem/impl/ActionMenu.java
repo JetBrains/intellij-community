@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -29,6 +30,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,6 +121,18 @@ public final class ActionMenu extends JMenu {
       myPresentation.removePropertyChangeListener(myMenuItemSynchronizer);
       myMenuItemSynchronizer = null;
     }
+  }
+
+  private JPopupMenu mySpecialMenu = null;
+  @Override
+  public JPopupMenu getPopupMenu() {
+    if (mySpecialMenu == null) {
+      mySpecialMenu = new JBPopupMenu();
+      mySpecialMenu.setInvoker(this);
+      popupListener = createWinListener(mySpecialMenu);
+      ReflectionUtil.setField(JMenu.class, this, JPopupMenu.class, "popupMenu", mySpecialMenu);
+    }
+    return super.getPopupMenu();
   }
 
   @Override
@@ -322,16 +337,27 @@ public final class ActionMenu extends JMenu {
       }
     }
   }
-
   private static class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
 
     private Component myComponent;
     private Point myLastMousePoint = null;
     private Point myUpperTargetPoint = null;
     private Point myLowerTargetPoint = null;
+    private SingleAlarm myCallbackAlarm;
+    private MouseEvent myEventToRedispatch = null;
 
     private UsabilityHelper(Component component, @NotNull Disposable disposable) {
       Disposer.register(disposable, this);
+      myCallbackAlarm = new SingleAlarm(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(myCallbackAlarm);
+          myCallbackAlarm = null;
+          if (myEventToRedispatch != null) {
+            IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
+          }
+        }
+      }, 50, this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
       myLastMousePoint = info != null ? info.getLocation() : null;
@@ -365,19 +391,25 @@ public final class ActionMenu extends JMenu {
 
     @Override
     public boolean dispatch(AWTEvent e) {
-      if (e instanceof MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null) {
+      if (e instanceof MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null && myCallbackAlarm != null) {
         if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
           return false;
         }
         Point point = ((MouseEvent)e).getLocationOnScreen();
 
-        boolean result = new Polygon(
+        myCallbackAlarm.cancel();
+        boolean isMouseMovingTowardsSubmenu = new Polygon(
           new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
           new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
           3).contains(point);
 
+        myEventToRedispatch = (MouseEvent)e;
+
+        if (!isMouseMovingTowardsSubmenu) {
+          myCallbackAlarm.request();
+        }
         myLastMousePoint = point;
-        return result;
+        return true;
       }
       return false;
     }
@@ -385,6 +417,7 @@ public final class ActionMenu extends JMenu {
     @Override
     public void dispose() {
       myComponent = null;
+      myEventToRedispatch = null;
       myLastMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     }

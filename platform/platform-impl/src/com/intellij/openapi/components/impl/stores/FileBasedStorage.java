@@ -51,14 +51,18 @@ public class FileBasedStorage extends XmlElementStorage {
                           @Nullable RoamingType roamingType,
                           @Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           @NotNull String rootElementName,
-                          @NotNull Disposable parentDisposable,
+                          @Nullable Disposable parentDisposable,
                           @Nullable final Listener listener,
                           @Nullable StreamProvider streamProvider) {
     super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
 
+    if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(file.getPath(), '$')) {
+      throw new AssertionError("It seems like some macros were not expanded for path: " + file);
+    }
+
     myFile = file;
 
-    if (listener != null) {
+    if (listener != null && parentDisposable != null) {
       VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
       if (virtualFileTracker != null) {
         virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(getFilePath()), new VirtualFileAdapter() {
@@ -98,17 +102,13 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(storageData);
   }
 
-  private class FileSaveSession extends XmlElementStorageSaveSession {
+  protected class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);
     }
 
     @Override
     protected void doSave(@Nullable Element element) throws IOException {
-      if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(myFile.getPath(), '$')) {
-        throw new IOException("It seems like some macros were not expanded for path: " + myFile);
-      }
-
       if (LOG.isDebugEnabled() && myFileSpec.equals(StoragePathMacros.MODULE_FILE)) {
         LOG.debug("doSave " + getFilePath());
       }
@@ -128,7 +128,7 @@ public class FileBasedStorage extends XmlElementStorage {
           myCachedVirtualFile = null;
         }
         else {
-          myCachedVirtualFile = StorageUtil.writeFile(myFile, this, virtualFile, element, isUseXmlProlog() ? myLineSeparator : null);
+          myCachedVirtualFile = StorageUtil.writeFile(myFile, this, virtualFile, element, isUseXmlProlog() ? myLineSeparator : LineSeparator.LF, isUseXmlProlog());
         }
       }
     }

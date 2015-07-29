@@ -159,7 +159,7 @@ class GitTest : TestCase() {
     repositoryManager.setUpstream(remoteRepository.getWorkTree().getAbsolutePath(), remoteBranchName)
   }
 
-  private fun createLocalRepositoryAndCommit(remoteBranchName: String?): FileInfo {
+  private fun createLocalRepositoryAndCommit(remoteBranchName: String? = null): FileInfo {
     createLocalRepository(remoteBranchName)
     return addAndCommit("\$APP_CONFIG$/local.xml")
   }
@@ -215,7 +215,7 @@ class GitTest : TestCase() {
   }
 
   public Test fun `reset to my, second merge is null`() {
-    createLocalRepositoryAndCommit(null)
+    createLocalRepositoryAndCommit()
     sync(SyncType.MERGE)
 
     restoreRemoteAfterPush()
@@ -223,12 +223,12 @@ class GitTest : TestCase() {
     val fs = fs("\$APP_CONFIG$/local.xml", "\$APP_CONFIG$/remote.xml")
     compareFiles(fs)
 
-    val local2FilePath = "_mac/local2.xml"
-    addAndCommit(local2FilePath)
+    val localToFilePath = "_mac/local2.xml"
+    addAndCommit(localToFilePath)
     sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
 
-    fs.findFileByPath(local2FilePath)
+    fs.findFileByPath(localToFilePath)
     compareFiles(fs)
 
     // test: merge to remote after such reset

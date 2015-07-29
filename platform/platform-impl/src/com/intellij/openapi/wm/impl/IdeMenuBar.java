@@ -39,6 +39,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
@@ -553,8 +554,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           Component item = ((IdeMenuBar)c).findComponentAt(p.x, size.height / 2);
           if (item instanceof JMenuItem) {
             // re-target border clicks as a menu item ones
-            item.dispatchEvent(
-              new MouseEvent(item, e.getID(), e.getWhen(), e.getModifiers(), 1, 1, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
+            item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1));
             e.consume();
             return;
           }

@@ -15,12 +15,15 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author Dennis.Ushakov
  */
 public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
+  private static final String NDASH = new String(new byte[]{-30, -128, -109}, CharsetToolkit.UTF8_CHARSET);
+
   public void testSimpleHtml() {
     doTest("<<<", "html", "&lt;&lt;&lt;");
   }
@@ -30,11 +33,11 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testWide() {
-    doTest("\u2013", "html", "&ndash;");
+    doTest(NDASH, "html", "&ndash;");
   }
 
   public void testAttributeValue() {
-    doTest("<a alt='\u2013'></a>", "html", "<a alt='&ndash;'></a>");
+    doTest("<a alt='" + NDASH + "'></a>", "html", "<a alt='&ndash;'></a>");
   }
 
   public void testTag() {

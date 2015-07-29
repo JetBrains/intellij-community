@@ -39,6 +39,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private JComboBox mySchemeComboBox;
 
   private JButton myDeleteButton;
+  private JLabel myHintLabel;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -59,7 +60,9 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       public void actionPerformed(@NotNull ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           EditorColorsScheme selected = myOptions.selectScheme((String)mySchemeComboBox.getSelectedItem());
-          myDeleteButton.setEnabled(!ColorAndFontOptions.isReadOnly(selected));
+          final boolean readOnly = ColorAndFontOptions.isReadOnly(selected);
+          myDeleteButton.setEnabled(!readOnly);
+          myHintLabel.setVisible(readOnly);
           if (areSchemesLoaded()) {
             myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
           }
@@ -80,12 +83,12 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     int gridx = 0;
 
     panel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")),
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 5),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
     mySchemeComboBox = new JComboBox();
     panel.add(mySchemeComboBox,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 10),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 10),
                                      0, 0));
 
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
@@ -96,7 +99,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(saveAsButton,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 5),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
@@ -109,7 +112,12 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(myDeleteButton,
-              new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
+                                     0));
+    myHintLabel = new JLabel(ApplicationBundle.message("hint.readonly.scheme.cannot.be.modified"));
+    myHintLabel.setEnabled(false);
+    panel.add(myHintLabel,
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                      0));
 
     for (final ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
@@ -129,6 +137,9 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
                 new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                        0));
     }
+    panel.add(Box.createHorizontalGlue(),
+              new GridBagConstraints(gridx+1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 0, 0), 0,
+                                     0));
 
     return panel;
   }

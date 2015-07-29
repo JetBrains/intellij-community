@@ -21,14 +21,10 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.Arrays;
-
 /**
  * @author max
  */
 public class JdkScope extends LibraryScopeBase {
-  private final VirtualFile[] myClasses;
-  private final VirtualFile[] mySources;
   private final String myJdkName;
 
   public JdkScope(Project project, JdkOrderEntry entry) {
@@ -40,17 +36,12 @@ public class JdkScope extends LibraryScopeBase {
                   VirtualFile[] sources,
                   String jdkName) {
     super(project, classes, sources);
-    myClasses = classes;
-    mySources = sources;
     myJdkName = jdkName;
   }
 
   @Override
   public int hashCode() {
-    int result = Arrays.hashCode(myClasses);
-    result = 31 * result + Arrays.hashCode(mySources);
-    result = 31 * result + myJdkName.hashCode();
-    return result;
+    return 31 * super.hashCode() + myJdkName.hashCode();
   }
 
   @Override
@@ -58,9 +49,6 @@ public class JdkScope extends LibraryScopeBase {
     if (object == this) return true;
     if (object.getClass() != getClass()) return false;
 
-    final JdkScope that = (JdkScope)object;
-    return myJdkName.equals(that.myJdkName) &&
-           Arrays.equals(myClasses, that.myClasses) &&
-           Arrays.equals(mySources, that.mySources);
+    return myJdkName.equals(((JdkScope)object).myJdkName) && super.equals(object);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,7 +248,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                                 myParentClass, false, false);
     new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         if (getLocalVariable() != null) {
           final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
             new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), myParentClass, settings, true,

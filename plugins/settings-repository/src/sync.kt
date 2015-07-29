@@ -15,13 +15,15 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.SchemeManagerFactoryImpl
+import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -115,10 +117,10 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
 
             icsManager.repositoryActive = true
             if (updateResult != null) {
-              restartApplication = updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
+              restartApplication = updateStoragesFromStreamProvider(ApplicationManager.getApplication().stateStore, updateResult!!)
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
-              (SchemesManagerFactory.getInstance() as SchemeManagerFactoryImpl).process {
+              (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
                 it.reload()
               }
             }
@@ -175,7 +177,7 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
       if (notReloadableComponents.isEmpty()) {
         return false
       }
-      return ComponentStoreImpl.askToRestart(store, notReloadableComponents, null)
+      return StoreUtil.askToRestart(store, notReloadableComponents, null)
     }
   })!!
 }

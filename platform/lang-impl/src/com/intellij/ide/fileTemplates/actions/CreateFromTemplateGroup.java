@@ -57,8 +57,9 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e){
-    Project project;
-    if (e == null || (project = CommonDataKeys.PROJECT.getData(e.getDataContext())) == null) return EMPTY_ARRAY;
+    if (e == null) return EMPTY_ARRAY;
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    if (project == null) return EMPTY_ARRAY;
     FileTemplateManager manager = FileTemplateManager.getInstance(project);
     FileTemplate[] templates = manager.getAllTemplates();
 
@@ -106,7 +107,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    if (!result.isEmpty()) {
+    if (!result.isEmpty() || !showAll) {
       if (!showAll) {
         result.add(new CreateFromTemplatesAction(IdeBundle.message("action.from.file.template")));
       }

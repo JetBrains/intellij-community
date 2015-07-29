@@ -20,7 +20,5 @@ public interface CCLanguageManager {
   @Nullable
   FileTemplate getTestsTemplate(@NotNull final Project project);
 
-  boolean packFile(File pathname);
-
-  String[] getAdditionalFilesToPack();
+  boolean doNotPackFile(File pathname);
 }

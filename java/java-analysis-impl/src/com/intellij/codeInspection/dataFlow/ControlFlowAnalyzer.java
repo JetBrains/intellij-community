@@ -350,8 +350,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else if (parent instanceof PsiTryStatement) {
       PsiResourceList list = ((PsiTryStatement)parent).getResourceList();
       if (list != null) {
-        for (PsiResourceVariable variable : list.getResourceVariables()) {
-          myCurrentFlow.removeVariable(variable);
+        for (PsiResourceListElement resource : list) {
+          if (resource instanceof PsiResourceVariable) {
+            myCurrentFlow.removeVariable((PsiVariable)resource);
+          }
         }
       }
     }
@@ -1029,12 +1031,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitResourceList(PsiResourceList resourceList) {
-    for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) {
-        initializeVariable(variable, initializer);
+    for (PsiResourceListElement resource : resourceList) {
+      if (resource instanceof PsiResourceVariable) {
+        PsiResourceVariable variable = (PsiResourceVariable)resource;
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null) {
+          initializeVariable(variable, initializer);
+        }
       }
-      PsiMethod closer = PsiUtil.getResourceCloserMethod(variable);
+      else if (resource instanceof PsiResourceExpression) {
+        ((PsiResourceExpression)resource).getExpression().accept(this);
+      }
+
+      PsiMethod closer = PsiUtil.getResourceCloserMethod(resource);
       if (closer != null) {
         addMethodThrows(closer, null);
       }
@@ -1519,7 +1528,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
-    final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {
       return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
         @Nullable
@@ -1528,6 +1536,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
           if (text != null) {
             try {
+              final int paramCount = method.getParameterList().getParametersCount();
               List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text), new Condition<MethodContract>() {
                 @Override
                 public boolean value(MethodContract contract) {

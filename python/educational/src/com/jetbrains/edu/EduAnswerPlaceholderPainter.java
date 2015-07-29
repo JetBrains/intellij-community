@@ -23,32 +23,23 @@ public class EduAnswerPlaceholderPainter {
 
   public static void drawAnswerPlaceholder(@NotNull final Editor editor, @NotNull final AnswerPlaceholder placeholder,
                                            boolean useLength, @NotNull final JBColor color) {
-    Document document = editor.getDocument();
+    final Document document = editor.getDocument();
     if (useLength && !placeholder.isValid(document)) {
       return;
     }
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes defaultTestAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
+    final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), color,
                                                                     EffectType.BOXED, Font.PLAIN);
     final Project project = editor.getProject();
     assert project != null;
-    int startOffset = placeholder.getRealStartOffset(document);
+    final int startOffset = placeholder.getRealStartOffset(document);
     final int length = placeholder.getLength();
     final int replacementLength = placeholder.getPossibleAnswerLength();
     int highlighterLength = useLength ? length : replacementLength;
-    int endOffset = startOffset + highlighterLength;
+    final int endOffset = startOffset + highlighterLength;
     RangeHighlighter
       highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST + 1,
-                                                                defaultTestAttributes, HighlighterTargetArea.EXACT_RANGE);
-    highlighter.setCustomRenderer(new CustomHighlighterRenderer() {
-      @Override
-      public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
-        g.setColor(color);
-        Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
-        Point pointEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getEndOffset()));
-        g.drawRect(point.x, point.y - 2, (pointEnd.x - point.x), editor.getLineHeight() + 1);
-      }
-    });
+                                                                textAttributes, HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }

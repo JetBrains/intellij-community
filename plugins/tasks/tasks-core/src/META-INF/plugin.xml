@@ -31,6 +31,7 @@
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift W"/>
       </action>
       <separator/>
+      <action id="tasks.edit" class="com.intellij.tasks.actions.EditTaskAction" text="Edit Task..."/>
       <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction" text="Create Change_list..."/>
       <action id="tasks.show.task.description" class="com.intellij.tasks.actions.ShowTaskDescription" text="Show Description"/>
       <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">

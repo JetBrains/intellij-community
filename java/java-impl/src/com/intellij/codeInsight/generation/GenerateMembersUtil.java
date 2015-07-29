@@ -312,7 +312,7 @@ public class GenerateMembersUtil {
                                                          @Nullable PsiTypeParameterList targetTypeParameterList,
                                                          @NotNull PsiSubstitutor substitutor, 
                                                          @NotNull PsiMethod sourceMethod) {
-    if (sourceTypeParameterList == null || targetTypeParameterList == null) {
+    if (sourceTypeParameterList == null || targetTypeParameterList == null || PsiUtil.isRawSubstitutor(sourceMethod, substitutor)) {
       return substitutor;
     }
 

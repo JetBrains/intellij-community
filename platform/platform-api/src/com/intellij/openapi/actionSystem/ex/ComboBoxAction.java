@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, contextComponent);
       if (rootPane != null) {
         button = (ComboBoxButton)
-          JBSwingUtilities.uiTraverser().breadthFirstTraversal(rootPane).filter(new Condition<Component>() {
+          JBSwingUtilities.uiTraverser().bfsTraversal(rootPane).filter(new Condition<Component>() {
             @Override
             public boolean value(Component component) {
               return component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this;
@@ -143,7 +144,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
-        setBorder(JBUI.Borders.empty(0, 2, 0, 2));
+        setBorder(JBUI.Borders.empty(0, 2));
         if (!UIUtil.isUnderGTKLookAndFeel()) {
           setFont(JBUI.Fonts.label(11));
         }
@@ -194,15 +195,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       addMouseMotionListener(new MouseMotionListener() {
         @Override
         public void mouseDragged(MouseEvent e) {
-          mouseMoved(new MouseEvent(e.getComponent(),
-                                    MouseEvent.MOUSE_MOVED,
-                                    e.getWhen(),
-                                    e.getModifiers(),
-                                    e.getX(),
-                                    e.getY(),
-                                    e.getClickCount(),
-                                    e.isPopupTrigger(),
-                                    e.getButton()));
+          mouseMoved(MouseEventAdapter.convert(e, e.getComponent(),
+                                               MouseEvent.MOUSE_MOVED,
+                                               e.getWhen(),
+                                               e.getModifiers() | e.getModifiersEx(),
+                                               e.getX(),
+                                               e.getY()));
         }
 
         @Override

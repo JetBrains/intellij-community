@@ -36,7 +36,7 @@ public final class PyTestTracebackParserTest extends TestCase {
     Assert.assertEquals("Bad file name", "foo/bar.py", linkInTrace.getFileName());
     Assert.assertEquals("Bad line number", 42, linkInTrace.getLineNumber());
     Assert.assertEquals("Bad start pos", 0, linkInTrace.getStartPos());
-    Assert.assertEquals("Bad end pos", 10, linkInTrace.getEndPos());
+    Assert.assertEquals("Bad end pos", 13, linkInTrace.getEndPos());
   }
 
   /**

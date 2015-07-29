@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class PsiResourceListImpl extends CompositePsiElement implements PsiResourceList {
@@ -35,19 +36,25 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
   public int getResourceVariablesCount() {
     int count = 0;
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiResourceVariable) ++count;
+      if (child instanceof PsiResourceListElement) ++count;
     }
     return count;
   }
 
-  @NotNull
+  @Deprecated
   @Override
   public List<PsiResourceVariable> getResourceVariables() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiResourceVariable.class);
   }
 
+  @NotNull
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public Iterator<PsiResourceListElement> iterator() {
+    return PsiTreeUtil.childIterator(this, PsiResourceListElement.class);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitResourceList(this);
     }
@@ -57,16 +64,16 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
-                                     final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
     return PsiImplUtil.processDeclarationsInResourceList(this, processor, state, lastParent);
   }
 
   @Override
-  public void deleteChildInternal(@NotNull final ASTNode child) {
-    if (child.getPsi() instanceof PsiResourceVariable && getResourceVariablesCount() == 1) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child.getPsi() instanceof PsiResourceListElement && getResourceVariablesCount() == 1) {
       getTreeParent().deleteChildInternal(this);
       return;
     }

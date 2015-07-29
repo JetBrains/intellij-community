@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -90,7 +89,6 @@ public class DocumentUndoProvider implements Disposable {
       return UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
                                               // for the same event twice (from original document too)
                                               // and undo will work incorrectly
-             || allEditorsAreViewersFor(document) 
              || !shouldRecordActions(document);
     }
 
@@ -99,15 +97,6 @@ public class DocumentUndoProvider implements Disposable {
 
       final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
       return vFile == null || vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
-    }
-
-    private boolean allEditorsAreViewersFor(Document document) {
-      Editor[] editors = EditorFactory.getInstance().getEditors(document);
-      if (editors.length == 0) return false;
-      for (Editor editor : editors) {
-        if (!editor.isViewer()) return false;
-      }
-      return true;
     }
 
     private void registerUndoableAction(DocumentEvent e) {

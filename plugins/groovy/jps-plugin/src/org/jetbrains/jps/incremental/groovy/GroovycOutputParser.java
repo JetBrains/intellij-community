@@ -69,13 +69,17 @@ public class GroovycOutputParser {
       return;
     }
 
-    if (outputType == ProcessOutputTypes.STDERR && !text.startsWith("Picked up JAVA_TOOL_OPTIONS")) {
+    if (outputType == ProcessOutputTypes.STDERR && !isSafeStderr(text)) {
       stdErr.append(StringUtil.convertLineSeparators(text));
       return;
     }
 
 
     parseOutput(text);
+  }
+
+  private static boolean isSafeStderr(String line) {
+    return line.startsWith("SLF4J:") || line.startsWith("Picked up JAVA_TOOL_OPTIONS");
   }
 
   private final StringBuffer outputBuffer = new StringBuffer();

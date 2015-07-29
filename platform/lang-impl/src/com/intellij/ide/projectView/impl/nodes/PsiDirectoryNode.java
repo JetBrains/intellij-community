@@ -130,12 +130,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     }
 
     data.setPresentableText(name);
-    if (ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
-      data.setLocationString("library home");
-    }
-    else {
-      data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory));
-    }
+    data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory));
 
     setupIcon(data, psiDirectory);
   }

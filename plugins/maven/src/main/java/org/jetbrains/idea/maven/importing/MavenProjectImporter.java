@@ -17,9 +17,11 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -52,6 +54,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class MavenProjectImporter {
+  private static final Logger LOG = Logger.getInstance(MavenProjectImporter.class);
   private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
   private final Map<VirtualFile, Module> myFileToModuleMapping;
@@ -118,17 +121,25 @@ public class MavenProjectImporter {
 
     if (myProject.isDisposed()) return null;
 
-    boolean modulesDeleted = deleteObsoleteModules();
-    hasChanges |= modulesDeleted;
-    if (hasChanges) {
-      removeUnusedProjectLibraries();
+    try {
+      boolean modulesDeleted = deleteObsoleteModules();
+      hasChanges |= modulesDeleted;
+      if (hasChanges) {
+        removeUnusedProjectLibraries();
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      disposeModifiableModels();
+      LOG.error(e);
+      return null;
     }
 
-    final boolean finalHasChanges = hasChanges;
-
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-      public void run() {
-        if (finalHasChanges) {
+    if (hasChanges) {
+      MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
+        public void run() {
           myModelsProvider.commit();
 
           if (projectsHaveChanges) {
@@ -146,13 +157,21 @@ public class MavenProjectImporter {
             }
           }
         }
-        else {
-          myModelsProvider.dispose();
-        }
-      }
-    });
+      });
+    }
+    else {
+      disposeModifiableModels();
+    }
 
     return postTasks;
+  }
+
+  private void disposeModifiableModels() {
+    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
+      public void run() {
+        myModelsProvider.dispose();
+      }
+    });
   }
 
   private boolean projectsToImportHaveChanges() {

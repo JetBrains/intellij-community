@@ -16,6 +16,7 @@
 package com.intellij.diff.util;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class CopyableLabel extends JTextArea {
     setBackground(UIUtil.TRANSPARENT_COLOR);
     setBorder(null);
     setOpaque(false);
-    setText(text);
+    setText(StringUtil.stripHtml(text, false));
     setCaretPosition(0);
   }
 

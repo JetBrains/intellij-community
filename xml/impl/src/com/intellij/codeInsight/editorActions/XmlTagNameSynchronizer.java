@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -66,7 +66,7 @@ import java.util.Set;
 /**
  * @author Dennis.Ushakov
  */
-public class XmlTagNameSynchronizer extends CommandAdapter implements ApplicationComponent {
+public class XmlTagNameSynchronizer extends CommandAdapter implements NamedComponent {
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
                                                                            XMLLanguage.INSTANCE.getID(),
@@ -126,16 +126,6 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
   @Override
   public String getComponentName() {
     return "XmlTagNameSynchronizer";
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
   }
 
   @Nullable
@@ -308,6 +298,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       final Document document = myEditor.getDocument();
       final Runnable apply = new Runnable() {
+        @Override
         public void run() {
           for (Couple<RangeMarker> couple : myMarkers) {
             final RangeMarker leader = couple.first;

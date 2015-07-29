@@ -29,10 +29,10 @@ public interface StateStorageManager {
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 
-  @Nullable
+  @NotNull
   StateStorage getStateStorage(@NotNull Storage storageSpec);
 
-  @Nullable
+  @NotNull
   StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 
   @NotNull

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -118,22 +119,32 @@ public class RepositoryAttachHandler {
                                                            boolean attachSources,
                                                            @Nullable final String copyTo,
                                                            List<MavenRepositoryInfo> repositories) {
+    final List<OrderRoot> roots = resolveAndDownloadImpl(project, coord, attachJavaDoc, attachSources, copyTo, repositories);
+    return new NewLibraryConfiguration(coord, RepositoryLibraryType.getInstance(), new RepositoryLibraryProperties(coord)) {
+      @Override
+      public void addRoots(@NotNull LibraryEditor editor) {
+        editor.addRoots(roots);
+      }
+    };
+  }
+
+  public static List<OrderRoot> resolveAndDownloadImpl(final Project project,
+                                                       final String coord,
+                                                       boolean attachJavaDoc,
+                                                       boolean attachSources,
+                                                       @Nullable final String copyTo,
+                                                       List<MavenRepositoryInfo> repositories) {
     final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
     if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
     if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
-    final Ref<NewLibraryConfiguration> result = Ref.create(null);
+    final Ref<List<OrderRoot>> result = Ref.create(null);
     resolveLibrary(project, coord, extraTypes, repositories, new Processor<List<MavenArtifact>>() {
       public boolean process(final List<MavenArtifact> artifacts) {
         if (!artifacts.isEmpty()) {
           AccessToken accessToken = WriteAction.start();
           try {
             final List<OrderRoot> roots = createRoots(artifacts, copyTo);
-            result.set(new NewLibraryConfiguration(coord, RepositoryLibraryType.getInstance(), new RepositoryLibraryProperties(coord)) {
-              @Override
-              public void addRoots(@NotNull LibraryEditor editor) {
-                editor.addRoots(roots);
-              }
-            });
+            result.set(roots);
           }
           finally {
             accessToken.finish();
@@ -334,6 +345,31 @@ public class RepositoryAttachHandler {
                                      final Processor<List<MavenArtifact>> resultProcessor,
                                      ProgressIndicator indicator) {
     doResolveInner(project, Collections.singletonList(mavenId), extraTypes, repositories, resultProcessor, indicator);
+  }
+
+  public static List<String> retrieveVersions(@NotNull final Project project,
+                                              @NotNull final String groupId,
+                                              @NotNull final String artifactId,
+                                              @NotNull final String remoteRepository) {
+    MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
+    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_GET_VERSIONS);
+    embedder.customizeForGetVersions();
+    try {
+      List<String> versions = embedder.retrieveVersions(groupId, artifactId, remoteRepository);
+      Collections.sort(versions, new Comparator<String>() {
+        @Override
+        public int compare(String o1, String o2) {
+          return StringUtil.compareVersionNumbers(o2, o1);
+        }
+      });
+      return versions;
+    }
+    catch (MavenProcessCanceledException e) {
+      return Collections.emptyList();
+    }
+    finally {
+      manager.release(embedder);
+    }
   }
 
   public static void doResolveInner(Project project,

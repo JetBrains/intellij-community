@@ -32,6 +32,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -46,6 +48,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -282,43 +285,58 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
     }
 
-    for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-      final ModifiableRootModel model = moduleEditor.apply();
-      if (model != null) {
-        if (!model.isSdkInherited()) {
-          // make sure the sdk is set to original SDK stored in the JDK Table
-          final Sdk modelSdk = model.getSdk();
-          if (modelSdk != null) {
-            final Sdk original = modifiedToOriginalMap.get(modelSdk);
-            if (original != null) {
-              model.setSdk(original);
+    final Ref<ConfigurationException> exceptionRef = Ref.create();
+    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
+                final ModifiableRootModel model = moduleEditor.apply();
+                if (model != null) {
+                  if (!model.isSdkInherited()) {
+                    // make sure the sdk is set to original SDK stored in the JDK Table
+                    final Sdk modelSdk = model.getSdk();
+                    if (modelSdk != null) {
+                      final Sdk original = modifiedToOriginalMap.get(modelSdk);
+                      if (original != null) {
+                        model.setSdk(original);
+                      }
+                    }
+                  }
+                  models.add(model);
+                }
+              }
+              myFacetsConfigurator.applyEditors();
+            }
+            catch (ConfigurationException e) {
+              exceptionRef.set(e);
+              return;
+            }
+
+            try {
+              final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
+              ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
+              myModuleModelCommitted = true;
+              myFacetsConfigurator.commitFacets();
+
+            }
+            finally {
+              ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
+
+              myFacetsConfigurator = createFacetsConfigurator();
+              myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+              myModuleModelCommitted = false;
             }
           }
-        }
-        models.add(model);
-      }
-    }
-    myFacetsConfigurator.applyEditors();
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-          ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
-          myModuleModelCommitted = true;
-          myFacetsConfigurator.commitFacets();
-
-        }
-        finally {
-          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
-
-          myFacetsConfigurator = createFacetsConfigurator();
-          myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-          myModuleModelCommitted = false;
-        }
+        });
       }
     });
+
+    if (!exceptionRef.isNull()) {
+      throw exceptionRef.get();
+    }
 
     myModified = false;
   }
@@ -352,26 +370,31 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final ProjectBuilder builder = runModuleWizard(parent, anImport);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<Module>();
-      final List<Module> commitedModules;
-      if (builder instanceof ProjectImportBuilder<?>) {
-        final ModifiableArtifactModel artifactModel =
-            ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
-        commitedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
-      }
-      else {
-        commitedModules = builder.commit(myProject, myModuleModel, this);
-      }
-      if (commitedModules != null) {
-        modules.addAll(commitedModules);
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-         @Override
-         public void run() {
-           for (Module module : modules) {
-             getOrCreateModuleEditor(module);
-           }
-         }
-       });
+      DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+        @Override
+        public void run() {
+          final List<Module> committedModules;
+          if (builder instanceof ProjectImportBuilder<?>) {
+            final ModifiableArtifactModel artifactModel =
+              ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+            committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, ModulesConfigurator.this, artifactModel);
+          }
+          else {
+            committedModules = builder.commit(myProject, myModuleModel, ModulesConfigurator.this);
+          }
+          if (committedModules != null) {
+            modules.addAll(committedModules);
+          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              for (Module module : modules) {
+                getOrCreateModuleEditor(module);
+              }
+            }
+          });
+        }
+      });
       return modules;
     }
     return null;

@@ -3,8 +3,10 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -18,9 +20,10 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.editor.StudyEditor;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class StudyShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
@@ -29,7 +32,7 @@ public class StudyShowHintAction extends DumbAwareAction {
   public static final String HINT_NOT_AVAILABLE = "There is no hint for this answer placeholder";
 
   public StudyShowHintAction() {
-    super("Show hint", "Show hint", InteractiveLearningIcons.ShowHint);
+    super("Show hint (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Show hint", InteractiveLearningIcons.ShowHint);
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -45,7 +48,7 @@ public class StudyShowHintAction extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    StudyState studyState = new StudyState(StudyEditor.getSelectedStudyEditor(project));
+    StudyState studyState = new StudyState(StudyUtils.getSelectedStudyEditor(project));
     if (!studyState.isValid()) {
       return;
     }

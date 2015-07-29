@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
       public void actionPerformed(ActionEvent e) {
         new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
           @Override
-          protected void run(Result result) throws Throwable {
+          protected void run(@NotNull Result result) throws Throwable {
             PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
             final GrVariable variable = getVariable();
             if (variable != null) {

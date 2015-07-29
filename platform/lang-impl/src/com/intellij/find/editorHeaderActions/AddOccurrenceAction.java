@@ -29,18 +29,18 @@ public class AddOccurrenceAction extends EditorHeaderAction implements DumbAware
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_NEXT_OCCURENCE));
     getTemplatePresentation().setIcon(AllIcons.Actions.AddMulticaret);
 
-    registerShortcutsForComponent(Arrays.asList(getShortcutSet().getShortcuts()), editorSearchComponent.getSearchField());
+    registerShortcutsForComponent(Arrays.asList(getShortcutSet().getShortcuts()), editorSearchComponent.getSearchTextComponent());
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    getEditorSearchComponent().addNextOccurrence();
+    myEditorSearchComponent.addNextOccurrence();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean isFind = !getEditorSearchComponent().getFindModel().isReplaceState();
-    boolean hasMatches = getEditorSearchComponent().hasMatches();
+    boolean isFind = !myEditorSearchComponent.getFindModel().isReplaceState();
+    boolean hasMatches = myEditorSearchComponent.hasMatches();
     e.getPresentation().setVisible(isFind);
     e.getPresentation().setEnabled(isFind && hasMatches);
   }}

@@ -258,9 +258,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     else if (result == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
       myHasToRecreate = true;
     }
-    else {
-      myShowBulb = false;  // nothing to apply
-    }
   }
 
   public static void getActionsToShow(@NotNull final Editor hostEditor,
@@ -318,7 +315,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                   hostDocument.getLineEndOffset(line), new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
-          GutterIntentionAction.addActions(highlighter, intentions.guttersToShow);
+          GutterIntentionAction.addActions(hostEditor.getProject(), highlighter, intentions.guttersToShow);
           return true;
         }
       });

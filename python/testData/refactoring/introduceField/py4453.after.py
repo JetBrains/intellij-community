@@ -7,6 +7,6 @@ class SolverEquation:
         b = 25
         c = 46
         self.a = math.sqrt(b ** 2 - 4 * a * c)
-        root1 = (-b + self.a) / (2*a)
-        root2 = (-b - self.a) / (2*a)
+        root1 = (-b + self.a) / (2 * a)
+        root2 = (-b - self.a) / (2 * a)
         print(root1,root2)

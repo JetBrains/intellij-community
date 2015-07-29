@@ -52,13 +52,13 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                @NotNull File dir,
                                @SuppressWarnings("deprecation") @NotNull StateSplitter splitter,
-                               @NotNull Disposable parentDisposable,
+                               @Nullable Disposable parentDisposable,
                                @Nullable final Listener listener) {
     super(pathMacroSubstitutor);
     myDir = dir;
     mySplitter = splitter;
 
-    VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
+    VirtualFileTracker virtualFileTracker = parentDisposable == null ? null : ServiceManager.getService(VirtualFileTracker.class);
     if (virtualFileTracker != null && listener != null) {
       virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(myDir.getPath())), new VirtualFileAdapter() {
         @Override
@@ -142,23 +142,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     if (parentVirtualFile == null) {
       throw new StateStorageException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
     }
-    return getFile(ioDir.getName(), parentVirtualFile, requestor);
-  }
-
-  @NotNull
-  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parent, @NotNull Object requestor) throws IOException {
-    VirtualFile file = parent.findChild(fileName);
-    if (file != null) {
-      return file;
-    }
-
-    AccessToken token = WriteAction.start();
-    try {
-      return parent.createChildData(requestor, fileName);
-    }
-    finally {
-      token.finish();
-    }
+    return StorageUtil.getFile(ioDir.getName(), parentVirtualFile, requestor);
   }
 
   private static class MySaveSession extends SaveSessionBase {
@@ -258,8 +242,9 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
               storeElement.setAttribute(StorageData.NAME, componentName);
               storeElement.addContent(element);
 
-              VirtualFile file = getFile(fileName, dir, MySaveSession.this);
-              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()));
+              VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);
+              // we don't write xml prolog due to historical reasons (and should not in any case)
+              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
             }
             catch (IOException e) {
               LOG.error(e);

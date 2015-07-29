@@ -26,6 +26,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,68 +74,53 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent.validate();
     myPopup = new MovablePopup(myComponent, myTipComponent);
 
-    MouseAdapter tipMouseAdapter = new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        // don't hide the hint if mouse exited to myComponent
-        if (myComponent.getMousePosition() == null) {
-          hideHint();
-        }
-      }
-
+    myTipComponent.addMouseWheelListener(new MouseWheelListener() {
       @Override
       public void mouseWheelMoved(MouseWheelEvent e) {
-        Point p = e.getLocationOnScreen();
-        SwingUtilities.convertPointFromScreen(p, myComponent);
-        myComponent.dispatchEvent(new MouseWheelEvent(myComponent,
-                                                        e.getID(),
-                                                        e.getWhen(),
-                                                        e.getModifiers(),
-                                                        p.x, p.y,
-                                                        e.getClickCount(),
-                                                        e.isPopupTrigger(),
-                                                        e.getScrollType(),
-                                                        e.getScrollAmount(),
-                                                        e.getWheelRotation()));
+        dispatchEvent(myComponent, e);
       }
+    });
 
+    myTipComponent.addMouseListener(new MouseListener() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        Point p = e.getLocationOnScreen();
-        SwingUtilities.convertPointFromScreen(p, myComponent);
-        myComponent.dispatchEvent(new MouseEvent(myComponent,
-                                                      e.getID(),
-                                                      e.getWhen(),
-                                                      e.getModifiers(),
-                                                      p.x, p.y,
-                                                      e.getClickCount(),
-                                                      e.isPopupTrigger(),
-                                                      e.getButton()));
+        dispatchEvent(myComponent, e);
       }
 
       @Override
       public void mousePressed(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
 
       @Override
+      public void mouseEntered(MouseEvent e) {
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        // don't hide the hint if mouse exited to owner component
+        if (myComponent.getMousePosition() == null) {
+          hideHint();
+        }
+      }
+    });
+
+    myTipComponent.addMouseMotionListener(new MouseMotionListener() {
+      @Override
       public void mouseMoved(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
 
       @Override
       public void mouseDragged(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
-    };
-    myTipComponent.addMouseListener(tipMouseAdapter);
-    myTipComponent.addMouseWheelListener(tipMouseAdapter);
-    myTipComponent.addMouseMotionListener(tipMouseAdapter);
+    });
 
     myComponent.addMouseListener(
       new MouseListener() {
@@ -480,4 +466,12 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 
   protected abstract KeyType getCellKeyForPoint(Point point);
+
+  private static void dispatchEvent(JComponent component, MouseEvent event) {
+    if (component != null && event != null) {
+      Point point = event.getLocationOnScreen();
+      SwingUtilities.convertPointFromScreen(point, component);
+      component.dispatchEvent(MouseEventAdapter.convert(event, component, point.x, point.y));
+    }
+  }
 }

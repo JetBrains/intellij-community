@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
@@ -30,11 +29,7 @@ import java.util.Map;
  * Calculation of fix-point of frames is removed, since frames are not needed to build control flow graph.
  * So, the main point here is handling of subroutines (jsr) and try-catch-finally blocks.
  */
-public class FramelessAnalyzer implements Opcodes {
-  private int n;
-  private InsnList insns;
-  private List<TryCatchBlockNode>[] handlers;
-  private Subroutine[] subroutines;
+public class FramelessAnalyzer extends SubroutineFinder {
   protected boolean[] wasQueued;
   protected boolean[] queued;
   protected int[] queue;
@@ -191,71 +186,6 @@ public class FramelessAnalyzer implements Opcodes {
         throw new AnalyzerException(insnNode, "Error at instruction "
                                               + insn + ": " + e.getMessage(), e);
       }
-    }
-  }
-
-  protected void findSubroutine(int insn, final Subroutine sub,
-                              final List<AbstractInsnNode> calls) throws AnalyzerException {
-    while (true) {
-      if (insn < 0 || insn >= n) {
-        throw new AnalyzerException(null, "Execution can fall off end of the code");
-      }
-      if (subroutines[insn] != null) {
-        return;
-      }
-      subroutines[insn] = sub.copy();
-      AbstractInsnNode node = insns.get(insn);
-
-      // calls findSubroutine recursively on normal successors
-      if (node instanceof JumpInsnNode) {
-        if (node.getOpcode() == JSR) {
-          // do not follow a JSR, it leads to another subroutine!
-          calls.add(node);
-        } else {
-          JumpInsnNode jnode = (JumpInsnNode) node;
-          findSubroutine(insns.indexOf(jnode.label), sub, calls);
-        }
-      } else if (node instanceof TableSwitchInsnNode) {
-        TableSwitchInsnNode tsnode = (TableSwitchInsnNode) node;
-        findSubroutine(insns.indexOf(tsnode.dflt), sub, calls);
-        for (int i = tsnode.labels.size() - 1; i >= 0; --i) {
-          LabelNode l = tsnode.labels.get(i);
-          findSubroutine(insns.indexOf(l), sub, calls);
-        }
-      } else if (node instanceof LookupSwitchInsnNode) {
-        LookupSwitchInsnNode lsnode = (LookupSwitchInsnNode) node;
-        findSubroutine(insns.indexOf(lsnode.dflt), sub, calls);
-        for (int i = lsnode.labels.size() - 1; i >= 0; --i) {
-          LabelNode l = lsnode.labels.get(i);
-          findSubroutine(insns.indexOf(l), sub, calls);
-        }
-      }
-
-      // calls findSubroutine recursively on exception handler successors
-      List<TryCatchBlockNode> insnHandlers = handlers[insn];
-      if (insnHandlers != null) {
-        for (int i = 0; i < insnHandlers.size(); ++i) {
-          TryCatchBlockNode tcb = insnHandlers.get(i);
-          findSubroutine(insns.indexOf(tcb.handler), sub, calls);
-        }
-      }
-
-      // if insn does not falls through to the next instruction, return.
-      switch (node.getOpcode()) {
-        case GOTO:
-        case RET:
-        case TABLESWITCH:
-        case LOOKUPSWITCH:
-        case IRETURN:
-        case LRETURN:
-        case FRETURN:
-        case DRETURN:
-        case ARETURN:
-        case RETURN:
-        case ATHROW:
-          return;
-      }
-      insn++;
     }
   }
 

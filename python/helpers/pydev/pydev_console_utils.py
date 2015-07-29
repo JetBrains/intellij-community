@@ -107,6 +107,9 @@ class StdIn(BaseStdIn):
         except:
             return '\n'
 
+    def close(self, *args, **kwargs):
+        pass #expected in StdIn
+
 
 class CodeFragment:
     def __init__(self, text, is_single_line=True):

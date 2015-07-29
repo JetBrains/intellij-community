@@ -55,6 +55,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -287,6 +288,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  @CalledInAwt
   private void runExecutor(ApplyPatchExecutor executor) {
     final Collection<AbstractFilePatchInProgress> included = getIncluded();
     if (included.isEmpty()) return;

@@ -26,7 +26,7 @@ import java.util.Map;
 @State(
   name = "HgGlobalSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/hg.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/hg.xml", roamingType = RoamingType.PER_OS),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml", deprecated = true)
   }
 )

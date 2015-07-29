@@ -540,6 +540,19 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
+  public static void copyFileOrDir(@NotNull File from, @NotNull File to) throws IOException {
+    copyFileOrDir(from, to, from.isDirectory());
+  }
+
+  public static void copyFileOrDir(@NotNull File from, @NotNull File to, boolean isDir) throws IOException {
+    if (isDir) {
+      copyDir(from, to);
+    }
+    else {
+      copy(from, to);
+    }
+  }
+
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir) throws IOException {
     copyDir(fromDir, toDir, true);
   }
@@ -555,13 +568,7 @@ public class FileUtil extends FileUtilRt {
   public static void copyDirContent(@NotNull File fromDir, @NotNull File toDir) throws IOException {
     File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY);
     for (File child : children) {
-      File target = new File(toDir, child.getName());
-      if (child.isFile()) {
-        copy(child, target);
-      }
-      else {
-        copyDir(child, target, true);
-      }
+      copyFileOrDir(child, new File(toDir, child.getName()));
     }
   }
 
@@ -940,6 +947,17 @@ public class FileUtil extends FileUtilRt {
     }
     while (file != null);
     return true;
+  }
+
+  public static boolean rename(@NotNull File source, @NotNull String newName) throws IOException {
+    File target = new File(source.getParent(), newName);
+    if (!SystemInfo.isFileSystemCaseSensitive && newName.equalsIgnoreCase(source.getName())) {
+      File intermediate = createTempFile(source.getParentFile(), source.getName(), ".tmp", false, false);
+      return source.renameTo(intermediate) && intermediate.renameTo(target);
+    }
+    else {
+      return source.renameTo(target);
+    }
   }
 
   public static void rename(@NotNull File source, @NotNull File target) throws IOException {

@@ -125,7 +125,7 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {
-      if (Location.DATA_KEY.is(dataId)) return new PsiLocation<PsiElement>(myElement);
+      if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<PsiElement>(myElement) : null;
       return myDelegate.getData(dataId);
     }
   }

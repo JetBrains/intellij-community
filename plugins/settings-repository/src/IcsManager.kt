@@ -19,11 +19,11 @@ import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -126,8 +126,8 @@ class IcsManager(dir: File) {
   }
 
   private fun registerProjectLevelProviders(project: Project) {
-    val storageManager = (project as ProjectEx).getStateStore().getStateStorageManager()
-    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED)!!.getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null)
+    val storageManager = project.stateStore.getStateStorageManager()
+    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null)
     if (projectId == null || projectId.uid == null) {
       // not mapped, if user wants, he can map explicitly, we don't suggest
       // we cannot suggest "map to ICS" for any project that user opens, it will be annoying
@@ -173,7 +173,7 @@ class IcsManager(dir: File) {
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application as ApplicationImpl).getStateStore().getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
+    application.stateStore.getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
 
     autoSyncManager.registerListeners(application)
 
@@ -259,6 +259,19 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
       catch (e: Throwable) {
         LOG.error(e)
       }
+    }
+
+    val repositoryManager = icsManager.repositoryManager
+    if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {
+      repositoryManager.renameDirectory(linkedMapOf(
+        Pair("\$ROOT_CONFIG$", null),
+        Pair("_mac/\$ROOT_CONFIG$", "_mac"),
+        Pair("_windows/\$ROOT_CONFIG$", "_windows"),
+        Pair("_linux/\$ROOT_CONFIG$", "_linux"),
+        Pair("_freebsd/\$ROOT_CONFIG$", "_freebsd"),
+        Pair("_unix/\$ROOT_CONFIG$", "_unix"),
+        Pair("_unknown/\$ROOT_CONFIG$", "_unknown")
+      ))
     }
 
     icsManager.beforeApplicationLoaded(application)

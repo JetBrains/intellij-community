@@ -60,24 +60,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   protected void createTrees(@NotNull Map<String, JTree> trees) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("PyTypeHierarchyPopupMenu");
-    final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
-    final JTree tree1 = createTree(true);
-    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    baseOnThisTypeAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree1);
-    trees.put(TYPE_HIERARCHY_TYPE, tree1);
-
-    final JTree tree2 = createTree(true);
-    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    baseOnThisTypeAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree2);
-    trees.put(SUPERTYPES_HIERARCHY_TYPE, tree2);
-
-    final JTree tree3 = createTree(true);
-    PopupHandler.installPopupHandler(tree3, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    baseOnThisTypeAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
-    trees.put(SUBTYPES_HIERARCHY_TYPE, tree3);
+    createTreeAndSetupCommonActions(trees, group);
   }
 
   @Nullable

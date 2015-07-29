@@ -24,16 +24,14 @@
   </application-components>
 
   <extensionPoints>
-  <extensionPoint qualifiedName="PythonidEdu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
+    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
       <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
   </extensions>
 
   <actions>
-    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="ToolsMenu"/>
-
-    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="PrintExportGroup"/>
     <group overrides="true" id="FileMainSettingsGroup">
       <reference id="ShowSettings"/>
       <separator/>

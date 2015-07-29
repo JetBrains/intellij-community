@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
@@ -99,7 +98,7 @@ public class Splash extends JDialog implements StartupProgress {
     this(info.getSplashImageUrl(), info.getSplashTextColor());
     if (info instanceof ApplicationInfoImpl) {
       final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
-      myProgressHeight = JBUI.scale(2);
+      myProgressHeight = 2 * Math.round(JBUI.scale(0.99f));
       myProgressColor = appInfo.getProgressColor();
       myProgressY = appInfo.getProgressY();
       myProgressTail = appInfo.getProgressTailIcon();
@@ -140,8 +139,8 @@ public class Splash extends JDialog implements StartupProgress {
     g.setColor(color);
     g.fillRect(1, getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
-      myProgressTail.paintIcon(this, g, width - (myProgressTail.getIconWidth() / JBUI.scale(1) / 2 * JBUI.scale(1)),
-                               getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / JBUI.scale(1) / 2 * JBUI.scale(1)); //I'll buy you a beer if you understand this line without playing with it
+      myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / JBUI.scale(1f) / 2f * JBUI.scale(1f))),
+                               (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / JBUI.scale(1f) / 2f * JBUI.scale(1f))); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
   }
@@ -155,7 +154,7 @@ public class Splash extends JDialog implements StartupProgress {
   }
 
   private int getProgressY() {
-    return JBUI.scale(myProgressY);
+    return (int)JBUI.scale((float)myProgressY);
   }
 
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {

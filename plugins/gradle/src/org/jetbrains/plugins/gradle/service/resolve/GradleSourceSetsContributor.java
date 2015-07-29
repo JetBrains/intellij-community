@@ -53,7 +53,7 @@ public class GradleSourceSetsContributor implements GradleMethodContextContribut
       return;
     }
 
-    if (methodCallInfo.size() > 1 && "sourceSets".equals(place.getText()) && place instanceof GrReferenceExpressionImpl) {
+    if (methodCallInfo.size() > 1 && SOURCE_SETS.equals(place.getText()) && place instanceof GrReferenceExpressionImpl) {
       GradleResolverUtil
         .addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER);
     }

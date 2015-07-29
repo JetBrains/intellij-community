@@ -22,6 +22,7 @@ import org.gradle.tooling.model.idea.IdeaDependency;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -63,7 +64,13 @@ public class ModelDependenciesBuilderImplTest extends AbstractModelBuilderTest {
 
         assertEquals("dependencyProject", moduleDependency.getDependencyModule().getName());
         assertEquals("COMPILE", moduleDependency.getScope().getScope());
-        assertTrue(moduleDependency.getExported());
+
+        if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.5")) < 0) {
+          assertTrue(moduleDependency.getExported());
+        } else {
+          assertFalse(moduleDependency.getExported());
+        }
+
       }
       else {
         fail();

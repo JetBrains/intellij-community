@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -482,7 +482,9 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
         @Override
         protected void paintCycleEnd() {
-          finish(true);
+          if (!isDisposed()) { // Animator will invoke paintCycleEnd() even if it was disposed
+            finish(true);
+          }
         }
       };
 

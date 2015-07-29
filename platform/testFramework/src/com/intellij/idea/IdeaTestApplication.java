@@ -46,6 +46,10 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
     return myDataContext == null ? null : myDataContext.getData(dataId);
   }
 
+  public static synchronized IdeaTestApplication getInstance() {
+    return getInstance(null);
+  }
+
   public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
     if (ourInstance == null) {
       PlatformTestCase.doAutodetectPlatformPrefix();

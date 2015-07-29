@@ -16,16 +16,6 @@
 
 package org.intellij.lang.xpath.xslt.refactoring.extractTemplate;
 
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import org.intellij.lang.xpath.psi.XPathVariable;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
-import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringActionBase;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -37,11 +27,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Query;
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
+import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
+import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringActionBase;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -210,7 +209,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
 
         if (s != null) {
             new WriteCommandAction(start.getProject()) {
-                protected void run(Result result) throws Throwable {
+                protected void run(@NotNull Result result) throws Throwable {
                     final PsiFile containingFile = start.getContainingFile();
 
                     XmlTag templateTag = parentScope.createChildTag("template", XsltSupport.XSLT_NS, sb.toString(), false);

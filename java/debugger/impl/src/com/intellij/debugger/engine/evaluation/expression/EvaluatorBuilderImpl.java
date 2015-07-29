@@ -1080,15 +1080,17 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       final boolean performCastToWrapperClass = shouldPerformBoxingConversion && !castingToPrimitive;
 
-      String castTypeName = castType.getCanonicalText();
-      if (performCastToWrapperClass) {
-        final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(castType);
-        if (unboxedType != null) {
-          castTypeName = unboxedType.getCanonicalText();
+      if (!(PsiUtil.resolveClassInClassTypeOnly(castType) instanceof PsiTypeParameter)) {
+        String castTypeName = castType.getCanonicalText();
+        if (performCastToWrapperClass) {
+          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(castType);
+          if (unboxedType != null) {
+            castTypeName = unboxedType.getCanonicalText();
+          }
         }
-      }
 
-      myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
+        myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
+      }
 
       if (performCastToWrapperClass) {
         myResult = new BoxingEvaluator(myResult);

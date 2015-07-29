@@ -21,12 +21,18 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.StubFileElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiFileStub<T extends PsiFile> extends StubElement<T>, UserDataHolder {
-  IStubFileElementType getType();
+  PsiFileStub[] EMPTY_ARRAY = new PsiFileStub[0];
+
+  StubFileElementType getType();
 
   @NotNull
   PsiFileStub[] getStubRoots();
+
+  @Nullable
+  String getInvalidationReason();
 }

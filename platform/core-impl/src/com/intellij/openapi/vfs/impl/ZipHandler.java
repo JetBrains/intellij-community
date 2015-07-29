@@ -25,7 +25,6 @@ import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -195,7 +194,8 @@ public class ZipHandler extends ArchiveHandler {
       if (entry != null) {
         InputStream stream = zip.getInputStream(entry);
         if (stream != null) {
-          stream = new BufferedInputStream(stream);
+          // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks
+          // no sense to create BufferedInputStream
           try {
             return FileUtil.loadBytes(stream, (int)entry.getSize());
           }

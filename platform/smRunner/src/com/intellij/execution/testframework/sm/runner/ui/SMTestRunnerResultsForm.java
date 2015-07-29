@@ -93,7 +93,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
   private SMTRunnerTreeBuilder myTreeBuilder;
-  private final TestConsoleProperties myConsoleProperties;
 
   private final List<EventsListener> myEventListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -129,8 +128,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                  @Nullable String splitterPropertyName) {
     super(console, consoleActions, consoleProperties,
           StringUtil.notNullize(splitterPropertyName, DEFAULT_SM_RUNNER_SPLITTER_PROPERTY), 0.2f);
-    myConsoleProperties = consoleProperties;
-
     myProject = consoleProperties.getProject();
 
     //Create tests common suite root
@@ -166,7 +163,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   protected ToolbarPanel createToolbarPanel() {
-    return new SMTRunnerToolbarPanel(myConsoleProperties, this, this);
+    return new SMTRunnerToolbarPanel(myProperties, this, this);
   }
 
   protected JComponent createTestTreeView() {
@@ -194,7 +191,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
 
-    TrackRunningTestUtil.installStopListeners(myTreeView, myConsoleProperties, new Pass<AbstractTestProxy>() {
+    TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, new Pass<AbstractTestProxy>() {
       @Override
       public void pass(AbstractTestProxy testProxy) {
         if (testProxy == null) return;
@@ -270,8 +267,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     myStartTime = System.currentTimeMillis();
     boolean printTestingStartedTime = true;
-    if (myConsoleProperties instanceof SMTRunnerConsoleProperties) {
-      printTestingStartedTime = ((SMTRunnerConsoleProperties)myConsoleProperties).isPrintTestingStartedTime();
+    if (myProperties instanceof SMTRunnerConsoleProperties) {
+      printTestingStartedTime = ((SMTRunnerConsoleProperties)myProperties).isPrintTestingStartedTime();
     }
     if (printTestingStartedTime) {
       myTestsRootNode.addSystemOutput("Testing started at " + DateFormatUtil.formatTime(myStartTime) + " ...\n");
@@ -326,14 +323,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     if (testsRoot.isEmptySuite() &&
         testsRoot.isTestsReporterAttached() &&
-        myConsoleProperties instanceof SMTRunnerConsoleProperties &&
-        ((SMTRunnerConsoleProperties)myConsoleProperties).fixEmptySuite()) {
+        myProperties instanceof SMTRunnerConsoleProperties &&
+        ((SMTRunnerConsoleProperties)myProperties).fixEmptySuite()) {
       return;
     }
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount, myTotalTestCount - myFinishedTestCount, myIgnoredTestCount);
-    TestsUIUtil.notifyByBalloon(myConsoleProperties.getProject(), testsRoot, myConsoleProperties, presentation);
-    addToHistory(testsRoot, myConsoleProperties, this);
+    TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
+    addToHistory(testsRoot, myProperties, this);
   }
 
   private static void addToHistory(final SMTestProxy.SMRootTestProxy root,
@@ -351,7 +348,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         }
       });
       Disposer.register(parentDisposable, processIndicator);
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
+
+      CompositePrintable.invokeInAlarm(new Runnable() {
+        public void run() {
+          ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
+        }
+      });
     }
   }
 
@@ -389,6 +391,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myFinishedTestCount++;
     }
     updateIconProgress(false);
+
+    //still expand failure when user selected another test
+    if (myLastSelected != null && 
+        TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties) &&
+        TestConsoleProperties.HIDE_PASSED_TESTS.value(myProperties)) {
+      myTreeBuilder.expand(test, null);
+    }
   }
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
@@ -440,7 +449,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   public TestConsoleProperties getProperties() {
-    return myConsoleProperties;
+    return myProperties;
   }
 
   public void setFilter(final Filter filter) {
@@ -596,7 +605,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
 
-    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
+    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
       if (myLastSelected == null || myLastSelected == newTestOrSuite) {
         myLastSelected = null;
         selectAndNotify(newTestOrSuite);

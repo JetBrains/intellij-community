@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class ModuleUtilCore {
   public static String getModuleNameInReadAction(@NotNull final Module module) {
     return new ReadAction<String>(){
       @Override
-      protected void run(final Result<String> result) throws Throwable {
+      protected void run(@NotNull final Result<String> result) throws Throwable {
         result.setResult(module.getName());
       }
     }.execute().getResultObject();

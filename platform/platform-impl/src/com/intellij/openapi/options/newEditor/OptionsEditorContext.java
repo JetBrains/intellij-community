@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.ui.speedSearch.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
-    if (myCurrentConfigurable == configurable) return new ActionCallback.Rejected();
+    if (myCurrentConfigurable == configurable) return ActionCallback.REJECTED;
 
     final Configurable old = myCurrentConfigurable;
     myCurrentConfigurable = configurable;
@@ -59,7 +59,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireModifiedAdded(@NotNull final Configurable configurable, @Nullable OptionsEditorColleague requestor) {
-    if (myModified.contains(configurable)) return new ActionCallback.Rejected();
+    if (myModified.contains(configurable)) return ActionCallback.REJECTED;
 
     myModified.add(configurable);
 
@@ -72,7 +72,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireModifiedRemoved(@NotNull final Configurable configurable, @Nullable OptionsEditorColleague requestor) {
-    if (!myModified.contains(configurable)) return new ActionCallback.Rejected();
+    if (!myModified.contains(configurable)) return ActionCallback.REJECTED;
 
     myModified.remove(configurable);
 
@@ -84,7 +84,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireErrorsChanged(final Map<Configurable, ConfigurationException> errors, OptionsEditorColleague requestor) {
-    if (myErrors.equals(errors)) return new ActionCallback.Rejected();
+    if (myErrors.equals(errors)) return ActionCallback.REJECTED;
 
     myErrors = errors != null ? errors : new HashMap<Configurable, ConfigurationException>();
 

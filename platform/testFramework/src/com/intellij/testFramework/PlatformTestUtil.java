@@ -369,7 +369,7 @@ public class PlatformTestUtil {
     assertNotNull(action);
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
-    final AnActionEvent event = new AnActionEvent(null, context, "", presentation, ActionManager.getInstance(), 0);
+    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
     action.update(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);

@@ -281,7 +281,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
     }
     String realKey = key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
     if (JBUI.isHiDPI()) {
-      realKey+="@" + JBUI.scale(1) + "x";
+      realKey+= "@" + (((int)(96 * JBUI.scale(1f)))) + "dpi";
     }
     return realKey;
   }

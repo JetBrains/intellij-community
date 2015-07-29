@@ -486,10 +486,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                                          ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
             actions.add(new UnresolvedRefCreateFunctionQuickFix(callExpression, expr));
           }
-          PyFunction parentFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-          PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
-          PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
-          if (parentFunction != null && decorator == null && importStatement == null) {
+          final PyFunction parentFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+          final PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
+          final PyAnnotation annotation = PsiTreeUtil.getParentOfType(element, PyAnnotation.class);
+          final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
+          if (parentFunction != null && decorator == null && annotation == null && importStatement == null) {
             actions.add(new UnresolvedReferenceAddParameterQuickFix(refName));
           }
           actions.add(new PyRenameUnresolvedRefQuickFix());

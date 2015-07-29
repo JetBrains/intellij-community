@@ -116,9 +116,10 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     if (PsiTreeUtil.isAncestor(containingClass, matchStart, false)) {
       return false;
     }
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
-    if (psiClass != null) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
+    while (psiClass != null) {
       if (InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) return false;
+      psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
     }
     return true;
   }

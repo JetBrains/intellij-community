@@ -47,7 +47,6 @@ public class StudyProjectGenerator {
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
-  private static final Pattern CACHE_PATTERN = Pattern.compile("name=(.*) description=(.*) folder=(.*) (instructor=(.*))+");
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
@@ -155,46 +154,54 @@ public class StudyProjectGenerator {
     int lessonIndex = 1;
     for (Lesson lesson : course.getLessons()) {
       final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
-      FileUtil.createDirectory(lessonDirectory);
-      int taskIndex = 1;
-      for (Task task : lesson.taskList) {
-        final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(taskIndex));
-        FileUtil.createDirectory(taskDirectory);
-        for (Map.Entry<String, TaskFile> taskFileEntry : task.taskFiles.entrySet()) {
-          final String name = taskFileEntry.getKey();
-          final TaskFile taskFile = taskFileEntry.getValue();
-          final File file = new File(taskDirectory, name);
-          FileUtil.createIfDoesntExist(file);
-
-          try {
-            FileUtil.writeToFile(file, taskFile.text);
-          }
-          catch (IOException e) {
-            LOG.error("ERROR copying file " + name);
-          }
-        }
-        final Map<String, String> testsText = task.getTestsText();
-        for (Map.Entry<String, String> entry : testsText.entrySet()) {
-          final File testsFile = new File(taskDirectory, entry.getKey());
-          FileUtil.createIfDoesntExist(testsFile);
-          try {
-              FileUtil.writeToFile(testsFile, entry.getValue());
-          }
-          catch (IOException e) {
-            LOG.error("ERROR copying tests file");
-          }
-        }
-        final File taskText = new File(taskDirectory, "task.html");
-        FileUtil.createIfDoesntExist(taskText);
-        try {
-          FileUtil.writeToFile(taskText, task.getText());
-        }
-        catch (IOException e) {
-          LOG.error("ERROR copying tests file");
-        }
-        taskIndex += 1;
-      }
+      flushLesson(lessonDirectory, lesson);
       lessonIndex += 1;
+    }
+  }
+
+  public static void flushLesson(@NotNull final File lessonDirectory, @NotNull final Lesson lesson) {
+    FileUtil.createDirectory(lessonDirectory);
+    int taskIndex = 1;
+    for (Task task : lesson.taskList) {
+      final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(taskIndex));
+      flushTask(task, taskDirectory);
+      taskIndex += 1;
+    }
+  }
+
+  public static void flushTask(@NotNull final Task task, @NotNull final File taskDirectory) {
+    FileUtil.createDirectory(taskDirectory);
+    for (Map.Entry<String, TaskFile> taskFileEntry : task.taskFiles.entrySet()) {
+      final String name = taskFileEntry.getKey();
+      final TaskFile taskFile = taskFileEntry.getValue();
+      final File file = new File(taskDirectory, name);
+      FileUtil.createIfDoesntExist(file);
+
+      try {
+        FileUtil.writeToFile(file, taskFile.text);
+      }
+      catch (IOException e) {
+        LOG.error("ERROR copying file " + name);
+      }
+    }
+    final Map<String, String> testsText = task.getTestsText();
+    for (Map.Entry<String, String> entry : testsText.entrySet()) {
+      final File testsFile = new File(taskDirectory, entry.getKey());
+      FileUtil.createIfDoesntExist(testsFile);
+      try {
+          FileUtil.writeToFile(testsFile, entry.getValue());
+      }
+      catch (IOException e) {
+        LOG.error("ERROR copying tests file");
+      }
+    }
+    final File taskText = new File(taskDirectory, "task.html");
+    FileUtil.createIfDoesntExist(taskText);
+    try {
+      FileUtil.writeToFile(taskText, task.getText());
+    }
+    catch (IOException e) {
+      LOG.error("ERROR copying tests file");
     }
   }
 
@@ -238,22 +245,13 @@ public class StudyProjectGenerator {
     File cacheFile = new File(myCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
     try {
-      if (!cacheFile.exists()) {
-        final boolean created = cacheFile.createNewFile();
-        if (!created) {
-          LOG.error("Cannot flush courses cache. Can't create " + CACHE_NAME + " file");
-          return;
-        }
-      }
+      if (!createCacheFile(cacheFile)) return;
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
       writer = new PrintWriter(cacheFile);
       for (CourseInfo courseInfo : myCourses) {
-        final List<CourseInfo.Instructor> instructors = courseInfo.getInstructors();
-        StringBuilder builder = new StringBuilder("name=").append(courseInfo.getName()).append(" ").append("description=").
-          append(courseInfo.getDescription()).append(" ").append("folder=").append(courseInfo.getName()).append(" ");
-        for (CourseInfo.Instructor instructor : instructors) {
-          builder.append("instructor=").append(instructor.getName()).append(" ");
-        }
-        writer.println(builder.toString());
+        final String json = gson.toJson(courseInfo);
+        writer.println(json);
       }
     }
     catch (FileNotFoundException e) {
@@ -265,6 +263,24 @@ public class StudyProjectGenerator {
     finally {
       StudyUtils.closeSilently(writer);
     }
+  }
+
+  private boolean createCacheFile(File cacheFile) throws IOException {
+    if (!myCoursesDir.exists()) {
+      final boolean created = myCoursesDir.mkdirs();
+      if (!created) {
+        LOG.error("Cannot flush courses cache. Can't create courses directory");
+        return false;
+      }
+    }
+    if (!cacheFile.exists()) {
+      final boolean created = cacheFile.createNewFile();
+      if (!created) {
+        LOG.error("Cannot flush courses cache. Can't create " + CACHE_NAME + " file");
+        return false;
+      }
+    }
+    return true;
   }
 
   public List<CourseInfo> getCourses(boolean force) {
@@ -304,22 +320,9 @@ public class StudyProjectGenerator {
         try {
           String line;
           while ((line = reader.readLine()) != null) {
-            Matcher matcher = CACHE_PATTERN.matcher(line);
-            if (matcher.matches()) {
-              String courseName = matcher.group(1);
-              final CourseInfo courseInfo = new CourseInfo();
-              courseInfo.setName(courseName);
-
-              courseInfo.setDescription(matcher.group(2));
-              courses.add(courseInfo);
-
-              final int groupCount = matcher.groupCount();
-              final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
-              for (int i = 5; i <= groupCount; i++) {
-                instructors.add(new CourseInfo.Instructor(matcher.group(i)));
-              }
-              courseInfo.setInstructors(instructors);
-            }
+            Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+            final CourseInfo courseInfo = gson.fromJson(line, CourseInfo.class);
+            courses.add(courseInfo);
           }
         }
         catch (IOException e) {
@@ -352,6 +355,10 @@ public class StudyProjectGenerator {
       ZipUtil.unzip(null, courseDir, file, null, null, true);
       CourseInfo courseName = addCourse(myCourses, courseDir);
       flushCache();
+      if (courseName != null && !courseName.getName().equals(unzippedName)) {
+        courseDir.renameTo(new File(myCoursesDir, courseName.getName()));
+        courseDir.delete();
+      }
       return courseName;
     }
     catch (IOException e) {

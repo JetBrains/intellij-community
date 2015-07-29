@@ -30,12 +30,11 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
+import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
@@ -173,37 +172,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   };
 
-  @Override
-  protected void bootstrapPicoContainer(@NotNull String name) {
-    super.bootstrapPicoContainer(name);
-    getPicoContainer().registerComponentImplementation(IComponentStore.class, ApplicationStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ApplicationPathMacroManager.class);
-  }
-
   @NotNull
+  @Deprecated
   public IComponentStore getStateStore() {
-    return (IComponentStore)getPicoContainer().getComponentInstance(IComponentStore.class);
-  }
-
-  @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-    getStateStore().initComponent(component, service);
-  }
-
-  @Override
-  public void init() {
-    loadComponents();
-
-    for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
-      try {
-        listener.beforeApplicationLoaded(this);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    super.init();
+    return ComponentsPackage.getStateStore(this);
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -361,15 +333,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
   }
 
-  @Override
-  protected synchronized Object createComponent(@NotNull Class componentInterface) {
-    Object component = super.createComponent(componentInterface);
-    if (mySplash != null) {
-      mySplash.showProgress("", 0.65f + getPercentageOfComponentsLoaded() * 0.35f);
-    }
-    return component;
-  }
-
   @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
@@ -489,19 +452,45 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(@Nullable String optionsPath) throws IOException {
-    load(PathManager.getConfigPath(), optionsPath == null ? PathManager.getOptionsPath() : optionsPath);
+  public void load() throws IOException {
+    load(null);
   }
 
-  public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
-    IComponentStore store = getStateStore();
-    StateStorageManager storageManager = store.getStateStorageManager();
-    storageManager.addMacro(StoragePathMacros.APP_CONFIG, optionsPath);
-    storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
-
+  @Override
+  public void load(@Nullable final String configPath) throws IOException {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      store.load();
+      long t = System.currentTimeMillis();
+      init(mySplash == null ? null : new EmptyProgressIndicator() {
+        @Override
+        public void setFraction(double fraction) {
+          mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
+        }
+      }, new Runnable() {
+        @Override
+        public void run() {
+          // create ServiceManagerImpl at first to force extension classes registration
+          getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
+
+          StateStorageManager storageManager = ComponentsPackage.getStateStore(ApplicationImpl.this).getStateStorageManager();
+
+          String effectiveConfigPath = configPath == null ? PathManager.getConfigPath() : configPath;
+          //noinspection deprecation
+          storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, effectiveConfigPath);
+          storageManager.addMacro(StoragePathMacros.APP_CONFIG, effectiveConfigPath + "/options");
+
+          for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+            try {
+              listener.beforeApplicationLoaded(ApplicationImpl.this);
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }
+        }
+      });
+      t = System.currentTimeMillis() - t;
+      LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
     }
     catch (StateStorageException e) {
       throw new IOException(e);
@@ -512,6 +501,33 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myLoaded = true;
 
     createLocatorFile();
+  }
+
+  @Override
+  protected void createComponents(@Nullable final ProgressIndicator indicator) {
+    // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
+    Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        ApplicationImpl.super.createComponents(indicator);
+      }
+    };
+
+    if (indicator == null) {
+      // no splash, no need to to use progress manager
+      task.run();
+    }
+    else {
+      ProgressManager.getInstance().runProcess(task, indicator);
+    }
+  }
+
+  @Override
+  @Nullable
+  protected ProgressIndicator getProgressIndicator() {
+    // could be called before full initialization
+    ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
+    return progressManager == null ? null : progressManager.getProgressIndicator();
   }
 
   private static void createLocatorFile() {
@@ -1482,7 +1498,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        StoreUtil.save(getStateStore(), null);
+        StoreUtil.save(ComponentsPackage.getStateStore(this), null);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);

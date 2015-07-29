@@ -884,14 +884,14 @@ public class JBTabsImpl extends JComponent
   private ActionCallback executeSelectionChange(TabInfo info, boolean requestFocus) {
     if (mySelectedInfo != null && mySelectedInfo.equals(info)) {
       if (!requestFocus) {
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       }
       else {
         Component owner = myFocusManager.getFocusOwner();
         JComponent c = info.getComponent();
         if (c != null && owner != null) {
           if (c == owner || SwingUtilities.isDescendingFrom(owner, c)) {
-            return new ActionCallback.Done();
+            return ActionCallback.DONE;
           }
         }
         return requestFocus(getToFocus());
@@ -984,11 +984,11 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback requestFocus(final JComponent toFocus) {
-    if (toFocus == null) return new ActionCallback.Done();
+    if (toFocus == null) return ActionCallback.DONE;
 
     if (myTestMode) {
       toFocus.requestFocus();
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
 
@@ -2533,7 +2533,7 @@ public class JBTabsImpl extends JComponent
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
     if (!isDropTarget) {
-      if (info == null || !getTabs().contains(info)) return new ActionCallback.Done();
+      if (info == null || !getTabs().contains(info)) return ActionCallback.DONE;
     }
 
     if (isDropTarget && myLastLayoutPass != null) {

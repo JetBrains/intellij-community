@@ -16,6 +16,7 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.SourceScope;
@@ -51,7 +52,16 @@ public class TestNGTestPattern extends TestNGTestObject {
   public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes)
     throws CantRunException {
     final TestData data = myConfig.getPersistantData();
-    for (final String pattern : data.getPatterns()) {
+    final Set<String> patterns = data.getPatterns();
+    fillTestObjects(classes, patterns, myConfig.getPersistantData().getScope(), myConfig, getSearchScope());
+  }
+
+  public static void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes,
+                                     final Set<String> patterns,
+                                     final TestSearchScope testSearchScope,
+                                     final ModuleBasedConfiguration config,
+                                     final GlobalSearchScope searchScope) throws CantRunException {
+    for (final String pattern : patterns) {
       final String className;
       final String methodName;
       if (pattern.contains(",")) {
@@ -66,7 +76,8 @@ public class TestNGTestPattern extends TestNGTestObject {
         @Nullable
         @Override
         public PsiClass compute() {
-          return ClassUtil.findPsiClass(PsiManager.getInstance(myConfig.getProject()), className.replace('/', '.'), null, true, getSearchScope());
+          return ClassUtil
+            .findPsiClass(PsiManager.getInstance(config.getProject()), className.replace('/', '.'), null, true, searchScope);
         }
       });
       if (psiClass != null) {
@@ -78,20 +89,19 @@ public class TestNGTestPattern extends TestNGTestObject {
         });
         if (hasTest) {
           if (StringUtil.isEmpty(methodName)) {
-            calculateDependencies(null, classes, getSearchScope(), psiClass);
+            calculateDependencies(null, classes, searchScope, psiClass);
           }
           else {
-            collectTestMethods(classes, psiClass, methodName, getSearchScope());
+            collectTestMethods(classes, psiClass, methodName, searchScope);
           }
         } else {
           throw new CantRunException("No tests found in class " + className);
         }
       }
     }
-    if (classes.size() != data.getPatterns().size()) {
-      TestSearchScope scope = myConfig.getPersistantData().getScope();
+    if (classes.size() != patterns.size()) {
       final List<Pattern> compilePatterns = new ArrayList<Pattern>();
-      for (String p : data.getPatterns()) {
+      for (String p : patterns) {
         final Pattern compilePattern;
         try {
           compilePattern = Pattern.compile(p);
@@ -101,9 +111,10 @@ public class TestNGTestPattern extends TestNGTestObject {
         }
         compilePatterns.add(compilePattern);
       }
-      final SourceScope sourceScope = scope.getSourceScope(myConfig);
+      final SourceScope sourceScope = testSearchScope.getSourceScope(config);
       TestClassFilter projectFilter =
-        new TestClassFilter(sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(myConfig.getProject()), myConfig.getProject(), true, true){
+        new TestClassFilter(sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(config.getProject()),
+                            config.getProject(), true, true){
           @Override
           public boolean isAccepted(PsiClass psiClass) {
             if (super.isAccepted(psiClass)) {
@@ -116,9 +127,9 @@ public class TestNGTestPattern extends TestNGTestObject {
             return false;
           }
         };
-      calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(projectFilter, false));
+      calculateDependencies(null, classes, searchScope, TestNGUtil.getAllTestClasses(projectFilter, false));
       if (classes.size() == 0) {
-        throw new CantRunException("No tests found in for patterns \"" + StringUtil.join(data.getPatterns(), " || ") + '\"');
+        throw new CantRunException("No tests found in for patterns \"" + StringUtil.join(patterns, " || ") + '\"');
       }
     }
   }

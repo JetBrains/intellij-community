@@ -24,6 +24,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -266,7 +267,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private static final Comparator<JavaExecutionStack> THREADS_COMPARATOR = new Comparator<JavaExecutionStack>() {
     @Override
     public int compare(JavaExecutionStack th1, JavaExecutionStack th2) {
-      return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
+      int res = Comparing.compare(th2.getThreadProxy().isSuspended(), th1.getThreadProxy().isSuspended());
+      if (res == 0) {
+        return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
+      }
+      return res;
     }
   };
 }

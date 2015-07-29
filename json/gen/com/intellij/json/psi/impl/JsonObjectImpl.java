@@ -11,7 +11,7 @@ import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 import com.intellij.navigation.ItemPresentation;
 
-public class JsonObjectImpl extends JsonContainerImpl implements JsonObject {
+public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
 
   public JsonObjectImpl(ASTNode node) {
     super(node);
@@ -26,11 +26,6 @@ public class JsonObjectImpl extends JsonContainerImpl implements JsonObject {
   @NotNull
   public List<JsonProperty> getPropertyList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonProperty.class);
-  }
-
-  @Nullable
-  public JsonProperty findProperty(String name) {
-    return JsonPsiImplUtils.findProperty(this, name);
   }
 
   @Nullable

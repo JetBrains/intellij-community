@@ -66,6 +66,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile LineSet myLineSet;
   private volatile ImmutableText myText;
   private volatile SoftReference<String> myTextString;
+  private volatile FrozenDocument myFrozen;
 
   private boolean myIsReadOnly = false;
   private volatile boolean isStripTrailingSpacesEnabled = true;
@@ -636,6 +637,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void clearLineModificationFlags() {
     myLineSet = getLineSet().clearModificationFlags();
+    myFrozen = null;
   }
 
   void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
@@ -651,6 +653,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       lineSet = lineSet.setModified(modifiedLines.get(i));
     }
     myLineSet = lineSet;
+    myFrozen = null;
   }
 
   private void updateText(@NotNull ImmutableText newText,
@@ -730,6 +733,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
       myLineSet = getLineSet().update(prevText, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewFragment(), event.isWholeTextReplaced());
+      myFrozen = null;
       if (myTabTrackingRequestors > 0) {
         updateMightContainTabs(event.getNewFragment());
       }
@@ -972,20 +976,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (myAssertThreading) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    if (myDoingBulkUpdate == value) {
-      // do not fire listeners or otherwise updateStarted() will be called more times than updateFinished()
-      return;
-    }
     if (myUpdatingBulkModeStatus) {
       throw new IllegalStateException("Detected bulk mode status update from DocumentBulkUpdateListener");
     }
+    if (myDoingBulkUpdate == value) {
+      return;
+    }
     myUpdatingBulkModeStatus = true;
     try {
-      myDoingBulkUpdate = value;
       if (value) {
         getPublisher().updateStarted(this);
+        myDoingBulkUpdate = true;
       }
       else {
+        myDoingBulkUpdate = false;
         getPublisher().updateFinished(this);
       }
     }
@@ -1069,4 +1073,19 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       myMightContainTabs = StringUtil.contains(text, 0, text.length(), '\t');
     }
   }
+
+  @NotNull
+  public FrozenDocument freeze() {
+    FrozenDocument frozen = myFrozen;
+    if (frozen == null) {
+      synchronized (myLineSetLock) {
+        frozen = myFrozen;
+        if (frozen == null) {
+          frozen = new FrozenDocument(myText, getLineSet(), myModificationStamp, SoftReference.dereference(myTextString));
+        }
+      }
+    }
+    return frozen;
+  }
+
 }

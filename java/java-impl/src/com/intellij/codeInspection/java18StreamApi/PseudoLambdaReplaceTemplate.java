@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,14 +104,47 @@ class PseudoLambdaReplaceTemplate {
       });
     final PsiType returnType = method.getReturnType();
 
-    if (returnType instanceof PsiClassType) {
-      final PsiClass resolvedReturnTypeClass = ((PsiClassType)returnType).resolve();
-      if (!InheritanceUtil.isInheritor(resolvedReturnTypeClass, CommonClassNames.JAVA_LANG_ITERABLE)) {
+    if (StreamApiConstants.FAKE_FIND_MATCHED.equals(myStreamApiMethodName)) {
+      if (!PsiType.BOOLEAN.equals(returnType)) {
         return null;
       }
-    } else if (!(returnType instanceof PsiArrayType)) {
-      return null;
+    } else {
+      final PsiClass stream =
+        JavaPsiFacade.getInstance(method.getProject()).findClass(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, method.getResolveScope());
+      if (stream == null) {
+        return null;
+      }
+      final PsiMethod[] methods = stream.findMethodsByName(myStreamApiMethodName, false);
+      LOG.assertTrue(methods.length != 0);
+      PsiMethod representative = methods[0];
+      final PsiType expectedReturnType = representative.getReturnType();
+      if (expectedReturnType instanceof PsiClassType) {
+        final PsiClass resolvedClass = ((PsiClassType)expectedReturnType).resolve();
+        if (resolvedClass == null) {
+          return null;
+        } else {
+          if (StreamApiConstants.JAVA_UTIL_STREAM_STREAM.equals(resolvedClass.getQualifiedName())) {
+            if (!(returnType instanceof PsiArrayType)) {
+              if (!(returnType instanceof PsiClassType)) {
+                return null;
+              }
+              final PsiClass methodReturnType = ((PsiClassType)returnType).resolve();
+              if (methodReturnType == null ||
+                  (!InheritanceUtil.isInheritor(methodReturnType, CommonClassNames.JAVA_LANG_ITERABLE) &&
+                   !InheritanceUtil.isInheritor(methodReturnType, CommonClassNames.JAVA_LANG_ITERABLE))) {
+                return null;
+              }
+            }
+          }
+        }
+      }
+      else if (PsiType.BOOLEAN.equals(expectedReturnType)) {
+        if (!PsiType.BOOLEAN.equals(returnType)) {
+          return null;
+        }
+      }
     }
+
     return validate(parameterTypes, returnType, null, method);
   }
 

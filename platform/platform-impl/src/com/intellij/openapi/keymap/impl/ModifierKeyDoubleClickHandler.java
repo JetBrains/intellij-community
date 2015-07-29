@@ -20,6 +20,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
@@ -204,14 +205,11 @@ public class ModifierKeyDoubleClickHandler {
     private void run(KeyEvent event) {
       myIsRunningAction = true;
       try {
-        final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-        final AnAction action = actionManager.getAction(myActionId);
-        final AnActionEvent anActionEvent = new AnActionEvent(event,
-                                                              DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
-                                                              ActionPlaces.MAIN_MENU,
-                                                              action.getTemplatePresentation(),
-                                                              actionManager,
-                                                              0);
+        ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+        AnAction action = actionManager.getAction(myActionId);
+        DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
+        AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.MAIN_MENU, context);
+
         actionManager.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         actionManager.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);

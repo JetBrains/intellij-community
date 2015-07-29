@@ -158,7 +158,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   public static void removePhysicalAnnotations(PsiModifierListOwner owner, String... fqns) {
     for (String fqn : fqns) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, fqn);
-      if (annotation != null) {
+      if (annotation != null && !AnnotationUtil.isInferredAnnotation(annotation)) {
         annotation.delete();
       }
     }

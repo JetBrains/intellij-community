@@ -36,6 +36,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.lang.ClassPath;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -49,10 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLDecoder;
+import java.net.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -887,8 +885,9 @@ public class PluginManagerCore {
     return "";
   }
 
-  private static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @Nullable StartupProgress progress) {
-    Collection<URL> urls = getClassLoaderUrls();
+  public static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result,
+                                                  @NotNull Collection<URL> urls,
+                                                  @Nullable StartupProgress progress) {
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     int i = 0;
     for (URL url : urls) {
@@ -896,31 +895,56 @@ public class PluginManagerCore {
       if ("file".equals(url.getProtocol())) {
         File file = new File(decodeUrl(url.getFile()));
 
-        IdeaPluginDescriptorImpl platformPluginDescriptor = null;
-        if (platformPrefix != null) {
-          platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
-          if (platformPluginDescriptor != null && !result.contains(platformPluginDescriptor)) {
-            platformPluginDescriptor.setUseCoreClassLoader(true);
-            result.add(platformPluginDescriptor);
+        final IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptorFromClassPath(file, result, platformPrefix);
+        if (pluginDescriptor != null) {
+          if (progress != null && !pluginDescriptor.getName().equals(SPECIAL_IDEA_PLUGIN)) {
+            progress.showProgress("Plugin loaded: " + pluginDescriptor.getName(), PLUGINS_PROGRESS_MAX_VALUE * (float)i / urls.size());
           }
-        }
-
-        IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file, PLUGIN_XML);
-        if (platformPrefix != null && pluginDescriptor != null && pluginDescriptor.getName().equals(SPECIAL_IDEA_PLUGIN)) {
           continue;
         }
-        if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
-          if (platformPluginDescriptor != null) {
-            // if we found a regular plugin.xml in the same .jar/root as a platform-prefixed descriptor, use the core loader for it too
-            pluginDescriptor.setUseCoreClassLoader(true);
-          }
-          result.add(pluginDescriptor);
-          if (progress != null) {
-            progress.showProgress("Plugin loaded: " + pluginDescriptor.getName(), PLUGINS_PROGRESS_MAX_VALUE * ((float)i / urls.size()));
+
+        final String[] referencedJars = ClassPath.loadManifestClasspath(file);
+        if (referencedJars != null) {
+          for (String referencedJar : referencedJars) {
+            final File referencedFile;
+            try {
+              referencedFile = new File(new URI(referencedJar));
+            }
+            catch (Exception e) {
+              continue;
+            }
+            loadDescriptorFromClassPath(referencedFile, result, platformPrefix);
           }
         }
       }
     }
+  }
+
+  private static IdeaPluginDescriptorImpl loadDescriptorFromClassPath(@NotNull File file,
+                                                                      @NotNull List<IdeaPluginDescriptorImpl> result,
+                                                                      String platformPrefix) {
+    IdeaPluginDescriptorImpl platformPluginDescriptor = null;
+    if (platformPrefix != null) {
+      platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
+      if (platformPluginDescriptor != null && !result.contains(platformPluginDescriptor)) {
+        platformPluginDescriptor.setUseCoreClassLoader(true);
+        result.add(platformPluginDescriptor);
+      }
+    }
+
+    IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file, PLUGIN_XML);
+    if (platformPrefix != null && pluginDescriptor != null && pluginDescriptor.getName().equals(SPECIAL_IDEA_PLUGIN)) {
+      return pluginDescriptor;
+    }
+    if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
+      if (platformPluginDescriptor != null) {
+        // if we found a regular plugin.xml in the same .jar/root as a platform-prefixed descriptor, use the core loader for it too
+        pluginDescriptor.setUseCoreClassLoader(true);
+      }
+      result.add(pluginDescriptor);
+      return pluginDescriptor;
+    }
+    return null;
   }
 
   @NotNull
@@ -963,7 +987,7 @@ public class PluginManagerCore {
 
     loadDescriptorsFromProperty(result);
 
-    loadDescriptorsFromClassPath(result, fromSources ? progress : null);
+    loadDescriptorsFromClassPath(result, getClassLoaderUrls(), fromSources ? progress : null);
 
     return topoSortPlugins(result);
   }

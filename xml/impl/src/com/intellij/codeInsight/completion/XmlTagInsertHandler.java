@@ -137,7 +137,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     // temp code
     PsiFile containingFile = tag.getContainingFile();
-    boolean htmlCode = HtmlUtil.hasHtml(containingFile);
+    boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
     template.setToReformat(!htmlCode);
 
     StringBuilder indirectRequiredAttrs = addRequiredAttributes(descriptor, tag, template, containingFile);
@@ -200,7 +200,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
                                                      Template template,
                                                      PsiFile containingFile) {
 
-    boolean htmlCode = HtmlUtil.hasHtml(containingFile);
+    boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
     Set<String> notRequiredAttributes = Collections.emptySet();
 
     if (tag instanceof HtmlTag) {

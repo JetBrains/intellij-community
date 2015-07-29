@@ -384,12 +384,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   public void saveDocumentAsIs(@NotNull Document document) {
     VirtualFile file = getFile(document);
-    Boolean disableTrailingSpacesStripper = TrailingSpacesStripper.DISABLE_FOR_FILE_KEY.get(file);
+    boolean spaceStrippingEnabled = true;
+    if (file != null) {
+      spaceStrippingEnabled = TrailingSpacesStripper.isEnabled(file);
+      TrailingSpacesStripper.setEnabled(file, false);
+    }
     try {
       saveDocument(document);
     }
     finally {
-      TrailingSpacesStripper.DISABLE_FOR_FILE_KEY.set(file, disableTrailingSpacesStripper);
+      if (file != null) {
+        TrailingSpacesStripper.setEnabled(file, spaceStrippingEnabled);
+      }
     }
   }
 

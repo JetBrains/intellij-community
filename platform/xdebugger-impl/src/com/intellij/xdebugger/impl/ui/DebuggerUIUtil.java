@@ -38,6 +38,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -370,7 +371,7 @@ public class DebuggerUIUtil {
    * Checks if value has evaluation expression ready, or calculation is pending
    */
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
-    Promise<String> promise = value.calculateEvaluationExpression();
+    Promise<XExpression> promise = value.calculateEvaluationExpression();
     if (promise.getState() == Promise.State.PENDING) return true;
     if (promise instanceof Getter) {
       return ((Getter)promise).get() != null;

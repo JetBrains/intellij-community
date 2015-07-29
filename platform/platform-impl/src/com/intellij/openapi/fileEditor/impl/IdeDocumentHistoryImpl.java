@@ -334,15 +334,17 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     putLastOrMerge(myForwardPlaces, info, Integer.MAX_VALUE);
 
     myBackInProgress = true;
-
-    executeCommand(new Runnable() {
-      @Override
-      public void run() {
-        gotoPlaceInfo(info);
-      }
-    }, "", null);
-
-    myBackInProgress = false;
+    try {
+      executeCommand(new Runnable() {
+        @Override
+        public void run() {
+          gotoPlaceInfo(info);
+        }
+      }, "", null);
+    }
+    finally {
+      myBackInProgress = false;
+    }
   }
 
   @Override
@@ -353,13 +355,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     if (target == null) return;
 
     myForwardInProgress = true;
-    executeCommand(new Runnable() {
-      @Override
-      public void run() {
-        gotoPlaceInfo(target);
-      }
-    }, "", null);
-    myForwardInProgress = false;
+    try {
+      executeCommand(new Runnable() {
+        @Override
+        public void run() {
+          gotoPlaceInfo(target);
+        }
+      }, "", null);
+    } finally {
+      myForwardInProgress = false;
+    }
   }
 
   private PlaceInfo getTargetForwardInfo() {

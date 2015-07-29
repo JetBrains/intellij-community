@@ -20,8 +20,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
+import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
@@ -29,6 +31,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
 import org.jetbrains.jgit.dirCache.AddLoadedFile
+import org.jetbrains.jgit.dirCache.DeleteDirectory
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.keychain.CredentialsStore
@@ -36,6 +39,7 @@ import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.File
 import java.io.IOException
+import kotlin.concurrent.write
 import kotlin.properties.Delegates
 
 class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: File) : BaseRepositoryManager(dir) {
@@ -106,11 +110,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator?): Boolean {
-    synchronized (lock) {
-      return commit(this, indicator)
-    }
-  }
+  override fun commit(indicator: ProgressIndicator?) = lock.write { commit(this, indicator) }
 
   override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
 
@@ -169,16 +169,15 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     return object : Updater {
       override var definitelySkipPush = false
 
-      override fun merge(): UpdateResult? {
-        synchronized (lock) {
-          val committed = commit(pullTask.indicator)
-          if (refToMerge == null && !committed && getAheadCommitsCount() == 0) {
-            definitelySkipPush = true
-            return null
-          }
-          else {
-            return pullTask.pull(prefetchedRefToMerge = refToMerge)
-          }
+      // KT-8632
+      override fun merge(): UpdateResult? = lock.write {
+        val committed = commit(pullTask.indicator)
+        if (refToMerge == null && !committed && getAheadCommitsCount() == 0) {
+          definitelySkipPush = true
+          return null
+        }
+        else {
+          return pullTask.pull(prefetchedRefToMerge = refToMerge)
         }
       }
     }
@@ -191,6 +190,59 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   override fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?) = Reset(this, indicator).reset(false, localRepositoryInitializer)
 
   override fun canCommit() = repository.getRepositoryState().canCommit()
+
+  fun renameDirectory(pairs: Map<String, String?>) {
+    val addCommand = AddCommand(repository)
+    val toDelete = SmartList<DeleteDirectory>()
+    var added = false
+    for ((oldPath, newPath) in pairs) {
+      val old = File(dir, oldPath)
+      if (!old.exists()) {
+        continue
+      }
+
+      LOG.info("Rename $oldPath to $newPath")
+
+      val files = old.listFiles()
+      if (files != null) {
+        val new = if (newPath == null) dir else File(dir, newPath)
+        for (file in files) {
+          try {
+            if (file.isHidden()) {
+              FileUtil.delete(file)
+            }
+            else {
+              file.renameTo(File(new, file.getName()))
+              addCommand.addFilepattern(if (newPath == null) file.getName() else "$newPath/${file.getName()}")
+              added = true
+            }
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
+        }
+        toDelete.add(DeleteDirectory(oldPath))
+      }
+
+      try {
+        FileUtil.delete(old)
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
+
+    repository.edit(toDelete)
+    if (added) {
+      addCommand.call()
+    }
+
+    if (toDelete.isEmpty() && !added) {
+      return
+    }
+
+    repository.commit(IdeaCommitMessageFormatter().prependMessage().append("Get rid of \$ROOT_CONFIG$").toString())
+  }
 }
 
 fun printMessages(fetchResult: OperationResult) {

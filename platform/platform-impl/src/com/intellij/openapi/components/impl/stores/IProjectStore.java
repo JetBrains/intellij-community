@@ -22,12 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @see com.intellij.openapi.project.ex.ProjectEx#getStateStore()
- */
 public interface IProjectStore extends IComponentStore {
-  boolean checkVersion();
-
   void setProjectFilePath(@NotNull String filePath);
 
   @Nullable

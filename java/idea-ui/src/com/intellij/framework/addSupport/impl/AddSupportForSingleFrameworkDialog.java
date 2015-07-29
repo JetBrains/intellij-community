@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       }
 
       new WriteAction() {
-        protected void run(final Result result) {
+        protected void run(@NotNull final Result result) {
           myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
         }
       }.execute();
@@ -116,7 +116,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     }
 
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         final ModifiableRootModel rootModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
         if (librarySettings != null) {
           librarySettings.addLibraries(rootModel, new ArrayList<Library>(), myModel.getLibrariesContainer());

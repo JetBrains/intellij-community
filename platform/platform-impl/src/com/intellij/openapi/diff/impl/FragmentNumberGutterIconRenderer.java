@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import java.awt.*;
  *         Date: 8/12/11
  *         Time: 3:12 PM
  */
-public class FragmentNumberGutterIconRenderer extends GutterIconRenderer {
+public class FragmentNumberGutterIconRenderer extends GutterIconRenderer implements DumbAware {
   private final String myPresentation;
   private CaptionIcon myIcon;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
       }
 
       new WriteAction() {
-        protected void run(final Result result) {
+        protected void run(@NotNull final Result result) {
           ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
           myAddSupportPanel.addSupport(myModule, model);
           model.commit();

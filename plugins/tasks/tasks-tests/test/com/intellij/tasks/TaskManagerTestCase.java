@@ -26,11 +26,6 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected TaskManagerTestCase() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   protected TaskManager myTaskManager;
 
   @Override

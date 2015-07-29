@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
   }
 
+  @Override
   public void projectOpened() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myLife.born();
@@ -76,9 +77,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
     else {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+        @Override
         public void run() {
           myLife.born();
           ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
             public void run() {
               markEverythingDirty();
             }
@@ -95,6 +98,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public void reanimate() {
     final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
     myLife.releaseMe(new Runnable() {
+      @Override
       public void run() {
         wasNotEmptyRef.set(! myDirtBuilder.isEmpty());
       }
@@ -104,6 +108,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void markEverythingDirty() {
     if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
@@ -112,6 +117,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
 
     final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
+      @Override
       public void run() {
         myDirtBuilder.everythingDirty();
       }
@@ -122,25 +128,30 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void projectClosed() {
     killSelf();
   }
 
+  @Override
   @NotNull @NonNls
   public String getComponentName() {
     return "VcsDirtyScopeManager";
   }
 
+  @Override
   public void initComponent() {}
 
   private void killSelf() {
     myLife.kill(new Runnable() {
+      @Override
       public void run() {
         myDirtBuilder.reset();
       }
     });
   }
 
+  @Override
   public void disposeComponent() {
     killSelf();
   }
@@ -161,6 +172,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     try {
       final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
@@ -177,6 +189,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
 
       takeDirt(new Consumer<DirtBuilder>() {
+        @Override
         public void consume(final DirtBuilder dirt) {
           if (filesConverted != null) {
             for (FilePathUnderVcs root : filesConverted) {
@@ -197,6 +210,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private void takeDirt(final Consumer<DirtBuilder> filler) {
     final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         filler.consume(myDirtBuilder);
         wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
@@ -213,6 +227,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (from != null) {
       for (final VirtualFile vf : from) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             final AbstractVcs vcs = myGuess.getVcsForDirty(vf);
             if (vcs != null) {
@@ -224,6 +239,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
     try {
       final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
@@ -239,6 +255,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
 
       takeDirt(new Consumer<DirtBuilder>() {
+        @Override
         public void consume(final DirtBuilder dirt) {
           if (filesConverted != null) {
             for (VcsRoot root : filesConverted) {
@@ -256,6 +273,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void fileDirty(@NotNull final VirtualFile file) {
     try {
       final AbstractVcs vcs = myGuess.getVcsForDirty(file);
@@ -265,6 +283,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
       final VcsRoot root = new VcsRoot(vcs, file);
       takeDirt(new Consumer<DirtBuilder>() {
+        @Override
         public void consume(DirtBuilder dirtBuilder) {
           dirtBuilder.addDirtyFile(root);
         }
@@ -273,6 +292,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void fileDirty(@NotNull final FilePath file) {
     try {
       final AbstractVcs vcs = myGuess.getVcsForDirty(file);
@@ -282,6 +302,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
       final FilePathUnderVcs root = new FilePathUnderVcs(file, vcs);
       takeDirt(new Consumer<DirtBuilder>() {
+        @Override
         public void consume(DirtBuilder dirtBuilder) {
           dirtBuilder.addDirtyFile(root);
         }
@@ -290,10 +311,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
     dirDirtyRecursively(dir);
   }
 
+  @Override
   public void dirDirtyRecursively(final VirtualFile dir) {
     try {
       final AbstractVcs vcs = myGuess.getVcsForDirty(dir);
@@ -303,6 +326,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
       final VcsRoot root = new VcsRoot(vcs, dir);
       takeDirt(new Consumer<DirtBuilder>() {
+        @Override
         public void consume(DirtBuilder dirtBuilder) {
           dirtBuilder.addDirtyDirRecursively(root);
         }
@@ -311,6 +335,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void dirDirtyRecursively(final FilePath path) {
     try {
       final AbstractVcs vcs = myGuess.getVcsForDirty(path);
@@ -320,6 +345,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
       final FilePathUnderVcs root = new FilePathUnderVcs(path, vcs);
       takeDirt(new Consumer<DirtBuilder>() {
+        @Override
         public void consume(DirtBuilder dirtBuilder) {
           dirtBuilder.addDirtyDirRecursively(root);
         }
@@ -371,9 +397,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   @Nullable
   public VcsInvalidated retrieveScopes() {
     final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
+      @Override
       public void run() {
         myProgressHolder.takeNext(new DirtBuilder(myDirtBuilder));
         myDirtBuilder.reset();
@@ -384,6 +412,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final VcsInvalidated invalidated = myProgressHolder.calculateInvalidated();
 
       myLife.doIfAlive(new Runnable() {
+        @Override
         public void run() {
           myProgressHolder.takeInvalidated(invalidated);
         }
@@ -393,8 +422,10 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     return null;
   }
 
+  @Override
   public void changesProcessed() {
     myLife.doIfAlive(new Runnable() {
+      @Override
       public void run() {
         myProgressHolder.processed();
       }
@@ -409,6 +440,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     final Ref<MyProgressHolder> currentHolderRef = new Ref<MyProgressHolder>();
 
     myLife.doIfAlive(new Runnable() {
+      @Override
       public void run() {
         inProgressHolderRef.set(myProgressHolder.copy());
         currentHolderRef.set(new MyProgressHolder(new DirtBuilder(myDirtBuilder), null));

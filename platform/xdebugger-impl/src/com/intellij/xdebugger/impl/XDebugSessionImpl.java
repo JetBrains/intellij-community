@@ -555,12 +555,12 @@ public class XDebugSessionImpl implements XDebugSession {
     if (!myPaused.getAndSet(false)) return;
 
     myDispatcher.getMulticaster().beforeSessionResume();
-    myDebuggerManager.setActiveSession(this, null, false, null);
     mySuspendContext = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
     myTopFramePosition = null;
     myActiveNonLineBreakpoint = null;
+    updateExecutionPosition();
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -574,8 +574,11 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void updateExecutionPosition() {
-    boolean isTopFrame = isTopFrameSelected();
-    myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
+    // allowed only for the active session
+    if (myDebuggerManager.getCurrentSession() == this) {
+      boolean isTopFrame = isTopFrameSelected();
+      myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
+    }
   }
 
   public boolean isTopFrameSelected() {
@@ -617,15 +620,9 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  public void activateSession() {
-    XSourcePosition position = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
-    if (position != null) {
-      boolean isTopFrame = isTopFrameSelected();
-      myDebuggerManager.setActiveSession(this, position, !isTopFrame, getPositionIconRenderer(isTopFrame));
-    }
-    else {
-      myDebuggerManager.setActiveSession(this, null, false, null);
-    }
+  void activateSession() {
+    myDebuggerManager.setCurrentSession(this);
+    updateExecutionPosition();
   }
 
   public XBreakpoint<?> getActiveNonLineBreakpoint() {
@@ -733,6 +730,10 @@ public class XDebugSessionImpl implements XDebugSession {
 
     myActiveNonLineBreakpoint =
       (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) ? breakpoint : null;
+
+    // set this session active on breakpoint, update execution position will be called inside positionReached
+    myDebuggerManager.setCurrentSession(this);
+
     positionReached(suspendContext);
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -824,9 +825,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     myPaused.set(true);
 
-    if (myTopFramePosition != null) {
-      myDebuggerManager.setActiveSession(this, myTopFramePosition, false, getPositionIconRenderer(true));
-    }
+    updateExecutionPosition();
 
     if (myShowTabOnSuspend.compareAndSet(true, false)) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -892,9 +891,9 @@ public class XDebugSessionImpl implements XDebugSession {
         myCurrentExecutionStack = null;
         myCurrentStackFrame = null;
         mySuspendContext = null;
-        if (myDebuggerManager.getCurrentSession() == XDebugSessionImpl.this) {
-          myDebuggerManager.updateExecutionPoint(null, false, null);
-        }
+
+        updateExecutionPosition();
+
         if (breakpointsInitialized) {
           XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
           if (myBreakpointListener != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +43,7 @@ import java.awt.*;
     @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
   })
-public class VcsGlobalMessageManager implements ProjectComponent, PersistentStateComponent<VcsGlobalMessage> {
+public class VcsGlobalMessageManager implements PersistentStateComponent<VcsGlobalMessage> {
   private VcsGlobalMessage myState;
 
   public static VcsGlobalMessageManager getInstance(final Project project) {
@@ -60,26 +59,6 @@ public class VcsGlobalMessageManager implements ProjectComponent, PersistentStat
   @Override
   public void loadState(VcsGlobalMessage state) {
     myState = state == null ? new VcsGlobalMessage() : state;
-  }
-
-  @Override
-  public void projectOpened() {
-
-  }
-
-  @Override
-  public void projectClosed() {
-
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
   }
 
   @Nullable
@@ -127,11 +106,5 @@ public class VcsGlobalMessageManager implements ProjectComponent, PersistentStat
     }
 
     return null;
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "VcsGlobalMessageManager";
   }
 }

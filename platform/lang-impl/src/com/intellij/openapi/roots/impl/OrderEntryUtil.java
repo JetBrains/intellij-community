@@ -31,6 +31,9 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OrderEntryUtil {
   private OrderEntryUtil() {
   }
@@ -213,5 +216,20 @@ public class OrderEntryUtil {
     if (scope2 == DependencyScope.COMPILE) return scope1;
     if (scope1 == DependencyScope.TEST || scope2 == DependencyScope.TEST) return DependencyScope.TEST;
     return scope1;
+  }
+
+  @NotNull
+  public static List<Library> getModuleLibraries(@NotNull ModuleRootModel model) {
+    OrderEntry[] orderEntries = model.getOrderEntries();
+    List<Library> libraries = new ArrayList<Library>();
+    for (OrderEntry orderEntry : orderEntries) {
+      if (orderEntry instanceof LibraryOrderEntry) {
+        final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;
+        if (entry.isModuleLevel()) {
+          libraries.add(entry.getLibrary());
+        }
+      }
+    }
+    return libraries;
   }
 }

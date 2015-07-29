@@ -29,6 +29,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
@@ -122,7 +123,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
       if (element instanceof PsiWhiteSpace && parent != null) {
         language = parent.getLanguage();
       }
-      result = language instanceof XMLLanguage || isAntFile.booleanValue();
+      result = language instanceof XMLLanguage || HtmlUtil.supportsXmlTypedHandlers(file) || isAntFile.booleanValue();
       isRelevantLanguage.set(result);
     }
     return result.booleanValue();

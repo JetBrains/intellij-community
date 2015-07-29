@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,15 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     mySplitter = createSplitter(mySplitterProportionProperty,
                                 mySplitterDefaultProportion,
                                 splitVertically);
+    if (mySplitter instanceof OnePixelSplitter) {
+      ((OnePixelSplitter)mySplitter).setBlindZone(new Producer<Insets>() {
+        @Nullable
+        @Override
+        public Insets produce() {
+          return new Insets(myToolbarPanel.getHeight(), 0, 0, 0);
+        }
+      });
+    }
     Disposer.register(this, new Disposable(){
       @Override
       public void dispose() {

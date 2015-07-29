@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
@@ -36,11 +37,15 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
   @Override
   protected Configurable prepare(Configurable key) {
+    long time = System.currentTimeMillis();
     try {
       ConfigurableWrapper.cast(Configurable.class, key); // create wrapped configurable on a pooled thread
     }
     catch (Exception unexpected) {
       LOG.error("cannot prepare configurable", unexpected);
+    }
+    finally {
+      warn(key, "prepare", time);
     }
     return key;
   }
@@ -61,11 +66,15 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
       @Override
       public JComponent compute() {
         JComponent component = null;
+        long time = System.currentTimeMillis();
         try {
           component = configurable.createComponent();
         }
         catch (Exception unexpected) {
           LOG.error("cannot create configurable component", unexpected);
+        }
+        finally {
+          warn(configurable, "create", time);
         }
         if (component != null) {
           reset(configurable);
@@ -95,22 +104,42 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   @Override
   protected void dispose(Configurable configurable) {
     if (configurable != null) {
+      long time = System.currentTimeMillis();
       try {
         configurable.disposeUIResources();
       }
       catch (Exception unexpected) {
         LOG.error("cannot dispose configurable", unexpected);
       }
+      finally {
+        warn(configurable, "dispose", time);
+      }
     }
   }
 
   public static void reset(Configurable configurable) {
     if (configurable != null) {
+      long time = System.currentTimeMillis();
       try {
         configurable.reset();
       }
       catch (Exception unexpected) {
         LOG.error("cannot reset configurable", unexpected);
+      }
+      finally {
+        warn(configurable, "reset", time);
+      }
+    }
+  }
+
+  static void warn(Configurable configurable, String action, long time) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      time = System.currentTimeMillis() - time;
+      int threshold = Registry.intValue("ide.settings.configurable.loading.threshold", 0);
+      if (0 < threshold && threshold < time) {
+        String name = configurable.getDisplayName();
+        String id = ConfigurableVisitor.ByID.getID(configurable);
+        LOG.warn(String.valueOf(time) + " ms to " + action + " '" + name + "' id=" + id);
       }
     }
   }

@@ -19,9 +19,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestFinished;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public class TestFinishedEvent extends TreeNodeEvent {
 
   private final long myDuration;

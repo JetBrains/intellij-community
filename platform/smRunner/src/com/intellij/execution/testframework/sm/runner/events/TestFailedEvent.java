@@ -15,13 +15,11 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public class TestFailedEvent extends TreeNodeEvent {
 
   private final String myLocalizedFailureMessage;
@@ -30,6 +28,7 @@ public class TestFailedEvent extends TreeNodeEvent {
   private final String myComparisonFailureActualText;
   private final String myComparisonFailureExpectedText;
   private final String myFilePath;
+  private final long myDurationMillis;
 
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);
@@ -43,6 +42,18 @@ public class TestFailedEvent extends TreeNodeEvent {
     myComparisonFailureActualText = testFailed.getActual();
     myComparisonFailureExpectedText = testFailed.getExpected();
     myFilePath = filePath;
+    myDurationMillis = parseDuration(testFailed.getAttributes().get("duration"));
+  }
+
+  private static long parseDuration(@Nullable String durationStr) {
+    if (!StringUtil.isEmpty(durationStr)) {
+      try {
+        return Long.parseLong(durationStr);
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return -1;
   }
 
   public TestFailedEvent(@NotNull String testName,
@@ -51,13 +62,34 @@ public class TestFailedEvent extends TreeNodeEvent {
                          boolean testError,
                          @Nullable String comparisonFailureActualText,
                          @Nullable String comparisonFailureExpectedText) {
-    super(testName, -1);
+    this(testName,
+         -1,
+         localizedFailureMessage,
+         stackTrace,
+         testError,
+         comparisonFailureActualText,
+         comparisonFailureExpectedText,
+         null,
+         -1);
+  }
+
+  public TestFailedEvent(@Nullable String testName,
+                         int id,
+                         @NotNull String localizedFailureMessage,
+                         @Nullable String stackTrace,
+                         boolean testError,
+                         @Nullable String comparisonFailureActualText,
+                         @Nullable String comparisonFailureExpectedText,
+                         @Nullable String expectedTextFilePath,
+                         long durationMillis) {
+    super(testName, id);
     myLocalizedFailureMessage = localizedFailureMessage;
     myStacktrace = stackTrace;
     myTestError = testError;
     myComparisonFailureActualText = comparisonFailureActualText;
     myComparisonFailureExpectedText = comparisonFailureExpectedText;
-    myFilePath = null;
+    myFilePath = expectedTextFilePath;
+    myDurationMillis = durationMillis;
   }
 
   @NotNull
@@ -95,5 +127,12 @@ public class TestFailedEvent extends TreeNodeEvent {
 
   public String getFilePath() {
     return myFilePath;
+  }
+
+  /**
+   * @return the test duration in milliseconds, or -1 if undefined
+   */
+  public long getDurationMillis() {
+    return myDurationMillis;
   }
 }

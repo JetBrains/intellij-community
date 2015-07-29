@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,12 +32,12 @@ public interface IComponentStore {
 
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
 
+  boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages);
+
   @NotNull
   Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
 
   boolean isReloadPossible(@NotNull Set<String> componentNames);
-
-  void load();
 
   @NotNull
   StateStorageManager getStateStorageManager();
@@ -59,4 +60,7 @@ public interface IComponentStore {
    */
   @Nullable
   Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages);
+
+  @TestOnly
+  void saveApplicationComponent(@NotNull Object component);
 }

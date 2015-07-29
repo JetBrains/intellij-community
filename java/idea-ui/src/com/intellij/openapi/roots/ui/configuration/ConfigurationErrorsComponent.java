@@ -694,9 +694,9 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
   private static class ConfigurationErrorsListModel extends AbstractListModel implements ConfigurationErrors, Disposable {
     private MessageBusConnection myConnection;
-    private List<ConfigurationError> myNotIgnoredErrors = new ArrayList<ConfigurationError>();
+    private ArrayList<ConfigurationError> myNotIgnoredErrors = new ArrayList<ConfigurationError>();
     private List<ConfigurationError> myAllErrors;
-    private List<ConfigurationError> myIgnoredErrors = new ArrayList<ConfigurationError>();
+    private ArrayList<ConfigurationError> myIgnoredErrors = new ArrayList<ConfigurationError>();
 
     private ConfigurationErrorsListModel(@NotNull final Project project) {
       setFilter(true, true);
@@ -728,19 +728,23 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
     
     @Override
     public void addError(@NotNull ConfigurationError error) {
-      if (!myAllErrors.contains(error)) {
-        List<ConfigurationError> targetList = error.isIgnored() ? myIgnoredErrors : myNotIgnoredErrors;
-        if (targetList.size() < MAX_ERRORS_TO_SHOW) {
-          targetList.add(0, error);
-        }
-        else {
-          targetList.add(error);
-        }
+      if (myAllErrors.contains(error)) {
+        return;
+      }
 
-        int i = myAllErrors.indexOf(error);
-        if (i != -1 && i < MAX_ERRORS_TO_SHOW) {
-          fireIntervalAdded(this, i, i);
-        }
+      ArrayList<ConfigurationError> targetList = error.isIgnored() ? myIgnoredErrors : myNotIgnoredErrors;
+
+      if (targetList.size() < MAX_ERRORS_TO_SHOW) {
+        targetList.add(0, error);
+        fireIntervalAdded(this, 0, 0);
+        return;
+      }
+
+      int listSize = targetList.size();
+      targetList.ensureCapacity(listSize+1);
+      targetList.add(listSize, error);
+      if (listSize < MAX_ERRORS_TO_SHOW) {
+        fireIntervalAdded(this, listSize, listSize);
       }
     }
 

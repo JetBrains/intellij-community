@@ -39,11 +39,6 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myModule;
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public ClsGenericsHighlightingTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Override
   public void setUp() throws Exception {
     super.setUp();

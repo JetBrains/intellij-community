@@ -18,16 +18,16 @@ package com.intellij.vcs.log.ui;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
-  private static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._192, Gray._96);
+  public static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._128, Gray._96);
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
@@ -48,12 +48,13 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull
-    private static final String ID = "MERGE_COMMITS";
+    @NotNull private static final String ID = "MERGE_COMMITS";
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
+                                               @NotNull VcsLogUiProperties uiProperties,
+                                               @NotNull VcsLogFilterUi filterUi) {
       return new MergeCommitsHighlighter(logDataHolder, uiProperties);
     }
 

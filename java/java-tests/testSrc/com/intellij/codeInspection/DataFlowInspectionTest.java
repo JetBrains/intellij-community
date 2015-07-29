@@ -196,6 +196,16 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testFinalFieldDuringInitialization() { doTest(); }
   public void testFinalFieldDuringSuperInitialization() { doTest(); }
   public void testFinalFieldInConstructorAnonymous() { doTest(); }
+
+  public void testFinalFieldNotDuringInitialization() {
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+
   public void _testSymmetricUncheckedCast() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }

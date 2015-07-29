@@ -23,6 +23,7 @@
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="library" exported="" name="ForkJoin" level="project" />
     <orderEntry type="library" exported="" name="Snappy-Java" level="project" />
+    <orderEntry type="library" name="imgscalr" level="project" />
   </component>
   <component name="copyright">
     <Base>

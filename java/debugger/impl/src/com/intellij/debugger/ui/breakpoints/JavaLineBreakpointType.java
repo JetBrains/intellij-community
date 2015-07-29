@@ -44,7 +44,8 @@ import java.util.List;
  * Base class for java line-connected exceptions (line, method, field)
  * @author egor
  */
-public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties> implements JavaBreakpointType {
+public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties>
+                                    implements JavaBreakpointType<JavaLineBreakpointProperties> {
   public JavaLineBreakpointType() {
     super("java-line", DebuggerBundle.message("line.breakpoints.tab.title"));
   }
@@ -78,8 +79,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   @NotNull
   @Override
-  public Breakpoint createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
-    return new LineBreakpoint(project, breakpoint);
+  public Breakpoint<JavaLineBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
+    return new LineBreakpoint<JavaLineBreakpointProperties>(project, breakpoint);
   }
 
   @Override

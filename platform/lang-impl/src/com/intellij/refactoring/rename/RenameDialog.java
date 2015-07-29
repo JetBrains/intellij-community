@@ -25,6 +25,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
@@ -44,7 +46,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -305,7 +306,6 @@ public class RenameDialog extends RefactoringDialog {
     performRename(newName);
   }
 
-  @TestOnly
   public void performRename(final String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
@@ -325,7 +325,12 @@ public class RenameDialog extends RefactoringDialog {
       }
     }
 
-    invokeRefactoring(processor);
+    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+      @Override
+      public void run() {
+        invokeRefactoring(processor);
+      }
+    });
   }
 
   protected RenameProcessor createRenameProcessor(String newName) {

@@ -862,6 +862,10 @@ public class GeneratedParserUtilBase {
       return count > 0;
     }
 
+    public int getVariantsSize() {
+      return variants.size();
+    }
+
     public void clearVariants(boolean expected, int start) {
       MyList<Variant> list = expected? variants : unexpected;
       if (start < 0 || start >= list.size()) return;
@@ -869,9 +873,11 @@ public class GeneratedParserUtilBase {
         VARIANTS.recycle(list.get(i));
       }
       list.setSize(start);
-      lastExpectedVariantPos = -1;
-      for (Variant variant : list) {
-        if (lastExpectedVariantPos < variant.position) lastExpectedVariantPos = variant.position;
+      if (expected) {
+        lastExpectedVariantPos = -1;
+        for (Variant variant : list) {
+          if (lastExpectedVariantPos < variant.position) lastExpectedVariantPos = variant.position;
+        }
       }
     }
 

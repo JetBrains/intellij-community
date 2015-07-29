@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 public class Page {
-  public static final int PAGE_SIZE = 4 * 1024;
+  public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 32 * 1024);
 
   private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
     @NotNull

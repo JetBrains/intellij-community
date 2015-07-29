@@ -33,7 +33,6 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -175,7 +174,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
       assert oldParent instanceof CompositeElement : oldParent;
       assert pos>=0 : pos;
-      assert pos<=oldParent.getChildren(null).length : pos + " "+ Arrays.toString(oldParent.getChildren(null));
+      //assert pos<=oldParent.getChildren(null).length : pos + " "+ Arrays.toString(oldParent.getChildren(null));
       myOldParent = oldParent;
       myNewNode = newNode;
       myPos = pos;

@@ -978,8 +978,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     VirtualFileSystemEntry result = myIdToDirCache.get(parentId);
 
     for (int i=parents.size() - 2; i>=0; i--) {
-      if (result == null) {
-        break;
+      if (!(result instanceof VirtualDirectoryImpl)) {
+        return null;
       }
       parentId = parents.get(i);
       result = ((VirtualDirectoryImpl)result).findChildById(parentId, cachedOnly);

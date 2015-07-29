@@ -271,7 +271,13 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (component != null) {
         Point point = ((MouseEvent)inputEvent).getPoint();
         Component componentAt = SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
-        Editor editor = getBaseEditor(event.getDataContext(), event.getProject());
+        Project project = event.getProject();
+        if (project == null) {
+          event.getPresentation().setEnabled(false);
+          return;
+        }
+
+        Editor editor = getBaseEditor(event.getDataContext(), project);
         if (componentAt instanceof EditorGutterComponentEx) {
           event.getPresentation().setEnabled(false);
           return;

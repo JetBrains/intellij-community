@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -205,7 +206,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         pyClass.setName("RenamedClass");
         assertEquals("RenamedClass", pyClass.getName());
       }
@@ -217,7 +218,7 @@ public class PyStubsTest extends PyTestCase {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, myFixture.getProject(), null);
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         fileImpl.unloadContent();
       }
     }.execute();

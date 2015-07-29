@@ -19,9 +19,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
 
   public TestSuiteStartedEvent(@NotNull TestSuiteStarted suiteStarted,

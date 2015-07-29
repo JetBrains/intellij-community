@@ -461,7 +461,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAtUnderClass() throws Throwable {
-    doTest();
+    doTest('\n');
   }
 
   public void testLocalClassName() throws Throwable { doTest(); }
@@ -1078,6 +1078,7 @@ public class ListUtils {
 
   public void testKeywordSmartEnter() {
     configure()
+    myFixture.assertPreferredCompletionItems 0, 'null', 'nullity'
     myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
     checkResult()
   }

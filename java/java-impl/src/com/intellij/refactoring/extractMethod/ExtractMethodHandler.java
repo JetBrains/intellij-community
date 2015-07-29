@@ -21,13 +21,12 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -116,28 +115,34 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   public static PsiElement[] getElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      int startOffset = selectionModel.getSelectionStart();
+      int endOffset = selectionModel.getSelectionEnd();
 
 
-    PsiElement[] elements;
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
-    if (expr != null) {
-      elements = new PsiElement[]{expr};
-    }
-    else {
-      elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
-      if (elements.length == 0) {
-        final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
-        if (expression != null && IntroduceVariableBase.getErrorMessage(expression) == null) {
-          final PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expression);
-          if (originalType != null) {
-            elements = new PsiElement[]{expression};
+      PsiElement[] elements;
+      PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
+      if (expr != null) {
+        elements = new PsiElement[]{expr};
+      }
+      else {
+        elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
+        if (elements.length == 0) {
+          final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+          if (expression != null && IntroduceVariableBase.getErrorMessage(expression) == null) {
+            final PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expression);
+            if (originalType != null) {
+              elements = new PsiElement[]{expression};
+            }
           }
         }
       }
+      return elements;
     }
-    return elements;
+
+    final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, editor.getCaretModel().getOffset());
+    return expressions.toArray(new PsiElement[expressions.size()]);
   }
 
   private static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {

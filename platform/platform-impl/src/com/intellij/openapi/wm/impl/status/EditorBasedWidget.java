@@ -33,7 +33,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   protected Project myProject;
 
   protected MessageBusConnection myConnection;
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
 
   protected EditorBasedWidget(@NotNull Project project) {
     myProject = project;

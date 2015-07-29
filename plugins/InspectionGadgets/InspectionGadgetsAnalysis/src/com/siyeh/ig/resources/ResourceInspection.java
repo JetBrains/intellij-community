@@ -298,7 +298,10 @@ public abstract class ResourceInspection extends BaseInspection {
         }
       }
     }
-    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(resourceCreationExpression);
+    PsiElement parent = ParenthesesUtils.getParentSkipParentheses(resourceCreationExpression);
+    if (parent instanceof PsiConditionalExpression) {
+      parent = ParenthesesUtils.getParentSkipParentheses(parent);
+    }
     if (parent instanceof PsiReturnStatement) {
       return true;
     }

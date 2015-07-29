@@ -9,6 +9,6 @@
     <plugin id="com.intellij.properties" />
     <plugin id="com.intellij.uiDesigner" />
     <plugin id="org.intellij.groovy" />
-    <plugin id="org.jetbrains.kotlin" min-version="0.12.613" max-version="0.12.1106" />
+    <plugin id="org.jetbrains.kotlin" min-version="0.12.613" max-version="0.12.1219" />
   </component>
 </project>

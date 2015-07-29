@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -61,6 +62,7 @@ import java.util.*;
 import java.util.List;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.InfoAndProgressPanel");
   private final ProcessPopup myPopup;
 
   private final StatusPanel myInfoPanel = new StatusPanel();
@@ -234,7 +236,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private void removeProgress(@NotNull InlineProgressIndicator progress) {
     synchronized (myOriginals) {
-      if (!myInline2Original.containsKey(progress)) return;
+      if (!myInline2Original.containsKey(progress)) return; // already disposed
 
       final boolean last = myOriginals.size() == 1;
       final boolean beforeLast = myOriginals.size() == 2;
@@ -242,7 +244,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       myPopup.removeIndicator(progress);
 
       final ProgressIndicatorEx original = removeFromMaps(progress);
-      if (myOriginals.contains(original)) return;
+      if (myOriginals.contains(original)) {
+        Disposer.dispose(progress);
+        return;
+      }
 
       if (last) {
         restoreEmptyStatus();
@@ -343,7 +348,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
-    progressCountPanel.setBorder(JBUI.Borders.empty(0, 0, 0, 4));
+    progressCountPanel.setBorder(JBUI.Borders.emptyRight(4));
     add(progressCountPanel, BorderLayout.EAST);
 
     revalidate();

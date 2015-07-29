@@ -23,6 +23,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -115,20 +118,26 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
     myOriginalToEditedMap.clear();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
-          myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
-        }
-        myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
-        for (FileNameMatcher matcher : myReassigned.keySet()) {
-          myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
-        }
+    DumbService.allowStartingDumbModeInside(
+      DumbModePermission.MAY_START_BACKGROUND, ProjectManager.getInstance().getOpenProjects(), new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+                myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
+              }
+              myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+              for (FileNameMatcher matcher : myReassigned.keySet()) {
+                myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
+              }
 
-        TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
-      }
-    });
+              TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
+            }
+          });
+        }
+      });
   }
 
   @Override
@@ -277,7 +286,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
                                                FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
                                                CommonBundle.getCancelButtonText(), Messages.getQuestionIcon())) {
             myTempPatternsTable.removeAssociation(matcher, registeredFileType);
-            myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
+            if (oldLanguage != null) {
+              myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
+            }
             myReassigned.put(matcher, registeredFileType);
           }
           else {
@@ -289,7 +300,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       if (item != null) {
         final FileNameMatcher oldMatcher = FileTypeManager.parseFromString(item);
         myTempPatternsTable.removeAssociation(oldMatcher, type);
-        myTempTemplateDataLanguages.removeAssociation(oldMatcher, oldLanguage);
+        if (oldLanguage != null) {
+          myTempTemplateDataLanguages.removeAssociation(oldMatcher, oldLanguage);
+        }
       }
       myTempPatternsTable.addAssociation(matcher, type);
       myTempTemplateDataLanguages.addAssociation(matcher, dialog.getTemplateDataLanguage());

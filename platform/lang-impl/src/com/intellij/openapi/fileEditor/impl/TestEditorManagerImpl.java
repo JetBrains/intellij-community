@@ -113,7 +113,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   @Override
   public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
     runnable.run();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
@@ -494,7 +494,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override

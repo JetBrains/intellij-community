@@ -21,17 +21,19 @@ import com.intellij.rt.execution.junit.ComparisonFailureData;
 import java.util.ArrayList;
 import java.util.List;
 
-class ExpectedPatterns extends AbstractExpectedPatterns {
+public class ExpectedPatterns extends AbstractExpectedPatterns {
   private static final List PATTERNS = new ArrayList();
 
   private static final String[] PATTERN_STRINGS = new String[]{
-    "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
-    "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "\nExpected: (.*)\n\\s*got: (.*)",
+    "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
+    "\nexpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
+    "\nexpected: (.*)\n\\s*got: (.*)",
     ".*?\\s*expected same:<(.*)> was not:<(.*)>",
     ".*?\\s*expected:<(.*?)> but was:<(.*?)>",
-    "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "\\s*Expected: (.*)\\s*but: was (.*)"};
+    "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
+    "\\s*expected: (.*)\\s*but: was (.*)",
+    ".*?\\s*expected: (.*)\\s*but was: (.*)"
+  };
 
   static {
     registerPatterns(PATTERN_STRINGS, PATTERNS);

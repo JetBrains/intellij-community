@@ -41,11 +41,13 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
@@ -61,6 +63,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author egor
@@ -500,16 +503,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.canSetValue() ? new JavaValueModifier(this) : null;
   }
 
-  private volatile String evaluationExpression = null;
+  private volatile XExpression evaluationExpression = null;
 
   @NotNull
   @Override
-  public Promise<String> calculateEvaluationExpression() {
+  public Promise<XExpression> calculateEvaluationExpression() {
     if (evaluationExpression != null) {
       return Promise.resolve(evaluationExpression);
     }
     else {
-      final AsyncPromise<String> res = new AsyncPromise<String>();
+      final AsyncPromise<XExpression> res = new AsyncPromise<XExpression>();
       myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {
@@ -518,13 +521,22 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         @Override
         public void contextAction() throws Exception {
-          evaluationExpression = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          evaluationExpression = ApplicationManager.getApplication().runReadAction(new Computable<XExpression>() {
             @Override
-            public String compute() {
+            public XExpression compute() {
               try {
                 PsiExpression psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
                 if (psiExpression != null) {
-                  return new TextWithImportsImpl(psiExpression).getText();
+                  XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                  // add runtime imports if any
+                  Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
+                  if (imports != null && res != null) {
+                    if (res.getCustomInfo() != null) {
+                      imports.add(res.getCustomInfo());
+                    }
+                    res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
+                  }
+                  return res;
                 }
               }
               catch (EvaluateException e) {

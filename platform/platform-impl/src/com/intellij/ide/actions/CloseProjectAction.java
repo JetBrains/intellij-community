@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -34,7 +33,6 @@ public class CloseProjectAction extends AnAction implements DumbAware {
     assert project != null;
 
     ProjectUtil.closeAndDispose(project);
-    RecentProjectsManager.getInstance().updateLastProjectPath();
     WelcomeFrame.showIfNoProjectOpened();
   }
 

@@ -49,6 +49,7 @@ public class
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     final Project project = e.getProject();
+    if (project == null) return EMPTY_ARRAY;
     final Collection<String> filePaths = TestHistoryConfiguration.getInstance(project).getFiles();
     final File testHistoryRoot = AbstractImportTestsAction.getTestHistoryRoot(project);
     final List<File> fileNames = ContainerUtil.map(filePaths, new Function<String, File>() {

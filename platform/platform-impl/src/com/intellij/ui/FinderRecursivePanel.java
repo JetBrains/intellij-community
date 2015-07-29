@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -353,7 +354,12 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         //noinspection unchecked
         final T t = (T)value;
         setIcon(getItemIcon(t));
-        append(getItemText(t));
+        try {
+          append(getItemText(t));
+        }
+        catch (IndexNotReadyException e) {
+          append("loading...");
+        }
 
         doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
 

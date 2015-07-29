@@ -22,11 +22,11 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -130,7 +130,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     };
 
-    list.setFont(ChooseByNameBase.getEditorFont());
+    list.setFont(EditorUtil.getEditorFont());
     
     list.setCellRenderer(new DefaultListCellRenderer() {
       @Override

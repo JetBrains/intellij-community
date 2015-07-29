@@ -197,9 +197,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       final EditorSearchComponent oldSearch = (EditorSearchComponent)oldHeader;
       if (oldSearch.hasMatches()) {
         String oldText = oldSearch.getTextInField();
-        if (!oldSearch.isRegexp()) {
+        if (!oldSearch.getFindModel().isRegularExpressions()) {
           oldText = StringUtil.escapeToRegexp(oldText);
-          oldSearch.setRegexp(true);
+          oldSearch.getFindModel().setRegularExpressions(true);
         }
 
         String newText = oldText + '|' + StringUtil.escapeToRegexp(text);
@@ -209,7 +209,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     final EditorSearchComponent header = new EditorSearchComponent(editor, project);
-    header.setRegexp(false);
+    header.getFindModel().setRegularExpressions(false);
     editor.setHeaderComponent(header);
   }
 

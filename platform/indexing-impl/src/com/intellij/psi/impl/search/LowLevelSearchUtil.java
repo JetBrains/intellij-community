@@ -17,15 +17,17 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class LowLevelSearchUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
 
   // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;
   // null -> there were nothing injected found
@@ -173,18 +176,21 @@ public class LowLevelSearchUtil {
     if (progress != null) progress.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
-    final CharSequence buffer = file.getViewProvider().getContents();
+    FileViewProvider viewProvider = file.getViewProvider();
+    final CharSequence buffer = viewProvider.getContents();
 
     TextRange range = scope.getTextRange();
     if (range == null) {
-      throw new AssertionError("Element " + scope + " of class " + scope.getClass() + " has null range");
+      LOG.error("Element " + scope + " of class " + scope.getClass() + " has null range");
+      return true;
     }
 
     int scopeStart = range.getStartOffset();
     int startOffset = scopeStart;
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
-      throw new AssertionError("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextRange()+"; file contents length: "+buffer.length()+"; file provider: "+file.getViewProvider());
+      diagnoseInvalidRange(scope, file, viewProvider, buffer, range);
+      return true;
     }
 
     final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
@@ -205,6 +211,27 @@ public class LowLevelSearchUtil {
     while (startOffset < endOffset);
 
     return true;
+  }
+
+  private static void diagnoseInvalidRange(@NotNull PsiElement scope,
+                                           PsiFile file,
+                                           FileViewProvider viewProvider,
+                                           CharSequence buffer,
+                                           TextRange range) {
+    String msg = "Range for element: '" + scope + "' = " + range + " is out of file '" + file + "' range: " + file.getTextRange();
+    msg += "; file contents length: " + buffer.length();
+    msg += "\n file provider: " + viewProvider;
+    Document document = viewProvider.getDocument();
+    if (document != null) {
+      msg += "\n committed=" + PsiDocumentManager.getInstance(file.getProject()).isCommitted(document);
+    }
+    for (Language language : viewProvider.getLanguages()) {
+      final PsiFile root = viewProvider.getPsi(language);
+      msg += "\n root " + language + " length=" + root.getTextLength() + (root instanceof PsiFileImpl
+                                                                          ? "; contentsLoaded=" + ((PsiFileImpl)root).isContentsLoaded() : "");
+    }
+
+    LOG.error(msg);
   }
 
   public static int searchWord(@NotNull CharSequence text,

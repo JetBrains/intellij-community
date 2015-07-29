@@ -327,7 +327,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     myDialog.setVisible(true);
 
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override

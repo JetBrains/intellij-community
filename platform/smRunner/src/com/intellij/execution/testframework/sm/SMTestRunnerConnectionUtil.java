@@ -26,7 +26,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.*;
-import com.intellij.execution.testframework.sm.runner.ui.*;
+import com.intellij.execution.testframework.sm.runner.ui.AttachToProcessListener;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
@@ -186,10 +189,10 @@ public class SMTestRunnerConnectionUtil {
     // events processor
     final GeneralTestEventsProcessor eventsProcessor;
     if (idBasedTestTree) {
-      eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
+      eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
     }
     else {
-      eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
+      eventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
     }
 
     if (locator != null) {

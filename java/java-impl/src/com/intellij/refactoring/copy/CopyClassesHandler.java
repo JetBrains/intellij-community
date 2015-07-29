@@ -279,11 +279,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
               } else {
                 target = ((MoveDestination)targetDirectory).getTargetDirectory(defaultTargetDirectory);
               }
-              PsiElement newElement = doCopyClasses(classes, map, copyClassName, target, project);
-              if (newElement != null) {
+              Collection<PsiFile> files = doCopyClasses(classes, map, copyClassName, target, project);
+              if (files != null) {
                 if (openInEditor) {
-                  CopyHandler.updateSelectionInActiveProjectView(newElement, project, selectInActivePanel);
-                  EditorHelper.openInEditor(newElement);
+                  for (PsiFile file : files) {
+                    CopyHandler.updateSelectionInActiveProjectView(file, project, selectInActivePanel);
+                  }
+                  EditorHelper.openFilesInEditor(files.toArray(new PsiFile[files.size()]));
                 }
 
                 result[0] = true;
@@ -314,7 +316,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
    @Nullable
-  public static PsiElement doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
+  public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
                                          final String copyClassName,
                                          final PsiDirectory targetDirectory,
                                          final Project project) throws IncorrectOperationException {
@@ -322,10 +324,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
    }
 
   @Nullable
-  public static PsiElement doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
-                                         @Nullable HashMap<PsiFile, String> map, final String copyClassName,
-                                         final PsiDirectory targetDirectory,
-                                         final Project project) throws IncorrectOperationException {
+  public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
+                                                     @Nullable HashMap<PsiFile, String> map, final String copyClassName,
+                                                     final PsiDirectory targetDirectory,
+                                                     final Project project) throws IncorrectOperationException {
     PsiElement newElement = null;
     final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<PsiClass, PsiElement>();
     for (final PsiClass[] psiClasses : fileToClasses.values()) {
@@ -404,7 +406,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       codeStyleManager.shortenClassReferences(expression);
     }
     new OptimizeImportsProcessor(project, createdFiles.toArray(new PsiFile[createdFiles.size()]), null).run();
-    return newElement != null ? newElement : createdFiles.size() > 0 ? createdFiles.get(0) : null;
+    return createdFiles;
   }
 
   protected static boolean isSynthetic(PsiClass aClass) {

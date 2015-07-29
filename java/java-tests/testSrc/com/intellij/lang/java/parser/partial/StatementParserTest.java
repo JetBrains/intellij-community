@@ -122,6 +122,10 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryNormal4() { doParserTest("try(R r = 0){}"); }
   public void testTryNormal5() { doParserTest("try(R1 r1 = 1; R2 r2 = 2){}"); }
   public void testTryNormal6() { doParserTest("try(R r = 0;){}"); }
+  public void testTryNormal7() { doParserTest("try(r){}"); }
+  public void testTryNormal8() { doParserTest("try(r;){}"); }
+  public void testTryNormal9() { doParserTest("try(r1; R r2 = 0){}"); }
+  public void testTryNormal10() { doParserTest("try(this){}"); }
   public void testTryIncomplete0() { doParserTest("try"); }
   public void testTryIncomplete1() { doParserTest("try{}"); }
   public void testTryIncomplete2() { doParserTest("try{}catch"); }
@@ -140,6 +144,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryIncomplete15() { doParserTest("try(R r){}"); }
   public void testTryIncomplete16() { doParserTest("try(R r =){}"); }
   public void testTryIncomplete17() { doParserTest("try(R r = 0;;){}"); }
+  public void testTryIncomplete18() { doParserTest("try(R<T> r){}"); }
 
   public void testWhileNormal() { doParserTest("while (true) foo();"); }
   public void testWhileIncomplete0() { doParserTest("while"); }

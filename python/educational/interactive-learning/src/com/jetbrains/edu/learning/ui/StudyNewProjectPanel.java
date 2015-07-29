@@ -33,7 +33,6 @@ public class StudyNewProjectPanel{
   private JButton myRefreshButton;
   private JPanel myContentPanel;
   private JLabel myAuthorLabel;
-  private JLabel myDescriptionLabel;
   private JLabel myLabel;
   private JPanel myInfoPanel;
   private JPanel myHideablePanel;
@@ -41,6 +40,7 @@ public class StudyNewProjectPanel{
   private JPasswordField myPasswordField;
   private JTextField myLoginField;
   private JButton myLogInButton;
+  private JTextPane myDescriptionLabel;
   private final StudyProjectGenerator myGenerator;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";

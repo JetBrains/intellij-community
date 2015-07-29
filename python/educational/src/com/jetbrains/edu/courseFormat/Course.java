@@ -24,7 +24,7 @@ public class Course {
   private boolean myUpToDate;
 
   @Expose @SerializedName("language")
-  private String myLanguage;
+  private String myLanguage="Python";
 
   /**
    * Initializes state of course

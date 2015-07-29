@@ -100,7 +100,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     self.messages.testIgnored(self.getTestName(test), message=reason)
 
 
-  def __getSuite(self, test):
+  def _getSuite(self, test):
     if hasattr(test, "suite"):
       suite = strclass(test.suite)
       suite_location = test.suite.location
@@ -172,7 +172,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
 
   def startTest(self, test):
-    location, suite_location = self.__getSuite(test)
+    location, suite_location = self._getSuite(test)
     suite = self.getSuiteName(test)
     if suite != self.current_suite:
       if self.current_suite:

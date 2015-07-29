@@ -139,7 +139,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
     myClass = new WriteCommandAction<PsiClass>(myProject, getCommandName()){
       @Override
-      protected void run(Result<PsiClass> result) throws Throwable {
+      protected void run(@NotNull Result<PsiClass> result) throws Throwable {
         result.setResult(buildClass());
       }
     }.execute().getResultObject();

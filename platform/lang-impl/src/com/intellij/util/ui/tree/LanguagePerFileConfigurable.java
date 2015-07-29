@@ -24,6 +24,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -95,7 +97,12 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
   @Override
   public void apply() throws ConfigurationException {
-    myMappings.setMappings(myTreeView.getValues());
+    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        myMappings.setMappings(myTreeView.getValues());
+      }
+    });
   }
 
   @Override

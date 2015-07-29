@@ -109,9 +109,15 @@ public class CheckBoxList<T> extends JBList {
     ((DefaultListModel) getModel()).addElement(checkBox);
   }
 
-  public void updateItem(@NotNull T oldItem, @NotNull T newItem) {
+  public void updateItem(@NotNull T oldItem, @NotNull T newItem, @NotNull String newText) {
     JCheckBox checkBox = myItemMap.remove(oldItem);
     myItemMap.put(newItem, checkBox);
+    checkBox.setText(newText);
+    DefaultListModel model = (DefaultListModel)getModel();
+    int ind = model.indexOf(checkBox);
+    if (ind >= 0) {
+      model.set(ind, checkBox); // to fire contentsChanged event
+    }
   }
 
   @Nullable

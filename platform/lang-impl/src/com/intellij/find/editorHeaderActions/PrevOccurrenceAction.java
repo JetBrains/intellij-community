@@ -18,11 +18,9 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -36,7 +34,7 @@ import java.util.ArrayList;
 */
 public class PrevOccurrenceAction extends EditorHeaderAction implements DumbAware {
 
-  public PrevOccurrenceAction(EditorSearchComponent editorSearchComponent, Getter<JTextComponent> editorTextField) {
+  public PrevOccurrenceAction(EditorSearchComponent editorSearchComponent, JComponent shortcutHolder) {
     super(editorSearchComponent);
 
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
@@ -49,16 +47,16 @@ public class PrevOccurrenceAction extends EditorHeaderAction implements DumbAwar
 
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
     }
-    registerShortcutsForComponent(shortcuts, editorTextField.get());
+    registerShortcutsForComponent(shortcuts, shortcutHolder);
   }
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    getEditorSearchComponent().searchBackward();
+    myEditorSearchComponent.searchBackward();
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(getEditorSearchComponent().hasMatches());
+    e.getPresentation().setEnabled(myEditorSearchComponent.hasMatches());
   }
 }

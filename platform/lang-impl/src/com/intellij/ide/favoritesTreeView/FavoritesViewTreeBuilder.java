@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   @NotNull
   public ActionCallback updateFromRootCB() {
     getStructure().rootsChanged();
-    if (isDisposed()) return new ActionCallback.Done();
+    if (isDisposed()) return ActionCallback.DONE;
     getUpdater().cancelAllRequests();
     return super.updateFromRootCB();
   }

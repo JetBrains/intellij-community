@@ -83,7 +83,6 @@ public class MethodCallFixer implements Fixer {
 
       endOffset = CharArrayUtil.shiftBackward(editor.getDocument().getCharsSequence(), endOffset - 1, " \t\n") + 1;
       editor.getDocument().insertString(endOffset, ")");
-      editor.getCaretModel().moveToOffset(endOffset + 1);
     }
   }
 

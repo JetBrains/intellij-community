@@ -37,6 +37,6 @@ public class CloseOnESCAction extends EditorHeaderAction  implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    getEditorSearchComponent().close();
+    myEditorSearchComponent.close();
   }
 }

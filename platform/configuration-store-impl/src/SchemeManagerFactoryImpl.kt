@@ -15,34 +15,40 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsSavingComponent
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.*
+import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
 
-private val LOG = Logger.getInstance(javaClass<SchemeManagerFactoryImpl>())
+val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
 
-public class SchemeManagerFactoryImpl : SchemesManagerFactory(), SettingsSavingComponent {
-  private val myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
+public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingComponent {
+  private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
 
-  override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(fileSpec: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
-    val storageManager = (ApplicationManager.getApplication().getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore).getStateStorageManager()
-    val baseDirPath = storageManager.expandMacros(fileSpec)
-    val provider = storageManager.getStreamProvider()
-    val manager = SchemeManagerImpl<T, E>(fileSpec, processor, roamingType, provider, File(baseDirPath))
+  abstract val componentManager: ComponentManager
+
+  override final fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
+    val storageManager = componentManager.stateStore.getStateStorageManager()
+
+    val manager = SchemeManagerImpl<T, E>(directoryName, processor, roamingType, storageManager.getStreamProvider(), pathToFile(directoryName, storageManager), componentManager)
     @suppress("CAST_NEVER_SUCCEEDS")
-    myRegisteredManagers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
+    managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager
   }
 
+  abstract fun pathToFile(path: String, storageManager: StateStorageManager): File
+
   public fun process(processor: (SchemeManagerImpl<Scheme, ExternalizableScheme>) -> Unit) {
-    for (manager in myRegisteredManagers) {
+    for (manager in managers) {
       try {
         processor(manager)
       }
@@ -52,18 +58,30 @@ public class SchemeManagerFactoryImpl : SchemesManagerFactory(), SettingsSavingC
     }
   }
 
-  override fun save() {
+  override final fun save() {
     val errors = SmartList<Throwable>()
-    for (registeredManager in myRegisteredManagers) {
+    for (registeredManager in managers) {
       try {
         registeredManager.save(errors)
       }
       catch (e: Throwable) {
         errors.add(e)
       }
-
     }
 
     CompoundRuntimeException.doThrow(errors)
   }
+}
+
+private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
+  override val componentManager: ComponentManager
+    get() = ApplicationManager.getApplication()
+
+  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros("$ROOT_CONFIG/$path"))
+}
+
+private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
+  override val componentManager = project
+
+  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(project.getBasePath(), if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
 }

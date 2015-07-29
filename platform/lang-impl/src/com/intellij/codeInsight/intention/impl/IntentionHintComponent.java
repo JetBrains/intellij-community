@@ -219,7 +219,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
       return PopupUpdateResult.HIDE_AND_RECREATE;
     }
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
-    if (!step.updateActions(intentions)) {
+    if (!step.wrapAndUpdateActions(intentions, true)) {
       return PopupUpdateResult.NOTHING_CHANGED;
     }
     if (!myPopupShown) {

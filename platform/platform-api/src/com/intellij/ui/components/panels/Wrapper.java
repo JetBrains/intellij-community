@@ -25,6 +25,9 @@ import java.awt.event.FocusListener;
 
 public class Wrapper extends JPanel implements NullableComponent {
 
+  private JComponent myVerticalSizeReferent;
+  private JComponent myHorizontalSizeReferent;
+
   public Wrapper() {
     setLayout(new BorderLayout());
     setOpaque(false);
@@ -112,6 +115,27 @@ public class Wrapper extends JPanel implements NullableComponent {
     }
   }
 
+  public final Wrapper setVerticalSizeReferent(JComponent verticalSizeReferent) {
+    myVerticalSizeReferent = verticalSizeReferent;
+    return this;
+  }
+
+  public final Wrapper setHorizontalSizeReferent(JComponent horizontalSizeReferent) {
+    myHorizontalSizeReferent = horizontalSizeReferent;
+    return this;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (myHorizontalSizeReferent != null && myHorizontalSizeReferent.isShowing()) {
+      size.width = Math.max(size.width, myHorizontalSizeReferent.getPreferredSize().width);
+    }
+    if (myVerticalSizeReferent != null && myVerticalSizeReferent.isShowing()) {
+      size.height = Math.max(size.height, myVerticalSizeReferent.getPreferredSize().height);
+    }
+    return size;
+  }
 
   public static class FocusHolder extends Wrapper implements FocusListener {
 
@@ -177,6 +201,7 @@ public class Wrapper extends JPanel implements NullableComponent {
     @Override
     public void focusLost(final FocusEvent e) {
     }
+
   }
 
   public static class North extends Wrapper {

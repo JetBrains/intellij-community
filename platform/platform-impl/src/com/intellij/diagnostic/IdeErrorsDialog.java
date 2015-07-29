@@ -1087,17 +1087,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     public void actionPerformed(ActionEvent e) {
-      final DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest((Component)e.getSource());
-
-      AnActionEvent event = new AnActionEvent(
-        null, dataContext,
-        ActionPlaces.UNKNOWN,
-        myAnalyze.getTemplatePresentation(),
-        ActionManager.getInstance(),
-        e.getModifiers()
-      );
-
-      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest((Component)e.getSource());
+      AnActionEvent event = AnActionEvent.createFromAnAction(myAnalyze, null, ActionPlaces.UNKNOWN, dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         myAnalyze.actionPerformed(event);
         doOKAction();

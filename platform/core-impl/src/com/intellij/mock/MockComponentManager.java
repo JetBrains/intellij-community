@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,9 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   private void registerComponentInDisposer(@Nullable Object o) {
-    if (o instanceof Disposable && o != MockComponentManager.this) {
+    if (o instanceof Disposable && o != this) {
       if (myDisposableComponents.add(o))
-        Disposer.register(MockComponentManager.this, (Disposable)o);
+        Disposer.register(this, (Disposable)o);
     }
   }
 
@@ -91,6 +91,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     registerComponentInDisposer(instance);
   }
 
+  @Nullable
   @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);

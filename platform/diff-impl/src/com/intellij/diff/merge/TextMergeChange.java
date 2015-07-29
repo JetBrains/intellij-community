@@ -113,16 +113,16 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       if (end < document.getTextLength()) end++;
     }
 
-    myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type, false, HighlighterTargetArea.EXACT_RANGE, resolved));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, false, HighlighterTargetArea.EXACT_RANGE, resolved));
 
     if (startLine == endLine) {
       if (startLine != 0) {
-        myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved));
+        myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved));
       }
     }
     else {
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved));
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved));
     }
   }
 

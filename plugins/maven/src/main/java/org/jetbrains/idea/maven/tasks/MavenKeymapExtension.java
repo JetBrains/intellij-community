@@ -55,6 +55,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       = new TreeMap<MavenProject, Set<Pair<String, String>>>(projectComparator);
 
     ActionManager actionManager = ActionManager.getInstance();
+    //noinspection TestOnlyProblems
     for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
       AnAction eachAction = actionManager.getAction(eachId);
 
@@ -102,14 +103,25 @@ public class MavenKeymapExtension implements KeymapExtension {
     createActions(project, mavenProjects);
   }
 
-  private static void createActions(Project project, List<MavenProject> mavenProjects) {
+  public static MavenAction registerAction(MavenProject mavenProject, String actionId, String goal) {
+    MavenGoalAction mavenGoalAction = new MavenGoalAction(mavenProject, goal);
     ActionManager manager = ActionManager.getInstance();
+    manager.registerAction(actionId, mavenGoalAction);
+    return mavenGoalAction;
+  }
+
+  private static void createActions(Project project, List<MavenProject> mavenProjects) {
+    ActionManager actionManager = ActionManager.getInstance();
+    MavenShortcutsManager shortcutsManager = MavenShortcutsManager.getInstance(project);
     for (MavenProject eachProject : mavenProjects) {
+      //noinspection TestOnlyProblems
       String actionIdPrefix = getActionPrefix(project, eachProject);
       for (MavenGoalAction eachAction : collectActions(eachProject)) {
         String id = actionIdPrefix + eachAction.getGoal();
-        manager.unregisterAction(id);
-        manager.registerAction(id, eachAction);
+        actionManager.unregisterAction(id);
+        if(shortcutsManager.hasShortcuts(eachProject, eachAction.getGoal())) {
+          actionManager.registerAction(id, eachAction);
+        }
       }
     }
   }
@@ -124,6 +136,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   public static void clearActions(Project project) {
     ActionManager manager = ActionManager.getInstance();
+    //noinspection TestOnlyProblems
     for (String each : manager.getActionIds(getActionPrefix(project, null))) {
       manager.unregisterAction(each);
     }
@@ -132,6 +145,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   public static void clearActions(Project project, List<MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
+      //noinspection TestOnlyProblems
       for (String eachAction : manager.getActionIds(getActionPrefix(project, eachProject))) {
         manager.unregisterAction(eachAction);
       }
@@ -186,7 +200,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
-                                                               Arrays.asList(myGoal),
+                                                               Collections.singletonList(myGoal),
                                                                explicitProfiles.getEnabledProfiles(),
                                                                explicitProfiles.getDisabledProfiles());
       MavenRunConfigurationType.runConfiguration(project, params, null);

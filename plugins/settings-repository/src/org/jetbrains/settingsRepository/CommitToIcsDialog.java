@@ -1,10 +1,10 @@
 package org.jetbrains.settingsRepository;
 
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -47,7 +47,7 @@ public class CommitToIcsDialog extends DialogWrapper {
   }
 
   private void commitChanges(List<Change> changes) {
-    StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+    StateStorageManager storageManager = ComponentsPackage.getStateStore(project).getStateStorageManager();
     TrackingPathMacroSubstitutor macroSubstitutor = storageManager.getMacroSubstitutor();
     assert macroSubstitutor != null;
     IcsManager icsManager = SettingsRepositoryPackage.getIcsManager();

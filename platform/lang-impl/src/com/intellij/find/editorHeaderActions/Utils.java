@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -50,14 +51,8 @@ public class Utils {
 
   public static void setSmallerFont(final JComponent component) {
     if (SystemInfo.isMac) {
-      Font f = new JLabel(" ").getFont();
-      Font font = smaller(f);
-      component.setFont(font);
+      component.setFont(JBUI.Fonts.smallFont());
     }
-  }
-
-  static Font smaller(Font f) {
-    return f.deriveFont(f.getStyle(), f.getSize() - 2);
   }
 
   public static void setSmallerFontForChildren(JComponent component) {

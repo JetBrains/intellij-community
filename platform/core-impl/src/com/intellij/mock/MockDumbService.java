@@ -18,6 +18,7 @@ package com.intellij.mock;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -88,6 +89,11 @@ public class MockDumbService extends DumbService {
   @Override
   public boolean isAlternativeResolveEnabled() {
     return false;
+  }
+
+  @Override
+  public void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
+    runnable.run();
   }
 
   public void smartInvokeLater(@NotNull final Runnable runnable) {

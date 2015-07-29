@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -477,9 +477,9 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-    if (place == null) return new ActionCallback.Done();
+    if (place == null) return ActionCallback.DONE;
     myTabbedPane.setSelectedTitle((String)place.getPath(SDK_TAB));
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override

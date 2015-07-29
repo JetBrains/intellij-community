@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,10 +89,9 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     return StringUtil.notNullize(myText);
   }
 
-  static void addActions(RangeHighlighterEx info,
-                         List<HighlightInfo.IntentionActionDescriptor> descriptors) {
+  static void addActions(@Nullable Project project, RangeHighlighterEx info, List<HighlightInfo.IntentionActionDescriptor> descriptors) {
     final GutterIconRenderer renderer = info.getGutterIconRenderer();
-    if (renderer == null) {
+    if (renderer == null || (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(renderer))) {
       return;
     }
     addActions(renderer.getClickAction(), descriptors, renderer, 0);

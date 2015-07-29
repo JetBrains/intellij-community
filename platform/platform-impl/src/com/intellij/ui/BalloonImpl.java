@@ -53,10 +53,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.*;
 import java.awt.image.*;
 import java.util.List;
 import java.util.Set;
@@ -450,7 +447,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myFocusManager = IdeFocusManager.findInstanceByComponent(myLayeredPane);
     final Ref<Component> originalFocusOwner = new Ref<Component>();
     final Ref<FocusRequestor> focusRequestor = new Ref<FocusRequestor>();
-    final Ref<ActionCallback> proxyFocusRequest = new Ref<ActionCallback>(new ActionCallback.Done());
+    final Ref<ActionCallback> proxyFocusRequest = new Ref<ActionCallback>(ActionCallback.DONE);
 
     boolean mnemonicsFix = myDialogMode && SystemInfo.isMac && Registry.is("ide.mac.inplaceDialogMnemonicsFix");
     if (mnemonicsFix) {
@@ -1008,8 +1005,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       Rectangle pointless = getPointlessContentRec(bounds, pointerLength);
 
-      int size = getDistanceToTarget(pointless, targetPoint);
-      if (size < pointerLength - 1) return false;
+      int distance = getDistanceToTarget(pointless, targetPoint);
+      if (distance < pointerLength - 1 || distance > 2 * pointerLength) return false;
 
       UnfairTextRange balloonRange;
       UnfairTextRange pointerRange;

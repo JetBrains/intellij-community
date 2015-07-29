@@ -22,16 +22,16 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -63,14 +63,21 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url) {
+    return loadFromUrl(url, true);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
     for (Pair<String, Integer> each : getFileNames(url.toString())) {
       try {
         Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
-
+        float scale = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
         //we can't check all 3rd party plugins and convince the authors to add @2x icons.
         // isHiDPI() != isRetina() => we should scale images manually
         if (image != null && JBUI.isHiDPI() && !each.first.contains("@2x")) {
-          image = upscale(image);
+          image = upscale(image, scale);
+        } else if (image != null && JBUI.scale(1f) >= 1.5f && JBUI.scale(1f) < 2.0f && each.first.contains("@2x")) {
+          image = downscale(image, scale);
         }
         return image;
       }
@@ -81,16 +88,17 @@ public class ImageLoader implements Serializable {
   }
 
   @NotNull
-  private static Image upscale(Image image) {
-    float scale = JBUI.scale(1f);
+  private static Image upscale(Image image, float scale) {
     int width = (int)(scale * image.getWidth(null));
     int height = (int)(scale * image.getHeight(null));
-    @SuppressWarnings("UndesirableClassUsage")
-    BufferedImage tmp = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g = tmp.createGraphics();
-    g.drawImage(image, AffineTransform.getScaleInstance(scale, scale), null);
-    image = tmp;
-    return image;
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+  }
+
+  @NotNull
+  private static Image downscale(Image image, float scale) {
+    int width = (int)(image.getWidth(null)  / 2f * scale);
+    int height = (int)(image.getHeight(null)/ 2f * scale);
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
   }
 
   @Nullable
@@ -124,7 +132,7 @@ public class ImageLoader implements Serializable {
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina() || JBUI.isHiDPI());
+    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina() || JBUI.scale(1.0f) >= 1.5f);
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {

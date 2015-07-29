@@ -30,7 +30,7 @@ import java.awt.image.BufferedImage;
 
 public class LoadingDecorator {
 
-  JLayeredPane myPane = new MyLayeredPane();
+  JLayeredPane myPane;
 
   LoadingLayer myLoadingLayer;
   Animator myFadeOutAnimator;
@@ -41,6 +41,11 @@ public class LoadingDecorator {
 
 
   public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs) {
+    this(content, parent, startDelayMs, false);
+  }
+
+  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs, boolean useMinimumSize) {
+    myPane = new MyLayeredPane(useMinimumSize ? content : null);
     myLoadingLayer = new LoadingLayer();
     myDelay = startDelayMs;
     myStartAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, parent);
@@ -226,6 +231,26 @@ public class LoadingDecorator {
   }
 
   private static class MyLayeredPane extends JBLayeredPane {
+    private final JComponent myContent;
+
+    private MyLayeredPane(JComponent content) {
+      myContent = content;
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return myContent != null && !isMinimumSizeSet()
+             ? myContent.getMinimumSize()
+             : super.getMinimumSize();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return myContent != null && !isPreferredSizeSet()
+             ? myContent.getPreferredSize()
+             : super.getPreferredSize();
+    }
+
     @Override
     public void doLayout() {
       super.doLayout();

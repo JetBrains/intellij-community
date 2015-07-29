@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -102,6 +103,7 @@ import java.util.EventObject;
 import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 
@@ -382,8 +384,19 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     public Info(@NotNull PsiElement elementAtPointer) {
-      this(elementAtPointer, Collections.singletonList(new TextRange(elementAtPointer.getTextOffset(),
-                                                                     elementAtPointer.getTextOffset() + elementAtPointer.getTextLength())));
+      this(elementAtPointer, Collections.singletonList(getReferenceRange(elementAtPointer)));
+    }
+
+    @NotNull
+    private static TextRange getReferenceRange(@NotNull PsiElement elementAtPointer) {
+      int textOffset = elementAtPointer.getTextOffset();
+      final TextRange range = elementAtPointer.getTextRange();
+      if (textOffset < range.getStartOffset() || textOffset < 0) {
+        LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.getClass());
+        textOffset = range.getStartOffset();
+      }
+      
+      return new TextRange(textOffset, range.getEndOffset());
     }
 
     boolean isSimilarTo(@NotNull Info that) {

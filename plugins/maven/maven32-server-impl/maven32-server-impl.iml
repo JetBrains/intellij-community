@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="Maven3">
+      <library name="Maven32">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/maven32/boot/plexus-classworlds-2.5.2.jar!/" />
           <root url="file://$MODULE_DIR$/lib/maven32/lib" />

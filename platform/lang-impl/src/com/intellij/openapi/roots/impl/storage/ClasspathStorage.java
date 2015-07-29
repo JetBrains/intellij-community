@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.impl.stores.IModuleStore;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import com.intellij.openapi.module.Module;
@@ -52,7 +52,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
-  public ClasspathStorage(@NotNull Module module, @NotNull IModuleStore moduleStore) {
+  public ClasspathStorage(@NotNull Module module, @NotNull IComponentStore moduleStore) {
     super(moduleStore.getStateStorageManager().getMacroSubstitutor());
 
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));

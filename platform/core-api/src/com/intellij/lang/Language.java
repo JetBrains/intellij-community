@@ -56,6 +56,12 @@ public abstract class Language extends UserDataHolderBase {
       //noinspection HardCodedStringLiteral
       return "Language: ANY";
     }
+
+    @Nullable
+    @Override
+    public LanguageFileType getAssociatedFileType() {
+      return null;
+    }
   };
 
   protected Language(@NotNull @NonNls String ID) {

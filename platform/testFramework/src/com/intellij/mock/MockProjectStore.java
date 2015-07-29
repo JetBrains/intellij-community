@@ -37,11 +37,6 @@ import java.util.Set;
  */
 public class MockProjectStore implements IProjectStore {
   @Override
-  public boolean checkVersion() {
-    throw new UnsupportedOperationException("Method checkVersion is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   public void setProjectFilePath(@NotNull final String filePath) {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
   }
@@ -49,6 +44,11 @@ public class MockProjectStore implements IProjectStore {
   @Override
   public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
     throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
+  }
+
+  @Override
+  public boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
+    return false;
   }
 
   @NotNull
@@ -125,11 +125,6 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void load() {
-    throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   public void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles) {
     throw new UnsupportedOperationException();
   }
@@ -144,6 +139,10 @@ public class MockProjectStore implements IProjectStore {
   @Override
   public Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages) {
     return null;
+  }
+
+  @Override
+  public void saveApplicationComponent(@NotNull Object component) {
   }
 
   @NotNull

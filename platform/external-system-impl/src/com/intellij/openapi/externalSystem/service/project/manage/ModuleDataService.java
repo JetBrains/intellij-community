@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.Application;
@@ -19,9 +34,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
@@ -38,14 +51,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Encapsulates functionality of importing gradle module to the intellij project.
+ * Encapsulates functionality of importing external system module to the intellij project.
  * 
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
@@ -103,10 +115,9 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     });
   }
 
-  private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
-                             @NotNull final Project project,
-                             @NotNull final PlatformFacade platformFacade) {
-    removeExistingModulesConfigs(toCreate, project);
+  private static void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
+                                    @NotNull final Project project,
+                                    @NotNull final PlatformFacade platformFacade) {
     Application application = ApplicationManager.getApplication();
     final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
     application.runWriteAction(new Runnable() {
@@ -168,31 +179,6 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
       }
     }
     return result;
-  }
-
-  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull final Project project) {
-    if (nodes.isEmpty()) {
-      return;
-    }
-    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-        for (DataNode<ModuleData> node : nodes) {
-          // Remove existing '*.iml' file if necessary.
-          ModuleData data = node.getData();
-          VirtualFile file = fileSystem.refreshAndFindFileByPath(data.getModuleFilePath());
-          if (file != null) {
-            try {
-              file.delete(this);
-            }
-            catch (IOException e) {
-              LOG.warn("Can't remove existing module config file at '" + data.getModuleFilePath() + "'");
-            }
-          }
-        }
-      }
-    });
   }
 
   private static void syncPaths(@NotNull Module module, @NotNull PlatformFacade platformFacade, @NotNull ModuleData data) {
@@ -369,6 +355,11 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
             @Override
             protected JComponent createCenterPanel() {
               return new JBScrollPane(content);
+            }
+            
+            @NotNull
+            protected Action[] createActions() {
+              return new Action[]{getOKAction()};
             }
           };
 

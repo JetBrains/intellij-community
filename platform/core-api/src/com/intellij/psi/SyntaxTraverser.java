@@ -1,85 +1,107 @@
 package com.intellij.psi;
 
 import com.intellij.lang.*;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.Function;
-import com.intellij.util.UnmodifiableIterator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteredTraverser;
+import com.intellij.util.containers.FilteredTraverserBase;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
  * @author gregsh
  */
-public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTraverser<T>> implements Iterable<T> {
+public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser<T>> implements Iterable<T>, UserDataHolder {
+
+  @NotNull
+  public static ApiEx<PsiElement> psiApi() {
+    return PsiApi.INSTANCE;
+  }
+
+  @NotNull
+  public static ApiEx<PsiElement> psiApiReversed() {
+    return PsiApi.INSTANCE_REV;
+  }
+
+  @NotNull
+  public static ApiEx<ASTNode> astApi() {
+    return ASTApi.INSTANCE;
+  }
+
+  @NotNull
+  public static Api<LighterASTNode> lightApi(@NotNull PsiBuilder builder) {
+    return new LighterASTApi(builder);
+  }
 
   @NotNull
   public static SyntaxTraverser<PsiElement> psiTraverser() {
-    return new PsiTraverser(null);
+    return new SyntaxTraverser<PsiElement>(psiApi(), null);
   }
 
   @NotNull
   public static SyntaxTraverser<PsiElement> revPsiTraverser() {
-    return new RevPsiTraverser(null);
+    return new SyntaxTraverser<PsiElement>(psiApiReversed(), null);
   }
 
   @NotNull
   public static SyntaxTraverser<ASTNode> astTraverser() {
-    return new ASTTraverser(null);
+    return new SyntaxTraverser<ASTNode>(astApi(), null);
   }
 
   @NotNull
-  public static SyntaxTraverser<LighterASTNode> lightTraverser(PsiBuilder builder) {
-    FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
-    Meta<LighterASTNode> meta = FilteredTraverser.<LighterASTNode>emptyMeta().withRoots(Collections.singletonList(lightTree.getRoot()));
-    return new LightASTTraverser(meta, builder.getOriginalText(), lightTree);
+  public static SyntaxTraverser<LighterASTNode> lightTraverser(@NotNull PsiBuilder builder) {
+    LighterASTApi api = new LighterASTApi(builder);
+    return new SyntaxTraverser<LighterASTNode>(api, Meta.<LighterASTNode>empty().withRoots(JBIterable.of(api.flyweightStructure.getRoot())));
   }
 
-  protected SyntaxTraverser(@Nullable Meta<T> meta) {
-    super(meta);
+  public final Api<T> api;
+
+  protected SyntaxTraverser(@NotNull Api<T> api, @Nullable Meta<T> meta) {
+    super(meta, api);
+    this.api = api;
   }
 
   @NotNull
-  public abstract IElementType nodeType(@NotNull T node);
+  @Override
+  protected SyntaxTraverser<T> newInstance(Meta<T> meta) {
+    return new SyntaxTraverser<T>(api, meta);
+  }
 
-  @NotNull
-  public abstract TextRange nodeRange(@NotNull T node);
-
-  @NotNull
-  public abstract CharSequence nodeText(@NotNull T node);
+  @Override
+  protected boolean isAlwaysLeaf(@NotNull T node) {
+    return super.isAlwaysLeaf(node) && !(api.typeOf(node) instanceof IFileElementType);
+  }
 
   @Nullable
-  public abstract T parent(@NotNull T node);
+  @Override
+  public <K> K getUserData(@NotNull Key<K> key) {
+    return getUserDataHolder().getUserData(key);
+  }
+
+  @Override
+  public <K> void putUserData(@NotNull Key<K> key, @Nullable K value) {
+    getUserDataHolder().putUserData(key, value);
+  }
+
+  private UserDataHolder getUserDataHolder() {
+    return api instanceof LighterASTApi ? ((LighterASTApi)api).builder : (UserDataHolder)parents(getRoot()).last();
+  }
 
   @NotNull
   public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.expand(Conditions.compose(NODE_TYPE(), condition));
+    return super.expand(Conditions.compose(api.TO_TYPE(), condition));
   }
 
   @NotNull
   public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.filter(Conditions.compose(NODE_TYPE(), condition));
-  }
-
-  @NotNull
-  public Function<T, IElementType> NODE_TYPE() {
-    return new Function<T, IElementType>() {
-      @Override
-      public IElementType fun(T t) {
-        return nodeType(t);
-      }
-    };
+    return super.filter(Conditions.compose(api.TO_TYPE(), condition));
   }
 
   @Nullable
@@ -95,181 +117,230 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
 
   @NotNull
   public JBIterable<T> parents(@Nullable final T element) {
-    return new JBIterable<T>() {
+    return JBIterable.generate(element, new Function<T, T>() {
       @Override
-      public Iterator<T> iterator() {
-        return new Iterator<T>() {
-          T cur = element;
-
-          @Override
-          public boolean hasNext() {
-            return cur != null;
-          }
-
-          @Override
-          public T next() {
-            T result = cur;
-            cur = parent(cur);
-            return result;
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
+      public T fun(T t) {
+        return api.parent(t);
       }
-    };
+    });
   }
 
-  private abstract static class FirstNextTraverser<T> extends SyntaxTraverser<T> {
 
-    public FirstNextTraverser(Meta<T> meta) {
-      super(meta);
-    }
+  public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
+    @NotNull
+    public abstract IElementType typeOf(@NotNull T node);
+
+    @NotNull
+    public abstract TextRange rangeOf(@NotNull T node);
+
+    @NotNull
+    public abstract CharSequence textOf(@NotNull T node);
 
     @Nullable
-    protected abstract T first(@NotNull T node);
+    public abstract T parent(@NotNull T node);
 
-    @Nullable
-    protected abstract T next(@NotNull T node);
+    @NotNull
+    public abstract JBIterable<? extends T> children(@NotNull T node);
 
     @Override
-    protected final Iterable<T> childrenImpl(@NotNull final T node) {
-      final T first = first(node);
-      if (first == null) return JBIterable.empty();
-      return new JBIterable<T>() {
+    public JBIterable<? extends T> fun(T t) {
+      return children(t);
+    }
+
+    @NotNull
+    public Function<T, IElementType> TO_TYPE() {
+      return new Function<T, IElementType>() {
         @Override
-        public Iterator<T> iterator() {
-          return new UnmodifiableIterator<T>(null) {
-            T cur = first;
+        public IElementType fun(T t) {
+          return typeOf(t);
+        }
 
-            @Override
-            public boolean hasNext() {
-              return cur != null;
-            }
+        @Override
+        public String toString() {
+          return "TO_TYPE";
+        }
+      };
+    }
 
-            @Override
-            public T next() {
-              T result = cur;
-              cur = FirstNextTraverser.this.next(cur);
-              return result;
-            }
-          };
+    @NotNull
+    public Function<T, CharSequence> TO_TEXT() {
+      return new Function<T, CharSequence>() {
+        @Override
+        public CharSequence fun(T t) {
+          return textOf(t);
+        }
+
+        @Override
+        public String toString() {
+          return "TO_TEXT";
+        }
+      };
+    }
+
+    @NotNull
+    public Function<T, TextRange> TO_RANGE() {
+      return new Function<T, TextRange>() {
+        @Override
+        public TextRange fun(T t) {
+          return rangeOf(t);
+        }
+
+        @Override
+        public String toString() {
+          return "TO_RANGE";
         }
       };
     }
   }
 
-  private static class PsiTraverser extends FirstNextTraverser<PsiElement> {
-
-    public PsiTraverser(Meta<PsiElement> meta) {
-      super(meta);
-    }
-
-    @Override
-    protected SyntaxTraverser<PsiElement> newInstance(Meta<PsiElement> meta) {
-      return new PsiTraverser(meta);
-    }
+  public abstract static class ApiEx<T> extends Api<T> {
+    @Nullable
+    public abstract T first(@NotNull T node);
 
     @Nullable
-    protected PsiElement first(@NotNull PsiElement node) {
+    public abstract T last(@NotNull T node);
+
+    @Nullable
+    public abstract T next(@NotNull T node);
+
+    @Nullable
+    public abstract T previous(@NotNull T node);
+
+    @NotNull
+    @Override
+    public JBIterable<? extends T> children(@NotNull final T node) {
+      final T first = first(node);
+      if (first == null) return JBIterable.empty();
+      return JBIterable.generate(first, new Function<T, T>() {
+        @Override
+        public T fun(T t) {
+          return next(t);
+        }
+      });
+    }
+  }
+
+  private static class PsiApi extends ApiEx<PsiElement> {
+
+    static final ApiEx<PsiElement> INSTANCE = new PsiApi();
+    static final ApiEx<PsiElement> INSTANCE_REV = new PsiApi() {
+      @Nullable
+      @Override
+      public PsiElement previous(@NotNull PsiElement node) {
+        return super.next(node);
+      }
+
+      @Nullable
+      @Override
+      public PsiElement next(@NotNull PsiElement node) {
+        return super.previous(node);
+      }
+
+      @Nullable
+      @Override
+      public PsiElement last(@NotNull PsiElement node) {
+        return super.first(node);
+      }
+
+      @Nullable
+      @Override
+      public PsiElement first(@NotNull PsiElement node) {
+        return super.last(node);
+      }
+    };
+
+    @Nullable
+    @Override
+    public PsiElement first(@NotNull PsiElement node) {
       return node.getFirstChild();
     }
 
     @Nullable
-    protected PsiElement next(@NotNull PsiElement node) {
+    @Override
+    public PsiElement last(@NotNull PsiElement node) {
+      return node.getLastChild();
+    }
+
+    @Nullable
+    @Override
+    public PsiElement next(@NotNull PsiElement node) {
       return node.getNextSibling();
+    }
+
+    @Nullable
+    @Override
+    public PsiElement previous(@NotNull PsiElement node) {
+      return node.getPrevSibling();
     }
 
     @NotNull
     @Override
-    public IElementType nodeType(@NotNull PsiElement node) {
+    public IElementType typeOf(@NotNull PsiElement node) {
       return node.getNode().getElementType();
     }
 
     @NotNull
     @Override
-    public TextRange nodeRange(@NotNull PsiElement node) {
+    public TextRange rangeOf(@NotNull PsiElement node) {
       return node.getTextRange();
     }
 
     @NotNull
     @Override
-    public CharSequence nodeText(@NotNull PsiElement node) {
+    public CharSequence textOf(@NotNull PsiElement node) {
       return node.getText();
     }
 
     @Nullable
     @Override
     public PsiElement parent(@NotNull PsiElement node) {
-      PsiElement parent = node.getParent();
-      return parent instanceof PsiFile ? null : parent;
+      return node instanceof PsiFile ? null : node.getParent();
     }
   }
 
-  private static class RevPsiTraverser extends PsiTraverser {
+  private static class ASTApi extends ApiEx<ASTNode> {
 
-    public RevPsiTraverser(Meta<PsiElement> meta) {
-      super(meta);
-    }
-
-    @Override
-    protected SyntaxTraverser<PsiElement> newInstance(Meta<PsiElement> meta) {
-      return new RevPsiTraverser(meta);
-    }
+    static final ASTApi INSTANCE = new ASTApi();
 
     @Nullable
     @Override
-    protected PsiElement first(@NotNull PsiElement node) {
-      return node.getLastChild();
-    }
-
-    @Nullable
-    @Override
-    protected PsiElement next(@NotNull PsiElement node) {
-      return node.getPrevSibling();
-    }
-  }
-
-  private static class ASTTraverser extends FirstNextTraverser<ASTNode> {
-
-    public ASTTraverser(Meta<ASTNode> meta) {
-      super(meta);
-    }
-
-    @Override
-    protected SyntaxTraverser<ASTNode> newInstance(Meta<ASTNode> meta) {
-      return new ASTTraverser(meta);
-    }
-
-    @Nullable
-    @Override
-    protected ASTNode first(@NotNull ASTNode node) {
+    public ASTNode first(@NotNull ASTNode node) {
       return node.getFirstChildNode();
     }
 
     @Nullable
     @Override
-    protected ASTNode next(@NotNull ASTNode node) {
+    public ASTNode last(@NotNull ASTNode node) {
+      return node.getLastChildNode();
+    }
+
+    @Nullable
+    @Override
+    public ASTNode next(@NotNull ASTNode node) {
       return node.getTreeNext();
+    }
+
+    @Nullable
+    @Override
+    public ASTNode previous(@NotNull ASTNode node) {
+      return node.getTreePrev();
     }
 
     @NotNull
     @Override
-    public IElementType nodeType(@NotNull ASTNode node) {
+    public IElementType typeOf(@NotNull ASTNode node) {
       return node.getElementType();
     }
 
     @NotNull
     @Override
-    public TextRange nodeRange(@NotNull ASTNode node) {
+    public TextRange rangeOf(@NotNull ASTNode node) {
       return node.getTextRange();
     }
 
     @NotNull
     @Override
-    public CharSequence nodeText(@NotNull ASTNode node) {
+    public CharSequence textOf(@NotNull ASTNode node) {
       return node.getText();
     }
 
@@ -280,76 +351,74 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
     }
   }
 
-  private abstract static class FlyweightTraverser<T> extends SyntaxTraverser<T> {
-    final FlyweightCapableTreeStructure<T> myTree;
+  private abstract static class FlyweightApi<T> extends Api<T> {
+    final FlyweightCapableTreeStructure<T> flyweightStructure;
 
-    FlyweightTraverser(@NotNull Meta<T> meta,
-                       @NotNull FlyweightCapableTreeStructure<T> structure) {
-      super(meta);
-      myTree = structure;
+    public FlyweightApi(@NotNull FlyweightCapableTreeStructure<T> structure) {
+      flyweightStructure = structure;
     }
 
     @Nullable
     @Override
     public T parent(@NotNull T node) {
-      return myTree.getParent(node);
-    }
-
-    @Override
-    protected Iterable<T> childrenImpl(@NotNull final T node) {
-      return new JBIterable<T>() {
-        @Override
-        public Iterator<T> iterator() {
-          Ref<T[]> ref = Ref.create();
-          int count = myTree.getChildren(myTree.prepareForGetChildren(node), ref);
-          if (count == 0) return ContainerUtil.emptyIterator();
-          T[] array = ref.get();
-          LinkedList<T> list = ContainerUtil.newLinkedList();
-          for (int i = 0; i < count; i++) {
-            T t = array[i];
-            if (nodeType(t).getLanguage() == Language.ANY) continue; // skip TokenType.* types
-            array[i] = null; // do not dispose meaningful TokenNodes
-            list.addLast(t);
-          }
-          myTree.disposeChildren(array, count);
-          return list.iterator();
-        }
-      };
-    }
-
-  }
-
-  private static class LightASTTraverser extends FlyweightTraverser<LighterASTNode> {
-    private final CharSequence myText;
-
-    public LightASTTraverser(@NotNull Meta<LighterASTNode> meta,
-                             @NotNull CharSequence text,
-                             @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure) {
-      super(meta, structure);
-      myText = text;
-    }
-
-    @Override
-    protected SyntaxTraverser<LighterASTNode> newInstance(Meta<LighterASTNode> meta) {
-      return new LightASTTraverser(meta, myText, myTree);
+      return flyweightStructure.getParent(node);
     }
 
     @NotNull
     @Override
-    public IElementType nodeType(@NotNull LighterASTNode node) {
+    public JBIterable<? extends T> children(@NotNull final T node) {
+      return new JBIterable<T>() {
+        @Override
+        public Iterator<T> iterator() {
+          Ref<T[]> ref = Ref.create();
+          int count = flyweightStructure.getChildren(flyweightStructure.prepareForGetChildren(node), ref);
+          if (count == 0) return ContainerUtil.emptyIterator();
+          T[] array = ref.get();
+          LinkedList<T> list = ContainerUtil.newLinkedList();
+          for (int i = 0; i < count; i++) {
+            T child = array[i];
+            IElementType childType = typeOf(child);
+            if (childType.getLanguage() == Language.ANY) {
+              // skip TokenType.* types, errors cannot be properly handled (no parents)
+              if (childType == TokenType.ERROR_ELEMENT) {
+                // todo remember error
+              }
+              continue;
+            }
+            array[i] = null; // do not dispose meaningful TokenNodes
+            list.addLast(child);
+          }
+          flyweightStructure.disposeChildren(array, count);
+          return list.iterator();
+        }
+      };
+    }
+  }
+
+  private static class LighterASTApi extends FlyweightApi<LighterASTNode> {
+    private final PsiBuilder builder;
+
+    public LighterASTApi(PsiBuilder builder) {
+      super(builder.getLightTree());
+      this.builder = builder;
+    }
+
+    @NotNull
+    @Override
+    public IElementType typeOf(@NotNull LighterASTNode node) {
       return node.getTokenType();
     }
 
     @NotNull
     @Override
-    public TextRange nodeRange(@NotNull LighterASTNode node) {
+    public TextRange rangeOf(@NotNull LighterASTNode node) {
       return TextRange.create(node.getStartOffset(), node.getEndOffset());
     }
 
     @NotNull
     @Override
-    public CharSequence nodeText(@NotNull LighterASTNode node) {
-      return myText.subSequence(node.getStartOffset(), node.getEndOffset());
+    public CharSequence textOf(@NotNull LighterASTNode node) {
+      return rangeOf(node).subSequence(builder.getOriginalText());
     }
 
     @Nullable

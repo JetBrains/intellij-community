@@ -548,12 +548,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
 
       if (myOpenInEditor) {
-        for (PsiElement element : myElementsToMove) {
-          if (element.getContainingFile() != null) {
-            EditorHelper.openInEditor(element);
-            break;
-          }
-        }
+        EditorHelper.openFilesInEditor(myElementsToMove);
       }
     }
     catch (IncorrectOperationException e) {

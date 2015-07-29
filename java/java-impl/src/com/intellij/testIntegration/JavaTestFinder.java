@@ -83,7 +83,9 @@ public class JavaTestFinder implements TestFinder {
   }
 
   private static boolean isTestSubjectClass(PsiClass klass) {
-    if (klass.isAnnotationType() || TestFrameworks.getInstance().isTestClass(klass)) {
+    if (klass.isAnnotationType() || 
+        TestFrameworks.getInstance().isTestClass(klass) ||
+        !klass.isPhysical()) {
       return false;
     }
     return true;
@@ -116,7 +118,7 @@ public class JavaTestFinder implements TestFinder {
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass)) {
+          if (eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass))) {
             if (!processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
               return true;
             }

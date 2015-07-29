@@ -246,7 +246,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         public void actionPerformed(ActionEvent e) {
           new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
               final PsiVariable variable = getVariable();
               if (variable != null) {

@@ -26,6 +26,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +69,12 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
         if (background != null) {
           info +="<div bgcolor=#"+ GuiUtils.colorToHex(background)+">";
         }
-        String doc = StringUtil.join(StringUtil.split(text, "\n"), "<br>");
+        String doc = StringUtil.join(ContainerUtil.map(StringUtil.split(text, "\n"), new Function<String, String>() {
+          @Override
+          public String fun(String s) {
+            return StringUtil.trimStart(StringUtil.trimStart(s, "#"), "!").trim();
+          }
+        }), "<br>");
         info += "<font color=#" + GuiUtils.colorToHex(attributes.getForegroundColor()) + ">" + doc + "</font>\n<br>";
         if (background != null) {
           info += "</div>";

@@ -1,6 +1,5 @@
 package org.jetbrains.settingsRepository.git
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
@@ -11,9 +10,8 @@ import org.jetbrains.jgit.dirCache.PathEdit
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
-import java.net.InetAddress
 
-fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator?): Boolean {
+fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator?, commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()): Boolean {
   indicator?.checkCanceled()
 
   val diff = manager.repository.computeIndexDiff()
@@ -47,9 +45,7 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator?): Boolea
   indicator?.checkCanceled()
 
   val builder = StringBuilder()
-  builder.append(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName())
-  builder.append(' ' ).append('<').append(System.getProperty("user.name", "unknown-user")).append('@').append(InetAddress.getLocalHost().getHostName())
-  builder.append(' ')
+  commitMessageFormatter.prependMessage(builder)
 
   // we use Github (edit via web UI) terms here
   builder.appendCompactList("Update", diff.getChanged())

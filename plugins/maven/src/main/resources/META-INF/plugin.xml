@@ -176,6 +176,9 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectSettings"/>
+
+    <postStartupActivity implementation="org.jetbrains.idea.maven.utils.MavenRehighlighter$MavenRehighlighterPostStartupActivity"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.utils.MavenRehighlighter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -328,9 +331,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenImportNotifier</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenRehighlighter</implementation-class>
     </component>
   </project-components>
 

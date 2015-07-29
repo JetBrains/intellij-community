@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <definitions id="definitions"
 	targetNamespace="http://activiti.org/bpmn20" 
-        xmlns:activiti="<error descr="URI is not registered (Settings | Project Settings | Schemas and DTDs)">http://activiti.org/bpmn</error>"
+        xmlns:activiti="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">http://activiti.org/bpmn</error>"
 	xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
 	
    <process id="financialReport" name="Monthly financial report process">

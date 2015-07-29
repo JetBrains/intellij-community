@@ -167,13 +167,8 @@ class JrtHandler extends ArchiveHandler {
   }
 
   private static Class<?> cls(String name, boolean array) {
-    try {
-      if (array) name = "[L" + name + ";";
-      return Class.forName(name);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    if (array) name = "[L" + name + ";";
+    return ReflectionUtil.forName(name);
   }
 
   private static Method method(String name, Class<?>... parameterTypes) {

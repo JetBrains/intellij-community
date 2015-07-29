@@ -30,8 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.ProperTextRange;
@@ -117,7 +115,7 @@ public class InspectionEngine {
     Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, new ArrayList<ProperTextRange>(),
                                    Collections.<PsiElement>emptyList(), Collections.<ProperTextRange>emptyList(), true, Conditions.<PsiFile>alwaysTrue());
 
-    MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = getToolsForElements(toolWrappers, DumbService.isDumb(file.getProject()), elements, Collections.<PsiElement>emptyList());
+    MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = getToolsForElements(toolWrappers, elements, Collections.<PsiElement>emptyList());
     List<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>(toolToLanguages.entrySet());
     Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> processor = new Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>() {
       @Override
@@ -236,7 +234,6 @@ public class InspectionEngine {
 
   @NotNull
   public static <T extends InspectionToolWrapper> MultiMap<T, String> getToolsForElements(@NotNull List<T> toolWrappers,
-                                                                                          boolean checkDumbAwareness,
                                                                                           @NotNull List<PsiElement> inside,
                                                                                           @NotNull List<PsiElement> outside) {
     Set<Language> languages = new SmartHashSet<Language>();
@@ -261,29 +258,20 @@ public class InspectionEngine {
       ProgressManager.checkCanceled();
       String language = wrapper.getLanguage();
       if (language == null) {
-        InspectionProfileEntry tool = wrapper.getTool();
-        if (!checkDumbAwareness || tool instanceof DumbAware) {
-          toolToLanguages.put(wrapper, null);
-        }
+        toolToLanguages.put(wrapper, null);
         continue;
       }
       Language lang = langIds.get(language);
       if (lang != null) {
-        InspectionProfileEntry tool = wrapper.getTool();
-        if (!checkDumbAwareness || tool instanceof DumbAware) {
-          toolToLanguages.putValue(wrapper, language);
-          if (wrapper.applyToDialects()) {
-            for (Language dialect : lang.getDialects()) {
-              toolToLanguages.putValue(wrapper, dialect.getID());
-            }
+        toolToLanguages.putValue(wrapper, language);
+        if (wrapper.applyToDialects()) {
+          for (Language dialect : lang.getDialects()) {
+            toolToLanguages.putValue(wrapper, dialect.getID());
           }
         }
       }
       else if (wrapper.applyToDialects() && dialects.contains(language)) {
-        InspectionProfileEntry tool = wrapper.getTool();
-        if (!checkDumbAwareness || tool instanceof DumbAware) {
-          toolToLanguages.putValue(wrapper, language);
-        }
+        toolToLanguages.putValue(wrapper, language);
       }
     }
     return toolToLanguages;

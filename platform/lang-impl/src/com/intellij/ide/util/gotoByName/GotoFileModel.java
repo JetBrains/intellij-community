@@ -25,6 +25,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +41,7 @@ import java.util.Collection;
 /**
  * Model for "Go to | File" action
  */
-public class GotoFileModel extends FilteringGotoByModel<FileType> {
+public class GotoFileModel extends FilteringGotoByModel<FileType> implements DumbAware {
   private final int myMaxSize;
 
   public GotoFileModel(@NotNull Project project) {

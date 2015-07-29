@@ -49,14 +49,13 @@ public class StatisticsWeigher extends CompletionWeigher {
 
   public static class LookupStatisticsWeigher extends Classifier<LookupElement> {
     private final CompletionLocation myLocation;
-    private final Classifier<LookupElement> myNext;
     private final Map<LookupElement, Integer> myWeights = new IdentityHashMap<LookupElement, Integer>();
     @SuppressWarnings("unchecked") private final Set<LookupElement> myNoStats = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
     private int myPrefixChanges;
 
     public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
+      super(next);
       myLocation = location;
-      myNext = next;
     }
 
     @Override
@@ -66,7 +65,7 @@ public class StatisticsWeigher extends CompletionWeigher {
       if (baseInfo == StatisticsInfo.EMPTY) {
         myNoStats.add(element);
       }
-      myNext.addElement(element, context);
+      super.addElement(element, context);
     }
 
     private void checkPrefixChanged(ProcessingContext context) {
@@ -162,7 +161,14 @@ public class StatisticsWeigher extends CompletionWeigher {
         }
         builder.append("stats=").append(getWeight(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
       }
-      myNext.describeItems(map, context);
+      super.describeItems(map, context);
+    }
+
+    @Override
+    public void removeElement(LookupElement element, ProcessingContext context) {
+      myWeights.remove(element);
+      myNoStats.remove(element);
+      super.removeElement(element, context);
     }
   }
 

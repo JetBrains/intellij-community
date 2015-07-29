@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -118,8 +119,13 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       @Override
       public void run() {
         TestFramework framework = d.getSelectedTestFrameworkDescriptor();
-        TestGenerator generator = TestGenerators.INSTANCE.forLanguage(framework.getLanguage());
-        generator.generateTest(project, d);
+        final TestGenerator generator = TestGenerators.INSTANCE.forLanguage(framework.getLanguage());
+        DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+          @Override
+          public void run() {
+            generator.generateTest(project, d);
+          }
+        });
       }
     }, CodeInsightBundle.message("intention.create.test"), this);
   }

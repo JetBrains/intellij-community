@@ -335,12 +335,19 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   public final Pair<List<Pair<Integer, Integer>>, List<String>> getHighlightedStrings() {
     final ConsoleView console = myConsoleView.getConsole();
     assert console instanceof ConsoleViewImpl : "Console has no editor!";
-    final Editor editor = ((ConsoleViewImpl)console).getEditor();
+    final ConsoleViewImpl consoleView = (ConsoleViewImpl)console;
+    final Editor editor = consoleView.getEditor();
     final List<String> resultStrings = new ArrayList<String>();
     final List<Pair<Integer, Integer>> resultRanges = new ArrayList<Pair<Integer, Integer>>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        /**
+         * To fetch data from console we need to flush it first.
+         * It works locally, but does not work on TC (reasons are not clear yet and need to be investigated).
+         * So, we flush it explicitly to make test run on TC.
+         */
+        consoleView.flushDeferredText();
         for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
           if (highlighter instanceof RangeHighlighterEx) {
             final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();

@@ -124,7 +124,6 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
                               @NotNull ProgressIndicator indicator,
                               @NotNull InspectionManager iManager,
                               boolean inVisibleRange,
-                              boolean checkDumbAwareness,
                               @NotNull List<LocalInspectionToolWrapper> wrappers) {
         // already inspected in LIP
       }

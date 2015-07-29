@@ -33,6 +33,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.CalledInAwt;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -52,6 +53,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     return null;
   }
 
+  @CalledInAwt
   @Override
   public void apply(MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
                     LocalChangeList localList,

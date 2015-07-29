@@ -65,7 +65,10 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public Module newModule(Project project, @NotNull @NonNls String filePath, String moduleTypeId) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    return moduleManager.newModule(filePath, moduleTypeId);
+    Module module = moduleManager.newModule(filePath, moduleTypeId);
+    // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
+    module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+    return module;
   }
 
   @Override

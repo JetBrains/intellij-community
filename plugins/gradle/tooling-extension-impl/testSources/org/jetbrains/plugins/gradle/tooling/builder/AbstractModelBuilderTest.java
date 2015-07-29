@@ -66,7 +66,7 @@ public abstract class AbstractModelBuilderTest {
 
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
     {"1.9"}, {"1.10"}, {"1.11"}, {"1.12"},
-    {"2.0"}, {"2.1"}, {"2.2"} , {"2.3"}
+    {"2.0"}, {"2.1"}, {"2.2"} , {"2.3"}, {"2.4"}, {"2.5"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 

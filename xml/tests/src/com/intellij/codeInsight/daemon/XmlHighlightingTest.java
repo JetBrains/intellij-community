@@ -1257,15 +1257,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     });
 
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_COMMENT_BLOCK);
-    action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
-                                             ActionManager.getInstance(), 0));
+    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
     assertNotSame(text,myEditor.getDocument().getText());
     PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
     Collection<HighlightInfo> infos = doHighlighting();
     assertEquals(0, infos.size());
 
-    action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
-                                             ActionManager.getInstance(), 0));
+    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
     assertEquals(text,myEditor.getDocument().getText().trim());
     PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
     infos = doHighlighting();

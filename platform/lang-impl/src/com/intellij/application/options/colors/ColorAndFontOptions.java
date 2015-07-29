@@ -18,7 +18,6 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -34,6 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
@@ -143,10 +144,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return mySelectedScheme;
   }
 
-  public EditorColorsScheme getOriginalSelectedScheme() {
-    return mySelectedScheme == null ? null : mySelectedScheme.getOriginalScheme();
-  }
-
   public EditorSchemeAttributeDescriptor[] getCurrentDescriptions() {
     return mySelectedScheme.getDescriptors();
   }
@@ -236,19 +233,30 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     try {
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
+      SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
 
       List<EditorColorsScheme> result = new ArrayList<EditorColorsScheme>(mySchemes.values().size());
+      boolean activeSchemeModified = false;
+      EditorColorsScheme activeOriginalScheme = mySelectedScheme.getOriginalScheme();
       for (MyColorScheme scheme : mySchemes.values()) {
+        if (!activeSchemeModified && activeOriginalScheme == scheme.getOriginalScheme()) {
+          activeSchemeModified = scheme.isModified();
+        }
+
         if (!scheme.isDefault()) {
           scheme.apply();
         }
         result.add(scheme.getOriginalScheme());
       }
-      myColorsManager.setSchemes(result);
 
-      EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
-      myColorsManager.setGlobalScheme(originalScheme);
-      if (originalScheme != null && DarculaLaf.NAME.equals(originalScheme.getName()) && !UIUtil.isUnderDarcula()) {
+      // refresh only if scheme is not switched
+      boolean refreshEditors = activeSchemeModified && schemeManager.getCurrentScheme() == activeOriginalScheme;
+      schemeManager.setSchemes(result, activeOriginalScheme);
+      if (refreshEditors) {
+        EditorColorsManagerImpl.schemeChangedOrSwitched();
+      }
+
+      if (DarculaLaf.NAME.equals(activeOriginalScheme.getName()) && !UIUtil.isUnderDarcula()) {
         if (Messages.showYesNoDialog(
           "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
           "Darcula Look and Feel",
@@ -256,10 +264,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
           DarculaInstaller.install();
         }
-      }
-
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        DaemonCodeAnalyzer.getInstance(project).restart();
       }
 
       reset();
@@ -1072,6 +1076,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return null;
     }
 
+    @NotNull
     public EditorColorsScheme getOriginalScheme() {
       return myParentScheme;
     }

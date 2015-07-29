@@ -2,9 +2,17 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdkTools.PyTestSdkTools;
+import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -42,8 +50,19 @@ public class PyEnvTaskRunner {
         if (executable == null) {
           throw new RuntimeException("Cannot find Python interpreter in " + root);
         }
-        testTask.runTestOn(executable);
-        passedRoots.add(root);
+        final Sdk sdk = createSdkByExecutable(executable);
+
+        /**
+         * Skipping test if {@link PyTestTask} reports it does not support this language level
+         */
+        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+        if (testTask.isLanguageLevelSupported(languageLevel)) {
+          testTask.runTestOn(executable);
+          passedRoots.add(root);
+        }
+        else {
+          System.err.println(String.format("Skipping root %s", root));
+        }
       }
       catch (Throwable e) {
         throw new RuntimeException(
@@ -68,6 +87,20 @@ public class PyEnvTaskRunner {
                                  "\n" +
                                  PyEnvTestCase.joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
     }
+  }
+
+  /**
+   * Create SDK by path to python exectuable
+   *
+   * @param executable path executable
+   * @return sdk
+   * @throws InvalidSdkException bad sdk
+   * @throws IOException         bad path
+   */
+  @NotNull
+  private static Sdk createSdkByExecutable(@NotNull final String executable) throws InvalidSdkException, IOException {
+    final URL rootUrl = new URL(String.format("file:///%s", executable));
+    return PyTestSdkTools.createTempSdk(VfsUtil.findFileByURL(rootUrl), SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null);
   }
 
   protected boolean shouldRun(String root, PyTestTask task) {

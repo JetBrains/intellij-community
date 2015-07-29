@@ -1044,4 +1044,29 @@ public class PsiTreeUtil {
 
     return res;
   }
+
+  @NotNull
+  public static <T extends PsiElement> Iterator<T> childIterator(@NotNull final PsiElement element, @NotNull final Class<T> aClass) {
+    return new Iterator<T>() {
+      private T next = getChildOfType(element, aClass);
+
+      @Override
+      public boolean hasNext() {
+        return next != null;
+      }
+
+      @Override
+      public T next() {
+        if (next == null) throw new NoSuchElementException();
+        T current = this.next;
+        next = getNextSiblingOfType(current, aClass);
+        return current;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
 }

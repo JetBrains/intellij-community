@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.*;
  */
 @State(
   name = "AbbreviationManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/abbreviations.xml", roamingType = RoamingType.PER_PLATFORM)}
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/abbreviations.xml", roamingType = RoamingType.PER_OS)}
 )
 public class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<String, List<String>>();

@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
@@ -43,9 +45,11 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
+import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
@@ -58,6 +62,11 @@ public class StudyCheckAction extends DumbAwareAction {
   public static final String ACTION_ID = "CheckAction";
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
+  boolean checkInProgress = false;
+
+  public StudyCheckAction() {
+    super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.Resolve);
+  }
 
   private static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
@@ -115,7 +124,7 @@ public class StudyCheckAction extends DumbAwareAction {
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           @Override
           public void run() {
-            final StudyEditor selectedEditor = StudyEditor.getSelectedStudyEditor(project);
+            final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
             if (selectedEditor == null) return;
             final StudyState studyState = new StudyState(selectedEditor);
             if (!studyState.isValid()) {
@@ -158,7 +167,7 @@ public class StudyCheckAction extends DumbAwareAction {
             if (testProcess == null) {
               return;
             }
-            selectedEditor.getCheckButton().setEnabled(false);
+            checkInProgress = true;
             ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, project, selectedEditor));
           }
         });
@@ -202,14 +211,14 @@ public class StudyCheckAction extends DumbAwareAction {
         drawAllPlaceholders(project, task, taskDir);
         ProjectView.getInstance(project).refresh();
         deleteWindowDescriptions(task, taskDir);
-        selectedEditor.getCheckButton().setEnabled(true);
+        checkInProgress = false;
       }
 
       @Override
       public void onCancel() {
         taskManager.setStatus(task, statusBeforeCheck);
         deleteWindowDescriptions(task, taskDir);
-        selectedEditor.getCheckButton().setEnabled(true);
+        checkInProgress = false;
       }
 
       @Override
@@ -382,12 +391,16 @@ public class StudyCheckAction extends DumbAwareAction {
     StudyUtils.showCheckPopUp(project, balloon);
   }
 
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       check(project);
     }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(!checkInProgress);
   }
 }

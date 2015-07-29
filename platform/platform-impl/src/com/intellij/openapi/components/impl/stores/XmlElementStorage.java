@@ -120,13 +120,13 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   protected abstract XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData);
 
   @Nullable
-  protected final Element getElement(@NotNull StorageData data, boolean collapsePaths, @NotNull Map<String, Element> newLiveStates) {
+  protected final Element getElement(@NotNull StorageData data, @NotNull Map<String, Element> newLiveStates) {
     Element element = data.save(newLiveStates);
     if (element == null || JDOMUtil.isEmpty(element)) {
       return null;
     }
 
-    if (collapsePaths && myPathMacroSubstitutor != null) {
+    if (myPathMacroSubstitutor != null) {
       try {
         myPathMacroSubstitutor.collapsePaths(element);
       }
@@ -200,13 +200,8 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
         }
       }
 
-      doSave(getElement(storageData, isCollapsePathsOnSave(), myNewLiveStates));
+      doSave(getElement(storageData, myNewLiveStates));
       myStorageData = storageData;
-    }
-
-    // only because default project store hack
-    protected boolean isCollapsePathsOnSave() {
-      return true;
     }
 
     protected abstract void doSave(@Nullable Element element) throws IOException;

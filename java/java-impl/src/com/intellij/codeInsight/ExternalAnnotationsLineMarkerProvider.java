@@ -21,7 +21,10 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.impl.AddAnnotationIntention;
+import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -75,15 +78,8 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
-    PsiElement owner = element.getParent();
-    if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
-    if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
-
-    // support non-Java languages where getNameIdentifier may return non-physical psi with the same range
-    PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
-    if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
-
-    if (findSignatureNonCodeAnnotations((PsiModifierListOwner)owner).isEmpty()) {
+    PsiModifierListOwner owner = getAnnotationOwner(element);
+    if (owner == null || findSignatureNonCodeAnnotations(owner).isEmpty()) {
       return null;
     }
 
@@ -92,6 +88,20 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
                                           Pass.UPDATE_ALL,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,
                                           GutterIconRenderer.Alignment.RIGHT);
+  }
+
+  @Nullable
+  static PsiModifierListOwner getAnnotationOwner(@Nullable PsiElement element) {
+    if (element == null) return null;
+    
+    PsiElement owner = element.getParent();
+    if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
+    if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
+
+    // support non-Java languages where getNameIdentifier may return non-physical psi with the same range
+    PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
+    if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
+    return (PsiModifierListOwner)owner;
   }
 
   private static List<PsiAnnotation> findSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
@@ -167,7 +177,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
     protected JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
-        if (action.isAvailable(project, editor, file)) {
+        if (shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file)) {
           group.add(new ApplyIntentionAction(action, action.getText(), editor, file));
         }
       }
@@ -179,6 +189,13 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
       }
 
       return null;
+    }
+
+    private static boolean shouldShowInGutterPopup(IntentionAction action) {
+      return action instanceof AddAnnotationIntention ||
+             action instanceof DeannotateIntentionAction ||
+             action instanceof EditContractIntention ||
+             action instanceof MakeInferredAnnotationExplicit;
     }
   }
 }

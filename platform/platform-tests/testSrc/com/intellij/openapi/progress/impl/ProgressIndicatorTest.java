@@ -48,10 +48,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author yole
  */
 public class ProgressIndicatorTest extends LightPlatformTestCase {
-  public ProgressIndicatorTest() {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
-
   public void testCheckCanceledHasStackFrame() {
     ProgressIndicator pib = new ProgressIndicatorBase();
     pib.cancel();

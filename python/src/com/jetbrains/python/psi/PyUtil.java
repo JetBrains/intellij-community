@@ -512,6 +512,15 @@ public class PyUtil {
     return f1 == f2;
   }
 
+  public static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(e1.getProject());
+    final Document document = documentManager.getDocument(e1.getContainingFile());
+    if (document == null || document != documentManager.getDocument(e2.getContainingFile())) {
+      return false;
+    }
+    return document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
+  }
+
   public static boolean isTopLevel(@NotNull PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
       final StubElement stub = ((StubBasedPsiElement)element).getStub();
@@ -771,7 +780,7 @@ public class PyUtil {
     if (folder != null) {
       LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
       if (level == null) level = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
-      if (level != null) return level;
+      return level;
     }
     else {
       // However this allows us to setup language level per file manually
@@ -785,8 +794,23 @@ public class PyUtil {
           return languageLevel;
         }
       }
+      return guessLanguageLevelWithCaching(project);
     }
-    return guessLanguageLevel(project);
+  }
+
+  public static void invalidateLanguageLevelCache(@NotNull Project project) {
+    project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, null);
+  }
+
+  @NotNull
+  public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
+    LanguageLevel languageLevel = project.getUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL);
+    if (languageLevel == null) {
+      languageLevel = guessLanguageLevel(project);
+      project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, languageLevel);
+    }
+
+    return languageLevel;
   }
 
   @NotNull

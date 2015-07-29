@@ -48,8 +48,10 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<DuplicatedCodeProcessor>();
 
     final FileASTNode node = psiFile.getNode();
-    if (profile instanceof LightDuplicateProfile && node.getElementType() instanceof ILightStubFileElementType &&
-        DuplicatesIndex.ourEnabledLightProfiles) {
+    boolean usingLightProfile = profile instanceof LightDuplicateProfile &&
+                                node.getElementType() instanceof ILightStubFileElementType &&
+                                DuplicatesIndex.ourEnabledLightProfiles;
+    if (usingLightProfile) {
       LighterAST ast = node.getLighterAST();
       assert ast != null;
       ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
@@ -80,6 +82,11 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
             @Override
             protected int getEndOffset(LighterASTNode node) {
               return node.getEndOffset();
+            }
+
+            @Override
+            protected boolean isLightProfile() {
+              return true;
             }
           }
           if (myProcessor == null) {
@@ -136,6 +143,11 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
             protected int getEndOffset(PsiFragment node) {
               return node.getEndOffset();
             }
+
+            @Override
+            protected boolean isLightProfile() {
+              return false;
+            }
           }
           if (myProcessor == null) {
             myProcessor = new OldDuplicatedCodeProcessor(virtualFile, psiFile.getProject());
@@ -154,7 +166,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       for(Map.Entry<Integer, TextRange> entry:processor.reportedRanges.entrySet()) {
         final Integer offset = entry.getKey();
         // todo 3 statements constant
-        if (processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
+        if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
         final VirtualFile file = processor.reportedFiles.get(offset);
         String message = "Found duplicated code in " + file.getPath();
 
@@ -244,7 +256,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
         reportedOffsetInOtherFiles.put(fragmentStartOffsetInteger, value);
         reportedPsi.put(fragmentStartOffsetInteger, target);
         fragmentSize.put(fragmentStartOffsetInteger, newFragmentSize);
-        if (newFragmentSize >= MIN_FRAGMENT_SIZE) fragmentHash.put(fragmentStartOffsetInteger, myHash);
+        if (newFragmentSize >= MIN_FRAGMENT_SIZE || isLightProfile()) fragmentHash.put(fragmentStartOffsetInteger, myHash);
         return false;
       }
       return true;
@@ -255,5 +267,6 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
     protected abstract int getStartOffset(T node);
     protected abstract int getEndOffset(T node);
+    protected abstract boolean isLightProfile();
   }
 }

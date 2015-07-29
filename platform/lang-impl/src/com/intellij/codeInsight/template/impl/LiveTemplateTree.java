@@ -75,10 +75,9 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
         }
         if (object instanceof TemplateImpl) {
           TemplateImpl template = (TemplateImpl)object;
-          return StringUtil.notNullize(template.getKey()) +
-                 " " +
-                 StringUtil.notNullize(template.getDescription()) +
-                 " " +
+          return StringUtil.notNullize(template.getGroupName()) + " " +
+                 StringUtil.notNullize(template.getKey()) + " " +
+                 StringUtil.notNullize(template.getDescription()) + " " +
                  template.getTemplateText();
         }
         return "";

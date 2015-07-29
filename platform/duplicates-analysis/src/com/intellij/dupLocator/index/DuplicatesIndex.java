@@ -54,7 +54,8 @@ import java.util.Map;
 public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex {
   static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.duplicates.online.calculation",
                                                                   isEnabledByDefault());
-  static boolean ourEnabledLightProfiles = true;
+  static final boolean ourEnabledLightProfiles = true;
+  private static boolean ourEnabledOldProfiles = false;
 
   private static boolean isEnabledByDefault() {
     Application application = ApplicationManager.getApplication();
@@ -62,12 +63,15 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   }
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 15;
+  private static final int myBaseVersion = 16;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {
-      return ourEnabled && findDuplicatesProfile(file.getFileType()) != null;
+      return ourEnabled &&
+             findDuplicatesProfile(file.getFileType()) != null &&
+             file.isInLocalFileSystem() // skip library sources
+        ;
     }
   };
 
@@ -151,12 +155,14 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     if (!(fileType instanceof LanguageFileType)) return null;
     Language language = ((LanguageFileType)fileType).getLanguage();
     DuplicatesProfile profile = DuplicatesProfile.findProfileForLanguage(language);
-    return profile != null && (profile.supportDuplicatesIndex() || profile instanceof LightDuplicateProfile) ? profile : null;
+    return profile != null &&
+           (ourEnabledOldProfiles && profile.supportDuplicatesIndex() ||
+            profile instanceof LightDuplicateProfile) ? profile : null;
   }
 
   @Override
   public int getVersion() {
-    return myBaseVersion + (ourEnabled ? 0xFF : 0) + (ourEnabledLightProfiles ? 0x7F : 0);
+    return myBaseVersion + (ourEnabled ? 0xFF : 0) + (ourEnabledLightProfiles ? 0x7F : 0) + (ourEnabledOldProfiles ? 0x21 : 0);
   }
 
   @Override
@@ -234,6 +240,13 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   public static boolean setEnabled(boolean value) {
     boolean old = ourEnabled;
     ourEnabled = value;
+    return old;
+  }
+
+  @TestOnly
+  public static boolean setEnabledOldProfiles(boolean value) {
+    boolean old = ourEnabledOldProfiles;
+    ourEnabledOldProfiles = value;
     return old;
   }
 

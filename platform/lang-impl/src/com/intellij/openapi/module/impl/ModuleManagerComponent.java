@@ -25,6 +25,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -120,7 +121,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @Override
   protected ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException {
     ModuleImpl module = new ModuleImpl(filePath, myProject);
-    module.getStateStore().load();
+    StorageUtil.checkUnknownMacros(module, myProject);
     return module;
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -42,11 +43,11 @@ class XAddToWatchesAction extends XDebuggerTreeActionBase {
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
     final XWatchesView watchesView = getWatchesView(e);
     if (watchesView != null) {
-      node.getValueContainer().calculateEvaluationExpression().done(new Consumer<String>() {
+      node.getValueContainer().calculateEvaluationExpression().done(new Consumer<XExpression>() {
         @Override
-        public void consume(String expression) {
-          if (!StringUtil.isEmpty(expression)) {
-            watchesView.addWatchExpression(XExpressionImpl.fromText(expression), -1, true);
+        public void consume(XExpression expression) {
+          if (expression != null) {
+            watchesView.addWatchExpression(expression, -1, true);
           }
         }
       });

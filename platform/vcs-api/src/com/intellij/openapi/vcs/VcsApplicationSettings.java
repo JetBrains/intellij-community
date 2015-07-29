@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
- * We don't use roaming type PER_PLATFORM - path macros is enough ($USER_HOME$/Dropbox for example)
+ * We don't use roaming type PER_OS - path macros is enough ($USER_HOME$/Dropbox for example)
  */
 @State(
   name = "VcsApplicationSettings",

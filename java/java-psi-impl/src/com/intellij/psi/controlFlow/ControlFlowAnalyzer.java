@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1163,10 +1163,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitResourceList(final PsiResourceList resourceList) {
     startElement(resourceList);
 
-    final List<PsiResourceVariable> resources = resourceList.getResourceVariables();
-    for (PsiResourceVariable resource : resources) {
+    for (PsiResourceListElement resource : resourceList) {
       ProgressIndicatorProvider.checkCanceled();
-      processVariable(resource);
+      if (resource instanceof PsiResourceVariable) {
+        processVariable((PsiVariable)resource);
+      }
+      else if (resource instanceof PsiResourceExpression) {
+        ((PsiResourceExpression)resource).getExpression().accept(this);
+      }
     }
 
     finishElement(resourceList);

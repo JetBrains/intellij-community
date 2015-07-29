@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -69,7 +70,7 @@ class CompoundRendererConfigurable extends JPanel {
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
 
-  public CompoundRendererConfigurable() {
+  public CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
 
     if (myProject == null) {
@@ -90,10 +91,10 @@ class CompoundRendererConfigurable extends JPanel {
     childrenButtonGroup.add(myRbExpressionChildrenRenderer);
     childrenButtonGroup.add(myRbListChildrenRenderer);
 
-    myLabelEditor = new DebuggerExpressionTextField(myProject, null, "ClassLabelExpression");
-    myChildrenEditor = new DebuggerExpressionTextField(myProject, null, "ClassChildrenExpression");
-    myChildrenExpandedEditor = new DebuggerExpressionTextField(myProject, null, "ClassChildrenExpression");
-    JComponent myChildrenListEditor = createChildrenListEditor();
+    myLabelEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "ClassLabelExpression");
+    myChildrenEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "ClassChildrenExpression");
+    myChildrenExpandedEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "ClassChildrenExpression");
+    JComponent myChildrenListEditor = createChildrenListEditor(parentDisposable);
 
     final ItemListener updateListener = new ItemListener() {
       @Override
@@ -226,10 +227,10 @@ class CompoundRendererConfigurable extends JPanel {
     myTable.setEnabled(myRbListChildrenRenderer.isSelected());
   }
 
-  private JComponent createChildrenListEditor() {
+  private JComponent createChildrenListEditor(@NotNull Disposable parentDisposable) {
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
-    myListChildrenEditor = new DebuggerExpressionTextField(myProject, null, "NamedChildrenConfigurable");
+    myListChildrenEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "NamedChildrenConfigurable");
 
     final TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(new AbstractTableCellEditor() {
