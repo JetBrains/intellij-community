@@ -22,8 +22,8 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.util.containers.ContainerUtil
 
-class ModuleStateStorageManager(pathMacroManager: TrackingPathMacroSubstitutor, private val myModule: Module) : StateStorageManagerImpl(pathMacroManager, "module", myModule.getPicoContainer(), myModule) {
-  override fun createStorageData(fileSpec: String, filePath: String) = ModuleFileData(rootTagName, myModule)
+class ModuleStateStorageManager(pathMacroManager: TrackingPathMacroSubstitutor, private val module: Module) : StateStorageManagerImpl(pathMacroManager, "module", module.getPicoContainer(), module) {
+  override fun createStorageData(fileSpec: String, filePath: String) = ModuleFileData(rootTagName, module)
 
   override fun startExternalization() = MyStateStorageManagerExternalizationSession(this)
 
@@ -40,5 +40,5 @@ class ModuleStateStorageManager(pathMacroManager: TrackingPathMacroSubstitutor, 
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
 
-  override fun createStorageTopicListener() = myModule.getProject().getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC)
+  override fun createStorageTopicListener() = module.getProject().getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC)
 }
