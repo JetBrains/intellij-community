@@ -28,7 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 import kotlin.properties.Delegates
 
-class StateStorageManagerImplTest {
+class StateStorageManageTest {
   private val fixtureManager = FixtureRule()
   public Rule fun getFixtureManager(): FixtureRule = fixtureManager
 
