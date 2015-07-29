@@ -402,6 +402,6 @@ public class JdkUtil {
   }
   
   public static boolean useClasspathJar() {
-    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit("classpath.jar", "true")).booleanValue();
+    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit("idea.dynamic.classpath.jar", "true")).booleanValue();
   }
 }
