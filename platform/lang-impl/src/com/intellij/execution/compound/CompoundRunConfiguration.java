@@ -61,7 +61,7 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
     RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
     for (Pair<String, String> pair : myPairs) {
       RunnerAndConfigurationSettings settings = manager.findConfigurationByTypeAndName(pair.first, pair.second);
-      if (settings != null) {
+      if (settings != null && settings.getConfiguration() != this) {
         mySetToRun.add(settings.getConfiguration());
       }
     }
