@@ -101,13 +101,6 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       }
     });
 
-    //collect all files with '::' and '->' in useScope 
-    final GlobalSearchScope filesScope = getFilesWithFunctionalExpressionsScope(project, useScope);
-
-    //collect all methods with parameter of functional interface or free type parameter type
-    final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope);
-
-    final LinkedHashSet<VirtualFile> filesToProcess = new LinkedHashSet<VirtualFile>();
     final MethodSignature functionalInterfaceMethod = ApplicationManager.getApplication().runReadAction(new Computable<MethodSignature>() {
       @Override
       public MethodSignature compute() {
@@ -116,6 +109,19 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     });
     LOG.assertTrue(functionalInterfaceMethod != null);
     final int expectedFunExprParamsCount = functionalInterfaceMethod.getParameterTypes().length;
+
+    //collect all files with '::' and '->' in useScope 
+    Set<VirtualFile> candidateFiles = getFilesWithFunctionalExpressionsScope(project, useScope);
+    if (candidateFiles.size() < 5) {
+      return searchInFiles(aClass, consumer, candidateFiles, expectedFunExprParamsCount);
+    }
+
+    final GlobalSearchScope filesScope = GlobalSearchScope.filesScope(project, candidateFiles);
+
+    //collect all methods with parameter of functional interface or free type parameter type
+    final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope);
+
+    final LinkedHashSet<VirtualFile> filesToProcess = new LinkedHashSet<VirtualFile>();
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     
     //find all usages of method candidates in files with functional expressions
@@ -143,6 +149,12 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     //search for functional expressions in non-call contexts
     collectFilesWithTypeOccurrencesAndFieldAssignments(aClass, filesScope, filesToProcess);
 
+    return searchInFiles(aClass, consumer, filesToProcess, expectedFunExprParamsCount);
+  }
+
+  private static boolean searchInFiles(final PsiClass aClass,
+                                       final Processor<PsiFunctionalExpression> consumer,
+                                       Set<VirtualFile> filesToProcess, final int expectedFunExprParamsCount) {
     LOG.info("#usage files: " + filesToProcess.size());
     return ContainerUtil.process(filesToProcess, new ReadActionProcessor<VirtualFile>() {
       @Override
@@ -172,14 +184,13 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
   }
 
   @NotNull
-  private static GlobalSearchScope getFilesWithFunctionalExpressionsScope(Project project, GlobalSearchScope useScope) {
+  private static Set<VirtualFile> getFilesWithFunctionalExpressionsScope(Project project, GlobalSearchScope useScope) {
+    final Set<VirtualFile> files = ContainerUtil.newLinkedHashSet();
     final PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
-    final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
     final CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files);
     helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "::", processor);
     helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "->", processor);
-
-    return GlobalSearchScope.filesScope(project, files);
+    return files;
   }
 
   @NotNull
