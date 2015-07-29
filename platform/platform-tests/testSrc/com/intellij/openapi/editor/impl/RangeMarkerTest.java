@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -59,6 +60,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private PsiToDocumentSynchronizer synchronizer;
   private Document document;
   private PsiFile psiFile;
+  private FileASTNode fileNode;
 
   @Override
   protected void runTest() throws Throwable {
@@ -94,6 +96,16 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     super.setUp();
     documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
     synchronizer = documentManager.getSynchronizer();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    documentManager = null;
+    synchronizer = null;
+    psiFile = null;
+    fileNode = null;
+    document = null;
+    super.tearDown();
   }
 
   public void testCreation() throws Exception {
@@ -940,6 +952,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   private RangeMarkerEx createMarker(String text, final int start, final int end) {
     psiFile = createFile("x.txt", text);
+    fileNode = psiFile.getNode(); // the node should be loaded, otherwise PsiToDocumentSynchronizer will ignore our commands
     return createMarker(psiFile, start, end);
   }
 
