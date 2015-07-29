@@ -342,6 +342,6 @@ public class VfsUtilTest extends PlatformTestCase {
       TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
     }
 
-    assertTrue(semaphore.waitFor(10000));
+    assertTrue(semaphore.waitFor(60000));
   }
 }
