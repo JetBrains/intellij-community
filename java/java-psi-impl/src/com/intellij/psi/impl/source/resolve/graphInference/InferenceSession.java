@@ -613,6 +613,12 @@ public class InferenceSession {
     return false;
   }
 
+  /**
+   * T is a reference type, but is not a wildcard-parameterized type, and either 
+   *  i)  B2 contains a bound of one of the forms α=S or S<:α, where S is a wildcard-parameterized type, or 
+   *  ii) B2 contains two bounds of the forms S1 <: α and S2 <: α,
+   *      where S1 and S2 have supertypes that are two different parameterizations of the same generic class or interface. 
+   */
   private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
     if (!FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
       final List<PsiType> bounds = inferenceVariable.getBounds(InferenceBound.LOWER);
@@ -624,13 +630,11 @@ public class InferenceSession {
       };
       if (findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor) != null) return true;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
-      for (PsiType lowBound : bounds) {
+      final List<PsiType> boundsToCheck = new ArrayList<PsiType>(bounds);
+      boundsToCheck.addAll(eqBounds);
+      for (PsiType lowBound : boundsToCheck) {
         if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(lowBound)) {
-          for (PsiType bound : eqBounds) {
-            if (lowBound.equals(bound)) {
-              return true;
-            }
-          }
+          return true;
         }
       }
     }
@@ -710,7 +714,9 @@ public class InferenceSession {
       }
       final int i = ArrayUtilRt.find(args, arg);
       if (i < 0) return null;
-      return getParameterType(parameters, i, substitutor, varargs);
+      final PsiType parameterType = getParameterType(parameters, i, substitutor, varargs);
+      final boolean isRaw = substitutor != null && PsiUtil.isRawSubstitutor((PsiMethod)parentMethod, substitutor);
+      return isRaw ? TypeConversionUtil.erasure(parameterType) : parameterType;
     }
     return null;
   }
