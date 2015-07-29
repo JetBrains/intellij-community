@@ -20,9 +20,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +53,20 @@ public abstract class StubTreeLoader {
     msg += ", file.class=" + psiFile.getClass();
     msg += ", file.lang=" + psiFile.getLanguage();
     msg += ", modStamp=" + psiFile.getModificationStamp();
+
+    if (!(psiFile instanceof PsiCompiledElement)) {
+      String text = psiFile.getText();
+      PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
+      if (fromText.getLanguage().equals(psiFile.getLanguage())) {
+        boolean consistent = DebugUtil.psiToString(psiFile, true).equals(DebugUtil.psiToString(fromText, true));
+        if (consistent) {
+          msg += "\n tree consistent";
+        } else {
+          msg += "\n AST INCONSISTENT, perhaps after incremental reparse; " + fromText;
+        }
+      }
+    }
+
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
     msg += "\n document before=" + prevCachedDocument;
 
