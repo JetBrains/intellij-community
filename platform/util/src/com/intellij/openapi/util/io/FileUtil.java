@@ -949,6 +949,17 @@ public class FileUtil extends FileUtilRt {
     return true;
   }
 
+  public static boolean rename(@NotNull File source, @NotNull String newName) throws IOException {
+    File target = new File(source.getParent(), newName);
+    if (!SystemInfo.isFileSystemCaseSensitive && newName.equalsIgnoreCase(source.getName())) {
+      File intermediate = createTempFile(source.getParentFile(), source.getName(), ".tmp", false, false);
+      return source.renameTo(intermediate) && intermediate.renameTo(target);
+    }
+    else {
+      return source.renameTo(target);
+    }
+  }
+
   public static void rename(@NotNull File source, @NotNull File target) throws IOException {
     if (source.renameTo(target)) return;
     if (!source.exists()) return;

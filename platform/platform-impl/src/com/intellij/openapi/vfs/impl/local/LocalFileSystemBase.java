@@ -571,7 +571,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     if (!auxRename(file, newName)) {
-      if (!ioFile.renameTo(ioTarget)) {
+      if (!FileUtil.rename(ioFile, newName)) {
         throw new IOException(VfsBundle.message("rename.failed.error", ioFile.getPath(), newName));
       }
     }
