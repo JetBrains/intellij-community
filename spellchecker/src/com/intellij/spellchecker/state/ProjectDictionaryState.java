@@ -31,7 +31,7 @@ import java.util.Set;
   name = "ProjectDictionaryState",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/dictionaries/",
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/dictionaries",
              scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectDictionarySplitter.class)
   }
 )

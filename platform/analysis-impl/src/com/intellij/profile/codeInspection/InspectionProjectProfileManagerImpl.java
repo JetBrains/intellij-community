@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
   name = "InspectionProjectProfileManager",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED,
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles", scheme = StorageScheme.DIRECTORY_BASED,
              stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
   }
 )

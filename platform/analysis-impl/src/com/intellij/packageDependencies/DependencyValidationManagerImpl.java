@@ -40,7 +40,7 @@ import java.util.*;
   name = "DependencyValidationManager",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/scopes/", scheme = StorageScheme.DIRECTORY_BASED,
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/scopes", scheme = StorageScheme.DIRECTORY_BASED,
       stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)}
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {

@@ -38,7 +38,7 @@ import java.util.Set;
   name = "ProjectRunConfigurationManager",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/runConfigurations/", scheme = StorageScheme.DIRECTORY_BASED,
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/runConfigurations", scheme = StorageScheme.DIRECTORY_BASED,
              stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
   }
 )
