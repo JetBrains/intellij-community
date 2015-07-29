@@ -156,9 +156,10 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     final int expectedFunExprParamsCount = functionalInterfaceMethod.getParameterTypes().length;
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     for (final PsiMethod psiMethod : lambdaCandidates) {
-      final int parametersCount = psiMethod.getParameterList().getParametersCount();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
+          if (!psiMethod.isValid()) return;
+          final int parametersCount = psiMethod.getParameterList().getParametersCount();
           final boolean varArgs = psiMethod.isVarArgs();
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           final GlobalSearchScope methodUseScope = modulesScope.intersectWith(convertToGlobalScope(project, psiMethod.getUseScope()));
