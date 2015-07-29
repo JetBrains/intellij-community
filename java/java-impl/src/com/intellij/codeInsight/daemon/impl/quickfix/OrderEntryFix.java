@@ -34,7 +34,6 @@ import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -234,14 +233,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return result;
   }
 
-  /**
-   * @deprecated
-   */
-  public static void addJUnit4Library(boolean inTests, Module currentModule) throws ClassNotFoundException {
-    final List<String> junit4Paths = JavaSdkUtil.getJUnit4JarPaths();
-    addJarsToRoots(junit4Paths, JUNIT4_LIBRARY_NAME, currentModule, null);
-  }
-
   private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
     DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(element.getProject());
     PsiFile fromFile = element.getContainingFile();
@@ -265,16 +256,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       return ThreeState.UNSURE;
     }
     return ThreeState.NO;
-  }
-
-  /**
-   * @deprecated use {@link #addJarsToRootsAndImportClass} instead
-   */
-  public static void addBundledJarToRoots(final Project project, @Nullable final Editor editor, final Module currentModule,
-                                          @Nullable final PsiReference reference,
-                                          @NonNls final String className,
-                                          @NonNls final String libVirtFile) {
-    addJarsToRootsAndImportClass(Collections.singletonList(libVirtFile), null, currentModule, editor, reference, className);
   }
 
   public static void addJarsToRootsAndImportClass(@NotNull List<String> jarPaths,
