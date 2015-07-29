@@ -401,7 +401,6 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
   }
 
   @Nullable
-  //TODO внутри лямбды же это работает неправильно!!!
   static PsiType findContainingMethodReturnType(PsiElement methodElement) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(methodElement, PsiMethod.class);
     if (containingMethod == null) {
