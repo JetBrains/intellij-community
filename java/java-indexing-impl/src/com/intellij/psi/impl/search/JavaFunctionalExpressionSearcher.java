@@ -110,51 +110,46 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     LOG.assertTrue(functionalInterfaceMethod != null);
     final int expectedFunExprParamsCount = functionalInterfaceMethod.getParameterTypes().length;
 
-    //collect all files with '::' and '->' in useScope 
-    Set<VirtualFile> candidateFiles = getFilesWithFunctionalExpressionsScope(project, useScope);
-    if (candidateFiles.size() < 5) {
-      return searchInFiles(aClass, consumer, candidateFiles, expectedFunExprParamsCount);
-    }
+    final LinkedHashSet<VirtualFile> filesToProcess = ContainerUtil.newLinkedHashSet();
 
+    //collect all files with '::' and '->' in useScope
+    Set<VirtualFile> candidateFiles = getFilesWithFunctionalExpressionsScope(project, useScope);
     final GlobalSearchScope filesScope = GlobalSearchScope.filesScope(project, candidateFiles);
 
-    //collect all methods with parameter of functional interface or free type parameter type
-    final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope);
+    if (candidateFiles.size() < 5) {
+      filesToProcess.addAll(candidateFiles);
+    }  else {
+      //collect all methods with parameter of functional interface or free type parameter type
+      final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope);
 
-    final LinkedHashSet<VirtualFile> filesToProcess = new LinkedHashSet<VirtualFile>();
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    
-    //find all usages of method candidates in files with functional expressions
-    for (final PsiMethod psiMethod : methodCandidates) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          if (!psiMethod.isValid()) return;
-          final int parametersCount = psiMethod.getParameterList().getParametersCount();
-          final boolean varArgs = psiMethod.isVarArgs();
-          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          final GlobalSearchScope methodUseScope = modulesScope.intersectWith(convertToGlobalScope(project, psiMethod.getUseScope()));
-          fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null,
-                                       //functional expressions checker: number and type of parameters at call site should correspond to
-                                       //candidate method currently check
-                                       new SuitableFilesProcessor(filesToProcess,
-                                                                  expectedFunExprParamsCount,
-                                                                  parametersCount,
-                                                                  varArgs,
-                                                                  parameters),
-                                       useScope.intersectWith(methodUseScope));
-        }
-      });
+      final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+
+      //find all usages of method candidates in files with functional expressions
+      for (final PsiMethod psiMethod : methodCandidates) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            if (!psiMethod.isValid()) return;
+            final int parametersCount = psiMethod.getParameterList().getParametersCount();
+            final boolean varArgs = psiMethod.isVarArgs();
+            final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            final GlobalSearchScope methodUseScope = modulesScope.intersectWith(convertToGlobalScope(project, psiMethod.getUseScope()));
+            fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null,
+                                         //functional expressions checker: number and type of parameters at call site should correspond to
+                                         //candidate method currently check
+                                         new SuitableFilesProcessor(filesToProcess,
+                                                                    expectedFunExprParamsCount,
+                                                                    parametersCount,
+                                                                    varArgs,
+                                                                    parameters),
+                                         useScope.intersectWith(methodUseScope));
+          }
+        });
+      }
     }
 
     //search for functional expressions in non-call contexts
     collectFilesWithTypeOccurrencesAndFieldAssignments(aClass, filesScope, filesToProcess);
 
-    return searchInFiles(aClass, consumer, filesToProcess, expectedFunExprParamsCount);
-  }
-
-  private static boolean searchInFiles(final PsiClass aClass,
-                                       final Processor<PsiFunctionalExpression> consumer,
-                                       Set<VirtualFile> filesToProcess, final int expectedFunExprParamsCount) {
     LOG.info("#usage files: " + filesToProcess.size());
     return ContainerUtil.process(filesToProcess, new ReadActionProcessor<VirtualFile>() {
       @Override
