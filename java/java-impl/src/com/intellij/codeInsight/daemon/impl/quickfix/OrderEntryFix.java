@@ -19,11 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
+import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
+import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver.ExternalClassResolveResult;
 import com.intellij.codeInsight.daemon.quickFix.MissingDependencyFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -48,6 +50,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -91,7 +94,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   @Nullable
   public static List<LocalQuickFix> registerFixes(@NotNull final QuickFixActionRegistrar registrar, @NotNull final PsiReference reference) {
     final PsiElement psiElement = reference.getElement();
-    @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
+    @NonNls final String shortReferenceName = reference.getRangeInElement().substring(psiElement.getText());
 
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
@@ -114,65 +117,33 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       return providedFixes;
     }
 
-    if (isAnnotation(psiElement) && AnnotationUtil.isJetbrainsAnnotation(referenceName)) {
-      @NonNls final String className = "org.jetbrains.annotations." + referenceName;
-      PsiClass found =
-        JavaPsiFacade.getInstance(project).findClass(className, currentModule.getModuleWithDependenciesAndLibrariesScope(true));
-      if (found != null) return null; //no need to add junit to classpath
-      final OrderEntryFix platformFix = new OrderEntryFix() {
-        @Override
-        @NotNull
-        public String getText() {
-          return QuickFixBundle.message("orderEntry.fix.add.annotations.jar.to.classpath");
+    List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    String fullReferenceText = reference.getCanonicalText();
+    for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensions()) {
+      final ExternalClassResolveResult resolveResult = resolver.resolveClass(shortReferenceName, isReferenceToAnnotation(psiElement));
+      OrderEntryFix fix = null;
+      if (resolveResult != null && psiFacade.findClass(resolveResult.getQualifiedClassName(), currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
+        fix = new AddExternalLibraryToDependenciesQuickFix(currentModule, resolveResult.getLibrary(), reference, resolveResult.getQualifiedClassName());
+      }
+      else if (!fullReferenceText.equals(shortReferenceName)) {
+        ExternalLibraryDescriptor descriptor = resolver.resolvePackage(fullReferenceText);
+        if (descriptor != null) {
+          fix = new AddExternalLibraryToDependenciesQuickFix(currentModule, descriptor, reference, null);
         }
-
-        @Override
-        @NotNull
-        public String getFamilyName() {
-          return getText();
-        }
-
-        @Override
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-          return !project.isDisposed() && !currentModule.isDisposed();
-        }
-
-        @Override
-        public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final String libraryPath = locateAnnotationsJar(currentModule);
-              if (libraryPath != null) {
-                new WriteCommandAction(project) {
-                  @Override
-                  protected void run(@NotNull final Result result) throws Throwable {
-                    addJarsToRootsAndImportClass(Collections.singletonList(libraryPath), null, currentModule, editor, reference,
-                                                 "org.jetbrains.annotations." + referenceName);
-                  }
-                }.execute();
-              }
-            }
-          });
-        }
-      };
-
-      final OrderEntryFix providedFix = provideFix(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
-        @Override
-        public OrderEntryFix fun(MissingDependencyFixProvider provider) {
-          return provider.getJetbrainsAnnotationFix(reference, platformFix, currentModule);
-        }
-      });
-      final OrderEntryFix fix = ObjectUtils.notNull(providedFix, platformFix);
-
-      registrar.register(fix);
-      return Collections.singletonList((LocalQuickFix)fix);
+      }
+      if (fix != null) {
+        registrar.register(fix);
+        result.add(fix);
+      }
+    }
+    if (!result.isEmpty()) {
+      return result;
     }
 
-    List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     Set<Object> librariesToAdd = new THashSet<Object>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
-    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(shortReferenceName, GlobalSearchScope.allScope(project));
     List<PsiClass> allowedDependencies = filterAllowedDependencies(psiElement, classes);
     if (allowedDependencies.isEmpty()) {
       return result;
@@ -283,8 +254,17 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return result;
   }
 
-  private static boolean isAnnotation(final PsiElement psiElement) {
-    return PsiTreeUtil.getParentOfType(psiElement, PsiAnnotation.class) != null && PsiUtil.isLanguageLevel5OrHigher(psiElement);
+  private static ThreeState isReferenceToAnnotation(final PsiElement psiElement) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(psiElement)) {
+      return ThreeState.NO;
+    }
+    if (PsiTreeUtil.getParentOfType(psiElement, PsiAnnotation.class) != null) {
+      return ThreeState.YES;
+    }
+    if (PsiTreeUtil.getParentOfType(psiElement, PsiImportStatement.class) != null) {
+      return ThreeState.UNSURE;
+    }
+    return ThreeState.NO;
   }
 
   /**
@@ -301,7 +281,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                                   final String libraryName,
                                                   @NotNull final Module currentModule, @Nullable final Editor editor,
                                                   @Nullable final PsiReference reference,
-                                                  @NonNls final String className) {
+                                                  @Nullable @NonNls final String className) {
     addJarsToRoots(jarPaths, libraryName, currentModule, reference != null ? reference.getElement() : null);
 
     final Project project = currentModule.getProject();
