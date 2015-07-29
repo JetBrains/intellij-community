@@ -141,6 +141,7 @@ public final class StoreUtil {
         notReloadableComponents = store.reload(changes);
       }
       catch (Throwable e) {
+        LOG.warn(e);
         Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
                                    ProjectBundle.message("project.reload.failed.title"));
         return ReloadComponentStoreStatus.ERROR;
