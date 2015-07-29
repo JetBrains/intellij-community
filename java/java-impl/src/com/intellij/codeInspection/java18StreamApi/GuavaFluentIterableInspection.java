@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -69,10 +70,11 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
     return new JavaElementVisitor() {
       private final SmartPointerManager mySmartPointerManager = SmartPointerManager.getInstance(holder.getProject());
       private final Set<PsiMethodCallExpression> myMethodCallsToIgnore =
-        new THashSet<PsiMethodCallExpression>(new TObjectIdentityHashingStrategy<PsiMethodCallExpression>());
-
-      private final MultiMap<PsiLocalVariable, PsiExpression> myLocalVariablesUsages = new MultiMap<PsiLocalVariable, PsiExpression>();
-      private final Set<PsiLocalVariable> myUnconvertibleVariables = new THashSet<PsiLocalVariable>();
+        ContainerUtil.newConcurrentSet(new TObjectIdentityHashingStrategy<PsiMethodCallExpression>());
+      private final MultiMap<PsiLocalVariable, PsiExpression> myLocalVariablesUsages =
+        new ConcurrentMultiMap<PsiLocalVariable, PsiExpression>();
+      private final Set<PsiLocalVariable> myUnconvertibleVariables =
+        ContainerUtil.newConcurrentSet(new TObjectIdentityHashingStrategy<PsiLocalVariable>());
 
       @Override
       public void visitLocalVariable(final PsiLocalVariable localVariable) {
@@ -399,6 +401,7 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
   }
 
   @Nullable
+  //TODO внутри лямбды же это работает неправильно!!!
   static PsiType findContainingMethodReturnType(PsiElement methodElement) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(methodElement, PsiMethod.class);
     if (containingMethod == null) {
