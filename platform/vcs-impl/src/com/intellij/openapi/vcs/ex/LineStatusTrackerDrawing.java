@@ -218,6 +218,8 @@ public class LineStatusTrackerDrawing {
     Pair<JComponent, Integer> editorComponent = createEditorComponent(range, editor, tracker, wordDiff);
 
     ActionToolbar toolbar = buildToolbar(range, editor, tracker, disposable);
+    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
+
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent.first, editorComponent.second);
 
     LightweightHint hint = new LightweightHint(popupPanel);
