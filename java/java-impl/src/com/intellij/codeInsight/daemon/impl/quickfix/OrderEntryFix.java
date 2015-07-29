@@ -27,8 +27,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -69,8 +67,6 @@ import static com.intellij.codeInsight.daemon.impl.quickfix.MissingDependencyFix
  * @author cdr
  */
 public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
-  public static final String JUNIT4_LIBRARY_NAME = "JUnit4";
-
   protected OrderEntryFix() {
   }
 
@@ -316,22 +312,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final File libraryRoot = new File(jarPath);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryRoot);
     return VfsUtil.getUrlForLibraryRoot(libraryRoot);
-  }
-
-  public static boolean ensureAnnotationsJarInPath(final Module module) {
-    if (isAnnotationsJarInPath(module)) return true;
-    if (module == null) return false;
-    final String libraryPath = locateAnnotationsJar(module);
-    if (libraryPath != null) {
-      new WriteCommandAction(module.getProject()) {
-        @Override
-        protected void run(@NotNull final Result result) throws Throwable {
-          addJarToRoots(libraryPath, module, null);
-        }
-      }.execute();
-      return true;
-    }
-    return false;
   }
 
   @Nullable
