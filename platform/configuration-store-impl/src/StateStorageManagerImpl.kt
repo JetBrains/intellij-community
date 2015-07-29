@@ -54,7 +54,7 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
                                    protected val rootTagName: String,
                                    private val picoContainer: PicoContainer,
                                    private val componentManager: ComponentManager? = null) : StateStorageManager {
-  private val macros = LinkedHashMap<String, String>()
+  private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantLock()
   private val storages = THashMap<String, StateStorage>()
 
@@ -82,9 +82,11 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
 
   override final fun getMacroSubstitutor() = pathMacroSubstitutor
 
-  synchronized override fun addMacro(macro: String, expansion: String) {
+  private data class Macro(val key: String, var value: String)
+
+  override final fun addMacro(macro: String, expansion: String) {
     assert(!macro.isEmpty())
-    macros.put(macro, expansion)
+    macros.add(Macro(macro, expansion))
   }
 
   override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType, storageSpec.storageClass.java as Class<out StateStorage>, storageSpec.stateSplitter.java)
@@ -193,26 +195,31 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
 
   protected open fun createStorageData(fileSpec: String, filePath: String): StorageData = StorageData(rootTagName)
 
-  synchronized override final fun expandMacros(file: String): String {
+  override final fun expandMacros(file: String): String {
+    // replacement can contains $ (php tests), so, this check must be performed before expand
     val matcher = MACRO_PATTERN.matcher(file)
+    matcherLoop@
     while (matcher.find()) {
       val m = matcher.group(1)
-      if (!macros.containsKey(m)) {
-        throw IllegalArgumentException("Unknown macro: $m in storage file spec: $file")
+      for (macro in macros) {
+        if (macro.key == m) {
+          continue@matcherLoop
+        }
       }
+      throw IllegalArgumentException("Unknown macro: $m in storage file spec: $file")
     }
 
     var expanded = file
-    for (entry in macros.entrySet()) {
-      expanded = StringUtil.replace(expanded, entry.getKey(), entry.getValue())
+    for ((key, value) in macros) {
+      expanded = StringUtil.replace(expanded, key, value)
     }
     return expanded
   }
 
   override final fun collapseMacros(path: String): String {
     var result = path
-    for (entry in macros.entrySet()) {
-      result = StringUtil.replace(result, entry.getValue(), entry.getKey())
+    for ((key, value) in macros) {
+      result = StringUtil.replace(result, key, value)
     }
     return result
   }
@@ -300,9 +307,9 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
             }
 
             // StoragePathMacros.MODULE_FILE -> old path, we must update value
-            for (key in macros.keySet()) {
-              if (oldPath.equals(macros.get(key))) {
-                macros.put(key, event.getPath())
+            for (macro in macros) {
+              if (oldPath.equals(macro.value)) {
+                macro.value = event.getPath()
               }
             }
           }
