@@ -41,7 +41,10 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ui.Group;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -60,6 +63,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -215,13 +219,41 @@ public class PyCharmEduInitialConfigurator {
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
                                              @NotNull final CustomActionsSchema schema){
     final TreeNode mainMenu = root.getFirstChild();
-    final TreeNode fileMenu = mainMenu.getChildAt(0);
-    final String[] fileItems = {"Print/Export Actions"};
-    for (String item : fileItems) {
-      hideAction(schema, root, fileMenu, item);
+
+    for (int i = 0; i < mainMenu.getChildCount(); i++) {
+      final DefaultMutableTreeNode menuItem = (DefaultMutableTreeNode)mainMenu.getChildAt(i);
+      if ("File".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"Print/Export Actions", "SaveAll", "Export/Import Actions", "Synchronize", "ChangeFileEncodingAction",
+          "Line Separators", "ToggleReadOnlyAttribute"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
+      else if ("Edit".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"CopyAsPlainText", "CopyAsReachText", "CopyReference", "EditorPasteSimple", "Macros", "EditorToggleCase",
+          "TemplateParametersNavigation", "EscapeEntities"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
+      else if ("View".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo", "ShowErrorDescription",
+          "RecentChanges", "CompareActions", "QuickChangeScheme"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
+      else if ("Navigate".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"GotoCustomRegion", "JumpToLastChange", "JumpToNextChange", "SelectIn", "GotoTypeDeclaration",
+        "GotoTest", "GotoRelated", "ShowFilePath", "Hierarchy Actions", "Goto Error/Bookmark Actions", "GoToEditPointGroup",
+          "Change Navigation Actions", "Method Navigation Actions"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
     }
 
-    final String[] menuItems = {"Tools", "VCS", "Refactor", "Navigate", "Code", "Window", "View"};
+    final String[] menuItems = {"Tools", "VCS", "Refactor", "Code", "Window", "Run"};
     for (String item : menuItems) {
       hideAction(schema, root, mainMenu, item);
     }
@@ -231,13 +263,24 @@ public class PyCharmEduInitialConfigurator {
                                  @NotNull final TreeNode actionGroup, @NotNull final String actionId) {
     for(int i = 0; i < actionGroup.getChildCount(); i++){
       final DefaultMutableTreeNode child = (DefaultMutableTreeNode)actionGroup.getChildAt(i);
-      final String childId = child.getUserObject() instanceof Group ? ((Group)child.getUserObject()).getName() : null;
+      final int childCount = child.getChildCount();
+      if (childCount > 0) {
+        hideAction(schema, child, child, actionId);
+      }
+      final String childId = getItemId(child);
       if (childId != null && childId.equals(actionId)){
         final TreePath treePath = TreeUtil.getPath(root, child);
         final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
         schema.addAction(url);
       }
     }
+  }
+
+  @Nullable
+  private static String getItemId(@NotNull final DefaultMutableTreeNode child) {
+    final Object userObject = child.getUserObject();
+    if (userObject instanceof String) return (String)userObject;
+    return userObject instanceof Group ? ((Group)userObject).getName() : null;
   }
 
   private static void patchRootAreaExtensions() {
