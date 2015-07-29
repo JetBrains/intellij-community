@@ -19,7 +19,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
 
-class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl(macroSubstitutor, "project", project, project.getPicoContainer()) {
+class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl(macroSubstitutor, "project", project.getPicoContainer(), project) {
   override fun createStorageData(fileSpec: String, filePath: String) = ProjectStorageData(rootTagName)
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {

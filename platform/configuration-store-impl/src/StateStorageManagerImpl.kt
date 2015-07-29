@@ -40,7 +40,13 @@ import java.util.regex.Pattern
 import kotlin.concurrent.withLock
 import kotlin.reflect.jvm.java
 
-abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPathMacroSubstitutor, protected val rootTagName: String, parentDisposable: Disposable, private val picoContainer: PicoContainer) : StateStorageManager, Disposable {
+/**
+ * If parentDisposable not specified, storage will not add file tracker (see VirtualFileTracker)
+ */
+open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPathMacroSubstitutor,
+                                   protected val rootTagName: String,
+                                   private val picoContainer: PicoContainer,
+                                   private val parentDisposable: Disposable? = null) : StateStorageManager {
   private val macros = LinkedHashMap<String, String>()
   private val storageLock = ReentrantLock()
   private val storages = THashMap<String, StateStorage>()
@@ -49,10 +55,6 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
 
   protected open val isUseXmlProlog: Boolean
     get() = true
-
-  init {
-    Disposer.register(parentDisposable, this)
-  }
 
   companion object {
     private val MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)")
@@ -122,7 +124,7 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
 
     //noinspection deprecation
     if (stateSplitter != javaClass<StateSplitter>() && stateSplitter != javaClass<StateSplitterEx>()) {
-      return DirectoryBasedStorage(pathMacroSubstitutor, file, ReflectionUtil.newInstance(stateSplitter), this, createStorageTopicListener())
+      return DirectoryBasedStorage(pathMacroSubstitutor, file, ReflectionUtil.newInstance(stateSplitter), parentDisposable, createStorageTopicListener())
     }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
@@ -131,7 +133,7 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
 
     val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
     beforeFileBasedStorageCreate()
-    return object : FileBasedStorage(file, fileSpec, effectiveRoamingType, getMacroSubstitutor(fileSpec), rootTagName, this@StateStorageManagerImpl, createStorageTopicListener(), streamProvider) {
+    return object : FileBasedStorage(file, fileSpec, effectiveRoamingType, getMacroSubstitutor(fileSpec), rootTagName, parentDisposable, createStorageTopicListener(), streamProvider) {
       override fun createStorageData() = createStorageData(myFileSpec, getFilePath())
 
       override fun isUseXmlProlog() = isUseXmlProlog
@@ -156,7 +158,7 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     while (matcher.find()) {
       val m = matcher.group(1)
       if (!macros.containsKey(m)) {
-        throw IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file)
+        throw IllegalArgumentException("Unknown macro: $m in storage file spec: $file")
       }
     }
 
@@ -239,8 +241,5 @@ abstract class StateStorageManagerImpl(private val pathMacroSubstitutor: Trackin
     return if (oldStorageSpec == null) null else getStateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.PER_USER)
   }
 
-  protected abstract fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String?
-
-  override fun dispose() {
-  }
+  protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
 }

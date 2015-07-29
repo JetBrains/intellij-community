@@ -37,7 +37,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 
-public class ApplicationStoreTest : LightPlatformTestCase() {
+class ApplicationStoreTest : LightPlatformTestCase() {
   private var testAppConfig: File? = null
   private var componentStore: MyComponentStore? = null
 
@@ -140,15 +140,13 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
       return map
     }
 
-    throws(IOException::class)
     override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
       val data = getMap(roamingType).get(fileSpec)
       return if (data == null) null else ByteArrayInputStream(data.toByteArray(CharsetToolkit.UTF8_CHARSET))
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
-      val map = data.get(roamingType)
-      map?.remove(fileSpec)
+      data.get(roamingType)?.remove(fileSpec)
     }
   }
 
@@ -157,9 +155,7 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
 
     init {
       val macroSubstitutor = ApplicationPathMacroManager().createTrackingSubstitutor()
-      stateStorageManager = object : StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
-        override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = null
-
+      stateStorageManager = object : StateStorageManagerImpl(macroSubstitutor, "application", ApplicationManager.getApplication().getPicoContainer()) {
         override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
           if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
             return null

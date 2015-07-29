@@ -40,7 +40,7 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
   }
 
   init {
-    stateStorageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), "application", application, application.getPicoContainer()) {
+    stateStorageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), "application", application.getPicoContainer(), application) {
       private var configDirectoryRefreshed = false
 
       override fun createStorageTopicListener() = application.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC)

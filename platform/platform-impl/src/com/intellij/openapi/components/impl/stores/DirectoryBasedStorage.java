@@ -52,13 +52,13 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                @NotNull File dir,
                                @SuppressWarnings("deprecation") @NotNull StateSplitter splitter,
-                               @NotNull Disposable parentDisposable,
+                               @Nullable Disposable parentDisposable,
                                @Nullable final Listener listener) {
     super(pathMacroSubstitutor);
     myDir = dir;
     mySplitter = splitter;
 
-    VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
+    VirtualFileTracker virtualFileTracker = parentDisposable == null ? null : ServiceManager.getService(VirtualFileTracker.class);
     if (virtualFileTracker != null && listener != null) {
       virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(myDir.getPath())), new VirtualFileAdapter() {
         @Override

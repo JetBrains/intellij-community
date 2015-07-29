@@ -51,7 +51,7 @@ public class FileBasedStorage extends XmlElementStorage {
                           @Nullable RoamingType roamingType,
                           @Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           @NotNull String rootElementName,
-                          @NotNull Disposable parentDisposable,
+                          @Nullable Disposable parentDisposable,
                           @Nullable final Listener listener,
                           @Nullable StreamProvider streamProvider) {
     super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
@@ -62,7 +62,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     myFile = file;
 
-    if (listener != null) {
+    if (listener != null && parentDisposable != null) {
       VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
       if (virtualFileTracker != null) {
         virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(getFilePath()), new VirtualFileAdapter() {
