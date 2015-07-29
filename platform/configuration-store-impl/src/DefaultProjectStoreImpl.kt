@@ -28,7 +28,7 @@ import com.intellij.util.containers.ContainerUtil
 import java.io.File
 import kotlin.properties.Delegates
 
-class DefaultProjectStoreImpl(project: ProjectImpl, private val projectManager: ProjectManagerImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+class DefaultProjectStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   companion object {
     val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
   }
@@ -37,7 +37,7 @@ class DefaultProjectStoreImpl(project: ProjectImpl, private val projectManager: 
     service<DefaultProjectExportableAndSaveTrigger>()!!.project = project
   }
 
-  private val storage: DefaultProjectStorage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager, projectManager) }
+  private val storage: DefaultProjectStorage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
   fun getStateCopy() = storage.loadLocalData()
 

@@ -43,8 +43,6 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
     stateStorageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), "application", application.getPicoContainer(), application) {
       private var configDirectoryRefreshed = false
 
-      override fun createStorageTopicListener() = application.getMessageBus().syncPublisher(StateStorage.STORAGE_TOPIC)
-
       override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
         if (component is NamedJDOMExternalizable) {
           return "${StoragePathMacros.APP_CONFIG}/${component.getExternalFileName()}${DirectoryStorageData.DEFAULT_EXT}"

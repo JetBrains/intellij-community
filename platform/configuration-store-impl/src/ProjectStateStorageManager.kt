@@ -16,7 +16,10 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.vfs.VirtualFileEvent
 import org.jdom.Element
 
 class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl(macroSubstitutor, "project", project.getPicoContainer(), project) {
@@ -31,6 +34,4 @@ class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
     }
     return fileSpec
   }
-
-  override fun createStorageTopicListener() = project.getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC)
 }

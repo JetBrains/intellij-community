@@ -17,6 +17,8 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +26,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface StateStorageManager {
+  Topic<IStorageManagerListener> STORAGE_TOPIC = new Topic<IStorageManagerListener>("STORAGE_LISTENER", IStorageManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
+
   void addMacro(@NotNull String macro, @NotNull String expansion);
 
   @Nullable
@@ -41,7 +45,7 @@ public interface StateStorageManager {
   @NotNull
   Collection<String> getStorageFileNames();
 
-  void clearStateStorage(@NotNull String file);
+  void clearStateStorage(@NotNull String fileSpec);
 
   @Nullable
   ExternalizationSession startExternalization();
@@ -70,5 +74,12 @@ public interface StateStorageManager {
      */
     @NotNull
     List<StateStorage.SaveSession> createSaveSessions();
+  }
+
+  /**
+   * Don't use it directly, only {@link StorageManagerListener} must be used to avoid compatibility issues
+   **/
+  interface IStorageManagerListener {
+    void storageFileChanged(@NotNull VFileEvent event, @NotNull StateStorage storage, @NotNull ComponentManager componentManager);
   }
 }

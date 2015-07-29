@@ -37,7 +37,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
@@ -70,10 +69,6 @@ public class StorageUtil {
   private static final Pair<byte[], String> NON_EXISTENT_FILE_DATA = Pair.create(null, SystemProperties.getLineSeparator());
 
   private StorageUtil() { }
-
-  public static boolean isChangedByStorageOrSaveSession(@NotNull VirtualFileEvent event) {
-    return event.getRequestor() instanceof StateStorage.SaveSession || event.getRequestor() instanceof StateStorage;
-  }
 
   public static void checkUnknownMacros(@NotNull final ComponentManager componentManager, @NotNull final Project project) {
     Application application = ApplicationManager.getApplication();

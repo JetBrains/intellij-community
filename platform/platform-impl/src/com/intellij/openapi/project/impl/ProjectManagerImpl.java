@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
@@ -40,6 +41,7 @@ import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.impl.stores.StoreUtil.ReloadComponentStoreStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
@@ -50,11 +52,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SingleAlarm;
@@ -117,10 +120,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     Application app = ApplicationManager.getApplication();
     MessageBus messageBus = app.getMessageBus();
 
-    messageBus.connect(app).subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+    messageBus.connect().subscribe(StateStorageManager.STORAGE_TOPIC, new StorageManagerListener() {
       @Override
-      public void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage) {
-        projectStorageFileChanged(event, storage, null);
+      public void storageFileChanged(@NotNull VFileEvent event, @NotNull StateStorage storage, @NotNull ComponentManager componentManager) {
+        if (event instanceof VFilePropertyChangeEvent) {
+          // ignore because doesn't affect content
+          return;
+        }
+
+        if (event.getRequestor() instanceof StateStorage.SaveSession ||
+            event.getRequestor() instanceof StateStorage ||
+            event.getRequestor() instanceof ProjectManagerImpl) {
+          return;
+        }
+
+        Project project;
+        if (componentManager instanceof Project) {
+          project = (Project)componentManager;
+        }
+        else {
+          project = componentManager instanceof Module ? ((Module)componentManager).getProject() : null;
+        }
+
+        VirtualFile file = event.getFile();
+        if (file != null) {
+          registerProjectToReload(project, file, storage);
+        }
       }
     });
 
@@ -129,13 +154,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       new ProjectManagerListener() {
         @Override
         public void projectOpened(final Project project) {
-          project.getMessageBus().connect(project).subscribe(StateStorage.PROJECT_STORAGE_TOPIC, new StateStorage.Listener() {
-            @Override
-            public void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage) {
-              projectStorageFileChanged(event, storage, project);
-            }
-          });
-
           busPublisher.projectOpened(project);
           for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectOpened(project);
@@ -182,13 +200,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     });
     myChangedFilesAlarm = new SingleAlarm(restartApplicationOrReloadProjectTask, 300);
-  }
-
-  private void projectStorageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage, @Nullable Project project) {
-    VirtualFile file = event.getFile();
-    if (!StorageUtil.isChangedByStorageOrSaveSession(event) && !(event.getRequestor() instanceof ProjectManagerImpl)) {
-      registerProjectToReload(project, file, storage);
-    }
   }
 
   @Override

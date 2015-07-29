@@ -95,9 +95,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @NotNull
   private static FileBasedStorage getMainStorage(@NotNull Module module) {
-    FileBasedStorage storage = (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
-    assert storage != null;
-    return storage;
+    return (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
   }
 
   @Override
@@ -160,16 +158,14 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     final VirtualFile file = getMainStorage(this).getVirtualFile();
     try {
       if (file != null) {
-        ClasspathStorage.moduleRenamed(this, newName);
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-        setModuleFilePath(VfsUtilCore.virtualToIoFile(file).getCanonicalPath());
-        return;
       }
-
-      // [dsl] we get here if either old file didn't exist or renaming failed
-      final File oldFile = new File(getModuleFilePath());
-      final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      setModuleFilePath(newFile.getCanonicalPath());
+      else {
+        // [dsl] we get here if either old file didn't exist or renaming failed
+        final File oldFile = new File(getModuleFilePath());
+        final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        setModuleFilePath(newFile.getCanonicalPath());
+      }
     }
     catch (IOException e) {
       LOG.debug(e);
