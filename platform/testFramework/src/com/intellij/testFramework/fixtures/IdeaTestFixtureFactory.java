@@ -34,7 +34,7 @@ public abstract class IdeaTestFixtureFactory {
 
   /**
    * @param aClass test fixture builder interface class
-   * @param implClass implementation class, should have an accessible constructor which takes {@link TestFixtureBuilder} as an argument.
+   * @param implClass implementation class, should have a constructor which takes {@link TestFixtureBuilder} as an argument.
    */
   public abstract <T extends ModuleFixtureBuilder> void registerFixtureBuilder(@NotNull Class<T> aClass, @NotNull Class<? extends T> implClass);
 
