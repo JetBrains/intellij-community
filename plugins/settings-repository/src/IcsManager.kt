@@ -127,7 +127,7 @@ class IcsManager(dir: File) {
 
   private fun registerProjectLevelProviders(project: Project) {
     val storageManager = project.stateStore.getStateStorageManager()
-    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED)!!.getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null)
+    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null)
     if (projectId == null || projectId.uid == null) {
       // not mapped, if user wants, he can map explicitly, we don't suggest
       // we cannot suggest "map to ICS" for any project that user opens, it will be annoying
