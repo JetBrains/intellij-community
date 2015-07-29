@@ -84,7 +84,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 
-    FileModificationService.getInstance().preparePsiElementForWrite(owner);
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(owner)) return;
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
