@@ -797,6 +797,11 @@
       <descriptionDirectoryName>MakeInferredAnnotationExplicit</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.ToggleSourceInferredAnnotations</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>ToggleSourceInferredAnnotations</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention</className>
       <category>Java/Control Flow</category>
     </intentionAction>
