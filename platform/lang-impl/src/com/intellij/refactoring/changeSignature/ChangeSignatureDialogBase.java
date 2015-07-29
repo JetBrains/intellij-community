@@ -19,6 +19,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -609,8 +611,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
         }, 100);
       }
     };
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(updateRunnable);
+    ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.current());
   }
 
   protected void updateSignatureAlarmFired() {
