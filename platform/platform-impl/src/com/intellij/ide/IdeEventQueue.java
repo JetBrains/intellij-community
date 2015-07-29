@@ -39,10 +39,7 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,7 +62,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Vladimir Kondratyev
@@ -540,7 +536,9 @@ public class IdeEventQueue extends EventQueue {
 
     myEventCount++;
 
-    if (processAppActivationEvents(e)) return;
+    if (e instanceof WindowEvent) {
+      processAppActivationEvents((WindowEvent)e);
+    }
 
     if (!typeAheadFlushing) {
       fixStickyFocusedComponents(e);
@@ -794,72 +792,35 @@ public class IdeEventQueue extends EventQueue {
     return peekEvent(WindowEvent.WINDOW_OPENED) != null;
   }
 
-  private static AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
+  private static final int APP_DEACTIVATION_DELAY = 50;
+  private static final Alarm ourDeactivationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private static boolean processAppActivationEvents(AWTEvent e) {
-    Application app = ApplicationManager.getApplication();
-    if (!(app instanceof ApplicationImpl)) return false;
-    final ApplicationImpl appImpl = (ApplicationImpl)app;
-
-    if (e instanceof WindowEvent) {
-      final WindowEvent we = (WindowEvent)e;
-
-      // Only Dialogs and Frames get window activated events.
-      // Let's handle Windows this way.
-
-      final Window eventWindow = we.getWindow();
-      if (we.getID() == WindowEvent.WINDOW_ACTIVATED || we.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
-        //if () {
-        //  getPopupManager().closeAllPopups();
-        //}
-        appImpl.myCancelDeactivation = true;
-        if (!appImpl.isActive()) {
-          appImpl.tryToApplyActivationState(eventWindow, true, false);
+  /*
+   * This method processes "external" focus events (i.e. those induced by a window manager) and tracks
+   * an application activation/deactivation state from them (an application is active if at least one it's windows has the focus).
+   *
+   * One special case is closing a child dialog: it generates a focus-lost event immediately followed by a focus-gained one.
+   * To avoid (or rather reduce a chance of) unneeded app-deactivation event the processing of the focus-lost event
+   * is slightly delayed.
+   */
+  private static void processAppActivationEvents(final WindowEvent e) {
+    if ((e.getID() == WindowEvent.WINDOW_GAINED_FOCUS || e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getOppositeWindow() == null) {
+      final Application app = ApplicationManager.getApplication();
+      if (app instanceof ApplicationImpl) {
+        if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+          ourDeactivationAlarm.cancelAllRequests();
+          ((ApplicationImpl)app).tryToApplyActivationState(e.getWindow(), true);
         }
-      }
-      else if (we.getID() == WindowEvent.WINDOW_DEACTIVATED) {
-        requestToDeactivateTime.getAndSet(System.currentTimeMillis());
-
-        // For stuff that cannot wait we notify about deactivation immediately
-        appImpl.tryToApplyActivationState(eventWindow, false, true);
-
-        // We do not know for sure that application is going to be inactive,
-        // we could just be showing a popup or another transient window.
-        // So let's postpone the application deactivation for a while
-        appImpl.myCancelDeactivation = false;
-
-        Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
-          public void actionPerformed(ActionEvent evt) {
-            if (appImpl.isActiveDelayed() && !appImpl.isDeactivationCanceled()) {
-              appImpl.tryToApplyActivationState(eventWindow, false, false);
+        else {
+          ourDeactivationAlarm.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              ((ApplicationImpl)app).tryToApplyActivationState(e.getWindow(), false);
             }
-          }
-        });
-
-        timer.setRepeats(false);
-        timer.start();
-      }
-
-      if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-        Component frame = UIUtil.findUltimateParent(eventWindow);
-        Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
-        IdeFrame[] allProjectFrames = WindowManager.getInstance().getAllProjectFrames();
-
-        if (focusOwnerInDeactivatedWindow != null) {
-          for (IdeFrame ideFrame : allProjectFrames) {
-            JFrame aFrame = WindowManager.getInstance().getFrame(ideFrame.getProject());
-            if (aFrame.equals(frame)) {
-              IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
-              if (focusManager instanceof FocusManagerImpl) {
-                ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(ideFrame, focusOwnerInDeactivatedWindow);
-              }
-            }
-          }
+          }, APP_DEACTIVATION_DELAY);
         }
       }
     }
-
-    return false;
   }
 
   private void defaultDispatchEvent(final AWTEvent e) {
