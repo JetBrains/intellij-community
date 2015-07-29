@@ -2,7 +2,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.HashMap
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -62,11 +61,11 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
 
   List<Pair<String, File>> runtimeResources = modulesWithScopes.collectMany {getRuntimeResources(findModule(it.first))}
 
-  String mainJarName = "${mainModuleName}.jar"
-  if (librariesWithScopes.any {it.first.any {it.name.equalsIgnoreCase(mainJarName)}}) {
-    mainJarName = "${mainModuleName}-plugin.jar"
-  }
-  dir(mainModuleName) {
+  def compatibilityMap = getOrCreateFileNameCompatibilityMap()[mainModuleName]
+  String mainJarName = compatibilityMap?.jar ?: "${mainModuleName}.jar"
+  def dirName = compatibilityMap?.dir ?: mainModuleName
+
+  dir(dirName) {
     dir("lib") {
       def embeddedModules = modulesWithScopes.findAll { it.second == "embedded" }.collect { it.first }
       jar(mainJarName) {
@@ -107,6 +106,18 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
       }
     }
   }
+})
+
+private Map<String, Map<String, String>> getOrCreateFileNameCompatibilityMap() {
+  String varName = "fileNameCompatibilityMap"
+  if (!binding.hasVariable(varName)) {
+    binding.setVariable(varName, new HashMap())
+  }
+  return (Map<String, Map<String, String>>) binding.getVariable(varName)
+}
+
+binding.setVariable("registerPluginFileNamesCompatibilityMap", { Map<String, Map<String, String>> namesMap ->
+  getOrCreateFileNameCompatibilityMap().putAll(namesMap)
 })
 
 private Map<String, JpsLibrary> getOrCreateLibraryMap() {

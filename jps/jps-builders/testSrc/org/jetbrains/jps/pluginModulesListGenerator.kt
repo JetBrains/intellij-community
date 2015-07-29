@@ -16,6 +16,7 @@
 package org.jetbrains.jps.devkit.builder
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtil.getFileName
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.platform.loader.impl.repository.ProductionRepository
 import org.jetbrains.platform.loader.repository.PlatformRepository
@@ -55,6 +57,8 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
     val moduleNameToPlugin = HashMap<String, String>()
     val singleModulePlugins = ArrayList<String>()
     var pluginsProcessed = 0
+    val directoryNames = HashMap<String, String>()
+    val mainJarNames = HashMap<String, String>()
     for (pluginName in plugins.keySet()) {
       val jars = plugins.get(pluginName)
       val includedModules = jars.flatMap { jar -> jar.getIncludedModules().map {Pair(jar, it)} }
@@ -66,13 +70,22 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
         }
         moduleNameToPlugin.put(moduleName, pluginName)
       }
+
+      if (pluginName in listOf("duplicates", "IntelliLang-js")) continue
+      val (pluginXml, mainModule) = findPluginXml(pluginName, includedModules.keySet())
+      println("$pluginName ($pluginXml):)")
+      if (pluginName != mainModule.getName()) {
+        directoryNames[mainModule.getName()] = pluginName
+      }
+      val mainJarName = jars.first { it.getIncludedModules().any { it.getModuleId().getStringId() == mainModule.getName() } }.getJarFile().getName()
+      if (mainJarName != "${mainModule.getName()}.jar") {
+        mainJarNames[mainModule.getName()] = mainJarName
+      }
       if (includedModules.size() == 1 && jars.size() == 1) {
         singleModulePlugins.add(pluginName)
         continue
       }
 
-      val (pluginXml, mainModule) = findPluginXml(pluginName, includedModules.keySet())
-      println("$pluginName ($pluginXml):)")
       val md5 = MessageDigest.getInstance("MD5")
       val buffer = ByteArray(16 * 1024)
       val libraryName = includedModulesNames.flatMap { collectDependencies(repo, RuntimeModuleId.module(it.key)) }
@@ -87,12 +100,14 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
         libraryName[bytes]?.getStringId()// ?: "Unknown library (${it.key.getJarFile()})"
       }.filterKeys { it != null }
 
+/*
       if (!includedModulesNames.isEmpty()) {
         println(" modules:\n  ${includedModulesNames.keySet().join("\n  ")}")
       }
       if (!includedLibraries.isEmpty()) {
         println(" libraries:\n  ${includedLibraries.keySet().join("\n  ")}")
       }
+*/
       val afterTags = listOf("name", "id", "description", "version", "vendor")
       val text = pluginXml.readText()
       val pluginXmlRoot = JDOMUtil.load(pluginXml)
@@ -115,16 +130,41 @@ public class PluginModulesListGenerator(private val project: JpsProject, private
       val modifiedText = text.replaceRange(insertStart, insertEnd, modulesTag)
 //      if (pluginName in setOf("GwtStudio", "sass")) {
 //      }
-      pluginXml.writeText(modifiedText)
-
+//      pluginXml.writeText(modifiedText)
       pluginsProcessed++
     }
     println("=== ($pluginsProcessed plugins processed)")
     println("Single-module plugins (${singleModulePlugins.size()}): \n ${singleModulePlugins.join("\n ")}")
+
+    printCompatibilityMap(true, directoryNames, mainJarNames)
+    printCompatibilityMap(false, directoryNames, mainJarNames)
+  }
+
+  private fun printCompatibilityMap(community: Boolean, directoryNames: HashMap<String, String>, mainJarNames: HashMap<String, String>) {
+    println("Compatibility map ${if (community) "community" else ""}")
+    val allModules = project.getModules().filter { isCommunity(it) == community }
+    val items = ArrayList<String>()
+    for (module in allModules) {
+      val moduleName = module.getName()
+      val dirName = directoryNames[moduleName]
+      val jarName = mainJarNames[moduleName]
+      val properties = listOf(dirName?.let{"dir: '$it'"}, jarName?.let{"jar: '$it'"}).filterNotNull()
+      if (properties.isNotEmpty()) {
+        items.add("'$moduleName': [${properties.joinToString()}]")
+      }
+    }
+    println("[\n  ${items.joinToString(",\n  ")}\n]")
   }
 
   private fun findModule(name: String) =
       project.getModules().firstOrNull { it.getName() == name } ?: throw RuntimeException("Module '$name' not found")
+
+  private fun isCommunity(module: JpsModule): Boolean {
+    val communityDir = File(JpsModelSerializationDataService.getBaseDirectory(project)!!, "community")
+    val moduleDir = JpsModelSerializationDataService.getBaseDirectory(module)!!
+    return FileUtil.isAncestor(communityDir, moduleDir, false)
+  }
+
 }
 
 private fun getScope(jar: IntellijJarInfo, module: JpsModule?, pluginXmlRoot: Element, mainModule: JpsModule): String? {

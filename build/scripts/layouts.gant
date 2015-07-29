@@ -345,6 +345,17 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     }
   }
 
+  registerPluginFileNamesCompatibilityMap([
+    'ByteCodeViewer'        : [jar: 'byteCodeViewer.jar'],
+    'ant'                   : [jar: 'antIntegration.jar'],
+    'cvs-plugin'            : [dir: 'cvsIntegration', jar: 'cvsIntegration.jar'],
+    'java-decompiler-plugin': [dir: 'java-decompiler', jar: 'java-decompiler.jar'],
+    'jetgroovy'             : [dir: 'Groovy', jar: 'Groovy.jar'],
+    'junit'                 : [jar: 'idea-junit.jar'],
+    'tasks-core'            : [dir: 'tasks'],
+    'testng'                : [jar: 'testng-plugin.jar'],
+    'ui-designer'           : [dir: 'uiDesigner', jar: 'uiDesigner.jar']
+  ])
   List<String> mainPluginModules =
     ["copyright", "java-i18n", "hg4idea", "github", "ant", "ui-designer", "properties",
      "maven", "gradle", "git4idea", "svn4idea", "junit", "ByteCodeViewer", "cvs-plugin", "testng", "xpath", "xslt-debugger",
