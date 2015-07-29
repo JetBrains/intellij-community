@@ -149,7 +149,7 @@ public class Task implements Named {
   public String getTestsText(@NotNull final Project project) {
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = taskDir.findChild("tests.py");
+      final VirtualFile file = taskDir.findChild(EduNames.TESTS_FILE);
       if (file == null) return null;
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {

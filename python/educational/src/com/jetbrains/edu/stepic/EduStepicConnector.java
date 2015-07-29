@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
@@ -429,7 +430,7 @@ public class EduStepicConnector {
       final StepOptions source = new StepOptions();
 
       final String text = task.getTestsText(project);
-      source.test = Collections.singletonList(new TestFileWrapper("tests.py", text));
+      source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, text));
       source.files = new ArrayList<TaskFile>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
