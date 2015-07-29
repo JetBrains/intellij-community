@@ -81,7 +81,11 @@ public class GuavaFluentIterableTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testLocalVariable() {
-    doTest();;
+    doTest();
+  }
+
+  public void testInsideLambda() {
+    doTest();
   }
 
   private void doTest() {
