@@ -61,6 +61,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private int myComponentConfigCount;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myInstantiatedComponentCount = -1;
+  private boolean myComponentsCreated;
 
   private final List<BaseComponent> myBaseComponents = new ArrayList<BaseComponent>();
 
@@ -101,6 +102,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       indicator.setIndeterminate(false);
     }
     createComponents(indicator);
+    myComponentsCreated = true;
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
@@ -135,7 +137,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public final boolean isComponentsCreated() {
-    return myComponentConfigCount != -1;
+    return myComponentsCreated;
   }
 
   protected synchronized final void disposeComponents() {
