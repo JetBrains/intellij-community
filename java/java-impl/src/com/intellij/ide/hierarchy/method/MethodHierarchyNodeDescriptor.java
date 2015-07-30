@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,10 +115,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       }
 
       if (myStateIcon != null) {
-        final RowIcon icon = new RowIcon(2);
-        icon.setIcon(myStateIcon, 0);
-        icon.setIcon(newIcon, 1);
-        newIcon = icon;
+        newIcon = new RowIcon(myStateIcon, newIcon);
       }
 
       setIcon(newIcon);
