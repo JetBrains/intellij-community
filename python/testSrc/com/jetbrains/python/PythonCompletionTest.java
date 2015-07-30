@@ -767,6 +767,14 @@ public class PythonCompletionTest extends PyTestCase {
     assertEmpty(variants);
   }
 
+  // PY-15119
+  public void testRelativeFromImportWhitespacesAfterDot() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("pkg/subpkg1/a.py");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "import", "subpkg1", "subpkg2", "m");
+  }
+
   public void testStructuralType() {
     doTest();
   }
