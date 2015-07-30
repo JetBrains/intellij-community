@@ -136,6 +136,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
         vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
         vm.defineProperty("idea.plugins.path", canonicalSandbox + File.separator + "plugins");
+        vm.defineProperty("idea.classpath.index.enabled", "false");
 
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
