@@ -18,6 +18,7 @@ package com.intellij.configurationStore
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorageOperation
@@ -33,49 +34,42 @@ import com.intellij.openapi.vfs.VfsUtil
 class ApplicationPathMacroManager : BasePathMacroManager(null)
 
 class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
-  private val stateStorageManager: StateStorageManager
+  private val storageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), "application", application.getPicoContainer(), application) {
+    override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
+      if (component is NamedJDOMExternalizable) {
+        return "${StoragePathMacros.APP_CONFIG}/${component.getExternalFileName()}${DirectoryStorageData.DEFAULT_EXT}"
+      }
+      else {
+        return DEFAULT_STORAGE_SPEC
+      }
+    }
+
+    override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}${DirectoryStorageData.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
+
+    override protected val isUseXmlProlog: Boolean
+      get() = false
+  }
 
   companion object {
     private val DEFAULT_STORAGE_SPEC = "${StoragePathMacros.APP_CONFIG}/${PathManager.DEFAULT_OPTIONS_FILE_NAME}${DirectoryStorageData.DEFAULT_EXT}"
+
+    private val FILE_STORAGE_DIR = "options"
   }
 
-  init {
-    stateStorageManager = object : StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), "application", application.getPicoContainer(), application) {
-      private var configDirectoryRefreshed = false
+  override fun setPath(path: String) {
+    storageManager.addMacro(ROOT_CONFIG, path)
+    storageManager.addMacro(StoragePathMacros.APP_CONFIG, "$path/$FILE_STORAGE_DIR")
 
-      override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-        if (component is NamedJDOMExternalizable) {
-          return "${StoragePathMacros.APP_CONFIG}/${component.getExternalFileName()}${DirectoryStorageData.DEFAULT_EXT}"
-        }
-        else {
-          return DEFAULT_STORAGE_SPEC
-        }
-      }
-
-      override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}${DirectoryStorageData.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
-
-      override protected val isUseXmlProlog: Boolean
-        get() = false
-
-      override fun beforeFileBasedStorageCreate() {
-        if (configDirectoryRefreshed || (!application.isUnitTestMode() && !application.isDispatchThread())) {
-          return
-        }
-
-        try {
-          val configPath = expandMacros(ROOT_CONFIG)
-          if (configPath == ROOT_CONFIG) {
-            LOG.warn("Macros ROOT_CONFIG is not defined")
-            return
-          }
-
-          val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configPath)
-          if (configDir != null) {
-            VfsUtil.markDirtyAndRefresh(false, true, true, configDir)
-          }
-        }
-        finally {
-          configDirectoryRefreshed = true
+    val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
+    if (configDir != null) {
+      invokeAndWaitIfNeed {
+        // not recursive, config directory contains various data - for example, ICS or shelf should not be refreshed,
+        // but we refresh direct children to avoid refreshAndFindFile in SchemeManager (to find schemes directory)
+        VfsUtil.markDirtyAndRefresh(false, false, true, configDir)
+        val optionsDir = configDir.findChild(FILE_STORAGE_DIR)
+        if (optionsDir != null) {
+          // not recursive, options directory contains only files
+          VfsUtil.markDirtyAndRefresh(false, false, true, optionsDir)
         }
       }
     }
@@ -83,5 +77,5 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
 
   override fun getMessageBus() = application.getMessageBus()
 
-  override fun getStateStorageManager() = stateStorageManager
+  override fun getStateStorageManager() = storageManager
 }

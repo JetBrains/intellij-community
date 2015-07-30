@@ -91,7 +91,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     getPicoContainer().registerComponentInstance(Project.class, this);
 
     if (!isDefault()) {
-      getStateStore().setProjectFilePath(filePath);
+      getStateStore().setPath(filePath);
     }
 
     myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
@@ -198,8 +198,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @NotNull
-  @Override
-  public IProjectStore getStateStore() {
+  IProjectStore getStateStore() {
     return (IProjectStore)ComponentsPackage.getStateStore(this);
   }
 
@@ -222,23 +221,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   @NotNull
   public String getProjectFilePath() {
-    return getStateStore().getProjectFilePath();
+    return isDefault() ? "" : getStateStore().getProjectFilePath();
   }
 
   @Override
   public VirtualFile getProjectFile() {
-    return getStateStore().getProjectFile();
+    return isDefault() ? null : getStateStore().getProjectFile();
   }
 
   @Override
   public VirtualFile getBaseDir() {
-    return getStateStore().getProjectBaseDir();
+    return isDefault() ? null : getStateStore().getProjectBaseDir();
   }
 
   @Nullable
   @Override
   public String getBasePath() {
-    return getStateStore().getProjectBasePath();
+    return isDefault() ? null : getStateStore().getProjectBasePath();
   }
 
   @NotNull
@@ -250,7 +249,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String getPresentableUrl() {
-    if (myName == null) return null;  // not yet initialized
+    if (myName == null || isDefault()) {
+      // not yet initialized
+      return null;
+    }
     return getStateStore().getPresentableUrl();
   }
 
@@ -261,14 +263,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     String str = getPresentableUrl();
     if (str == null) str = getName();
 
-    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
+    final String prefix = !isDefault() && getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    return getStateStore().getWorkspaceFile();
+    return isDefault() ? null : getStateStore().getWorkspaceFile();
   }
 
   @Override
@@ -352,7 +354,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         }
       }
 
-      StoreUtil.save(getStateStore(), this);
+      StoreUtil.save(ComponentsPackage.getStateStore(this), this);
     }
     finally {
       mySavingInProgress.set(false);
@@ -446,8 +448,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void checkUnknownMacros(final boolean showDialog) {
-    final IProjectStore stateStore = getStateStore();
-    TrackingPathMacroSubstitutor[] substitutors = stateStore.getSubstitutors();
+    final IComponentStore stateStore = ComponentsPackage.getStateStore(this);
+    // default project doesn't have it
+    TrackingPathMacroSubstitutor[] substitutors = stateStore instanceof IProjectStore ? ((IProjectStore)stateStore).getSubstitutors() : new TrackingPathMacroSubstitutor[]{};
     Set<String> unknownMacros = new THashSet<String>();
     for (TrackingPathMacroSubstitutor substitutor : substitutors) {
       unknownMacros.addAll(substitutor.getUnknownMacros(null));

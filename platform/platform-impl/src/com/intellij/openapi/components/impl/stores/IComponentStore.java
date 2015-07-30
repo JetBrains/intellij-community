@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
+  void setPath(@NotNull String path);
+
   void initComponent(@NotNull Object component, boolean service);
 
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);

@@ -28,7 +28,7 @@ import com.intellij.util.containers.ContainerUtil
 import java.io.File
 import kotlin.properties.Delegates
 
-class DefaultProjectStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   companion object {
     val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
   }
@@ -37,43 +37,49 @@ class DefaultProjectStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroM
     service<DefaultProjectExportableAndSaveTrigger>()!!.project = project
   }
 
-  private val storage: DefaultProjectStorage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+  private val storage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+
+  private val storageManager = object : StateStorageManager {
+    override fun getMacroSubstitutor() = null
+
+    override fun getStateStorage(storageSpec: Storage) = storage
+
+    override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
+
+    override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileBasedStorage>> = Couple(emptyList<FileBasedStorage>(), emptyList<FileBasedStorage>())
+
+    override fun clearStateStorage(file: String) {
+    }
+
+    override fun startExternalization(): StateStorageManager.ExternalizationSession? {
+      val externalizationSession = storage.startExternalization()
+      return if (externalizationSession == null) null else MyExternalizationSession(externalizationSession)
+    }
+
+    override fun expandMacros(file: String) = throw UnsupportedOperationException("Method expandMacros not implemented in " + javaClass)
+
+    override fun collapseMacros(path: String) = throw UnsupportedOperationException("Method collapseMacros not implemented in " + javaClass)
+
+    override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
+
+    override fun setStreamProvider(streamProvider: StreamProvider?) = throw UnsupportedOperationException("Method setStreamProvider not implemented in " + javaClass)
+
+    override fun getStreamProvider() = throw UnsupportedOperationException("Method getStreamProviders not implemented in " + javaClass)
+
+    override fun getStorageFileNames() = throw UnsupportedOperationException("Method getStorageFileNames not implemented in " + javaClass)
+  }
 
   fun getStateCopy() = storage.loadLocalData()
 
-  override protected fun createStorageManager(): StateStorageManager {
-    //noinspection deprecation
-    return object : StateStorageManager {
-      override fun addMacro(macro: String, expansion: String) = throw UnsupportedOperationException("Method addMacro not implemented in " + javaClass)
+  override fun getMessageBus() = project.getMessageBus()
 
-      override fun getMacroSubstitutor() = null
+  override final fun getStateStorageManager() = storageManager
 
-      override fun getStateStorage(storageSpec: Storage) = storage
+  override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-      override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
+  override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, StorageScheme.DEFAULT)
 
-      override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileBasedStorage>> = Couple(emptyList<FileBasedStorage>(), emptyList<FileBasedStorage>())
-
-      override fun clearStateStorage(file: String) {
-      }
-
-      override fun startExternalization(): StateStorageManager.ExternalizationSession? {
-        val externalizationSession = storage.startExternalization()
-        return if (externalizationSession == null) null else MyExternalizationSession(externalizationSession)
-      }
-
-      override fun expandMacros(file: String) = throw UnsupportedOperationException("Method expandMacros not implemented in " + javaClass)
-
-      override fun collapseMacros(path: String) = throw UnsupportedOperationException("Method collapseMacros not implemented in " + javaClass)
-
-      override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
-
-      override fun setStreamProvider(streamProvider: StreamProvider?) = throw UnsupportedOperationException("Method setStreamProvider not implemented in " + javaClass)
-
-      override fun getStreamProvider() = throw UnsupportedOperationException("Method getStreamProviders not implemented in " + javaClass)
-
-      override fun getStorageFileNames() = throw UnsupportedOperationException("Method getStorageFileNames not implemented in " + javaClass)
-    }
+  override fun setPath(path: String) {
   }
 
   private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {

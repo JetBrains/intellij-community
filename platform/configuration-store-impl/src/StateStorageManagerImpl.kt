@@ -84,9 +84,18 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
 
   private data class Macro(val key: String, var value: String)
 
-  override final fun addMacro(macro: String, expansion: String) {
-    assert(!macro.isEmpty())
-    macros.add(Macro(macro, expansion))
+  fun addMacro(key: String, expansion: String) {
+    assert(!key.isEmpty())
+
+    // you must not add duplicated macro, but our ModuleImpl.setModuleFilePath does it (it will be fixed later)
+    for (macro in macros) {
+      if (key.equals(macro.key)) {
+        macro.value = expansion
+        return
+      }
+    }
+
+    macros.add(Macro(key, expansion))
   }
 
   override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType, storageSpec.storageClass.java as Class<out StateStorage>, storageSpec.stateSplitter.java)
@@ -161,7 +170,6 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
     }
 
     val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
-    beforeFileBasedStorageCreate()
     val storage = object : FileBasedStorage(file, fileSpec, effectiveRoamingType, getMacroSubstitutor(fileSpec), rootTagName, streamProvider) {
       override fun createStorageData() = createStorageData(myFileSpec, getFilePath())
 
@@ -186,9 +194,6 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
         storages.remove(fileSpec)
       }
     }
-  }
-
-  protected open fun beforeFileBasedStorageCreate() {
   }
 
   protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = pathMacroSubstitutor

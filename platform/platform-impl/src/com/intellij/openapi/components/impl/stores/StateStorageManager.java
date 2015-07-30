@@ -28,8 +28,6 @@ import java.util.List;
 public interface StateStorageManager {
   Topic<IStorageManagerListener> STORAGE_TOPIC = new Topic<IStorageManagerListener>("STORAGE_LISTENER", IStorageManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  void addMacro(@NotNull String macro, @NotNull String expansion);
-
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 

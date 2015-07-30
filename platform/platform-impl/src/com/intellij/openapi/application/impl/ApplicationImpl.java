@@ -32,11 +32,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -466,21 +464,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           // create ServiceManagerImpl at first to force extension classes registration
           getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
-          StateStorageManager storageManager = ComponentsPackage.getStateStore(ApplicationImpl.this).getStateStorageManager();
-
           String effectiveConfigPath = configPath == null ? PathManager.getConfigPath() : configPath;
-          //noinspection deprecation
-          storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, effectiveConfigPath);
-          storageManager.addMacro(StoragePathMacros.APP_CONFIG, effectiveConfigPath + "/options");
-
           for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
             try {
-              listener.beforeApplicationLoaded(ApplicationImpl.this);
+              listener.beforeApplicationLoaded(ApplicationImpl.this, effectiveConfigPath);
             }
             catch (Throwable e) {
               LOG.error(e);
             }
           }
+
+          // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+          ComponentsPackage.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
         }
       });
       t = System.currentTimeMillis() - t;

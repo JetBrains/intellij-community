@@ -35,13 +35,3 @@ public fun byteBufferToBytes(byteBuffer: ByteBuffer): ByteArray {
   byteBuffer.get(bytes)
   return bytes
 }
-
-fun getPluginSystemDir(): File {
-  val customPath = System.getProperty("ics.settingsRepository")
-  if (customPath == null) {
-    return File(PathManager.getConfigPath(), "settingsRepository")
-  }
-  else {
-    return File(FileUtil.expandUserHome(customPath))
-  }
-}

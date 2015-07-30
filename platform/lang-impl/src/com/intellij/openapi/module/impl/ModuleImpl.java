@@ -23,7 +23,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -80,11 +80,11 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   private void setModuleFilePath(@NotNull String filePath) {
-    String path = filePath.replace(File.separatorChar, '/');
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    StateStorageManager storageManager = ComponentsPackage.getStateStore(this).getStateStorageManager();
-    storageManager.clearStateStorage(StoragePathMacros.MODULE_FILE);
-    storageManager.addMacro(StoragePathMacros.MODULE_FILE, path);
+    String normalizedPath = filePath.replace(File.separatorChar, '/');
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
+    IComponentStore store = ComponentsPackage.getStateStore(this);
+    store.getStateStorageManager().clearStateStorage(StoragePathMacros.MODULE_FILE);
+    store.setPath(normalizedPath);
   }
 
   @Override
@@ -105,7 +105,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       public void run() {
         // create ServiceManagerImpl at first to force extension classes registration
         getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
-        ComponentsPackage.getStateStore(ModuleImpl.this).getStateStorageManager().addMacro(StoragePathMacros.MODULE_FILE, path);
+        ComponentsPackage.getStateStore(ModuleImpl.this).setPath(path);
 
         if (beforeComponentCreation != null) {
           beforeComponentCreation.run();

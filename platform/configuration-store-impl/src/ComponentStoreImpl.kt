@@ -62,10 +62,11 @@ public abstract class ComponentStoreImpl : IComponentStore {
   private val myComponents = Collections.synchronizedMap(THashMap<String, Any>())
   private val mySettingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
 
-  protected open val defaultStorageChooser: StateStorageChooser<PersistentStateComponent<*>>? = null
-
   protected open val project: Project?
     get() = null
+
+  // return null if not applicable
+  protected open fun selectDefaultStorages(storages:Array<Storage>, operation:StateStorageOperation): Array<Storage>? = null
 
   override fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
@@ -316,7 +317,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
     catch (e: JDOMException) {
       throw StateStorageException("Error loading state from " + url, e)
     }
-
   }
 
   protected open fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
@@ -333,9 +333,9 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return stateStorageChooser.selectStorages(storages, component, operation)
     }
 
-    val defaultChooser = defaultStorageChooser
-    if (defaultChooser != null) {
-      return defaultChooser.selectStorages(storages, component, operation)
+    val defaultStorages = selectDefaultStorages(storages, operation)
+    if (defaultStorages != null) {
+      return defaultStorages
     }
 
     var actualStorageCount = 0

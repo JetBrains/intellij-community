@@ -151,23 +151,24 @@ class ApplicationStoreTest : LightPlatformTestCase() {
   }
 
   class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl(), Disposable {
-    private val stateStorageManager: StateStorageManager
-
-    init {
-      val macroSubstitutor = ApplicationPathMacroManager().createTrackingSubstitutor()
-      stateStorageManager = object : StateStorageManagerImpl(macroSubstitutor, "application", ApplicationManager.getApplication().getPicoContainer()) {
-        override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
-          if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
-            return null
-          }
-          return super.getMacroSubstitutor(fileSpec)
+    private val storageManager = object : StateStorageManagerImpl(ApplicationPathMacroManager().createTrackingSubstitutor(), "application", ApplicationManager.getApplication().getPicoContainer()) {
+      override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
+        if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
+          return null
         }
+        return super.getMacroSubstitutor(fileSpec)
       }
-
-      stateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, testAppConfigPath)
     }
 
-    override fun getStateStorageManager() = stateStorageManager
+    init {
+      setPath(testAppConfigPath)
+    }
+
+    override fun setPath(path: String) {
+      storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
+    }
+
+    override fun getStateStorageManager() = storageManager
 
     override fun dispose() {
     }
