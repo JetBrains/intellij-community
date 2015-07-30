@@ -53,28 +53,23 @@ import java.util.Map;
 public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
-  /**
-   * @deprecated to remove in IDEA 16
-   */
   protected static Class myInAction = null;
-  private static Class ourLastAction = null;
   private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
   private static final Map<Class, List<String>> ourHistory = ContainerUtil.newHashMap();
   private int myHistoryIndex = 0;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    LOG.assertTrue(!getClass().equals(myInAction));
     try {
-      final Class<? extends GotoActionBase> currentAction = getClass();
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourLastAction = currentAction;
-      myInAction = currentAction;
-      List<String> strings = ourHistory.get(currentAction);
-      myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(currentAction) ? 0 : 1;
+      myInAction = getClass();
+      List<String> strings = ourHistory.get(myInAction);
+      myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(myInAction) ? 0 : 1;
       gotoActionPerformed(e);
     }
     catch (Throwable t) {
       LOG.error(t);
+      myInAction = null;
     }
   }
 
@@ -85,7 +80,7 @@ public abstract class GotoActionBase extends AnAction {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    presentation.setEnabled(!getClass().equals(ourLastAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
+    presentation.setEnabled(!getClass().equals (myInAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
     presentation.setVisible(hasContributors(dataContext));
   }
 
@@ -151,8 +146,8 @@ public abstract class GotoActionBase extends AnAction {
       }
     }
 
-    if (ourLastAction != null) {
-      final Pair<String, Integer> lastString = ourLastStrings.get(ourLastAction);
+    if (myInAction != null) {
+      final Pair<String, Integer> lastString = ourLastStrings.get(myInAction);
       if (lastString != null) {
         return lastString;
       }
@@ -217,13 +212,14 @@ public abstract class GotoActionBase extends AnAction {
                                          final ChooseByNamePopup popup,
                                          final boolean allowMultipleSelection) {
 
-    final Class startedAction = getClass();
+    final Class startedAction = myInAction;
+    LOG.assertTrue(startedAction != null);
 
     popup.setCheckBoxShortcut(getShortcutSet());
     popup.setFindUsagesTitle(findUsagesTitle);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
-    if (historyEnabled(startedAction) && popup.getAdText() == null) {
+    if (historyEnabled() && popup.getAdText() == null) {
       popup.setAdText("Press " +
                       KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_MASK)) + " or " +
                       KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_MASK)) +
@@ -234,10 +230,11 @@ public abstract class GotoActionBase extends AnAction {
       @Override
       public void onClose() {
         //noinspection ConstantConditions
-        if (startedAction != null && startedAction.equals(ourLastAction)) {
+        if (startedAction != null && startedAction.equals(myInAction)) {
           String text = popup.getEnteredText();
-          ourLastStrings.put(startedAction, Pair.create(text, popup.getSelectedIndex()));
+          ourLastStrings.put(myInAction, Pair.create(text, popup.getSelectedIndex()));
           updateHistory(text);
+          myInAction = null;
         }
         if (filter != null) {
           filter.close();
@@ -246,12 +243,12 @@ public abstract class GotoActionBase extends AnAction {
 
       private void updateHistory(@Nullable String text) {
         if (!StringUtil.isEmptyOrSpaces(text)) {
-          List<String> history = ourHistory.get(startedAction);
+          List<String> history = ourHistory.get(myInAction);
           if (history == null) history = ContainerUtil.newArrayList();
           if (!text.equals(ContainerUtil.getFirstItem(history))) {
             history.add(0, text);
           }
-          ourHistory.put(startedAction, history);
+          ourHistory.put(myInAction, history);
         }
       }
 
@@ -273,7 +270,7 @@ public abstract class GotoActionBase extends AnAction {
     abstract class HistoryAction extends DumbAwareAction {
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(historyEnabled(startedAction));
+        e.getPresentation().setEnabled(historyEnabled());
       }
 
       void setText(@NotNull List<String> strings) {
@@ -290,7 +287,7 @@ public abstract class GotoActionBase extends AnAction {
     new HistoryAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        List<String> strings = ourHistory.get(startedAction);
+        List<String> strings = ourHistory.get(myInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex >= strings.size() - 1 ? 0 : myHistoryIndex + 1;
       }
@@ -300,14 +297,14 @@ public abstract class GotoActionBase extends AnAction {
     new HistoryAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        List<String> strings = ourHistory.get(startedAction);
+        List<String> strings = ourHistory.get(myInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ctrl DOWN"), editor);
   }
 
-  private static boolean historyEnabled(final Class action) {
-    return !ContainerUtil.isEmpty(ourHistory.get(action));
+  private static boolean historyEnabled() {
+    return !ContainerUtil.isEmpty(ourHistory.get(myInAction));
   }
 }
