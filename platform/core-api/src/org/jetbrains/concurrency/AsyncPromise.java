@@ -334,8 +334,8 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         rejected.consume(error);
       }
     }
-    else if (!(error instanceof MessageError)) {
-      LOG.error(error);
+    else {
+      Promise.logError(LOG, error);
     }
     return true;
   }
