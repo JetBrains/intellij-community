@@ -15,11 +15,19 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Map;
 
 /**
  * @author traff
  */
 public interface HelperModule {
-  void addToPythonPath(Map<String, String> environment);
+  void addToPythonPath(@NotNull Map<String, String> environment);
+
+  void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd);
+
+  String asParamString();
 }

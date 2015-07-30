@@ -79,6 +79,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_EXE_OPTIONS = "Exe Options";
   public static final String GROUP_DEBUGGER = "Debugger";
   public static final String GROUP_PROFILER = "Profiler";
+  public static final String GROUP_COVERAGE = "Coverage";
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
@@ -250,6 +251,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_EXE_OPTIONS);
     params.addParamsGroup(GROUP_DEBUGGER);
     params.addParamsGroup(GROUP_PROFILER);
+    params.addParamsGroup(GROUP_COVERAGE);
     params.addParamsGroup(GROUP_SCRIPT);
   }
 

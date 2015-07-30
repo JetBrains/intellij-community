@@ -15,25 +15,44 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Map;
 
 public enum PythonHelpersLocator implements HelperModule {
-  COVERAGEPY(new ZipModule("coveragepy.zip"));
+  COVERAGEPY("", "coveragepy.zip"), COVERAGE("run_coverage", "coverage.zip", "run_coverage.py"),
+  DEBUGGER("pydevd", "debugger.zip", "pydev/pydevd.py"),
+  CONSOLE("pydevconsole", "debugger.zip", "pydev/pydevconsole.py");
+
+  @NotNull
+  private PathModule findModule(String moduleName, String zipPath, String ... fallbackPaths) {
+    if (getHelperFile(zipPath).isFile()) {
+      return new ZipModule(moduleName, zipPath);
+    }
+    for (String p: fallbackPaths) {
+      if (getHelperFile(p).exists()) {
+        return new PathModule(p);
+      }
+    }
+    throw new IllegalStateException("Corrupted installation. Helper module not found: " + name());
+  }
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
   private static final String COMMUNITY_SUFFIX = "-community";
 
-  private ZipModule myModule;
+  private PathModule myModule;
 
-  PythonHelpersLocator(ZipModule module) {
-    myModule = module;
+  PythonHelpersLocator(String moduleName, String path, String ... fallbackPaths) {
+    myModule = findModule(moduleName, path, fallbackPaths);
   }
 
 
@@ -86,22 +105,58 @@ public enum PythonHelpersLocator implements HelperModule {
     return new File(PathManager.getHomePath(), "python").getPath();
   }
 
-  public static class ZipModule implements HelperModule {
+  public static class PathModule implements HelperModule {
     private final File myPath;
 
-    public ZipModule(String relativePath) {
+    public PathModule(String relativePath) {
       myPath = getHelperFile(relativePath);
     }
 
     @Override
-    public void addToPythonPath(Map<String, String> environment) {
+    public void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.addToPythonPath(environment, myPath.getAbsolutePath());
+    }
+
+    @Override
+    public void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd) {
+      addToPythonPath(cmd.getEnvironment());
+      group.addParameter(asParamString());
+    }
+
+    @Override
+    public String asParamString() {
+      return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
+    }
+  }
+
+  public static class ZipModule extends PathModule {
+    private final String myModuleName;
+
+    public ZipModule(String moduleName, String relativePath) {
+      super(relativePath);
+      this.myModuleName = moduleName;
+    }
+
+    @Override
+    public String asParamString() {
+      return "-m" + myModuleName;
     }
   }
 
 
   @Override
-  public void addToPythonPath(Map<String, String> environment) {
+  public void addToPythonPath(@NotNull Map<String, String> environment) {
     myModule.addToPythonPath(environment);
+  }
+
+  @Override
+  public void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd) {
+    myModule.addToGroup(group, cmd);
+  }
+
+
+  @Override
+  public String asParamString() {
+    return myModule.asParamString();
   }
 }
