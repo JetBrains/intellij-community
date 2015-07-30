@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,11 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = new Comparator<ThreadReferenceProxyImpl>() {
     @Override
     public int compare(ThreadReferenceProxyImpl th1, ThreadReferenceProxyImpl th2) {
-      return th1.name().compareToIgnoreCase(th2.name());
+      int res = Comparing.compare(th2.isSuspended(), th1.isSuspended());
+      if (res == 0) {
+        return th1.name().compareToIgnoreCase(th2.name());
+      }
+      return res;
     }
   };
 
