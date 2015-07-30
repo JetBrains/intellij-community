@@ -18,6 +18,7 @@ package com.jetbrains.python.debugger;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -121,7 +122,12 @@ public class PyDebugRunner extends GenericProgramRunner {
 
   @Override
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
-    return createSession(state, environment).getRunContentDescriptor();
+    XDebugSession session = createSession(state, environment);
+    initSession(session, state, environment.getExecutor());
+    return session.getRunContentDescriptor();
+  }
+
+  protected void initSession(XDebugSession session, RunProfileState state, Executor executor) {
   }
 
   public static int findIndex(List<String> paramList, String paramName) {
