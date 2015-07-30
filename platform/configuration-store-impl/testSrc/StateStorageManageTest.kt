@@ -34,14 +34,22 @@ class StateStorageManageTest {
 
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
 
+  companion object {
+    val MACRO = "\$MACRO1$"
+  }
+
   public Before fun setUp() {
     val application = ApplicationManager.getApplication()
     storageManager = StateStorageManagerImpl(PathMacroManager.getInstance(application).createTrackingSubstitutor(), "foo", application.getPicoContainer())
-    storageManager.addMacro("\$MACRO1$", "/temp/m1")
+    storageManager.addMacro(MACRO, "/temp/m1")
   }
 
   public Test fun testCreateFileStateStorageMacroSubstituted() {
-    assertThat(storageManager.getStateStorage("\$MACRO1$/test.xml", RoamingType.PER_USER), notNullValue())
+    assertThat(storageManager.getStateStorage("$MACRO/test.xml", RoamingType.PER_USER), notNullValue())
+  }
+
+  public Test fun `collapse macro`() {
+    assertThat(storageManager.collapseMacros("/temp/m1/foo"), equalTo("$MACRO/foo"))
   }
 
   public Test fun `create storage assertion thrown when unknown macro`() {
