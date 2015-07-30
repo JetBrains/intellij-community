@@ -150,16 +150,16 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
   }
 
   public Icon getIcon() {
-    if(isCurrent()) {
+    if (isCurrent()) {
       return AllIcons.Debugger.ThreadCurrent;
     }
-    if(isFrozen()) {
-      return AllIcons.Debugger.ThreadFrozen;
-    }
-    if(isAtBreakpoint()) {
+    if (isAtBreakpoint()) {
       return AllIcons.Debugger.ThreadAtBreakpoint;
     }
-    if(isSuspended()) {
+    if (isFrozen()) {
+      return AllIcons.Debugger.ThreadFrozen;
+    }
+    if (isSuspended()) {
       return AllIcons.Debugger.ThreadSuspended;
     }
     return AllIcons.Debugger.ThreadRunning;

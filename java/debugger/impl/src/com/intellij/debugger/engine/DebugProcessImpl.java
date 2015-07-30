@@ -1745,7 +1745,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         suspendManager.freezeThread(myThread);
         SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_EVENT_THREAD, 0);
         suspendContext.setThread(myThread.getThreadReference());
-        mySuspendManager.notifyPaused(suspendContext);
+        myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
       }
     }
   }
