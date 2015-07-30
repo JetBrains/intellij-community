@@ -243,7 +243,7 @@ public class PopFrameAction extends DebuggerAction {
   }
 
   @Nullable
-  private static StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
+  static StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(selectedNode != null) {
       NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
