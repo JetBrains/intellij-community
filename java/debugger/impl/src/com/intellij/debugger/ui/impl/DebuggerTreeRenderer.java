@@ -126,10 +126,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (nodeIcon != null && valueIcon != null) {
-      final RowIcon composite = new RowIcon(2);
-      composite.setIcon(nodeIcon, 0);
-      composite.setIcon(valueIcon, 1);
-      nodeIcon = composite;
+      nodeIcon = new RowIcon(nodeIcon, valueIcon);
     }
     return nodeIcon;
   }

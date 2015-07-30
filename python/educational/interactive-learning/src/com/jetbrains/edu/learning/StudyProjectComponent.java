@@ -84,7 +84,7 @@ public class StudyProjectComponent implements ProjectComponent {
   }
 
   public void registerStudyToolwindow(@Nullable final Course course) {
-    if (course != null) {
+    if (course != null && "PyCharm".equals(course.getCourseType())) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       registerToolWindow(toolWindowManager);
       final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
