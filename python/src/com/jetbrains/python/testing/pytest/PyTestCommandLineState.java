@@ -43,7 +43,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   }
 
   @Override
-  protected void addBeforeParameters(GeneralCommandLine cmd) throws ExecutionException {
+  protected void addBeforeParameters(GeneralCommandLine cmd) {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     script_params.addParameters("-p", "pytest_teamcity");
@@ -62,7 +62,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   }
 
   @Override
-  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+  protected void addAfterParameters(GeneralCommandLine cmd)  {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     String params = myConfiguration.getParams();

@@ -139,7 +139,7 @@ public class PythonTask {
       homePath = FileUtil.toSystemDependentName(homePath);
     }
 
-    PythonCommandLineState.createStandardGroupsIn(cmd);
+    PythonCommandLineState.createStandardGroups(cmd);
     ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert scriptParams != null;
 

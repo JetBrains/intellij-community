@@ -148,7 +148,7 @@ public class SphinxBaseCommand {
 
     ReSTService service = ReSTService.getInstance(module);
     cmd.setWorkDirectory(service.getWorkdir().isEmpty()? module.getProject().getBaseDir().getPath(): service.getWorkdir());
-    PythonCommandLineState.createStandardGroupsIn(cmd);
+    PythonCommandLineState.createStandardGroups(cmd);
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert script_params != null;
 

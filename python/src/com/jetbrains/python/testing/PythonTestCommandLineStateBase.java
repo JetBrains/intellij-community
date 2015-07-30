@@ -92,7 +92,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @Override
-  public GeneralCommandLine generateCommandLine() throws ExecutionException {
+  public GeneralCommandLine generateCommandLine()  {
     GeneralCommandLine cmd = super.generateCommandLine();
 
     setWorkingDirectory(cmd);
@@ -154,10 +154,10 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return executionResult;
   }
 
-  protected void addBeforeParameters(GeneralCommandLine cmd) throws ExecutionException {}
-  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {}
+  protected void addBeforeParameters(GeneralCommandLine cmd)  {}
+  protected void addAfterParameters(GeneralCommandLine cmd) {}
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd) throws ExecutionException {
+  protected void addTestRunnerParameters(GeneralCommandLine cmd)  {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), getRunner()).getAbsolutePath());
@@ -167,8 +167,8 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @Override
-  public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
-    super.addPredefinedEnvironmentVariables(envs, passParentEnvs);
+  public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+    super.customizeEnvironmentVars(envs, passParentEnvs);
     envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.getHelperPath("pycharm"));
   }
 

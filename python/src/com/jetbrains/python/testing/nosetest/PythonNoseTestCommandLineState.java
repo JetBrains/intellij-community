@@ -70,7 +70,7 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
   }
 
   @Override
-  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+  protected void addAfterParameters(GeneralCommandLine cmd)  {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))

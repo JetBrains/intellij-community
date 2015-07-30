@@ -31,7 +31,8 @@ import java.util.Map;
 public enum PythonHelpersLocator implements PythonHelper {
   COVERAGEPY("", "coveragepy"), COVERAGE("run_coverage", "coverage"),
   DEBUGGER("pydevd", "pydev"),
-  CONSOLE("pydevconsole", "pydev");
+  CONSOLE("pydevconsole", "pydev"),
+  RUN_IN_CONSOLE("pydev_run_in_console", "pydev");
 
   @NotNull
   private PathPythonHelper findModule(String moduleName, String path) {

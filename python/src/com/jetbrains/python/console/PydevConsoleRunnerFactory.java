@@ -54,8 +54,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     String[] setupFragment;
 
     PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
-    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
-                                                                             settingsProvider.addSourceRoots());
+    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.shouldAddContentRoots(),
+                                                                             settingsProvider.shouldAddSourceRoots());
 
     if (mappingSettings != null) {
       pythonPath = mappingSettings.convertToRemote(pythonPath);

@@ -122,19 +122,19 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+    protected void addAfterParameters(GeneralCommandLine cmd) {
       myState.addAfterParameters(cmd);
     }
 
     @Override
-    protected void addBeforeParameters(GeneralCommandLine cmd) throws ExecutionException {
+    protected void addBeforeParameters(GeneralCommandLine cmd) {
       myState.addBeforeParameters(cmd);
     }
 
     @Override
-    public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
-      myState.addPredefinedEnvironmentVariables(envs,
-                                                passParentEnvs);
+    public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+      myState.customizeEnvironmentVars(envs,
+                                       passParentEnvs);
     }
   }
 }
