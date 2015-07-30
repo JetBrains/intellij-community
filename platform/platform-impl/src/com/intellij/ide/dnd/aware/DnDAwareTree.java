@@ -16,7 +16,6 @@
 package com.intellij.ide.dnd.aware;
 
 import com.intellij.ide.dnd.DnDAware;
-import com.intellij.ide.dnd.TransferableList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.treeStructure.Tree;
@@ -32,23 +31,19 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public class DnDAwareTree extends Tree implements DnDAware {
   public DnDAwareTree() {
-    initDnD();
   }
 
   public DnDAwareTree(final TreeModel treemodel) {
     super(treemodel);
-    initDnD();
   }
 
   public DnDAwareTree(final TreeNode root) {
     super(root);
-    initDnD();
   }
 
   @Override
@@ -122,34 +117,5 @@ public class DnDAwareTree extends Tree implements DnDAware {
     return new Pair<Image, Point>(image, point);
   }
 
-  private void initDnD() {
-    if (!GraphicsEnvironment.isHeadless()) {
-      setDragEnabled(true);
-      setTransferHandler(DEFAULT_TRANSFER_HANDLER);
-    }
-  }
-
-  private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
-    @Override
-    protected Transferable createTransferable(JComponent component) {
-      if (component instanceof JTree) {
-        JTree tree = (JTree)component;
-        TreePath[] selection = tree.getSelectionPaths();
-        if (selection != null && selection.length > 1) {
-          return new TransferableList<TreePath>(selection) {
-            @Override
-            protected String toString(TreePath path) {
-              return String.valueOf(path.getLastPathComponent());
-            }
-          };
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public int getSourceActions(JComponent c) {
-      return COPY_OR_MOVE;
-    }
-  };
+  
 }
