@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker
@@ -89,14 +90,16 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     if (useVfs && (provider == null || !provider.enabled)) {
-      // store refreshes root directory, so, we don't need to use refreshAndFindFile
-      directory = LocalFileSystem.getInstance().findFileByIoFile(ioDirectory)
-      if (directory != null) {
-        try {
-          invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, false, true, directory) }
-        }
-        catch  (e: Throwable) {
-          LOG.error(e)
+      if (!Registry.`is`("use.read.action.to.init.service", true)) {
+        // store refreshes root directory, so, we don't need to use refreshAndFindFile
+        directory = LocalFileSystem.getInstance().findFileByIoFile(ioDirectory)
+        if (directory != null) {
+          try {
+            invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, false, true, directory) }
+          }
+          catch  (e: Throwable) {
+            LOG.error(e)
+          }
         }
       }
 

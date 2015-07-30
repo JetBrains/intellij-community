@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
@@ -27,8 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
@@ -211,37 +212,44 @@ public class ServiceManagerImpl implements BaseComponent {
     @Override
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
       Object instance = myInitializedComponentInstance;
-      if (instance != null) return instance;
+      if (instance != null) {
+        return instance;
+      }
 
-      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
-        @Override
-        public Object compute() {
-          // prevent storages from flushing and blocking FS
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
+      synchronized (this) {
+        instance = myInitializedComponentInstance;
+        if (instance != null) {
+          // DCL is fine, field is volatile
+          return instance;
+        }
+
+        ComponentAdapter delegate = getDelegate();
+        AccessToken readToken = null;
+        // prevent storages from flushing and blocking FS
+        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
+        try {
+          readToken = Registry.is("use.read.action.to.init.service", true) ? ReadAction.start() : null;
+          instance = delegate.getComponentInstance(container);
+          if (instance instanceof Disposable) {
+            Disposer.register(myComponentManager, (Disposable)instance);
+          }
+
+          myComponentManager.initializeComponent(instance, true);
+
+          myInitializedComponentInstance = instance;
+          return instance;
+        }
+        finally {
           try {
-            synchronized (MyComponentAdapter.this) {
-              Object instance = myInitializedComponentInstance;
-              if (instance != null) return instance; // DCL is fine, field is volatile
-              myInitializedComponentInstance = instance = initializeInstance(container);
-              return instance;
+            if (readToken != null) {
+              readToken.finish();
             }
           }
           finally {
             token.finish();
           }
         }
-      });
-    }
-
-    protected Object initializeInstance(final PicoContainer container) {
-      final Object serviceInstance = getDelegate().getComponentInstance(container);
-      if (serviceInstance instanceof Disposable) {
-        Disposer.register(myComponentManager, (Disposable)serviceInstance);
       }
-
-      myComponentManager.initializeComponent(serviceInstance, true);
-
-      return serviceInstance;
     }
 
     private synchronized ComponentAdapter getDelegate() {
