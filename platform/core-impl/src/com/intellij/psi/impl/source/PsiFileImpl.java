@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
@@ -441,8 +442,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     else if (myOriginalFile != null) {
       clone.myOriginalFile = myOriginalFile;
     }
-    
-    clone.clearCaches();
+
+    FileManagerImpl.clearPsiCaches(providerCopy);
 
     return clone;
   }
