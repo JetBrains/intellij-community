@@ -148,9 +148,9 @@ public class ServerIdeDocumentHistory(project: Project,
       if (myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
         if (!myBackInProgress && !myForwardInProgress) {
           if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) {
+            val current = getCurrentPlaceInfo()
             model?.transaction { m ->
               val cur = currentPlace(m) ?: throw IllegalStateException("Current shouldn't be null")
-              val current = getCurrentPlaceInfo()
               if (!IdeDocumentHistoryImpl.isSame(cur, current)) {
                 forward(m)
               }

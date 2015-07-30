@@ -36,6 +36,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.*
 
+public fun DefaultMutableTreeNode.text(view: UsageView): String = (if (this is Node) getText(view) else getUserObject().toString()) ?: ""
+
 public class ServerUsageView(val project: Project,
                              private val presentation: UsageViewPresentation,
                              val targets: Array<UsageTarget>,
@@ -52,7 +54,8 @@ public class ServerUsageView(val project: Project,
 
   val model: UsageViewTreeModelBuilder = UsageViewTreeModelBuilder(presentation, targets);
   val root = model.getRoot() as GroupNode
-  val builder = UsageNodeTreeBuilder(targets, UsageViewImpl.getActiveGroupingRules(project), UsageViewImpl.getActiveFilteringRules(project), root)
+  val rules = UsageViewImpl.getActiveGroupingRules(project)
+  val builder = UsageNodeTreeBuilder(targets, rules, UsageViewImpl.getActiveFilteringRules(project), root)
   val transferToEDTQueue = TransferToEDTQueue("Insert usages", object : Processor<Runnable> {
     override fun process(runnable: Runnable): Boolean {
       runnable.run()

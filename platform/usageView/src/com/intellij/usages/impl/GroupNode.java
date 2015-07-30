@@ -377,7 +377,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   protected String getText(@NotNull UsageView view) {
-    return myGroup.getText(view);
+    return myGroup != null ? myGroup.getText(view) : null;
   }
 
   @NotNull

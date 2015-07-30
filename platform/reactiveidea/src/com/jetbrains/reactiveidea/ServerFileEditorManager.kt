@@ -599,7 +599,7 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
       val host = editor.getUserData(EditorHost.editorHostKey)
       host.reactiveModel.transaction { m ->
         val tabs = host.path.dropLast(2).getIn(m)!!.meta["host"] as? TabViewHost
-        val model = tabs?.setActiveEditor(m, host.path.components.last().toString()) ?: m
+        val model = tabs?.setActiveTab(m, host.path.components.last().toString()) ?: m
 
         (IdeDocumentHistory.getInstance(proj) as IdeDocumentHistoryImpl).onSelectionChanged()
         model

@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerAdapter
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.usages.Usage
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactiveidea.history.host.HistoryHost
@@ -87,6 +88,17 @@ public class ReactiveModelsManager() : ApplicationComponent {
           model
         }
 
+        reactiveModel.registerHandler(lifetime.lifetime, "go-usage") { args: MapModel, model ->
+          val path = (args["path"] as ListModel).toPath()
+          val usage = path.getIn(model)!!.meta["usage"]
+          if (usage is Usage) {
+            EdtInvocationManager.getInstance().invokeLater {
+              usage.navigate(true)
+            }
+          }
+          model
+        }
+
         reactiveModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
           val path = (args["path"] as ListModel).toPath()
           val mapModel = path.getIn(model) as MapModel
@@ -105,10 +117,16 @@ public class ReactiveModelsManager() : ApplicationComponent {
           model
         }
 
+        for (project in ProjectManager.getInstance().getOpenProjects()) {
+          reactiveModel.host(Path(), { path, lifetime, initializer ->
+            ProjectHost(path, lifetime, initializer, project, reactiveModel)
+          })
+        }
+
         ProjectManager.getInstance().addProjectManagerListener(object : ProjectManagerAdapter() {
-          override fun projectOpened(project: Project?) {
+          override fun projectOpened(project: Project) {
             reactiveModel.host(Path(), { path, lifetime, initializer ->
-              ProjectHost(path, lifetime, initializer, project!!, reactiveModel)
+              ProjectHost(path, lifetime, initializer, project, reactiveModel)
             })
           }
         })

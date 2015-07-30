@@ -15,26 +15,33 @@
  */
 package com.jetbrains.reactiveidea.usages
 
-import com.intellij.usages.Usage
-import com.intellij.usages.UsagePresentation
-import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
+import com.intellij.usages.impl.ServerUsageView
+import com.intellij.usages.impl.UsageNode
+import com.intellij.usages.impl.text
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
+import com.jetbrains.reactivemodel.util.createMeta
+import com.jetbrains.reactivemodel.util.emptyMeta
+import java.util.Enumeration
 import java.util.HashMap
+import javax.swing.tree.DefaultMutableTreeNode
 
 public class UsageHost(val reactiveModel: ReactiveModel,
                        val path: Path,
                        val lifetime: Lifetime,
-                       val usageView: UsageView,
+                       val usageView: ServerUsageView,
                        init: Initializer) : Host {
 
   companion object {
     val presentation = "presentation"
     val usages = "usages"
+    val name = "name"
+    val targets = "targets"
+    val tree = "tree"
   }
 
   override val tags: Array<String>
@@ -43,29 +50,25 @@ public class UsageHost(val reactiveModel: ReactiveModel,
   init {
     init += { m ->
       m.putIn(path / presentation, convertPresentation(usageView.getPresentation()))
-          .putIn(path / usages, convertUsages(usageView.getUsages()))
+          .putIn(path / tree, convertTree(usageView.root))
+          .putIn(path / name, PrimitiveModel(usageView.getPresentation().getTabName()))
+
     }
   }
 
-  private fun convertUsages(usages: Set<Usage>): ListModel {
-    return ListModel(usages.map {
-      convertUsage(it)
-    }.toArrayList())
-  }
-
-  private fun convertUsage(usage: Usage): Model {
-    return MapModel(hashMapOf(
-        "valid" to PrimitiveModel(usage.isValid()),
-        "readOnly" to PrimitiveModel(usage.isReadOnly()),
-        "presentation" to convertUsagePresentation(usage.getPresentation())
-    ))
-  }
-
-  private fun convertUsagePresentation(presentation: UsagePresentation): Model {
-    return toModel(hashMapOf(
-        "plainText" to presentation.getPlainText(),
-        "tooltipText" to presentation.getTooltipText()
-    ))
+  private fun convertTree(node: DefaultMutableTreeNode): Model {
+    val text = node.text(usageView)
+    val value = if (text.isNotEmpty()) text else " "
+    val meta = if (node is UsageNode) createMeta("usage", node.getUsage()) else emptyMeta()
+    val childs = (node.children() as Enumeration<*>).asSequence()
+        .map { child ->
+          convertTree(child as DefaultMutableTreeNode)
+        }.toArrayList()
+    return if (childs.isEmpty()) {
+      PrimitiveModel(value, meta)
+    } else {
+      MapModel(hashMapOf(value to ListModel(childs)), meta)
+    }
   }
 
   private fun convertPresentation(presentation: UsageViewPresentation): MapModel {
@@ -76,6 +79,7 @@ public class UsageHost(val reactiveModel: ReactiveModel,
         "usagesString" to presentation.getUsagesString(),
         "targetNodeText" to presentation.getTargetsNodeText(),
         "nonCodeUsagesString" to presentation.getNonCodeUsagesString(),
+        "codeUsagesString" to presentation.getCodeUsagesString(),
         "usagesInGeneratedCodeString" to presentation.getUsagesInGeneratedCodeString(),
         "showReadOnlyStatusAsRed" to presentation.isShowReadOnlyStatusAsRed(),
         "showCancelButton" to presentation.isShowCancelButton(),

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewManager
+import com.intellij.usages.impl.ServerUsageView
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactiveidea.EditorHost
 import com.jetbrains.reactiveidea.usages.UsageHost
@@ -53,12 +54,13 @@ class TabViewHost(val project: Project,
         reactiveModel.transaction { m ->
           val tabs = m.getIn(path / tabPath) as? MapModel
           var model = m
-          if(tabs is MapModel) {
-            tabs.keySet().forEach { key ->
-              println("SET $key ACTIVE=${activeIdx == key}")
-              model = setEditorActive(model, activeIdx, activeIdx == key)
+          if (tabs is MapModel) {
+            tabs.entrySet().forEach { e ->
+              val value = e.value
+              if (value is MapModel && value.hmap.isNotEmpty()) {
+                model = setEditorActive(model, activeIdx, activeIdx == e.key)
+              }
             }
-            println("END")
           }
           model
         }
@@ -71,8 +73,10 @@ class TabViewHost(val project: Project,
         UIUtil.invokeLaterIfNeeded {
           val idx = nextIdx()
           reactiveModel.host(path / tabPath / idx) { path, lifetime, init ->
-            val host = UsageHost(reactiveModel, path, lifetime, usageView, init)
-            ensureActiveExists(idx, init)
+            val host = UsageHost(reactiveModel, path, lifetime, usageView as ServerUsageView, init)
+            init += {
+              setActiveTab(it, idx)
+            }
             host
           }
         }
@@ -91,7 +95,7 @@ class TabViewHost(val project: Project,
 
       init += { m ->
         if (active) {
-          setActiveEditor(m, idx)
+          setActiveTab(m, idx)
         } else m
       }
 
@@ -110,8 +114,8 @@ class TabViewHost(val project: Project,
     return (m.getIn(path / activePath) as? PrimitiveModel<*>)?.value as? String
   }
 
-  public fun setActiveEditor(m: MapModel, idx: String): MapModel {
-    if(m.getIn(path/tabPath/idx) == null) {
+  public fun setActiveTab(m: MapModel, idx: String): MapModel {
+    if (m.getIn(path / tabPath / idx) == null) {
       throw AssertionError("Editor $idx not exists")
     }
     return m.putIn(path / activePath, PrimitiveModel(idx))
