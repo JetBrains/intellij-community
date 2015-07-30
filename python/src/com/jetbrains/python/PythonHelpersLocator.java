@@ -18,17 +18,24 @@ package com.jetbrains.python;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.util.Map;
 
-public class PythonHelpersLocator {
+public enum PythonHelpersLocator implements HelperModule {
+  COVERAGEPY(new ZipModule("coveragepy.zip"));
+
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
-
   private static final String COMMUNITY_SUFFIX = "-community";
 
-  private PythonHelpersLocator() {
+  private ZipModule myModule;
+
+  PythonHelpersLocator(ZipModule module) {
+    myModule = module;
   }
+
 
   /**
    * @return the base directory under which various scripts, etc are stored.
@@ -52,6 +59,7 @@ public class PythonHelpersLocator {
 
   /**
    * Find a resource by name under helper root.
+   *
    * @param resourceName a path relative to helper root
    * @return absolute path of the resource
    */
@@ -61,6 +69,7 @@ public class PythonHelpersLocator {
 
   /**
    * Finds a resource file by name under helper root.
+   *
    * @param resourceName a path relative to helper root
    * @return a file object pointing to that path; existence is not checked.
    */
@@ -68,11 +77,31 @@ public class PythonHelpersLocator {
     return new File(getHelpersRoot(), resourceName);
   }
 
+
   public static String getPythonCommunityPath() {
     File pathFromUltimate = new File(PathManager.getHomePath(), "community/python");
     if (pathFromUltimate.exists()) {
       return pathFromUltimate.getPath();
     }
     return new File(PathManager.getHomePath(), "python").getPath();
+  }
+
+  public static class ZipModule implements HelperModule {
+    private final File myPath;
+
+    public ZipModule(String relativePath) {
+      myPath = getHelperFile(relativePath);
+    }
+
+    @Override
+    public void addToPythonPath(Map<String, String> environment) {
+      PythonEnvUtil.addToPythonPath(environment, myPath.getAbsolutePath());
+    }
+  }
+
+
+  @Override
+  public void addToPythonPath(Map<String, String> environment) {
+    myModule.addToPythonPath(environment);
   }
 }

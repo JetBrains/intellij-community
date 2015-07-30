@@ -4,10 +4,10 @@ import os
 import sys
 import imp
 
-helpers_root = os.getenv('PYCHARM_HELPERS_ROOT')
-if helpers_root:
+bundled_coverage_path = os.getenv('BUNDLED_COVERAGE_PATH')
+if bundled_coverage_path:
     sys_path_backup = sys.path
-    sys.path = [p for p in sys.path if p!=helpers_root]
+    sys.path = [p for p in sys.path if p != bundled_coverage_path]
     from coverage.cmdline import main
     sys.path = sys_path_backup
 else:
