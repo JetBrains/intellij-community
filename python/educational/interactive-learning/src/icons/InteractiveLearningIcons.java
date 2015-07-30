@@ -13,6 +13,7 @@ public class InteractiveLearningIcons {
     return IconLoader.getIcon(path, InteractiveLearningIcons.class);
   }
 
+  public static final Icon InterpreterGear = load("/icons/com/jetbrains/edu/learning/interpreterGear.png"); // 16x16
   public static final Icon Lesson = load("/icons/com/jetbrains/edu/learning/Lesson.png"); // 16x16
   public static final Icon LessonCompl = load("/icons/com/jetbrains/edu/learning/LessonCompl.png"); // 16x16
   public static final Icon Prev = load("/icons/com/jetbrains/edu/learning/prev.png"); // 16x16
