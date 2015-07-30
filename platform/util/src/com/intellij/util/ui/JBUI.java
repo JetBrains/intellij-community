@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
@@ -42,11 +43,11 @@ public class JBUI {
       return 1.0f;
     }
 
-    final int dpi = getSystemDPI();
-    if (dpi <= 96)  return 1.0f;
-    if (dpi <= 120) return 1.25f;
-    if (dpi <= 144) return 1.5f;
-    if (dpi <= 168) return 1.75f;
+    final int size = Fonts.label().getSize();
+    if (size <= 13) return 1.0f;
+    if (size <= 16) return 1.25f;
+    if (size <= 18) return 1.5f;
+    if (size < 24)  return 1.75f;
 
     return 2.0f;
   }
@@ -57,6 +58,17 @@ public class JBUI {
     } catch (HeadlessException e) {
       return 96;
     }
+  }
+
+  public static void setScaleFactor(float scale) {
+    if (scale < 1.25f) scale = 1.0f;
+    else if (scale < 1.5f) scale = 1.25f;
+    else if (scale < 1.75f) scale = 1.5f;
+    else if (scale < 2f) scale = 1.75f;
+    else scale = 2.0f;
+
+    SCALE_FACTOR = scale;
+    IconLoader.setScale(scale);
   }
 
   public static int scale(int i) {
