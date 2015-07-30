@@ -224,7 +224,7 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
   override final fun collapseMacros(path: String): String {
     var result = path
     for ((key, value) in macros) {
-      result = StringUtil.replace(result, key, value)
+      result = StringUtil.replace(result, value, key)
     }
     return result
   }
