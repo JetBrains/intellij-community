@@ -111,7 +111,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
         if (myClickHandler != null && id == MouseEvent.MOUSE_CLICKED) {
           if (!(me.getComponent() instanceof CloseButton) && insideBalloon) {
-            myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
+            myClickHandler.actionPerformed(new ActionEvent(me, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
             if (myCloseOnClick) {
               hide();
               return;

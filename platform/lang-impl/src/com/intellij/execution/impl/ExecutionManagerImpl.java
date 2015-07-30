@@ -541,7 +541,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (condition.value(trinity.getSecond())) {
         ProcessHandler processHandler = trinity.getFirst().getProcessHandler();
-        if (processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated()) {
+        if (processHandler != null /*&& !processHandler.isProcessTerminating()*/ && !processHandler.isProcessTerminated()) {
           result.add(trinity.getFirst());
         }
       }
