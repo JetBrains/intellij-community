@@ -181,7 +181,11 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   @Override
   public int compareTo(@NotNull BuildNumber o) {
+    //if both are snapshots then IDEA and plugin are built from sources,
+    //in that case comparing baselines doesn't make sense,
+    //so we treat those builds equal
     if (isSnapshot() && o.isSnapshot()) return 0;
+
     if (myBaselineVersion == o.myBaselineVersion) return myBuildNumber - o.myBuildNumber;
     return myBaselineVersion - o.myBaselineVersion;
   }
