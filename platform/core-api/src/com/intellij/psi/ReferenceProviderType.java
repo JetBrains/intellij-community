@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +30,7 @@ import java.util.List;
  */
 public class ReferenceProviderType {
   @NonNls public static final String EP_NAME = "com.intellij.referenceProviderType";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ReferenceProviderType");
   private static final KeyedExtensionCollector<PsiReferenceProvider,ReferenceProviderType> COLLECTOR =
     new KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType>(EP_NAME) {
     @NotNull
@@ -46,6 +48,7 @@ public class ReferenceProviderType {
   @NotNull
   public PsiReferenceProvider getProvider() {
     List<PsiReferenceProvider> list = COLLECTOR.forKey(this);
+    LOG.assertTrue(!list.isEmpty(), myId);
     return list.size() == 1 ? list.get(0) : new CompositePsiReferenceProvider(list);
   }
 
