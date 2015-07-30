@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,19 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 @State(
   name = "XmlEditorOptions",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")
 )
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
+  public static final Topic<WebEditorOptionsListener> WEB_EDITOR_OPTIONS =
+    new Topic<WebEditorOptionsListener>("web editor options changed", WebEditorOptionsListener.class);
+
   private boolean myBreadcrumbsEnabled = true;
   private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
@@ -59,6 +61,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setBreadcrumbsEnabled(boolean b) {
     myBreadcrumbsEnabled = b;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
   }
 
   public boolean isBreadcrumbsEnabledInXml() {
@@ -67,6 +70,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setBreadcrumbsEnabledInXml(boolean b) {
     myBreadcrumbsEnabledInXml = b;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
   }
 
   public boolean isShowCssInlineColorPreview() {
@@ -190,5 +194,9 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setSyncTagEditing(boolean syncTagEditing) {
     mySyncTagEditing = syncTagEditing;
+  }
+
+  public interface WebEditorOptionsListener {
+    void breadcrumbsOptionsChanged(@NotNull WebEditorOptions options);
   }
 }

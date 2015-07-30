@@ -79,7 +79,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<BreadcrumbsXmlWrapper>("BREADCRUMBS_KEY");
 
-  public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
+  public BreadcrumbsXmlWrapper(@NotNull final Editor editor, @NotNull WebEditorOptions webEditorOptions) {
     myEditor = editor;
     myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, this);
 
@@ -111,7 +111,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }, this);
 
 
-    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
+    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject), webEditorOptions);
 
     final CaretListener caretListener = new CaretAdapter() {
       @Override
@@ -355,10 +355,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider, @NotNull WebEditorOptions webEditorOptions) {
     BreadcrumbsInfoProvider provider = null;
     if (viewProvider != null) {
-      final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
       final Language baseLang = viewProvider.getBaseLanguage();
       provider = getInfoProvider(baseLang);
       if (!webEditorOptions.isBreadcrumbsEnabledInXml() && baseLang == XMLLanguage.INSTANCE) return null;
@@ -423,7 +422,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   @Override
   public void dispose() {
-    myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
+    if (myEditor != null) {
+      myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
+    }
     myEditor = null;
   }
 
