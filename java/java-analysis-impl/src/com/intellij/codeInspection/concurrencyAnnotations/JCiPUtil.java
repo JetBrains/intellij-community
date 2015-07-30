@@ -24,15 +24,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JCiPUtil {
+class JCiPUtil {
   @NonNls
   private static final String IMMUTABLE = "net.jcip.annotations.Immutable";
   @NonNls
   private static final String GUARDED_BY = "net.jcip.annotations.GuardedBy";
-  @NonNls
-  private static final String THREAD_SAFE = "net.jcip.annotations.ThreadSafe";
 
-  public static boolean isJCiPAnnotation(String ref) {
+  static boolean isJCiPAnnotation(String ref) {
     return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals("ref");
   }
 
@@ -49,18 +47,23 @@ public class JCiPUtil {
   }
 
   @Nullable
-  public static String findGuardForMember(PsiMember member) {
+  static String findGuardForMember(PsiMember member) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, GUARDED_BY);
     if (annotation != null) {
       return getGuardValue(annotation);
     }
-
+    if (member instanceof PsiCompiledElement) {
+      member = (PsiMember)member.getNavigationElement();
+      if (member == null || member instanceof PsiCompiledElement) {
+        return null; // can't analyze compiled code
+      }
+    }
     final GuardedTagVisitor visitor = new GuardedTagVisitor();
     member.accept(visitor);
     return visitor.getGuardString();
   }
 
-  public static boolean isGuardedBy(PsiMember member, String guard) {
+  static boolean isGuardedBy(PsiMember member, String guard) {
 
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, GUARDED_BY);
     if (annotation != null) {
@@ -69,7 +72,7 @@ public class JCiPUtil {
       final String fieldName = '"' + guard + '"';
       for (PsiNameValuePair pair : pairs) {
         final String name = pair.getName();
-        if (("value".equals(name) || name == null)) {
+        if ("value".equals(name) || name == null) {
           final PsiAnnotationMemberValue value = pair.getValue();
           if (value != null && value.getText().equals(fieldName)) {
             return true;
@@ -84,18 +87,18 @@ public class JCiPUtil {
     return isGuardedBy(member, field.getName());
   }
 
-  public static boolean isGuardedByAnnotation(PsiAnnotation annotation) {
+  static boolean isGuardedByAnnotation(PsiAnnotation annotation) {
     return GUARDED_BY.equals(annotation.getQualifiedName());
   }
 
-  public static boolean isGuardedByTag(PsiDocTag tag) {
+  static boolean isGuardedByTag(PsiDocTag tag) {
     final String text = tag.getText();
 
     return text.startsWith("@GuardedBy") && text.contains("(") && text.contains(")");
   }
 
   @Nullable
-  public static String getGuardValue(PsiAnnotation annotation) {
+  static String getGuardValue(PsiAnnotation annotation) {
     final PsiAnnotationParameterList parameters = annotation.getParameterList();
     final PsiNameValuePair[] pairs = parameters.getAttributes();
     for (PsiNameValuePair pair : pairs) {
@@ -117,13 +120,13 @@ public class JCiPUtil {
   }
 
   @NotNull
-  public static String getGuardValue(PsiDocTag tag) {
+  static String getGuardValue(PsiDocTag tag) {
     final String text = tag.getText();
     return text.substring(text.indexOf((int)'(') + 1, text.indexOf((int)')')).trim();
   }
 
-  private static class GuardedTagVisitor extends JavaRecursiveElementVisitor {
-    private String guardString = null;
+  private static class GuardedTagVisitor extends JavaRecursiveElementWalkingVisitor {
+    private String guardString;
 
     @Override
     public void visitDocTag(PsiDocTag tag) {
@@ -135,7 +138,7 @@ public class JCiPUtil {
     }
 
     @Nullable
-    public String getGuardString() {
+    private String getGuardString() {
       return guardString;
     }
   }

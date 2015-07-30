@@ -462,7 +462,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     };
   }
 
-  private class StringI18nVisitor extends JavaRecursiveElementVisitor {
+  private class StringI18nVisitor extends JavaRecursiveElementWalkingVisitor {
     private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
     private final InspectionManager myManager;
     private final boolean myOnTheFly;

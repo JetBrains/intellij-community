@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class ClassAccessVisitor extends JavaRecursiveElementVisitor {
+class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final Map<PsiClass, Integer> m_accessCounts =
     new HashMap<PsiClass, Integer>(2);
@@ -35,7 +35,6 @@ class ClassAccessVisitor extends JavaRecursiveElementVisitor {
   private final PsiClass currentClass;
 
   ClassAccessVisitor(PsiClass currentClass) {
-    super();
     this.currentClass = currentClass;
   }
 
@@ -78,17 +77,17 @@ class ClassAccessVisitor extends JavaRecursiveElementVisitor {
     final Map<PsiClass, Integer> accessCounts = m_accessCounts;
     final Integer count = accessCounts.get(calledClass);
     if (count == null) {
-      accessCounts.put(calledClass, Integer.valueOf(1));
+      accessCounts.put(calledClass, 1);
     }
     else if (count.equals(Integer.valueOf(1))) {
-      accessCounts.put(calledClass, Integer.valueOf(2));
+      accessCounts.put(calledClass, 2);
     }
     else {
       overAccessedClasses.add(calledClass);
     }
   }
 
-  public Set<PsiClass> getOveraccessedClasses() {
+  Set<PsiClass> getOveraccessedClasses() {
     return Collections.unmodifiableSet(m_overAccessedClasses);
   }
 }

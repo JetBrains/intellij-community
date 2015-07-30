@@ -21,16 +21,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
+class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiClass innerClass;
   private boolean referencesStaticallyAccessible = true;
 
-  public InnerClassReferenceVisitor(@NotNull PsiClass innerClass) {
+  InnerClassReferenceVisitor(@NotNull PsiClass innerClass) {
     this.innerClass = innerClass;
   }
 
-  public boolean canInnerClassBeStatic() {
+  boolean canInnerClassBeStatic() {
     final PsiClass superClass = innerClass.getSuperClass();
     if (superClass != null && !isClassStaticallyAccessible(superClass)) {
       return false;
@@ -70,10 +70,7 @@ class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
 
   private boolean hasContainingClassQualifier(PsiQualifiedExpression expression) {
     final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
-    if (qualifier == null) {
-      return false;
-    }
-    return !innerClass.equals(qualifier.resolve());
+    return qualifier != null && !innerClass.equals(qualifier.resolve());
   }
 
   @Override
@@ -144,7 +141,7 @@ class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
     }
     final PsiClassType classType = (PsiClassType)type;
     final PsiClass aClass = classType.resolve();
-    if ((aClass instanceof PsiTypeParameter) && !PsiTreeUtil.isAncestor(innerClass, aClass, true)) {
+    if (aClass instanceof PsiTypeParameter && !PsiTreeUtil.isAncestor(innerClass, aClass, true)) {
       referencesStaticallyAccessible = false;
     }
   }

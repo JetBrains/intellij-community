@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class CyclomaticComplexityVisitor extends JavaRecursiveElementVisitor {
+public class CyclomaticComplexityVisitor extends JavaRecursiveElementWalkingVisitor {
   private int m_complexity = 1;
 
   @Override

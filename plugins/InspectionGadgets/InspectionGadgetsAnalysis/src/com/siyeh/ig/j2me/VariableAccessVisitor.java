@@ -21,8 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class VariableAccessVisitor extends JavaRecursiveElementVisitor {
-
+class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   private final Map<PsiField, Integer> m_accessCounts =
     new HashMap<PsiField, Integer>(2);
   private final Set<PsiField> m_overAccessedFields =
@@ -52,17 +51,17 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
     final Map<PsiField, Integer> accessCounts = m_accessCounts;
     final Integer count = accessCounts.get(field);
     if (count == null) {
-      accessCounts.put(field, Integer.valueOf(1));
+      accessCounts.put(field, 1);
     }
     else if (count.intValue() == 1) {
-      accessCounts.put(field, Integer.valueOf(2));
+      accessCounts.put(field, 2);
     }
     else {
       overAccessedFields.add(field);
     }
   }
 
-  public Set<PsiField> getOveraccessedFields() {
+  Set<PsiField> getOveraccessedFields() {
     return Collections.unmodifiableSet(m_overAccessedFields);
   }
 }

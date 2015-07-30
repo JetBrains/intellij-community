@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-class CouplingVisitor extends JavaRecursiveElementVisitor {
-  private boolean m_inClass = false;
+class CouplingVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean m_inClass;
   private final PsiClass m_class;
   private final boolean m_includeJavaClasses;
   private final boolean m_includeLibraryClasses;
@@ -36,7 +36,6 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
 
   CouplingVisitor(PsiClass aClass, boolean includeJavaClasses,
                   boolean includeLibraryClasses) {
-    super();
     m_class = aClass;
     m_includeJavaClasses = includeJavaClasses;
     m_includeLibraryClasses = includeLibraryClasses;
@@ -185,7 +184,7 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
     m_dependencies.add(baseTypeName);
   }
 
-  public int getNumDependencies() {
+  int getNumDependencies() {
     return m_dependencies.size();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,11 @@ public class StringExpressionHelper {
         if (body != null) {
           final Set<PsiExpression> returns = new com.intellij.util.containers.HashSet<PsiExpression>();
 
-          body.accept(new JavaRecursiveElementVisitor() {
+          body.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
             public void visitClass(PsiClass aClass) {}
 
+            @Override
             public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
             @Override
@@ -129,7 +131,7 @@ public class StringExpressionHelper {
   }
 
   @Nullable
-  public static Pair<PsiElement, String> evaluatePsiLiteralExpression(@NotNull PsiElement expression) {
+  private static Pair<PsiElement, String> evaluatePsiLiteralExpression(@NotNull PsiElement expression) {
     return Pair.create(expression, ElementManipulators.getValueText(expression));
   }
 

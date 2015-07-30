@@ -127,8 +127,8 @@ public class RedundantCastUtil {
     }
   }
 
-  private static class MyIsRedundantVisitor extends JavaRecursiveElementVisitor {
-    private boolean isRedundant = false;
+  private static class MyIsRedundantVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean isRedundant;
     private final boolean myRecursive;
 
     private MyIsRedundantVisitor(final boolean recursive) {
@@ -710,7 +710,7 @@ public class RedundantCastUtil {
     return result.get().booleanValue();
   }
 
-  public static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
+  private static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
     PsiExpression operand = typeCast.getOperand();
     if (operand == null) return false;
 

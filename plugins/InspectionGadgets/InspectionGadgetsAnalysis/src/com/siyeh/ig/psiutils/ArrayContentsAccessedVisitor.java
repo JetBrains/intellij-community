@@ -20,12 +20,12 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor {
+class ArrayContentsAccessedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  private boolean accessed = false;
+  private boolean accessed;
   private final PsiVariable variable;
 
-  public ArrayContentsAccessedVisitor(@NotNull PsiVariable variable) {
+  ArrayContentsAccessedVisitor(@NotNull PsiVariable variable) {
     this.variable = variable;
   }
 

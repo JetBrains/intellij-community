@@ -17,13 +17,13 @@ class Test {
     return (str);
   }
 
-  @Nullable
+  @NotNull
   String foo2(@Nullable String str) {
     if (str == null) return "null";
     return ((String)str);
   }
 
-  @Nullable
+  @NotNull
   String fram(@Nullable String str, boolean b) {
     if (str != null) {
       return b ? str : "not null strimg";

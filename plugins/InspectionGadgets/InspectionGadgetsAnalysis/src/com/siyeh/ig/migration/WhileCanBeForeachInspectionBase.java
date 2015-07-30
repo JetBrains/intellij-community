@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class WhileCanBeForeachInspectionBase extends BaseInspection {
   @Nullable
-  public static PsiStatement getPreviousStatement(PsiElement context) {
+  static PsiStatement getPreviousStatement(PsiElement context) {
     final PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(context, PsiWhiteSpace.class, PsiComment.class);
     if (!(prevStatement instanceof PsiStatement)) {
       return null;
@@ -73,7 +73,6 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
   }
 
   private static class WhileCanBeForeachVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement) {
       super.visitWhileStatement(whileStatement);
@@ -221,8 +220,7 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
   }
 
   private static class NumberCallsToIteratorNextVisitor extends JavaRecursiveElementVisitor {
-
-    private int numCallsToIteratorNext = 0;
+    private int numCallsToIteratorNext;
     private final PsiVariable iterator;
 
     private NumberCallsToIteratorNextVisitor(PsiVariable iterator) {
@@ -249,17 +247,16 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
       numCallsToIteratorNext++;
     }
 
-    public int getNumCallsToIteratorNext() {
+    int getNumCallsToIteratorNext() {
       return numCallsToIteratorNext;
     }
   }
 
   private static class IteratorMethodCallVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean methodCalled = false;
+    private boolean methodCalled;
     private final PsiVariable iterator;
 
-    IteratorMethodCallVisitor(PsiVariable iterator) {
+    IteratorMethodCallVisitor(@NotNull PsiVariable iterator) {
       this.iterator = iterator;
     }
 
@@ -292,17 +289,16 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
       }
     }
 
-    public boolean isMethodCalled() {
+    boolean isMethodCalled() {
       return methodCalled;
     }
   }
 
   private static class IteratorHasNextVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean hasNextCalled = false;
+    private boolean hasNextCalled;
     private final PsiVariable iterator;
 
-    private IteratorHasNextVisitor(PsiVariable iterator) {
+    private IteratorHasNextVisitor(@NotNull PsiVariable iterator) {
       this.iterator = iterator;
     }
 
@@ -332,7 +328,7 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
       }
     }
 
-    public boolean isHasNextCalled() {
+    boolean isHasNextCalled() {
       return hasNextCalled;
     }
   }

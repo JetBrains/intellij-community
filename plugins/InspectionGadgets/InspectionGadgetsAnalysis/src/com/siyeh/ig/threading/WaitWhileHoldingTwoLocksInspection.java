@@ -58,8 +58,8 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
     }
 
     private void checkErrorsIn(PsiElement context) {
-      context.accept(new JavaRecursiveElementVisitor() {
-        private int m_numLocksHeld = 0;
+      context.accept(new JavaRecursiveElementWalkingVisitor() {
+        private int m_numLocksHeld;
 
         @Override
         public void visitClass(PsiClass aClass) {

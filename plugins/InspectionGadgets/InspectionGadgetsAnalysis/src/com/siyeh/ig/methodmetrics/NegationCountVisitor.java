@@ -19,10 +19,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-class NegationCountVisitor extends JavaRecursiveElementVisitor {
-
+class NegationCountVisitor extends JavaRecursiveElementWalkingVisitor {
   private final boolean myIgnoreInAssertStatements;
-  private int m_count = 0;
+  private int m_count;
+  private boolean ignoring;
 
   public NegationCountVisitor(boolean ignoreInAssertStatements) {
     myIgnoreInAssertStatements = ignoreInAssertStatements;
@@ -32,7 +32,7 @@ class NegationCountVisitor extends JavaRecursiveElementVisitor {
   public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
     super.visitBinaryExpression(expression);
     final IElementType tokenType = expression.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.NE)) {
+    if (!ignoring && tokenType.equals(JavaTokenType.NE)) {
       m_count++;
     }
   }
@@ -45,17 +45,24 @@ class NegationCountVisitor extends JavaRecursiveElementVisitor {
   @Override
   public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
     super.visitPrefixExpression(expression);
-    if (expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
+    if (!ignoring && expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
       m_count++;
     }
   }
 
   @Override
   public void visitAssertStatement(PsiAssertStatement statement) {
-    final int count = m_count;
-    super.visitAssertStatement(statement);
     if (myIgnoreInAssertStatements) {
-      m_count = count;
+      ignoring = true;
+    }
+    super.visitAssertStatement(statement);
+  }
+
+  @Override
+  protected void elementFinished(@NotNull PsiElement element) {
+    super.elementFinished(element);
+    if (element instanceof PsiAssertStatement) {
+      ignoring = false;
     }
   }
 

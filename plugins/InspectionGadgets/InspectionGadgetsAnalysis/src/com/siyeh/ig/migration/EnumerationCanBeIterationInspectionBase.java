@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class EnumerationCanBeIterationInspectionBase extends BaseInspection {
-  protected static final int KEEP_NOTHING = 0;
-  protected static final int KEEP_INITIALIZATION = 1;
-  protected static final int KEEP_DECLARATION = 2;
+  static final int KEEP_NOTHING = 0;
+  static final int KEEP_INITIALIZATION = 1;
+  static final int KEEP_DECLARATION = 2;
   @NonNls
   static final String ITERATOR_TEXT = "iterator()";
   @NonNls
@@ -148,12 +148,12 @@ public class EnumerationCanBeIterationInspectionBase extends BaseInspection {
     }
 
     private static class EnumerationMethodCalledVisitor
-      extends JavaRecursiveElementVisitor {
+      extends JavaRecursiveElementWalkingVisitor {
 
       private final PsiVariable variable;
-      private boolean enumerationMethodCalled = false;
+      private boolean enumerationMethodCalled;
 
-      EnumerationMethodCalledVisitor(@NotNull PsiVariable variable) {
+      private EnumerationMethodCalledVisitor(@NotNull PsiVariable variable) {
         this.variable = variable;
       }
 
@@ -187,7 +187,7 @@ public class EnumerationCanBeIterationInspectionBase extends BaseInspection {
         enumerationMethodCalled = this.variable.equals(variable);
       }
 
-      public boolean isEnumerationMethodCalled() {
+      private boolean isEnumerationMethodCalled() {
         return enumerationMethodCalled;
       }
     }

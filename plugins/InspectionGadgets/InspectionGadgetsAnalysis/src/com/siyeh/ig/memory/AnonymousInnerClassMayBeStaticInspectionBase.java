@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,9 +85,9 @@ public class AnonymousInnerClassMayBeStaticInspectionBase extends BaseInspection
       return visitor.hasReferenceToLocalClass();
     }
 
-    private static class LocalClassReferenceVisitor extends JavaRecursiveElementVisitor {
+    private static class LocalClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
 
-      private boolean referenceToLocalClass = false;
+      private boolean referenceToLocalClass;
 
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -102,7 +102,7 @@ public class AnonymousInnerClassMayBeStaticInspectionBase extends BaseInspection
         referenceToLocalClass = true;
       }
 
-      public boolean hasReferenceToLocalClass() {
+      private boolean hasReferenceToLocalClass() {
         return referenceToLocalClass;
       }
     }

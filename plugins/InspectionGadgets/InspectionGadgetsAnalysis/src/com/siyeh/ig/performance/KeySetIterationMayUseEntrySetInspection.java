@@ -184,21 +184,20 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       else {
         baseName = "entry";
       }
-      if (baseName == null || baseName.length() == 0) {
+      if (baseName == null || baseName.isEmpty()) {
         baseName = "entry";
       }
       return codeStyleManager.suggestUniqueVariableName(baseName, scope, true);
     }
 
-    private static class ParameterAccessCollector extends JavaRecursiveElementVisitor {
-
+    private static class ParameterAccessCollector extends JavaRecursiveElementWalkingVisitor {
       private final PsiParameter parameter;
       private final PsiElement map;
       private final String parameterName;
 
-      private final List<PsiExpression> parameterAccesses = new ArrayList();
+      private final List<PsiExpression> parameterAccesses = new ArrayList<PsiExpression>();
 
-      public ParameterAccessCollector(PsiParameter parameter, PsiElement map) {
+      private ParameterAccessCollector(PsiParameter parameter, PsiElement map) {
         this.parameter = parameter;
         parameterName = parameter.getName();
         this.map = map;
@@ -261,7 +260,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         return true;
       }
 
-      public List<PsiExpression> getParameterAccesses() {
+      private List<PsiExpression> getParameterAccesses() {
         Collections.reverse(parameterAccesses);
         return parameterAccesses;
       }
@@ -339,12 +338,12 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
   }
 
-  private static class GetValueFromMapChecker extends JavaRecursiveElementVisitor {
+  private static class GetValueFromMapChecker extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable key;
     private final PsiVariable map;
-    private boolean getValueFromMap = false;
-    private boolean tainted = false;
+    private boolean getValueFromMap;
+    private boolean tainted;
 
     GetValueFromMapChecker(@NotNull PsiVariable map, @NotNull PsiVariable key) {
       this.map = map;
@@ -403,7 +402,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       getValueFromMap = true;
     }
 
-    public boolean isGetValueFromMap() {
+    boolean isGetValueFromMap() {
       return getValueFromMap && !tainted;
     }
   }

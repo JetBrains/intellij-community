@@ -18,9 +18,9 @@ package com.siyeh.ig.methodmetrics;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class NestingDepthVisitor extends JavaRecursiveElementVisitor {
-  private int m_maximumDepth = 0;
-  private int m_currentDepth = 0;
+class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
+  private int m_maximumDepth;
+  private int m_currentDepth;
 
 
   @Override
@@ -116,7 +116,7 @@ class NestingDepthVisitor extends JavaRecursiveElementVisitor {
     m_currentDepth--;
   }
 
-  public int getMaximumDepth() {
+  int getMaximumDepth() {
     return m_maximumDepth;
   }
 }

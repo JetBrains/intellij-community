@@ -20,12 +20,12 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
+class ArrayContentsAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  private boolean assigned = false;
+  private boolean assigned;
   private final PsiVariable variable;
 
-  public ArrayContentsAssignedVisitor(@NotNull PsiVariable variable) {
+  ArrayContentsAssignedVisitor(@NotNull PsiVariable variable) {
     this.variable = variable;
   }
 
