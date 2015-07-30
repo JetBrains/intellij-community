@@ -1,6 +1,8 @@
 package com.intellij.tasks.integration;
 
 import com.google.gson.Gson;
+import com.intellij.openapi.util.Condition;
+import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.gitlab.GitlabRepository;
 import com.intellij.tasks.gitlab.GitlabTask;
@@ -9,6 +11,7 @@ import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collections;
 
@@ -18,6 +21,7 @@ import java.util.Collections;
  */
 public class GitlabIntegrationTest extends TaskManagerTestCase {
   private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  private static final String SERVER_URL = "http://trackers-tests.labs.intellij.net:8045";
   private GitlabRepository myRepository;
 
   public void testCommitMessageFormat() throws Exception {
@@ -55,9 +59,42 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
 
   }
 
+  public void testIssueFilteringByState() throws Exception {
+    final GitlabProject project = ContainerUtil.find(myRepository.getProjects(), new Condition<GitlabProject>() {
+      @Override
+      public boolean value(GitlabProject p) {
+        return p.getName().equals("Issue Filtering Tests");
+      }
+    });
+    assertNotNull(project);
+    myRepository.setCurrentProject(project);
+
+    final Task[] allIssues = myRepository.getIssues("", 0, 20, true);
+    assertSize(2, allIssues);
+    assertNotNull(ContainerUtil.find(allIssues, new Condition<Task>() {
+      @Override
+      public boolean value(Task task) {
+        return task.isClosed() && task.getSummary().equals("Closed issue #1");
+      }
+    }));
+    assertNotNull(ContainerUtil.find(allIssues, new Condition<Task>() {
+      @Override
+      public boolean value(Task task) {
+        return !task.isClosed() && task.getSummary().equals("Opened issue #1");
+      }
+    }));
+
+    final Task[] openedIssues = myRepository.getIssues("", 0, 20, false);
+    assertSize(1, openedIssues);
+    assertFalse(openedIssues[0].isClosed());
+    assertEquals("Opened issue #1", openedIssues[0].getSummary());
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myRepository = new GitlabRepository();
+    myRepository.setUrl(SERVER_URL);
+    myRepository.setPassword("PqbBxWaqFxZijQXKPLLo"); // buildtest
   }
 }
