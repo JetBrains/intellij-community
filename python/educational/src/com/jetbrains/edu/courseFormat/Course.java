@@ -26,6 +26,8 @@ public class Course {
   @Expose @SerializedName("language")
   private String myLanguage="Python";
 
+  private String courseType="PyCharm";
+
   /**
    * Initializes state of course
    */
@@ -126,5 +128,13 @@ public class Course {
 
   public void setAuthors(List<CourseInfo.Instructor> instructors) {
     this.authors = instructors;
+  }
+
+  public String getCourseType() {
+    return courseType;
+  }
+
+  public void setCourseType(String courseType) {
+    this.courseType = courseType;
   }
 }
