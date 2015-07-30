@@ -336,7 +336,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
     final Ref<ConfigurationException> exceptionRef = Ref.create();
-    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, ProjectManager.getInstance().getOpenProjects(), new Runnable() {
       @Override
       public void run() {
         try {
