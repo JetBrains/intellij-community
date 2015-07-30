@@ -181,6 +181,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   @Override
   public int compareTo(@NotNull BuildNumber o) {
+    if (isSnapshot() && o.isSnapshot()) return 0;
     if (myBaselineVersion == o.myBaselineVersion) return myBuildNumber - o.myBuildNumber;
     return myBaselineVersion - o.myBaselineVersion;
   }
