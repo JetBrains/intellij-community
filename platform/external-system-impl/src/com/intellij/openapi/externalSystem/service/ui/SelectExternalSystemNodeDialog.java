@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.service.project.wizard;
+package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
@@ -35,7 +36,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
@@ -49,21 +49,24 @@ import java.util.List;
  */
 public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
+  private final @NotNull ProjectSystemId mySystemId;
   private final SimpleTree myTree;
   private final NodeSelector mySelector;
 
-  public SelectExternalSystemNodeDialog(Project project,
+  public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
+                                        Project project,
                                         String title,
                                         final Class<? extends ExternalSystemNode> nodeClass,
                                         NodeSelector selector) {
     super(project, false);
+    mySystemId = systemId;
     mySelector = selector;
     setTitle(title);
 
     myTree = new SimpleTree();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    final ExternalProjectsView projectsView = ExternalProjectsManager.getInstance(project).getExternalProjectsView(GradleConstants.SYSTEM_ID);
+    final ExternalProjectsView projectsView = ExternalProjectsManager.getInstance(project).getExternalProjectsView(mySystemId);
     if(projectsView != null) {
       final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
         @SuppressWarnings("unchecked")
@@ -91,7 +94,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
       });
 
       final Collection<ExternalProjectInfo> projectsData =
-        ProjectDataManager.getInstance().getExternalProjectsData(project, GradleConstants.SYSTEM_ID);
+        ProjectDataManager.getInstance().getExternalProjectsData(project, mySystemId);
 
       final List<DataNode<ProjectData>> dataNodes =
         ContainerUtil.mapNotNull(projectsData, new Function<ExternalProjectInfo, DataNode<ProjectData>>() {
