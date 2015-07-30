@@ -233,8 +233,9 @@ public class PyDebugRunner extends GenericProgramRunner {
                                           @NotNull ParamsGroup debugParams,
                                           int serverLocalPort,
                                           @NotNull PythonCommandLineState pyState,
-                                          @NotNull GeneralCommandLine generalCommandLine) {
-    debugParams.addParameter(PythonHelpersLocator.getHelperPath(DEBUGGER_MAIN));
+                                          @NotNull GeneralCommandLine cmd) {
+    PythonHelpersLocator.DEBUGGER.addToGroup(debugParams, cmd);
+
     if (pyState.isMultiprocessDebug()) {
       //noinspection SpellCheckingInspection
       debugParams.addParameter("--multiproc");
@@ -253,10 +254,10 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
-      generalCommandLine.getEnvironment().put(GEVENT_SUPPORT, "True");
+      cmd.getEnvironment().put(GEVENT_SUPPORT, "True");
     }
 
-    addProjectRootsToEnv(project, generalCommandLine);
+    addProjectRootsToEnv(project, cmd);
 
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",

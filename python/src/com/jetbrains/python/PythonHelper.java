@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author traff
  */
-public interface HelperModule {
+public interface PythonHelper {
   void addToPythonPath(@NotNull Map<String, String> environment);
 
   void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd);

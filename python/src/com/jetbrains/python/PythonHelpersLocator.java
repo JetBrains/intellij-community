@@ -28,31 +28,35 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Map;
 
-public enum PythonHelpersLocator implements HelperModule {
-  COVERAGEPY("", "coveragepy.zip"), COVERAGE("run_coverage", "coverage.zip", "run_coverage.py"),
-  DEBUGGER("pydevd", "debugger.zip", "pydev/pydevd.py"),
-  CONSOLE("pydevconsole", "debugger.zip", "pydev/pydevconsole.py");
+public enum PythonHelpersLocator implements PythonHelper {
+  COVERAGEPY("", "coveragepy"), COVERAGE("run_coverage", "coverage"),
+  DEBUGGER("pydevd", "pydev"),
+  CONSOLE("pydevconsole", "pydev");
 
   @NotNull
-  private PathModule findModule(String moduleName, String zipPath, String ... fallbackPaths) {
-    if (getHelperFile(zipPath).isFile()) {
-      return new ZipModule(moduleName, zipPath);
+  private PathPythonHelper findModule(String moduleName, String path) {
+    if (getHelperFile(path + ".zip").isFile()) {
+      return new ModulePythonHelper(moduleName, path + ".zip");
     }
-    for (String p: fallbackPaths) {
-      if (getHelperFile(p).exists()) {
-        return new PathModule(p);
-      }
+
+    if (getHelperFile(path).isDirectory()) {
+        return new ModulePythonHelper(moduleName, path);
     }
-    throw new IllegalStateException("Corrupted installation. Helper module not found: " + name());
+
+    if (getHelperFile(path).isFile()) {
+      return new ScriptPythonHelper(path);
+    }
+
+    throw new IllegalStateException("Corrupted installation. Helper not found: " + name());
   }
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
   private static final String COMMUNITY_SUFFIX = "-community";
 
-  private PathModule myModule;
+  private PathPythonHelper myModule;
 
-  PythonHelpersLocator(String moduleName, String path, String ... fallbackPaths) {
-    myModule = findModule(moduleName, path, fallbackPaths);
+  PythonHelpersLocator(String moduleName, String pythonPath) {
+    myModule = findModule(moduleName, pythonPath);
   }
 
 
@@ -105,10 +109,10 @@ public enum PythonHelpersLocator implements HelperModule {
     return new File(PathManager.getHomePath(), "python").getPath();
   }
 
-  public static class PathModule implements HelperModule {
-    private final File myPath;
+  public static class PathPythonHelper implements PythonHelper {
+    protected final File myPath;
 
-    public PathModule(String relativePath) {
+    public PathPythonHelper(String relativePath) {
       myPath = getHelperFile(relativePath);
     }
 
@@ -129,10 +133,10 @@ public enum PythonHelpersLocator implements HelperModule {
     }
   }
 
-  public static class ZipModule extends PathModule {
+  public static class ModulePythonHelper extends PathPythonHelper {
     private final String myModuleName;
 
-    public ZipModule(String moduleName, String relativePath) {
+    public ModulePythonHelper(String moduleName, String relativePath) {
       super(relativePath);
       this.myModuleName = moduleName;
     }
@@ -140,6 +144,18 @@ public enum PythonHelpersLocator implements HelperModule {
     @Override
     public String asParamString() {
       return "-m" + myModuleName;
+    }
+  }
+
+  public static class ScriptPythonHelper extends PathPythonHelper {
+    public ScriptPythonHelper(String relativePath) {
+      super(relativePath);
+    }
+
+    @Override
+    public void addToPythonPath(@NotNull Map<String, String> environment) {
+      PythonEnvUtil.setPythonDontWriteBytecode(environment);
+      PythonEnvUtil.addToPythonPath(environment, myPath.getParent());
     }
   }
 
