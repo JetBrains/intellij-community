@@ -205,7 +205,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public void beforeDocumentChanged(@Nullable PsiFile psiCause) {
     PsiFile psiFile = psiCause != null ? psiCause : getPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileImpl) {
+    if (psiFile instanceof PsiFileImpl && myContent instanceof VirtualFileContent) {
       setContent(new PsiFileContent((PsiFileImpl)psiFile, psiCause == null ? getModificationStamp() : LocalTimeCounter.currentTime()));
       checkLengthConsistency();
     }
