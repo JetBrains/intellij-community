@@ -25,9 +25,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.debugger.ui.tree.ThreadDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,10 +42,10 @@ public class AddSteppingFilterAction extends DebuggerAction {
     if (process == null) {
       return;
     }
-    final StackFrameDescriptorImpl descriptor = PopFrameAction.getSelectedStackFrameDescriptor(e);
+    final StackFrameProxyImpl proxy = PopFrameAction.getStackFrameProxy(e);
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() throws Exception {
-        final String name = getClassName(descriptor != null ? descriptor.getFrameProxy() : debuggerContext.getFrameProxy());
+        final String name = getClassName(proxy != null ? proxy : debuggerContext.getFrameProxy());
         if (name == null) {
           return;
         }
@@ -69,13 +66,7 @@ public class AddSteppingFilterAction extends DebuggerAction {
   }
 
   public void update(AnActionEvent e) {
-    DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if (selectedNode != null && selectedNode.getDescriptor() instanceof ThreadDescriptor) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      e.getPresentation().setEnabledAndVisible(true);
-    }
+    e.getPresentation().setEnabledAndVisible(PopFrameAction.getStackFrameProxy(e) != null);
   }
 
   private static String getClassName(StackFrameProxyImpl stackFrameProxy) {
