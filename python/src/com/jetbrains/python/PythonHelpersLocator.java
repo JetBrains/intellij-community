@@ -109,10 +109,10 @@ public enum PythonHelpersLocator implements PythonHelper {
     return new File(PathManager.getHomePath(), "python").getPath();
   }
 
-  public static class PathPythonHelper implements PythonHelper {
+  public abstract static class PathPythonHelper implements PythonHelper {
     protected final File myPath;
 
-    public PathPythonHelper(String relativePath) {
+    PathPythonHelper(String relativePath) {
       myPath = getHelperFile(relativePath);
     }
 
@@ -133,6 +133,9 @@ public enum PythonHelpersLocator implements PythonHelper {
     }
   }
 
+  /**
+   * Module Python helper can be executed from zip-archive
+   */
   public static class ModulePythonHelper extends PathPythonHelper {
     private final String myModuleName;
 
@@ -147,6 +150,11 @@ public enum PythonHelpersLocator implements PythonHelper {
     }
   }
 
+  /**
+   * Script Python helper can be executed as a Python script, therefore
+   * PYTHONDONTWRITEBYTECODE option is set not to spoil installation
+   * with .pyc files
+   */
   public static class ScriptPythonHelper extends PathPythonHelper {
     public ScriptPythonHelper(String relativePath) {
       super(relativePath);
