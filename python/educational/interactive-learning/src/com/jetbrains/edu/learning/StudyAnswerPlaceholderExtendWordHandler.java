@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class AnswerPlaceholderExtendWordHandler implements ExtendWordSelectionHandler {
+public class StudyAnswerPlaceholderExtendWordHandler implements ExtendWordSelectionHandler {
 
   @Nullable
   private static AnswerPlaceholder getAnswerPlaceholder(PsiElement e, int offset) {
