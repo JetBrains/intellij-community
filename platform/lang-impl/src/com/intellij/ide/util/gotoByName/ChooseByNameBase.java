@@ -650,15 +650,6 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     myTextFieldPanel.hideHint();
   }
 
-  /**
-   * Default rebuild list. It uses {@link #myRebuildDelay} and current modality state.
-   */
-  @Override
-  public void rebuildList(boolean initial) {
-    // TODO this method is public, because the chooser does not listed for the model.
-    rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, ModalityState.current(), null);
-  }
-
   @Override
   protected void updateDocumentation() {
     final JBPopup hint = myTextFieldPanel.getHint();

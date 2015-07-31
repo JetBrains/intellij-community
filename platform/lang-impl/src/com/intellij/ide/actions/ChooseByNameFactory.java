@@ -33,5 +33,5 @@ public abstract class ChooseByNameFactory {
   public abstract ChooseByNameViewModel createChooseByName(ChooseByNameModel model,
                                               ChooseByNameItemProvider itemProvider,
                                               boolean mayRequestOpenInCurrentWindow,
-                                              Pair<String, Integer> start) ;
+                                              Pair<String, Integer> start);
   }

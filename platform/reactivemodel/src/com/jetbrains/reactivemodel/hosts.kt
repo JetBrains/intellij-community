@@ -65,7 +65,13 @@ public fun ReactiveModel.host<U : Host>(path: Path, h: (Path, Lifetime, Initiali
             "lifetime" to lifetimeDefinition.lifetime))))
   }
 
-  val aHost = h(path, lifetimeDefinition.lifetime, currentInit!!)
+  val aHost: U
+  try {
+    aHost = h(path, lifetimeDefinition.lifetime, currentInit!!)
+  } catch(e: Exception) {
+    currentInit = null
+    throw e
+  }
 
   currentInit!! += {
     it.putIn(path,

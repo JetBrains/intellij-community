@@ -188,7 +188,7 @@ public abstract class ChooseByNameViewModel {
     return isClosedByShiftEnter();
   }
 
-  abstract void setToolArea(JComponent toolArea);
+  public abstract void setToolArea(JComponent toolArea);
 
   public void setFindUsagesTitle(@Nullable String findUsagesTitle) {
     myFindUsagesTitle = findUsagesTitle;
@@ -260,7 +260,7 @@ public abstract class ChooseByNameViewModel {
 
   public void setAdText(String adText) {}
 
-  abstract void repaintList();
+  public abstract void repaintList();
 
   public abstract String getEnteredText();
 
@@ -274,7 +274,13 @@ public abstract class ChooseByNameViewModel {
 
   protected abstract void doHideHint();
 
-  abstract void rebuildList(boolean initial);
+  /**
+   * Default rebuild list. It uses {@link #myRebuildDelay} and current modality state.
+   */
+  public void rebuildList(boolean initial) {
+    // TODO this method is public, because the chooser does not listed for the model.
+    rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, ModalityState.current(), null);
+  }
 
   protected abstract void updateDocumentation();
 
@@ -593,7 +599,7 @@ public abstract class ChooseByNameViewModel {
   protected abstract void updateVisibleRowCount();
 
   @Nullable
-  abstract Object getChosenElement();
+  public abstract Object getChosenElement();
 
   protected abstract List<Object> getChosenElements();
 
@@ -650,7 +656,7 @@ public abstract class ChooseByNameViewModel {
     }, delay, t.myModalityState);
   }
 
-  abstract JTextField getTextField();
+  public abstract JTextField getTextField();
 
   protected static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
     @Override
