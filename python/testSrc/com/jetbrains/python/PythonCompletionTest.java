@@ -771,6 +771,12 @@ public class PythonCompletionTest extends PyTestCase {
     assertSameElements(myFixture.getLookupElementStrings(), "import", "subpkg1", "subpkg2", "m");
   }
 
+  // PY-15197
+  public void testKeywordArgumentEqualsSignSurroundedWithSpaces() {
+    getPythonCodeStyle().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTest();
+  }
+
   public void testStructuralType() {
     doTest();
   }
