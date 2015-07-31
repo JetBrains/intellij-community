@@ -773,7 +773,7 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-15197
   public void testKeywordArgumentEqualsSignSurroundedWithSpaces() {
-    getPythonCodeStyle().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
     doTest();
   }
 
