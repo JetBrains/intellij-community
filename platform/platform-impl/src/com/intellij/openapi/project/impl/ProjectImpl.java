@@ -46,6 +46,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -91,7 +92,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     getPicoContainer().registerComponentInstance(Project.class, this);
 
     if (!isDefault()) {
-      getStateStore().setPath(filePath);
+      getStateStore().setPath(FileUtilRt.toSystemIndependentName(filePath));
     }
 
     myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;

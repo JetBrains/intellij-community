@@ -84,18 +84,36 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
 
   private data class Macro(val key: String, var value: String)
 
+  /**
+   * @param expansion System-independent.
+   */
   fun addMacro(key: String, expansion: String) {
     assert(!key.isEmpty())
+
+    val value: String
+    if (expansion.contains("\\")) {
+      val message = "Macro $key set to system-dependent expansion $expansion"
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw IllegalArgumentException(message)
+      }
+      else {
+        LOG.warn(message)
+        value = FileUtilRt.toSystemIndependentName(expansion)
+      }
+    }
+    else {
+      value = expansion
+    }
 
     // you must not add duplicated macro, but our ModuleImpl.setModuleFilePath does it (it will be fixed later)
     for (macro in macros) {
       if (key.equals(macro.key)) {
-        macro.value = expansion
+        macro.value = value
         return
       }
     }
 
-    macros.add(Macro(key, expansion))
+    macros.add(Macro(key, value))
   }
 
   override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType, storageSpec.storageClass.java as Class<out StateStorage>, storageSpec.stateSplitter.java)
@@ -200,9 +218,9 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
 
   protected open fun createStorageData(fileSpec: String, filePath: String): StorageData = StorageData(rootTagName)
 
-  override final fun expandMacros(file: String): String {
+  override final fun expandMacros(path: String): String {
     // replacement can contains $ (php tests), so, this check must be performed before expand
-    val matcher = MACRO_PATTERN.matcher(file)
+    val matcher = MACRO_PATTERN.matcher(path)
     matcherLoop@
     while (matcher.find()) {
       val m = matcher.group(1)
@@ -211,10 +229,10 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
           continue@matcherLoop
         }
       }
-      throw IllegalArgumentException("Unknown macro: $m in storage file spec: $file")
+      throw IllegalArgumentException("Unknown macro: $m in storage file spec: $path")
     }
 
-    var expanded = file
+    var expanded = path
     for ((key, value) in macros) {
       expanded = StringUtil.replace(expanded, key, value)
     }

@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -80,7 +81,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   private void setModuleFilePath(@NotNull String filePath) {
-    String normalizedPath = filePath.replace(File.separatorChar, '/');
+    String normalizedPath = FileUtilRt.toSystemIndependentName(filePath);
     LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
     IComponentStore store = ComponentsPackage.getStateStore(this);
     store.getStateStorageManager().clearStateStorage(StoragePathMacros.MODULE_FILE);

@@ -55,6 +55,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
@@ -464,7 +465,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           // create ServiceManagerImpl at first to force extension classes registration
           getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
-          String effectiveConfigPath = configPath == null ? PathManager.getConfigPath() : configPath;
+          String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
           for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
             try {
               listener.beforeApplicationLoaded(ApplicationImpl.this, effectiveConfigPath);

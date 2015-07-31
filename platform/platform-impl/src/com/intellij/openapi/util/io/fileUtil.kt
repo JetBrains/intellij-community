@@ -13,28 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module.impl;
+package com.intellij.openapi.util.io
 
-import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.io.File
 
-/**
- * @author yole
- */
-public interface ModuleEx extends Module {
-  /**
-   * @param path System-independent path.
-   */
-  void init(@NotNull String path, @Nullable Runnable beforeComponentCreation);
-
-  void moduleAdded();
-
-  void projectOpened();
-
-  void projectClosed();
-
-  void rename(String newName);
-
-  void clearScopesCache();
-}
+public val File.systemIndependentPath: String
+  get() = FileUtilRt.toSystemIndependentName(getPath())

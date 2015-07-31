@@ -19,13 +19,14 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.FileBasedStorage
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.impl.stores.XmlElementStorage
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectN
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.util.PathUtilRt
@@ -62,8 +64,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
   override fun setPath(filePath: String) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
-
-    val file = File(filePath)
     if (FileUtilRt.extensionEquals(filePath, ProjectFileType.DEFAULT_EXTENSION)) {
       scheme = StorageScheme.DEFAULT
 
@@ -79,17 +79,19 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
+      val file = File(filePath)
       val dirStore = File(if (file.isDirectory()) file else file.getParentFile(), Project.DIRECTORY_STORE_FOLDER)
-      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, File(dirStore, "misc.xml").getPath())
-      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, dirStore.getPath())
+      val projectConfigDir = dirStore.systemIndependentPath
+      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, "$projectConfigDir/misc.xml")
+      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, projectConfigDir)
 
       val workspace = File(dirStore, "workspace.xml")
-      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.getPath())
+      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.systemIndependentPath)
       if (!workspace.exists() && !file.isDirectory()) {
         useOldWorkspaceContent(filePath, workspace)
       }
 
-      invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByIoFile(dirStore)) }
+      invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(projectConfigDir)) }
     }
 
     presentableUrl = null

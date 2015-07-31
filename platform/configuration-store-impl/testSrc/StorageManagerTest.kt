@@ -26,11 +26,16 @@ import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import kotlin.properties.Delegates
 
 class StorageManagerTest {
   private val fixtureManager = FixtureRule()
   public Rule fun getFixtureManager(): FixtureRule = fixtureManager
+
+
+  private val thrown = ExpectedException.none()
+  public Rule fun getThrown(): ExpectedException = thrown
 
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
 
@@ -50,6 +55,14 @@ class StorageManagerTest {
 
   public Test fun `collapse macro`() {
     assertThat(storageManager.collapseMacros("/temp/m1/foo"), equalTo("$MACRO/foo"))
+    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo"), equalTo("\\temp\\m1\\foo"))
+  }
+
+  public Test fun `add system-dependent macro`() {
+    val key = "\$INVALID$"
+    val expansion = "\\temp"
+    thrown.expectMessage("Macro $key set to system-dependent expansion $expansion");
+    storageManager.addMacro(key, expansion)
   }
 
   public Test fun `create storage assertion thrown when unknown macro`() {

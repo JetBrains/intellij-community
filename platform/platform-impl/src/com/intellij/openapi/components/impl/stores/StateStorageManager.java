@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,12 @@ public interface StateStorageManager {
   StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   @NotNull
-  String expandMacros(@NotNull String file);
+  String expandMacros(@NotNull String path);
 
   @NotNull
+  /**
+   * @param path System-independent path.
+   */
   String collapseMacros(@NotNull String path);
 
   void setStreamProvider(@Nullable StreamProvider streamProvider);
