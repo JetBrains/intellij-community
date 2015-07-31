@@ -8,8 +8,8 @@ class Contracts {
     if (y) System.out.println();
 
     int k = 1;
-    boolean z = (k +=1) == k; // returns true
-    if (z) System.out.println();
+    boolean z = <warning descr="Condition '(k +=1) == k' is always 'true'">(k +=1) == k</warning>; // returns true
+    if (<warning descr="Condition 'z' is always 'true'">z</warning>) System.out.println();
   }
 
 

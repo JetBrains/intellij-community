@@ -33,6 +33,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TLongArrayList;
@@ -229,7 +230,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void setVarValue(DfaVariableValue var, DfaValue value) {
     if (var == value) return;
 
+    value = handleFlush(var, value);
     flushVariable(var);
+
     if (value instanceof DfaUnknownValue) {
       setVariableState(var, getVariableState(var).withNullable(false));
       return;
@@ -258,6 +261,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (getVariableState(var).isNotNull()) {
       applyCondition(compareToNull(var, true));
     }
+  }
+
+  private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
+    if (value instanceof DfaVariableValue && (value == flushed || myFactory.getVarFactory().getAllQualifiedBy(flushed).contains(value))) {
+      Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL : ((DfaVariableValue)value).getInherentNullability();
+      return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
+    }
+    return value;
   }
 
   @Nullable("for boxed values which can't be compared by ==")
@@ -904,7 +915,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void flushVariable(@NotNull DfaVariableValue variable) {
+  public void flushVariable(@NotNull final DfaVariableValue variable) {
+    List<DfaValue> updatedStack = ContainerUtil.map(myStack, new Function<DfaValue, DfaValue>() {
+      @Override
+      public DfaValue fun(DfaValue value) {
+        return handleFlush(variable, value);
+      }
+    });
+    myStack.clear();
+    for (DfaValue value : updatedStack) {
+      myStack.push(value);
+    }
+
     doFlush(variable, false);
     flushDependencies(variable);
     myUnknownVariables.remove(variable);
