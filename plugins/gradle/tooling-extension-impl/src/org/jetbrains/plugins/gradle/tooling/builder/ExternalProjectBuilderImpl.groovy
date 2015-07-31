@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.google.gson.GsonBuilder
-import com.intellij.openapi.externalSystem.model.*
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import org.gradle.api.Action
 import org.gradle.api.Project
@@ -29,6 +28,18 @@ import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.gradle.model.DefaultExternalFilter
+import org.jetbrains.plugins.gradle.model.DefaultExternalPlugin
+import org.jetbrains.plugins.gradle.model.DefaultExternalProject
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
+import org.jetbrains.plugins.gradle.model.DefaultExternalTask
+import org.jetbrains.plugins.gradle.model.ExternalFilter
+import org.jetbrains.plugins.gradle.model.ExternalPlugin
+import org.jetbrains.plugins.gradle.model.ExternalProject
+import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet
+import org.jetbrains.plugins.gradle.model.ExternalTask
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 

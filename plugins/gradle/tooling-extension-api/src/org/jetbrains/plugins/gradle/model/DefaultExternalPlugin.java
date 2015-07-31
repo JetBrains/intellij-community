@@ -13,18 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model;
+package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
+ * @since 7/16/2014
  */
-public interface ExternalPlugin extends Serializable {
+public class DefaultExternalPlugin implements ExternalPlugin {
+  private static final long serialVersionUID = 1L;
+
   @NotNull
-  String getId();
+  private String myId;
+
+  public DefaultExternalPlugin() {
+  }
+
+  public DefaultExternalPlugin(ExternalPlugin plugin) {
+    myId = plugin.getId();
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myId;
+  }
+
+  public void setId(@NotNull String id) {
+    myId = id;
+  }
 }

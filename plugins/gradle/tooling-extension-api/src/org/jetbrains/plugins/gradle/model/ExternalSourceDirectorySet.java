@@ -13,34 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model;
+package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Vladislav.Soroka
- * @since 7/16/2014
+ * @since 7/14/2014
  */
-public class DefaultExternalPlugin implements ExternalPlugin {
-  private static final long serialVersionUID = 1L;
+public interface ExternalSourceDirectorySet extends Serializable {
+  @NotNull
+  String getName();
 
   @NotNull
-  private String myId;
-
-  public DefaultExternalPlugin() {
-  }
-
-  public DefaultExternalPlugin(ExternalPlugin plugin) {
-    myId = plugin.getId();
-  }
+  Set<File> getSrcDirs();
 
   @NotNull
-  @Override
-  public String getId() {
-    return myId;
-  }
+  File getOutputDir();
 
-  public void setId(@NotNull String id) {
-    myId = id;
-  }
+  /**
+   * Returns <code>true</code> if compiler output for this ExternalSourceDirectorySet should is inherited from IDEA project
+   * @return true if compiler output path is inherited, false otherwise
+   */
+  boolean isCompilerOutputPathInherited();
+
+  @NotNull
+  Set<String> getExcludes();
+  @NotNull
+  Set<String> getIncludes();
+
+  @NotNull
+  List<ExternalFilter> getFilters();
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model;
+package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,13 +24,7 @@ import java.io.Serializable;
  * @author Vladislav.Soroka
  * @since 7/14/2014
  */
-public interface ExternalTask extends Serializable {
+public interface ExternalPlugin extends Serializable {
   @NotNull
-  String getName();
-  @NotNull
-  String getQName();
-  @Nullable
-  String getDescription();
-  @Nullable
-  String getGroup();
+  String getId();
 }
