@@ -15,12 +15,16 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.fixtures.PyLightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTypedElement;
@@ -36,7 +40,12 @@ public class PyiTypeTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK) {
+      @Override
+      public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+        createLibrary(model, "pyiStubs", "/community/python/testData/pyi/pyiStubs");
+      }
+    };
   }
 
   @Override
@@ -86,6 +95,10 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testModuleAttribute() {
+    doTest("int");
+  }
+
+  public void testPyiOnPythonPath() {
     doTest("int");
   }
 }
