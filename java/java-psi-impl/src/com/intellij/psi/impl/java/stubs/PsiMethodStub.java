@@ -36,5 +36,7 @@ public interface PsiMethodStub extends NamedStub<PsiMethod> {
   boolean isDeprecated();
   boolean hasDeprecatedAnnotation();
 
+  boolean hasDocComment();
+
   PsiParameterStub findParameter(int idx);
 }

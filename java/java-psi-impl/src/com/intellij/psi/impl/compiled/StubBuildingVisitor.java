@@ -342,7 +342,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
     if (!isCorrectName(name)) return null;
 
-    byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
+    byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false, false);
     TypeInfo type = fieldType(desc, signature);
     String initializer = constToString(value, type.text.getString(), false);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
@@ -406,7 +406,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (!isConstructor && !isCorrectName(name)) return null;
 
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false, false);
 
     String canonicalMethodName = isConstructor ? myResult.getName() : name;
     List<String> args = new ArrayList<String>();

@@ -37,6 +37,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private static final int ENUM_CONST = 0x01;
   private static final int DEPRECATED = 0x02;
   private static final int DEPRECATED_ANNOTATION = 0x04;
+  private static final int HAS_DOC_COMMENT = 0x08;
 
   public PsiFieldStubImpl(StubElement parent, String name, @NotNull TypeInfo type, @Nullable String initializer, byte flags) {
     this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
@@ -85,15 +86,21 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   }
 
   @Override
+  public boolean hasDocComment() {
+    return (myFlags & HAS_DOC_COMMENT) != 0;
+  }
+
+  @Override
   public String getName() {
     return StringRef.toString(myName);
   }
 
-  public static byte packFlags(boolean isEnumConst, boolean isDeprecated, boolean hasDeprecatedAnnotation) {
+  public static byte packFlags(boolean isEnumConst, boolean isDeprecated, boolean hasDeprecatedAnnotation, boolean hasDocComment) {
     byte flags = 0;
     if (isEnumConst) flags |= ENUM_CONST;
     if (isDeprecated) flags |= DEPRECATED;
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
+    if (hasDocComment) flags |= HAS_DOC_COMMENT;
     return flags;
   }
 
