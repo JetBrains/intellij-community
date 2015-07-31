@@ -31,7 +31,6 @@ class StorageManagerTest {
   private val fixtureManager = FixtureRule()
   public Rule fun getFixtureManager(): FixtureRule = fixtureManager
 
-
   private val thrown = ExpectedException.none()
   public Rule fun getThrown(): ExpectedException = thrown
 

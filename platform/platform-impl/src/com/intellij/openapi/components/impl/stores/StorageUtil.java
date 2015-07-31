@@ -62,7 +62,7 @@ public class StorageUtil {
   static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   @TestOnly
-  public static String DEBUG_LOG = "";
+  public static String DEBUG_LOG = null;
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
