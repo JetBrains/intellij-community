@@ -5,6 +5,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessorBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,5 +43,11 @@ final class YAMLPsiManager extends PsiTreeChangePreprocessorBase {
       }
       element = parent;
     }
+  }
+
+  @Override
+  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
+    if (!(event.getFile() instanceof YAMLFile)) return;
+    super.treeChanged(event);
   }
 }
