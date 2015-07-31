@@ -32,7 +32,9 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import com.sun.tools.javac.Main;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -243,8 +245,10 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     if (!classesDir.exists() || !versionFile.exists() || !hasCompiledClasses(classesDir)) {
       FileUtil.delete(classesDir);
       classesDir.mkdirs();
+      String toolsJarPath = PathUtil.getJarPathForClass(Main.class);
       if (compileTinyApp(appPath) != 0) {
-        throw new Exception("Failed to compile debugger test application.\nIt must be compiled in order to run debugger tests.\n" + appPath);
+        throw new Exception("Failed to compile debugger test application using compiler from " + toolsJarPath +
+                            ".\nIt must be compiled in order to run debugger tests.\n" + appPath);
       }
       versionFile.createNewFile();
     }
