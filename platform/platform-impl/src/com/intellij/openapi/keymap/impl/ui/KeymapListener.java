@@ -29,4 +29,6 @@ public interface KeymapListener {
   void quickListRenamed(QuickList oldQuickList, QuickList newQuickList);
 
   void processCurrentKeymapChanged(@NotNull QuickList[] ids);
+
+  void processCurrentKeymapChanged();
 }
