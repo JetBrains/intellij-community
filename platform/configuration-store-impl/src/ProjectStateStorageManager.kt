@@ -15,14 +15,14 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.vfs.VirtualFileEvent
 import org.jdom.Element
 
-class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl(macroSubstitutor, "project", project.getPicoContainer(), project) {
+class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl(macroSubstitutor, "project", project) {
   override fun createStorageData(fileSpec: String, filePath: String) = ProjectStorageData(rootTagName)
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {

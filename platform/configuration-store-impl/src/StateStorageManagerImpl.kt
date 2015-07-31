@@ -36,11 +36,8 @@ import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
 import org.jdom.Element
-import org.picocontainer.MutablePicoContainer
-import org.picocontainer.PicoContainer
 import java.io.File
 import java.util.LinkedHashMap
-import java.util.UUID
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
@@ -52,7 +49,6 @@ import kotlin.reflect.jvm.java
  */
 open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPathMacroSubstitutor,
                                    protected val rootTagName: String,
-                                   private val picoContainer: PicoContainer,
                                    private val componentManager: ComponentManager? = null) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantLock()
@@ -157,9 +153,9 @@ open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPat
   // overridden in upsource
   protected open fun createStateStorage(storageClass: Class<out StateStorage>, fileSpec: String, roamingType: RoamingType, SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter>): StateStorage {
     if (storageClass != javaClass<StateStorage>()) {
-      val key = UUID.randomUUID().toString()
-      (picoContainer as MutablePicoContainer).registerComponentImplementation(key, storageClass)
-      return picoContainer.getComponentInstance(key) as StateStorage
+      val constructor = storageClass.getConstructors()[0]!!
+      constructor.setAccessible(true)
+      return constructor.newInstance(componentManager!!, this) as StateStorage
     }
 
     val filePath = expandMacros(fileSpec)

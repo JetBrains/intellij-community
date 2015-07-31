@@ -45,7 +45,7 @@ class StorageManagerTest {
 
   public Before fun setUp() {
     val application = ApplicationManager.getApplication()
-    storageManager = StateStorageManagerImpl(PathMacroManager.getInstance(application).createTrackingSubstitutor(), "foo", application.getPicoContainer())
+    storageManager = StateStorageManagerImpl(PathMacroManager.getInstance(application).createTrackingSubstitutor(), "foo")
     storageManager.addMacro(MACRO, "/temp/m1")
   }
 
