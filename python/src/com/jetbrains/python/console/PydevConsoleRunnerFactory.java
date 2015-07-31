@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathMappingSettings;
+import com.intellij.util.PathMapper;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -49,7 +49,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
     assert sdk != null;
 
-    PathMappingSettings mappingSettings = PydevConsoleRunner.getMappings(project, sdk);
+    PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, sdk);
 
     String[] setupFragment;
 
@@ -57,8 +57,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
                                                                              settingsProvider.addSourceRoots());
 
-    if (mappingSettings != null) {
-      pythonPath = mappingSettings.convertToRemote(pythonPath);
+    if (pathMapper != null) {
+      pythonPath = pathMapper.convertToRemote(pythonPath);
     }
 
     String customStartScript = settingsProvider == null ? "" : settingsProvider.getCustomStartScript();
@@ -84,8 +84,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       }
     }
 
-    if (mappingSettings != null) {
-      workingDir = mappingSettings.convertToRemote(workingDir);
+    if (pathMapper != null) {
+      workingDir = pathMapper.convertToRemote(workingDir);
     }
 
     BuildoutFacet facet = null;
@@ -95,8 +95,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
     if (facet != null) {
       List<String> path = facet.getAdditionalPythonPath();
-      if (mappingSettings != null) {
-        path = mappingSettings.convertToRemote(path);
+      if (pathMapper != null) {
+        path = pathMapper.convertToRemote(path);
       }
       String prependStatement = facet.getPathPrependStatement(path);
       setupFragment = new String[]{prependStatement, selfPathAppend};
