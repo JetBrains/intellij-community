@@ -121,8 +121,8 @@ public class ProjectViewHost(val project: Project,
     PsiManager.getInstance(project).addPsiTreeChangeListener(psiTreeChangeListener)
   }
 
-  class LeafHost(val psi: SmartPsiElementPointer<PsiElement>)
-  class NodeHost(val descriptor: AbstractTreeNode<*>, val index: Int)
+  class LeafHost(val psi: SmartPsiElementPointer<PsiElement>) : Host
+  class NodeHost(val descriptor: AbstractTreeNode<*>, val index: Int) : Host
 
   private fun createNode(descriptor: AbstractTreeNode<*>, parentLifetime: Lifetime, path: Path, index: Int): Model {
     descriptor.update();
