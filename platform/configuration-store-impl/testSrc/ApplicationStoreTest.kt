@@ -137,7 +137,7 @@ class ApplicationStoreTest {
   }
 
   class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
-    private val storageManager = object : StateStorageManagerImpl(ApplicationPathMacroManager().createTrackingSubstitutor(), "application") {
+    private val storageManager = object : StateStorageManagerImpl("application") {
       override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
         if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
           return null

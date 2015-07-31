@@ -47,8 +47,8 @@ import kotlin.reflect.jvm.java
 /**
  * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
  */
-open class StateStorageManagerImpl(private val pathMacroSubstitutor: TrackingPathMacroSubstitutor,
-                                   protected val rootTagName: String,
+open class StateStorageManagerImpl(protected val rootTagName: String,
+                                   private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                    private val componentManager: ComponentManager? = null) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantLock()

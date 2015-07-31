@@ -22,7 +22,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.util.containers.ContainerUtil
 
-class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl(macroSubstitutor, "module", module) {
+class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
   override fun createStorageData(fileSpec: String, filePath: String) = ModuleFileData(rootTagName)
 
   override fun startExternalization() = MyStateStorageManagerExternalizationSession(this)

@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface IProjectStore extends IComponentStore {
   @Nullable
   VirtualFile getProjectBaseDir();
@@ -33,7 +35,7 @@ public interface IProjectStore extends IComponentStore {
   String getProjectName();
 
   @NotNull
-  TrackingPathMacroSubstitutor[] getSubstitutors();
+  List<TrackingPathMacroSubstitutor> getSubstitutors();
 
   @NotNull
   StorageScheme getStorageScheme();

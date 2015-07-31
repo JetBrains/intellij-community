@@ -62,6 +62,7 @@ import org.picocontainer.*;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -451,7 +452,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void checkUnknownMacros(final boolean showDialog) {
     final IComponentStore stateStore = ComponentsPackage.getStateStore(this);
     // default project doesn't have it
-    TrackingPathMacroSubstitutor[] substitutors = stateStore instanceof IProjectStore ? ((IProjectStore)stateStore).getSubstitutors() : new TrackingPathMacroSubstitutor[]{};
+    List<TrackingPathMacroSubstitutor> substitutors;
+    if (stateStore instanceof IProjectStore) {
+      substitutors = ((IProjectStore)stateStore).getSubstitutors();
+    }
+    else {
+      substitutors = Collections.emptyList();
+    }
     Set<String> unknownMacros = new THashSet<String>();
     for (TrackingPathMacroSubstitutor substitutor : substitutors) {
       unknownMacros.addAll(substitutor.getUnknownMacros(null));

@@ -15,8 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.testFramework.FixtureRule
 import junit.framework.TestCase
@@ -44,8 +42,7 @@ class StorageManagerTest {
   }
 
   public Before fun setUp() {
-    val application = ApplicationManager.getApplication()
-    storageManager = StateStorageManagerImpl(PathMacroManager.getInstance(application).createTrackingSubstitutor(), "foo")
+    storageManager = StateStorageManagerImpl("foo")
     storageManager.addMacro(MACRO, "/temp/m1")
   }
 

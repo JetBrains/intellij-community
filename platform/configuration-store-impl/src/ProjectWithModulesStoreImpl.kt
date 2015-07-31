@@ -49,14 +49,14 @@ class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMa
     return true
   }
 
-  override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
+  override fun getSubstitutors(): List<TrackingPathMacroSubstitutor> {
     val result = SmartList<TrackingPathMacroSubstitutor>()
     ContainerUtil.addIfNotNull(result, storageManager.getMacroSubstitutor())
 
     for (module in getPersistentModules()) {
       ContainerUtil.addIfNotNull(result, module.stateStore.getStateStorageManager().getMacroSubstitutor())
     }
-    return result.toTypedArray()
+    return result
   }
 
   override fun isReloadPossible(componentNames: Set<String>): Boolean {

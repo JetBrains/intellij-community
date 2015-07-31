@@ -20,20 +20,18 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.vfs.LocalFileSystem
-import java.io.File
 
-class ModuleStoreImpl(private val myModule: Module, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager) {
+class ModuleStoreImpl(private val module: Module, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager) {
   override val project: Project?
-    get() = myModule.getProject()
+    get() = module.getProject()
 
   override fun setPath(path: String) {
     storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
   }
 
-  override fun optimizeTestLoading() = (myModule.getProject() as ProjectEx).isOptimiseTestLoadSpeed()
+  override fun optimizeTestLoading() = (module.getProject() as ProjectEx).isOptimiseTestLoadSpeed()
 
-  override fun getMessageBus() = myModule.getMessageBus()
+  override fun getMessageBus() = module.getMessageBus()
 
-  override fun createStorageManager() = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), myModule)
+  override fun createStorageManager() = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
 }
