@@ -157,7 +157,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   @Nullable
-  protected static TextAttributes getNavigationItemAttributes(Object value) {
+  protected TextAttributes getNavigationItemAttributes(Object value) {
     TextAttributes attributes = null;
 
     if (value instanceof NavigationItem) {
