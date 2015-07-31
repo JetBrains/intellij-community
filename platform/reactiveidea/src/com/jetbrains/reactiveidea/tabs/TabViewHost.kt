@@ -25,7 +25,7 @@ import com.intellij.usages.UsageViewManager
 import com.intellij.usages.impl.ServerUsageView
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactiveidea.EditorHost
-import com.jetbrains.reactiveidea.usages.UsageHost
+import com.jetbrains.reactiveidea.usages.UsagesHost
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.MapModel
@@ -70,19 +70,19 @@ class TabViewHost(val project: Project,
 
     (FindManager.getInstance(project) as FindManagerImpl).getFindUsagesManager().setListener(object : UsageViewManager.UsageViewStateListener {
       override fun findingUsagesFinished(usageView: UsageView) {
+      }
+
+      override fun usageViewCreated(usageView: UsageView) {
         UIUtil.invokeLaterIfNeeded {
           val idx = nextIdx()
           reactiveModel.host(path / tabPath / idx) { path, lifetime, init ->
-            val host = UsageHost(reactiveModel, path, lifetime, usageView as ServerUsageView, init)
+            val host = UsagesHost(reactiveModel, path, lifetime, usageView as ServerUsageView, init)
             init += {
               setActiveTab(it, idx)
             }
             host
           }
         }
-      }
-
-      override fun usageViewCreated(usageView: UsageView) {
       }
     })
   }

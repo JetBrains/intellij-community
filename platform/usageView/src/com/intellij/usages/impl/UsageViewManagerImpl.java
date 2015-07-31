@@ -209,7 +209,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                               @NotNull final ProgressIndicator indicator,
                                               @NotNull final UsageViewPresentation presentation,
                                               final int usageCount,
-                                              @Nullable final UsageViewImpl usageView) {
+                                              @Nullable final UsageView usageView) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {

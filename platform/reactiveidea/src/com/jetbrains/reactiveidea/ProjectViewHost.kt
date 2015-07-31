@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -40,7 +41,7 @@ public class ProjectViewHost(val project: Project,
                              val lifetime: Lifetime,
                              init: Initializer) : Host, DataProvider {
   override fun getData(dataId: String?): Any? {
-    if (CommonDataKeys.PROJECT.`is`(dataId)){
+    if (CommonDataKeys.PROJECT.`is`(dataId)) {
       return project
     }
     return null
@@ -106,20 +107,22 @@ public class ProjectViewHost(val project: Project,
         if (path != null) {
           reactiveModel.transaction { m ->
             val model = path.getIn(m)
-            if(model == null) {
+            if (model == null) {
               LOG.error("Unexpected model behaviour. Path $path null in model. Directory: ${dir.toString()}")
               ApplicationManagerEx.getApplicationEx().assertIsDispatchThread()
               return@transaction m
             }
-            val descr = model.meta["descriptor"] as AbstractTreeNode<*>
-            val index = model.meta["index"] as Int
-            updateChilds(m, descr, path.dropLast(1), index)
+            val host = model.meta.host<NodeHost>()
+            updateChilds(m, host.descriptor, path.dropLast(1), host.index)
           }
         }
       }
     }
     PsiManager.getInstance(project).addPsiTreeChangeListener(psiTreeChangeListener)
   }
+
+  class LeafHost(val psi: SmartPsiElementPointer<PsiElement>)
+  class NodeHost(val descriptor: AbstractTreeNode<*>, val index: Int)
 
   private fun createNode(descriptor: AbstractTreeNode<*>, parentLifetime: Lifetime, path: Path, index: Int): Model {
     descriptor.update();
@@ -128,17 +131,16 @@ public class ProjectViewHost(val project: Project,
     val state = if (value is PsiFileSystemItem && value.isDirectory() || descriptor.getChildren().isNotEmpty()) "closed" else "leaf"
     val meta =
         if (state != "leaf") createMeta(
-            "lifetime", Lifetime.create(parentLifetime).lifetime,
-            "descriptor", descriptor,
-            "index", index)
-        else if (value is PsiElement) createMeta("psi", ptrManager.createSmartPsiElementPointer(value))
+            "host", NodeHost(descriptor, index),
+            "lifetime", Lifetime.create(parentLifetime).lifetime)
+        else if (value is PsiElement) createMeta("host", LeafHost(ptrManager.createSmartPsiElementPointer(value)))
         else emptyMeta()
 
     map.put("state", PrimitiveModel(state))
     map.put("order", PrimitiveModel(index))
     map.put("childs", MapModel())
 
-    if(state != "leaf") {
+    if (state != "leaf") {
       val stateSignal = reactiveModel.subscribe(meta.lifetime()!!, path / descriptor.toString())
       reaction(true, "update state of project tree node", stateSignal) { state ->
         if (state != null) {

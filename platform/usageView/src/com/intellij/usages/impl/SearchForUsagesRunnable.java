@@ -282,9 +282,7 @@ class SearchForUsagesRunnable implements Runnable {
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
       usageView =  myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
-      if(usageView instanceof UsageViewImpl) {
-        ((UsageViewImpl)usageView).associateProgress(indicator);
-      }
+      usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
         openView(usageView);
         final Usage firstUsage = myFirstUsage.get();
@@ -367,9 +365,8 @@ class SearchForUsagesRunnable implements Runnable {
           final UsageView usageView = getUsageView(indicator);
 
           TooManyUsagesStatus tooManyUsagesStatus;
-          if (usageCount > UsageLimitUtil.USAGES_LIMIT && (tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator)).switchTooManyUsagesStatus()
-              && usageView instanceof UsageViewImpl) {
-            UsageViewManagerImpl.showTooManyUsagesWarning(myProject, tooManyUsagesStatus, indicator, myPresentation, usageCount, (UsageViewImpl)usageView);
+          if (usageCount > UsageLimitUtil.USAGES_LIMIT && (tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator)).switchTooManyUsagesStatus()) {
+            UsageViewManagerImpl.showTooManyUsagesWarning(myProject, tooManyUsagesStatus, indicator, myPresentation, usageCount, usageView);
           }
 
           if (usageView != null) {
