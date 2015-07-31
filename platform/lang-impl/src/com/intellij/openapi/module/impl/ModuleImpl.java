@@ -365,27 +365,22 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private class MyVirtualFileListener extends VirtualFileAdapter {
     @Override
     public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (!isModuleAdded) return;
-      final Object requestor = event.getRequestor();
-      if (MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
-      if (!VirtualFile.PROP_NAME.equals(event.getPropertyName())) return;
+      if (!isModuleAdded || MODULE_RENAMING_REQUESTOR.equals(event.getRequestor()) || !VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        return;
+      }
 
-      final VirtualFile parent = event.getParent();
+      VirtualFile parent = event.getParent();
       if (parent != null) {
-        final String parentPath = parent.getPath();
-        final String ancestorPath = parentPath + "/" + event.getOldValue();
-        final String moduleFilePath = getModuleFilePath();
+        String parentPath = parent.getPath();
+        String ancestorPath = parentPath + "/" + event.getOldValue();
+        String moduleFilePath = getModuleFilePath();
         if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-          final String newValue = (String)event.getNewValue();
-          final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
-          final String newFilePath = parentPath + "/" + newValue + "/" + relativePath;
-          setModuleFilePath(moduleFilePath, newFilePath);
+          setModuleFilePath(moduleFilePath, parentPath + "/" + event.getNewValue() + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
         }
       }
 
-      final VirtualFile moduleFile = getModuleFile();
-      if (moduleFile == null) return;
-      if (moduleFile.equals(event.getFile())) {
+      VirtualFile moduleFile = getModuleFile();
+      if (moduleFile != null && moduleFile.equals(event.getFile())) {
         String oldName = myName;
         myName = moduleNameByFileName(moduleFile.getName());
         ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this, oldName);
@@ -404,14 +399,11 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
     @Override
     public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      final VirtualFile oldParent = event.getOldParent();
-      final VirtualFile newParent = event.getNewParent();
-      final String dirName = event.getFileName();
-      final String ancestorPath = oldParent.getPath() + "/" + dirName;
-      final String moduleFilePath = getModuleFilePath();
+      String dirName = event.getFileName();
+      String ancestorPath = event.getOldParent().getPath() + "/" + dirName;
+      String moduleFilePath = getModuleFilePath();
       if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-        final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
-        setModuleFilePath(moduleFilePath, newParent.getPath() + "/" + dirName + "/" + relativePath);
+        setModuleFilePath(moduleFilePath, event.getNewParent().getPath() + "/" + dirName + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
       }
     }
   }
