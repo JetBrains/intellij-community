@@ -60,8 +60,11 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   }
 
   public void setBreadcrumbsEnabled(boolean b) {
+    boolean oldValue = myBreadcrumbsEnabled;
     myBreadcrumbsEnabled = b;
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
+    if (oldValue != b) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
+    }
   }
 
   public boolean isBreadcrumbsEnabledInXml() {
@@ -69,8 +72,11 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   }
 
   public void setBreadcrumbsEnabledInXml(boolean b) {
+    boolean oldValue = myBreadcrumbsEnabledInXml;
     myBreadcrumbsEnabledInXml = b;
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
+    if (oldValue != b) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
+    }
   }
 
   public boolean isShowCssInlineColorPreview() {
