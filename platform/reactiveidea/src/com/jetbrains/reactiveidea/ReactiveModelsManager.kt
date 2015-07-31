@@ -29,12 +29,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerAdapter
+import com.intellij.pom.Navigatable
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.usages.Usage
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactiveidea.history.host.HistoryHost
 import com.jetbrains.reactiveidea.history.host.historyPath
+import com.jetbrains.reactiveidea.usages.UsagesHost
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
@@ -77,26 +79,31 @@ public class ReactiveModelsManager() : ApplicationComponent {
           model
         }
 
-        reactiveModel.registerHandler(lifetime.lifetime, "open-file") { args: MapModel, model ->
-          val path = (args["path"] as ListModel).toPath()
-          val psiPtr = path.getIn(model)!!.meta["psi"]
-          if (psiPtr is SmartPsiElementPointer<*>) {
-            EdtInvocationManager.getInstance().invokeLater {
-              FileEditorManager.getInstance(psiPtr.getProject()).openFile(psiPtr.getVirtualFile(), true)
-            }
-          }
-          model
-        }
+        val handlers = hashMapOf(
+            "open-file" to { host: ProjectViewHost.LeafHost ->
+              val psi = host.psi
+              FileEditorManager.getInstance(psi.getProject()).openFile(psi.getVirtualFile(), true)
+            },
+            "go-usage" to { host: UsagesHost.UsageHost ->
+              val node = host.node
+              if (node is Navigatable) {
+                node.navigate(true)
+              }
+            })
 
-        reactiveModel.registerHandler(lifetime.lifetime, "go-usage") { args: MapModel, model ->
-          val path = (args["path"] as ListModel).toPath()
-          val usage = path.getIn(model)!!.meta["usage"]
-          if (usage is Usage) {
-            EdtInvocationManager.getInstance().invokeLater {
-              usage.navigate(true)
+        handlers.forEach { e: Map.Entry<String, Any> ->
+          val name = e.getKey()
+          val func = e.getValue() as (Host) -> Unit
+          reactiveModel.registerHandler(lifetime.lifetime, name) { args: MapModel, model ->
+            val path = (args["path"] as ListModel).toPath()
+            val host = path.getIn(model)!!.meta.host<Host?>()
+            if (host != null) {
+              EdtInvocationManager.getInstance().invokeLater {
+                func(host)
+              }
             }
+            model
           }
-          model
         }
 
         reactiveModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->

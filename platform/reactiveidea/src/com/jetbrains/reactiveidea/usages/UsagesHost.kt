@@ -15,6 +15,7 @@
  */
 package com.jetbrains.reactiveidea.usages
 
+import com.intellij.pom.Navigatable
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.ServerUsageView
 import com.intellij.usages.impl.UsageNode
@@ -30,11 +31,11 @@ import java.util.Enumeration
 import java.util.HashMap
 import javax.swing.tree.DefaultMutableTreeNode
 
-public class UsageHost(val reactiveModel: ReactiveModel,
-                       val path: Path,
-                       val lifetime: Lifetime,
-                       val usageView: ServerUsageView,
-                       init: Initializer) : Host {
+public class UsagesHost(val reactiveModel: ReactiveModel,
+                        val path: Path,
+                        val lifetime: Lifetime,
+                        val usageView: ServerUsageView,
+                        init: Initializer) : Host {
 
   companion object {
     val presentation = "presentation"
@@ -47,19 +48,27 @@ public class UsageHost(val reactiveModel: ReactiveModel,
   override val tags: Array<String>
     get() = arrayOf("usages")
 
+  class UsageHost(val node: DefaultMutableTreeNode) : Host {}
+
   init {
     init += { m ->
+      reaction(true, "tree reaction", usageView.usagesSignal) { usages ->
+        reactiveModel.transaction { m ->
+          m.putIn(path / tree, convertTree(usageView.root))
+        }
+      }
       m.putIn(path / presentation, convertPresentation(usageView.getPresentation()))
-          .putIn(path / tree, convertTree(usageView.root))
           .putIn(path / name, PrimitiveModel(usageView.getPresentation().getTabName()))
-
+    }
+    lifetime += {
+      usageView.lifetime.terminate()
     }
   }
 
   private fun convertTree(node: DefaultMutableTreeNode): Model {
     val text = node.text(usageView)
     val value = if (text.isNotEmpty()) text else " "
-    val meta = if (node is UsageNode) createMeta("usage", node.getUsage()) else emptyMeta()
+    val meta = if (node is Navigatable) createMeta("host", UsageHost(node)) else emptyMeta()
     val childs = (node.children() as Enumeration<*>).asSequence()
         .map { child ->
           convertTree(child as DefaultMutableTreeNode)

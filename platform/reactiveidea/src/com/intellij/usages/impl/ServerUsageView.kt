@@ -15,6 +15,8 @@
  */
 package com.intellij.usages.impl
 
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Factory
@@ -29,6 +31,8 @@ import com.intellij.util.Consumer
 import com.intellij.util.Processor
 import com.intellij.util.containers.TransferToEDTQueue
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.reactivemodel.VariableSignal
+import com.jetbrains.reactivemodel.util.Lifetime
 import gnu.trove.THashSet
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -42,6 +46,17 @@ public class ServerUsageView(val project: Project,
                              private val presentation: UsageViewPresentation,
                              val targets: Array<UsageTarget>,
                              val usageSearcherFactory: Factory<UsageSearcher>) : UsageView {
+
+  override fun searchHasBeenCancelled(): Boolean {
+    return associatedProgress?.isCanceled() == true
+  }
+
+  override fun cancelCurrentSearch() {
+    val progress = associatedProgress
+    if (progress != null) {
+      ProgressWrapper.unwrap(progress).cancel()
+    }
+  }
 
   companion object {
     val NULL_NODE = UsageViewImpl.NULL_NODE
@@ -67,6 +82,10 @@ public class ServerUsageView(val project: Project,
     }
   }, 200)
   private val usageNodes = ConcurrentHashMap<Usage, UsageNode>()
+  private volatile var associatedProgress: ProgressIndicator? = null
+
+  val lifetime = Lifetime.create(Lifetime.Eternal)
+  val usagesSignal = VariableSignal<Set<Usage>>(lifetime, "usages", HashSet())
 
   override fun appendUsage(usage: Usage) {
     if (!usage.isValid()) {
@@ -80,10 +99,16 @@ public class ServerUsageView(val project: Project,
     node?.update(this)
 
     usageNodes.put(usage, node ?: NULL_NODE)
+    updateUsages()
   }
 
   override fun removeUsage(usage: Usage) {
     usageNodes.remove(usage)
+    updateUsages()
+  }
+
+  override fun associateProgress(indicator: ProgressIndicator) {
+    associatedProgress = indicator
   }
 
   override fun includeUsages(usages: Array<out Usage>) {
@@ -188,6 +213,7 @@ public class ServerUsageView(val project: Project,
         nodes.add(node)
       }
     }
+    updateUsages()
   }
 
   override fun dispose() {
@@ -205,4 +231,10 @@ public class ServerUsageView(val project: Project,
     }
   }
 
+  private fun updateUsages() {
+    val usages = HashSet(getUsages())
+    UIUtil.invokeLaterIfNeeded {
+      usagesSignal.value = usages
+    }
+  }
 }

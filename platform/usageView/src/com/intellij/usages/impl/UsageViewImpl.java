@@ -275,12 +275,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     },200);
   }
 
-  protected boolean searchHasBeenCancelled() {
+  @Override
+  public boolean searchHasBeenCancelled() {
     ProgressIndicator progress = associatedProgress;
     return progress != null && progress.isCanceled();
   }
 
-  protected void cancelCurrentSearch() {
+  @Override
+  public void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
       ProgressWrapper.unwrap(progress).cancel();
@@ -809,7 +811,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
-  void associateProgress(@NotNull ProgressIndicator indicator) {
+  @Override
+  public void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
   }
 
