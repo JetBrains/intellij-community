@@ -339,6 +339,8 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void closeFile(@NotNull VirtualFile file) {
     Editor editor = myVirtualFile2Editor.remove(file);
     if (editor != null){
+      TextEditorProvider editorProvider = TextEditorProvider.getInstance();
+      editorProvider.disposeEditor(editorProvider.getTextEditor(editor));
       EditorFactory.getInstance().releaseEditor(editor);
     }
     if (Comparing.equal(file, myActiveFile)) {
