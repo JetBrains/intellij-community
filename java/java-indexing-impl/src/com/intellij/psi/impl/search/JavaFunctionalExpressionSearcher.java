@@ -33,6 +33,8 @@ import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
@@ -42,10 +44,12 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#" + JavaFunctionalExpressionSearcher.class.getName());
@@ -67,7 +71,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       final Set<Module> highLevelModules = getJava8Modules(project);
       if (highLevelModules.isEmpty()) return;
 
-      useScope = new ModulesScope(highLevelModules, project).intersectWith(convertToGlobalScope(project, queryParameters.getEffectiveSearchScope()));
+      useScope = new JavaSourceFilterScope(new ModulesScope(highLevelModules, project).intersectWith(convertToGlobalScope(project, queryParameters.getEffectiveSearchScope())));
 
       final MethodSignature functionalInterfaceMethod = LambdaUtil.getFunction(aClass);
       LOG.assertTrue(functionalInterfaceMethod != null);
@@ -83,10 +87,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       return;
     }
 
-    final GlobalSearchScope filesScope = GlobalSearchScope.filesScope(project, candidateFiles);
+    final GlobalSearchScope candidateScope = GlobalSearchScope.filesScope(project, candidateFiles);
 
     //collect all methods with parameter of functional interface or free type parameter type
-    final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope, candidateFiles);
+    final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope, candidateFiles, candidateScope);
 
     final LinkedHashSet<VirtualFile> filesToProcess = new LinkedHashSet<VirtualFile>();
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
@@ -114,7 +118,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
 
     //search for functional expressions in non-call contexts
-    collectFilesWithTypeOccurrencesAndFieldAssignments(aClass, filesScope, filesToProcess);
+    collectFilesWithTypeOccurrencesAndFieldAssignments(aClass, candidateScope, filesToProcess);
 
     searchInFiles(aClass, consumer, filesToProcess, expectedFunExprParamsCount);
   }
@@ -152,16 +156,34 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static Collection<PsiMethod> getCandidateMethodsWithSuitableParams(final PsiClass aClass,
                                                                              final Project project,
                                                                              final GlobalSearchScope useScope,
-                                                                             final Set<VirtualFile> candidateFiles) {
+                                                                             final Set<VirtualFile> candidateFiles,
+                                                                             final GlobalSearchScope candidateScope) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
         @Override
         public Collection<PsiMethod> compute() {
-          GlobalSearchScope visibleFromCandidates = combineResolveScopes(project, candidateFiles);
-          JavaMethodParameterTypesIndex index = JavaMethodParameterTypesIndex.getInstance();
+          if (!aClass.isValid()) return Collections.emptyList();
 
-          LinkedHashSet<PsiMethod> methods = newLinkedHashSet();
-          methods.addAll(index.get(aClass.getName(), project, useScope.intersectWith(visibleFromCandidates)));
-          methods.addAll(index.get(JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, visibleFromCandidates));
+          GlobalSearchScope visibleFromCandidates = combineResolveScopes(project, candidateFiles);
+
+          final Set<String> usedMethodNames = newHashSet();
+          FileBasedIndex.getInstance().processAllKeys(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID,
+                                                      new CommonProcessors.CollectProcessor<String>(usedMethodNames), candidateScope, null);
+
+          final LinkedHashSet<PsiMethod> methods = newLinkedHashSet();
+          Processor<PsiMethod> methodProcessor = new Processor<PsiMethod>() {
+            @Override
+            public boolean process(PsiMethod method) {
+              if (usedMethodNames.contains(method.getName())) {
+                methods.add(method);
+              }
+              return true;
+            }
+          };
+
+          StubIndexKey<String, PsiMethod> key = JavaMethodParameterTypesIndex.getInstance().getKey();
+          StubIndex index = StubIndex.getInstance();
+          index.processElements(key, aClass.getName(), project, useScope.intersectWith(visibleFromCandidates), PsiMethod.class, methodProcessor);
+          index.processElements(key, JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, visibleFromCandidates, PsiMethod.class, methodProcessor);
           LOG.info("#methods: " + methods.size());
           return methods;
         }
@@ -174,7 +196,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     LinkedHashSet<GlobalSearchScope> resolveScopes = newLinkedHashSet(mapNotNull(candidateFiles, new Function<VirtualFile, GlobalSearchScope>() {
       @Override
       public GlobalSearchScope fun(VirtualFile file) {
-        PsiFile psiFile = psiManager.findFile(file);
+        PsiFile psiFile = file.isValid() ? psiManager.findFile(file) : null;
         return psiFile == null ? null : psiFile.getResolveScope();
       }
     }));
