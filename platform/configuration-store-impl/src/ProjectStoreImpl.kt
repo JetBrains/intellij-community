@@ -144,7 +144,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
       return baseDir.getName().replace(":", "")
     }
     else {
-      var temp = PathUtilRt.getFileName((getProjectFileStorage() as FileBasedStorage).getFilePath())
+      var temp = PathUtilRt.getFileName(getProjectFileStorage().getFilePath())
       val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
       if (fileType is ProjectFileType) {
         temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1)
