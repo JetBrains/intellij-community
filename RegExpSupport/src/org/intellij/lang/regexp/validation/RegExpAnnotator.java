@@ -92,16 +92,15 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       Character prevSiblingValue = ((RegExpChar)prevSibling).getValue();
       Character nextSiblingValue = ((RegExpChar)nextSibling).getValue();
 
-      if (prevSiblingValue != null && nextSiblingValue != null) {
-        if (Character.isSurrogatePair(prevSiblingValue, f) && Character.isSurrogatePair(t, nextSiblingValue)) {
-          if (Character.toCodePoint(prevSiblingValue, f) > Character.toCodePoint(t, nextSiblingValue)) {
-            TextRange prevSiblingRange = prevSibling.getTextRange();
-            TextRange nextSiblingRange = nextSibling.getTextRange();
-            TextRange errorRange = new TextRange(prevSiblingRange.getStartOffset(), nextSiblingRange.getEndOffset());
-            myHolder.createErrorAnnotation(errorRange, ILLEGAL_CHARACTER_RANGE_TO_FROM);
-          }
-          return true;
+      if (prevSiblingValue != null && nextSiblingValue != null &&
+          Character.isSurrogatePair(prevSiblingValue, f) && Character.isSurrogatePair(t, nextSiblingValue)) {
+        if (Character.toCodePoint(prevSiblingValue, f) > Character.toCodePoint(t, nextSiblingValue)) {
+          TextRange prevSiblingRange = prevSibling.getTextRange();
+          TextRange nextSiblingRange = nextSibling.getTextRange();
+          TextRange errorRange = new TextRange(prevSiblingRange.getStartOffset(), nextSiblingRange.getEndOffset());
+          myHolder.createErrorAnnotation(errorRange, ILLEGAL_CHARACTER_RANGE_TO_FROM);
         }
+        return true;
       }
     }
     return false;
