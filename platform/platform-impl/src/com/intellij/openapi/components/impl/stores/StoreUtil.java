@@ -40,11 +40,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 public final class StoreUtil {
   private static final Logger LOG = Logger.getInstance(StoreUtil.class);
@@ -132,7 +132,7 @@ public final class StoreUtil {
   }
 
   @NotNull
-  public static ReloadComponentStoreStatus reloadStore(@NotNull MultiMap<StateStorage, VirtualFile> changes, @NotNull IComponentStore store) {
+  public static ReloadComponentStoreStatus reloadStore(@NotNull Set<StateStorage> changes, @NotNull IComponentStore store) {
     Collection<String> notReloadableComponents;
     boolean willBeReloaded = false;
     try {
@@ -159,7 +159,7 @@ public final class StoreUtil {
     }
     finally {
       if (!willBeReloaded) {
-        for (StateStorage storage : changes.keySet()) {
+        for (StateStorage storage : changes) {
           if (storage instanceof StateStorageBase) {
             ((StateStorageBase)storage).enableSaving();
           }
@@ -171,7 +171,7 @@ public final class StoreUtil {
   // used in settings repository plugin
   public static boolean askToRestart(@NotNull IComponentStore store,
                                      @NotNull Collection<String> notReloadableComponents,
-                                     @Nullable MultiMap<StateStorage, VirtualFile> changedStorages) {
+                                     @Nullable Set<StateStorage> changedStorages) {
     StringBuilder message = new StringBuilder();
     String storeName = store instanceof IProjectStore ? "Project" : "Application";
     message.append(storeName).append(' ');
@@ -199,7 +199,7 @@ public final class StoreUtil {
     if (Messages.showYesNoDialog(message.toString(),
                                  storeName + " Files Changed", Messages.getQuestionIcon()) == Messages.YES) {
       if (changedStorages != null) {
-        for (StateStorage storage : changedStorages.keySet()) {
+        for (StateStorage storage : changedStorages) {
           if (storage instanceof StateStorageBase) {
             ((StateStorageBase)storage).disableSaving();
           }

@@ -64,7 +64,6 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.JDOMException;
@@ -83,7 +82,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  private static final Key<MultiMap<StateStorage, VirtualFile>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
+  private static final Key<Set<StateStorage>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
@@ -93,7 +92,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final SingleAlarm myChangedFilesAlarm;
-  private final MultiMap<StateStorage, VirtualFile> myChangedApplicationFiles = MultiMap.createLinkedSet();
+  private final Set<StateStorage> myChangedApplicationFiles = new LinkedHashSet<StateStorage>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
 
   private final ProgressManager myProgressManager;
@@ -142,10 +141,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           project = componentManager instanceof Module ? ((Module)componentManager).getProject() : null;
         }
 
-        VirtualFile file = event.getFile();
-        if (file != null) {
-          registerProjectToReload(project, file, storage);
-        }
+        registerProjectToReload(project, storage);
       }
     });
 
@@ -628,7 +624,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         continue;
       }
 
-      MultiMap<StateStorage, VirtualFile> changes = CHANGED_FILES_KEY.get(project);
+      Set<StateStorage> changes = CHANGED_FILES_KEY.get(project);
       if (changes == null) {
         continue;
       }
@@ -652,8 +648,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return true;
     }
 
-    MultiMap<StateStorage, VirtualFile> changes = MultiMap.createLinkedSet();
-    changes.putAllValues(myChangedApplicationFiles);
+    Set<StateStorage> changes = new LinkedHashSet<StateStorage>(myChangedApplicationFiles);
     myChangedApplicationFiles.clear();
 
     ReloadComponentStoreStatus status = StoreUtil.reloadStore(changes, ComponentsPackage.getStateStore(ApplicationManager.getApplication()));
@@ -712,30 +707,30 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     FileBasedStorage storage = ContainerUtil.getFirstItem(storages.first);
     // if empty, so, storage is not yet loaded, so, we don't have to reload
     if (storage != null) {
-      registerProjectToReload(project, file, storage);
+      registerProjectToReload(project, storage);
     }
   }
 
-  private void registerProjectToReload(@Nullable Project project, @NotNull VirtualFile file, @NotNull StateStorage storage) {
+  private void registerProjectToReload(@Nullable Project project, @NotNull StateStorage storage) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("[RELOAD] Registering project to reload: " + file, new Exception());
+      LOG.debug("[RELOAD] Registering project to reload: " + storage, new Exception());
     }
 
-    MultiMap<StateStorage, VirtualFile> changes;
+    Set<StateStorage> changes;
     if (project == null) {
       changes = myChangedApplicationFiles;
     }
     else {
       changes = CHANGED_FILES_KEY.get(project);
       if (changes == null) {
-        changes = MultiMap.createLinkedSet();
+        changes = new LinkedHashSet<StateStorage>();
         CHANGED_FILES_KEY.set(project, changes);
       }
     }
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (changes) {
-      changes.putValue(storage, file);
+      changes.add(storage);
     }
 
     if (storage instanceof StateStorageBase) {

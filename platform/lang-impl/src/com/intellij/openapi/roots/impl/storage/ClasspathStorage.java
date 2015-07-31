@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -188,7 +187,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
     if (myStorageData != null) {

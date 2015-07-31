@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 public interface StateStorage {
@@ -53,7 +51,7 @@ public interface StateStorage {
   /**
    * Get changed component names
    */
-  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames);
+  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames);
 
   interface ExternalizationSession {
     void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);
