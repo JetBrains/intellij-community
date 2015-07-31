@@ -31,6 +31,7 @@ import com.jetbrains.reactivemodel.models.PrimitiveModel
 import java.util.ArrayList
 import javax.swing.JComponent
 import javax.swing.JTextField
+import javax.swing.SwingUtilities
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -54,9 +55,9 @@ public class SearchByName(val project: Project,
                           val initialIndex: Int,
                           val reactiveModel: ReactiveModel): ChooseByNameViewModel(project, model, provider, initialText, initialIndex) {
 
-  private var textSignal: Signal<String>? = null
-  private var checkSignal: Signal<Boolean>? = null
-  private var indexSignal: Signal<Int>? = null
+  private var textSignal: Signal<String?>? = null
+  private var checkSignal: Signal<Boolean?>? = null
+  private var indexSignal: Signal<Int?>? = null
   private val path = Path("goto")
 
   override fun invoke(callback: ChooseByNamePopupComponent.Callback?, modalityState: ModalityState?, allowMultipleSelection: Boolean) {
@@ -83,15 +84,15 @@ public class SearchByName(val project: Project,
       }
 
       checkSignal = reaction(false, "convert check to bool", reactiveModel.subscribe(lifetime, path / "check")) {
-        (it as PrimitiveModel<Boolean>).value
+        (it as? PrimitiveModel<Boolean>?)?.value
       }
 
       textSignal = reaction(false, "convert text to string", reactiveModel.subscribe(lifetime, path / "text")) {
-        (it as PrimitiveModel<String>).value
+        (it as? PrimitiveModel<String>?)?.value
       }
 
       indexSignal = reaction(false, "convert index to int", reactiveModel.subscribe(lifetime, path / "index")) {
-        (it as PrimitiveModel<Int>).value
+        (it as? PrimitiveModel<Int>?)?.value
       }
 
       reaction(false, "go to checkbox", checkSignal!!) {
@@ -103,15 +104,23 @@ public class SearchByName(val project: Project,
         rebuildList(false)
       }
 
+      var updateScheduled = false
+
       fun renderList(l: List<Any?>): ListModel =
         ListModel(l.map { PrimitiveModel(it.toString()) })
 
       fun renderList() {
-        val list = ArrayList<Any?>()
-        for (i in 0..myListModel.getSize()-1) {
-          list.add(myListModel.getElementAt(i))
+        if (updateScheduled) return
+        else {
+          SwingUtilities.invokeLater {
+            updateScheduled = false
+            val list = ArrayList<Any?>()
+            for (i in 0..myListModel.getSize() - 1) {
+              list.add(myListModel.getElementAt(i))
+            }
+            reactiveModel.transaction { it.putIn(path / "list", renderList(list)) }
+          }
         }
-        reactiveModel.transaction { it.putIn(path / "list", renderList(list))}
       }
 
       myListModel.addListDataListener(object: ListDataListener {
