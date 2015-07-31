@@ -26,7 +26,6 @@ import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.impl.stores.XmlElementStorage
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -170,12 +169,11 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
     return presentableUrl
   }
 
-  override fun getProjectFile() = (getProjectFileStorage() as FileBasedStorage).getVirtualFile()
+  override fun getProjectFile() = getProjectFileStorage().getVirtualFile()
 
-  override fun getProjectFilePath() = (getProjectFileStorage() as FileBasedStorage).getFilePath()
+  override fun getProjectFilePath() = getProjectFileStorage().getFilePath()
 
-  // XmlElementStorage if default project, otherwise FileBasedStorage
-  private fun getProjectFileStorage() = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as XmlElementStorage
+  private fun getProjectFileStorage() = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as FileBasedStorage
 
   override fun getWorkspaceFile() = workspaceStorage?.getVirtualFile()
 
