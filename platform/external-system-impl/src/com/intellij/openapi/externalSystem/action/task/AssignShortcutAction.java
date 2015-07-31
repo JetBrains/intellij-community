@@ -74,7 +74,7 @@ public class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
           group = projectData != null ? projectData.getInternalName() : null;
         }
         if (group != null) {
-          ExternalSystemKeymapExtension.registerAction(project, group, taskData);
+          ExternalSystemKeymapExtension.getOrRegisterAction(project, group, taskData);
         }
       }
       new EditKeymapsDialog(project, actionId).show();

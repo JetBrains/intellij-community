@@ -34,6 +34,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,30 +50,49 @@ import java.util.List;
  */
 public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
-  private final @NotNull ProjectSystemId mySystemId;
+  @NotNull
   private final SimpleTree myTree;
+  @Nullable
   private final NodeSelector mySelector;
+  @Nullable
+  protected Boolean groupTasks;
+  @Nullable
+  protected Boolean useTasksNode;
 
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
-                                        Project project,
-                                        String title,
-                                        final Class<? extends ExternalSystemNode> nodeClass,
-                                        NodeSelector selector) {
+                                        @NotNull Project project,
+                                        @NotNull String title,
+                                        Class<? extends ExternalSystemNode> nodeClass,
+                                        @Nullable NodeSelector selector) {
+    //noinspection unchecked
+    this(systemId, project, title, new Class[]{nodeClass}, selector);
+  }
+
+  public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
+                                        @NotNull Project project,
+                                        @NotNull String title,
+                                        final Class<? extends ExternalSystemNode>[] nodeClasses,
+                                        @Nullable NodeSelector selector) {
     super(project, false);
-    mySystemId = systemId;
     mySelector = selector;
     setTitle(title);
 
     myTree = new SimpleTree();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    final ExternalProjectsView projectsView = ExternalProjectsManager.getInstance(project).getExternalProjectsView(mySystemId);
+    final ExternalProjectsView projectsView = ExternalProjectsManager.getInstance(project).getExternalProjectsView(systemId);
     if(projectsView != null) {
       final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
         @SuppressWarnings("unchecked")
         @Override
         protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
-          return new Class[]{nodeClass};
+          return nodeClasses;
+        }
+
+        @Override
+        public Object getRootElement() {
+          Object rootElement = super.getRootElement();
+          return customizeProjectsTreeRoot(rootElement);
         }
       };
       treeStructure.init(new ExternalProjectsViewAdapter(projectsView) {
@@ -88,13 +108,23 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
         }
 
         @Override
+        public boolean getGroupTasks() {
+          return groupTasks != null ? groupTasks : super.getGroupTasks();
+        }
+
+        @Override
+        public boolean useTasksNode() {
+          return useTasksNode != null ? useTasksNode : super.useTasksNode();
+        }
+
+        @Override
         public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
           SelectExternalSystemNodeDialog.this.handleDoubleClickOrEnter(node, actionId, inputEvent);
         }
       });
 
       final Collection<ExternalProjectInfo> projectsData =
-        ProjectDataManager.getInstance().getExternalProjectsData(project, mySystemId);
+        ProjectDataManager.getInstance().getExternalProjectsData(project, systemId);
 
       final List<DataNode<ProjectData>> dataNodes =
         ContainerUtil.mapNotNull(projectsData, new Function<ExternalProjectInfo, DataNode<ProjectData>>() {
@@ -104,21 +134,28 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
           }
         });
       treeStructure.updateProjects(dataNodes);
+      TreeUtil.expandAll(myTree);
 
-      final SimpleNode[] selection = new SimpleNode[]{null};
-      treeStructure.accept(new SimpleNodeVisitor() {
-        public boolean accept(SimpleNode each) {
-          if (!mySelector.shouldSelect(each)) return false;
-          selection[0] = each;
-          return true;
+      if (mySelector != null) {
+        final SimpleNode[] selection = new SimpleNode[]{null};
+        treeStructure.accept(new SimpleNodeVisitor() {
+          public boolean accept(SimpleNode each) {
+            if (!mySelector.shouldSelect(each)) return false;
+            selection[0] = each;
+            return true;
+          }
+        });
+        if (selection[0] != null) {
+          treeStructure.select(selection[0]);
         }
-      });
-      if (selection[0] != null) {
-        treeStructure.select(selection[0]);
       }
     }
 
     init();
+  }
+
+  protected Object customizeProjectsTreeRoot(Object rootElement) {
+    return rootElement;
   }
 
   @Nullable

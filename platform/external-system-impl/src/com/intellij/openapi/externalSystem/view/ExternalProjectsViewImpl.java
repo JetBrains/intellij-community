@@ -479,6 +479,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     return myState.groupTasks;
   }
 
+  @Override
+  public boolean useTasksNode() {
+    return true;
+  }
+
   public void setGroupTasks(boolean value) {
     if (myState.groupTasks != value) {
       myState.groupTasks = value;

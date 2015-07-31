@@ -72,7 +72,7 @@ public class AssignShortcutAction extends MavenAction {
     if (actionId != null) {
       AnAction action = ActionManager.getInstance().getAction(actionId);
       if (action == null) {
-        MavenKeymapExtension.registerAction(project, actionId, goal);
+        MavenKeymapExtension.getOrRegisterAction(project, actionId, goal);
       }
     }
     return actionId;

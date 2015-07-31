@@ -93,6 +93,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myParent = parent;
   }
 
+  public boolean isAutoExpandNode() {
+    SimpleNode parent = getParent();
+    return parent != null && parent.getChildCount() == 1;
+  }
+
   public void setParent(@Nullable ExternalSystemNode parent) {
     myParent = parent;
   }

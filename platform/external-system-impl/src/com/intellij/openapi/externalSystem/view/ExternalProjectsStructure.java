@@ -132,7 +132,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure {
         projectNode = new ProjectNode(myExternalProjectsView, each);
         myNodeMapping.put(projectPath, projectNode);
       }
-      if (toImport.size() == 0) {
+      if (toImport.size() == 1) {
         myTreeBuilder.expand(projectNode, null);
       }
       doUpdateProject((ProjectNode)projectNode);

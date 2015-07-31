@@ -72,6 +72,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="external-system-api" />
     <orderEntry type="module" module-name="external-system-impl" />
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />

@@ -61,7 +61,7 @@ public class AssignRunConfigurationShortcutAction extends ExternalSystemAction {
     String actionId = actionIdPrefix + settings.getName();
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) {
-      ExternalSystemKeymapExtension.registerAction(project, settings);
+      ExternalSystemKeymapExtension.getOrRegisterAction(project, settings);
     }
     new EditKeymapsDialog(project, actionId).show();
   }
