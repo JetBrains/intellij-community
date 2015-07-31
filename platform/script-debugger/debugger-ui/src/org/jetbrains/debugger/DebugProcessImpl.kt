@@ -30,6 +30,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
+import org.jetbrains.concurrency.AsyncFunction
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.connection.VmConnection
 import org.jetbrains.debugger.frame.SuspendContextImpl
 import java.util.concurrent.ConcurrentMap
@@ -218,4 +220,8 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   public fun saveResolvedFile(url: Url, file: VirtualFile) {
     urlToFileCache.putIfAbsent(url, file)
   }
+}
+
+public inline fun asyncPromise(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) task: () -> Promise<Void>): AsyncFunction<Void, Void> = object : AsyncFunction<Void, Void> {
+  override fun `fun`(aVoid: Void?) = task()
 }
