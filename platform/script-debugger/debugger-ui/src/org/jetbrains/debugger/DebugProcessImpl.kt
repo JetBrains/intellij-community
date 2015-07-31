@@ -34,7 +34,6 @@ import org.jetbrains.debugger.connection.VmConnection
 import org.jetbrains.debugger.frame.SuspendContextImpl
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.event.HyperlinkListener
 import kotlin.properties.Delegates
 
 public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
@@ -47,7 +46,6 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   volatile protected var lastCallFrame: CallFrame? = null
   volatile protected var isForceStep: Boolean = false
   volatile protected var disableDoNotStepIntoLibraries: Boolean = false
-    private set
 
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
