@@ -28,4 +28,5 @@ contributor ([ctx], {
   ["jar", "dir", "zip"].each { methodName ->
     method name:methodName, type:"void", params: [name:"String", layout:{}]
   }
+  method name: "jar", type: "void", params: [attributes: "java.util.Map", layout: {}]
 })

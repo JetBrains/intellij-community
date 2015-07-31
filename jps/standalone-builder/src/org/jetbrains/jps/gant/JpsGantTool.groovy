@@ -75,20 +75,19 @@ final class JpsGantTool {
       }
       binding.setVariable("jar", {Object[] args ->
         if (args.length == 2) {
+          Map<String, String> params = new HashMap<String, String>()
           def param0 = args[0]
-          String name;
-          String duplicate = null;
           if (param0 instanceof Map) {
-            name = param0.name;
-            duplicate = param0.duplicate;
+            params = param0
           }
           else {
-            name = (String)param0;
+            params.name = (String)param0;
           }
-          if (duplicate == null) {
-            duplicate = "fail"
+          if (params.duplicate == null) {
+            params.duplicate = "fail"
           }
-          binding.ant.jar(name: name, compress: builder.compressJars, duplicate: duplicate, args[1])
+          params.compress = builder.compressJars
+          binding.ant.jar(params, args[1])
         }
         else {
           builder.error("unexpected number of parameters for 'jar' task: $args.length")
