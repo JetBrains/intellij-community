@@ -15,13 +15,19 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -174,7 +180,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
-    assertXmlOutputEquals("<scheme name=\"test\" version=\"141\" parent_scheme=\"Default\" />", root);
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\" />", root);
   }
 
   public void testWriteInheritedFromDarcula() throws Exception {
@@ -184,7 +190,45 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
-    assertXmlOutputEquals("<scheme name=\"test\" version=\"141\" parent_scheme=\"Darcula\" />", root);
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"142\" parent_scheme=\"Darcula\" />", root);
+  }
+
+  public void testSaveInheritance() throws Exception {
+    Pair<EditorColorsScheme,TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, new TextAttributes());
+    TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.STATIC_METHOD.getFallbackAttributeKey());
+    assertSame(result.second, fallbackAttrs);
+  }
+
+  public void testSaveNoInheritanceAndDefaults() throws Exception {
+    TextAttributes identifierAttrs = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME)
+      .getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER);
+    TextAttributes declarationAttrs = identifierAttrs.clone();
+    Pair<EditorColorsScheme, TextAttributes> result =
+      doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
+    TextAttributes fallbackAttrs = result.first.getAttributes(
+      DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey()
+    );
+    assertEquals(result.second, fallbackAttrs);
+    assertNotSame(result.second, fallbackAttrs);
+  }
+
+  @NotNull
+  public Pair<EditorColorsScheme,TextAttributes> doTestWriteRead(TextAttributesKey key, TextAttributes attributes)
+    throws WriteExternalException {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+
+    EditorColorsScheme sourceScheme = (EditorColorsScheme)defaultScheme.clone();
+    sourceScheme.setName("test");
+    sourceScheme.setAttributes(key, attributes);
+
+    Element root = new Element("scheme");
+    ((AbstractColorsScheme)sourceScheme).writeExternal(root);
+
+    EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
+    targetScheme.readExternal(root);
+    assertEquals("test", targetScheme.getName());
+    TextAttributes targetAttrs = targetScheme.getAttributes(key);
+    return Pair.create(targetScheme,targetAttrs);
   }
 
   private static void assertXmlOutputEquals(String expected, Element root) throws IOException {

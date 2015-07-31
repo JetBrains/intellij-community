@@ -37,6 +37,7 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -49,7 +50,7 @@ import static com.intellij.ui.ColorUtil.fromHex;
 
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private static final String OS_VALUE_PREFIX = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "linux";
-  private static final int CURR_VERSION = 141;
+  private static final int CURR_VERSION = 142;
 
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
 
@@ -81,6 +82,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String SCHEME_ELEMENT                 = "scheme";
   @NonNls public static final  String NAME_ATTR                      = "name";
   @NonNls private static final String VERSION_ATTR                   = "version";
+  @NonNls private static final String BASE_ATTRIBUTES_ATTR           = "baseAttributes";
   @NonNls private static final String DEFAULT_SCHEME_ATTR            = "default_scheme";
   @NonNls private static final String PARENT_SCHEME_ATTR             = "parent_scheme";
   @NonNls private static final String OPTION_ELEMENT                 = "option";
@@ -336,7 +338,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
       TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
-      TextAttributes attr = new TextAttributes(e.getChild(VALUE_ELEMENT));
+      Element valueElement = e.getChild(VALUE_ELEMENT);
+      TextAttributes attr = valueElement != null ? new TextAttributes(valueElement) : new TextAttributes();
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom14(name, attr);
     }
@@ -550,10 +553,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       parent.addContent(element);
     }
   }
-  
-  private static boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttribute) {
-    return !(key.getFallbackAttributeKey() != null && value.isFallbackEnabled()) && !value.equals(defaultAttribute);
-  }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
     List<TextAttributesKey> list = new ArrayList<TextAttributesKey>(myAttributesMap.keySet());
@@ -561,14 +560,25 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
     for (TextAttributesKey key: list) {
       TextAttributes defaultAttr = myParentScheme != null ? myParentScheme.getAttributes(key) : new TextAttributes();
+      TextAttributesKey baseKey = key.getFallbackAttributeKey();
+      TextAttributes defaultFallbackAttr =
+        baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
+        ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
       TextAttributes value = myAttributesMap.get(key);
-      if (!haveToWrite(key,value,defaultAttr)) continue;
-      Element element = new Element(OPTION_ELEMENT);
-      element.setAttribute(NAME_ATTR, key.getExternalName());
-      Element valueElement = new Element(VALUE_ELEMENT);
-      value.writeExternal(valueElement);
-      element.addContent(valueElement);
-      attrElements.addContent(element);
+      if (!value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
+        Element element = new Element(OPTION_ELEMENT);
+        element.setAttribute(NAME_ATTR, key.getExternalName());
+        if (baseKey == null || !value.isFallbackEnabled()) {
+          Element valueElement = new Element(VALUE_ELEMENT);
+          value.writeExternal(valueElement);
+          element.addContent(valueElement);
+          attrElements.addContent(element);
+        }
+        else if (defaultAttr != defaultFallbackAttr) {
+          element.setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName());
+          attrElements.addContent(element);
+        }
+      }
     }
   }
 
@@ -665,13 +675,28 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   protected TextAttributes getFallbackAttributes(TextAttributesKey fallbackKey) {
     if (fallbackKey == null) return null;
-    if (myAttributesMap.containsKey(fallbackKey)) {
-      TextAttributes fallbackAttributes = myAttributesMap.get(fallbackKey);
-      if (fallbackAttributes != null && (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null)) {
+    TextAttributes fallbackAttributes = getDirectlyDefinedAttributes(fallbackKey);
+    if (fallbackAttributes != null) {
+      if (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null) {
         return fallbackAttributes;
       }
     }
     return getFallbackAttributes(fallbackKey.getFallbackAttributeKey());
   }
 
+
+  /**
+   * Looks for explicitly specified attributes either in the scheme or its parent scheme. No fallback keys are used.
+   *
+   * @param key The key to use for search.
+   * @return Explicitly defined attribute or <code>null</code> if not found.
+   */
+  @Nullable
+  public TextAttributes getDirectlyDefinedAttributes(@NotNull TextAttributesKey key) {
+    TextAttributes attributes = myAttributesMap.get(key);
+    if (attributes != null) {
+      return attributes;
+    }
+    return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
+  }
 }

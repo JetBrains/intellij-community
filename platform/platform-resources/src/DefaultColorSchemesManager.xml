@@ -79,6 +79,9 @@
           <option name="FONT_TYPE" value="2"/>
         </value>
       </option>
+      <option name="DEFAULT_COMMA">
+        <value/>
+      </option>
       <option name="DEFAULT_CONSTANT">
         <value>
           <option name="FOREGROUND" value="660e7a"/>
@@ -106,6 +109,9 @@
         <value>
           <option name="FOREGROUND" value="808000" />
         </value>
+      </option>
+      <option name="DEFAULT_SEMICOLON">
+        <value/>
       </option>
       <option name="DEFAULT_STRING">
         <value>
