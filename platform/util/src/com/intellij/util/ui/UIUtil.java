@@ -3116,6 +3116,9 @@ public class UIUtil {
   }
 
   public static void addUndoRedoActions(@NotNull final JTextComponent textComponent) {
+    if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
+      return;
+    }
     UndoManager undoManager = new UndoManager();
     textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
