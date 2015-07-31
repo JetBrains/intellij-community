@@ -580,10 +580,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         if (!lowerHighlighter.isValid()) continue;
 
         int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
-        if (isInvalidLine(document, startLineIndex)) continue;
+        if (!isValidLine(document, startLineIndex)) continue;
 
         int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
-        if (isInvalidLine(document, endLineIndex)) continue;
+        if (!isValidLine(document, endLineIndex)) continue;
 
         if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
           processor.process(lowerHighlighter);
@@ -596,10 +596,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private static boolean isInvalidLine(@NotNull Document document, int line) {
+  private static boolean isValidLine(@NotNull Document document, int line) {
     if (line < 0) return false;
     int lineCount = document.getLineCount();
-    return lineCount == 0 ? line > 0 : line >= lineCount;
+    return lineCount == 0 ? line == 0 : line < lineCount;
   }
 
   private static boolean less(RangeHighlighter h1, RangeHighlighter h2) {
