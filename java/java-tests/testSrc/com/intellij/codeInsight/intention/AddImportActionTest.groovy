@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.intention
-
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.psi.impl.source.codeStyle.ImportHelper
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -455,5 +451,23 @@ class Tq {
 
   private def reimportClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with 'import'"))
+  }
+
+  public void "test disprefer deprecated classes"() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package bar; @Deprecated public class Log {}'
+    myFixture.configureByText 'a.java', '''\
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.Log;
+
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+
   }
 }
