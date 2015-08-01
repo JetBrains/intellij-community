@@ -89,10 +89,10 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final LibraryCompositionSettings settings = myPanel.apply();
-    if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
           if (myModifiableRootModel == null) {
             final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
             new WriteAction() {
@@ -108,9 +108,9 @@ public class AddCustomLibraryDialog extends DialogWrapper {
           }
 
         }
-      });
-      super.doOKAction();
-    }
+        AddCustomLibraryDialog.super.doOKAction();
+      }
+    });
   }
 
   private void addLibraries(ModifiableRootModel model, final LibraryCompositionSettings settings) {
