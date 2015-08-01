@@ -94,9 +94,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
           .rejected(new Consumer<Throwable>() {
             @Override
             public void consume(Throwable error) {
-              if (ApplicationManager.getApplication().isUnitTestMode() || !(error instanceof Promise.MessageError)) {
-                CommandProcessor.LOG.error(error);
-              }
+              Promise.logError(CommandProcessor.LOG, error);
               setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage());
             }
           })

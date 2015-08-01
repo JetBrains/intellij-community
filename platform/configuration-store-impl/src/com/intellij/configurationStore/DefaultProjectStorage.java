@@ -4,7 +4,6 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StorageData;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +12,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class DefaultProjectStorage extends FileBasedStorage {
-  public DefaultProjectStorage(@NotNull File file, @NotNull String fileSpec, PathMacroManager pathMacroManager, ProjectManagerImpl projectManager) {
-    super(file, fileSpec, RoamingType.DISABLED, pathMacroManager.createTrackingSubstitutor(), "defaultProject", projectManager, null, null);
+  public DefaultProjectStorage(@NotNull File file, @NotNull String fileSpec, PathMacroManager pathMacroManager) {
+    super(file, fileSpec, RoamingType.DISABLED, pathMacroManager.createTrackingSubstitutor(), "defaultProject", null);
   }
 
   @Nullable

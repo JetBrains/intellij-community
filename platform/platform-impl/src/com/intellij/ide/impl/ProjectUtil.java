@@ -25,11 +25,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
@@ -160,7 +160,7 @@ public class ProjectUtil {
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
-      if (isSameProject(path, project)) {
+      if (!project.isDefault() && isSameProject(path, project)) {
         focusProjectWindow(project, false);
         return project;
       }
@@ -288,6 +288,7 @@ public class ProjectUtil {
   }
 
   public static boolean isDirectoryBased(@NotNull Project project) {
-    return project instanceof ProjectEx && StorageScheme.DIRECTORY_BASED.equals(((IProjectStore)ComponentsPackage.getStateStore(project)).getStorageScheme());
+    IComponentStore store = ComponentsPackage.getStateStore(project);
+    return store instanceof IProjectStore && StorageScheme.DIRECTORY_BASED.equals(((IProjectStore)store).getStorageScheme());
   }
 }

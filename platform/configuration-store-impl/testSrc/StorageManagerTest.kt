@@ -15,8 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.testFramework.FixtureRule
 import junit.framework.TestCase
@@ -26,22 +24,41 @@ import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import kotlin.properties.Delegates
 
-class StateStorageManageTest {
+class StorageManagerTest {
   private val fixtureManager = FixtureRule()
   public Rule fun getFixtureManager(): FixtureRule = fixtureManager
 
+  private val thrown = ExpectedException.none()
+  public Rule fun getThrown(): ExpectedException = thrown
+
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
 
+  companion object {
+    val MACRO = "\$MACRO1$"
+  }
+
   public Before fun setUp() {
-    val application = ApplicationManager.getApplication()
-    storageManager = StateStorageManagerImpl(PathMacroManager.getInstance(application).createTrackingSubstitutor(), "foo", application.getPicoContainer())
-    storageManager.addMacro("\$MACRO1$", "/temp/m1")
+    storageManager = StateStorageManagerImpl("foo")
+    storageManager.addMacro(MACRO, "/temp/m1")
   }
 
   public Test fun testCreateFileStateStorageMacroSubstituted() {
-    assertThat(storageManager.getStateStorage("\$MACRO1$/test.xml", RoamingType.PER_USER), notNullValue())
+    assertThat(storageManager.getStateStorage("$MACRO/test.xml", RoamingType.PER_USER), notNullValue())
+  }
+
+  public Test fun `collapse macro`() {
+    assertThat(storageManager.collapseMacros("/temp/m1/foo"), equalTo("$MACRO/foo"))
+    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo"), equalTo("\\temp\\m1\\foo"))
+  }
+
+  public Test fun `add system-dependent macro`() {
+    val key = "\$INVALID$"
+    val expansion = "\\temp"
+    thrown.expectMessage("Macro $key set to system-dependent expansion $expansion");
+    storageManager.addMacro(key, expansion)
   }
 
   public Test fun `create storage assertion thrown when unknown macro`() {

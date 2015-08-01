@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.List;
   name = "libraryTable",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/libraries/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectLibraryTable.LibraryStateSplitter.class)
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/libraries", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectLibraryTable.LibraryStateSplitter.class)
   }
 )
 public class ProjectLibraryTable extends LibraryTableBase {

@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+package com.intellij.openapi.util.io
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NotNull;
+import java.io.File
 
-public interface ApplicationLoadListener {
-  ExtensionPointName<ApplicationLoadListener> EP_NAME = ExtensionPointName.create("com.intellij.ApplicationLoadListener");
-
-  void beforeApplicationLoaded(@NotNull Application application, @NotNull String configPath);
-}
+public val File.systemIndependentPath: String
+  get() = FileUtilRt.toSystemIndependentName(getPath())

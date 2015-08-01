@@ -16,10 +16,13 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageDataBase;
+import com.intellij.openapi.components.impl.stores.StorageManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -31,10 +34,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.PathUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -52,27 +57,58 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
-  public ClasspathStorage(@NotNull Module module, @NotNull IComponentStore moduleStore) {
-    super(moduleStore.getStateStorageManager().getMacroSubstitutor());
+  public ClasspathStorage(@NotNull final Module module, @NotNull StateStorageManager storageManager) {
+    super(storageManager.getMacroSubstitutor());
 
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
     assert provider != null;
     myConverter = provider.createConverter(module);
     assert myConverter != null;
 
-    VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
-    if (virtualFileTracker != null) {
-      List<String> urls = myConverter.getFileUrls();
-      for (String url : urls) {
-        final Listener listener = module.getProject().getMessageBus().syncPublisher(PROJECT_STORAGE_TOPIC);
-        virtualFileTracker.addTracker(url, new VirtualFileAdapter() {
-          @Override
-          public void contentsChanged(@NotNull VirtualFileEvent event) {
-            listener.storageFileChanged(event, ClasspathStorage.this);
+    final List<String> paths = myConverter.getFilePaths();
+    MessageBusConnection busConnection = module.getMessageBus().connect();
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (!event.isFromRefresh() || !(event instanceof VFileContentChangeEvent)) {
+            continue;
           }
-        }, true, module);
+
+          for (String path : paths) {
+            if (path.equals(event.getPath())) {
+              module.getMessageBus().syncPublisher(StateStorageManager.STORAGE_TOPIC).storageFileChanged(event, ClasspathStorage.this, module);
+              return;
+            }
+          }
+        }
       }
-    }
+    });
+
+    busConnection.subscribe(StateStorageManager.STORAGE_TOPIC, new StorageManagerListener() {
+      private String fileNameToModuleName(@NotNull String fileName) {
+        return fileName.substring(0, fileName.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length());
+      }
+
+      @Override
+      public void storageFileChanged(@NotNull VFileEvent event, @NotNull StateStorage storage, @NotNull ComponentManager componentManager) {
+        assert componentManager == module;
+        if (!(event instanceof VFilePropertyChangeEvent)) {
+          return;
+        }
+
+        VFilePropertyChangeEvent propertyEvent = (VFilePropertyChangeEvent)event;
+        if (propertyEvent.getPropertyName().equals(VirtualFile.PROP_NAME)) {
+          String oldFileName = (String)propertyEvent.getOldValue();
+          if (oldFileName.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
+            ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
+            if (provider != null) {
+              provider.moduleRenamed(module, fileNameToModuleName(oldFileName), fileNameToModuleName((String)propertyEvent.getNewValue()));
+            }
+          }
+        }
+      }
+    });
   }
 
   @Nullable
@@ -154,7 +190,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
     if (myStorageData != null) {
@@ -218,13 +254,6 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
     else {
       module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
       module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider.getContentRoot(model));
-    }
-  }
-
-  public static void moduleRenamed(@NotNull Module module, @NotNull String newName) {
-    ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
-    if (provider != null) {
-      provider.moduleRenamed(module, newName);
     }
   }
 
