@@ -25,10 +25,13 @@ import org.jetbrains.annotations.Nullable;
  * A range marker that has to be manually updated with {@link #applyEvent(DocumentEvent)}. Can hold PSI-based range and be updated when the document is committed.
  */
 public class ManualRangeMarker {
+  private static int ourCount = 0;
+
   private ProperTextRange myRange;
   private boolean myValid = true;
   private final boolean myGreedyLeft;
   private final boolean myGreedyRight;
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod") private final int myHash = ourCount++;
   private PersistentRangeMarker.LinesCols myLinesCols;
 
   public ManualRangeMarker(@NotNull FrozenDocument document, @NotNull ProperTextRange range, boolean greedyLeft, boolean greedyRight, boolean surviveOnExternalChange) {
@@ -81,5 +84,15 @@ public class ManualRangeMarker {
 
   public boolean isValid() {
     return myValid;
+  }
+
+  @Override
+  public String toString() {
+    return "ManualRangeMarker" + (myValid ? myRange.toString() : " invalid");
+  }
+
+  @Override
+  public int hashCode() {
+    return myHash;
   }
 }

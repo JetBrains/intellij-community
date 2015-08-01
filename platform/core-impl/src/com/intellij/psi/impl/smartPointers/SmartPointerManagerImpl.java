@@ -33,10 +33,12 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -47,8 +49,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
@@ -245,16 +247,21 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @NotNull
-  List<SmartPsiElementPointerImpl> getAlivePointers(@NotNull VirtualFile containingFile) {
-    FilePointersList pointers = getPointers(containingFile);
-    if (pointers == null) return Collections.emptyList();
+  ManualRangeMarker obtainMarker(@NotNull Document document, @NotNull ProperTextRange range) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    FilePointersList pointers = file == null ? null : getPointers(file);
+    ConcurrentMap<ProperTextRange, ManualRangeMarker> cache = pointers == null ? null : pointers.getMarkerCache();
+    ManualRangeMarker marker = cache == null ? null : cache.get(range);
+    if (marker != null) {
+      return marker;
+    }
 
-    return ContainerUtil.mapNotNull(pointers.references, new Function<PointerReference, SmartPsiElementPointerImpl>() {
-      @Override
-      public SmartPsiElementPointerImpl fun(PointerReference reference) {
-        return (SmartPsiElementPointerImpl)SoftReference.dereference(reference);
-      }
-    });
+    FrozenDocument frozen = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getLastCommittedDocument(document);
+    marker = new ManualRangeMarker(frozen, range, false, false, true);
+    if (cache != null) {
+      marker = ConcurrencyUtil.cacheOrGet(cache, range, marker);
+    }
+    return marker;
   }
 
   @TestOnly
@@ -287,9 +294,12 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   public void updatePointers(Document document, FrozenDocument frozen, List<DocumentEvent> events) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return;
+    FilePointersList pointers = file == null ? null : getPointers(file);
+    if (pointers == null) return;
 
-    List<SelfElementInfo> infos = ContainerUtil.mapNotNull(getAlivePointers(file), new Function<SmartPsiElementPointerImpl, SelfElementInfo>() {
+    pointers.markerCache = null;
+
+    List<SelfElementInfo> infos = ContainerUtil.mapNotNull(pointers.getAlivePointers(), new Function<SmartPsiElementPointerImpl, SelfElementInfo>() {
       @Override
       public SelfElementInfo fun(SmartPsiElementPointerImpl pointer) {
         final SmartPointerElementInfo info = pointer.getElementInfo();
@@ -327,6 +337,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     private int nextAvailableIndex;
     private int size;
     private PointerReference[] references = new PointerReference[10];
+    private volatile ConcurrentMap<ProperTextRange, ManualRangeMarker> markerCache;
 
     private void add(@NotNull PointerReference reference) {
       if (nextAvailableIndex >= references.length || nextAvailableIndex > size*2) {  // overflow or too many dead refs
@@ -370,6 +381,34 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
     private boolean isEmpty() {
       return size == 0;
+    }
+
+    @Nullable
+    private ConcurrentMap<ProperTextRange, ManualRangeMarker> getMarkerCache() {
+      ConcurrentMap<ProperTextRange, ManualRangeMarker> cache = markerCache;
+      if (cache == null) {
+        cache = ContainerUtil.newConcurrentMap();
+        for (SmartPsiElementPointerImpl pointer : getAlivePointers()) {
+          SmartPointerElementInfo info = pointer == null ? null : pointer.getElementInfo();
+          ManualRangeMarker marker = info instanceof SelfElementInfo ? ((SelfElementInfo)info).getRangeMarker() : null;
+          ProperTextRange key = marker == null ? null : marker.getRange();
+          if (key != null) {
+            cache.putIfAbsent(key, marker);
+          }
+        }
+        markerCache = cache;
+      }
+      return cache;
+    }
+
+    @NotNull
+    private List<SmartPsiElementPointerImpl> getAlivePointers() {
+      return ContainerUtil.mapNotNull(references, new Function<PointerReference, SmartPsiElementPointerImpl>() {
+        @Override
+        public SmartPsiElementPointerImpl fun(PointerReference reference) {
+          return (SmartPsiElementPointerImpl)SoftReference.dereference(reference);
+        }
+      });
     }
   }
 }
