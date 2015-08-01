@@ -397,7 +397,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, ProjectManager.getInstance().getOpenProjects(), new Runnable() {
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
         @Override
         public void run() {
           for (PsiElement element : myElements) {

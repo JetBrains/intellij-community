@@ -299,7 +299,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   public boolean downloadLibraries() {
     final Ref<Boolean> result = Ref.create(true);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, ProjectManager.getInstance().getOpenProjects(), new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       @Override
       public void run() {
         applyLibraryOptionsForSelected();

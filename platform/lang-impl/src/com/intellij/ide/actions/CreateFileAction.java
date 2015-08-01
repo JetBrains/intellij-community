@@ -232,7 +232,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
       final Project project = psiDirectory.getProject();
       final boolean[] result = {false};
-      DumbService.getInstance(project).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
         @Override
         public void run() {
           final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(new FakeVirtualFile(psiDirectory.getVirtualFile(), getFileName(inputString)),

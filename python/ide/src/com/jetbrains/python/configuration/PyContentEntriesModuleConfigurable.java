@@ -110,7 +110,7 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
     final boolean editorWasModified = myEditor.isModified();
     myEditor.apply();
     if (editorWasModified) {
-      DumbService.getInstance(myModifiableModel.getProject()).allowStartingDumbModeInside(MAY_START_BACKGROUND, new Runnable() {
+      DumbService.allowStartingDumbModeInside(MAY_START_BACKGROUND, new Runnable() {
         @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {

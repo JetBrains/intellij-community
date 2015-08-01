@@ -90,7 +90,7 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   protected void doOKAction() {
     final LibraryCompositionSettings settings = myPanel.apply();
     if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
-      DumbService.getInstance(myModule.getProject()).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
         @Override
         public void run() {
           if (myModifiableRootModel == null) {

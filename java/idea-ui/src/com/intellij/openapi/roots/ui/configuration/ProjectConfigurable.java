@@ -226,7 +226,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       throw new ConfigurationException("Please, specify project name!");
     }
 
-    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override

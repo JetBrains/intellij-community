@@ -133,10 +133,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       selectInTree(toSelect, true);
     }
 
-    // file chooser calls VFS refresh which might lead to rootsChanged in any open project and dumb mode that the clients don't expect.
-    // so if reindexing has to happen, let it happen under a modal progress and be finished before the file chooser returns.
-    // this hack should be gone if file chooser doesn't use VFS (https://youtrack.jetbrains.com/issue/IDEA-101218)
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, ProjectManager.getInstance().getOpenProjects(), new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
       @Override
       public void run() {
         show();

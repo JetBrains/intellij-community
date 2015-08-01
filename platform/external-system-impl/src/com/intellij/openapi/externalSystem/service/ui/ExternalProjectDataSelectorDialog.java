@@ -216,17 +216,16 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
           @Override
           public void execute() {
-            DumbService.getInstance(myProject).allowStartingDumbModeInside(
-              DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-                public void run() {
-                  ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
-                    @Override
-                    public void run() {
-                      ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, true);
-                    }
-                  });
-                }
-              });
+            DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+              public void run() {
+                ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
+                  @Override
+                  public void run() {
+                    ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, true);
+                  }
+                });
+              }
+            });
           }
         });
       }
