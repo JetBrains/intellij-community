@@ -28,6 +28,12 @@ public class ThreeNegationsPerMethod
         }
     }
 
+    public void <warning descr="'badMethod3' contains 4 negations">badMethod3</warning>() {
+        if (true != false != true != false != true) {
+            return;
+        }
+    }
+
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

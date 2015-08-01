@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ class NegationCountVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
-    super.visitBinaryExpression(expression);
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+    super.visitPolyadicExpression(expression);
     final IElementType tokenType = expression.getOperationTokenType();
     if (!ignoring && tokenType.equals(JavaTokenType.NE)) {
-      m_count++;
+      m_count += expression.getOperands().length - 1;
     }
   }
 
