@@ -59,7 +59,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
         storageManager.clearStateStorage(file);
       }
 
-      projectStore.setPath(baseDir.getPath());
+      projectStore.setProjectFilePath(baseDir.getPath());
       project.save();
       ProjectUtil.closeAndDispose(project);
       ProjectUtil.openProject(baseDir.getPath(), null, false);

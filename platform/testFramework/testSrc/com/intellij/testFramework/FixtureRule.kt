@@ -17,57 +17,25 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import org.junit.rules.ExternalResource
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
-import kotlin.properties.Delegates
 
-public open class FixtureRule() : ExternalResource() {
+public class FixtureRule() : ExternalResource() {
   companion object {
     init {
       Logger.setFactory(javaClass<TestLoggerFactory>())
     }
   }
 
-  protected var _projectFixture: IdeaProjectTestFixture? = null
+  val projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture()
 
-  public val projectFixture: IdeaProjectTestFixture
-    get() = _projectFixture!!
-
-  open fun createBuilder() = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder()
-
-  override final fun before() {
-    val builder = createBuilder()
-    if (_projectFixture == null) {
-      _projectFixture = builder.getFixture()
-    }
-
+  override fun before() {
     UsefulTestCase.replaceIdeEventQueueSafely()
+
     invokeAndWaitIfNeed { projectFixture.setUp() }
   }
 
-  override final fun after() {
+  override fun after() {
     invokeAndWaitIfNeed { projectFixture.tearDown() }
-  }
-}
-
-public fun FixtureRule(tuner: TestFixtureBuilder<IdeaProjectTestFixture>.() -> Unit): FixtureRule = HeavyFixtureRule(tuner)
-
-private class HeavyFixtureRule(private val tune: TestFixtureBuilder<IdeaProjectTestFixture>.() -> Unit) : FixtureRule() {
-  private var name: String by Delegates.notNull()
-
-  override final fun apply(base: Statement, description: Description): Statement {
-    name = description.getMethodName()
-    return super.apply(base, description)
-  }
-
-  override final fun createBuilder(): TestFixtureBuilder<IdeaProjectTestFixture> {
-    val builder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
-    _projectFixture = builder.getFixture()
-    builder.tune()
-    return builder
   }
 }

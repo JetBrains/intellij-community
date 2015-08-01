@@ -38,7 +38,9 @@ public final class RejectErrorReporter implements Consumer<Throwable> {
 
   @Override
   public void consume(Throwable error) {
-    Promise.logError(CommandProcessor.LOG, error);
+    if (!(error instanceof Promise.MessageError)) {
+      CommandProcessor.LOG.error(error);
+    }
     if (error != AsyncPromise.OBSOLETE_ERROR) {
       session.reportError((description == null ? "" : description + ": ") + error.getMessage());
     }

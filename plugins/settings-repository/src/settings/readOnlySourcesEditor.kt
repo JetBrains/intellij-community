@@ -144,7 +144,7 @@ private fun createReadOnlySourcesEditor(dialogParent: Component, project: Projec
               indicator.checkCanceled()
               try {
                 indicator.setText("Cloning ${StringUtil.trimMiddle(source.url!!, 255)}")
-                cloneBare(source.url!!, File(root, source.path!!), icsManager.credentialsStore, indicator.asProgressMonitor()).close()
+                cloneBare(source.url!!, File(root, source.path!!), credentialsStore, indicator.asProgressMonitor()).close()
               }
               catch (e: Exception) {
                 LOG.error(e)

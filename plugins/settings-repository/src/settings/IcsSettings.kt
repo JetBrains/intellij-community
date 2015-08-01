@@ -13,6 +13,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.Time
 import java.io.File
 
+private val settingsFile = File(getPluginSystemDir(), "config.json")
 private val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
 
 class MyPrettyPrinter : DefaultPrettyPrinter() {
@@ -44,7 +45,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
   }
 }
 
-fun saveSettings(settings: IcsSettings, settingsFile: File) {
+fun saveSettings(settings: IcsSettings) {
   val serialized = ObjectMapper().writer<ObjectWriter>(MyPrettyPrinter()).writeValueAsBytes(settings)
   if (serialized.size() <= 2) {
     FileUtil.delete(settingsFile)
@@ -54,7 +55,7 @@ fun saveSettings(settings: IcsSettings, settingsFile: File) {
   }
 }
 
-fun loadSettings(settingsFile: File): IcsSettings {
+fun loadSettings(): IcsSettings {
   if (!settingsFile.exists()) {
     return IcsSettings()
   }

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface ModuleEx extends Module {
-  /**
-   * @param path System-independent path.
-   */
   void init(@NotNull String path, @Nullable Runnable beforeComponentCreation);
 
   void moduleAdded();

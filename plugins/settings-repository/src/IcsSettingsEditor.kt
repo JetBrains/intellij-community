@@ -58,7 +58,7 @@ class IcsSettingsEditor(private val project: Project?) : DialogWrapper(project, 
 
   override fun doOKAction() {
     currentConfigurable?.apply()
-    saveSettings(icsManager.settings, icsManager.settingsFile)
+    saveSettings(icsManager.settings)
 
     super.doOKAction()
   }

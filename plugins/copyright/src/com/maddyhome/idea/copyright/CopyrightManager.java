@@ -53,7 +53,7 @@ import java.util.*;
 
 @State(name = "CopyrightManager",
   storages = {@Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/copyright", scheme = StorageScheme.DIRECTORY_BASED,
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
       stateSplitter = CopyrightManager.CopyrightStateSplitter.class)})
 public class CopyrightManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + CopyrightManager.class.getName());

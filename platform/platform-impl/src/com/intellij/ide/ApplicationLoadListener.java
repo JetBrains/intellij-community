@@ -22,5 +22,5 @@ import org.jetbrains.annotations.NotNull;
 public interface ApplicationLoadListener {
   ExtensionPointName<ApplicationLoadListener> EP_NAME = ExtensionPointName.create("com.intellij.ApplicationLoadListener");
 
-  void beforeApplicationLoaded(@NotNull Application application, @NotNull String configPath);
+  void beforeApplicationLoaded(@NotNull Application application);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface StateStorageManager {
-  Topic<IStorageManagerListener> STORAGE_TOPIC = new Topic<IStorageManagerListener>("STORAGE_LISTENER", IStorageManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
+  void addMacro(@NotNull String macro, @NotNull String expansion);
 
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();
@@ -43,7 +41,7 @@ public interface StateStorageManager {
   @NotNull
   Collection<String> getStorageFileNames();
 
-  void clearStateStorage(@NotNull String fileSpec);
+  void clearStateStorage(@NotNull String file);
 
   @Nullable
   ExternalizationSession startExternalization();
@@ -52,12 +50,9 @@ public interface StateStorageManager {
   StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
   @NotNull
-  String expandMacros(@NotNull String path);
+  String expandMacros(@NotNull String file);
 
   @NotNull
-  /**
-   * @param path System-independent path.
-   */
   String collapseMacros(@NotNull String path);
 
   void setStreamProvider(@Nullable StreamProvider streamProvider);
@@ -75,12 +70,5 @@ public interface StateStorageManager {
      */
     @NotNull
     List<StateStorage.SaveSession> createSaveSessions();
-  }
-
-  /**
-   * Don't use it directly, only {@link StorageManagerListener} must be used to avoid compatibility issues
-   **/
-  interface IStorageManagerListener {
-    void storageFileChanged(@NotNull VFileEvent event, @NotNull StateStorage storage, @NotNull ComponentManager componentManager);
   }
 }

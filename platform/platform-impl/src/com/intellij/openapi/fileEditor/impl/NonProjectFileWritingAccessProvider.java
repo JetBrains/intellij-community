@@ -154,7 +154,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     if (fileIndex.isInContent(file)) return true;
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
     
-    if (project instanceof ProjectEx && !project.isDefault()) {
+    if (project instanceof ProjectEx) {
       if (ProjectUtil.isDirectoryBased(project)) {
         VirtualFile baseDir = project.getBaseDir();
         VirtualFile dotIdea = baseDir == null ? null : baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);

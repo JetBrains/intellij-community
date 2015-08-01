@@ -61,7 +61,9 @@ public abstract class NetService implements Disposable {
         @Override
         public void consume(Throwable error) {
           processHandler.destroyProcess();
-          Promise.logError(LOG, error);
+          if (!(error instanceof Promise.MessageError)) {
+            LOG.error(error);
+          }
         }
       });
 

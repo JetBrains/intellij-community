@@ -38,8 +38,8 @@ public final class EclipseClasspathConverter implements ClasspathStorageProvider
 
   @NotNull
   @Override
-  public List<String> getFilePaths() {
-    return getFileSet().getFilePaths();
+  public List<String> getFileUrls() {
+    return getFileSet().getFileUrls();
   }
 
   @Override

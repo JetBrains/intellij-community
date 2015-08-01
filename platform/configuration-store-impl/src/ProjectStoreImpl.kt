@@ -19,13 +19,12 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
-import com.intellij.openapi.components.impl.stores.FileBasedStorage
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -33,7 +32,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectN
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.util.PathUtilRt
@@ -45,25 +43,26 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.ArrayList
 
-open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager), IProjectStore {
+open class ProjectStoreImpl(override protected val project: ProjectImpl, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
 
   private var presentableUrl: String? = null
 
-  init {
-    assert(!project.isDefault())
+  override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
+    val substitutor = storageManager.getMacroSubstitutor()
+    return if (substitutor == null) emptyArray() else arrayOf(substitutor)
   }
-
-  override fun getSubstitutors() = listOf(storageManager.getMacroSubstitutor())
 
   override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
 
-  override fun setPath(filePath: String) {
+  override fun setProjectFilePath(filePath: String) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
-    if (FileUtilRt.extensionEquals(filePath, ProjectFileType.DEFAULT_EXTENSION)) {
+
+    val file = File(filePath)
+    if (isIprPath(file)) {
       scheme = StorageScheme.DEFAULT
 
       storageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath)
@@ -71,37 +70,48 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
       val workspacePath = composeWsPath(filePath)
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
-      invokeAndWaitIfNeed {
-        VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
-      }
+      ApplicationManager.getApplication().invokeAndWait(object : Runnable {
+        override fun run() {
+          VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
+        }
+      }, ModalityState.defaultModalityState())
     }
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
-      val file = File(filePath)
       val dirStore = File(if (file.isDirectory()) file else file.getParentFile(), Project.DIRECTORY_STORE_FOLDER)
-      val projectConfigDir = dirStore.systemIndependentPath
-      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, "$projectConfigDir/misc.xml")
-      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, projectConfigDir)
+      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, File(dirStore, "misc.xml").getPath())
+      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, dirStore.getPath())
 
       val workspace = File(dirStore, "workspace.xml")
-      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.systemIndependentPath)
+      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.getPath())
       if (!workspace.exists() && !file.isDirectory()) {
         useOldWorkspaceContent(filePath, workspace)
       }
 
-      invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(projectConfigDir)) }
+      ApplicationManager.getApplication().invokeAndWait(object : Runnable {
+        override fun run() {
+          VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByIoFile(dirStore))
+        }
+      }, ModalityState.defaultModalityState())
     }
 
     presentableUrl = null
   }
 
   override fun getProjectBaseDir(): VirtualFile? {
+    if (project.isDefault()) {
+      return null
+    }
     val path = getProjectBasePath() ?: return null
     return LocalFileSystem.getInstance().findFileByPath(path)
   }
 
   override fun getProjectBasePath(): String? {
+    if (project.isDefault()) {
+      return null
+    }
+
     val path = getProjectFilePath()
     if (!StringUtil.isEmptyOrSpaces(path)) {
       return getBasePath(File(path))
@@ -144,7 +154,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
       return baseDir.getName().replace(":", "")
     }
     else {
-      var temp = PathUtilRt.getFileName(getProjectFileStorage().getFilePath())
+      var temp = PathUtilRt.getFileName((getProjectFileStorage() as FileBasedStorage).getFilePath())
       val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
       if (fileType is ProjectFileType) {
         temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1)
@@ -160,6 +170,9 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
   override fun getStorageScheme() = scheme
 
   override fun getPresentableUrl(): String? {
+    if (project.isDefault()) {
+      return null
+    }
     if (presentableUrl == null) {
       val url = if (scheme == StorageScheme.DIRECTORY_BASED) getProjectBasePath() else getProjectFilePath()
       if (url != null) {
@@ -169,18 +182,19 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
     return presentableUrl
   }
 
-  override fun getProjectFile() = getProjectFileStorage().getVirtualFile()
+  override fun getProjectFile() = if (project.isDefault()) null else (getProjectFileStorage() as FileBasedStorage).getVirtualFile()
 
-  override fun getProjectFilePath() = getProjectFileStorage().getFilePath()
+  override fun getProjectFilePath() = if (project.isDefault()) "" else (getProjectFileStorage() as FileBasedStorage).getFilePath()
 
-  private fun getProjectFileStorage() = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as FileBasedStorage
+  // XmlElementStorage if default project, otherwise FileBasedStorage
+  private fun getProjectFileStorage() = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as XmlElementStorage
 
   override fun getWorkspaceFile() = workspaceStorage?.getVirtualFile()
 
   override fun getWorkspaceFilePath() = workspaceStorage?.getFilePath()
 
   private val workspaceStorage: FileBasedStorage?
-    get() = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
+    get() = if (project.isDefault()) null else storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
 
   override fun loadProjectFromTemplate(defaultProject: ProjectImpl) {
     defaultProject.save()
@@ -191,7 +205,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
     }
   }
 
-  override fun createStorageManager() = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
+  override fun createStorageManager(): StateStorageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
 
   override fun doSave(saveSessions: List<SaveSession>?, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
     var errors = prevErrors
@@ -245,6 +259,16 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
   protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
   }
 
+  private var _defaultStorageChooser: StateStorageChooser<PersistentStateComponent<*>>? = null
+
+  override val defaultStorageChooser: StateStorageChooser<PersistentStateComponent<*>>?
+    get() {
+      if (_defaultStorageChooser == null) {
+        _defaultStorageChooser = DefaultStorageChooser(scheme)
+      }
+      return _defaultStorageChooser
+    }
+
   override fun getMessageBus() = project.getMessageBus()
 
   override fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
@@ -262,6 +286,8 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
 
   companion object {
     private val DEFAULT_STORAGE_ANNOTATION = DefaultStorageAnnotation()
+
+    private fun isIprPath(file: File) = FileUtilRt.extensionEquals(file.getName(), ProjectFileType.DEFAULT_EXTENSION)
 
     private fun composeWsPath(filePath: String): String {
       val lastDot = filePath.lastIndexOf('.')
@@ -295,47 +321,47 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
 
     private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size()) { readonlyFiles.get(it).second }
   }
-
-  override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, scheme)
 }
 
-fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation, scheme: StorageScheme): Array<Storage> {
-  if (operation === StateStorageOperation.READ) {
-    val result = SmartList<Storage>()
-    for (i in storages.indices.reversed()) {
-      val storage = storages[i]
-      if (storage.scheme == scheme) {
-        result.add(storage)
-      }
-    }
-
-    for (storage in storages) {
-      if (storage.scheme == StorageScheme.DEFAULT && !result.contains(storage)) {
-        result.add(storage)
-      }
-    }
-
-    return result.toTypedArray()
-  }
-  else if (operation == StateStorageOperation.WRITE) {
-    val result = SmartList<Storage>()
-    for (storage in storages) {
-      if (storage.scheme == scheme) {
-        result.add(storage)
-      }
-    }
-
-    if (result.isEmpty()) {
-      for (storage in storages) {
-        if (storage.scheme == StorageScheme.DEFAULT) {
+class DefaultStorageChooser(private val scheme: StorageScheme) : StateStorageChooser<PersistentStateComponent<*>> {
+  override fun selectStorages(storages: Array<Storage>, component: PersistentStateComponent<*>, operation: StateStorageOperation): Array<Storage> {
+    if (operation === StateStorageOperation.READ) {
+      val result = SmartList<Storage>()
+      for (i in storages.indices.reversed()) {
+        val storage = storages[i]
+        if (storage.scheme == scheme) {
           result.add(storage)
         }
       }
-    }
 
-    return result.toTypedArray()
-  }
-  else {
-    return emptyArray()
+      for (storage in storages) {
+        if (storage.scheme == StorageScheme.DEFAULT && !result.contains(storage)) {
+          result.add(storage)
+        }
+      }
+
+      return result.toTypedArray()
+    }
+    else if (operation == StateStorageOperation.WRITE) {
+      val result = SmartList<Storage>()
+      for (storage in storages) {
+        if (storage.scheme == scheme) {
+          result.add(storage)
+        }
+      }
+
+      if (result.isEmpty()) {
+        for (storage in storages) {
+          if (storage.scheme == StorageScheme.DEFAULT) {
+            result.add(storage)
+          }
+        }
+      }
+
+      return result.toTypedArray()
+    }
+    else {
+      return emptyArray()
+    }
   }
 }

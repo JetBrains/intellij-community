@@ -25,11 +25,11 @@ import kotlin.properties.Delegates
 abstract class BaseFileConfigurableStoreImpl(protected val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   val storageManager by Delegates.lazy { createStorageManager() }
 
-  override final fun getStateStorageManager() = storageManager
+  override fun getStateStorageManager() = storageManager
 
-  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+  override fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  protected abstract fun createStorageManager(): StateStorageManagerImpl
+  protected abstract fun createStorageManager(): StateStorageManager
 }
 
 open class ProjectStorageData : StorageData {

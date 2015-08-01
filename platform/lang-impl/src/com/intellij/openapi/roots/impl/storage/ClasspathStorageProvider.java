@@ -46,7 +46,7 @@ public interface ClasspathStorageProvider {
 
   void detach(@NotNull Module module);
 
-  void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName);
+  void moduleRenamed(@NotNull Module module, @NotNull String newName);
 
   @Nullable
   ClasspathConverter createConverter(Module module);
@@ -57,7 +57,7 @@ public interface ClasspathStorageProvider {
 
   interface ClasspathConverter {
     @NotNull
-    List<String> getFilePaths();
+    List<String> getFileUrls();
 
     @NotNull
     StateStorage.ExternalizationSession startExternalization();

@@ -42,9 +42,6 @@ public @interface Storage {
    */
   RoamingType roamingType() default RoamingType.PER_USER;
 
-  /**
-   * Class must have constructor (ComponentManager componentManager, StateStorageManager storageManager). componentManager parameter can have more concrete type - e.g. Module (if storage intended to support only one type)
-   */
   Class<? extends StateStorage> storageClass() default StateStorage.class;
 
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;

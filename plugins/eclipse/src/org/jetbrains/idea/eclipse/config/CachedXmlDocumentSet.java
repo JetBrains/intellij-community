@@ -17,6 +17,7 @@ package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -36,7 +37,7 @@ public class CachedXmlDocumentSet {
 
   @Nullable
   public Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
-    assert nameToDir.containsKey(name) : name;
+    assertKnownName(name);
 
     VirtualFile file = getFile(name, refresh);
     if (file == null) {
@@ -60,8 +61,8 @@ public class CachedXmlDocumentSet {
     nameToDir.put(name, path);
   }
 
-  public void unregister(@NotNull String name) {
-    nameToDir.remove(name);
+  protected void assertKnownName(@NotNull String name) {
+    assert nameToDir.containsKey(name) : name;
   }
 
   public boolean exists(@NotNull String name) {
@@ -81,10 +82,10 @@ public class CachedXmlDocumentSet {
   }
 
   @NotNull
-  public List<String> getFilePaths() {
+  public List<String> getFileUrls() {
     List<String> list = new ArrayList<String>(nameToDir.size());
     for (String name : nameToDir.keySet()) {
-      list.add(getParent(name) + '/' + name);
+      list.add(StandardFileSystems.FILE_PROTOCOL_PREFIX + getParent(name) + '/' + name);
     }
     return list;
   }

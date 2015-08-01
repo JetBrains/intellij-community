@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -24,9 +26,10 @@ import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.TObjectObjectProcedure;
@@ -37,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData> {
@@ -45,18 +49,48 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   @SuppressWarnings("deprecation")
   private final StateSplitter mySplitter;
 
-  public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor, @NotNull File dir, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
+  public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
+                               @NotNull File dir,
+                               @SuppressWarnings("deprecation") @NotNull StateSplitter splitter,
+                               @Nullable Disposable parentDisposable,
+                               @Nullable final Listener listener) {
     super(pathMacroSubstitutor);
     myDir = dir;
     mySplitter = splitter;
-  }
 
-  public void setVirtualDir(@Nullable VirtualFile dir) {
-    myVirtualFile = dir;
+    VirtualFileTracker virtualFileTracker = parentDisposable == null ? null : ServiceManager.getService(VirtualFileTracker.class);
+    if (virtualFileTracker != null && listener != null) {
+      virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(myDir.getPath())), new VirtualFileAdapter() {
+        @Override
+        public void contentsChanged(@NotNull VirtualFileEvent event) {
+          notifyIfNeed(event);
+        }
+
+        @Override
+        public void fileDeleted(@NotNull VirtualFileEvent event) {
+          if (event.getFile().equals(myVirtualFile)) {
+            myVirtualFile = null;
+          }
+          notifyIfNeed(event);
+        }
+
+        @Override
+        public void fileCreated(@NotNull VirtualFileEvent event) {
+          notifyIfNeed(event);
+        }
+
+        private void notifyIfNeed(@NotNull VirtualFileEvent event) {
+          // storage directory will be removed if the only child was removed
+          if (event.getFile().isDirectory() || DirectoryStorageData.isStorageFile(event.getFile())) {
+            listener.storageFileChanged(event, DirectoryBasedStorage.this);
+          }
+        }
+      }, false, parentDisposable);
+    }
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
     // todo reload only changed file, compute diff
     DirectoryStorageData oldData = myStorageData;
     DirectoryStorageData newData = loadData();

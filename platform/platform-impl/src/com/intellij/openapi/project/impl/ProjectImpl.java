@@ -46,7 +46,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -62,7 +61,6 @@ import org.picocontainer.*;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -93,7 +91,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     getPicoContainer().registerComponentInstance(Project.class, this);
 
     if (!isDefault()) {
-      getStateStore().setPath(FileUtilRt.toSystemIndependentName(filePath));
+      getStateStore().setProjectFilePath(filePath);
     }
 
     myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
@@ -200,7 +198,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @NotNull
-  IProjectStore getStateStore() {
+  @Override
+  public IProjectStore getStateStore() {
     return (IProjectStore)ComponentsPackage.getStateStore(this);
   }
 
@@ -223,23 +222,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   @NotNull
   public String getProjectFilePath() {
-    return isDefault() ? "" : getStateStore().getProjectFilePath();
+    return getStateStore().getProjectFilePath();
   }
 
   @Override
   public VirtualFile getProjectFile() {
-    return isDefault() ? null : getStateStore().getProjectFile();
+    return getStateStore().getProjectFile();
   }
 
   @Override
   public VirtualFile getBaseDir() {
-    return isDefault() ? null : getStateStore().getProjectBaseDir();
+    return getStateStore().getProjectBaseDir();
   }
 
   @Nullable
   @Override
   public String getBasePath() {
-    return isDefault() ? null : getStateStore().getProjectBasePath();
+    return getStateStore().getProjectBasePath();
   }
 
   @NotNull
@@ -251,10 +250,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String getPresentableUrl() {
-    if (myName == null || isDefault()) {
-      // not yet initialized
-      return null;
-    }
+    if (myName == null) return null;  // not yet initialized
     return getStateStore().getPresentableUrl();
   }
 
@@ -265,14 +261,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     String str = getPresentableUrl();
     if (str == null) str = getName();
 
-    final String prefix = !isDefault() && getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
+    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    return isDefault() ? null : getStateStore().getWorkspaceFile();
+    return getStateStore().getWorkspaceFile();
   }
 
   @Override
@@ -356,7 +352,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         }
       }
 
-      StoreUtil.save(ComponentsPackage.getStateStore(this), this);
+      StoreUtil.save(getStateStore(), this);
     }
     finally {
       mySavingInProgress.set(false);
@@ -450,15 +446,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void checkUnknownMacros(final boolean showDialog) {
-    final IComponentStore stateStore = ComponentsPackage.getStateStore(this);
-    // default project doesn't have it
-    List<TrackingPathMacroSubstitutor> substitutors;
-    if (stateStore instanceof IProjectStore) {
-      substitutors = ((IProjectStore)stateStore).getSubstitutors();
-    }
-    else {
-      substitutors = Collections.emptyList();
-    }
+    final IProjectStore stateStore = getStateStore();
+    TrackingPathMacroSubstitutor[] substitutors = stateStore.getSubstitutors();
     Set<String> unknownMacros = new THashSet<String>();
     for (TrackingPathMacroSubstitutor substitutor : substitutors) {
       unknownMacros.addAll(substitutor.getUnknownMacros(null));
