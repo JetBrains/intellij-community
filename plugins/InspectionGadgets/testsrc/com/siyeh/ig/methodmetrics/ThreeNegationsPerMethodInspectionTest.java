@@ -1,13 +1,21 @@
 package com.siyeh.ig.methodmetrics;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ThreeNegationsPerMethodInspectionTest extends IGInspectionTestCase {
+public class ThreeNegationsPerMethodInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final ThreeNegationsPerMethodInspection tool = new ThreeNegationsPerMethodInspection();
-    tool.m_ignoreInEquals = true;
-    tool.ignoreInAssert = true;
-    doTest("com/siyeh/igtest/methodmetrics/three_negations_per_method", tool);
+  public void testThreeNegationsPerMethod() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final ThreeNegationsPerMethodInspection inspection = new ThreeNegationsPerMethodInspection();
+    inspection.m_ignoreInEquals = true;
+    inspection.ignoreInAssert = true;
+    return inspection;
   }
 }
