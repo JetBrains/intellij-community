@@ -205,38 +205,37 @@ public class ServiceManagerImpl implements BaseComponent {
         return instance;
       }
 
-      synchronized (this) {
-        instance = myInitializedComponentInstance;
-        if (instance != null) {
-          // DCL is fine, field is volatile
-          return instance;
-        }
-
-        ComponentAdapter delegate = getDelegate();
-        AccessToken readToken = null;
-        // prevent storages from flushing and blocking FS
-        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
-        try {
-          readToken = Registry.is("use.read.action.to.init.service", true) ? ReadAction.start() : null;
-          instance = delegate.getComponentInstance(container);
-          if (instance instanceof Disposable) {
-            Disposer.register(myComponentManager, (Disposable)instance);
+      AccessToken readToken = Registry.is("use.read.action.to.init.service", true) ? ReadAction.start() : null;
+      try {
+        synchronized (this) {
+          instance = myInitializedComponentInstance;
+          if (instance != null) {
+            // DCL is fine, field is volatile
+            return instance;
           }
 
-          myComponentManager.initializeComponent(instance, true);
-
-          myInitializedComponentInstance = instance;
-          return instance;
-        }
-        finally {
+          ComponentAdapter delegate = getDelegate();
+          // prevent storages from flushing and blocking FS
+          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
           try {
-            if (readToken != null) {
-              readToken.finish();
+            instance = delegate.getComponentInstance(container);
+            if (instance instanceof Disposable) {
+              Disposer.register(myComponentManager, (Disposable)instance);
             }
+
+            myComponentManager.initializeComponent(instance, true);
+
+            myInitializedComponentInstance = instance;
+            return instance;
           }
           finally {
             token.finish();
           }
+        }
+      }
+      finally {
+        if (readToken != null) {
+          readToken.finish();
         }
       }
     }
