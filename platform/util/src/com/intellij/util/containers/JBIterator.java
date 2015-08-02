@@ -155,7 +155,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public final JBIterator<E> takeWhile(int count) {
+  public final JBIterator<E> take(int count) {
     return takeWhile(new CountDown<E>(count));
   }
 
@@ -175,7 +175,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public final JBIterator<E> skipWhile(int count) {
+  public final JBIterator<E> skip(int count) {
     return skipWhile(new CountDown<E>(count));
   }
 
