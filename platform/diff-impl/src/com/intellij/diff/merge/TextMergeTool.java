@@ -59,6 +59,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
@@ -788,6 +789,7 @@ public class TextMergeTool implements MergeTool {
         }
 
         ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
+        ThreeSide oppositeSide = side.select(ThreeSide.RIGHT, ThreeSide.LEFT);
         ThreeSide outputSide = ThreeSide.BASE;
 
         int outputStartLine = change.getStartLine(outputSide);
@@ -797,15 +799,35 @@ public class TextMergeTool implements MergeTool {
 
         enterBulkChangeUpdateBlock();
         try {
-          DiffUtil.applyModification(getContent(outputSide).getDocument(), outputStartLine, outputEndLine,
-                                     getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
+          if (Registry.is("diff.merge.conflict.two.step.resolve") && change.isConflict()) {
+            boolean append = change.isResolved(side.other());
+            int actualOutputStartLine = append ? outputEndLine : outputStartLine;
 
-          if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
-            int newOutputEndLine = outputStartLine + (sourceEndLine - sourceStartLine);
-            moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+            DiffUtil.applyModification(getContent(outputSide).getDocument(), actualOutputStartLine, outputEndLine,
+                                       getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
+
+            if (outputStartLine == outputEndLine || append) { // onBeforeDocumentChange() should process other cases correctly
+              int newOutputEndLine = actualOutputStartLine + (sourceEndLine - sourceStartLine);
+              moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+            }
+
+            if (change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
+              markResolved(change);
+            } else {
+              markResolved(change, side);
+            }
           }
+          else {
+            DiffUtil.applyModification(getContent(outputSide).getDocument(), outputStartLine, outputEndLine,
+                                       getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
 
-          markResolved(change);
+            if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
+              int newOutputEndLine = outputStartLine + (sourceEndLine - sourceStartLine);
+              moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+            }
+
+            markResolved(change);
+          }
         }
         finally {
           exitBulkChangeUpdateBlock();
