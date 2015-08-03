@@ -483,6 +483,27 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "      PsiWhiteSpace(' ')\n");
   }
 
+  public void testEmptyCollapsedNode() {
+    doTest("a<<b",
+           new Parser() {
+             @Override
+             public void parse(PsiBuilder builder) {
+               builder.advanceLexer();
+               builder.mark().collapse(COLLAPSED);
+               while (builder.getTokenType() != null) {
+                 builder.advanceLexer();
+               }
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(LETTER)('a')\n" +
+           "  PsiElement(COLLAPSED)('')\n" +
+           "  PsiElement(OTHER)('<')\n" +
+           "  PsiElement(OTHER)('<')\n" +
+           "  PsiElement(LETTER)('b')\n"
+    );
+  }
+
   private interface Parser {
     void parse(PsiBuilder builder);
   }
