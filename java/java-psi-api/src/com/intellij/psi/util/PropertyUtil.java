@@ -207,18 +207,21 @@ public class PropertyUtil {
 
   @Nullable
   public static PsiMethod findPropertyGetter(PsiClass aClass,
-                                             String propertyName,
+                                             @NotNull String propertyName,
                                              boolean isStatic,
                                              boolean checkSuperClasses) {
     if (aClass == null) return null;
-    PsiMethod[] methods = checkSuperClasses ? aClass.getAllMethods() : aClass.getMethods();
+    String[] getterCandidateNames = suggestGetterNames(propertyName);
 
-    for (PsiMethod method : methods) {
-      if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
+    for (String getterCandidateName: getterCandidateNames) {
+      PsiMethod[] getterCandidates = aClass.findMethodsByName(getterCandidateName, checkSuperClasses);
+      for (PsiMethod method : getterCandidates) {
+        if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
-      if (isSimplePropertyGetter(method)) {
-        if (getPropertyNameByGetter(method).equals(propertyName)) {
-          return method;
+        if (isSimplePropertyGetter(method)) {
+          if (getPropertyNameByGetter(method).equals(propertyName)) {
+            return method;
+          }
         }
       }
     }
@@ -246,11 +249,12 @@ public class PropertyUtil {
 
   @Nullable
   public static PsiMethod findPropertySetter(PsiClass aClass,
-                                             String propertyName,
+                                             @NotNull String propertyName,
                                              boolean isStatic,
                                              boolean checkSuperClasses) {
     if (aClass == null) return null;
-    PsiMethod[] methods = checkSuperClasses ? aClass.getAllMethods() : aClass.getMethods();
+    String setterName = suggestSetterName(propertyName);
+    PsiMethod[] methods = aClass.findMethodsByName(setterName, checkSuperClasses);
 
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -325,16 +329,17 @@ public class PropertyUtil {
   }
 
   @NonNls
-  public static String[] suggestGetterNames(String propertyName) {
+  @NotNull
+  public static String[] suggestGetterNames(@NotNull String propertyName) {
     final String str = StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName));
     return new String[]{IS_PREFIX + str, "get" + str};
   }
 
-  public static String suggestSetterName(@NonNls String propertyName) {
+  public static String suggestSetterName(@NonNls @NotNull String propertyName) {
     return suggestSetterName(propertyName, "set");
   }
 
-  public static String suggestSetterName(@NonNls String propertyName, String setterPrefix) {
+  public static String suggestSetterName(@NonNls @NotNull String propertyName, String setterPrefix) {
     final String sanitizeJavaIdentifier = StringUtil.sanitizeJavaIdentifier(propertyName);
     if (StringUtil.isEmpty(setterPrefix)) {
       return sanitizeJavaIdentifier;
@@ -344,7 +349,8 @@ public class PropertyUtil {
     return name.toString();
   }
 
-  public static String[] getReadableProperties(PsiClass aClass, boolean includeSuperClass) {
+  @NotNull
+  public static String[] getReadableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
     List<String> result = new ArrayList<String>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
@@ -360,7 +366,8 @@ public class PropertyUtil {
     return ArrayUtil.toStringArray(result);
   }
 
-  public static String[] getWritableProperties(PsiClass aClass, boolean includeSuperClass) {
+  @NotNull
+  public static String[] getWritableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
     List<String> result = new ArrayList<String>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
@@ -413,7 +420,7 @@ public class PropertyUtil {
    * to add @Override annotation
    */
   @Nullable
-  public static PsiMethod generateSetterPrototype(PsiField field) {
+  public static PsiMethod generateSetterPrototype(@NotNull PsiField field) {
     return generateSetterPrototype(field, field.getContainingClass());
   }
 
@@ -423,7 +430,7 @@ public class PropertyUtil {
    * to add @Override annotation
    */
   @Nullable
-  public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass) {
+  public static PsiMethod generateSetterPrototype(@NotNull PsiField field, @NotNull PsiClass containingClass) {
     return generateSetterPrototype(field, containingClass, false);
   }
 
@@ -433,7 +440,7 @@ public class PropertyUtil {
    * to add @Override annotation
    */
   @Nullable
-  public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass, boolean returnSelf) {
+  public static PsiMethod generateSetterPrototype(@NotNull PsiField field, @NotNull PsiClass containingClass, boolean returnSelf) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
@@ -489,8 +496,8 @@ public class PropertyUtil {
     }
   }
 
-  public static void annotateWithNullableStuff(final PsiModifierListOwner field,
-                                               final PsiModifierListOwner listOwner)
+  public static void annotateWithNullableStuff(@NotNull PsiModifierListOwner field,
+                                               @NotNull PsiModifierListOwner listOwner)
     throws IncorrectOperationException {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
     final PsiAnnotation notNull = manager.copyNotNullAnnotation(field);
@@ -505,7 +512,7 @@ public class PropertyUtil {
     }
   }
 
-  private static void annotate(final PsiModifierListOwner listOwner, final PsiAnnotation annotation)
+  private static void annotate(@NotNull PsiModifierListOwner listOwner, @NotNull PsiAnnotation annotation)
     throws IncorrectOperationException {
     final PsiModifierList modifierList = listOwner.getModifierList();
     LOG.assertTrue(modifierList != null);
