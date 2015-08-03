@@ -120,12 +120,6 @@ public class VcsLogImpl implements VcsLog {
 
   @NotNull
   @Override
-  public Component getToolbar() {
-    return myUi.getToolbar();
-  }
-
-  @NotNull
-  @Override
   public Collection<VcsLogProvider> getLogProviders() {
     return myDataHolder.getLogProviders();
   }
