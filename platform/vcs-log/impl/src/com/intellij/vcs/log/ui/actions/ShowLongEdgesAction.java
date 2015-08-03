@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +31,7 @@ public class ShowLongEdgesAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    return ui != null && !((VcsLogUiImpl)ui).getDataPack().getVisibleGraph().getActionController().areLongEdgesHidden();
+    return ui != null && ui.areLongEdgesVisible();
   }
 
   @Override
