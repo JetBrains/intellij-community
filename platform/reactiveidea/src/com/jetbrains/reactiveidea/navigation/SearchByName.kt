@@ -71,7 +71,7 @@ public class SearchByName(val project: Project,
     reactiveModel.host(path) { path, lifetime, init ->
       init += {
         it.putIn(path / "text", PrimitiveModel(initialText))
-            .putIn(path / "index", PrimitiveModel(initialIndex))
+            .putIn(path / "selectedIndex", PrimitiveModel(initialIndex))
             .putIn(path / "check", PrimitiveModel(myModel.loadInitialCheckBoxState()))
       }
 
@@ -230,7 +230,7 @@ public class SearchByName(val project: Project,
   }
 
   override fun selectItem(selectionPos: Int) {
-    reactiveModel.transaction { it.putIn(path / "index", PrimitiveModel(selectionPos)) }
+    reactiveModel.transaction { it.putIn(path / "selectedIndex", PrimitiveModel(selectionPos)) }
   }
 
   override fun repositionHint() {
