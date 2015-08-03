@@ -56,20 +56,13 @@ open class ProjectStorageData : StorageData {
     if (root == null) {
       root = Element(myRootElementName)
     }
-    writeOptions(root, Integer.toString(version))
+    writeOptions(root)
     return root
   }
 
   override fun clone() = ProjectStorageData(this)
 
-  protected open fun writeOptions(root: Element, versionString: String) {
+  protected open fun writeOptions(root: Element) {
     root.setAttribute(VERSION_OPTION, "4")
-  }
-
-  override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
-    if (version != (newStorageData as ProjectStorageData).version) {
-      return null
-    }
-    return super.getChangedComponentNames(newStorageData, substitutor)
   }
 }

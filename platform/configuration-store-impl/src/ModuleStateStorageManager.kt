@@ -29,7 +29,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.ContainerUtil
 
 class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
-  override fun createStorageData(fileSpec: String, filePath: String) = ModuleFileData(rootTagName)
+  override fun createStorageData(fileSpec: String) = ModuleFileData(rootTagName)
 
   override fun startExternalization() = MyStateStorageManagerExternalizationSession(this)
 

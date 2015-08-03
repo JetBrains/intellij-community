@@ -220,7 +220,7 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
                   roamingType: RoamingType? = null,
                   pathMacroManager: TrackingPathMacroSubstitutor? = null,
                   streamProvider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider), StorageVirtualFileTracker.TrackedStorage {
-    override fun createStorageData() = storageManager.createStorageData(myFileSpec, getFilePath())
+    override fun createStorageData() = storageManager.createStorageData(myFileSpec)
 
     override fun isUseXmlProlog() = storageManager.isUseXmlProlog
   }
@@ -272,7 +272,7 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
 
   protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = pathMacroSubstitutor
 
-  protected open fun createStorageData(fileSpec: String, filePath: String): StorageData = StorageData(rootTagName)
+  protected open fun createStorageData(fileSpec: String): StorageData = StorageData(rootTagName)
 
   override final fun expandMacros(path: String): String {
     // replacement can contains $ (php tests), so, this check must be performed before expand
