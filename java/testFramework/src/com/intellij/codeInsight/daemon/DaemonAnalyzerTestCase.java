@@ -362,7 +362,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.METHOD, ElementType.TYPE})
-  protected @interface CanChangeDocumentDuringHighlighting {}
+  public @interface CanChangeDocumentDuringHighlighting {}
 
   private boolean canChangeDocumentDuringHighlighting() {
     return annotatedWith(CanChangeDocumentDuringHighlighting.class);
