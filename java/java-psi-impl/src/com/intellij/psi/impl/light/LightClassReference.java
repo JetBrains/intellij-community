@@ -282,4 +282,10 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   public boolean isQualified() {
     return false;
   }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getResolveScope() {
+    return myResolveScope;
+  }
 }
