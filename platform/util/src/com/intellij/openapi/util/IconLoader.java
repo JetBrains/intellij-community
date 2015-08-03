@@ -109,8 +109,10 @@ public final class IconLoader {
   }
 
   public static void setScale(float scale) {
-    SCALE = scale;
-    clearCache();
+    if (scale != SCALE) {
+      SCALE = scale;
+      clearCache();
+    }
   }
 
   private static void clearCache() {
