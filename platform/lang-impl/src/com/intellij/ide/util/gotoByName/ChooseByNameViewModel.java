@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -584,7 +585,63 @@ public abstract class ChooseByNameViewModel {
 
   protected abstract void hideList();
 
-  protected abstract void close(boolean isOk);
+  protected void close(boolean isOk) {
+    if (checkDisposed()) {
+      return;
+    }
+
+    if (isOk) {
+      myModel.saveInitialCheckBoxState(isCheckboxSelected());
+
+      final List<Object> chosenElements = getChosenElements();
+      if (chosenElements != null) {
+        if (myActionListener instanceof ChooseByNamePopupComponent.MultiElementsCallback) {
+          ((ChooseByNamePopupComponent.MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
+        }
+        else {
+          for (Object element : chosenElements) {
+            myActionListener.elementChosen(element);
+            String text = myModel.getFullName(element);
+            if (text != null) {
+              StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+            }
+          }
+        }
+      }
+      else {
+        return;
+      }
+
+      if (!chosenElements.isEmpty()) {
+        final String enteredText = getTrimmedText();
+        if (enteredText.indexOf('*') >= 0) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
+        }
+        else {
+          for (Object element : chosenElements) {
+            final String name = myModel.getElementName(element);
+            if (name != null) {
+              if (!StringUtil.startsWithIgnoreCase(name, enteredText)) {
+                FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.camelprefix");
+                break;
+              }
+            }
+          }
+        }
+      }
+      else {
+        return;
+      }
+    }
+
+    setDisposed(true);
+    myAlarm.cancelAllRequests();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (myActionListener != null) {
+      myActionListener.onClose();
+    }
+  }
 
   @NotNull
   @NonNls

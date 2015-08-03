@@ -15,15 +15,21 @@
  */
 package com.jetbrains.reactiveidea.navigation
 
+import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.actions.ChooseByNameFactory
 import com.intellij.ide.actions.ChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.statistics.StatisticsInfo
+import com.intellij.psi.statistics.StatisticsManager
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
@@ -35,7 +41,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-public class ModelChooseByNameFactory(val project: Project): ChooseByNameFactory() {
+public class ModelChooseByNameFactory(val project: Project) : ChooseByNameFactory() {
   override fun createChooseByName(model: ChooseByNameModel?,
                                   itemProvider: ChooseByNameItemProvider?,
                                   mayRequestOpenInCurrentWindow: Boolean,
@@ -53,7 +59,7 @@ public class SearchByName(val project: Project,
                           provider: ChooseByNameItemProvider,
                           val initialText: String,
                           val initialIndex: Int,
-                          val reactiveModel: ReactiveModel): ChooseByNameViewModel(project, model, provider, initialText, initialIndex) {
+                          val reactiveModel: ReactiveModel) : ChooseByNameViewModel(project, model, provider, initialText, initialIndex), Host {
 
   private var textSignal: Signal<String?>? = null
   private var checkSignal: Signal<Boolean?>? = null
@@ -65,8 +71,8 @@ public class SearchByName(val project: Project,
     reactiveModel.host(path) { path, lifetime, init ->
       init += {
         it.putIn(path / "text", PrimitiveModel(initialText))
-        .putIn(path / "index", PrimitiveModel(initialIndex))
-        .putIn(path / "check", PrimitiveModel(myModel.loadInitialCheckBoxState()))
+            .putIn(path / "index", PrimitiveModel(initialIndex))
+            .putIn(path / "check", PrimitiveModel(myModel.loadInitialCheckBoxState()))
       }
 
       val checkBoxName = myModel.getCheckBoxName()
@@ -91,7 +97,7 @@ public class SearchByName(val project: Project,
         (it as? PrimitiveModel<String>?)?.value
       }
 
-      indexSignal = reaction(false, "convert index to int", reactiveModel.subscribe(lifetime, path / "index")) {
+      indexSignal = reaction(false, "convert index to int", reactiveModel.subscribe(lifetime, path / "selectedIndex")) {
         (it as? PrimitiveModel<Int>?)?.value
       }
 
@@ -106,8 +112,16 @@ public class SearchByName(val project: Project,
 
       var updateScheduled = false
 
+
+      fun renderElement(i: Int, e: Any?): Model {
+        if (e is PsiNamedElement) {
+          return PrimitiveModel(e.getName())
+        }
+        return PrimitiveModel(e.toString())
+      }
+
       fun renderList(l: List<Any?>): ListModel =
-        ListModel(l.map { PrimitiveModel(it.toString()) })
+          ListModel(l.mapIndexed { i, e -> renderElement(i, e) })
 
       fun renderList() {
         if (updateScheduled) return
@@ -123,7 +137,7 @@ public class SearchByName(val project: Project,
         }
       }
 
-      myListModel.addListDataListener(object: ListDataListener {
+      myListModel.addListDataListener(object : ListDataListener {
         override fun contentsChanged(e: ListDataEvent) {
           renderList()
         }
@@ -144,20 +158,18 @@ public class SearchByName(val project: Project,
         cancelListUpdater()
       }
 
-      object: Host {
-        override val tags: Array<String>
-          get() = arrayOf("goto")
-      }
+      this
     }
     myInitialized = true
     if (modalityState != null) {
       rebuildList(myInitialIndex, 0, modalityState, null)
     }
-
   }
 
-  override fun getEnteredText(): String? = textSignal?.value ?: ""
+  override val tags: Array<String>
+    get() = arrayOf("goto")
 
+  override fun getEnteredText(): String? = textSignal?.value ?: ""
 
   override fun getSelectedIndex(): Int = indexSignal?.value ?: 0
 
@@ -201,7 +213,7 @@ public class SearchByName(val project: Project,
   }
 
   override fun setHasResults(b: Boolean) {
-    reactiveModel.transaction { it.putIn(path / "hasResults", PrimitiveModel(b))}
+    reactiveModel.transaction { it.putIn(path / "hasResults", PrimitiveModel(b)) }
   }
 
   override fun showList() {
@@ -212,7 +224,8 @@ public class SearchByName(val project: Project,
 
   }
 
-  override fun close(isOk: Boolean) {
+  public override fun close(isOk: Boolean) {
+    super<ChooseByNameViewModel>.close(isOk)
     reactiveModel.transaction { it.putIn(path, AbsentModel()) }
   }
 
@@ -229,11 +242,11 @@ public class SearchByName(val project: Project,
   }
 
   override fun getChosenElements(): MutableList<Any>? {
-    throw UnsupportedOperationException()
+    return arrayListOf(myListModel.get(getSelectedIndex()))
   }
 
   override fun getChosenElement(): Any? {
-    throw UnsupportedOperationException()
+    return getChosenElements()!![0]
   }
 
   override fun handlePaste(str: String?) {

@@ -30,12 +30,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerAdapter
 import com.intellij.pom.Navigatable
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.usages.Usage
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.reactiveidea.history.host.HistoryHost
-import com.jetbrains.reactiveidea.history.host.historyPath
+import com.jetbrains.reactiveidea.navigation.SearchByName
 import com.jetbrains.reactiveidea.usages.UsagesHost
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
@@ -43,7 +40,6 @@ import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.models.toPath
 import com.jetbrains.reactivemodel.util.Lifetime
-import com.jetbrains.reactivemodel.util.get
 import com.jetbrains.reactivemodel.util.host
 
 public class ReactiveModelsManager() : ApplicationComponent {
@@ -89,6 +85,9 @@ public class ReactiveModelsManager() : ApplicationComponent {
               if (node is Navigatable) {
                 node.navigate(true)
               }
+            },
+            "navigate" to {host: SearchByName ->
+              host.close(true)
             })
 
         handlers.forEach { e: Map.Entry<String, Any> ->
