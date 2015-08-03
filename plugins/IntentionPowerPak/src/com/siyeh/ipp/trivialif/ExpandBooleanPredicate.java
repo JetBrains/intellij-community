@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,16 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ExpandBooleanPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiStatement)) {
       return false;
     }
-    final PsiStatement containingStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    if (containingStatement == null) {
-      return false;
-    }
-    return isBooleanReturn(containingStatement) || isBooleanAssignment(containingStatement) || isBooleanDeclaration(containingStatement);
+    final PsiStatement statement = (PsiStatement)element;
+    return isBooleanReturn(statement) || isBooleanAssignment(statement) || isBooleanDeclaration(statement);
   }
 
   public static boolean isBooleanReturn(PsiStatement statement) {
