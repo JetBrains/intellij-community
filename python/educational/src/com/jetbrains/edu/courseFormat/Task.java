@@ -23,6 +23,9 @@ public class Task implements Named {
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
+
+  private int myStepicId;
+
   @Expose
   @SerializedName("task_files")
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -192,5 +195,13 @@ public class Task implements Named {
     result = 31 * result + (text != null ? text.hashCode() : 0);
     result = 31 * result + (testsText != null ? testsText.hashCode() : 0);
     return result;
+  }
+
+  public void setStepicId(int stepicId) {
+    myStepicId = stepicId;
+  }
+
+  public int getStepicId() {
+    return myStepicId;
   }
 }
