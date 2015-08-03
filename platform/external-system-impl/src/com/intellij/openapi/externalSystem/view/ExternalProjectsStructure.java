@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.view;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ import java.util.Map;
  * @author Vladislav.Soroka
  * @since 9/22/2014
  */
-public class ExternalProjectsStructure extends SimpleTreeStructure {
+public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;
   private ExternalProjectsView myExternalProjectsView;
   private final SimpleTreeBuilder myTreeBuilder;
@@ -225,6 +226,13 @@ public class ExternalProjectsStructure extends SimpleTreeStructure {
     for (T node : getNodes(nodeClass)) {
       consumer.consume(node);
     }
+  }
+
+  @Override
+  public void dispose() {
+    this.myExternalProjectsView = null;
+    this.myNodeMapping.clear();
+    this.myRoot = null;
   }
 
   public class RootNode<T> extends ExternalSystemNode<T> {

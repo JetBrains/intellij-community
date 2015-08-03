@@ -78,7 +78,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 9/19/2014
  */
-public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView {
+public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
   @NotNull
@@ -171,6 +171,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public void init() {
+    Disposer.register(myProject, this);
     initTree();
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
@@ -305,6 +306,12 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (gearAction instanceof ExternalSystemViewGearAction) {
         ((ExternalSystemViewGearAction)gearAction).setView(this);
         group.add(gearAction);
+        Disposer.register(myProject, new Disposable() {
+          @Override
+          public void dispose() {
+            ((ExternalSystemViewGearAction)gearAction).setView(null);
+          }
+        });
       }
     }
     return group;
@@ -312,6 +319,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   private void initStructure() {
     myStructure = new ExternalProjectsStructure(myProject, myTree);
+    Disposer.register(this, myStructure);
     myStructure.init(this);
   }
 
@@ -651,5 +659,12 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (navigatable != null) navigatables.add(navigatable);
     }
     return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+  }
+
+  @Override
+  public void dispose() {
+    this.listeners.clear();
+    this.myStructure = null;
+    this.myTree = null;
   }
 }

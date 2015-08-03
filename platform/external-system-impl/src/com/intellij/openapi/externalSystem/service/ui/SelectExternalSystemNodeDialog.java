@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewAdapter;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleNodeVisitor;
@@ -95,6 +96,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
           return customizeProjectsTreeRoot(rootElement);
         }
       };
+      Disposer.register(myDisposable, treeStructure);
       treeStructure.init(new ExternalProjectsViewAdapter(projectsView) {
         @Nullable
         @Override
