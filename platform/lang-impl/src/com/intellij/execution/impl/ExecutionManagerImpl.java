@@ -375,7 +375,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
           final RunContentDescriptor descriptor = starter.execute(state, environment);
           if (descriptor != null) {
-            environment.setContentToReuse(descriptor);
             final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
               Trinity.create(descriptor, environment.getRunnerAndConfigurationSettings(), executor);
             myRunningConfigurations.add(trinity);
