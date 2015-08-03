@@ -96,6 +96,10 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
     presentableUrl = null
   }
 
+  override fun clearStorages() {
+    storageManager.clearStorages()
+  }
+
   override fun getProjectBaseDir(): VirtualFile? {
     val path = getProjectBasePath() ?: return null
     return LocalFileSystem.getInstance().findFileByPath(path)

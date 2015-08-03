@@ -59,6 +59,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class StorageUtil {
+  public static final String DEFAULT_EXT = ".xml";
+
   static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   @TestOnly

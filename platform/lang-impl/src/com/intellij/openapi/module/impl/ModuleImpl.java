@@ -23,7 +23,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -48,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -60,8 +58,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @NotNull private final Project myProject;
   private boolean isModuleAdded;
-
-  public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   private String myName;
 
@@ -78,14 +74,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myName = moduleNameByFileName(PathUtil.getFileName(filePath));
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
-  }
-
-  private void setModuleFilePath(@NotNull String filePath) {
-    String normalizedPath = FileUtilRt.toSystemIndependentName(filePath);
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
-    IComponentStore store = ComponentsPackage.getStateStore(this);
-    store.getStateStorageManager().clearStateStorage(StoragePathMacros.MODULE_FILE);
-    store.setPath(normalizedPath);
   }
 
   @Override
@@ -156,21 +144,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public void rename(String newName) {
     myName = newName;
-    final VirtualFile file = getMainStorage(this).getVirtualFile();
-    try {
-      if (file != null) {
-        file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      }
-      else {
-        // [dsl] we get here if either old file didn't exist or renaming failed
-        final File oldFile = new File(getModuleFilePath());
-        final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-        setModuleFilePath(newFile.getCanonicalPath());
-      }
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-    }
+    ComponentsPackage.getStateStore(this).getStateStorageManager().rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @Override
@@ -365,7 +339,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private class MyVirtualFileListener extends VirtualFileAdapter {
     @Override
     public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (!isModuleAdded || MODULE_RENAMING_REQUESTOR.equals(event.getRequestor()) || !VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      if (!isModuleAdded || event.getRequestor() instanceof StateStorage || !VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
         return;
       }
 
@@ -378,13 +352,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
           setModuleFilePath(moduleFilePath, parentPath + "/" + event.getNewValue() + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
         }
       }
-
-      VirtualFile moduleFile = getModuleFile();
-      if (moduleFile != null && moduleFile.equals(event.getFile())) {
-        String oldName = myName;
-        myName = moduleNameByFileName(moduleFile.getName());
-        ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this, oldName);
-      }
     }
 
     private void setModuleFilePath(String moduleFilePath, String newFilePath) {
@@ -394,7 +361,8 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       modifiableModel.setModuleFilePath(ModuleImpl.this, moduleFilePath, newFilePath);
       modifiableModel.commit();
 
-      ModuleImpl.this.setModuleFilePath(newFilePath);
+      getMainStorage(ModuleImpl.this).setFile(null, new File(newFilePath));
+      ComponentsPackage.getStateStore(ModuleImpl.this).setPath(FileUtilRt.toSystemIndependentName(newFilePath));
     }
 
     @Override

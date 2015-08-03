@@ -1013,7 +1013,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }, false, true);
   }
 
-  void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
+  public void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
       @Override
       public void run() {

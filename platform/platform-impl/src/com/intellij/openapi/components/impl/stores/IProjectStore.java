@@ -56,4 +56,6 @@ public interface IProjectStore extends IComponentStore {
   String getWorkspaceFilePath();
 
   void loadProjectFromTemplate(@NotNull ProjectImpl project);
+
+  void clearStorages();
 }
