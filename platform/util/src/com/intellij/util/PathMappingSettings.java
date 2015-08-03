@@ -141,11 +141,6 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return Collections.unmodifiableCollection(myPathMappings);
   }
 
-  @Override
-  public boolean isUseMapping() {
-    return !myPathMappings.isEmpty();
-  }
-
   @NotNull
   public List<PathMapping> getPathMappings() {
     return myPathMappings;
@@ -186,7 +181,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   }
 
   public static void writeExternal(@Nullable final Element element, @Nullable final PathMappingSettings mappings) {
-    if (element == null || mappings == null || !mappings.isUseMapping()) {
+    if (element == null || mappings == null || mappings.isEmpty()) {
       return;
     }
     element.addContent(XmlSerializer.serialize(mappings));

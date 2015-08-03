@@ -27,8 +27,6 @@ public interface PathMapper {
 
   boolean isEmpty();
 
-  boolean isUseMapping();
-
   boolean canReplaceLocal(@NotNull String localPath);
 
   @NotNull

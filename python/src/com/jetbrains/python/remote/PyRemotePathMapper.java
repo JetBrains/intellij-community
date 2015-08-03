@@ -47,11 +47,6 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
     return myPathMappings.isEmpty();
   }
 
-  @Override
-  public boolean isUseMapping() {
-    return !isEmpty();
-  }
-
   @NotNull
   @Override
   public String convertToLocal(@NotNull String remotePath) {
