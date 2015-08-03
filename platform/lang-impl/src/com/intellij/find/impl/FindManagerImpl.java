@@ -346,7 +346,7 @@ public class FindManagerImpl extends FindManager {
     boolean isAcceptableFor(FindModel model, VirtualFile file, CharSequence text) {
       return Comparing.equal(myFile, file) &&
              myFindModel.equals(model) &&
-             Comparing.equal(myText, text)
+             myText.length() == text.length()
         ;
     }
 
