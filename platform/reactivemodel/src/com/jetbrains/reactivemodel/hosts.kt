@@ -16,11 +16,8 @@
 package com.jetbrains.reactivemodel
 
 import com.github.krukow.clj_lang.PersistentHashMap
-import com.jetbrains.reactivemodel.models.ListModel
-import com.jetbrains.reactivemodel.models.MapModel
-import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Lifetime
-import com.jetbrains.reactivemodel.util.LifetimeDefinition
 
 interface Host {
   val tags: Array<String>
@@ -42,7 +39,12 @@ public fun ReactiveModel.host<U : Host>(path: Path, h: (Path, Lifetime, Initiali
   val toStartTransaction = currentInit == null
 
   if (toStartTransaction) {
+    if (!path.components.isEmpty() && path.getIn(root) != null) {
+      transaction { path.putIn(it, AbsentModel()) }
+    }
     currentInit = Initializer(root);
+  } else {
+    assert(path.getIn(root) == null)
   }
   var aHost: U? = null
   //transactions delayed: otherwise they will be reverted by applying Initializer

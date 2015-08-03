@@ -57,6 +57,7 @@ object ReactGraph {
       parents.forEach {
         children.removeValue(it, s)
       }
+      children.remove(s)
       this.parents.remove(s)
       handlers.remove(s)
     }
