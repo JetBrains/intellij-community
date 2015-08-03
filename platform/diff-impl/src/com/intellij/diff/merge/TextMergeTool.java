@@ -50,20 +50,29 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -575,17 +584,26 @@ public class TextMergeTool implements MergeTool {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (Messages.showOkCancelDialog(myPanel,
-                                              DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
-                                              DiffBundle.message("all.changes.processed.dialog.title"),
-                                              DiffBundle.message("merge.save.and.finish.button"),
-                                              DiffBundle.message("merge.continue.button"),
-                                              Messages.getQuestionIcon()) == Messages.OK) {
-                markConflictResolved();
-                destroyChangedBlocks();
-                myMergeRequest.applyResult(MergeResult.RESOLVED);
-                myMergeContext.closeDialog();
-              }
+              String message = "All changes have been processed.<br><a href=\"\">Save changes and finish merging</a>";
+              HyperlinkListener listener = new HyperlinkAdapter() {
+                @Override
+                protected void hyperlinkActivated(HyperlinkEvent e) {
+                  markConflictResolved();
+                  destroyChangedBlocks();
+                  myMergeRequest.applyResult(MergeResult.RESOLVED);
+                  myMergeContext.closeDialog();
+                }
+              };
+
+              JComponent component = getEditor(ThreeSide.BASE).getComponent();
+              Point point = new Point(component.getWidth() / 2, JBUI.scale(5));
+              Color bgColor = MessageType.INFO.getPopupBackground();
+
+              BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, null, bgColor, listener)
+                                                                          .setAnimationCycle(200);
+              Balloon balloon = balloonBuilder.createBalloon();
+              balloon.show(new RelativePoint(component, point), Balloon.Position.below);
+              Disposer.register(MyThreesideViewer.this, balloon);
             }
           });
         }
