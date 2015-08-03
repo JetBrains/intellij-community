@@ -71,6 +71,23 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     if (taskDir == null) {
       return;
     }
+
+    VirtualFile shouldBeActive = getFileToActivate(project, nextTaskFiles, taskDir);
+    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+    TreePath path = TreeUtil.getFirstNodePath(tree);
+    tree.collapsePath(path);
+    if (shouldBeActive != null) {
+      ProjectView.getInstance(project).select(shouldBeActive, shouldBeActive, false);
+      FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
+    }
+    ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
+    if (runToolWindow != null) {
+      runToolWindow.hide(null);
+    }
+  }
+
+  @Nullable
+  protected VirtualFile getFileToActivate(@NotNull Project project, Map<String, TaskFile> nextTaskFiles, VirtualFile taskDir) {
     VirtualFile shouldBeActive = null;
     for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
       String name = entry.getKey();
@@ -83,17 +100,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
         }
       }
     }
-    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
-    TreePath path = TreeUtil.getFirstNodePath(tree);
-    tree.collapsePath(path);
-    if (shouldBeActive != null) {
-      ProjectView.getInstance(project).select(shouldBeActive, shouldBeActive, false);
-      FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
-    }
-    ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
-    if (runToolWindow != null) {
-      runToolWindow.hide(null);
-    }
+    return shouldBeActive;
   }
 
   @Override
