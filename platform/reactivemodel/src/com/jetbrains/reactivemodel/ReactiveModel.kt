@@ -23,7 +23,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   private val subscriptions: MultiMap<Path, ModelSignal> = MultiMap.create()
   private val tagSubs: MultiMap<String, TagSignal<*>> = MultiMap.create()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
-  private val transactionGuard = Guard()
+  val transactionGuard = Guard()
   private val actionToHandler: MutableMap<String, (MapModel, MapModel) -> MapModel> = HashMap()
   private val LOG = Logger.getInstance("#com.jetbrains.reactivemodel.ReactiveModel")
 

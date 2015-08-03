@@ -44,42 +44,43 @@ public fun ReactiveModel.host<U : Host>(path: Path, h: (Path, Lifetime, Initiali
   if (toStartTransaction) {
     currentInit = Initializer(root);
   }
+  var aHost: U? = null
+  //transactions delayed: otherwise they will be reverted by applying Initializer
+  transactionGuard.lock {
+    var parent = path;
+    var parentLifetime: Lifetime? = null
+    while (parent != Path()) {
+      parent = parent.dropLast(1)
+      parentLifetime = (currentInit!!.model.getIn(parent)?.meta?.valAt("lifetime") as? Lifetime)
+      if (parentLifetime != null) {
+        break
+      }
+    }
+    if (parentLifetime == null) {
+      parentLifetime = lifetime
+    }
+    val lifetimeDefinition = Lifetime.create(parentLifetime)
 
-  var parent = path;
-  var parentLifetime: Lifetime? = null
-  while (parent != Path()) {
-    parent = parent.dropLast(1)
-    parentLifetime = (currentInit!!.model.getIn(parent)?.meta?.valAt("lifetime") as? Lifetime)
-    if (parentLifetime != null) {
-      break
+    currentInit!! += {
+      it.putIn(path, MapModel(emptyMap(),
+          PersistentHashMap.create(hashMapOf(
+              "lifetime" to lifetimeDefinition.lifetime))))
+    }
+
+    try {
+      aHost = h(path, lifetimeDefinition.lifetime, currentInit!!)
+    } catch(e: Exception) {
+      currentInit = null
+      throw e
+    }
+
+    currentInit!! += {
+      it.putIn(path,
+          (it.getIn(path) as MapModel)
+              .assocMeta("host", aHost)
+              .assoc(tagsField, ListModel(aHost!!.tags.map { PrimitiveModel(it) })))
     }
   }
-  if (parentLifetime == null) {
-    parentLifetime = lifetime
-  }
-  val lifetimeDefinition = Lifetime.create(parentLifetime)
-
-  currentInit!! += {
-    it.putIn(path, MapModel(emptyMap(),
-        PersistentHashMap.create(hashMapOf(
-            "lifetime" to lifetimeDefinition.lifetime))))
-  }
-
-  val aHost: U
-  try {
-    aHost = h(path, lifetimeDefinition.lifetime, currentInit!!)
-  } catch(e: Exception) {
-    currentInit = null
-    throw e
-  }
-
-  currentInit!! += {
-    it.putIn(path,
-        (it.getIn(path) as MapModel)
-            .assocMeta("host", aHost)
-            .assoc(tagsField, ListModel(aHost.tags.map { PrimitiveModel(it) })))
-  }
-
   if (toStartTransaction) {
     transaction { m ->
       val result = currentInit!!.model
@@ -88,5 +89,5 @@ public fun ReactiveModel.host<U : Host>(path: Path, h: (Path, Lifetime, Initiali
       result
     }
   }
-  return aHost
+  return aHost!!
 }
