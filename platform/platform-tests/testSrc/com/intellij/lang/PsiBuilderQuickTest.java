@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.idea.Bombed;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
@@ -34,6 +35,7 @@ import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class PsiBuilderQuickTest extends LightPlatformTestCase {
@@ -483,6 +485,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "      PsiWhiteSpace(' ')\n");
   }
 
+  @Bombed(month = Calendar.AUGUST, day = 15)
   public void testEmptyCollapsedNode() {
     doTest("a<<b",
            new Parser() {
