@@ -97,7 +97,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
   @Override
   public void apply() throws ConfigurationException {
-    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       @Override
       public void run() {
         myMappings.setMappings(myTreeView.getValues());

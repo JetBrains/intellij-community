@@ -263,12 +263,6 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   }
 
   @Nullable
-  private String getCustomResourceBundleName(final @NotNull VirtualFile virtualFile) {
-    final CustomResourceBundleState customResourceBundle = getCustomResourceBundleState(virtualFile);
-    return customResourceBundle == null ? null : customResourceBundle.getBaseName();
-  }
-
-  @Nullable
   private CustomResourceBundleState getCustomResourceBundleState(final @NotNull VirtualFile virtualFile) {
     if (myState.getCustomResourceBundles().isEmpty()) {
       return null;

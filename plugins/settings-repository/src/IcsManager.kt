@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.io.FileUtil
@@ -54,27 +53,29 @@ val icsManager by Delegates.lazy {
   ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsApplicationLoadListener>()).icsManager
 }
 
-val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
-  override fun compute(): CredentialsStore {
-    if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
-      try {
-        return OsXCredentialsStore("IntelliJ Platform Settings Repository")
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-    return FileCredentialsStore(File(getPluginSystemDir(), ".git_auth"))
-  }
-}
-
 class IcsManager(dir: File) {
+  val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
+    override fun compute(): CredentialsStore {
+      if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
+        try {
+          return OsXCredentialsStore("IntelliJ Platform Settings Repository")
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
+      }
+      return FileCredentialsStore(File(dir, ".git_auth"))
+    }
+  }
+
+   val settingsFile = File(dir, "config.json")
+
   val settings: IcsSettings
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, File(dir, "repository"))
 
   init {
     try {
-      settings = loadSettings()
+      settings = loadSettings(settingsFile)
     }
     catch (e: Exception) {
       settings = IcsSettings()
@@ -241,12 +242,13 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
   var icsManager: IcsManager by Delegates.notNull()
     private set
 
-  override fun beforeApplicationLoaded(application: Application) {
+  override fun beforeApplicationLoaded(application: Application, configPath: String) {
     if (application.isUnitTestMode()) {
       return
     }
 
-    val pluginSystemDir = getPluginSystemDir()
+    val customPath = System.getProperty("ics.settingsRepository")
+    val pluginSystemDir = if (customPath == null) File(configPath, "settingsRepository") else File(FileUtil.expandUserHome(customPath))
     icsManager = IcsManager(pluginSystemDir)
 
     if (!pluginSystemDir.exists()) {

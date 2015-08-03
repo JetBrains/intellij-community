@@ -83,10 +83,20 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return AllIcons.Actions.Compile;
   }
 
-  public MakeBeforeRunTask createTask(RunConfiguration runConfiguration) {
-    return !(runConfiguration instanceof RemoteConfiguration) && runConfiguration instanceof RunProfileWithCompileBeforeLaunchOption
-           ? new MakeBeforeRunTask()
-           : null;
+  @Nullable
+  public MakeBeforeRunTask createTask(RunConfiguration configuration) {
+    MakeBeforeRunTask task = null;
+    if (shouldCreateTask(configuration)) {
+      task = new MakeBeforeRunTask();
+      if (configuration instanceof RunConfigurationBase) {
+        task.setEnabled(((RunConfigurationBase)configuration).isCompileBeforeLaunchAddedByDefault());
+      }
+    }
+    return task;
+  }
+
+  static boolean shouldCreateTask(RunConfiguration configuration) {
+    return !(configuration instanceof RemoteConfiguration) && configuration instanceof RunProfileWithCompileBeforeLaunchOption;
   }
 
   public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {

@@ -139,6 +139,9 @@
             text="Go to next incomplete property"
             use-shortcut-of="GotoNextError"/>
 
+    <action id="AddNewPropertyFile" class="com.intellij.lang.properties.create.AddNewPropertyFileAction">
+      <add-to-group group-id="NewGroup" anchor="first"/>
+    </action>
     <action id="CreateResourceBundle" class="com.intellij.lang.properties.create.CreateResourceBundleAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>

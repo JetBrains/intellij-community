@@ -37,6 +37,7 @@ import java.util.List;
  */
 public class ProjectNode extends ExternalSystemNode<ProjectData> {
   private String myTooltipCache;
+  private boolean singleModuleProject = false;
 
   public ProjectNode(ExternalProjectsView externalProjectsView, DataNode<ProjectData> projectDataNode) {
     super(externalProjectsView, null, projectDataNode);
@@ -64,12 +65,19 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
       }
     });
     if (visibleChildren.size() == 1 && visibleChildren.get(0).getName().equals(getName())) {
+      singleModuleProject = true;
       //noinspection unchecked
       return visibleChildren.get(0).doBuildChildren();
     }
     else {
+      singleModuleProject = false;
       return visibleChildren;
     }
+  }
+
+  public boolean isSingleModuleProject() {
+    getChildren();
+    return singleModuleProject;
   }
 
   void updateProject() {

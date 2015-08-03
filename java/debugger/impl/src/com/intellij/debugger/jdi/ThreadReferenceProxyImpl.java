@@ -38,7 +38,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private String myName;
   private int                       myFrameCount = -1;
   // stack frames, 0 - bottom
-  private final List<StackFrameProxyImpl> myFramesFromBottom = new ArrayList<StackFrameProxyImpl>();
+  private final LinkedList<StackFrameProxyImpl> myFramesFromBottom = new LinkedList<StackFrameProxyImpl>();
   //cache build on the base of myFramesFromBottom 0 - top, initially nothing is cached
   private List<StackFrameProxyImpl> myFrames = null;
 
@@ -236,11 +236,11 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   }
 
   private void checkFrames(@NotNull final ThreadReference threadRef) throws EvaluateException {
-    if (myFramesFromBottom.size() < frameCount()) {
-      int count = frameCount();
+    int frameCount = frameCount();
+    if (myFramesFromBottom.size() < frameCount) {
       List<StackFrame> frames;
       try {
-        frames = threadRef.frames(0, count - myFramesFromBottom.size());
+        frames = threadRef.frames(0, frameCount - myFramesFromBottom.size());
       }
       catch (IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -250,9 +250,14 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       }
 
       int index = myFramesFromBottom.size() + 1;
-      for (ListIterator<StackFrame> iterator = frames.listIterator(count - myFramesFromBottom.size()); iterator.hasPrevious();) {
+      for (ListIterator<StackFrame> iterator = frames.listIterator(frameCount - myFramesFromBottom.size()); iterator.hasPrevious();) {
         myFramesFromBottom.add(new StackFrameProxyImpl(this, iterator.previous(), index));
         index++;
+      }
+    }
+    else { // avoid leaking frames
+      while (myFramesFromBottom.size() > frameCount) {
+        myFramesFromBottom.removeLast();
       }
     }
   }

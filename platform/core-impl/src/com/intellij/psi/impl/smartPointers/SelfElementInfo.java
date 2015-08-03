@@ -67,22 +67,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
-
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null) {
-      for (SmartPsiElementPointerImpl pointer : ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).getAlivePointers(file)) {
-        SmartPointerElementInfo info = pointer.getElementInfo();
-        if (info instanceof SelfElementInfo) {
-          ManualRangeMarker existing = ((SelfElementInfo)info).myRangeMarker;
-          if (existing != null && range.equals(existing.getRange())) {
-            myRangeMarker = existing;
-            return;
-          }
-        }
-      }
-    }
-
-    myRangeMarker = new ManualRangeMarker(getDocumentManager().getLastCommittedDocument(document), ProperTextRange.create(range), false, false, true);
+    myRangeMarker = ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).obtainMarker(document, ProperTextRange.create(range));
   }
 
   private PsiDocumentManagerBase getDocumentManager() {
@@ -297,5 +282,10 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Nullable
+  ManualRangeMarker getRangeMarker() {
+    return myRangeMarker;
   }
 }

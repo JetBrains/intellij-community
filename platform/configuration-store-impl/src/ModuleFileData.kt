@@ -17,7 +17,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.StorageData
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.OptionManager
 import com.intellij.openapi.util.text.StringUtil
 import org.jdom.Element
@@ -25,19 +24,16 @@ import java.util.TreeMap
 
 class ModuleFileData : ProjectStorageData, OptionManager {
   private var options: TreeMap<String, String>? = null
-  private val module: Module
 
   private var dirty = true
 
   override fun isDirty() = dirty
 
-  public constructor(rootElementName: String, module: Module) : super(rootElementName) {
-    this.module = module
+  public constructor(rootElementName: String) : super(rootElementName) {
     options = TreeMap<String, String>()
   }
 
   private constructor(storageData: ModuleFileData) : super(storageData) {
-    module = storageData.module
     dirty = storageData.dirty
     options = TreeMap(storageData.options)
   }

@@ -17,7 +17,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StorageData
 import org.jdom.Element
 import kotlin.properties.Delegates
@@ -25,11 +24,11 @@ import kotlin.properties.Delegates
 abstract class BaseFileConfigurableStoreImpl(protected val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   val storageManager by Delegates.lazy { createStorageManager() }
 
-  override fun getStateStorageManager() = storageManager
+  override final fun getStateStorageManager() = storageManager
 
-  override fun getPathMacroManagerForDefaults() = pathMacroManager
+  override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  protected abstract fun createStorageManager(): StateStorageManager
+  protected abstract fun createStorageManager(): StateStorageManagerImpl
 }
 
 open class ProjectStorageData : StorageData {

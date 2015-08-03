@@ -23,9 +23,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -298,17 +296,23 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     checkForEmptyAndDuplicatedNames("Artifact", CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
     super.apply();
 
-    myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
-    final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
-    if (modifiableModel != null) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull final Result result) {
-          modifiableModel.commit();
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
+        final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
+        if (modifiableModel != null) {
+          new WriteAction() {
+            @Override
+            protected void run(@NotNull final Result result) {
+              modifiableModel.commit();
+            }
+          }.execute();
+          myPackagingEditorContext.resetModifiableModel();
         }
-      }.execute();
-      myPackagingEditorContext.resetModifiableModel();
-    }
+      }
+    });
+    
 
     reset(); // TODO: fix to not reset on apply!
   }

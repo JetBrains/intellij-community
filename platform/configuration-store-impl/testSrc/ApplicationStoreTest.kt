@@ -16,75 +16,61 @@
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StorageData
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.exists
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.intellij.lang.annotations.Language
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.IOException
 import java.io.InputStream
+import kotlin.properties.Delegates
 
-class ApplicationStoreTest : LightPlatformTestCase() {
-  private var testAppConfig: File? = null
-  private var componentStore: MyComponentStore? = null
+class ApplicationStoreTest {
+  private val fixtureManager = FixtureRule()
+  public Rule fun getFixtureManager(): FixtureRule = fixtureManager
 
-  override fun setUp() {
-    super.setUp()
+  private val tempDirManager = TemporaryDirectory()
+  public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
 
-    val testAppConfigPath = System.getProperty("test.app.config.path")
-    if (testAppConfigPath == null) {
-      testAppConfig = FileUtil.createTempDirectory("testAppSettings", null)
-    }
-    else {
-      testAppConfig = File(FileUtil.expandUserHome(testAppConfigPath))
-    }
-    FileUtil.delete(testAppConfig!!)
+  private var testAppConfig: File by Delegates.notNull()
+  private var componentStore: MyComponentStore by Delegates.notNull()
 
-    componentStore = MyComponentStore(testAppConfig!!.getAbsolutePath())
+  public Before fun setUp() {
+    testAppConfig = tempDirManager.newDirectory()
+    componentStore = MyComponentStore(FileUtilRt.toSystemIndependentName(testAppConfig.systemIndependentPath))
   }
 
-  override fun tearDown() {
-    try {
-      Disposer.dispose(componentStore!!)
-      componentStore = null
-    }
-    finally {
-      try {
-        super.tearDown()
-      }
-      finally {
-        FileUtil.delete(testAppConfig!!)
-      }
-    }
-  }
-
-  public fun testStreamProviderSaveIfSeveralStoragesConfigured() {
+  public Test fun `stream provider save if several storages configured`() {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
-    componentStore!!.getStateStorageManager().setStreamProvider(streamProvider)
+    componentStore.getStateStorageManager().setStreamProvider(streamProvider)
 
-    componentStore!!.initComponent(component, false)
+    componentStore.initComponent(component, false)
     component.foo = "newValue"
-    StoreUtil.save(componentStore!!, null)
+    StoreUtil.save(componentStore, null)
 
     assertThat<String>(streamProvider.data.get(RoamingType.PER_USER)!!.get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>"))
   }
 
-  public fun testLoadFromStreamProvider() {
+  public Test fun testLoadFromStreamProvider() {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
@@ -92,15 +78,15 @@ class ApplicationStoreTest : LightPlatformTestCase() {
     map.put(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml", "<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
     streamProvider.data.put(RoamingType.PER_USER, map)
 
-    componentStore!!.getStateStorageManager().setStreamProvider(streamProvider)
-    componentStore!!.initComponent(component, false)
+    componentStore.getStateStorageManager().setStreamProvider(streamProvider)
+    componentStore.initComponent(component, false)
     assertThat(component.foo, equalTo("newValue"))
   }
 
-  public fun testRemoveDeprecatedStorageOnWrite() {
+  public Test fun `remove deprecated storage on write`() {
   }
 
-  public fun testRemoveDeprecatedStorageOnWrite2() {
+  public Test fun `remove deprecated storage on write 2`() {
     doRemoveDeprecatedStorageOnWrite(ActualStorageLast())
   }
 
@@ -109,13 +95,13 @@ class ApplicationStoreTest : LightPlatformTestCase() {
 
     saveConfig("proxy.settings.xml", "<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"new\" />\n" + "  </component>\n" + "</application>")
 
-    componentStore!!.initComponent(component, false)
+    componentStore.initComponent(component, false)
     assertThat(component.foo, equalTo("new"))
 
     component.foo = "new2"
-    StoreUtil.save(componentStore!!, null)
+    invokeAndWaitIfNeed { StoreUtil.save(componentStore, null) }
 
-    assertThat(oldFile.exists(), equalTo(false))
+    assertThat(oldFile, not(exists()))
   }
 
   private fun saveConfig(fileName: String, Language("XML") data: String): File {
@@ -141,8 +127,8 @@ class ApplicationStoreTest : LightPlatformTestCase() {
     }
 
     override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
-      val data = getMap(roamingType).get(fileSpec)
-      return if (data == null) null else ByteArrayInputStream(data.toByteArray(CharsetToolkit.UTF8_CHARSET))
+      val data = getMap(roamingType).get(fileSpec) ?: return null
+      return ByteArrayInputStream(data.toByteArray())
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
@@ -150,27 +136,25 @@ class ApplicationStoreTest : LightPlatformTestCase() {
     }
   }
 
-  class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl(), Disposable {
-    private val stateStorageManager: StateStorageManager
+  class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
+    private val storageManager = object : StateStorageManagerImpl("application") {
+      override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
+        if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
+          return null
+        }
+        return super.getMacroSubstitutor(fileSpec)
+      }
+    }
 
     init {
-      val macroSubstitutor = ApplicationPathMacroManager().createTrackingSubstitutor()
-      stateStorageManager = object : StateStorageManagerImpl(macroSubstitutor, "application", ApplicationManager.getApplication().getPicoContainer()) {
-        override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
-          if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
-            return null
-          }
-          return super.getMacroSubstitutor(fileSpec)
-        }
-      }
-
-      stateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, testAppConfigPath)
+      setPath(testAppConfigPath)
     }
 
-    override fun getStateStorageManager() = stateStorageManager
-
-    override fun dispose() {
+    override fun setPath(path: String) {
+      storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
     }
+
+    override fun getStateStorageManager() = storageManager
 
     override fun getMessageBus() = ApplicationManager.getApplication().getMessageBus()
   }

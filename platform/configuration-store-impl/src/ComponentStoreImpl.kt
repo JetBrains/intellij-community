@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
@@ -62,10 +61,11 @@ public abstract class ComponentStoreImpl : IComponentStore {
   private val myComponents = Collections.synchronizedMap(THashMap<String, Any>())
   private val mySettingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
 
-  protected open val defaultStorageChooser: StateStorageChooser<PersistentStateComponent<*>>? = null
-
   protected open val project: Project?
     get() = null
+
+  // return null if not applicable
+  protected open fun selectDefaultStorages(storages:Array<Storage>, operation:StateStorageOperation): Array<Storage>? = null
 
   override fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
@@ -316,7 +316,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
     catch (e: JDOMException) {
       throw StateStorageException("Error loading state from " + url, e)
     }
-
   }
 
   protected open fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
@@ -333,9 +332,9 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return stateStorageChooser.selectStorages(storages, component, operation)
     }
 
-    val defaultChooser = defaultStorageChooser
-    if (defaultChooser != null) {
-      return defaultChooser.selectStorages(storages, component, operation)
+    val defaultStorages = selectDefaultStorages(storages, operation)
+    if (defaultStorages != null) {
+      return defaultStorages
     }
 
     var actualStorageCount = 0
@@ -419,22 +418,21 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   protected abstract fun getMessageBus(): MessageBus
 
-  override fun reload(changedStorages: MultiMap<StateStorage, VirtualFile>): Collection<String>? {
+  override fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
     if (changedStorages.isEmpty()) {
       return emptySet()
     }
 
     val componentNames = SmartHashSet<String>()
-    for (storage in changedStorages.keySet()) {
+    for (storage in changedStorages) {
       try {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
         // not saved -> user does own modification -> new (on disk) state will be overwritten and not applied
-        storage.analyzeExternalChangesAndUpdateIfNeed(changedStorages.get(storage), componentNames)
+        storage.analyzeExternalChangesAndUpdateIfNeed(componentNames)
       }
       catch (e: Throwable) {
         LOG.error(e)
       }
-
     }
 
     if (componentNames.isEmpty()) {
@@ -442,7 +440,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
-    reinitComponents(componentNames, notReloadableComponents, changedStorages.keySet())
+    reinitComponents(componentNames, notReloadableComponents, changedStorages)
     return if (notReloadableComponents.isEmpty()) null else notReloadableComponents
   }
 

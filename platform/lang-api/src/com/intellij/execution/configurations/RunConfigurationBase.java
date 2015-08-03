@@ -25,7 +25,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -293,6 +292,14 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
+  }
+
+  /**
+   * @return true if "Make" Before Launch task should be added automatically on run configuration creation
+   * @see RunProfileWithCompileBeforeLaunchOption
+   */
+  public boolean isCompileBeforeLaunchAddedByDefault() {
+    return true;
   }
 
   @Override

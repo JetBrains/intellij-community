@@ -45,10 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class CodeInsightUtil {
   @Nullable
@@ -183,7 +180,17 @@ public class CodeInsightUtil {
     if (classes.length <= 1) return;
 
     PsiElement leaf = context.getElement().getFirstChild(); // the same proximity weighers are used in completion, where the leafness is critical
-    Arrays.sort(classes, new PsiProximityComparator(leaf));
+    final PsiProximityComparator proximityComparator = new PsiProximityComparator(leaf);
+    Arrays.sort(classes, new Comparator<PsiClass>() {
+      @Override
+      public int compare(PsiClass o1, PsiClass o2) {
+        boolean deprecated1 = o1.isDeprecated();
+        boolean deprecated2 = o2.isDeprecated();
+        if (deprecated1 && !deprecated2) return 1;
+        if (!deprecated1 && deprecated2) return -1;
+        return proximityComparator.compare(o1, o2);
+      }
+    });
   }
 
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {

@@ -51,12 +51,15 @@ public class PropertiesUtil {
     @NotNull
     @Override
     protected Set<String> compute() {
-      return new HashSet<String>(ContainerUtil.map(Locale.getAvailableLocales(), new Function<Locale, String>() {
-        @Override
-        public String fun(Locale locale) {
-          return locale.getLanguage();
-        }
-      }));
+      final HashSet<String> locales =
+        new HashSet<String>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(), new Function<Locale, List<String>>() {
+          @Override
+          public List<String> fun(Locale locale) {
+            return ContainerUtil.newArrayList(locale.getLanguage(), locale.getISO3Language());
+          }
+        })));
+      locales.addAll(ContainerUtil.newArrayList(Locale.getISOLanguages()));
+      return locales;
     }
   };
 

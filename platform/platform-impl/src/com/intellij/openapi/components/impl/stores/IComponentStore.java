@@ -18,7 +18,6 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -28,6 +27,11 @@ import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
+  /**
+   * @param path System-independent path.
+   */
+  void setPath(@NotNull String path);
+
   void initComponent(@NotNull Object component, boolean service);
 
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
@@ -59,7 +63,7 @@ public interface IComponentStore {
    * list of not reloadable components (reload is not performed)
    */
   @Nullable
-  Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages);
+  Collection<String> reload(@NotNull Set<StateStorage> changedStorages);
 
   @TestOnly
   void saveApplicationComponent(@NotNull Object component);

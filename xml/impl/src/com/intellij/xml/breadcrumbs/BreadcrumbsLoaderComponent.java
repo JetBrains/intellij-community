@@ -137,10 +137,10 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
 
   private static void removeBreadcrumbs(@NotNull FileEditorManager fileEditorManager, @NotNull VirtualFile file) {
     final FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
-    for (final FileEditor fileEditor : fileEditors) {
+    for (FileEditor fileEditor : fileEditors) {
       if (fileEditor instanceof TextEditor) {
         Editor editor = ((TextEditor)fileEditor).getEditor();
-        final BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
+        BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
         if (wrapper != null) {
           disposeWrapper(fileEditorManager, fileEditor, wrapper);
         }

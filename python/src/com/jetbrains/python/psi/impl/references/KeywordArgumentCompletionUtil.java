@@ -75,7 +75,7 @@ public class KeywordArgumentCompletionUtil {
       for (PyKeywordArgumentProvider provider : Extensions.getExtensions(PyKeywordArgumentProvider.EP_NAME)) {
         final List<String> arguments = provider.getKeywordArguments(def, callExpr);
         for (String argument : arguments) {
-          ret.add(PyUtil.createNamedParameterLookup(argument));
+          ret.add(PyUtil.createNamedParameterLookup(argument, callExpr.getProject()));
         }
       }
       KwArgFromStatementCallCollector fromStatementCallCollector = new KwArgFromStatementCallCollector(ret, collector.getKwArgs());
@@ -119,7 +119,7 @@ public class KeywordArgumentCompletionUtil {
       PyNamedParameter namedParam = par.getAsNamed();
       if (namedParam != null) {
         if (!namedParam.isKeywordContainer() && !namedParam.isPositionalContainer()) {
-          final LookupElement item = PyUtil.createNamedParameterLookup(namedParam.getName());
+          final LookupElement item = PyUtil.createNamedParameterLookup(namedParam.getName(), par.getProject());
           myRet.add(item);
         }
         else if (namedParam.isKeywordContainer()) {
@@ -202,7 +202,7 @@ public class KeywordArgumentCompletionUtil {
           argument instanceof PyStringLiteralExpression) {
         String name = ((PyStringLiteralExpression)argument).getStringValue();
         if (PyUtil.isPythonIdentifier(name)) {
-          myRet.add(PyUtil.createNamedParameterLookup(name));
+          myRet.add(PyUtil.createNamedParameterLookup(name, argument.getProject()));
         }
       }
     }

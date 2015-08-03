@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.service.project.wizard;
+package com.intellij.openapi.externalSystem.service.ui;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
@@ -23,7 +24,6 @@ import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -37,8 +37,8 @@ public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog 
 
   private ProjectData myResult;
 
-  public SelectExternalProjectDialog(Project project, final ProjectData current) {
-    super(project, String.format("Select %s Project", GradleConstants.SYSTEM_ID.getReadableName()), ProjectNode.class,
+  public SelectExternalProjectDialog(@NotNull ProjectSystemId systemId, Project project, final ProjectData current) {
+    super(systemId, project, String.format("Select %s Project", systemId.getReadableName()), ProjectNode.class,
           new SelectExternalSystemNodeDialog.NodeSelector() {
             public boolean shouldSelect(SimpleNode node) {
               if (node instanceof ProjectNode) {
@@ -47,7 +47,7 @@ public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog 
               return false;
             }
           });
-
+    assert current == null || current.getOwner().equals(systemId);
     init();
   }
 

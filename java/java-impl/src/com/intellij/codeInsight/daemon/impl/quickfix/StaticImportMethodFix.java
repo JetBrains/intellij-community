@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -44,6 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -360,6 +362,20 @@ public class StaticImportMethodFix implements IntentionAction {
       @Override
       protected ListCellRenderer getListElementRenderer() {
         return new MethodCellRenderer(true, PsiFormatUtilBase.SHOW_NAME){
+
+          @Nullable
+          @Override
+          protected TextAttributes getNavigationItemAttributes(Object value) {
+            TextAttributes attrs = super.getNavigationItemAttributes(value);
+            if (value instanceof PsiMethod && !((PsiMethod)value).isDeprecated()) {
+              PsiClass psiClass = ((PsiMethod)value).getContainingClass();
+              if (psiClass != null && psiClass.isDeprecated()) {
+                return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
+              }
+            }
+            return attrs;
+          }
+
           @Override
           protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
             final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer(value);

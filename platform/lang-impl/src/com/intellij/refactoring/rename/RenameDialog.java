@@ -325,7 +325,7 @@ public class RenameDialog extends RefactoringDialog {
       }
     }
 
-    DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
       @Override
       public void run() {
         invokeRefactoring(processor);

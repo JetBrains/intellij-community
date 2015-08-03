@@ -24,7 +24,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 public class PythonDoctestCompletionTest extends PyTestCase {
 
   private void doDoctestTest(String expected) {
-    final String testName = "completion/doctest/" + getTestName(true);
+    final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
     final LookupElement[] elements = myFixture.completeBasic();
     if (elements != null) {
@@ -49,4 +49,8 @@ public class PythonDoctestCompletionTest extends PyTestCase {
     doDoctestTest("foo");
   }
 
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/completion/doctest";
+  }
 }

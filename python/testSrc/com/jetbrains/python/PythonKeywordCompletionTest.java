@@ -233,7 +233,7 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     List<String> variants = doTestByText("from ...<caret>");
     assertDoesntContain(variants, "import");
 
-    variants = doTestByText("from ... <caret>");
-    assertContainsElements(variants, "import");
+    assertNull(doTestByText("from ... <caret>"));
+    myFixture.checkResult("from ... import ");
   }
 }

@@ -1005,6 +1005,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       setUniformIcon(MavenIcons.Phase);
     }
 
+    public MavenProject getMavenProject() {
+      return myMavenProject;
+    }
+
     public String getProjectPath() {
       return myMavenProject.getPath();
     }

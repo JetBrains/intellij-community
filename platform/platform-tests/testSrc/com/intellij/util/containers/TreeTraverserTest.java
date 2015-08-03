@@ -90,6 +90,12 @@ public class TreeTraverserTest extends TestCase {
 
   // JBIterable ----------------------------------------------
 
+  public void testGenerateRepeat() {
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(3).repeat(3);
+    assertEquals(9, it.size());
+    assertEquals(Arrays.asList(1, 2, 3, 1, 2, 3, 1, 2, 3), it.toList());
+  }
+
   public void testSkipTakeSize() {
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).skip(10).take(10);
     assertEquals(10, it.size());
@@ -118,6 +124,17 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(121, 169, 225), it.toList());
     assertEquals(new Integer(121), it.first());
     assertEquals(new Integer(225), it.last());
+  }
+
+  public void testOnce() {
+    JBIterable<Integer> it = JBIterable.once(JBIterable.generate(1, INCREMENT).take(3).iterator());
+    assertEquals(Arrays.asList(1, 2, 3), it.toList());
+    try {
+      assertEquals(Arrays.asList(1, 2, 3), it.toList());
+      fail();
+    }
+    catch (UnsupportedOperationException ignored) {
+    }
   }
 
   // TreeTraverser ----------------------------------------------

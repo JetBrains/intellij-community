@@ -23,7 +23,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -80,11 +81,11 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   private void setModuleFilePath(@NotNull String filePath) {
-    String path = filePath.replace(File.separatorChar, '/');
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    StateStorageManager storageManager = ComponentsPackage.getStateStore(this).getStateStorageManager();
-    storageManager.clearStateStorage(StoragePathMacros.MODULE_FILE);
-    storageManager.addMacro(StoragePathMacros.MODULE_FILE, path);
+    String normalizedPath = FileUtilRt.toSystemIndependentName(filePath);
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
+    IComponentStore store = ComponentsPackage.getStateStore(this);
+    store.getStateStorageManager().clearStateStorage(StoragePathMacros.MODULE_FILE);
+    store.setPath(normalizedPath);
   }
 
   @Override
@@ -95,9 +96,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @NotNull
   private static FileBasedStorage getMainStorage(@NotNull Module module) {
-    FileBasedStorage storage = (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
-    assert storage != null;
-    return storage;
+    return (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
   }
 
   @Override
@@ -107,7 +106,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       public void run() {
         // create ServiceManagerImpl at first to force extension classes registration
         getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
-        ComponentsPackage.getStateStore(ModuleImpl.this).getStateStorageManager().addMacro(StoragePathMacros.MODULE_FILE, path);
+        ComponentsPackage.getStateStore(ModuleImpl.this).setPath(path);
 
         if (beforeComponentCreation != null) {
           beforeComponentCreation.run();
@@ -160,16 +159,14 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     final VirtualFile file = getMainStorage(this).getVirtualFile();
     try {
       if (file != null) {
-        ClasspathStorage.moduleRenamed(this, newName);
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-        setModuleFilePath(VfsUtilCore.virtualToIoFile(file).getCanonicalPath());
-        return;
       }
-
-      // [dsl] we get here if either old file didn't exist or renaming failed
-      final File oldFile = new File(getModuleFilePath());
-      final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      setModuleFilePath(newFile.getCanonicalPath());
+      else {
+        // [dsl] we get here if either old file didn't exist or renaming failed
+        final File oldFile = new File(getModuleFilePath());
+        final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        setModuleFilePath(newFile.getCanonicalPath());
+      }
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -368,27 +365,22 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private class MyVirtualFileListener extends VirtualFileAdapter {
     @Override
     public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (!isModuleAdded) return;
-      final Object requestor = event.getRequestor();
-      if (MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
-      if (!VirtualFile.PROP_NAME.equals(event.getPropertyName())) return;
+      if (!isModuleAdded || MODULE_RENAMING_REQUESTOR.equals(event.getRequestor()) || !VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        return;
+      }
 
-      final VirtualFile parent = event.getParent();
+      VirtualFile parent = event.getParent();
       if (parent != null) {
-        final String parentPath = parent.getPath();
-        final String ancestorPath = parentPath + "/" + event.getOldValue();
-        final String moduleFilePath = getModuleFilePath();
+        String parentPath = parent.getPath();
+        String ancestorPath = parentPath + "/" + event.getOldValue();
+        String moduleFilePath = getModuleFilePath();
         if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-          final String newValue = (String)event.getNewValue();
-          final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
-          final String newFilePath = parentPath + "/" + newValue + "/" + relativePath;
-          setModuleFilePath(moduleFilePath, newFilePath);
+          setModuleFilePath(moduleFilePath, parentPath + "/" + event.getNewValue() + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
         }
       }
 
-      final VirtualFile moduleFile = getModuleFile();
-      if (moduleFile == null) return;
-      if (moduleFile.equals(event.getFile())) {
+      VirtualFile moduleFile = getModuleFile();
+      if (moduleFile != null && moduleFile.equals(event.getFile())) {
         String oldName = myName;
         myName = moduleNameByFileName(moduleFile.getName());
         ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this, oldName);
@@ -407,14 +399,11 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
     @Override
     public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      final VirtualFile oldParent = event.getOldParent();
-      final VirtualFile newParent = event.getNewParent();
-      final String dirName = event.getFileName();
-      final String ancestorPath = oldParent.getPath() + "/" + dirName;
-      final String moduleFilePath = getModuleFilePath();
+      String dirName = event.getFileName();
+      String ancestorPath = event.getOldParent().getPath() + "/" + dirName;
+      String moduleFilePath = getModuleFilePath();
       if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-        final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
-        setModuleFilePath(moduleFilePath, newParent.getPath() + "/" + dirName + "/" + relativePath);
+        setModuleFilePath(moduleFilePath, event.getNewParent().getPath() + "/" + dirName + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
       }
     }
   }

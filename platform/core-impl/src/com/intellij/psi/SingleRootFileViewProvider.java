@@ -550,7 +550,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     List<FileElement> knownTreeRoots = getKnownTreeRoots();
     if (knownTreeRoots.isEmpty()) return;
 
-    int fileLength = myContent.getText().length();
+    int fileLength = myContent.getTextLength();
     for (FileElement fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
       if (nodeLength != fileLength) {
@@ -575,6 +575,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private interface Content {
     CharSequence getText();
+    int getTextLength();
 
     long getModificationStamp();
   }
@@ -594,6 +595,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         return LoadTextUtil.loadText(virtualFile);
       }
       return getLastCommittedText(document);
+    }
+
+    @Override
+    public int getTextLength() {
+      return getText().length();
     }
 
     @Override
@@ -656,6 +662,15 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         });
       }
       return content;
+    }
+
+    @Override
+    public int getTextLength() {
+      String content = myContent;
+      if (content != null) {
+        return content.length();
+      }
+      return myFile.calcTreeElement().getTextLength();
     }
 
     @Override
