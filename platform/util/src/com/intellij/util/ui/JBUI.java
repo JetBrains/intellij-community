@@ -43,7 +43,16 @@ public class JBUI {
       return 1.0f;
     }
 
-    final int size = Fonts.label().getSize();
+    int size = -1;
+    try {
+      if (SystemInfo.isWindows) {
+        size = (Integer)Toolkit.getDefaultToolkit().getDesktopProperty("win.system.font.height");
+      }
+    } catch (Exception e) {//
+    }
+    if (size == -1) {
+      size = Fonts.label().getSize();
+    }
     if (size <= 13) return 1.0f;
     if (size <= 16) return 1.25f;
     if (size <= 18) return 1.5f;
