@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.lang.CompoundRuntimeException
@@ -53,7 +52,6 @@ import java.util.Collections
 import java.util.Comparator
 import java.util.LinkedHashSet
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.reflect.jvm.java
 
 private val LOG = Logger.getInstance(javaClass<ComponentStoreImpl>())
 
@@ -324,13 +322,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return storages
     }
     assert(!storages.isEmpty())
-
-    var storageChooserClass = stateSpec.storageChooser.java
-    if (storageChooserClass != javaClass<StateStorageChooser<*>>()) {
-      @suppress("UNCHECKED_CAST")
-      val stateStorageChooser: StateStorageChooser<Any> = ReflectionUtil.newInstance(stateSpec.storageChooser.java as Class<out StateStorageChooser<Any>>)
-      return stateStorageChooser.selectStorages(storages, component, operation)
-    }
 
     val defaultStorages = selectDefaultStorages(storages, operation)
     if (defaultStorages != null) {
