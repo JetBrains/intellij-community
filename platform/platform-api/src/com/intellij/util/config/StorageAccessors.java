@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,17 @@
  */
 package com.intellij.util.config;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("unused")
+@Deprecated
 /**
- * @author dyoma
+ * @deprecated Use {@link PropertiesComponent} directly.
+ * @see {@link JBSplitter}
  */
 public class StorageAccessors {
   private final Storage myStorage;
@@ -29,12 +34,10 @@ public class StorageAccessors {
     myStorage = storage;
   }
 
-  public static StorageAccessors createGlobal(@NonNls String prefix) {
+  @NotNull
+  public static StorageAccessors createGlobal(@NotNull @NonNls String prefix) {
     Application application = ApplicationManager.getApplication();
-    Storage storage;
-    if (application != null) storage = new Storage.PropertiesComponentStorage(prefix + ".");
-    else storage = new Storage.MapStorage();
-    return new StorageAccessors(storage);
+    return new StorageAccessors(application == null ? new Storage.MapStorage() : new Storage.PropertiesComponentStorage(prefix + "."));
   }
 
   public float getFloat(@NonNls String id, float defaultValue) {

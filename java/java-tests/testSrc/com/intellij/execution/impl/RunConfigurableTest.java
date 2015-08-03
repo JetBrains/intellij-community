@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Trinity;
@@ -196,7 +197,8 @@ public class RunConfigurableTest extends LightIdeaTestCase {
   }
 
   private static RunManagerImpl createRunManager(Element element) throws InvalidDataException {
-    RunManagerImpl runManager = new RunManagerImpl(getProject(), PropertiesComponent.getInstance());
+    Project project = getProject();
+    RunManagerImpl runManager = new RunManagerImpl(project, PropertiesComponent.getInstance(project));
     runManager.initializeConfigurationTypes(new ConfigurationType[]{ApplicationConfigurationType.getInstance(),
       JUnitConfigurationType.getInstance(), UnknownConfigurationType.INSTANCE});
     runManager.loadState(element);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,12 +76,32 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public void setValue(@NotNull String name, @NotNull String value, @NotNull String defaultValue) {
-    if (value.equals(defaultValue)) {
+  public void setValue(@NotNull String name, @Nullable String value, @Nullable String defaultValue) {
+    if (value == null || value.equals(defaultValue)) {
       myMap.remove(name);
     }
     else {
       myMap.put(name, value);
+    }
+  }
+
+  @Override
+  public void setValue(@NotNull String name, float value, float defaultValue) {
+    if (value == defaultValue) {
+      myMap.remove(name);
+    }
+    else {
+      myMap.put(name, String.valueOf(value));
+    }
+  }
+
+  @Override
+  public void setValue(@NotNull String name, int value, int defaultValue) {
+    if (value == defaultValue) {
+      myMap.remove(name);
+    }
+    else {
+      myMap.put(name, String.valueOf(value));
     }
   }
 
