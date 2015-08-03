@@ -48,7 +48,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     List<PathMapping> result = ContainerUtil.newArrayList();
     if (mappings != null) {
       for (PathMapping m : mappings) {
-        if (m != null && !areBothEmpty(m.getLocalRoot(), m.getRemoteRoot())) {
+        if (m != null && !isAnyEmpty(m.getLocalRoot(), m.getRemoteRoot())) {
           result.add(m);
         }
       }
@@ -111,7 +111,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   }
 
   public void add(@NotNull PathMapping mapping) {
-    if (areBothEmpty(mapping.getLocalRoot(), mapping.getRemoteRoot())) {
+    if (isAnyEmpty(mapping.getLocalRoot(), mapping.getRemoteRoot())) {
       return;
     }
     myPathMappings.add(mapping);
@@ -152,7 +152,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
 
   @NotNull
   public static String mapToLocal(@NotNull String path, @Nullable String remoteRoot, @Nullable String localRoot) {
-    if (areBothEmpty(localRoot, remoteRoot)) {
+    if (isAnyEmpty(localRoot, remoteRoot)) {
       return path;
     }
     path = norm(path);
@@ -162,7 +162,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   }
 
   @Contract(value = "null, _ -> true; _, null -> true", pure = true)
-  public static boolean areBothEmpty(@Nullable String localRoot, @Nullable String remoteRoot) {
+  public static boolean isAnyEmpty(@Nullable String localRoot, @Nullable String remoteRoot) {
     return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
   }
 
@@ -287,7 +287,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     private boolean isEmpty() {
-      return areBothEmpty(myLocalRoot, myRemoteRoot);
+      return isAnyEmpty(myLocalRoot, myRemoteRoot);
     }
 
     private static String trimSlash(String s) {
