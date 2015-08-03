@@ -407,9 +407,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       myLineSpacing = Float.parseFloat(value);
     }
     else if (EDITOR_FONT_SIZE.equals(name)) {
-      int size = Integer.parseInt(value);
-      if (isDefault) size = JBUI.scale(size);
-      setEditorFontSize(size);
+      setEditorFontSize(parseFontSize(value, isDefault));
     }
     else if (EDITOR_FONT_NAME.equals(name)) {
       setEditorFontName(value);
@@ -418,9 +416,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       setConsoleLineSpacing(Float.parseFloat(value));
     }
     else if (CONSOLE_FONT_SIZE.equals(name)) {
-      int size = Integer.parseInt(value);
-      if (isDefault) size = JBUI.scale(size);
-      setConsoleFontSize(size);
+      setConsoleFontSize(parseFontSize(value, isDefault));
     }
     else if (CONSOLE_FONT_NAME.equals(name)) {
       setConsoleFontName(value);
@@ -428,6 +424,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     else if (EDITOR_QUICK_JAVADOC_FONT_SIZE.equals(name)) {
       myQuickDocFontSize = FontSize.valueOf(value);
     }
+  }
+
+  private static int parseFontSize(String value, boolean isDefault) {
+    int size = Integer.parseInt(value);
+    if (isDefault) {
+      size = JBUI.scaleFontSize(size);
+    }
+    return size;
   }
 
   private static void readFontSettings(@NotNull Element element, @NotNull FontPreferences preferences, boolean isDefaultScheme) {
