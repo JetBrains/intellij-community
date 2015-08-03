@@ -387,7 +387,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public Set<Class> getToolingExtensionsClasses() {
     return ContainerUtil.<Class>set(
-      ExternalProject.class,
+      // externalSystem api jar
+      ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
