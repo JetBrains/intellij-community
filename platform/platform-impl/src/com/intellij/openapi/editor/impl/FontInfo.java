@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
+import java.util.Collections;
 
 /**
  * @author max
@@ -35,6 +36,7 @@ import java.awt.image.BufferedImage;
 public class FontInfo {
   private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = SystemInfo.isAppleJvm && Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
+  private static final boolean ENABLE_OPTIONAL_LIGATURES = Registry.is("editor.enable.optional.ligatures");
 
   private final TIntHashSet mySymbolsToBreakDrawingIteration = new TIntHashSet();
 
@@ -50,7 +52,9 @@ public class FontInfo {
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
     mySize = size;
     myStyle = style;
-    myFont = new Font(familyName, style, size);
+    Font font = new Font(familyName, style, size);
+    myFont = ENABLE_OPTIONAL_LIGATURES ? font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON)) : 
+             font;
   }
   
   private void parseProblemGlyphs() {

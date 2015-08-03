@@ -18,6 +18,8 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -469,5 +471,76 @@ public class Foo {
 }
 '''
 
+  }
+
+  public void "prefer from imported package"() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package foo; public class Imported {}'
+    myFixture.addClass 'package bar; public class Log {}'
+    myFixture.configureByText 'a.java', '''import foo.Imported;
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.Log;
+import foo.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+  }
+
+  public void "test prefer from imported package sibling"() {
+    myFixture.addClass 'package com.foo.doo; public class Log {}'
+    myFixture.addClass 'package com.foo.imported; public class Imported {}'
+    myFixture.addClass 'package com.bar; public class Log {}'
+    myFixture.configureByText 'a.java', '''import com.foo.imported.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import com.foo.doo.Log;
+import com.foo.imported.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+
+  }
+
+  public void "test remember chosen variants"() {
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package bar; public class Log {}'
+
+    def textBefore = '''\
+
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+    def textAfter = '''import bar.Log;
+
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+    myFixture.configureByText 'a.java', textBefore
+    importClass()
+    myFixture.checkResult textAfter
+
+    myFixture.addClass("package aPackage; public class Log {}")
+    myFixture.configureByText 'b.java', textBefore
+    importClass()
+    myFixture.checkResult textAfter
   }
 }
