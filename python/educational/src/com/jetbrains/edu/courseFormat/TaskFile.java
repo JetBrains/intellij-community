@@ -97,19 +97,26 @@ public class TaskFile {
    */
   @Nullable
   public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos) {
+    return getAnswerPlaceholder(document, pos, false);
+  }
+
+  @Nullable
+  public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos,
+                                                boolean useAnswerLength) {
     int line = pos.line;
     if (line >= document.getLineCount()) {
       return null;
     }
     int column = pos.column;
     int offset = document.getLineStartOffset(line) + column;
-    for (AnswerPlaceholder tw : myAnswerPlaceholders) {
-      if (tw.getLine() <= line) {
-        int twStartOffset = tw.getRealStartOffset(document);
-        final int length = tw.getLength() > 0 ? tw.getLength() : 0;
-        int twEndOffset = twStartOffset + length;
-        if (twStartOffset <= offset && offset <= twEndOffset) {
-          return tw;
+    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
+      if (placeholder.getLine() <= line) {
+        int realStartOffset = placeholder.getRealStartOffset(document);
+        int placeholderLength = useAnswerLength ? placeholder.getPossibleAnswerLength() : placeholder.getLength();
+        final int length = placeholderLength > 0 ? placeholderLength : 0;
+        int endOffset = realStartOffset + length;
+        if (realStartOffset <= offset && offset <= endOffset) {
+          return placeholder;
         }
       }
     }
