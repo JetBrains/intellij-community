@@ -84,6 +84,12 @@ public class JBUI {
     return (int)(SCALE_FACTOR * i);
   }
 
+  public static int scaleFontSize(int fontSize) {
+    if (SCALE_FACTOR == 1.25f) return (int)(fontSize * 1.34f);
+    if (SCALE_FACTOR == 1.75f) return (int)(fontSize * 1.67f);
+    return scale(fontSize);
+  }
+
   public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
   }
