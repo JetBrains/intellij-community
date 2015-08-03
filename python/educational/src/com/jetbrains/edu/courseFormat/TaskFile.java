@@ -163,4 +163,33 @@ public class TaskFile {
       myAnswerPlaceholders.get(i).setIndex(i + 1);
     }
   }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TaskFile that = (TaskFile)o;
+
+    if (getIndex() != that.getIndex()) return false;
+    final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
+    final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();
+    if (answerPlaceholders.size() != thatAnswerPlaceholders.size()) return false;
+    for (int i = 0; i < answerPlaceholders.size(); i++) {
+      final AnswerPlaceholder placeholder = answerPlaceholders.get(i);
+      final AnswerPlaceholder thatPlaceholder = thatAnswerPlaceholders.get(i);
+      if (!placeholder.equals(thatPlaceholder)) return false;
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = getIndex();
+    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
+      result = 31 * result + placeholder.hashCode();
+    }
+    return result;
+  }
 }
