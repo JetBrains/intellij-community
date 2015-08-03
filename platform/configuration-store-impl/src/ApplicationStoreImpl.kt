@@ -16,6 +16,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.invokeAndWaitIfNeed
@@ -65,7 +66,7 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
         // but we refresh direct children to avoid refreshAndFindFile in SchemeManager (to find schemes directory)
 
         // ServiceManager inits service under read-action, so, we cannot refresh scheme dir on SchemeManager creation because it leads to error "Calling invokeAndWait from read-action leads to possible deadlock."
-        val refreshAll = Registry.`is`("use.read.action.to.init.service", true)
+        val refreshAll = Registry.`is`("use.read.action.to.init.service", !ApplicationManager.getApplication().isUnitTestMode())
 
         VfsUtil.markDirtyAndRefresh(false, refreshAll, true, configDir)
         val optionsDir = configDir.findChild(FILE_STORAGE_DIR)

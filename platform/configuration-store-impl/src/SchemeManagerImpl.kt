@@ -16,11 +16,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
 import com.intellij.openapi.components.impl.stores.StorageUtil
@@ -89,7 +86,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     if (useVfs && (provider == null || !provider.enabled)) {
-      if (!Registry.`is`("use.read.action.to.init.service", true)) {
+      if (!Registry.`is`("use.read.action.to.init.service", !ApplicationManager.getApplication().isUnitTestMode())) {
         // store refreshes root directory, so, we don't need to use refreshAndFindFile
         directory = LocalFileSystem.getInstance().findFileByIoFile(ioDirectory)
         if (directory != null) {

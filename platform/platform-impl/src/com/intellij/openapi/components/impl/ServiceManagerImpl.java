@@ -205,7 +205,8 @@ public class ServiceManagerImpl implements BaseComponent {
         return instance;
       }
 
-      AccessToken readToken = Registry.is("use.read.action.to.init.service", true) ? ReadAction.start() : null;
+      // we must take read action before adapter lock - if service requested from EDT (2) and pooled (1), will be a deadlock, because EDT waits adapter lock and Pooled waits read lock
+      AccessToken readToken = Registry.is("use.read.action.to.init.service", !ApplicationManager.getApplication().isUnitTestMode()) ? ReadAction.start() : null;
       try {
         synchronized (this) {
           instance = myInitializedComponentInstance;
