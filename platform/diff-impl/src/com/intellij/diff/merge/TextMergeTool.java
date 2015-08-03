@@ -573,7 +573,7 @@ public class TextMergeTool implements MergeTool {
         }
       }
 
-      public void onChangeResolved(@NotNull TextMergeChange change) {
+      private void onChangeResolved(@NotNull TextMergeChange change) {
         if (change.isResolved()) {
           onChangeRemoved(change);
         }

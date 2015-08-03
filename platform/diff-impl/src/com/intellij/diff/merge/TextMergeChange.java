@@ -64,7 +64,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     installHighlighter();
   }
 
-  protected void installHighlighter() {
+  void installHighlighter() {
     assert myHighlighters.isEmpty();
 
     createHighlighter(ThreeSide.BASE);
@@ -75,7 +75,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  public void destroyHighlighter() {
+  void destroyHighlighter() {
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.dispose();
     }
@@ -88,7 +88,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  public void doReinstallHighlighter() {
+  void doReinstallHighlighter() {
     destroyHighlighter();
     installHighlighter();
     myViewer.repaintDividers();
@@ -132,7 +132,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   @CalledInAwt
-  public void setResolved(@NotNull Side side, boolean value) {
+  void setResolved(@NotNull Side side, boolean value) {
     myResolved[side.getIndex()] = value;
   }
 
@@ -178,7 +178,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   @Nullable
-  public State processBaseChange(int oldLine1, int oldLine2, int shift) {
+  State processBaseChange(int oldLine1, int oldLine2, int shift) {
     int line1 = getStartLine(ThreeSide.BASE);
     int line2 = getEndLine(ThreeSide.BASE);
 
@@ -384,7 +384,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   @NotNull
-  public State storeState() {
+  State storeState() {
     return new State(
       myStartLines[0],
       myStartLines[1],
@@ -399,7 +399,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     );
   }
 
-  public void restoreState(@NotNull State state) {
+  void restoreState(@NotNull State state) {
     myStartLines[0] = state.myStartLine1;
     myStartLines[1] = state.myStartLine2;
     myStartLines[2] = state.myStartLine3;
