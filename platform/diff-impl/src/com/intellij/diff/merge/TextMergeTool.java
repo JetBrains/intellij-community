@@ -19,10 +19,8 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.comparison.ByLine;
-import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
@@ -408,10 +406,10 @@ public class TextMergeTool implements MergeTool {
         try {
           indicator.checkCanceled();
 
-          FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences.get(1), sequences.get(0), ComparisonPolicy.DEFAULT, indicator);
-          FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences.get(1), sequences.get(2), ComparisonPolicy.DEFAULT, indicator);
-          List<MergeLineFragment> mergeFragments = ComparisonMergeUtil.buildFair(fragments1, fragments2, indicator);
-          return apply(mergeFragments, outputModificationStamp);
+          List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
+                                                                        ComparisonPolicy.DEFAULT, indicator);
+
+          return apply(lineFragments, outputModificationStamp);
         }
         catch (DiffTooBigException e) {
           return applyNotification(DiffNotifications.createDiffTooBig());

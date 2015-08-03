@@ -16,17 +16,17 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.comparison.ByLine;
-import com.intellij.diff.comparison.ComparisonMergeUtil;
-import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.comparison.*;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeLineFragmentImpl;
+import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(new MyIgnorePolicySettingAction());
-    //group.add(new MyHighlightPolicySettingAction()); // TODO
+    group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyEditorReadOnlyLockAction());
@@ -138,11 +139,33 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       });
 
       ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
-      FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
-      FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
-      List<MergeLineFragment> mergeFragments = ComparisonMergeUtil.buildFair(fragments1, fragments2, indicator);
+      List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences[0], sequences[1], sequences[2],
+                                                                    comparisonPolicy, indicator);
 
-      return apply(mergeFragments, comparisonPolicy);
+      if (getHighlightPolicy().isFineFragments()) {
+        List<MergeLineFragment> fineLineFragments = new ArrayList<MergeLineFragment>(lineFragments.size());
+
+        for (final MergeLineFragment fragment : lineFragments) {
+          CharSequence[] chunks = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
+            @Override
+            public CharSequence[] compute() {
+              indicator.checkCanceled();
+              CharSequence[] chunks = new CharSequence[3];
+              chunks[0] = getChunkContent(fragment, documents, ThreeSide.LEFT);
+              chunks[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
+              chunks[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
+              return chunks;
+            }
+          });
+
+          List<MergeWordFragment> wordFragments = getWordFragments(chunks, comparisonPolicy, indicator);
+          fineLineFragments.add(new MergeLineFragmentImpl(fragment, wordFragments));
+        }
+
+        lineFragments = fineLineFragments;
+      }
+
+      return apply(lineFragments, comparisonPolicy);
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -154,6 +177,48 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       LOG.error(e);
       return applyNotification(DiffNotifications.createError());
     }
+  }
+
+  @Nullable
+  private static CharSequence getChunkContent(@NotNull MergeLineFragment fragment, @NotNull Document[] documents, @NotNull ThreeSide side) {
+    int startLine = fragment.getStartLine(side);
+    int endLine = fragment.getEndLine(side);
+    return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
+  }
+
+  @Nullable
+  private static List<MergeWordFragment> getWordFragments(@NotNull CharSequence[] chunks,
+                                                          @NotNull ComparisonPolicy comparisonPolicy,
+                                                          @NotNull ProgressIndicator indicator) {
+    assert chunks[0] != null || chunks[1] != null || chunks[2] != null; // ---
+    if (chunks[0] == null && chunks[1] == null ||
+        chunks[0] == null && chunks[2] == null ||
+        chunks[1] == null && chunks[2] == null) { // =--, -=-, --=
+      return null;
+    }
+
+    if (chunks[0] != null && chunks[1] != null && chunks[2] != null) { // ===
+      return ByWord.compare(chunks[0], chunks[1], chunks[2], comparisonPolicy, indicator);
+    }
+
+    // ==-, =-=, -==
+    final ThreeSide side1 = chunks[0] != null ? ThreeSide.LEFT : ThreeSide.BASE;
+    final ThreeSide side2 = chunks[2] != null ? ThreeSide.RIGHT : ThreeSide.BASE;
+    CharSequence chunk1 = side1.select(chunks);
+    CharSequence chunk2 = side2.select(chunks);
+
+    if (chunks[1] != null && ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy)) {
+      return null; // unmodified - deleted
+    }
+
+    List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
+
+    return ContainerUtil.map(wordConflicts, new Function<DiffFragment, MergeWordFragment>() {
+      @Override
+      public MergeWordFragment fun(DiffFragment fragment) {
+        return new MyWordFragment(side1, side2, fragment);
+      }
+    });
   }
 
   @NotNull
@@ -238,6 +303,14 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     return policy;
   }
 
+  @NotNull
+  private HighlightPolicy getHighlightPolicy() {
+    HighlightPolicy policy = getTextSettings().getHighlightPolicy();
+    if (policy == HighlightPolicy.BY_WORD_SPLIT) return HighlightPolicy.BY_WORD;
+    if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
+    return policy;
+  }
+
   //
   // Getters
   //
@@ -291,6 +364,29 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
+  private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
+    public MyHighlightPolicySettingAction() {
+      super(getTextSettings());
+    }
+
+    @NotNull
+    @Override
+    protected HighlightPolicy getCurrentSetting() {
+      return getHighlightPolicy();
+    }
+
+    @NotNull
+    @Override
+    protected List<HighlightPolicy> getAvailableSettings() {
+      return ContainerUtil.list(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD);
+    }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
+  }
+
   protected class MyEditorReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
     public MyEditorReadOnlyLockAction() {
       super(getContext(), getEditableEditors());
@@ -321,6 +417,35 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
           return;
         }
       }
+    }
+  }
+
+  private static class MyWordFragment implements MergeWordFragment {
+    @NotNull private final ThreeSide mySide1;
+    @NotNull private final ThreeSide mySide2;
+    @NotNull private final DiffFragment myFragment;
+
+    public MyWordFragment(@NotNull ThreeSide side1,
+                          @NotNull ThreeSide side2,
+                          @NotNull DiffFragment fragment) {
+      assert side1 != side2;
+      mySide1 = side1;
+      mySide2 = side2;
+      myFragment = fragment;
+    }
+
+    @Override
+    public int getStartOffset(@NotNull ThreeSide side) {
+      if (side == mySide1) return myFragment.getStartOffset1();
+      if (side == mySide2) return myFragment.getStartOffset2();
+      return 0;
+    }
+
+    @Override
+    public int getEndOffset(@NotNull ThreeSide side) {
+      if (side == mySide1) return myFragment.getEndOffset1();
+      if (side == mySide2) return myFragment.getEndOffset2();
+      return 0;
     }
   }
 }

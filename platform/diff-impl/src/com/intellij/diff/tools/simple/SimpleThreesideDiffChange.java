@@ -17,6 +17,7 @@ package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
@@ -76,6 +77,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     TextDiffType type = getDiffType();
     int startLine = myFragment.getStartLine(side);
     int endLine = myFragment.getEndLine(side);
+    boolean hasInner = myFragment.getInnerFragments() != null;
 
     int start;
     int end;
@@ -88,7 +90,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
       if (end < document.getTextLength()) end++;
     }
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, hasInner));
 
     if (startLine == endLine) {
       if (startLine != 0) myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
@@ -96,6 +98,14 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     else {
       myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
       myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
+    }
+
+    if (hasInner) {
+      for (MergeWordFragment innerFragment : myFragment.getInnerFragments()) {
+        int startOffset = innerFragment.getStartOffset(side);
+        int endOffset = innerFragment.getEndOffset(side);
+        myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start + startOffset, start + endOffset, type));
+      }
     }
   }
 

@@ -19,11 +19,16 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil.TrimChangeBuilder
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
+import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.util.IntPair;
+import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,21 +77,31 @@ public class ByLine {
   }
 
   @NotNull
-  public static FairDiffIterable compareTwoStepFair(@NotNull CharSequence text1,
-                                                    @NotNull CharSequence text2,
-                                                    @NotNull ComparisonPolicy policy,
-                                                    @NotNull ProgressIndicator indicator) {
+  public static List<MergeLineFragment> compareTwoStep(@NotNull CharSequence text1,
+                                                       @NotNull CharSequence text2,
+                                                       @NotNull CharSequence text3,
+                                                       @NotNull ComparisonPolicy policy,
+                                                       @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
     List<Line> lines1 = getLines(text1, policy);
     List<Line> lines2 = getLines(text2, policy);
+    List<Line> lines3 = getLines(text3, policy);
 
     List<Line> iwLines1 = convertToIgnoreWhitespace(lines1);
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
+    List<Line> iwLines3 = convertToIgnoreWhitespace(lines3);
 
-    FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
-    iwChanges = optimizeLineChunks(lines1, lines2, iwChanges, indicator);
-    return correctChangesSecondStep(lines1, lines2, iwChanges);
+    FairDiffIterable iwChanges1 = compareSmart(iwLines2, iwLines1, indicator);
+    iwChanges1 = optimizeLineChunks(lines2, lines1, iwChanges1, indicator);
+    FairDiffIterable iterable1 = correctChangesSecondStep(lines2, lines1, iwChanges1);
+
+    FairDiffIterable iwChanges2 = compareSmart(iwLines2, iwLines3, indicator);
+    iwChanges2 = optimizeLineChunks(lines2, lines3, iwChanges2, indicator);
+    FairDiffIterable iterable2 = correctChangesSecondStep(lines2, lines3, iwChanges2);
+
+    List<MergeRange> conflicts = ComparisonMergeUtil.buildFair(iterable1, iterable2, indicator);
+    return convertIntoFragments(conflicts);
   }
 
   //
@@ -286,6 +301,16 @@ public class ByLine {
                                          offsets1.val1, offsets1.val2, offsets2.val1, offsets2.val2));
     }
     return fragments;
+  }
+
+  @NotNull
+  private static List<MergeLineFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
+    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeLineFragment>() {
+      @Override
+      public MergeLineFragment fun(MergeRange ch) {
+        return new MergeLineFragmentImpl(ch);
+      }
+    });
   }
 
   @NotNull
