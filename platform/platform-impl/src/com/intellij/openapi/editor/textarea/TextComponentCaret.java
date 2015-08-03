@@ -204,7 +204,7 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
   }
 
   @Override
-  public boolean isAtDirectionBoundary() {
+  public boolean isAtBidiRunBoundary() {
     return false;
   }
 

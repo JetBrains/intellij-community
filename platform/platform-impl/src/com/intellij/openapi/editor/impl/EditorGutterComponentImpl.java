@@ -281,8 +281,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void drawEditorBackgroundForRange(Graphics g, int startOffset, int endOffset, TextAttributes attributes,
                                             Color defaultBackgroundColor, Color defaultForegroundColor, int startX) {
-    VisualPosition visualStart = myEditor.offsetToVisualPosition(startOffset);
-    VisualPosition visualEnd   = myEditor.offsetToVisualPosition(endOffset);
+    VisualPosition visualStart = myEditor.offsetToVisualPosition(startOffset, true, false);
+    VisualPosition visualEnd   = myEditor.offsetToVisualPosition(endOffset, false, true);
     for (int line = visualStart.getLine(); line <= visualEnd.getLine(); line++) {
       if (line == visualStart.getLine()) {
         if (visualStart.getColumn() == 0) {
@@ -491,7 +491,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (int i = startLineNumber; i < endLineNumber; i++) {
       LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
-      if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
+      if (EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPosition) > 0) {
         continue;
       }
       int logLine = convertor.execute(logicalPosition.line);

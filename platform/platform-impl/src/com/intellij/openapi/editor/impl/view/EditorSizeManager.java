@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.TIntArrayList;
@@ -47,6 +49,13 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
 
   private int myMaxLineWithExtensionWidth;
   private int myWidestLineWithExtension;
+
+  private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
+    @Override
+    public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
+      onSoftWrapRecalculationEnd(event);
+    }
+  };
   
   EditorSizeManager(EditorView view) {
     myView = view;
@@ -54,10 +63,12 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     myDocument = myEditor.getDocument(); 
     myDocument.addDocumentListener(this, this);
     myEditor.getFoldingModel().addListener(this, this);
+    myEditor.getSoftWrapModel().getApplianceManager().addListener(mySoftWrapChangeListener);
   }
 
   @Override
   public void dispose() {
+    myEditor.getSoftWrapModel().getApplianceManager().removeListener(mySoftWrapChangeListener);
   }
 
   @Override
@@ -92,6 +103,10 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     }
     foldingChangeStartOffset = Integer.MAX_VALUE;
     foldingChangeEndOffset = Integer.MIN_VALUE;
+  }
+
+  private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
+    invalidateRange(event.getStartOffset(), event.getActualEndOffset());
   }
 
   Dimension getPreferredSize() {
@@ -152,8 +167,8 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
 
   void invalidateRange(int startOffset, int endOffset) {
     myWidthInPixels = -1;
-    int startVisualLine = myView.offsetToVisualLine(startOffset);
-    int endVisualLine = myView.offsetToVisualLine(endOffset);
+    int startVisualLine = myView.offsetToVisualLine(startOffset, false);
+    int endVisualLine = myView.offsetToVisualLine(endOffset, true);
     int lineDiff = myEditor.getVisibleLineCount() - myLineWidths.size();
     if (lineDiff > 0) {
       int[] newEntries = new int[lineDiff];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -569,8 +570,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     int cutEndLine = lp.line == 0 ? 0 : lp.line - 1;
 
     boolean commonPartOk = leftPixels == 0 || startLp.line == lp.line;
-    return new BeforeAfter<Integer>(commonPartOk && startLp.softWrapLinesOnCurrentLogicalLine == 0 ? startLp.line : curStartLine,
-                                    commonPartOk && lp.softWrapLinesOnCurrentLogicalLine == 0 ? lp.line : cutEndLine);
+    return new BeforeAfter<Integer>(commonPartOk && EditorUtil.getSoftWrapCountAfterLineStart(editor, startLp) == 0 ? startLp.line : curStartLine,
+                                    commonPartOk && EditorUtil.getSoftWrapCountAfterLineStart(editor, lp) == 0 ? lp.line : cutEndLine);
   }
 
   private static final int[] ourMarks = {1,2,4,8,-1};

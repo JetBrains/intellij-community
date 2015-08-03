@@ -184,8 +184,8 @@ class LazyEditor extends UserDataHolderBase implements Editor {
 
   @Override
   @NotNull
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward) {
-    return getEditor().offsetToVisualPosition(offset, leanForward);
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
+    return getEditor().offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
   }
 
   @Override
