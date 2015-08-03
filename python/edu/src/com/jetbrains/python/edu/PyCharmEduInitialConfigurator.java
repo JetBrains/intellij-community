@@ -223,7 +223,7 @@ public class PyCharmEduInitialConfigurator {
     for (int i = 0; i < mainMenu.getChildCount(); i++) {
       final DefaultMutableTreeNode menuItem = (DefaultMutableTreeNode)mainMenu.getChildAt(i);
       if ("File".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"Print/Export Actions", "SaveAll", "Export/Import Actions", "Synchronize", "ChangeFileEncodingAction",
+        final String[] fileItems = {"ExportToHTML", "SaveAll", "Export/Import Actions", "Synchronize", "ChangeFileEncodingAction",
           "Line Separators", "ToggleReadOnlyAttribute"};
         for (String item : fileItems) {
           hideAction(schema, root, menuItem, item);
