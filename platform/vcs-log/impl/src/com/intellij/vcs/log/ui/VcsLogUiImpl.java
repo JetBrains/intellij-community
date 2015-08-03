@@ -68,7 +68,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
-      addHighlighter(factory.createHighlighter(logDataHolder, myUiProperties, myMainFrame.getFilterUi()));
+      getTable().addHighlighter(factory.createHighlighter(logDataHolder, this));
     }
   }
 

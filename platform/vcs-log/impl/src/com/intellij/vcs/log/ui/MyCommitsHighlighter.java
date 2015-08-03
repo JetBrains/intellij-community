@@ -15,15 +15,11 @@
  */
 package com.intellij.vcs.log.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogContentProvider;
-import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import org.jetbrains.annotations.NotNull;
@@ -33,36 +29,18 @@ import java.util.Collections;
 import java.util.Set;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
-  @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final VcsLogFilterUi myFilterUi;
+  @NotNull private final VcsLogUi myLogUi;
   private boolean myAreTheOnlyUsers = false;
 
-  public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder,
-                              @NotNull VcsLogUiProperties uiProperties,
-                              @NotNull VcsLogFilterUi filterUi) {
+  public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
     myDataHolder = logDataHolder;
-    myUiProperties = uiProperties;
-    myFilterUi = filterUi;
+    myLogUi = logUi;
 
-    // this is a tmp solution for performance problems of calculating areTheOnlyUsers every repaint (we simply do not want to do that)
-    // todo remove this when history2 branch is merged into master (history2 will allow a proper way to fix the problem)
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    myLogUi.addLogListener(new VcsLogListener() {
       @Override
-      public void run() {
-        if (myDataHolder.getProject().isDisposed()) return;
-        VcsLogManager logManager = VcsLogContentProvider.findLogManager(myDataHolder.getProject());
-        if (logManager != null) {
-          VcsLogUiImpl logUi = logManager.getLogUi();
-          if (logUi != null) {
-            logUi.addLogListener(new VcsLogListener() {
-              @Override
-              public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-                myAreTheOnlyUsers = areTheOnlyUsers();
-              }
-            });
-          }
-        }
+      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+        myAreTheOnlyUsers = areTheOnlyUsers();
       }
     });
   }
@@ -70,7 +48,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (!myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
+    if (!myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     if (!myAreTheOnlyUsers && !isFilteredByCurrentUser()) {
       VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
       if (details != null && !(details instanceof LoadingDetails)) {
@@ -97,7 +75,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   }
 
   private boolean isFilteredByCurrentUser() {
-    VcsLogUserFilter userFilter = myFilterUi.getFilters().getUserFilter();
+    VcsLogUserFilter userFilter = myLogUi.getFilterUi().getFilters().getUserFilter();
     if (userFilter == null) return false;
     Collection<String> filterByName = ((VcsLogUserFilterImpl)userFilter).getUserNamesForPresentation();
     if (Collections.singleton(VcsLogUserFilterImpl.ME).containsAll(filterByName)) return true;
@@ -109,10 +87,8 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
-                                               @NotNull VcsLogUiProperties uiProperties,
-                                               @NotNull VcsLogFilterUi filterUi) {
-      return new MyCommitsHighlighter(logDataHolder, uiProperties, filterUi);
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
+      return new MyCommitsHighlighter(logDataHolder, logUi);
     }
 
     @NotNull

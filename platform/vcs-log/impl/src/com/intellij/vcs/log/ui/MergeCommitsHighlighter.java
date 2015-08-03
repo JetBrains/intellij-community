@@ -17,29 +17,25 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.VcsCommitStyleFactory;
-import com.intellij.vcs.log.VcsLogFilterUi;
-import com.intellij.vcs.log.VcsLogHighlighter;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
   public static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._128, Gray._96);
-  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final VcsLogUi myLogUi;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
-  public MergeCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+  public MergeCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
     myDataHolder = logDataHolder;
-    myUiProperties = uiProperties;
+    myLogUi = logUi;
   }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || !myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
+    if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
       if (details.getParents().size() >= 2) return VcsCommitStyleFactory.foreground(MERGE_COMMIT_FOREGROUND);
@@ -52,10 +48,8 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
-                                               @NotNull VcsLogUiProperties uiProperties,
-                                               @NotNull VcsLogFilterUi filterUi) {
-      return new MergeCommitsHighlighter(logDataHolder, uiProperties);
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
+      return new MergeCommitsHighlighter(logDataHolder, logUi);
     }
 
     @NotNull

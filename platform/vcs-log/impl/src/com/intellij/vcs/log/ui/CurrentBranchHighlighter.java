@@ -20,9 +20,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,21 +28,17 @@ import java.awt.*;
 
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
-  @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogUi myLogUi;
   @NotNull private final VcsLogFilterUi myFilterUi;
   @Nullable private String mySingleFilteredBranch;
 
-  public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder,
-                                  @NotNull VcsLogUiProperties uiProperties,
-                                  @NotNull VcsLogFilterUi filterUi) {
+  public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
     myDataHolder = logDataHolder;
-    myUiProperties = uiProperties;
-    myFilterUi = filterUi;
+    myLogUi = logUi;
+    myFilterUi = logUi.getFilterUi();
 
-
-    // this code will look much simpler when history* branch is merged
-    ((VcsLogClassicFilterUi)filterUi).getLogUi().addLogListener(new VcsLogListener() {
+    logUi.addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
         VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
@@ -59,7 +53,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || !myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
+    if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
       VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
@@ -81,10 +75,8 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
-                                               @NotNull VcsLogUiProperties uiProperties,
-                                               @NotNull VcsLogFilterUi filterUi) {
-      return new CurrentBranchHighlighter(logDataHolder, uiProperties, filterUi);
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
+      return new CurrentBranchHighlighter(logDataHolder, logUi);
     }
 
     @NotNull
