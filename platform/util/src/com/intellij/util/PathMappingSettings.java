@@ -73,21 +73,6 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return norm(path);
   }
 
-  @NotNull
-  public static String mapToLocal(String path, String remoteRoot, String localRoot) {
-    if (areBothEmpty(localRoot, remoteRoot)) {
-      return path;
-    }
-    path = norm(path);
-    String remotePrefix = norm(remoteRoot);
-    path = path.replace(remotePrefix, norm(localRoot));
-    return path;
-  }
-
-  public static boolean areBothEmpty(String localRoot, String remoteRoot) {
-    return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
-  }
-
   @Override
   public boolean isEmpty() {
     return myPathMappings.isEmpty();
@@ -105,7 +90,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     @Nullable
-    public final PathMapping get() {
+    public PathMapping get() {
       return myBest;
     }
   }
@@ -165,6 +150,21 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
 
   public void setPathMappings(@Nullable final List<PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
+  }
+
+  @NotNull
+  public static String mapToLocal(String path, String remoteRoot, String localRoot) {
+    if (areBothEmpty(localRoot, remoteRoot)) {
+      return path;
+    }
+    path = norm(path);
+    String remotePrefix = norm(remoteRoot);
+    path = path.replace(remotePrefix, norm(localRoot));
+    return path;
+  }
+
+  public static boolean areBothEmpty(String localRoot, String remoteRoot) {
+    return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
   }
 
   @Nullable
