@@ -470,4 +470,48 @@ public class Foo {
 '''
 
   }
+
+  public void "prefer from imported package"() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package foo; public class Imported {}'
+    myFixture.addClass 'package bar; public class Log {}'
+    myFixture.configureByText 'a.java', '''import foo.Imported;
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.Log;
+import foo.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+  }
+
+  public void "test prefer from imported package sibling"() {
+    myFixture.addClass 'package com.foo.doo; public class Log {}'
+    myFixture.addClass 'package com.foo.imported; public class Imported {}'
+    myFixture.addClass 'package com.bar; public class Log {}'
+    myFixture.configureByText 'a.java', '''import com.foo.imported.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import com.foo.doo.Log;
+import com.foo.imported.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+
+  }
 }

@@ -16,15 +16,20 @@
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableLazyKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -76,25 +81,30 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     final PsiFile elementFile = element.getContainingFile();
     final PsiFile positionFile = position.getContainingFile();
     if (positionFile != null && elementFile != null && positionFile.getOriginalFile().equals(elementFile.getOriginalFile())) {
-      return 3;
+      return 300;
     }
 
     if (element instanceof PsiClass) {
       final String qname = ((PsiClass) element).getQualifiedName();
-      if (qname != null) {
-        final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(position, PsiJavaFile.class, false);
-        if (psiJavaFile != null) {
-          PsiUtilCore.ensureValid(psiJavaFile);
-          final PsiImportList importList = psiJavaFile.getImportList();
-          if (importList != null) {
-            for (final PsiImportStatement importStatement : importList.getImportStatements()) {
-              final boolean onDemand = importStatement.isOnDemand();
-              final String imported = importStatement.getQualifiedName();
-              if (onDemand && qname.startsWith(imported + ".") || !onDemand && qname.equals(imported)) {
-                return 1;
-              }
-            }
+      final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(position, PsiJavaFile.class, false);
+      final PsiImportList importList = psiJavaFile == null ? null : psiJavaFile.getImportList();
+      if (qname != null && importList != null) {
+        List<String> importedNames = getImportedNames(importList);
+
+        if (importedNames.contains(qname)) {
+          return 100;
+        }
+
+        String pkg = StringUtil.getPackageName(qname);
+
+        // check if anything from the parent packages is already imported in the file:
+        //    people are likely to refer to the same subsystem as they're already working
+        while (!pkg.isEmpty()) {
+          if (containsImport(importedNames, pkg)) {
+            // more specific already imported packages get more weight
+            return StringUtil.countChars(pkg, '.') + 1;
           }
+          pkg = StringUtil.getPackageName(pkg);
         }
       }
 
@@ -102,12 +112,30 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     if (element instanceof PsiMember) {
       final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
       if (placePackage != null) {
-        Module elementModule = ModuleUtil.findModuleForPsiElement(element);
+        Module elementModule = ModuleUtilCore.findModuleForPsiElement(element);
         if (location.getPositionModule() == elementModule && placePackage.equals(getContextPackage(element))) {
-          return 2;
+          return 200;
         }
       }
     }
     return 0;
+  }
+
+  @NotNull
+  private static List<String> getImportedNames(PsiImportList importList) {
+    List<String> importedNames = ContainerUtil.newArrayList();
+    for (final PsiImportStatement importStatement : importList.getImportStatements()) {
+      ContainerUtil.addIfNotNull(importedNames, importStatement.getQualifiedName());
+    }
+    return importedNames;
+  }
+
+  private static boolean containsImport(List<String> importedNames, final String pkg) {
+    return ContainerUtil.or(importedNames, new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return s.startsWith(pkg + '.') || s.equals(pkg);
+      }
+    });
   }
 }
