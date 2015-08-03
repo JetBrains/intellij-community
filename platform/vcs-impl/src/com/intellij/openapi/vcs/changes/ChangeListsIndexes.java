@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
@@ -33,6 +34,7 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 public class ChangeListsIndexes {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
   private final TreeMap<FilePath, FileStatus> myFileToStatus;
   private final Map<FilePath, Pair<VcsKey, VcsRevisionNumber>> myFileToVcs;
 
@@ -49,6 +51,9 @@ public class ChangeListsIndexes {
   void add(final FilePath file, final FileStatus status, final VcsKey key, VcsRevisionNumber number) {
     myFileToStatus.put(file, status);
     myFileToVcs.put(file, Pair.create(key, number));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Set status " + status + " for " + file);
+    }
   }
 
   void remove(final FilePath file) {
