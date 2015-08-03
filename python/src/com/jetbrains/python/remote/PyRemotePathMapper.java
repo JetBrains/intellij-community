@@ -54,7 +54,7 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
 
   @NotNull
   @Override
-  public String convertToLocal(String remotePath) {
+  public String convertToLocal(@NotNull String remotePath) {
     for (PyPathMappingType type : PyPathMappingType.values()) {
       String localPath = AbstractPathMapper.convertToLocal(remotePath, myPathMappings.get(type));
       if (localPath != null) {
@@ -64,8 +64,9 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
     return remotePath;
   }
 
+  @NotNull
   @Override
-  public String convertToRemote(String localPath) {
+  public String convertToRemote(@NotNull String localPath) {
     for (PyPathMappingType type : PyPathMappingType.values()) {
       String remotePath = AbstractPathMapper.convertToRemote(localPath, myPathMappings.get(type));
       if (remotePath != null) {

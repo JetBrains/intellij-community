@@ -84,7 +84,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       }
     }
 
-    if (pathMapper != null) {
+    if (pathMapper != null && workingDir != null) {
       workingDir = pathMapper.convertToRemote(workingDir);
     }
 
