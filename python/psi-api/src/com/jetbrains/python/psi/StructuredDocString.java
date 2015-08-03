@@ -34,9 +34,48 @@ public interface StructuredDocString {
   @NotNull
   String createParameterType(@NotNull String name, @NotNull String type);
 
+  String getSummary();
   String getDescription();
 
-  String getSummary();
+  List<String> getParameters();
+  List<Substring> getParameterSubstrings();
+  @Nullable
+  String getParamType(@Nullable String paramName);
+  @Nullable
+  Substring getParamTypeSubstring(@Nullable String paramName);
+  @Nullable
+  String getParamDescription(@Nullable String paramName);
+
+  /**
+   * Keyword arguments are those arguments that usually don't exist in function signature, 
+   * but are passed e.g. via {@code **kwargs} mechanism. 
+   */
+  List<String> getKeywordArguments();
+  List<Substring> getKeywordArgumentSubstrings();
+  // getKeywordArgumentType(name)
+  // getKeywordArgumentTypeString(name)  
+  @Nullable
+  String getKeywordArgumentDescription(@Nullable String paramName);
+
+  @Nullable
+  String getReturnType();
+  @Nullable
+  Substring getReturnTypeSubstring();
+  @Nullable
+  String getReturnDescription();
+
+  List<String> getRaisedExceptions();
+  @Nullable
+  String getRaisedExceptionDescription(@Nullable String exceptionName);
+  
+  // getAttributes
+  // getAttributeSubstrings
+  // getAttributeType(name)
+  // getAttributeTypeSubstring(name)
+  @Nullable
+  String getAttributeDescription();
+  
+  // Tags related methods
 
   @Nullable
   Substring getTagValue(String... tagNames);
@@ -49,45 +88,8 @@ public interface StructuredDocString {
 
   List<Substring> getTagArguments(String... tagNames);
 
-  List<Substring> getParameterSubstrings();
-
   @Nullable
   Substring getParamByNameAndKind(@NotNull String name, String kind);
 
-  List<String> getParameters();
-
-  List<String> getKeywordArguments();
-
-  @Nullable
-  String getReturnType();
-
-  @Nullable
-  String getReturnDescription();
-
-  @Nullable
-  String getParamType(@Nullable String paramName);
-
-  @Nullable
-  String getParamDescription(@Nullable String paramName);
-
-  @Nullable
-  String getKeywordArgumentDescription(@Nullable String paramName);
-
-  List<String> getRaisedExceptions();
-
-  @Nullable
-  String getRaisedExceptionDescription(@Nullable String exceptionName);
-
-  @Nullable
-  String getAttributeDescription();
-
   List<String> getAdditionalTags();
-
-  List<Substring> getKeywordArgumentSubstrings();
-
-  @Nullable
-  Substring getReturnTypeSubstring();
-
-  @Nullable
-  Substring getParamTypeSubstring(@Nullable String paramName);
 }
