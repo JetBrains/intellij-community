@@ -293,8 +293,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
     myVersion = readVersion;
     String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
-    boolean isDefault = isDefaultScheme == null || Boolean.parseBoolean(isDefaultScheme);
-    if (isDefaultScheme == null || !isDefault) {
+    boolean isDefault = isDefaultScheme != null && Boolean.parseBoolean(isDefaultScheme);
+    if (!isDefault) {
       myParentScheme = DefaultColorSchemesManager.getInstance().getScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
     }
 
