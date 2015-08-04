@@ -28,7 +28,6 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -103,8 +102,8 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(s);
   }
 
-  private void complete() {
-    myFixture.completeBasic();
+  private LookupElement[] complete() {
+    return myFixture.completeBasic();
   }
 
   private void configureByFiles(String... files) {
@@ -369,9 +368,8 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testUrlCompletionInDtd() throws Exception {
     configureByFile("20.xml");
-    final PsiReference referenceAt = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset() - 1);
-    assertNotNull(referenceAt);
-    assertTrue(referenceAt.getVariants().length > 0);
+    complete();
+    checkResultByFile("20_after.xml");
   }
 
   public void testElementFromSchemaIncludeCompletion() throws Exception {
@@ -735,8 +733,8 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNamespaceCompletion() throws Exception {
     myFixture.configureByText("foo.xml", "<schema xmlns=\"<caret>\"/>");
-    myFixture.completeBasic();
-    assertSameElements(myFixture.getLookupElementStrings(), "http://www.w3.org/2001/XMLSchema");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals("http://www.w3.org/2001/XMLSchema", elements[0].getLookupString());
 
     myFixture.configureByText("unknown.xml", "<unknown_tag_name xmlns=\"<caret>\"/>");
     myFixture.completeBasic();
