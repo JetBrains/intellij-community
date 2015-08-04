@@ -179,7 +179,7 @@ public final class UpdateChecker {
       if (updatedChannel != null) {
         BuildInfo latestBuild = updatedChannel.getLatestBuild();
         if (latestBuild != null) {
-          buildNumber = latestBuild.getNumber();
+          buildNumber = latestBuild.getApiVersion();
         }
       }
 
