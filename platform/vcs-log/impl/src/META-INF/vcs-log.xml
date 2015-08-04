@@ -77,6 +77,7 @@
     <action class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction" id="Vcs.Log.OpenRepositoryVersion"
             use-shortcut-of="EditSource"/>
     <action class="com.intellij.vcs.log.ui.actions.AnnotateRevisionAction" id="Vcs.Log.AnnotateRevisionAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowDiffWithLocalFromFileHistory" id="Vcs.Log.ShowDiffWithLocal"/>
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
@@ -108,6 +109,7 @@
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
+      <reference id="Vcs.Log.ShowDiffWithLocal"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>
     </group>
