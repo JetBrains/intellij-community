@@ -49,7 +49,7 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
   protected abstract Element getStateAndArchive(@NotNull T storageData, Object component, @NotNull String componentName);
 
   @Override
-  public final boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) {
+  public final boolean hasState(@NotNull String componentName, boolean reloadData) {
     return getStorageData(reloadData).hasState(componentName);
   }
 
