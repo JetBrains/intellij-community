@@ -27,6 +27,8 @@ import java.util.Map;
 public interface PythonHelper {
   void addToPythonPath(@NotNull Map<String, String> environment);
 
+  String getPythonPath();
+
   void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd);
 
   String asParamString();

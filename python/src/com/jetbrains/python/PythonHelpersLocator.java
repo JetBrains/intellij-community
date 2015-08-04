@@ -29,10 +29,25 @@ import java.io.File;
 import java.util.Map;
 
 public enum PythonHelpersLocator implements PythonHelper {
-  COVERAGEPY("", "coveragepy"), COVERAGE("run_coverage", "coverage"),
-  DEBUGGER("pydevd", "pydev"),
-  CONSOLE("pydevconsole", "pydev"),
-  RUN_IN_CONSOLE("pydev_run_in_console", "pydev");
+  COVERAGEPY("coveragepy", ""), COVERAGE("coverage", "run_coverage"),
+  DEBUGGER("pydev", "pydevd"),
+  CONSOLE("pydev", "pydevconsole"),
+  RUN_IN_CONSOLE("pydev", "pydev_run_in_console"),
+
+  UT("pycharm", "utrunner"),
+  SETUPPY("pycharm", "pycharm_setup_runner"),
+  NOSE("pycharm", "noserunner"),
+  PYTEST("pycharm", "pytestrunner"),
+  ATTEST("pycharm", "attestrunner"),
+  DOCSTRING("pycharm", "docrunner"),
+
+  BEHAVE("pycharm", "behave_runner"),
+  LETTUCE("pycharm", "lettuce_runner"),
+
+  DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
+
+
+  ;
 
   @NotNull
   private PathPythonHelper findModule(String moduleEntryPoint, String path) {
@@ -44,7 +59,7 @@ public enum PythonHelpersLocator implements PythonHelper {
         return new ModulePythonHelper(moduleEntryPoint, path);
     }
 
-    return new ScriptPythonHelper(path + ".py");
+    return new ScriptPythonHelper(moduleEntryPoint, path);
   }
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
@@ -52,8 +67,12 @@ public enum PythonHelpersLocator implements PythonHelper {
 
   private PathPythonHelper myModule;
 
-  PythonHelpersLocator(String moduleName, String pythonPath) {
+  PythonHelpersLocator(String pythonPath, String moduleName) {
     myModule = findModule(moduleName, pythonPath);
+  }
+
+  public String getPythonPath() {
+    return myModule.getPythonPath();
   }
 
 
@@ -145,6 +164,11 @@ public enum PythonHelpersLocator implements PythonHelper {
     public String asParamString() {
       return "-m" + myModuleName;
     }
+
+    @Override
+    public String getPythonPath() {
+      return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
+    }
   }
 
   /**
@@ -153,15 +177,25 @@ public enum PythonHelpersLocator implements PythonHelper {
    * with .pyc files
    */
   public static class ScriptPythonHelper extends PathPythonHelper {
-    public ScriptPythonHelper(String relativePath) {
-      super(relativePath);
+    private String myPythonPath;
+
+    public ScriptPythonHelper(String module, String pythonPath) {
+      super(new File(pythonPath, module.replace(".", File.separator)).getPath());
+      myPythonPath = pythonPath;
     }
 
     @Override
     public void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
-      PythonEnvUtil.addToPythonPath(environment, myPath.getParent());
+      PythonEnvUtil.addToPythonPath(environment, myPythonPath);
     }
+
+    @Override
+    public String getPythonPath() {
+      return myPythonPath;
+    }
+
+
   }
 
 

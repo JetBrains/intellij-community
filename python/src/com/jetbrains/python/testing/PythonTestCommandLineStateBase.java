@@ -158,11 +158,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   protected void addAfterParameters(GeneralCommandLine cmd) {}
 
   protected void addTestRunnerParameters(GeneralCommandLine cmd)  {
-    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
-    assert script_params != null;
-    script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), getRunner()).getAbsolutePath());
+    ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
+    assert scriptParams != null;
+    getRunner().addToGroup(scriptParams, cmd);
     addBeforeParameters(cmd);
-    script_params.addParameters(getTestSpecs());
+    scriptParams.addParameters(getTestSpecs());
     addAfterParameters(cmd);
   }
 
@@ -172,6 +172,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.getHelperPath("pycharm"));
   }
 
-  protected abstract String getRunner();
+  protected abstract PythonHelpersLocator getRunner();
   protected abstract List<String> getTestSpecs();
 }

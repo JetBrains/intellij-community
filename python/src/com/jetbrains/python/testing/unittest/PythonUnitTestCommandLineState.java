@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
@@ -34,8 +35,7 @@ import java.util.List;
 public class PythonUnitTestCommandLineState extends
                                             PythonTestCommandLineStateBase {
   private final PythonUnitTestRunConfiguration myConfig;
-  private static final String UTRUNNER_PY = "pycharm/utrunner.py";
-  private static final String SETUP_PY_TESTRUNNER = "pycharm/pycharm_setup_runner.py";
+
 
   public PythonUnitTestCommandLineState(PythonUnitTestRunConfiguration runConfiguration, ExecutionEnvironment env) {
     super(runConfiguration, env);
@@ -43,11 +43,11 @@ public class PythonUnitTestCommandLineState extends
   }
 
   @Override
-  protected String getRunner() {
+  protected PythonHelpersLocator getRunner() {
     if (myConfig.getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT &&
       myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY))
-      return SETUP_PY_TESTRUNNER;
-    return UTRUNNER_PY;
+      return PythonHelpersLocator.SETUPPY;
+    return PythonHelpersLocator.UT;
   }
 
   protected List<String> getTestSpecs() {

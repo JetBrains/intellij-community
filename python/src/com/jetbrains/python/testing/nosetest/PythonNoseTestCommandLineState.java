@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python.testing.nosetest;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ import java.util.List;
  */
 public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBase {
   private final PythonNoseTestRunConfiguration myConfig;
-  private static final String NOSERUNNER_PY = "pycharm/noserunner.py";
 
   public PythonNoseTestCommandLineState(PythonNoseTestRunConfiguration runConfiguration, ExecutionEnvironment env) {
     super(runConfiguration, env);
@@ -39,8 +38,8 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
   }
 
   @Override
-  protected String getRunner() {
-    return NOSERUNNER_PY;
+  protected PythonHelpersLocator getRunner() {
+    return PythonHelpersLocator.NOSE;
   }
 
   protected List<String> getTestSpecs() {
