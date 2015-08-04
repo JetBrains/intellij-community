@@ -17,6 +17,7 @@ package com.jetbrains.python.toolbox;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +35,26 @@ import java.util.regex.Pattern;
 public class Substring implements CharSequence {
   private static final Pattern RE_NL = Pattern.compile("(\\r?\\n)");
 
+  @NotNull
+  public static Substring fromMatcherGroup(@NotNull String s, @NotNull Matcher matcher, int groupNumber) {
+    if (matcher.groupCount() < groupNumber || matcher.end(groupNumber) > s.length()) {
+      throw new IllegalArgumentException("Inconsistent matcher, group number and underlying string");
+    }
+    return new Substring(s, matcher.start(groupNumber), matcher.end(groupNumber));
+  }
+  
+  @NotNull
+  public static Substring fromMatcherGroup(@NotNull Substring s, @NotNull Matcher matcher, int groupNumber) {
+    if (matcher.groupCount() < groupNumber || matcher.end(groupNumber) > s.length()) {
+      throw new IllegalArgumentException("Inconsistent matcher, group number and underlying string");
+    }
+    return new Substring(s.getSuperString(), s.myStartOffset + matcher.start(groupNumber), s.myStartOffset + matcher.end(groupNumber));
+  }
+
   @NotNull private final String myString;
   private final int myStartOffset;
   private final int myEndOffset;
-
+  
   public Substring(@NotNull String s) {
     this(s, 0, s.length());
   }
@@ -87,21 +104,33 @@ public class Substring implements CharSequence {
 
   @NotNull
   public List<Substring> split(@NotNull String regex) {
-    return split(Pattern.compile(regex));
+    return split(regex, Integer.MAX_VALUE);
+  }
+  
+  @NotNull
+  public List<Substring> split(@NotNull String regex, int maxSplits) {
+    return split(Pattern.compile(regex), maxSplits);
   }
 
   @NotNull
   public List<Substring> split(@NotNull Pattern pattern) {
+    return split(pattern, Integer.MAX_VALUE);
+  }
+  
+  @NotNull
+  public List<Substring> split(@NotNull Pattern pattern, int maxSplits) {
     final List<Substring> result = new ArrayList<Substring>();
     final Matcher m = pattern.matcher(myString);
     int start = myStartOffset;
     int end = myEndOffset;
+    int splitCount = 0;
     if (m.find(start)) {
       do {
+        splitCount++;
         end = m.start();
         result.add(createAnotherSubstring(start, Math.min(end, myEndOffset)));
         start = m.end();
-      } while (end < myEndOffset && m.find());
+      } while (end < myEndOffset && m.find() && splitCount < maxSplits);
       if (start < myEndOffset) {
         result.add(createAnotherSubstring(start, myEndOffset));
       }
@@ -189,5 +218,27 @@ public class Substring implements CharSequence {
   @NotNull
   private Substring createAnotherSubstring(int start, int end) {
     return new Substring(myString, start, end);
+  }
+
+  public int getStartOffset() {
+    return myStartOffset;
+  }
+
+  public int getEndOffset() {
+    return myEndOffset;
+  }
+
+  /**
+   * If both substrings share the same origin, returns new substring that includes both of them. Otherwise return {@code null}.
+   *
+   * @param other substring to concat with
+   * @return new substring as described
+   */
+  @Nullable
+  public Substring getSmallestInclusiveSubstring(@NotNull Substring other) {
+    if (myString.equals(other.myString)) {
+      return new Substring(myString, Math.min(myStartOffset, other.myStartOffset), Math.max(myEndOffset, other.myEndOffset));
+    }
+    return null;
   }
 }

@@ -27,8 +27,9 @@ public class DocStringFormat {
   public static final String EPYTEXT = "Epytext";
   public static final String REST = "reStructuredText";
   public static final String NUMPY = "NumPy";
+  public static final String GOOGLE = "Google";
 
-  public static final List<String> ALL = ImmutableList.of(PLAIN, EPYTEXT, REST, NUMPY);
+  public static final List<String> ALL = ImmutableList.of(PLAIN, EPYTEXT, REST, NUMPY, GOOGLE);
 
   private DocStringFormat() {
   }
