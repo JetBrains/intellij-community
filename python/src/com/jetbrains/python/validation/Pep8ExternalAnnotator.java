@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -184,16 +185,17 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
-    final String pep8Path = PythonHelpersLocator.getHelperPath("pep8.py");
-    ArrayList<String> options = new ArrayList<String>();
-    Collections.addAll(options, collectedInfo.interpreterPath, pep8Path);
+    ArrayList<String> options = Lists.newArrayList();
+
     if (collectedInfo.ignoredErrors.size() > 0) {
       options.add("--ignore=" + StringUtil.join(collectedInfo.ignoredErrors, ","));
     }
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
-    ProcessOutput output = PySdkUtil.getProcessOutput(new File(collectedInfo.interpreterPath).getParent(),
-                                                      ArrayUtil.toStringArray(options),
+
+    GeneralCommandLine cmd = PythonHelpersLocator.PEP8.newCommandLine(collectedInfo.interpreterPath, options);
+
+    ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
                                                       ImmutableMap.of("PYTHONBUFFERED", "1"),
                                                       10000,
                                                       collectedInfo.fileText.getBytes(), false);

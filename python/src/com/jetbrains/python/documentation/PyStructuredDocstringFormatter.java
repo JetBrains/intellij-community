@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -25,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -66,17 +68,17 @@ public class PyStructuredDocstringFormatter {
     final String[] lines = PyDocumentationBuilder.removeCommonIndentation(docstring);
     final String preparedDocstring = StringUtil.join(lines, "\n");
 
-    final String formatter;
+    final PythonHelper formatter;
     final StructuredDocStringBase structuredDocString;
     if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
         DocStringUtil.isEpydocDocString(preparedDocstring)) {
-      formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
+      formatter = PythonHelpersLocator.EPYDOC_FORMATTER;
       structuredDocString = new EpydocString(preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
     else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
              DocStringUtil.isSphinxDocString(preparedDocstring)) {
-      formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
+      formatter = PythonHelpersLocator.REST_FORMATTER;
       structuredDocString = new SphinxDocString(preparedDocstring);
     }
     else {
@@ -94,7 +96,7 @@ public class PyStructuredDocstringFormatter {
 
   @Nullable
   private static String runExternalTool(@NotNull final Module module,
-                                        @NotNull final String formatter,
+                                        @NotNull final PythonHelper formatter,
                                         @NotNull final String docstring) {
     final Sdk sdk = PythonSdkType.findPython2Sdk(module);
     if (sdk == null) return null;
@@ -111,7 +113,8 @@ public class PyStructuredDocstringFormatter {
     final Map<String, String> env = new HashMap<String, String>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);
 
-    final ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(), new String[]{sdkHome, formatter},
+    final ProcessOutput output = PySdkUtil.getProcessOutput(formatter.newCommandLine(sdkHome, Lists.<String>newArrayList()),
+                                                            new File(sdkHome).getParent(),
                                                             env, 5000, data, true);
     if (output.isTimeout()) {
       LOG.info("timeout when calculating docstring");

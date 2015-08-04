@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -766,17 +767,17 @@ public class PythonSdkType extends SdkType {
 
   @NotNull
   public static List<String> getSysPathsFromScript(@NotNull String binaryPath) throws InvalidSdkException {
-    String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
-    final ProcessOutput run_result = PySdkUtil.getProcessOutput(new File(scriptFile).getParent(), new String[]{binaryPath, scriptFile},
+    GeneralCommandLine cmd = PythonHelpersLocator.SYSPATH.newCommandLine(binaryPath, Lists.<String>newArrayList());
+    final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                 getVirtualEnvExtraEnv(binaryPath), MINUTE);
-    if (!run_result.checkSuccess(LOG)) {
+    if (!runResult.checkSuccess(LOG)) {
       throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
-                                                  run_result.getStdout(),
-                                                  run_result.getStderr()));
+                                                  runResult.getStdout(),
+                                                  runResult.getStderr()));
     }
-    return run_result.getStdoutLines();
+    return runResult.getStdoutLines();
   }
 
   /**

@@ -33,6 +33,8 @@ import java.util.Map;
 public enum PythonHelpersLocator implements PythonHelper {
   COVERAGEPY("coveragepy", ""), COVERAGE("coverage", "run_coverage"),
   DEBUGGER("pydev", "pydevd"),
+  ATTACH_DEBUGGER("pydev", "pydevd_attach_to_process.attach_pydevd"),
+
   CONSOLE("pydev", "pydevconsole"),
   RUN_IN_CONSOLE("pydev", "pydev_run_in_console"),
   PROFILER("profiler", "run_profiler"),
@@ -52,13 +54,29 @@ public enum PythonHelpersLocator implements PythonHelper {
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
   DJANGO_MANAGE("pycharm", "django_manage"),
-  MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider")
+  MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider"),
+
+  BUILDOUT_ENGULFER("pycharm", "buildout_engulfer"),
+
+  EPYDOC_FORMATTER("epydoc_formatter.py"),
+  REST_FORMATTER("rest_formatter.py"),
+
+  EXTRA_SYSPATH("extra_syspath.py"),
+  SYSPATH("syspath.py"),
+
+  PEP8("pep8.py"),
+
+  REST_RUNNER("rest_runners/rst2smth.py"),
+
+  SPHINX_RUNNER("rest_runners/sphinx_runner.py")
 
 
   ;
 
+
+
   @NotNull
-  private PathPythonHelper findModule(String moduleEntryPoint, String path) {
+  private static PathPythonHelper findModule(String moduleEntryPoint, String path) {
     if (getHelperFile(path + ".zip").isFile()) {
       return new ModulePythonHelper(moduleEntryPoint, path + ".zip");
     }
@@ -67,7 +85,7 @@ public enum PythonHelpersLocator implements PythonHelper {
         return new ModulePythonHelper(moduleEntryPoint, path);
     }
 
-    return new ScriptPythonHelper(moduleEntryPoint, path);
+    return new ScriptPythonHelper(path, getHelpersRoot());
   }
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
@@ -77,6 +95,10 @@ public enum PythonHelpersLocator implements PythonHelper {
 
   PythonHelpersLocator(String pythonPath, String moduleName) {
     myModule = findModule(moduleName, pythonPath);
+  }
+
+  PythonHelpersLocator(String helperScript) {
+    myModule = new ScriptPythonHelper(helperScript, getHelpersRoot());
   }
 
   public String getPythonPath() {
@@ -198,9 +220,9 @@ public enum PythonHelpersLocator implements PythonHelper {
   public static class ScriptPythonHelper extends PathPythonHelper {
     private String myPythonPath;
 
-    public ScriptPythonHelper(String module, String pythonPath) {
-      super(new File(pythonPath, module.replace(".", File.separator)).getPath());
-      myPythonPath = pythonPath;
+    public ScriptPythonHelper(String script, File pythonPath) {
+      super(new File(pythonPath, script).getAbsolutePath());
+      myPythonPath = pythonPath.getAbsolutePath();
     }
 
     @Override

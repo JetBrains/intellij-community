@@ -25,7 +25,7 @@ import java.io.OutputStream;
  * @author traff
  */
 public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineState {
-  private final static String ATTACH_PYDEVD = "pydev/pydevd_attach_to_process/attach_pydevd.py";
+
 
   private PyAttachToProcessCommandLineState(PythonRunConfiguration runConfiguration,
                                             ExecutionEnvironment env) {
@@ -36,7 +36,7 @@ public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineSt
     throws ExecutionException {
     PythonRunConfiguration conf =
       (PythonRunConfiguration)PythonConfigurationType.getInstance().getFactory().createTemplateConfiguration(project);
-    conf.setScriptName(PythonHelpersLocator.getHelperPath(ATTACH_PYDEVD));
+    conf.setScriptName(PythonHelpersLocator.ATTACH_DEBUGGER.asParamString());
     conf.setSdkHome(sdkPath);
     conf.setScriptParameters("--port " + port + " --pid " + pid);
 
