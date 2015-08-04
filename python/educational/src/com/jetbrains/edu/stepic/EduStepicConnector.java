@@ -269,6 +269,9 @@ public class EduStepicConnector {
   }
 
   public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
+    if (task.getStepicId() <= 0) {
+      return;
+    }
     if (ourClient == null) {
       if (StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)) {
         return;
