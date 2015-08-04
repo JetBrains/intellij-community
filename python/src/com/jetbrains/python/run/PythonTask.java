@@ -118,7 +118,7 @@ public class PythonTask {
       handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
     }
     else {
-      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, myModule.getProject());
+      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
       handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
 
       ProcessTerminatedListener.attach(handler);
