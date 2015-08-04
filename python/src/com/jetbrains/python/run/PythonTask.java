@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -60,6 +61,8 @@ public class PythonTask {
   private final Sdk mySdk;
   private String myWorkingDirectory;
   private String myRunnerScript;
+  private PythonHelper myHelper = null;
+
   private List<String> myParameters = new ArrayList<String>();
   private final String myRunTabTitle;
   private String myHelpId;
@@ -88,6 +91,10 @@ public class PythonTask {
 
   public void setRunnerScript(String script) {
     myRunnerScript = script;
+  }
+
+  public void setHelper(PythonHelper helper) {
+    myHelper = helper;
   }
 
   public void setParameters(List<String> parameters) {
@@ -151,8 +158,14 @@ public class PythonTask {
       bashParams.addParameter("-cl");
 
       NotNullFunction<String, String> escaperFunction = StringUtil.escaper(false, "|>$\"'& ");
-      StringBuilder paramString = new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myRunnerScript));
-
+      StringBuilder paramString;
+      if (myHelper != null) {
+        paramString= new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myHelper.asParamString()));
+        myHelper.addToPythonPath(cmd.getEnvironment());
+      }
+      else {
+        paramString= new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myRunnerScript));
+      }
       for (String p : myParameters) {
         paramString.append(" ").append(p);
       }
@@ -160,7 +173,12 @@ public class PythonTask {
     }
     else {
       cmd.setExePath(homePath);
-      scriptParams.addParameter(myRunnerScript);
+      if (myHelper != null) {
+        myHelper.addToGroup(scriptParams, cmd);
+      }
+      else {
+        scriptParams.addParameter(myRunnerScript);
+      }
       scriptParams.addParameters(myParameters);
     }
 

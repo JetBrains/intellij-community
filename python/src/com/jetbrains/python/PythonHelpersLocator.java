@@ -47,6 +47,8 @@ public enum PythonHelpersLocator implements PythonHelper {
   LETTUCE("pycharm", "lettuce_runner"),
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
+  DJANGO_MANAGE("pycharm", "django_manage"),
+  MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider")
 
 
   ;
