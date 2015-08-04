@@ -55,6 +55,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
+
   public IpnbConnectionManager(final Project project) {
     myProject = project;
   }
@@ -191,7 +192,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
           }
           catch (URISyntaxException e) {
             if (showNotification) {
-              showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+              showWarning(codePanel.getFileEditor(),
+                          "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
                           new IpnbSettingsAdapter());
               LOG.warn("IPython Notebook connection refused: " + e.getMessage());
             }
@@ -271,8 +273,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
                   new IpnbSettingsAdapter());
       return false;
     }
-    final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
-    final ArrayList<String> parameters = Lists.newArrayList(sdk.getHomePath(), ipython, "notebook", "--no-browser");
+
+    final ArrayList<String> parameters = Lists.newArrayList("notebook", "--no-browser");
     if (hostPort.getFirst() != null) {
       parameters.add("--ip");
       parameters.add(hostPort.getFirst());
@@ -281,8 +283,11 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath()).
-      withEnvironment(env);
+
+    final GeneralCommandLine commandLine = PythonHelpersLocator.LOAD_ENTRY_POINT
+      .newCommandLine(sdk.getHomePath(), parameters)
+      .withWorkDirectory(myProject.getBasePath()).
+        withEnvironment(env);
 
     try {
       final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
@@ -343,7 +348,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  public void projectOpened() {}
+  public void projectOpened() {
+  }
 
 
   public void projectClosed() {

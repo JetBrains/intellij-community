@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.application.PathManager;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 public enum PythonHelpersLocator implements PythonHelper {
@@ -34,6 +36,8 @@ public enum PythonHelpersLocator implements PythonHelper {
   CONSOLE("pydev", "pydevconsole"),
   RUN_IN_CONSOLE("pydev", "pydev_run_in_console"),
   PROFILER("profiler", "run_profiler"),
+
+  LOAD_ENTRY_POINT("pycharm", "pycharm_load_entry_point"),
 
   // Test runners
   UT("pycharm", "utrunner"),
@@ -151,6 +155,17 @@ public enum PythonHelpersLocator implements PythonHelper {
     public String asParamString() {
       return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
     }
+
+    @Override
+    public GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters) {
+      List<String> args = Lists.newArrayList();
+      args.add(sdkPath);
+      args.add(asParamString());
+      args.addAll(parameters);
+      GeneralCommandLine cmd = new GeneralCommandLine(args);
+      addToPythonPath(cmd.getEnvironment());
+      return cmd;
+    }
   }
 
   /**
@@ -217,5 +232,10 @@ public enum PythonHelpersLocator implements PythonHelper {
   @Override
   public String asParamString() {
     return myModule.asParamString();
+  }
+
+  @Override
+  public GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters) {
+    return myModule.newCommandLine(sdkPath, parameters);
   }
 }

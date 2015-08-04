@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,4 +33,6 @@ public interface PythonHelper {
   void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd);
 
   String asParamString();
+
+  GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters);
 }
