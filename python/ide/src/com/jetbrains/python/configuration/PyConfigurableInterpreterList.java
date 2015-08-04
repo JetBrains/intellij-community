@@ -82,17 +82,22 @@ public class PyConfigurableInterpreterList {
         final boolean isRemote2 = PySdkUtil.isRemote(o2);
 
         if (isVEnv1) {
-          if (project != null && associatedWithCurrent(o1, project)) {
-            if (associatedWithCurrent(o2, project)) return compareSdk(o1, o2);
-            return -1;
-          }
           if (isVEnv2) {
+            if (project != null && associatedWithCurrent(o1, project)) {
+              if (associatedWithCurrent(o2, project)) return compareSdk(o1, o2);
+              return -1;
+            }
             return compareSdk(o1, o2);
           }
           return -1;
         }
         if (isVEnv2)   return 1;
-        if (isRemote1) return 1;
+        if (isRemote1) {
+          if (isRemote2) {
+            return compareSdk(o1, o2);
+          }
+          return 1;
+        }
         if (isRemote2) return -1;
 
         return compareSdk(o1, o2);
