@@ -41,7 +41,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   protected static int verifyPyDevDParameters(List<String> params) {
     params = Lists.newArrayList(params);
     int debugParam = params.remove("--DEBUG") ? 1 : 0;
-    assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
+    assertEquals(PythonHelpersLocator.DEBUGGER.asParamString(), params.get(0));
     assertEquals("--multiproc", params.get(1));
     assertEquals("--client", params.get(2));
     assertEquals("--port", params.get(4));
