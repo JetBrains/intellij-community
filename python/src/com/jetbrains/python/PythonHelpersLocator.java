@@ -158,8 +158,8 @@ public enum PythonHelpersLocator implements PythonHelper {
   public abstract static class PathPythonHelper implements PythonHelper {
     protected final File myPath;
 
-    PathPythonHelper(String relativePath) {
-      myPath = getHelperFile(relativePath);
+    PathPythonHelper(String path) {
+      myPath = new File(path);
     }
 
     @Override
@@ -197,13 +197,13 @@ public enum PythonHelpersLocator implements PythonHelper {
     private final String myModuleName;
 
     public ModulePythonHelper(String moduleName, String relativePath) {
-      super(relativePath);
+      super(getHelperFile(relativePath).getAbsolutePath());
       this.myModuleName = moduleName;
     }
 
     @Override
     public String asParamString() {
-      return "-m" + myModuleName;
+      return "-m " + myModuleName;
     }
 
     @Override
