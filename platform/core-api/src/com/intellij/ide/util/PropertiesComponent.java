@@ -112,6 +112,10 @@ public abstract class PropertiesComponent {
     }
   }
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link #getValue(String, String)}
+   */
   public String getOrInit(@NonNls String name, String defaultValue) {
     if (!isValueSet(name)) {
       setValue(name, defaultValue);

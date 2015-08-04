@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,8 +99,8 @@ public class FileColorsModel implements Cloneable {
   private void initGlobalScopes() {
     for (String scopeName : globalScopes.keySet()) {
       if (findConfiguration(scopeName, false) == null) {
-        final String color = PropertiesComponent.getInstance().getOrInit(globalScopes.get(scopeName), globalScopesColors.get(scopeName));
-        if (color.length() != 0) {
+        String color = PropertiesComponent.getInstance().getValue(globalScopes.get(scopeName), globalScopesColors.get(scopeName));
+        if (!color.isEmpty()) {
           final Color col = ColorUtil.fromHex(color, null);
           final String name = col == null ? null : FileColorManagerImpl.getColorName(col);
           myConfigurations.add(new FileColorConfiguration(scopeName, name == null ? color : name));
@@ -113,8 +114,9 @@ public class FileColorsModel implements Cloneable {
     for (final FileColorConfiguration configuration : configurations) {
       final String name = configuration.getScopeName();
       if (!shared && globalScopes.containsKey(name)) {
-        PropertiesComponent.getInstance().setValue(name, configuration.getColorName());
-      } else {
+        PropertiesComponent.getInstance().setValue(name, configuration.getColorName(), globalScopesColors.get(name));
+      }
+      else {
         configuration.save(e);
       }
     }
@@ -239,14 +241,14 @@ public class FileColorsModel implements Cloneable {
     return mySharedConfigurations.contains(configuration);
   }
 
-  public void setConfigurations(final List<FileColorConfiguration> configurations, final boolean shared) {
+  public void setConfigurations(@NotNull List<FileColorConfiguration> configurations, final boolean shared) {
     if (shared) {
       mySharedConfigurations.clear();
       mySharedConfigurations.addAll(configurations);
     }
     else {
       myConfigurations.clear();
-      final HashMap<String, String> global = new HashMap<String, String>(globalScopes);
+      Map<String, String> global = new THashMap<String, String>(globalScopes);
       for (FileColorConfiguration configuration : configurations) {
         myConfigurations.add(configuration);
         final String name = configuration.getScopeName();
