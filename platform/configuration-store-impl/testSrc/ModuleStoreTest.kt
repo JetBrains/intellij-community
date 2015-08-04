@@ -136,8 +136,13 @@ class ModuleStoreTest {
     invokeAndWaitIfNeed { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
 
     val newFile = File(parentVirtualDir.getPath(), module.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
-    assertThat(newFile, exists())
-    assertRename(module.getName(), oldFile)
-    assertThat(oldModuleNames, empty())
+    try {
+      assertThat(newFile, exists())
+      assertRename(module.getName(), oldFile)
+      assertThat(oldModuleNames, empty())
+    }
+    finally {
+      invokeAndWaitIfNeed { runWriteAction { parentVirtualDir.delete(this) } }
+    }
   }
 }
