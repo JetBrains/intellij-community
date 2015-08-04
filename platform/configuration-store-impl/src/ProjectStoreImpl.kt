@@ -186,7 +186,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
   private val workspaceStorage: FileBasedStorage?
     get() = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
 
-  override fun loadProjectFromTemplate(defaultProject: ProjectImpl) {
+  override fun loadProjectFromTemplate(defaultProject: Project) {
     defaultProject.save()
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy()

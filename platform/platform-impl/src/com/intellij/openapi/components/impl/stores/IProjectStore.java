@@ -17,7 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getWorkspaceFilePath();
 
-  void loadProjectFromTemplate(@NotNull ProjectImpl project);
+  void loadProjectFromTemplate(@NotNull Project project);
 
   void clearStorages();
 }

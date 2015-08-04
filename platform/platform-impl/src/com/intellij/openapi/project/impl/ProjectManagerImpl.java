@@ -259,7 +259,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
     try {
-      initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
+      initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -290,7 +290,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return message;
   }
 
-  private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
+  private void initProject(@NotNull ProjectImpl project, @Nullable Project template) throws IOException {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
