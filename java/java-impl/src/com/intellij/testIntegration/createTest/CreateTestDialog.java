@@ -35,6 +35,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -379,13 +381,18 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+          @Override
           public void run() {
-            if (mySelectedFramework instanceof JavaTestFramework) {
-              ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
-            } else {
-              OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
-            }
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                if (mySelectedFramework instanceof JavaTestFramework) {
+                  ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
+                } else {
+                  OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
+                }
+              }
+            });
           }
         });
         myFixLibraryPanel.setVisible(false);
