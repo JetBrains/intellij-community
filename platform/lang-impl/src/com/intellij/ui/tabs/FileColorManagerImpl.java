@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   @Override
   public void setEnabled(boolean enabled) {
-    PropertiesComponent.getInstance().setValue(FC_ENABLED, Boolean.toString(enabled));
+    PropertiesComponent.getInstance().setValue(FC_ENABLED, enabled, true);
   }
 
   public void setEnabledForTabs(boolean enabled) {

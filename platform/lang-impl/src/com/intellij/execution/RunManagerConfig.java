@@ -49,7 +49,7 @@ public class RunManagerConfig {
   }
 
   public void setRestartRequiresConfirmation(boolean restartRequiresConfirmation) {
-    myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, String.valueOf(restartRequiresConfirmation), "true");
+    myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, restartRequiresConfirmation, true);
   }
 
   public boolean isStopIncompatibleRequiresConfirmation() {
@@ -57,6 +57,6 @@ public class RunManagerConfig {
   }
 
   public void setStopIncompatibleRequiresConfirmation(boolean stopIncompatibleRequiresConfirmation) {
-    myPropertiesComponent.setValue(STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION, String.valueOf(stopIncompatibleRequiresConfirmation));
+    myPropertiesComponent.setValue(STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION, stopIncompatibleRequiresConfirmation, true);
   }
 }

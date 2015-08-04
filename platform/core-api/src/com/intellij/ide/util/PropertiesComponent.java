@@ -44,7 +44,7 @@ public abstract class PropertiesComponent {
   /**
    * @deprecated Use {@link #setValue(String, String, String)} to avoid write defaults.
    */
-  public abstract void setValue(@NotNull String name, String value);
+  public abstract void setValue(@NotNull String name, @Nullable String value);
 
   /**
    * Set value or unset if equals to default value
@@ -60,6 +60,16 @@ public abstract class PropertiesComponent {
    * Set value or unset if equals to default value
    */
   public abstract void setValue(@NotNull String name, int value, int defaultValue);
+
+  /**
+   * Set value or unset if equals to false
+   */
+  public abstract void setValue(@NotNull String name, boolean value);
+
+  /**
+   * Set value or unset if equals to false
+   */
+  public abstract void setValue(@NotNull String name, boolean value, boolean defaultValue);
 
   @Nullable
   public abstract String[] getValues(@NonNls String name);

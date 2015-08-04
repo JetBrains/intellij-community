@@ -21,6 +21,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,6 +38,12 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   PropertiesComponentImpl() {
+  }
+
+  @TestOnly
+  @Deprecated
+  public static PropertiesComponentImpl create() {
+    return new PropertiesComponentImpl();
   }
 
   @Override
@@ -71,8 +78,13 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public void setValue(String name, String value) {
-    myMap.put(name, value);
+  public void setValue(@NotNull String name, @Nullable String value) {
+    if (value == null) {
+      myMap.remove(name);
+    }
+    else {
+      myMap.put(name, value);
+    }
   }
 
   @Override
@@ -102,6 +114,26 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     }
     else {
       myMap.put(name, String.valueOf(value));
+    }
+  }
+
+  @Override
+  public void setValue(@NotNull String name, boolean value) {
+    if (value) {
+      setValue(name, "true");
+    }
+    else {
+      myMap.remove(name);
+    }
+  }
+
+  @Override
+  public void setValue(@NotNull String name, boolean value, boolean defaultValue) {
+    if (value == defaultValue) {
+      myMap.remove(name);
+    }
+    else {
+      setValue(name, String.valueOf(value));
     }
   }
 

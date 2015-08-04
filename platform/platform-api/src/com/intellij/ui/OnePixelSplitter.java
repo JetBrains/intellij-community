@@ -38,6 +38,11 @@ public class OnePixelSplitter extends JBSplitter {
     init();
   }
 
+  public OnePixelSplitter(boolean vertical, @NotNull String proportionKey, float defaultProportion) {
+    super(vertical, proportionKey, defaultProportion);
+    init();
+  }
+
   public OnePixelSplitter(boolean vertical, float proportion) {
     super(vertical, proportion);
     init();
