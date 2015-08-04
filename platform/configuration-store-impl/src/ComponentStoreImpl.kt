@@ -170,12 +170,16 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun commitComponent(externalizationSession: ExternalizationSession, component: Any, componentName: String?) {
+  private fun commitComponent(session: ExternalizationSession, component: Any, componentName: String?) {
     if (component is PersistentStateComponent<*>) {
-      commitPersistentComponent(component, externalizationSession, componentName)
+      val state = component.getState()
+      if (state != null) {
+        val stateSpec = StoreUtil.getStateSpec(component)
+        session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, state)
+      }
     }
     else if (component is JDOMExternalizable) {
-      externalizationSession.setStateInOldStorage(component, componentName ?: ComponentManagerImpl.getComponentName(component), component)
+      session.setStateInOldStorage(component, componentName ?: ComponentManagerImpl.getComponentName(component), component)
     }
   }
 
@@ -187,14 +191,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
       }
     }
     return errors
-  }
-
-  private fun <T> commitPersistentComponent(component: PersistentStateComponent<T>, session: ExternalizationSession, componentName: String?) {
-    val state = component.getState()
-    if (state != null) {
-      val storageSpecs = getComponentStorageSpecs(component, StoreUtil.getStateSpec(component), StateStorageOperation.WRITE)
-      session.setState(storageSpecs, component, componentName ?: StoreUtil.getComponentName(component), state)
-    }
   }
 
   private fun initJdomExternalizable(component: JDOMExternalizable): String? {
@@ -252,7 +248,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
-    val storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ)
+    val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
     val stateStorageChooser = component as? StateStorageChooserEx
     runReadAction {
       for (storageSpec in storageSpecs) {
@@ -292,7 +288,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     try {
       val documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement()
       getPathMacroManagerForDefaults()?.expandPaths(documentElement)
-      return DefaultStateSerializer.deserializeState<T>(documentElement, stateClass, null)
+      return DefaultStateSerializer.deserializeState(documentElement, stateClass, null)
     }
     catch (e: IOException) {
       throw StateStorageException("Error loading state from $url", e)
@@ -302,7 +298,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
+  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     val storages = stateSpec.storages
     if (storages.size() == 1 || component is StateStorageChooserEx) {
       return storages
