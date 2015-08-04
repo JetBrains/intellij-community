@@ -275,4 +275,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     configureByFile();
     myFixture.testHighlighting(true, true, true);
   }
+
+  public void testCreateRequiredAttribute() {
+    myFixture.configureByFile(getTestName(true) + ".xml")
+    myFixture.launchAction(myFixture.findSingleIntention("Define class attribute"))
+    myFixture.checkResultByFile(getTestName(true) + "_after.xml")
+  }
 }
