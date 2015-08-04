@@ -447,7 +447,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   public void writeExternal(@NotNull Element element) {
-    final Element modules = new Element(ELEMENT_MODULES);
     final Module[] collection = getModules();
 
     List<SaveItem> sorted = new ArrayList<SaveItem>(collection.length + myFailedModulePaths.size());
@@ -457,17 +456,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     for (ModulePath modulePath : myFailedModulePaths) {
       sorted.add(new ModulePathSaveItem(modulePath));
     }
-    Collections.sort(sorted, new Comparator<SaveItem>() {
-      @Override
-      public int compare(SaveItem item1, SaveItem item2) {
-        return item1.getModuleName().compareTo(item2.getModuleName());
-      }
-    });
-    for (SaveItem saveItem : sorted) {
-      saveItem.writeExternal(modules);
-    }
 
-    element.addContent(modules);
+    if (!sorted.isEmpty()) {
+      Collections.sort(sorted, new Comparator<SaveItem>() {
+        @Override
+        public int compare(SaveItem item1, SaveItem item2) {
+          return item1.getModuleName().compareTo(item2.getModuleName());
+        }
+      });
+
+      Element modules = new Element(ELEMENT_MODULES);
+      for (SaveItem saveItem : sorted) {
+        saveItem.writeExternal(modules);
+      }
+      element.addContent(modules);
+    }
   }
 
   @Override
