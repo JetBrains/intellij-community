@@ -24,6 +24,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   }
 
   @Override
-  protected PythonHelpersLocator getRunner() {
+  protected PythonHelper getRunner() {
     return PythonHelpersLocator.PYTEST;
   }
 
