@@ -203,7 +203,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       hOffset = hOffset > 0 ? hOffset : 0;
     }
     else if (targetLocation.x >= hOffset + viewRect.width) {
-      hOffset = targetLocation.x - viewRect.width + xInsets;
+      hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);
     }
 
     // the following code tries to keeps 1 line above and 1 line below if available in viewRect
