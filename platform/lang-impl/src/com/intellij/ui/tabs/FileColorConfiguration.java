@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ColorUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -63,19 +64,10 @@ class FileColorConfiguration implements Cloneable {
   }
 
   public boolean isValid(Project project) {
-    if (myScopeName == null || myScopeName.length() == 0) {
+    if (StringUtil.isEmpty(myScopeName) || myColorName == null) {
       return false;
     }
-
-    if (myColorName == null) {
-      return false;
-    }
-
-    if (project != null) {
-      return NamedScopeManager.getScope(project, myScopeName) != null;
-    } else {
-      return true;
-    }
+    return project == null || NamedScopesHolder.getScope(project, myScopeName) != null;
   }
 
   public void save(@NotNull final Element e) {
