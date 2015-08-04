@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
+import gnu.trove.TLongIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -971,18 +972,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
       if (varClass.isEmpty()) {
         myEqClasses.set(varClassIndex, null);
-        long[] pairs = myDistinctClasses.toArray();
-        for (long pair : pairs) {
+
+        for (TLongIterator iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
+          long pair = iterator.next();
           if (low(pair) == varClassIndex || high(pair) == varClassIndex) {
-            myDistinctClasses.remove(pair);
+            iterator.remove();
           }
         }
       }
       else if (varClass.containsConstantsOnly()) {
-        for (long pair : myDistinctClasses.toArray()) {
+        for (TLongIterator iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
+          long pair = iterator.next();
           if (low(pair) == varClassIndex && myEqClasses.get(high(pair)).containsConstantsOnly() ||
               high(pair) == varClassIndex && myEqClasses.get(low(pair)).containsConstantsOnly()) {
-            myDistinctClasses.remove(pair);
+            iterator.remove();
           }
         }
       }
