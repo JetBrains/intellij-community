@@ -362,9 +362,9 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
   }
 
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
-    val oldStorageSpec = getOldStorageSpec(component, componentName, operation)
+    val oldStorageSpec = getOldStorageSpec(component, componentName, operation) ?: return null
     @suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-    return if (oldStorageSpec == null) null else getStateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.PER_USER)
+    return getStateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.PER_USER)
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null

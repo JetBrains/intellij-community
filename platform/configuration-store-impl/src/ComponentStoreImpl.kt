@@ -17,9 +17,9 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -63,7 +63,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     get() = null
 
   // return null if not applicable
-  protected open fun selectDefaultStorages(storages:Array<Storage>, operation:StateStorageOperation): Array<Storage>? = null
+  protected open fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation): Array<Storage>? = null
 
   override fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
@@ -75,7 +75,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val componentNameIfStateExists: String?
-    val token = ReadAction.start()
     try {
       componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
         initPersistentComponent(component, null, false)
@@ -93,9 +92,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
     catch (e: Exception) {
       LOG.error(e)
       return
-    }
-    finally {
-      token.finish()
     }
 
     // if not service, so, component manager will check it later for all components
@@ -132,7 +128,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
         }
         errors.add(e)
       }
-
     }
 
     errors = doSave(externalizationSession?.createSaveSessions(), readonlyFiles, errors)
@@ -210,44 +205,35 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return null
     }
 
-    loadJdomDefaults(component, componentName)
-
-    val stateStorage = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ) ?: return null
-    val element = stateStorage.getState<Element>(component, componentName, javaClass<Element>(), null) ?: return null
-    try {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Loading configuration for " + component.javaClass)
+    runReadAction {
+      try {
+        val defaultState = getDefaultState(component, componentName, javaClass<Element>())
+        if (defaultState != null) {
+          component.readExternal(defaultState)
+        }
       }
-      component.readExternal(element)
-    }
-    catch (e: InvalidDataException) {
-      LOG.error(e)
-      return null
-    }
+      catch (e: Exception) {
+        LOG.error("Cannot load defaults for ${component.javaClass}", e)
+      }
 
-
+      val element = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null) ?: return null
+      try {
+        component.readExternal(element)
+      }
+      catch (e: InvalidDataException) {
+        LOG.error(e)
+        return null
+      }
+    }
     return componentName
   }
 
-  private fun doAddComponent(componentName: String, component: Any) {
-    val existing = myComponents.get(componentName)
+  private fun doAddComponent(name: String, component: Any) {
+    val existing = myComponents.put(name, component)
     if (existing != null && existing !== component) {
-      LOG.error("Conflicting component name '" + componentName + "': " + existing.javaClass + " and " + component.javaClass)
+      myComponents.put(name, existing)
+      LOG.error("Conflicting component name '$name': ${existing.javaClass} and ${component.javaClass}")
     }
-    myComponents.put(componentName, component)
-  }
-
-  private fun loadJdomDefaults(component: JDOMExternalizable, componentName: String) {
-    try {
-      val defaultState = getDefaultState(component, componentName, javaClass<Element>())
-      if (defaultState != null) {
-        component.readExternal(defaultState)
-      }
-    }
-    catch (e: Exception) {
-      LOG.error("Cannot load defaults for " + component.javaClass, e)
-    }
-
   }
 
   private fun <T> initPersistentComponent(component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
@@ -262,46 +248,47 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
     val stateClass = ComponentSerializationUtil.getStateClass<T>(component.javaClass)
     if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled() && getDefaultState(component, name, stateClass) != null) {
-      LOG.error(name + " has default state, but not marked to load it")
+      LOG.error("$name has default state, but not marked to load it")
     }
 
     var state = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     val storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ)
     val stateStorageChooser = component as? StateStorageChooserEx
-    for (storageSpec in storageSpecs) {
-      val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
-      if (resolution === Resolution.SKIP) {
-        continue
-      }
-
-      val storage = getStateStorageManager().getStateStorage(storageSpec)
-      var forcedState = false
-      if (!storage.hasState(component, name, stateClass, reloadData)) {
-        forcedState = changedStorages != null && changedStorages.contains(storage)
-        if (!forcedState) {
+    runReadAction {
+      for (storageSpec in storageSpecs) {
+        val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
+        if (resolution === Resolution.SKIP) {
           continue
         }
+
+        val storage = getStateStorageManager().getStateStorage(storageSpec)
+        var forcedState = false
+        if (!storage.hasState(component, name, stateClass, reloadData)) {
+          forcedState = changedStorages != null && changedStorages.contains(storage)
+          if (!forcedState) {
+            continue
+          }
+        }
+
+        state = storage.getState(component, name, stateClass, state)
+        if (state == null && forcedState) {
+          // state will be null if file deleted
+          // we must create empty (initial) state to reinit component
+          state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)
+        }
+        break
       }
 
-      state = storage.getState(component, name, stateClass, state)
-      if (state == null && forcedState) {
-        // state will be null if file deleted
-        // we must create empty (initial) state to reinit component
-        state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)
+      if (state != null) {
+        component.loadState(state)
       }
-      break
     }
-
-    if (state != null) {
-      component.loadState(state)
-    }
-
     return name
   }
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
-  protected fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
+  private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val url = DecodeDefaultsUtil.getDefaults(component, componentName) ?: return null
     try {
       val documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement()
@@ -309,10 +296,10 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return DefaultStateSerializer.deserializeState<T>(documentElement, stateClass, null)
     }
     catch (e: IOException) {
-      throw StateStorageException("Error loading state from " + url, e)
+      throw StateStorageException("Error loading state from $url", e)
     }
     catch (e: JDOMException) {
-      throw StateStorageException("Error loading state from " + url, e)
+      throw StateStorageException("Error loading state from $url", e)
     }
   }
 
