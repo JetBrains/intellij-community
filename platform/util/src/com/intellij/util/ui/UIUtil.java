@@ -3113,6 +3113,7 @@ public class UIUtil {
       undoManager.discardAllEdits();
     }
   }
+
   private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
     @Override
     protected void textChanged(DocumentEvent e) {
