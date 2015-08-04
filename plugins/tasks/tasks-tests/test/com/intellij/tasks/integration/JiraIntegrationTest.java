@@ -178,14 +178,14 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   private String createIssueViaXmlRpc(@NotNull String project, @NotNull String summary) throws Exception {
     final URL url = new URL(myRepository.getUrl() + "/rpc/xmlrpc");
     final XmlRpcClient xmlRpcClient = new XmlRpcClient(url);
-    final Map<String, Object> issue = new Hashtable<String, Object>();
+    final Map<String, Object> issue = new Hashtable<>();
     issue.put("summary", summary);
     issue.put("project", project);
     issue.put("assignee", myRepository.getUsername());
     issue.put("type", 1); // Bug
     issue.put("state", 1); // Open
 
-    final Vector<Object> params = new Vector<Object>(Arrays.asList("", issue)); // empty token because of HTTP basic auth
+    final Vector<Object> params = new Vector<>(Arrays.asList("", issue)); // empty token because of HTTP basic auth
     final Hashtable result = (Hashtable)xmlRpcClient.execute(new XmlRpcRequest("jira1.createIssue", params),
                                                              new CommonsXmlRpcTransport(url, myRepository.getHttpClient()));
     return (String)result.get("key");
@@ -203,7 +203,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   public void testSetTimeSpend() throws Exception {
     // only REST API 2.0 supports this feature
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
-    Task task = myRepository.findTask("UT-9");
+    Task task = myRepository.findTask("UT-21");
     assertNotNull("Test task not found", task);
 
     // timestamp as comment
@@ -220,6 +220,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     String response = myRepository.executeMethod(request);
     JsonObject object = new Gson().fromJson(response, JsonObject.class);
     JsonArray worklogs = object.get("worklogs").getAsJsonArray();
+    assertTrue("Michael, it's time to clean it!", worklogs.size() < 1000);
     JsonObject last = worklogs.get(worklogs.size() - 1).getAsJsonObject();
 
     assertEquals(comment, last.get("comment").getAsString());
@@ -228,9 +229,9 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testParseVersionNumbers() throws Exception {
-    assertEquals(new JiraVersion("6.1-OD-09-WN").toString(), "6.1.9");
-    assertEquals(new JiraVersion("5.0.6").toString(), "5.0.6");
-    assertEquals(new JiraVersion("4.4.5").toString(), "4.4.5");
+    assertEquals("6.1.9", new JiraVersion("6.1-OD-09-WN").toString());
+    assertEquals("5.0.6", new JiraVersion("5.0.6").toString());
+    assertEquals("4.4.5", new JiraVersion("4.4.5").toString());
   }
 
   @Override
