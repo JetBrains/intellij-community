@@ -42,16 +42,15 @@ import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
-import javax.swing.text.DefaultEditorKit;
-import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.NumberFormatter;
+import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -3114,6 +3113,31 @@ public class UIUtil {
       undoManager.discardAllEdits();
     }
   }
+  private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
+    @Override
+    protected void textChanged(DocumentEvent e) {
+      Document document = e.getDocument();
+      if (document instanceof AbstractDocument) {
+        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+        for (StackTraceElement element : stackTrace) {
+          if (!element.getClassName().equals(JTextComponent.class.getName()) || !element.getMethodName().equals("setText")) continue;
+          UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
+          for (final UndoableEditListener listener : undoableEditListeners) {
+            if (listener instanceof UndoManager) {
+              Runnable runnable = new Runnable() {
+                public void run() {
+                  ((UndoManager)listener).discardAllEdits();
+                }
+              };
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(runnable);
+              return;
+            }
+          }
+        }
+      }
+    }
+  };
 
   public static void addUndoRedoActions(@NotNull final JTextComponent textComponent) {
     if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
@@ -3122,6 +3146,7 @@ public class UIUtil {
     UndoManager undoManager = new UndoManager();
     textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
+    textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
