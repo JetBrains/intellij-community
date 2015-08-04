@@ -363,21 +363,25 @@ public class FileStatusMap implements Disposable {
   private static int getThreadNum() {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
-  private static final StringBuffer log = new StringBuffer();
+  private static final StringBuilder log = new StringBuilder();
   private static final boolean IN_TESTS = ApplicationManager.getApplication().isUnitTestMode();
   public static void log(@NonNls @NotNull Object... info) {
     if (IN_TESTS) {
-      if (log.length() > 10000) {
-        log.replace(0, log.length()-5000, "");
+      synchronized (log) {
+        if (log.length() > 10000) {
+          log.replace(0, log.length()-5000, "");
+        }
+        String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
+        log.append(s);
       }
-      String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
-      log.append(s);
     }
   }
   @NotNull
   static String getAndClearLog() {
-    String l = log.toString();
-    log.setLength(0);
-    return l;
+    synchronized (log) {
+      String l = log.toString();
+      log.setLength(0);
+      return l;
+    }
   }
 }
