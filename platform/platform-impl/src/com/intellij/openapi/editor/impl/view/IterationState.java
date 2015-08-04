@@ -380,10 +380,13 @@ public class IterationState {
     myDoc.advance();
     myView.advance();
 
+    boolean fileEnd = myStartOffset == myDocument.getTextLength();
     for (int i = myCurrentHighlighters.size() - 1; i >= 0; i--) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (myReverseIteration ?
           highlighter.getAffectedAreaStartOffset() >= myStartOffset :
+          fileEnd && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE ? 
+          highlighter.getAffectedAreaEndOffset() < myStartOffset : 
           highlighter.getAffectedAreaEndOffset() <= myStartOffset) {
         myCurrentHighlighters.remove(i);
       }
