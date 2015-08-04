@@ -20,6 +20,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -49,6 +50,7 @@ import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
+  private static final Logger LOG = Logger.getInstance(EditorColorsScheme.class);
   private static final String OS_VALUE_PREFIX = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "linux";
   private static final int CURR_VERSION = 142;
 
@@ -388,16 +390,36 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private static Color readColorValue(final Element colorElement) {
-    String value = getValue(colorElement);
-    Color valueColor = null;
-    if (value != null && value.trim().length() > 0) {
-      try {
-        valueColor = new Color(Integer.parseInt(value, 16));
-      }
-      catch (NumberFormatException ignored) {
+    String blindness = null; // TODO: get blindness
+    return blindness != null
+           ? readColor(colorElement, blindness, OS_VALUE_PREFIX, VALUE_ELEMENT)
+           : readColor(colorElement, OS_VALUE_PREFIX, VALUE_ELEMENT);
+  }
+
+  private static Color readColor(Element element, String... attributes) {
+    for (String attribute : attributes) {
+      String value = element.getAttributeValue(attribute);
+      if (value != null) {
+        value = value.trim();
+        if (value.isEmpty()) {
+          if (LOG.isDebugEnabled()) LOG.debug("empty attribute: " + attribute);
+        }
+        else {
+          try {
+            return new Color(Integer.parseInt(value, 16));
+          }
+          catch (NumberFormatException ignored) {
+            try {
+              return new Color(Integer.decode(value));
+            }
+            catch (NumberFormatException exception) {
+              if (LOG.isDebugEnabled()) LOG.debug("wrong attribute: " + attribute, exception);
+            }
+          }
+        }
       }
     }
-    return valueColor;
+    return null;
   }
 
   private void readSettings(Element childNode, boolean isDefault) {
