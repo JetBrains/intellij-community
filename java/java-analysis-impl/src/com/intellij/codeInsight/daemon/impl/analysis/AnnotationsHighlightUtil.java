@@ -134,8 +134,7 @@ public class AnnotationsHighlightUtil {
         }
       }
 
-      String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                     formatReference(nameRef), JavaHighlightUtil.formatType(expectedType));
+      String description = JavaErrorMessages.message("incompatible.types", JavaHighlightUtil.formatType(expectedType), formatReference(nameRef) );
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
 
@@ -161,8 +160,7 @@ public class AnnotationsHighlightUtil {
         return null;
       }
 
-      String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                     JavaHighlightUtil.formatType(type), JavaHighlightUtil.formatType(expectedType));
+      String description = JavaErrorMessages.message("incompatible.types", JavaHighlightUtil.formatType(expectedType), JavaHighlightUtil.formatType(type));
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createSurroundWithQuotesAnnotationParameterValueFix(value, expectedType));
       return info;
