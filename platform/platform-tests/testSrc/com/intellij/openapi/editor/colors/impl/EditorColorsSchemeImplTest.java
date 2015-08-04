@@ -16,10 +16,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -210,6 +207,20 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     );
     assertEquals(result.second, fallbackAttrs);
     assertNotSame(result.second, fallbackAttrs);
+  }
+
+  public void testSaveInheritanceForEmptyAttrs() throws Exception {
+    TextAttributes abstractMethodAttrs = new TextAttributes();
+    assertTrue(abstractMethodAttrs.isFallbackEnabled());
+    Pair<EditorColorsScheme, TextAttributes> result =
+      doTestWriteRead(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES, abstractMethodAttrs);
+    TextAttributes fallbackAttrs = result.first.getAttributes(
+      CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES.getFallbackAttributeKey()
+    );
+    TextAttributes directlyDefined =
+      ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
+    assertTrue(directlyDefined != null && directlyDefined.isFallbackEnabled());
+    assertSame(fallbackAttrs, result.second);
   }
 
   @NotNull

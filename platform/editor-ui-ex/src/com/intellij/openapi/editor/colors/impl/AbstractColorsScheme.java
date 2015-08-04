@@ -601,17 +601,19 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
         ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
       TextAttributes value = myAttributesMap.get(key);
-      if (!value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
-        Element element = new Element(OPTION_ELEMENT);
-        element.setAttribute(NAME_ATTR, key.getExternalName());
-        if (baseKey == null || !value.isFallbackEnabled()) {
+      Element element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, key.getExternalName());
+      if (baseKey != null && value.isFallbackEnabled()) {
+        if (defaultFallbackAttr != null && defaultAttr != null && defaultAttr != defaultFallbackAttr) {
+          element.setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName());
+          attrElements.addContent(element);
+        }
+      }
+      else {
+        if (!value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
           Element valueElement = new Element(VALUE_ELEMENT);
           value.writeExternal(valueElement);
           element.addContent(valueElement);
-          attrElements.addContent(element);
-        }
-        else if (defaultAttr != defaultFallbackAttr) {
-          element.setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName());
           attrElements.addContent(element);
         }
       }
