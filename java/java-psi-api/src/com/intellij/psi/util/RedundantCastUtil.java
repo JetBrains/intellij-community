@@ -103,24 +103,28 @@ public class RedundantCastUtil {
       super(true);
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      expression.acceptChildren(this);
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitElement(expression);
     }
 
-    @Override public void visitClass(PsiClass aClass) {
-      // avoid multiple visit
-    }
-
-    @Override public void visitMethod(PsiMethod method) {
-      // avoid multiple visit
-    }
-
-    @Override public void visitField(PsiField field) {
+    @Override
+    public void visitClass(PsiClass aClass) {
       // avoid multiple visit
     }
 
     @Override
-    protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
+    public void visitMethod(PsiMethod method) {
+      // avoid multiple visit
+    }
+
+    @Override
+    public void visitField(PsiField field) {
+      // avoid multiple visit
+    }
+
+    @Override
+    protected void addToResults(@NotNull PsiTypeCastExpression typeCast) {
       if (!isTypeCastSemantic(typeCast)) {
         myFoundCasts.add(typeCast);
       }
@@ -302,7 +306,8 @@ public class RedundantCastUtil {
       super.visitEnumConstant(enumConstant);
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       //expression.acceptChildren(this);
     }
 

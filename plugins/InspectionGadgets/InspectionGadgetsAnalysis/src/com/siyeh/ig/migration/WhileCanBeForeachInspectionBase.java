@@ -294,7 +294,7 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
     }
   }
 
-  private static class IteratorHasNextVisitor extends JavaRecursiveElementVisitor {
+  private static class IteratorHasNextVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean hasNextCalled;
     private final PsiVariable iterator;
 

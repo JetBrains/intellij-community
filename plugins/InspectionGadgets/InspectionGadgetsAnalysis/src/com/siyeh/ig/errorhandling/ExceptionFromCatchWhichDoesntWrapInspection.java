@@ -131,7 +131,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
     }
   }
 
-  private class ReferenceFinder extends JavaRecursiveElementWalkingVisitor {
+  private class ReferenceFinder extends JavaRecursiveElementVisitor {
 
     private final Set<PsiReferenceExpression> visited = new HashSet<PsiReferenceExpression>();
     private boolean argumentsContainCatchParameter;
