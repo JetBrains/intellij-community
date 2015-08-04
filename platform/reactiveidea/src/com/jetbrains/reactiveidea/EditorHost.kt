@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TemplateManagerListener
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.formatting.FormattingDocumentModel
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -43,7 +44,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
-import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Guard
@@ -153,6 +153,10 @@ public class EditorHost(val reactiveModel: ReactiveModel,
 
     init += {
       writeSelectionAndCaret(it)
+    }
+
+    init += {
+      it.putIn(path / "indent", PrimitiveModel(editor.getSettings().getTabSize(editor.getProject())))
     }
 
     val commandListener = object : CommandAdapter() {
