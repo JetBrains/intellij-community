@@ -20,7 +20,6 @@ import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +28,13 @@ import org.jetbrains.annotations.Nullable;
   name = "GithubSettings",
   storages = {@Storage(
     file = StoragePathMacros.APP_CONFIG + "/stepic_settings.xml")})
-public class EduSettings implements PersistentStateComponent<EduSettings> {
+public class EduSettings implements PersistentStateComponent<EduSettings.State> {
 
-  @Nullable public String LOGIN = null;
+  private State myState = new State();
+
+  public static class State {
+    @Nullable public String LOGIN = null;
+  }
 
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
   private static final Logger LOG = Logger.getInstance(EduSettings.class.getName());
@@ -42,6 +45,9 @@ public class EduSettings implements PersistentStateComponent<EduSettings> {
 
   @NotNull
   public String getPassword() {
+    final String login = getLogin();
+    if (StringUtil.isEmptyOrSpaces(login)) return "";
+
     String password;
     try {
       password = PasswordSafe.getInstance().getPassword(null, EduSettings.class, STEPIC_SETTINGS_PASSWORD_KEY);
@@ -62,22 +68,23 @@ public class EduSettings implements PersistentStateComponent<EduSettings> {
       LOG.info("Couldn't set password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
     }
   }
+
   @Nullable
   public String getLogin() {
-    return LOGIN;
+    return myState.LOGIN;
   }
 
   public void setLogin(@Nullable String login) {
-    LOGIN = login;
+    myState.LOGIN = login;
   }
   @Nullable
   @Override
-  public EduSettings getState() {
-    return this;
+  public EduSettings.State getState() {
+    return myState;
   }
 
   @Override
-  public void loadState(EduSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public void loadState(EduSettings.State state) {
+    myState = state;
   }
 }

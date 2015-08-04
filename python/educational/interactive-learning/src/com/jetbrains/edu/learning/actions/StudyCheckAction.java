@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -238,8 +239,10 @@ public class StudyCheckAction extends DumbAwareAction {
           return;
         }
         final String failedMessage = testRunner.getTestsOutput(output);
-        final String login = EduSettings.getInstance().getLogin();
-        final String password = EduSettings.getInstance().getPassword();
+        final EduSettings eduSettings = EduSettings.getInstance();
+
+        final String login = eduSettings.getLogin();
+        final String password = StringUtil.isEmptyOrSpaces(login) ? "" : eduSettings.getPassword();
         if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
           taskManager.setStatus(task, StudyStatus.Solved);
           EduStepicConnector.postAttempt(task, true, login, password);
