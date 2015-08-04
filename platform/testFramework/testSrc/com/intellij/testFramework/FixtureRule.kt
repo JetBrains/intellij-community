@@ -20,7 +20,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TestFixtureBuilder
+import com.intellij.util.SmartList
+import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
+import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import kotlin.properties.Delegates
@@ -69,5 +72,26 @@ private class HeavyFixtureRule(private val tune: TestFixtureBuilder<IdeaProjectT
     _projectFixture = builder.getFixture()
     builder.tune()
     return builder
+  }
+}
+
+public class RuleChain(vararg val rules: TestRule) : TestRule {
+  override fun apply(base: Statement, description: Description): Statement {
+    var statement = base
+    var errors: MutableList<Throwable>? = null
+    for (i in (rules.size() - 1) downTo 0) {
+      try {
+        statement = rules[i].apply(statement, description)
+      }
+      catch(e: Throwable) {
+        if (errors == null) {
+          errors = SmartList<Throwable>()
+        }
+        errors.add(e)
+      }
+    }
+
+    CompoundRuntimeException.doThrow(errors)
+    return statement
   }
 }

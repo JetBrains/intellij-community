@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder
 import com.intellij.testFramework.exists
 import com.intellij.testFramework.fixtures.ModuleFixture
@@ -30,7 +31,6 @@ import org.hamcrest.collection.IsEmptyCollection.empty
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
-import org.junit.rules.RuleChain
 import java.io.File
 import java.util.UUID
 import kotlin.properties.Delegates
@@ -46,9 +46,9 @@ class ModuleStoreTest {
     moduleFixture = addModule(javaClass<EmptyModuleFixtureBuilder<*>>()).getFixture()
   }
 
-  private val _chain = RuleChain
-    .outerRule(object: ExternalResource() {
-      // should be invoked after proect tearDown
+  private val ruleChain = RuleChain(
+    object : ExternalResource() {
+      // should be invoked after project tearDown
       override fun after() {
         (ApplicationManager.getApplication().stateStore.getStateStorageManager() as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
           if (it.storageManager.componentManager == module) {
@@ -57,11 +57,11 @@ class ModuleStoreTest {
           false
         }
       }
-    })
-    .around(fixtureManager)
-    .around(object: ExternalResource() {
+    },
+    fixtureManager,
+    object : ExternalResource() {
       override fun before() {
-        module.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object: ModuleAdapter() {
+        module.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
           override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
             assertThat(modules.size(), equalTo(1))
             assertThat(modules.get(0), equalTo(module))
@@ -69,10 +69,10 @@ class ModuleStoreTest {
           }
         })
       }
-    })
+    }
+  )
 
-  Rule
-  public fun getChain(): RuleChain = _chain
+  public Rule fun getChain(): RuleChain = ruleChain
 
   fun Module.change(task: ModifiableModuleModel.() -> Unit) {
     invokeAndWaitIfNeed {

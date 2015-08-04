@@ -33,7 +33,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
   }
 
   init {
-    service<DefaultProjectExportableAndSaveTrigger>()!!.project = project
+    service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
   private val storage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
@@ -66,6 +66,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun getStreamProvider() = throw UnsupportedOperationException("Method getStreamProviders not implemented in " + javaClass)
   }
 
+  // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
 
   override fun getMessageBus() = project.getMessageBus()
