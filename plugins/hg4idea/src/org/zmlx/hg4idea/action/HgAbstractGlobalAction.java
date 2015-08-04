@@ -19,6 +19,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -42,13 +44,12 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     final HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
     List<HgRepository> repositories = repositoryManager.getRepositories();
     if (!repositories.isEmpty()) {
-      List<HgRepository> selectedRepositories = (files == null || files.length == 0)
-                                                ?
-                                                Collections.singletonList(HgUtil.getCurrentRepository(project))
-                                                : HgActionUtil.collectRepositoriesFromFiles(repositoryManager,
-                                                                                            Arrays.asList(files));
+      List<HgRepository> selectedRepositories = files != null
+                                                ? HgActionUtil.collectRepositoriesFromFiles(repositoryManager, Arrays.asList(files))
+                                                : ContainerUtil.<HgRepository>emptyList();
 
-      execute(project, repositories, selectedRepositories);
+      execute(project, repositories,
+              selectedRepositories.isEmpty() ? Collections.singletonList(HgUtil.getCurrentRepository(project)) : selectedRepositories);
     }
   }
 
@@ -68,7 +69,7 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     if (project == null) {
       return false;
     }
-    HgVcs vcs = HgVcs.getInstance(project);
+    HgVcs vcs = ObjectUtils.assertNotNull(HgVcs.getInstance(project));
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     if (roots == null || roots.length == 0) {
       return false;

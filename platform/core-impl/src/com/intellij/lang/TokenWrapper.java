@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TokenWrapper extends IElementType {
   private final IElementType myDelegate;
+  @NotNull
   private final String myValue;
 
   public TokenWrapper(@NotNull IElementType delegate, @NotNull CharSequence value) {
@@ -37,6 +38,7 @@ public class TokenWrapper extends IElementType {
     return myDelegate;
   }
 
+  @NotNull
   public String getValue() {
     return myValue;
   }

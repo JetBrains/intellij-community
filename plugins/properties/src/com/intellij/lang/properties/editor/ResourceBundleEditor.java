@@ -59,6 +59,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -596,6 +598,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       @Override
       public void run() {
         updateEditorsFromProperties();
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar != null) {
+          statusBar.setInfo("Selected property: " + getSelectedPropertyName());
+        }
       }
     });
   }
@@ -807,7 +813,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   @Override
   public void deselectNotify() {
-
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar != null) {
+      statusBar.setInfo("");
+    }
   }
 
   @Override

@@ -55,7 +55,7 @@ oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar
 proxy-vole_20131209.jar
-pty4j-0.4.16.jar
+pty4j-0.4.17.jar
 purejavacomm.jar
 resolver.jar
 rhino-js-1_7R4.jar
@@ -65,6 +65,7 @@ snappy-in-java-0.3.1.jar
 swingx-core-1.6.2.jar
 slf4j-api-1.7.10.jar
 slf4j-log4j12-1.7.10.jar
+testDiscoveryInstrumenter.jar
 trove4j.jar
 velocity.jar
 winp-1.23.jar

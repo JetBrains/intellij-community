@@ -81,6 +81,10 @@ public class SelectedTextFormatter {
     }
   }
 
+  void reformatWholeFile() {
+    reformatRange(myFile, myFile.getTextRange());
+  }
+
   private static void reformatRange(final @NotNull PsiFile file, final @NotNull TextRange range) {
     final Project project = file.getProject();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {

@@ -251,12 +251,28 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
    * @param project current project
    */
   public static void setCorrectStdOutEncoding(@NotNull final Map<String, String> envs, @NotNull final Project project) {
-    final Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-
+    final Charset defaultCharset = getProjectDefaultCharset(project);
     final String encoding = defaultCharset.name();
     setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
   }
 
+  /**
+   * Set command line charset as current project charset.
+   * Add required ENV var to Python task to set its stdout charset to current project charset to allow it print correctly.
+   *
+   * @param commandLine command line
+   * @param project     current project
+   */
+  public static void setCorrectStdOutEncoding(@NotNull GeneralCommandLine commandLine, @NotNull final Project project) {
+    final Charset defaultCharset = getProjectDefaultCharset(project);
+    commandLine.setCharset(defaultCharset);
+    setPythonIOEncoding(commandLine.getEnvironment(), defaultCharset.name());
+  }
+
+  @NotNull
+  private static Charset getProjectDefaultCharset(@NotNull Project project) {
+    return EncodingProjectManager.getInstance(project).getDefaultCharset();
+  }
 
   @Override
   protected List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,

@@ -27,6 +27,9 @@ import javax.swing.*;
  *
  * Daemon code analyzer checks newly arrived gutter icon renderer against the old one and if they are equal, does not redraw the icon.
  * So it is highly advisable to override hashCode()/equals() methods to avoid icon flickering when old gutter renderer gets replaced with the new.
+ *
+ * During indexing, methods are only invoked for renderers implementing {@link com.intellij.openapi.project.DumbAware}.
+ *
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */
 public interface GutterMark {

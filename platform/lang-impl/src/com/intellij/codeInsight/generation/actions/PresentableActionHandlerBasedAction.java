@@ -17,10 +17,13 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -49,13 +52,17 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
   }
 
   @Override
-  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected void update(@NotNull Presentation presentation, @NotNull Project project,
+                        @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext, @Nullable String actionPlace) {
     // avoid evaluating isValidFor several times unnecessary
     
     LanguageCodeInsightActionHandler handler = getValidHandler(editor, file);
     presentation.setEnabled(handler != null);
+    if (handler instanceof ContextAwareActionHandler && !ActionPlaces.isMainMenuOrActionSearch(actionPlace)) {
+      presentation.setVisible(((ContextAwareActionHandler)handler).isAvailableForQuickList(editor, file, dataContext));
+    }
 
-    if (handler instanceof PresentableLanguageCodeInsightActionHandler) {
+    if (presentation.isVisible() && handler instanceof PresentableLanguageCodeInsightActionHandler) {
       ((PresentableLanguageCodeInsightActionHandler)handler).update(editor, file, presentation);
     }
   }

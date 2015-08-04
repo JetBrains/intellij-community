@@ -53,10 +53,6 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
   TestExternalSystemManager externalSystemManager
   ExtensionPoint externalSystemManagerEP
 
-  AbstractExternalSystemTest() {
-    PlatformTestCase.autodetectPlatformPrefix()
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp()
@@ -163,7 +159,7 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
         @Override
         void execute() {
           ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring {
-            dataManager.importData(node.key, [node], myProject, true)
+            dataManager.importData(node, myProject, true)
           }
         }})
     }

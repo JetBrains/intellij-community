@@ -19,7 +19,6 @@ import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 
 /**
  * @author Roman Chernyatchik
@@ -27,10 +26,6 @@ import com.intellij.testFramework.PlatformTestCase;
 public abstract class BaseSMTRunnerTestCase extends LightPlatformTestCase {
   protected SMTestProxy mySuite;
   protected SMTestProxy mySimpleTest;
-
-  protected BaseSMTRunnerTestCase() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {

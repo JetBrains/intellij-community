@@ -31,6 +31,7 @@ import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -149,10 +150,11 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         File oldDataFile = new File(path + DATA_EXTENSION);
         DataTable newDataTable = new DataTable(newDataFile, myPool);
 
-        final int count = myRecordsTable.getRecordsCount();
-        for (int i = 1; i <= count; i++) {
-          final long addr = myRecordsTable.getAddress(i);
-          final int size = myRecordsTable.getSize(i);
+        RecordIdIterator recordIterator = myRecordsTable.createRecordIdIterator();
+        while(recordIterator.hasNextId()) {
+          final int recordId = recordIterator.nextId();
+          final long addr = myRecordsTable.getAddress(recordId);
+          final int size = myRecordsTable.getSize(recordId);
 
           if (size > 0) {
             assert addr > 0;
@@ -162,8 +164,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
             final byte[] bytes = new byte[size];
             myDataTable.readBytes(addr, bytes);
             newDataTable.writeBytes(newaddr, bytes);
-            myRecordsTable.setAddress(i, newaddr);
-            myRecordsTable.setCapacity(i, capacity);
+            myRecordsTable.setAddress(recordId, newaddr);
+            myRecordsTable.setCapacity(recordId, capacity);
           }
         }
 
@@ -220,6 +222,18 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     synchronized (myLock) {
       return myDataTable.isDirty() || myRecordsTable.isDirty();
     }
+  }
+
+  @TestOnly
+  public int getLiveRecordsCount() throws IOException {
+    synchronized (myLock) {
+      return myRecordsTable.getLiveRecordsCount();
+    }
+  }
+
+  @TestOnly
+  public RecordIdIterator createRecordIdIterator() throws IOException {
+    return myRecordsTable.createRecordIdIterator();
   }
 
   public StorageDataOutput writeStream(final int record) {

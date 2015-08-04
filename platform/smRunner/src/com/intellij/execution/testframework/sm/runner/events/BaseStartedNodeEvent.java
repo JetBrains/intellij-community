@@ -20,9 +20,6 @@ import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
 
   private final int myParentId;

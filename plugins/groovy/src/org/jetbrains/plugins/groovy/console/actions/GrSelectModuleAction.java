@@ -70,12 +70,11 @@ public class GrSelectModuleAction extends AnAction {
       public void consume(Module module) {
         final Module existingModule = myProjectConsole.getSelectedModule(myFile);
         if (module.equals(existingModule)) return;
-        final GroovyConsole groovyConsole = myFile.getUserData(GroovyConsole.GROOVY_CONSOLE);
-        if (groovyConsole == null || groovyConsole.stop()) {
-          myProjectConsole.setFileModule(myFile, module);
-          myFile.putUserData(GroovyConsole.GROOVY_CONSOLE, null);
-          ProjectView.getInstance(project).refresh();
-        }
+        final GroovyConsole existingConsole = myFile.getUserData(GroovyConsole.GROOVY_CONSOLE);
+        if (existingConsole != null) existingConsole.stop();
+        myProjectConsole.setFileModule(myFile, module);
+        myFile.putUserData(GroovyConsole.GROOVY_CONSOLE, null);
+        ProjectView.getInstance(project).refresh();
       }
     }, e.getDataContext());
   }

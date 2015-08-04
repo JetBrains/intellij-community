@@ -17,12 +17,15 @@ import java.util.Map;
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
-public class Task {
+public class Task implements Named {
   @Expose
   private String name;
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
+
+  private int myStepicId;
+
   @Expose
   @SerializedName("task_files")
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -149,7 +152,7 @@ public class Task {
   public String getTestsText(@NotNull final Project project) {
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = taskDir.findChild("tests.py");
+      final VirtualFile file = taskDir.findChild(EduNames.TESTS_FILE);
       if (file == null) return null;
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -192,5 +195,13 @@ public class Task {
     result = 31 * result + (text != null ? text.hashCode() : 0);
     result = 31 * result + (testsText != null ? testsText.hashCode() : 0);
     return result;
+  }
+
+  public void setStepicId(int stepicId) {
+    myStepicId = stepicId;
+  }
+
+  public int getStepicId() {
+    return myStepicId;
   }
 }

@@ -30,6 +30,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -55,6 +56,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), true);
+    ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
   }
 
   @Override
@@ -62,11 +64,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     NonProjectFileWritingAccessProvider.setCustomUnlocker(null);
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), false);
     super.tearDown();
-  }
-
-  @Override
-  protected boolean runInDispatchThread() {
-    return true;
+    ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed
   }
 
   public void testBasicAccessCheck() throws Exception {

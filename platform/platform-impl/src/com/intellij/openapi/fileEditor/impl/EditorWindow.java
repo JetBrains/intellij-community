@@ -60,6 +60,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Author: msk
@@ -110,6 +111,8 @@ public class EditorWindow {
       super.push(pair);
     }
   };
+  private AtomicBoolean myTabsHidingInProgress = new AtomicBoolean(false);
+  private final Stack<Pair<String, Integer>> myHiddenTabs = new Stack<Pair<String, Integer>>();
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -201,6 +204,18 @@ public class EditorWindow {
     }
   }
 
+  private void restoreHiddenTabs() {
+    while (!myHiddenTabs.isEmpty()) {
+      final Pair<String, Integer> info = myHiddenTabs.pop();
+      myRemovedTabs.remove(info);
+      final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
+      final Integer second = info.getSecond();
+      if (file != null) {
+        getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue());
+      }
+    }
+  }
+
   public void closeFile(@NotNull final VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
@@ -220,7 +235,11 @@ public class EditorWindow {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
-              myRemovedTabs.push(Pair.create(file.getUrl(), componentIndex));
+              Pair<String, Integer> pair = Pair.create(file.getUrl(), componentIndex);
+              myRemovedTabs.push(pair);
+              if (myTabsHidingInProgress.get()) {
+                myHiddenTabs.push(pair);
+              }
               myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
               editorManager.disposeComposite(editor);
             }
@@ -403,6 +422,7 @@ public class EditorWindow {
         final EditorWithProviderComposite editor = getSelectedEditor();
         myPanel.removeAll();
         createTabs(tabPlacement);
+        restoreHiddenTabs();
         setEditor (editor, true);
       }
       else {
@@ -417,9 +437,17 @@ public class EditorWindow {
         currentFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
       }
       final VirtualFile[] files = getFiles();
+      myHiddenTabs.clear();
+      myTabsHidingInProgress.set(true);
       for (VirtualFile file : files) {
         closeFile(file, false);
       }
+      getManager().runChange(new FileEditorManagerChange() {//Add flag switching activity to the end of queue
+        @Override
+        public void run(EditorsSplitters splitters) {
+          myTabsHidingInProgress.set(false);
+        }
+      }, myOwner);
       disposeTabs();
       if (currentFile != null) {
         currentFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
@@ -1094,7 +1122,8 @@ public class EditorWindow {
     if (closeNonModifiedFilesFirst) {
       // Search in history
       for (final VirtualFile file : histFiles) {
-        if (isFileModified(findFileComposite(file), file)) {
+        EditorWithProviderComposite composite = findFileComposite(file);
+        if (composite != null && !myOwner.getManager().isChanged(composite)) {
           // we found non modified file
           closingOrder.add(file);
         }
@@ -1103,7 +1132,7 @@ public class EditorWindow {
       // Search in tabbed pane
       for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
         final VirtualFile file = getFileAt(i);
-        if (isFileModified(getEditorAt(i), file)) {
+        if (!myOwner.getManager().isChanged(getEditorAt(i))) {
           // we found non modified file
           closingOrder.add(file);
         }
@@ -1137,10 +1166,6 @@ public class EditorWindow {
     Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
     if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
     return !myOwner.getManager().isChanged(composite);
-  }
-
-  private static boolean isFileModified(EditorComposite composite, VirtualFile file) {
-    return composite != null && (composite.getInitialFileTimeStamp() == file.getTimeStamp() || composite.isModified());
   }
 
   private boolean areAllTabsPinned(VirtualFile fileToIgnore) {

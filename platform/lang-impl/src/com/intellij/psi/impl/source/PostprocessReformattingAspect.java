@@ -745,6 +745,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     @Override
     public void execute(@NotNull FileViewProvider viewProvider) {
       final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
+      codeFormatter.setReformatContext(true);
       codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), myRanges.ensureNonEmpty(), false);
     }
 

@@ -26,6 +26,7 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
+    boolean caseSensitive = refElement.getLanguage().isCaseSensitive();
 
     String text = null;
     if (refElement instanceof PsiFileSystemItem && !(refElement instanceof SyntheticFileSystemItem)) {
@@ -33,6 +34,10 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
       if (vFile != null) {
         text = vFile.getNameWithoutExtension();
       }
+      // We must not look for file references with the file language's case-sensitivity, 
+      // since case-sensitivity of the references themselves depends either on file system 
+      // or on the rules of the language of reference
+      caseSensitive = false;
     }
     else if (refElement instanceof PsiNamedElement) {
       text = ((PsiNamedElement)refElement).getName();
@@ -48,7 +53,7 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
     }
     if (StringUtil.isNotEmpty(text)) {
       final SearchScope searchScope = p.getEffectiveSearchScope();
-      p.getOptimizer().searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive(), refElement);
+      p.getOptimizer().searchWord(text, searchScope, caseSensitive, refElement);
     }
   }
 }

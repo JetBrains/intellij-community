@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -28,6 +29,7 @@ import java.util.List;
  * @author yole
  */
 public class SetupKeywordArgumentProvider implements PyKeywordArgumentProvider {
+  @NotNull
   @Override
   public List<String> getKeywordArguments(PyFunction function, PyCallExpression callExpr) {
     if ("setup".equals(function.getName())) {

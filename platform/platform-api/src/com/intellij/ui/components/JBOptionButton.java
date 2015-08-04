@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -360,6 +361,14 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      int x = getWidth() - getInsets().right - 8;
+      Icon icon = AllIcons.Mac.YosemiteOptionButtonSelector;
+      int y = (getHeight() - icon.getIconHeight()) / 2;
+      icon.paintIcon(this, g, x, y);
+      return;
+    }
+
     boolean dark = UIUtil.isUnderDarcula();
     int off = dark ? 6 : 0;
     AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);

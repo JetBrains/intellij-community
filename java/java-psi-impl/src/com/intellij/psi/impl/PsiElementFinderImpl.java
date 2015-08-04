@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,16 +37,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by kosyakov on 05.12.14.
+ * @author kosyakov
+ * @since 05.12.2014
  */
 public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
-
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
   public PsiElementFinderImpl(Project project, JavaFileManager javaFileManager) {
-    this.myProject = project;
-    this.myFileManager = javaFileManager;
+    myProject = project;
+    myFileManager = javaFileManager;
   }
 
   @Override
@@ -164,7 +164,8 @@ public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware 
                                            @NotNull final Processor<PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    return PackageIndex.getInstance(myProject).getDirsByPackageName(psiPackage.getQualifiedName(), includeLibrarySources)
+    return PackageIndex.getInstance(myProject)
+      .getDirsByPackageName(psiPackage.getQualifiedName(), includeLibrarySources)
       .forEach(new ReadActionProcessor<VirtualFile>() {
         @Override
         public boolean processInReadAction(final VirtualFile dir) {

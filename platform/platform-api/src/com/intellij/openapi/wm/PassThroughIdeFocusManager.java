@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   @NotNull
   public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
     c.requestFocus();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @NotNull
@@ -78,7 +78,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
 
   @NotNull
   public ActionCallback requestDefaultFocus(boolean forced) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override

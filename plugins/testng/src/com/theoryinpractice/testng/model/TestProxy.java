@@ -74,6 +74,11 @@ public class TestProxy extends AbstractTestProxy {
     return name;
   }
 
+  @Override
+  public boolean isConfig() {
+    return false;
+  }
+
   @Nullable
   public PsiElement getPsiElement() {
     return psiElement != null ? psiElement.getElement() : null;
@@ -236,6 +241,11 @@ public class TestProxy extends AbstractTestProxy {
 
   public boolean isInterrupted() {
     return !isInProgress() && inProgress;
+  }
+
+  @Override
+  public boolean hasPassedTests() {
+    return isPassed();
   }
 
   @Override

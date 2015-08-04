@@ -16,9 +16,8 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
@@ -140,13 +139,13 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public void moduleRenamed(@NotNull Module module, @NotNull String newName) {
+  public void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName) {
     try {
       CachedXmlDocumentSet fileSet = getFileCache(module);
       VirtualFile root = LocalFileSystem.getInstance().findFileByPath(ClasspathStorage.getModuleDir(module));
-      VirtualFile source = root == null ? null : root.findChild(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
+      VirtualFile source = root == null ? null : root.findChild(oldName + EclipseXml.IDEA_SETTINGS_POSTFIX);
       if (source != null && source.isValid()) {
-        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+        AccessToken token = WriteAction.start();
         try {
           source.rename(this, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
         }
@@ -156,6 +155,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       }
 
       DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
+      fileSet.unregister(oldName + EclipseXml.IDEA_SETTINGS_POSTFIX);
       fileSet.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
     }
     catch (IOException e) {

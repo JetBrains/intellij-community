@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
+  public boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
@@ -283,7 +283,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new RenameViewDescriptor(myAllRenames);
   }
 
@@ -320,7 +320,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(PsiElement[] elements) {
+  protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length > 0);
     if (myPrimaryElement != null) {
       myPrimaryElement = elements[0];
@@ -336,7 +336,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
+  protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (myForceShowPreview) return true;
     if (super.isPreviewUsages(usages)) return true;
     if (UsageViewUtil.reportNonRegularUsages(usages, myProject)) return true;
@@ -359,14 +359,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(myPrimaryElement);
     return data;
   }
 
   @Override
-  public void performRefactoring(UsageInfo[] usages) {
+  public void performRefactoring(@NotNull UsageInfo[] usages) {
     final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
     String message = null;
     try {

@@ -58,14 +58,13 @@ public class NestingDepthInspection extends MethodMetricInspection {
   }
 
   private class NestingDepthMethodVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       // note: no call to super
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final NestingDepthVisitor visitor = new NestingDepthVisitor();
+      final NestingDepthVisitor visitor = new NestingDepthVisitor(getLimit());
       method.accept(visitor);
       final int count = visitor.getMaximumDepth();
       if (count <= getLimit()) {

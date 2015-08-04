@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -60,10 +61,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     final EnabledPluginInfo enabledColumn = new EnabledPluginInfo();
     columns = SystemInfo.isMac ? new ColumnInfo[]{infoColumn, enabledColumn, new Spacer()} : new ColumnInfo[]{infoColumn, enabledColumn};
 
+    final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     view.addAll(ContainerUtil.filter(PluginManagerCore.getPlugins(), new Condition<IdeaPluginDescriptor>() {
       @Override
       public boolean value(IdeaPluginDescriptor descriptor) {
-        return !PluginManagerCore.CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
+        return !appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString());
       }
     }));
     view.addAll(ourState.getInstalledPlugins());

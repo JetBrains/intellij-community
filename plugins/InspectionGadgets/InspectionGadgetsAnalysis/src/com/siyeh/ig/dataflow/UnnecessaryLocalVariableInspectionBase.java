@@ -362,18 +362,20 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
           return false;
         }
         boolean referenceFound = false;
-        for (PsiResourceVariable resourceVariable : resourceList.getResourceVariables()) {
-          final PsiExpression initializer = resourceVariable.getInitializer();
-          if (!referenceFound && initializer instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer;
-            final PsiElement referent = referenceExpression.resolve();
-            if (variable.equals(referent)) {
-              referenceFound = true;
-              continue;
+        for (PsiResourceListElement resource : resourceList) {
+          if (resource instanceof PsiResourceVariable) {
+            final PsiExpression initializer = ((PsiResourceVariable)resource).getInitializer();
+            if (!referenceFound && initializer instanceof PsiReferenceExpression) {
+              final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer;
+              final PsiElement referent = referenceExpression.resolve();
+              if (variable.equals(referent)) {
+                referenceFound = true;
+                continue;
+              }
             }
-          }
-          if (VariableAccessUtils.variableIsUsed(variable, initializer)) {
-            return false;
+            if (VariableAccessUtils.variableIsUsed(variable, initializer)) {
+              return false;
+            }
           }
         }
         if (!referenceFound) {

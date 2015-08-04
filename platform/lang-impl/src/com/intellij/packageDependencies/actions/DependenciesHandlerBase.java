@@ -17,6 +17,7 @@ package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -99,12 +100,14 @@ public abstract class DependenciesHandlerBase {
 
   private void perform(List<DependenciesBuilder> builders) {
     try {
+      PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
       for (AnalysisScope scope : myScopes) {
         builders.add(createDependenciesBuilder(scope));
       }
       for (DependenciesBuilder builder : builders) {
         builder.analyze();
       }
+      snapshot.logResponsivenessSinceCreation("Dependency analysis");
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(myProject).showDumbModeNotification("Analyze dependencies is not available until indices are ready");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -424,15 +424,15 @@ public class DateFormatUtil {
 
     rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_SSHORTDATE, data, dataSize);
     assert rv > 1 : kernel32.GetLastError();
-    String shortDate = new String(data.getCharArray(0, rv - 1));
+    String shortDate = fixWindowsFormat(new String(data.getCharArray(0, rv - 1)));
 
     rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_SSHORTTIME, data, dataSize);
     assert rv > 1 : kernel32.GetLastError();
-    String shortTime = StringUtil.replace(new String(data.getCharArray(0, rv - 1)), "tt", "a");
+    String shortTime = fixWindowsFormat(new String(data.getCharArray(0, rv - 1)));
 
     rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_STIMEFORMAT, data, dataSize);
     assert rv > 1 : kernel32.GetLastError();
-    String mediumTime = StringUtil.replace(new String(data.getCharArray(0, rv - 1)), "tt", "a");
+    String mediumTime = fixWindowsFormat(new String(data.getCharArray(0, rv - 1)));
 
     formats[0] = new SimpleDateFormat(shortDate);
     formats[1] = new SimpleDateFormat(shortTime);
@@ -440,5 +440,11 @@ public class DateFormatUtil {
     formats[3] = new SimpleDateFormat(shortDate + " " + shortTime);
 
     return true;
+  }
+
+  private static String fixWindowsFormat(String format) {
+    format = format.replaceAll("g+", "G");
+    format = StringUtil.replace(format, "tt", "a");
+    return format;
   }
 }

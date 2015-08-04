@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,6 @@ public abstract class JavaTestFixtureFactory {
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture);
-
-  /** @deprecated use {@link JavaTestFixtureFactory#createFixtureBuilder(String)} */
-  //also implicitly initializes ourInstance and registers java module fixture builder
-  public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
-    return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
-  }
 
   public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name) {
     return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);

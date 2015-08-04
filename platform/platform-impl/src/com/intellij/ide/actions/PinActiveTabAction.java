@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PinActiveTabAction extends ToggleAction implements DumbAware {
@@ -57,6 +58,7 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
     return contentManager.getSelectedContent();
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     DataContext context = e.getDataContext();
     VirtualFile file = getFile(context);
@@ -82,6 +84,7 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
     }
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     DataContext context = e.getDataContext();
     VirtualFile file = getFile(context);
@@ -99,27 +102,32 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
       }
     }
     Content content = getContent(context); // at this point content cannot be null
+    assert content != null : context;
     content.setPinned(state);
   }
 
   private static EditorWindow getEditorWindow(DataContext dataContext) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     if (editorWindow == null) {
-      editorWindow = fileEditorManager.getCurrentWindow();
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (project != null) {
+        editorWindow = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
+      }
     }
     return editorWindow;
   }
 
-  public void update(AnActionEvent e){
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
+
     Presentation presentation = e.getPresentation();
     DataContext context = e.getDataContext();
     EditorWindow window = getEditorWindow(context);
     if (window == null || window.getOwner().isPreview()) {
       presentation.setEnabledAndVisible(false);
-    } else {
+    }
+    else {
       if (getFile(context) != null) {
         presentation.setEnabledAndVisible(true);
       }
@@ -128,10 +136,11 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
         presentation.setEnabledAndVisible(content != null && content.isPinnable());
       }
     }
-    if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace()) ||
-        ViewContext.CELL_POPUP_PLACE.equals(e.getPlace())) {
+
+    if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace()) || ViewContext.CELL_POPUP_PLACE.equals(e.getPlace())) {
       presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
-    } else {
+    }
+    else {
       presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab"));
     }
   }

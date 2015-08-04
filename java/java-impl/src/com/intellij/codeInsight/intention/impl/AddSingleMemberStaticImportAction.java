@@ -157,6 +157,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
       if (availability.resolved instanceof PsiClass) {
         setText(CodeInsightBundle.message("intention.add.single.member.import.text", availability.qName));
       } else {
+        if (!(element.getContainingFile() instanceof PsiJavaFile)) return false;
         setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", availability.qName));
       }
     }
@@ -198,7 +199,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
 
     if (resolved != null && findExistingImport(file, resolvedClass, referenceName) == null) {
       if (resolved instanceof PsiClass) {
-        ((PsiJavaFile) file).importClass((PsiClass) resolved);
+        ((PsiImportHolder) file).importClass((PsiClass) resolved);
       } else {
         PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
       }

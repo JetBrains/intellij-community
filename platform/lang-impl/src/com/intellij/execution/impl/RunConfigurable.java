@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
@@ -353,6 +354,12 @@ class RunConfigurable extends BaseConfigurable {
         myTreeModel.reload(node);
       }
     });
+    textField.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myTree.requestFocus();
+      }
+    });
     p.add(new JLabel("Folder name:"), "gapright 5");
     p.add(textField, "pushx, growx, wrap");
     p.add(new JLabel(ExecutionBundle.message("run.configuration.rename.folder.disclaimer")), "gaptop 5, spanx 2");
@@ -388,10 +395,17 @@ class RunConfigurable extends BaseConfigurable {
 
     JComponent configurableComponent = configurable.createComponent();
     final JBScrollPane scrollPane = new JBScrollPane(configurableComponent);
+    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
     scrollPane.setBorder(null);
     myRightPanel.add(scrollPane, BorderLayout.CENTER);
     if (configurable instanceof SingleConfigurationConfigurable) {
       myRightPanel.add(((SingleConfigurationConfigurable)configurable).getValidationComponent(), BorderLayout.SOUTH);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          ((SingleConfigurationConfigurable)configurable).updateWarning();
+        }
+      });
       if (configurableComponent != null) {
         DataProvider dataProvider = DataManager.getDataProvider(configurableComponent);
         if (dataProvider != null) {

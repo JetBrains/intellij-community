@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
+class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
 
   @Nls
   @NotNull
@@ -94,11 +94,11 @@ public class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
   }
 
   private static class AlwaysNegatedVisitor
-    extends JavaRecursiveElementVisitor {
+    extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable variable;
     private boolean alwaysNegated = true;
-    private boolean read = false;
+    private boolean read;
 
     private AlwaysNegatedVisitor(PsiVariable variable) {
       this.variable = variable;
@@ -143,7 +143,7 @@ public class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
       }
     }
 
-    public boolean isAlwaysNegated() {
+    boolean isAlwaysNegated() {
       return alwaysNegated;
     }
 

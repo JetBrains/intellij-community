@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,7 +38,7 @@ import java.util.List;
 
 public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     if (!PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7)) return false;
 
@@ -52,18 +51,11 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     final PsiElement codeBlock = declaration.getParent();
     if (!(codeBlock instanceof PsiCodeBlock)) return false;
 
-    final PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) return false;
-    final PsiClass aClass = ((PsiClassType)type).resolve();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
-    if (!InheritanceUtil.isInheritorOrSelf(aClass, autoCloseable, true)) return false;
-
-    return true;
+    return InheritanceUtil.isInheritor(variable.getType(), CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
       return;
     }
@@ -92,10 +84,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
     List<PsiElement> toFormat = null;
     if (last != null) {
-      final PsiElement first = armStatement.getNextSibling();
-      if (first != null) {
-        toFormat = moveStatements(first, last, armStatement);
-      }
+      toFormat = moveStatements(last, armStatement);
     }
 
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
@@ -117,14 +106,19 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static List<PsiElement> moveStatements(@NotNull PsiElement first, PsiElement last, PsiTryStatement statement) {
+  private static List<PsiElement> moveStatements(PsiElement last, PsiTryStatement statement) {
     PsiCodeBlock tryBlock = statement.getTryBlock();
     assert tryBlock != null : statement.getText();
     PsiElement parent = statement.getParent();
 
     List<PsiElement> toFormat = new SmartList<PsiElement>();
     PsiElement stopAt = last.getNextSibling();
-    for (PsiElement child = first; child != null && child != stopAt; child = child.getNextSibling()) {
+
+    PsiElement i = statement.getNextSibling();
+    while (i != null && i != stopAt) {
+      PsiElement child = i;
+      i = PsiTreeUtil.skipSiblingsForward(i, PsiWhiteSpace.class, PsiComment.class);
+
       if (!(child instanceof PsiDeclarationStatement)) continue;
 
       PsiElement anchor = child;
@@ -134,8 +128,8 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
         final int endOffset = last.getTextRange().getEndOffset();
         boolean contained = ReferencesSearch.search(declared, new LocalSearchScope(parent)).forEach(new Processor<PsiReference>() {
           @Override
-          public boolean process(PsiReference reference) {
-            return reference.getElement().getTextOffset() <= endOffset;
+          public boolean process(PsiReference ref) {
+            return ref.getElement().getTextOffset() <= endOffset;
           }
         });
 
@@ -148,9 +142,10 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
           toFormat.add(parent.addBefore(factory.createVariableDeclarationStatement(name, var.getType(), null), statement));
 
           PsiExpression varInit = var.getInitializer();
-          assert varInit != null : child.getText();
-          String varAssignText = name + " = " + varInit.getText() + ";";
-          anchor = parent.addAfter(factory.createStatementFromText(varAssignText, parent), anchor);
+          if (varInit != null) {
+            String varAssignText = name + " = " + varInit.getText() + ";";
+            anchor = parent.addAfter(factory.createStatementFromText(varAssignText, parent), anchor);
+          }
 
           var.delete();
         }
@@ -161,6 +156,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       }
     }
 
+    PsiElement first = statement.getNextSibling();
     tryBlock.addRangeBefore(first, last, tryBlock.getRBrace());
     parent.deleteChildRange(first, last);
 

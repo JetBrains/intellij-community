@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
@@ -124,7 +125,7 @@ public class FSRecords implements Forceable {
     w = lock.writeLock();
   }
 
-  static void writeAttributesToRecord(int id, int parentId, FileAttributes attributes, String name) {
+  static void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
     w.lock();
     try {
       setName(id, name);
@@ -1053,6 +1054,35 @@ public class FSRecords implements Forceable {
     }
   }
 
+  // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
+  @NotNull
+  public static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
+    TIntArrayList result = new TIntArrayList(10);
+    r.lock();
+    try {
+      int parentId;
+      do {
+        result.add(id);
+        if (idCache.containsKey(id)) {
+          break;
+        }
+        parentId = getRecordInt(id, PARENT_OFFSET);
+        if (parentId == id || result.size() % 128 == 0 && result.contains(parentId)) {
+          LOG.error("Cyclic parent child relations in the database. id = " + parentId);
+          return result;
+        }
+        id = parentId;
+      } while (parentId != 0);
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+    finally {
+      r.unlock();
+    }
+    return result;
+  }
+
   public static void setParent(int id, int parent) {
     if (id == parent) {
       LOG.error("Cyclic parent/child relations");
@@ -1137,7 +1167,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static void setName(int id, String name) {
+  public static void setName(int id, @NotNull String name) {
     w.lock();
     try {
       incModCount(id);
@@ -1311,28 +1341,26 @@ public class FSRecords implements Forceable {
   @Nullable
   public static DataInputStream readAttributeWithLock(int fileId, FileAttribute att) {
     try {
-      synchronized (att.getId()) {
-        r.lock();
-        try {
-          DataInputStream stream = readAttribute(fileId, att);
-          if (stream != null && att.isVersioned()) {
-            try {
-              int actualVersion = DataInputOutputUtil.readINT(stream);
-              if (actualVersion != att.getVersion()) {
-                stream.close();
-                return null;
-              }
-            }
-            catch (IOException e) {
+      r.lock();
+      try {
+        DataInputStream stream = readAttribute(fileId, att);
+        if (stream != null && att.isVersioned()) {
+          try {
+            int actualVersion = DataInputOutputUtil.readINT(stream);
+            if (actualVersion != att.getVersion()) {
               stream.close();
               return null;
             }
           }
-          return stream;
+          catch (IOException e) {
+            stream.close();
+            return null;
+          }
         }
-        finally {
-          r.unlock();
-        }
+        return stream;
+      }
+      finally {
+        r.unlock();
       }
     }
     catch (Throwable e) {
@@ -1738,34 +1766,29 @@ public class FSRecords implements Forceable {
       super.close();
 
       try {
-        synchronized (myAttribute.getId()) {
-          final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
-          if (inlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
-            w.lock();
-            try {
+        if (inlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
+          w.lock();
+          try {
 
-              rewriteDirectoryRecordWithAttrContent(_out);
-              incModCount(myFileId);
+            rewriteDirectoryRecordWithAttrContent(_out);
+            incModCount(myFileId);
 
-              return;
-            }
-            finally {
-              w.unlock();
-            }
-          } else {
-            int page;
-            w.lock();
-            try {
-              incModCount(myFileId);
+            return;
+          }
+          finally {
+            w.unlock();
+          }
+        } else {
+          int page;
+          w.lock();
+          try {
+            incModCount(myFileId);
+            page = findAttributePage(myFileId, myAttribute, true);
+            if (inlineAttributes && page < 0) {
+              rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
               page = findAttributePage(myFileId, myAttribute, true);
-              if (inlineAttributes && page < 0) {
-                rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
-                page = findAttributePage(myFileId, myAttribute, true);
-              }
-            }
-            finally {
-              w.unlock();
             }
 
             if (bulkAttrReadSupport) {
@@ -1780,6 +1803,9 @@ public class FSRecords implements Forceable {
               getAttributesStorage()
                 .writeBytes(page, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
             }
+          }
+          finally {
+            w.unlock();
           }
         }
       }

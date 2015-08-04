@@ -12,6 +12,6 @@ abstract class PertinentToApplicabilityOfExplicitlyTypedLambdaTest {
   abstract void foo(B b);
 
   {
-    foo<error descr="Cannot resolve method 'foo(<lambda expression>)'">(x -> y -> 42)</error>;
+    <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>(x -> y -> 42);
   }
 }

@@ -226,11 +226,9 @@ public class JBEditorTabs extends JBTabsImpl {
     }
 
     getPainter().doPaintBackground(g2d, clip, vertical, afterTabs);
-    if (isSingleRow()) {
-      g2d.setPaint(getEmptySpaceColor());
-      g2d.fill(beforeTabs);
-      g2d.fill(afterTabs);
-    }
+    g2d.setPaint(getEmptySpaceColor());
+    g2d.fill(beforeTabs);
+    g2d.fill(afterTabs);
   }
 
   protected Color getEmptySpaceColor() {

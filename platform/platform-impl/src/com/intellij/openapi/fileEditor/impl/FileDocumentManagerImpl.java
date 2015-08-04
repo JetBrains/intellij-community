@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.extensions.Extensions;
@@ -84,17 +83,17 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.List;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener,
-                                                                            ProjectManagerListener, SafeWriteRequestor {
+public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, ProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
-  private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
+
+  private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
-  private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
+  private final DocumentCacheStrategy myDocumentCacheStrategy;
 
   private final MessageBus myBus;
 
@@ -105,6 +104,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private boolean myOnClose = false;
 
   public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
+    myDocumentCacheStrategy = createDocumentCacheStrategy();
+
     virtualFileManager.addVirtualFileListener(this);
     projectManager.addProjectManagerListener(this);
 
@@ -187,7 +188,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         if (file instanceof LightVirtualFile) {
           registerDocument(document, file);
         } else {
-          myDocuments.put(file, document);
+          myDocumentCacheStrategy.putDocument(file, document);
           document.putUserData(FILE_KEY, file);
         }
 
@@ -234,11 +235,41 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, false);
   }
 
+
+  protected interface DocumentCacheStrategy {
+    @Nullable Document getDocument (@NotNull VirtualFile file);
+    void putDocument (@NotNull VirtualFile file, @NotNull Document document);
+    void invalidateDocument (@NotNull VirtualFile file);
+  }
+
+  @NotNull
+  protected DocumentCacheStrategy createDocumentCacheStrategy() {
+    return new DocumentCacheStrategy() {
+      private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
+
+      @Nullable
+      @Override
+      public Document getDocument(@NotNull VirtualFile file) {
+        return myDocuments.get(file);
+      }
+
+      @Override
+      public void putDocument(@NotNull VirtualFile file, @NotNull Document document) {
+        myDocuments.put(file, document);
+      }
+
+      @Override
+      public void invalidateDocument(@NotNull VirtualFile file) {
+        myDocuments.remove(file);
+      }
+    };
+  }
+
   @Override
   @Nullable
   public Document getCachedDocument(@NotNull VirtualFile file) {
     Document hard = file.getUserData(HARD_REF_TO_DOCUMENT_KEY);
-    return hard != null ? hard : myDocuments.get(file);
+    return hard != null ? hard : myDocumentCacheStrategy.getDocument(file);
   }
 
   public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
@@ -352,18 +383,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   @Override
   public void saveDocumentAsIs(@NotNull Document document) {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-
-    String trailer = editorSettings.getStripTrailingSpaces();
-    boolean ensureEOLonEOF = editorSettings.isEnsureNewLineAtEOF();
-    editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    editorSettings.setEnsureNewLineAtEOF(false);
+    VirtualFile file = getFile(document);
+    boolean spaceStrippingEnabled = true;
+    if (file != null) {
+      spaceStrippingEnabled = TrailingSpacesStripper.isEnabled(file);
+      TrailingSpacesStripper.setEnabled(file, false);
+    }
     try {
       saveDocument(document);
     }
     finally {
-      editorSettings.setStripTrailingSpaces(trailer);
-      editorSettings.setEnsureNewLineAtEOF(ensureEOLonEOF);
+      if (file != null) {
+        TrailingSpacesStripper.setEnabled(file, spaceStrippingEnabled);
+      }
     }
   }
 
@@ -567,7 +599,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   private void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
-    myDocuments.remove(file);
+    myDocumentCacheStrategy.invalidateDocument(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
   }
@@ -825,7 +857,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      IOException ioException = failures.isEmpty() ? null : failures.values().iterator().next();
+      IOException ioException = ContainerUtil.getFirstItem(failures.values());
       if (ioException != null) {
         throw new RuntimeException(ioException);
       }

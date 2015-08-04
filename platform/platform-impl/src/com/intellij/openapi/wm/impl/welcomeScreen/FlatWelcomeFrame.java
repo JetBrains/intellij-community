@@ -24,6 +24,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -46,10 +47,9 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +64,6 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -83,6 +81,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       public void addNotify() {
         super.addNotify();
         rootPane.remove(getProxyComponent());
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            JBProtocolCommand.handleCurrentCommand();
+          }
+        });
       }
     };
 
@@ -112,7 +116,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
     });
 
-    myBalloonLayout = new BalloonLayoutImpl(rootPane, new JBInsets(8, 8, 8, 8));
+    myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
@@ -236,18 +240,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       AnAction register = ActionManager.getInstance().getAction("Register");
       boolean registeredVisible = false;
       if (register != null) {
-        Presentation presentation = register.getTemplatePresentation();
-        register.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
-                                          ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+        AnActionEvent e =
+          AnActionEvent.createFromAnAction(register, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
+        register.update(e);
+        Presentation presentation = e.getPresentation();
         if (presentation.isEnabled()) {
           ActionLink registerLink = new ActionLink("Register", register);
           registerLink.setNormalColor(getLinkNormalColor());
           NonOpaquePanel button = new NonOpaquePanel(new BorderLayout());
-          button.setBorder(JBUI.Borders.empty(4, 10, 4, 10));
+          button.setBorder(JBUI.Borders.empty(4, 10));
           button.add(registerLink);
           installFocusable(button, register, KeyEvent.VK_UP, KeyEvent.VK_RIGHT, true);
           NonOpaquePanel wrap = new NonOpaquePanel();
-          wrap.setBorder(JBUI.Borders.empty(0, 10, 0, 0));
+          wrap.setBorder(JBUI.Borders.emptyLeft(10));
           wrap.add(button);
           panel.add(wrap, BorderLayout.WEST);
           registeredVisible = true;
@@ -291,7 +296,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createActionPanel() {
       JPanel actions = new NonOpaquePanel();
-      actions.setBorder(JBUI.Borders.empty(0, 10, 0, 0));
+      actions.setBorder(JBUI.Borders.emptyLeft(10));
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -301,13 +306,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       for (AnAction action : group.getChildren(null)) {
         JPanel button = new JPanel(new BorderLayout());
         button.setOpaque(false);
-        button.setBorder(JBUI.Borders.empty(8, 20, 8, 20));
-        Presentation presentation = action.getTemplatePresentation();
-        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
-                                        ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+        button.setBorder(JBUI.Borders.empty(8, 20));
+        AnActionEvent e =
+          AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
+        action.update(e);
+        Presentation presentation = e.getPresentation();
         if (presentation.isVisible()) {
           String text = presentation.getText();
-          if (text.endsWith("...")) {
+          if (text != null && text.endsWith("...")) {
             text = text.substring(0, text.length() - 3);
           }
           Icon icon = presentation.getIcon();
@@ -412,7 +418,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
       panel.add(appName);
       panel.add(version, BorderLayout.SOUTH);
-      panel.setBorder(JBUI.Borders.empty(0, 0, 20, 0));
+      panel.setBorder(JBUI.Borders.emptyBottom(20));
       return panel;
     }
 
@@ -443,7 +449,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
       panel.setBackground(getProjectsBackground());
-      panel.setBorder(new CustomLineBorder(getSeparatorColor(), JBUI.insets(0, 0, 0, 1)));
+      panel.setBorder(new CustomLineBorder(getSeparatorColor(), JBUI.insetsRight(1)));
       return panel;
     }
 
@@ -462,12 +468,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
                 event = new MouseEvent(link, MouseEvent.MOUSE_CLICKED, e.getWhen(), e.getModifiers(), 0, 0, 1, false, MouseEvent.BUTTON1);
               }
             }
-            action.actionPerformed(new AnActionEvent(event,
-                                                     DataManager.getInstance().getDataContext(),
-                                                     ActionPlaces.WELCOME_SCREEN,
-                                                     action.getTemplatePresentation().clone(),
-                                                     ActionManager.getInstance(),
-                                                     0));
+            action.actionPerformed(AnActionEvent.createFromAnAction(action, event, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext()));
           } else if (e.getKeyCode() == prevKeyCode) {
             focusPrev(comp);
           } else if (e.getKeyCode() == nextKeyCode) {
@@ -605,8 +606,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        final MouseEvent newEvent = new MouseEvent(link, e.getID(), e.getWhen(), e.getModifiers(), e.getX(), e.getY(), e.getClickCount(),
-                                                   e.isPopupTrigger(), e.getButton());
+        final MouseEvent newEvent = MouseEventAdapter.convert(e, link, e.getX(), e.getY());
         link.doClick(newEvent);
         return true;
       }
@@ -666,10 +666,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     list.setBackground(getProjectsBackground());
     list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
       final JLabel label = new JLabel();
-      Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
 
       {
-        label.setBorder(JBUI.Borders.empty(3, 7, 3, 7));
+        label.setBorder(JBUI.Borders.empty(3, 7));
       }
 
       @NotNull
@@ -677,14 +676,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       public JComponent fun(AnAction action) {
         label.setText(action.getTemplatePresentation().getText());
         Icon icon = action.getTemplatePresentation().getIcon();
-        if (icon.getIconHeight() == 32) {
-          Icon scaledIcon = scaled.get(icon);
-          if (scaledIcon == null) {
-            scaledIcon = IconUtil.scale(icon, 0.5);
-            scaled.put(icon, scaledIcon);
-          }
-          icon = scaledIcon;
-        }
         label.setIcon(icon);
         return label;
       }
@@ -712,13 +703,18 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+          // Update when a change has been finalized.
+          // For instance, selecting an element with mouse fires two consecutive ListSelectionEvent events.
+          return;
+        }
         if (!selected.isNull()) {
           main.remove(selected.get());
         }
         Object value = list.getSelectedValue();
         if (value instanceof AbstractActionWithPanel) {
           JPanel panel = ((AbstractActionWithPanel)value).createPanel();
-          panel.setBorder(JBUI.Borders.empty(7, 10, 7, 10));
+          panel.setBorder(JBUI.Borders.empty(7, 10));
           selected.set(panel);
           main.add(selected.get());
 

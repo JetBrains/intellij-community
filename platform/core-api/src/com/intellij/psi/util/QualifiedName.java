@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class QualifiedName {
+public class QualifiedName implements Comparable<QualifiedName> {
   @NotNull private final List<String> myComponents;
 
   private QualifiedName(int count) {
@@ -204,5 +204,10 @@ public class QualifiedName {
 
   public QualifiedName subQualifiedName(int fromIndex, int toIndex) {
     return fromComponents(myComponents.subList(fromIndex, toIndex));
+  }
+
+  @Override
+  public int compareTo(@NotNull QualifiedName other) {
+    return toString().compareTo(other.toString());
   }
 }

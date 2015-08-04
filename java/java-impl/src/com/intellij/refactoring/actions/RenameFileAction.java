@@ -43,7 +43,9 @@ public class RenameFileAction extends AnAction implements DumbAware {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
     String place = e.getPlace();
-    boolean enabled = (file instanceof PsiClassOwner || ActionPlaces.EDITOR_TAB_POPUP.equals(place)) && place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
+    boolean enabled = file != null && 
+                      (file instanceof PsiClassOwner || ActionPlaces.EDITOR_TAB_POPUP.equals(place)) && 
+                      place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled);
     if (enabled) {

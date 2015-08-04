@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -28,16 +25,13 @@ import java.io.File;
  */
 @State(
   name = "TerminalOptionsProvider",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/terminal.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/terminal.xml")
 )
-public class TerminalOptionsProvider implements PersistentStateComponent<TerminalOptionsProvider.State>, ExportableApplicationComponent {
+public class TerminalOptionsProvider implements PersistentStateComponent<TerminalOptionsProvider.State> {
   private State myState = new State();
 
   public static TerminalOptionsProvider getInstance() {
-    return ApplicationManager.getApplication().getComponent(TerminalOptionsProvider.class);
+    return ServiceManager.getService(TerminalOptionsProvider.class);
   }
 
   @Override
@@ -145,32 +139,6 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
 
   public void setPasteOnMiddleMouseButton(boolean pasteOnMiddleMouseButton) {
     myState.myPasteOnMiddleMouseButton = pasteOnMiddleMouseButton;
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{new File(PathManager.getOptionsPath() + File.separatorChar + "terminal.xml")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "TerminalOptions";
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "TerminalOptionsProvider";
   }
 }
 

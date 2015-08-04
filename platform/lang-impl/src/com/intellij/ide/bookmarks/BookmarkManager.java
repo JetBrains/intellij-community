@@ -17,6 +17,8 @@
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -64,6 +66,8 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   private final MessageBus myBus;
 
+  private boolean mySortedState;
+
   public static BookmarkManager getInstance(Project project) {
     return project.getComponent(BookmarkManager.class);
   }
@@ -107,6 +111,21 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
       }
     });
+    mySortedState  = UISettings.getInstance().SORT_BOOKMARKS;
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
+          mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
+          EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged();
+            }
+          });
+        }
+      }
+    }, project);
   }
 
   public void editDescription(@NotNull Bookmark bookmark) {
@@ -183,6 +202,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     List<Bookmark> answer = new ArrayList<Bookmark>();
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.isValid()) answer.add(bookmark);
+    }
+    if (UISettings.getInstance().SORT_BOOKMARKS) {
+      Collections.sort(answer);
     }
     return answer;
   }

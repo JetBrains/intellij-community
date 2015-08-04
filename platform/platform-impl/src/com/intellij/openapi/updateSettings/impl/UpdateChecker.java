@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,7 +46,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,8 +68,8 @@ public final class UpdateChecker {
   public static final NotificationGroup NOTIFICATIONS =
     new NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true);
 
-  @NonNls private static final String INSTALLATION_UID = "installation.uid";
-  @NonNls private static final String DISABLED_UPDATE = "disabled_update.txt";
+  private static final String INSTALLATION_UID = "installation.uid";
+  private static final String DISABLED_UPDATE = "disabled_update.txt";
 
   private static Set<String> ourDisabledToUpdatePlugins;
   private static final Map<String, String> ourAdditionalRequestOptions = ContainerUtil.newHashMap();
@@ -208,7 +208,7 @@ public final class UpdateChecker {
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
         prepareUpdateCheckArgs(uriBuilder);
       }
-      String updateUrl = uriBuilder.toString();
+      String updateUrl = uriBuilder.build().toString();
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
       info = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
@@ -386,7 +386,16 @@ public final class UpdateChecker {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          new NewChannelDialog(channelToPropose).show();
+          NewChannelDialog dialog = new NewChannelDialog(channelToPropose);
+          dialog.show();
+          // once we informed that new product is available (when new channel was detected), remember the fact
+          if(dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE &&
+             checkForUpdateResult.getState() == UpdateStrategy.State.LOADED &&
+             !updateSettings.getKnownChannelsIds().contains(channelToPropose.getId())) {
+            List<String> newIds =  new ArrayList<String>(updateSettings.getKnownChannelsIds());
+            newIds.add(channelToPropose.getId());
+            updateSettings.setKnownChannelIds(newIds);
+          }
         }
       };
 

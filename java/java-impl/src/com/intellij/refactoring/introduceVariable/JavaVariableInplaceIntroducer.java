@@ -109,6 +109,10 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       }
     }
     super.beforeTemplateStart();
+  }
+
+  @Override
+  protected void onRenameTemplateStarted() {
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
     myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
   }
@@ -242,7 +246,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         public void actionPerformed(ActionEvent e) {
           new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
               final PsiVariable variable = getVariable();
               if (variable != null) {
@@ -284,7 +288,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         LOG.assertTrue(expression.isValid(), expression.getText());
         stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
       }
-    } else if (getExpr() != null && !myReplaceSelf) {
+    } else if (getExpr() != null && !myReplaceSelf && getExpr().getParent() != getVariable()) {
       final PsiExpression expr = getExpr();
       LOG.assertTrue(expr.isValid(), expr.getText());
       stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
@@ -293,8 +297,11 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   @Override
   protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-    if (!isReplaceAllOccurrences() && getExpr() == null && !myReplaceSelf) {
-      return;
+    if (!isReplaceAllOccurrences()) {
+      final PsiExpression expr = getExpr();
+      if (expr == null && !myReplaceSelf || expr != null && expr.getParent() == getVariable()) {
+        return;
+      }
     }
     super.addReferenceAtCaret(refs);
   }

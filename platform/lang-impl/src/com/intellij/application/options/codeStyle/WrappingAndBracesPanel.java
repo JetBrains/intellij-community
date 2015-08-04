@@ -61,6 +61,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   @Override
   protected void initTables() {
     addOption("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), null, 0, 999, -1, ApplicationBundle.message("settings.code.style.default.general"));
+    addOption("WRAP_ON_TYPING", ApplicationBundle.message("wrapping.wrap.on.typing"), null, WRAP_ON_TYPING_OPTIONS, WRAP_ON_TYPING_VALUES);
     
     addOption("KEEP_LINE_BREAKS", ApplicationBundle.message("wrapping.keep.line.breaks"), WRAPPING_KEEP);
     addOption("KEEP_FIRST_COLUMN_COMMENT", ApplicationBundle.message("wrapping.keep.comment.at.first.column"), WRAPPING_KEEP);

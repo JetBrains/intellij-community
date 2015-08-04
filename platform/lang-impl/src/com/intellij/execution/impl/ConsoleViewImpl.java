@@ -65,7 +65,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorNotificationPanel;
@@ -346,12 +345,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       @Override
       public void exitDumbMode() {
-        if (myEditor == null) return;
-        DocumentEx document = myEditor.getDocument();
-        if (myLastStamp != document.getModificationStamp()) {
-          clearHyperlinkAndFoldings();
-          highlightHyperlinksAndFoldings(document.createRangeMarker(0, 0));
-        }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (myEditor == null || project.isDisposed() || DumbService.getInstance(project).isDumb()) return;
+            
+            DocumentEx document = myEditor.getDocument();
+            if (myLastStamp != document.getModificationStamp()) {
+              clearHyperlinkAndFoldings();
+              highlightHyperlinksAndFoldings(document.createRangeMarker(0, 0));
+            }
+          }
+        });
       }
     });
 
@@ -1012,7 +1017,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     lastProcessedOutput.dispose();
     int endLine = myEditor.getDocument().getLineCount() - 1;
     ApplicationManager.getApplication().assertIsDispatchThread();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
     if (canHighlightHyperlinks) {
       myHyperlinks.highlightHyperlinks(myFilters, line1, endLine);
     }

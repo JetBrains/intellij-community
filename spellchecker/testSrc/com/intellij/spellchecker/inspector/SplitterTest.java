@@ -227,7 +227,7 @@ public class SplitterTest {
 
   @Test
   public void testSpecial() {
-    String text = "test &nbsp; test";
+    String text = "test &nbsp; test &sup; &gt;";
     correctListToCheck(PlainTextSplitter.getInstance(), text, "test", "test");
   }
 

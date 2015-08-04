@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,11 +55,11 @@ public class PySplitIfIntention extends BaseIntentionAction {
     final IElementType elementType = elementAtOffset.getNode().getElementType();
     if (elementType == PyTokenTypes.COLON) {
       elementAtOffset = elementAtOffset.getPrevSibling();
-      elementAtOffset = PyUtil.getFirstNonCommentBefore(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getPrevNonCommentSibling(elementAtOffset, false);
     }
     else if (elementType == PyTokenTypes.IF_KEYWORD) {
       elementAtOffset = elementAtOffset.getNextSibling();
-      elementAtOffset = PyUtil.getFirstNonCommentAfter(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getNextNonCommentSibling(elementAtOffset, false);
     }
 
     PsiElement element = PsiTreeUtil.getParentOfType(elementAtOffset, PyBinaryExpression.class, false);
@@ -87,11 +88,11 @@ public class PySplitIfIntention extends BaseIntentionAction {
     final IElementType elementType = elementAtOffset.getNode().getElementType();
     if (elementType == PyTokenTypes.COLON) {
       elementAtOffset = elementAtOffset.getPrevSibling();
-      elementAtOffset = PyUtil.getFirstNonCommentBefore(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getPrevNonCommentSibling(elementAtOffset, false);
     }
     else if (elementType == PyTokenTypes.IF_KEYWORD) {
       elementAtOffset = elementAtOffset.getNextSibling();
-      elementAtOffset = PyUtil.getFirstNonCommentAfter(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getNextNonCommentSibling(elementAtOffset, false);
     }
 
     PyBinaryExpression element = PsiTreeUtil.getParentOfType(elementAtOffset, PyBinaryExpression.class, false);

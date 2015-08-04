@@ -62,6 +62,7 @@ import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -71,7 +72,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class LineBreakpoint extends BreakpointWithHighlighter {
+public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
@@ -210,19 +211,33 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       @Override
       public Boolean compute() {
         if (getProperties() instanceof JavaLineBreakpointProperties) {
-          Integer offset = ((JavaLineBreakpointProperties)getProperties()).getOffset();
-          if (offset == null) return true;
-          PsiFile file = getPsiFile();
-          if (file != null) {
-            SourcePosition exactPosition = SourcePosition.createFromOffset(file, offset);
-            SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
-            if (position == null) return false;
-            return DebuggerUtilsEx.inTheSameMethod(exactPosition, position);
-          }
+          Integer ordinal = ((JavaLineBreakpointProperties)getProperties()).getLambdaOrdinal();
+          if (ordinal == null) return true;
+          PsiElement containingMethod = getContainingMethod();
+          if (containingMethod == null) return false;
+          SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+          if (position == null) return false;
+          return DebuggerUtilsEx.inTheMethod(position, containingMethod);
         }
         return true;
       }
     });
+  }
+
+  @Nullable
+  public PsiElement getContainingMethod() {
+    SourcePosition position = getSourcePosition();
+    if (position == null) return null;
+    if (getProperties() instanceof JavaLineBreakpointProperties) {
+      Integer ordinal = ((JavaLineBreakpointProperties)getProperties()).getLambdaOrdinal();
+      if (ordinal > -1) {
+        List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(position, true);
+        if (ordinal < lambdas.size()) {
+          return lambdas.get(ordinal);
+        }
+      }
+    }
+    return DebuggerUtilsEx.getContainingMethod(position);
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {

@@ -15,12 +15,14 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
+    <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="diff-api" />
+    <orderEntry type="module" module-name="jps-builders" />
   </component>
   <component name="copyright">
     <Base>

@@ -34,6 +34,7 @@ import java.nio.charset.Charset;
 public class LightVirtualFile extends LightVirtualFileBase {
   private CharSequence myContent = "";
   private Language myLanguage;
+  private boolean myReadOnly;
 
   public LightVirtualFile() {
     this("");
@@ -127,6 +128,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   private void setContent(@NotNull CharSequence content) {
+    assert !myReadOnly;
     //StringUtil.assertValidSeparators(content);
     myContent = content;
   }
@@ -134,6 +136,11 @@ public class LightVirtualFile extends LightVirtualFileBase {
   @NotNull
   public CharSequence getContent() {
     return myContent;
+  }
+
+  public void markReadOnly() {
+    setWritable(false);
+    myReadOnly = true;
   }
 
   @Override

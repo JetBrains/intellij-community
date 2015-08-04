@@ -79,6 +79,9 @@
           <option name="FONT_TYPE" value="2"/>
         </value>
       </option>
+      <option name="DEFAULT_COMMA">
+        <value/>
+      </option>
       <option name="DEFAULT_CONSTANT">
         <value>
           <option name="FOREGROUND" value="660e7a"/>
@@ -106,6 +109,9 @@
         <value>
           <option name="FOREGROUND" value="808000" />
         </value>
+      </option>
+      <option name="DEFAULT_SEMICOLON">
+        <value/>
       </option>
       <option name="DEFAULT_STRING">
         <value>
@@ -1190,6 +1196,14 @@
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
+      <option name="BLINKING_HIGHLIGHTS_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR" value="808080"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
       <option name="BAD_CHARACTER">
         <value>
           <option name="EFFECT_COLOR" value="ff0000" />
@@ -1278,7 +1292,7 @@
       </option>
       <option name="CONSOLE_BLACK_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="000000" />
+          <option name="FOREGROUND" value="ffffff" />
         </value>
       </option>
       <option name="CONSOLE_BLUE_OUTPUT">
@@ -1293,7 +1307,7 @@
       </option>
       <option name="CONSOLE_CYAN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="33CCCC" />
+          <option name="FOREGROUND" value="299999" />
         </value>
       </option>
       <option name="CONSOLE_CYAN_BRIGHT_OUTPUT">
@@ -1318,17 +1332,17 @@
       </option>
       <option name="CONSOLE_GREEN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="007F00" />
+          <option name="FOREGROUND" value="a8c023" />
         </value>
       </option>
       <option name="CONSOLE_GREEN_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="70FF70" />
+          <option name="FOREGROUND" value="a8c023" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FF70FF"/>
+          <option name="FOREGROUND" value="ae8abe" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_BRIGHT_OUTPUT">
@@ -1369,12 +1383,12 @@
       </option>
       <option name="CONSOLE_WHITE_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="BBBBBB" />
+          <option name="FOREGROUND" value="1f1f1f" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="CDCD00" />
+          <option name="FOREGROUND" value="d6bf55" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_BRIGHT_OUTPUT">
@@ -1564,7 +1578,7 @@
       </option>
       <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR">
       <value>
-        <option name="BACKGROUND" value="303232" />
+        <option name="BACKGROUND" value="232525" />
       </value>
     </option>
       <option name="DEFAULT_IDENTIFIER">

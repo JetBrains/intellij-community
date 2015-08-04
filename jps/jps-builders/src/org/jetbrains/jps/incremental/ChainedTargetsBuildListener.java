@@ -47,7 +47,7 @@ class ChainedTargetsBuildListener implements BuildListener {
       Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, myContext);
       for (BuildRootDescriptor descriptor : descriptors) {
         try {
-          fsState.markDirty(myContext, file, descriptor, myContext.getProjectDescriptor().timestamps.getStorage(), false);
+          fsState.markDirty(myContext, file, descriptor, myContext.getProjectDescriptor().timestamps.getStorage());
         }
         catch (IOException ignored) {
         }

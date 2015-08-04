@@ -39,6 +39,11 @@ public enum Side {
     return isLeft ? LEFT : RIGHT;
   }
 
+  @NotNull
+  public static Side fromRight(boolean isRight) {
+    return isRight ? RIGHT : LEFT;
+  }
+
   public int getIndex() {
     return myIndex;
   }

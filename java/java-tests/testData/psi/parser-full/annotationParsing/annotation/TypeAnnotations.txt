@@ -191,7 +191,7 @@ PsiJavaFile:TypeAnnotations.java
         PsiTypeParameter:F
           PsiIdentifier:F('F')
           PsiWhiteSpace(' ')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             PsiKeyword:extends('extends')
             PsiWhiteSpace(' ')
             PsiJavaCodeReferenceElement:@Existing File
@@ -259,7 +259,7 @@ PsiJavaFile:TypeAnnotations.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:T
           PsiIdentifier:T('T')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiReferenceList
@@ -1067,7 +1067,7 @@ PsiJavaFile:TypeAnnotations.java
           PsiJavaToken:LT('<')
           PsiTypeParameter:T
             PsiIdentifier:T('T')
-            PsiElement(EXTENDS_BOUND_LIST)
+            PsiReferenceList
               <empty list>
           PsiJavaToken:GT('>')
         PsiWhiteSpace(' ')
@@ -1107,7 +1107,7 @@ PsiJavaFile:TypeAnnotations.java
           PsiJavaToken:LT('<')
           PsiTypeParameter:T
             PsiIdentifier:T('T')
-            PsiElement(EXTENDS_BOUND_LIST)
+            PsiReferenceList
               <empty list>
           PsiJavaToken:GT('>')
         PsiWhiteSpace(' ')
@@ -1591,7 +1591,7 @@ PsiJavaFile:TypeAnnotations.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:T
           PsiIdentifier:T('T')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiWhiteSpace(' ')
@@ -1659,7 +1659,7 @@ PsiJavaFile:TypeAnnotations.java
               <empty list>
           PsiWhiteSpace(' ')
           PsiIdentifier:T('T')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiReferenceList
@@ -1690,7 +1690,7 @@ PsiJavaFile:TypeAnnotations.java
               <empty list>
           PsiWhiteSpace(' ')
           PsiIdentifier:E('E')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiReferenceList

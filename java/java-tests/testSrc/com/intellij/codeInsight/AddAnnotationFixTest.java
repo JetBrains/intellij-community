@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -66,10 +65,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   private boolean myExpectedEventWasProduced = false;
   private boolean myUnexpectedEventWasProduced = false;
   private MessageBusConnection myBusConnection = null;
-
-  public AddAnnotationFixTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
 
   @Override
   public void setUp() throws Exception {
@@ -205,7 +200,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(expectedSequence);
     new WriteCommandAction(myProject){
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         fix.invoke(myProject, editor, file);
       }
     }.execute();
@@ -275,7 +270,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(container, AnnotationUtil.NOT_NULL, true);
     new WriteCommandAction(myProject){
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         ExternalAnnotationsManager.getInstance(myProject).deannotate(container, AnnotationUtil.NOT_NULL);
       }
     }.execute();
@@ -323,7 +318,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(method, AnnotationUtil.NULLABLE, true);
     new WriteCommandAction(myProject) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         manager.editExternalAnnotation(method, AnnotationUtil.NULLABLE, annotationFromText.getParameterList().getAttributes());
       }
     }.execute();
@@ -332,7 +327,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(parameter, AnnotationUtil.NOT_NULL, true);
     new WriteCommandAction(myProject) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         manager.editExternalAnnotation(parameter, AnnotationUtil.NOT_NULL, annotationFromText.getParameterList().getAttributes());
       }
     }.execute();
@@ -354,7 +349,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(method, AnnotationUtil.NOT_NULL, false);
     new WriteCommandAction(myProject){
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         ExternalAnnotationsManager.getInstance(myProject).annotateExternally(method, AnnotationUtil.NOT_NULL, myFixture.getFile(), null);
       }
     }.execute();
@@ -363,7 +358,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(method, AnnotationUtil.NOT_NULL, false);
     new WriteCommandAction(myProject){
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         ExternalAnnotationsManager.getInstance(myProject).editExternalAnnotation(method, AnnotationUtil.NOT_NULL, null);
       }
     }.execute();
@@ -372,7 +367,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(method, AnnotationUtil.NOT_NULL, false);
     new WriteCommandAction(myProject){
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         ExternalAnnotationsManager.getInstance(myProject).deannotate(method, AnnotationUtil.NOT_NULL);
       }
     }.execute();
@@ -389,7 +384,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListeningForExternalChanges();
     new WriteCommandAction(myProject){
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
         assert file != null;
         String newText = "  " + StreamUtil.readText(file.getInputStream()) + "      "; // adding newspace to the beginning and end of file

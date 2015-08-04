@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.lang.ContextAwareActionHandler;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -47,7 +49,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
+public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
 
   private final String myChooserTitle;
@@ -55,6 +57,16 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   public GenerateMembersHandlerBase(String chooserTitle) {
     myChooserTitle = chooserTitle;
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    final PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, false);
+    return aClass != null && hasMembers(aClass);
+  }
+
+  protected boolean hasMembers(@NotNull PsiClass aClass) {
+    return true;
   }
 
   @Override
@@ -193,7 +205,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
             public void run() {
               new WriteCommandAction(myProject) {
                 @Override
-                protected void run(Result result) throws Throwable {
+                protected void run(@NotNull Result result) throws Throwable {
                   runTemplates(myProject, editor, templates, index + 1);
                 }
               }.execute();

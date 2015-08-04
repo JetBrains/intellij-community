@@ -156,10 +156,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
+
     private final PtyProcess myProcess;
+    private final ProcessWaitFor myWaitFor;
 
     public PtyProcessHandler(PtyProcess process) {
       myProcess = process;
+      myWaitFor = new ProcessWaitFor(process, this);
     }
 
     @Override
@@ -168,7 +171,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         @Override
         public void startNotified(ProcessEvent event) {
           try {
-            ProcessWaitFor.attach(myProcess, new Consumer<Integer>() {
+            myWaitFor.setTerminationCallback(new Consumer<Integer>() {
               @Override
               public void consume(Integer integer) {
                 notifyProcessTerminated(integer);

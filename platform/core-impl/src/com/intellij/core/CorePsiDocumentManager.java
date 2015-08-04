@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.core;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.util.messages.MessageBus;
@@ -28,11 +27,10 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 class CorePsiDocumentManager extends PsiDocumentManagerBase {
-  public CorePsiDocumentManager(@NotNull Project project,
-                                @NotNull PsiManager psiManager,
-                                @NotNull SmartPointerManager smartPointerManager,
-                                @NotNull MessageBus bus,
-                                @NonNls @NotNull DocumentCommitProcessor documentCommitProcessor) {
-    super(project, psiManager, smartPointerManager, bus, documentCommitProcessor);
+  CorePsiDocumentManager(@NotNull Project project,
+                         @NotNull PsiManager psiManager,
+                         @NotNull MessageBus bus,
+                         @NonNls @NotNull DocumentCommitProcessor documentCommitProcessor) {
+    super(project, psiManager, bus, documentCommitProcessor);
   }
 }

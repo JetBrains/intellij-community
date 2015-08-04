@@ -95,19 +95,47 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * Kill the whole process tree.
+   * Kills the whole process tree asynchronously.
+   * As a potentially time-consuming operation, it's executed asynchronously on a pooled thread.
    *
    * @param process Process
-   * @return True if process tree has been successfully killed.
    */
-  protected boolean killProcessTree(@NotNull Process process) {
+  protected void killProcessTree(@NotNull final Process process) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      killProcessTreeSync(process);
+    }
+    else {
+      executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          killProcessTreeSync(process);
+        }
+      });
+    }
+  }
+
+  private void killProcessTreeSync(@NotNull Process process) {
     LOG.debug("killing process tree");
     final boolean destroyed = OSProcessManager.getInstance().killProcessTree(process);
     if (!destroyed) {
-      LOG.warn("Cannot kill process tree. Trying to destroy process using Java API. Cmdline:\n" + myCommandLine);
-      process.destroy();
+      if (isTerminated(process)) {
+        LOG.warn("Process has been already terminated: " + myCommandLine);
+      }
+      else {
+        LOG.warn("Cannot kill process tree. Trying to destroy process using Java API. Cmdline:\n" + myCommandLine);
+        process.destroy();
+      }
     }
-    return destroyed;
+  }
+
+  private static boolean isTerminated(@NotNull Process process) {
+    try {
+      process.exitValue();
+      return true;
+    }
+    catch (IllegalThreadStateException e) {
+      return false;
+    }
   }
 
   /**

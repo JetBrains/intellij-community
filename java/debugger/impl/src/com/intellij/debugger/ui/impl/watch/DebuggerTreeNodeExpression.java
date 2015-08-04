@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,20 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.SmartHashSet;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * User: lex
@@ -147,8 +152,10 @@ public class DebuggerTreeNodeExpression {
       return false;
     }
 
-  public static PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
+  @Nullable
+  public static PsiExpression substituteThis(@Nullable PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
+    if (expressionWithThis == null) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();
 
     PsiClass thisClass = PsiTreeUtil.getContextOfType(result, PsiClass.class, true);
@@ -174,7 +181,7 @@ public class DebuggerTreeNodeExpression {
     }
 
     if (castNeeded) {
-      howToEvaluateThis = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue, howToEvaluateThis.getContext());
+      howToEvaluateThis = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue);
     }
 
     ChangeContextUtil.encodeContextInfo(result, false);
@@ -188,15 +195,19 @@ public class DebuggerTreeNodeExpression {
     }
 
     try {
-      return JavaPsiFacade.getInstance(howToEvaluateThis.getProject()).getElementFactory()
+      PsiExpression res = JavaPsiFacade.getInstance(howToEvaluateThis.getProject()).getElementFactory()
         .createExpressionFromText(psiExpression.getText(), howToEvaluateThis.getContext());
+      res.putUserData(ADDITIONAL_IMPORTS_KEY, howToEvaluateThis.getUserData(ADDITIONAL_IMPORTS_KEY));
+      return res;
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(e.getMessage(), e);
     }
   }
 
-  public static PsiExpression castToRuntimeType(PsiExpression expression, Value value, PsiElement contextElement) throws EvaluateException {
+  public static final Key<Set<String>> ADDITIONAL_IMPORTS_KEY = Key.create("ADDITIONAL_IMPORTS");
+
+  public static PsiExpression castToRuntimeType(PsiExpression expression, Value value) throws EvaluateException {
     if (!(value instanceof ObjectReference)) {
       return expression;
     }
@@ -214,14 +225,21 @@ public class DebuggerTreeNodeExpression {
     }
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    String typeName = type.getQualifiedName();
     try {
       PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
-        "((" + type.getQualifiedName() + ")expression)", null);
+        "((" + typeName + ")expression)", null);
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
+      Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
+      if (imports == null) {
+        imports = new SmartHashSet<String>();
+      }
+      imports.add(typeName);
+      parenthExpression.putUserData(ADDITIONAL_IMPORTS_KEY, imports);
       return parenthExpression;
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", type.getQualifiedName()), e);
+      throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", typeName), e);
     }
   }
 

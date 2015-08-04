@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -38,6 +39,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -70,9 +73,15 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull private String myDefaultDirectoryName = "";
   @NotNull protected final Project myProject;
   @NotNull protected final String myVcsDirectoryName;
+  @Nullable private final String myDefaultRepoUrl;
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
+    this(project, displayName, vcsDirectoryName, null);
+  }
+
+  public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName, @Nullable String defaultUrl) {
     super(project, true);
+    myDefaultRepoUrl = defaultUrl;
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;
     init();
@@ -260,13 +269,17 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @NotNull
   private String getCurrentUrlText() {
-    return myRepositoryURL.getText().trim();
+    return FileUtil.expandUserHome(myRepositoryURL.getText().trim());
   }
 
   private void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
     final DvcsRememberedInputs rememberedInputs = getRememberedInputs();
-    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
+    List<String> urls = new ArrayList<String>(rememberedInputs.getVisitedUrls());
+    if (myDefaultRepoUrl != null) {
+      urls.add(0, myDefaultRepoUrl);
+    }
+    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(urls, String.class));
     myRepositoryURL.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {

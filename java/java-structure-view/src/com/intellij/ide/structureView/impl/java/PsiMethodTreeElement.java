@@ -19,6 +19,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -73,10 +74,13 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
   @Override
   public String getPresentableText() {
-    String method = PsiFormatUtil.formatMethod(getElement(),
+    final PsiMethod psiMethod = getElement();
+    if (psiMethod == null) return "";
+    final boolean dumb = DumbService.isDumb(psiMethod.getProject());
+    String method = PsiFormatUtil.formatMethod(psiMethod, 
                                                PsiSubstitutor.EMPTY,
-                                               SHOW_NAME | SHOW_TYPE | TYPE_AFTER | SHOW_PARAMETERS,
-                                               SHOW_TYPE);
+                                               SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS | (dumb ? 0 : SHOW_TYPE), 
+                                               dumb ? SHOW_NAME : SHOW_TYPE);
     return StringUtil.replace(method, ":", ": ");
   }
 
@@ -85,7 +89,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   public String getLocationString() {
     if (!Registry.is("show.method.base.class.in.java.file.structure")) return null;
     final PsiMethod method = getElement();
-    if (myLocation == null) {
+    if (myLocation == null && method != null && !DumbService.isDumb(method.getProject())) {
       if (isInherited()) {
         return super.getLocationString();
       } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaHighlightingLexer extends LayeredLexer {
   public JavaHighlightingLexer(@NotNull LanguageLevel languageLevel) {
     super(JavaParserDefinition.createLexer(languageLevel));
+
     registerSelfStoppingLayer(new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.STRING_LITERAL}, IElementType.EMPTY_ARRAY);
 
@@ -36,11 +37,9 @@ public class JavaHighlightingLexer extends LayeredLexer {
                               new IElementType[]{JavaTokenType.CHARACTER_LITERAL}, IElementType.EMPTY_ARRAY);
 
     LayeredLexer docLexer = new LayeredLexer(JavaParserDefinition.createDocLexer(languageLevel));
-
-    HtmlHighlightingLexer lexer = new HtmlHighlightingLexer(null);
-    lexer.setHasNoEmbeddments(true);
-    docLexer.registerLayer(lexer, JavaDocTokenType.DOC_COMMENT_DATA);
-
+    HtmlHighlightingLexer htmlLexer = new HtmlHighlightingLexer(null);
+    htmlLexer.setHasNoEmbeddments(true);
+    docLexer.registerLayer(htmlLexer, JavaDocTokenType.DOC_COMMENT_DATA);
     registerSelfStoppingLayer(docLexer, new IElementType[]{JavaDocElementType.DOC_COMMENT}, IElementType.EMPTY_ARRAY);
   }
 }

@@ -24,9 +24,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,10 +65,15 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     if (line >= doc.getLineCount()) {
       return Collections.emptyList(); // the document has been changed
     }
-    final int startOffset = doc.getLineStartOffset(line);
-    final TextRange lineRange = new TextRange(startOffset, doc.getLineEndOffset(line));
-    final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), startOffset, " \t");
-    PsiElement element = DebuggerUtilsEx.findElementAt(file, offset);
+    TextRange curLineRange = DocumentUtil.getLineTextRange(doc, line);
+    PsiElement element = position.getElementAt();
+    PsiElement method = getBody(DebuggerUtilsEx.getContainingMethod(element));
+    final TextRange lineRange = (method != null) ? curLineRange.intersection(method.getTextRange()) : curLineRange;
+
+    if (lineRange == null || lineRange.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     if (element != null && !(element instanceof PsiCompiledElement)) {
       do {
         final PsiElement parent = element.getParent();
@@ -88,6 +93,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();
         final Stack<String> myParamNameStack = new Stack<String>();
         private int myNextLambdaExpressionOrdinal = 0;
+        private boolean myInsideLambda = false;
 
         @Nullable
         private String getCurrentParamName() {
@@ -102,7 +108,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         public void visitLambdaExpression(PsiLambdaExpression expression) {
+          boolean inLambda = myInsideLambda;
+          myInsideLambda = true;
           super.visitLambdaExpression(expression);
+          myInsideLambda = inLambda;
           targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, null));
         }
 
@@ -169,7 +178,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               expression instanceof PsiMethodCallExpression?
                 ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
                 : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
-              false,
+              myInsideLambda,
               null
             ));
           }
@@ -202,4 +211,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return Collections.emptyList();
   }
 
+  private static PsiElement getBody(@Nullable PsiElement containingMethod) {
+    if (containingMethod instanceof PsiMethod) {
+      return ((PsiMethod)containingMethod).getBody();
+    }
+    else if (containingMethod instanceof PsiLambdaExpression) {
+      return ((PsiLambdaExpression)containingMethod).getBody();
+    }
+    return null;
+  }
 }

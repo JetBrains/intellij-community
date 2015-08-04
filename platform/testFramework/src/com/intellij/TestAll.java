@@ -24,6 +24,7 @@
  */
 package com.intellij;
 
+import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -62,6 +63,8 @@ public class TestAll implements Test {
   public static int ourMode = SAVE_MEMORY_SNAPSHOT /*| START_GUARD | RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
 
   private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
+  private static final boolean INCLUDE_PERFORMANCE_TESTS = System.getProperty(TestCaseLoader.INCLUDE_PERFORMANCE_TESTS_FLAG) != null;
+  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = System.getProperty(TestCaseLoader.INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG) != null;
 
   private static final int MAX_FAILURE_TEST_COUNT = 150;
 
@@ -93,14 +96,16 @@ public class TestAll implements Test {
   };
 
   private final TestCaseLoader myTestCaseLoader;
-  private long myStartTime = 0;
-  private boolean myInterruptedByOutOfTime = false;
-  private long myLastTestStartTime = 0;
+  private long myStartTime;
+  private boolean myInterruptedByOutOfTime;
+  private long myLastTestStartTime;
   private String myLastTestClass;
   private int myRunTests = -1;
   private boolean mySavingMemorySnapshot;
-  private int myLastTestTestMethodCount = 0;
+  private int myLastTestTestMethodCount;
   private TestRecorder myTestRecorder;
+  
+  private static List<Throwable> outClassLoadingProblems = new ArrayList<Throwable>();
 
   public TestAll(String packageRoot) throws Throwable {
     this(packageRoot, getClassRoots());
@@ -112,10 +117,16 @@ public class TestAll implements Test {
       classFilterName = "";
     }
 
-    myTestCaseLoader = new TestCaseLoader(classFilterName, isPerformanceTestsRun());
+    myTestCaseLoader = new TestCaseLoader(classFilterName);
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
     myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
     fillTestCases(myTestCaseLoader, packageRoot, classRoots);
+  
+    outClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
+  }
+  
+  public static List<Throwable> getLoadingClassProblems() {
+    return outClassLoadingProblems;
   }
 
   public static String[] getClassRoots() {
@@ -160,10 +171,11 @@ public class TestAll implements Test {
   }
 
   public static void fillTestCases(TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
+    long before = System.currentTimeMillis();
     for (String classRoot : classRoots) {
       int oldCount = testCaseLoader.getClasses().size();
       File classRootFile = new File(FileUtil.toSystemDependentName(classRoot));
-      ClassFinder classFinder = new ClassFinder(classRootFile, packageRoot);
+      ClassFinder classFinder = new ClassFinder(classRootFile, packageRoot, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
       testCaseLoader.loadTestCases(classRootFile.getName(), classFinder.getClasses());
       int newCount = testCaseLoader.getClasses().size();
       if (newCount != oldCount) {
@@ -174,8 +186,12 @@ public class TestAll implements Test {
     if (testCaseLoader.getClasses().size() == 1) {
       testCaseLoader.clearClasses();
     }
-
-    log("Number of test classes found: " + testCaseLoader.getClasses().size());
+    long after = System.currentTimeMillis();
+    
+    String message = "Number of test classes found: " + testCaseLoader.getClasses().size() 
+                      + " time to load: " + (after - before) / 1000 + "s.";
+    System.out.println(message);
+    log(message);
   }
 
   @Override
@@ -190,7 +206,7 @@ public class TestAll implements Test {
 
   private void beforeFirstTest() {
     if ((ourMode & START_GUARD) != 0) {
-      Thread timeAndMemoryGuard = new Thread() {
+      Thread timeAndMemoryGuard = new Thread("Time and Memory Guard") {
         @Override
         public void run() {
           log("Starting Time and Memory Guard");
@@ -242,7 +258,7 @@ public class TestAll implements Test {
     if (PlatformTestCase.ourTestThread != null) {
       return PlatformTestCase.ourTestThread;
     }
-    else return LightPlatformTestCase.ourTestThread;
+    return LightPlatformTestCase.ourTestThread;
   }
 
   private void addErrorMessage(TestResult testResult, String message) {
@@ -283,7 +299,7 @@ public class TestAll implements Test {
     tryGc(10);
   }
 
-  private static boolean shouldRecord(Class<?> aClass) {
+  private static boolean shouldRecord(@NotNull Class<?> aClass) {
     return aClass.getAnnotation(RecordExecution.class) != null;
   }
 
@@ -387,12 +403,20 @@ public class TestAll implements Test {
   private static boolean isPerformanceTestsRun() {
     return PERFORMANCE_TESTS_ONLY;
   }
+  
+  private static boolean isIncludingPerformanceTestsRun() {
+    return INCLUDE_PERFORMANCE_TESTS;
+  }
 
   @Nullable
-  private static Test getTest(@NotNull final Class testCaseClass) {
+  private static Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
       if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
         return null;
+      }
+      Bombed classBomb = testCaseClass.getAnnotation(Bombed.class);
+      if (classBomb != null && PlatformTestUtil.bombExplodes(classBomb)) {
+        return new ExplodedBomb(testCaseClass.getName(), classBomb);
       }
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
@@ -402,11 +426,12 @@ public class TestAll implements Test {
 
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
         JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
-        if (!isPerformanceTest(testCaseClass) || !isPerformanceTestsRun()) {
+        boolean runEverything = isIncludingPerformanceTestsRun() || (isPerformanceTest(testCaseClass) && isPerformanceTestsRun());
+        if (!runEverything) {
           try {
             adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
           }
-          catch (NoTestsRemainException ignored) { }
+          catch (NoTestsRemainException ignored) {}
         }
         return adapter;
       }
@@ -416,21 +441,33 @@ public class TestAll implements Test {
         @Override
         public void addTest(Test test) {
           if (!(test instanceof TestCase)) {
-            testsCount[0]++;
-            super.addTest(test);
+            doAddTest(test);
           }
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (isPerformanceTestsRun() ^ (hasPerformance(name) || isPerformanceTest(testCaseClass)))
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ (hasPerformance(name) || isPerformanceTest(testCaseClass))))
               return;
 
             Method method = findTestMethod((TestCase)test);
-            if (method == null || !TestCaseLoader.isBombed(method)) {
-              testsCount[0]++;
-              super.addTest(test);
+            if (method == null) {
+              doAddTest(test);
+            }
+            else {
+              Bombed methodBomb = method.getAnnotation(Bombed.class);
+              if (methodBomb == null) {
+                doAddTest(test);
+              }
+              else if (PlatformTestUtil.bombExplodes(methodBomb)) {
+                doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
+              }
             }
           }
+        }
+
+        private void doAddTest(Test test) {
+          testsCount[0]++;
+          super.addTest(test);
         }
 
         @Nullable
@@ -448,6 +485,9 @@ public class TestAll implements Test {
     }
   }
 
+  public static boolean shouldIncludePerformanceTestCase(Class aClass) {
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(aClass);
+  }
 
   public static boolean isPerformanceTest(Class aClass) {
     return hasPerformance(aClass.getSimpleName());
@@ -487,5 +527,21 @@ public class TestAll implements Test {
 
   private static void log(String message) {
     TeamCityLogger.info(message);
+  }
+
+  @SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNonTrivialConstructors"})
+  private static class ExplodedBomb extends TestCase {
+    private final Bombed myBombed;
+
+    public ExplodedBomb(String testName, Bombed bombed) {
+      super(testName);
+      myBombed = bombed;
+    }
+
+    @Override
+    protected void runTest() throws Throwable {
+      String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
+      fail("Bomb created by " + myBombed.user() + description + " now explodes!");
+    }
   }
 }

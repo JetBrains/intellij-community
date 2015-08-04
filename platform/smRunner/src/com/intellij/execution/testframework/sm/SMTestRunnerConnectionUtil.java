@@ -26,7 +26,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.*;
-import com.intellij.execution.testframework.sm.runner.ui.*;
+import com.intellij.execution.testframework.sm.runner.ui.AttachToProcessListener;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
@@ -93,19 +96,17 @@ public class SMTestRunnerConnectionUtil {
   @NotNull
   public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                                   @NotNull ProcessHandler processHandler,
-                                                                  @NotNull TestConsoleProperties consoleProperties,
-                                                                  ExecutionEnvironment environment) throws ExecutionException {
-    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, environment);
+                                                                  @NotNull TestConsoleProperties consoleProperties) throws ExecutionException {
+    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties);
     console.attachToProcess(processHandler);
     return console;
   }
 
   @NotNull
   public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
-                                                         @NotNull TestConsoleProperties consoleProperties,
-                                                         ExecutionEnvironment environment) {
+                                                         @NotNull TestConsoleProperties consoleProperties) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
-    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, environment, splitterPropertyName);
+    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, splitterPropertyName);
     initConsoleView(consoleView, testFrameworkName);
     return consoleView;
   }
@@ -188,10 +189,10 @@ public class SMTestRunnerConnectionUtil {
     // events processor
     final GeneralTestEventsProcessor eventsProcessor;
     if (idBasedTestTree) {
-      eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
+      eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
     }
     else {
-      eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
+      eventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
     }
 
     if (locator != null) {
@@ -231,6 +232,7 @@ public class SMTestRunnerConnectionUtil {
       @Override
       public void startNotified(final ProcessEvent event) {
         eventsProcessor.onStartTesting();
+        outputConsumer.onStartTesting();
       }
 
       @Override
@@ -264,7 +266,26 @@ public class SMTestRunnerConnectionUtil {
     }
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
+  /** @deprecated use {@link #createAndAttachConsole(String, ProcessHandler, TestConsoleProperties)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"unused", "deprecation"})
+  public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
+                                                                  @NotNull ProcessHandler processHandler,
+                                                                  @NotNull TestConsoleProperties consoleProperties,
+                                                                  ExecutionEnvironment environment) throws ExecutionException {
+    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, environment);
+    console.attachToProcess(processHandler);
+    return console;
+  }
+
+  /** @deprecated use {@link SMTestRunnerConnectionUtil#createConsole(String, TestConsoleProperties)} instead (to be removed in IDEA 16) */
+  @SuppressWarnings({"unused", "deprecation"})
+  public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
+                                                         @NotNull TestConsoleProperties consoleProperties,
+                                                         ExecutionEnvironment environment) {
+    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, null);
+  }
+
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
   @SuppressWarnings({"unused", "deprecation"})
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                           @NotNull TestConsoleProperties consoleProperties,
@@ -273,7 +294,7 @@ public class SMTestRunnerConnectionUtil {
     return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, locator, false, null);
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
   @SuppressWarnings({"unused", "deprecation"})
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
@@ -282,7 +303,7 @@ public class SMTestRunnerConnectionUtil {
                                                                     boolean idBasedTreeConstruction,
                                                                     @Nullable TestProxyFilterProvider filterProvider) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
-    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, environment, splitterPropertyName);
+    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, splitterPropertyName);
     initConsoleView(consoleView, testFrameworkName, locator, idBasedTreeConstruction, filterProvider);
     return consoleView;
   }
@@ -321,8 +342,8 @@ public class SMTestRunnerConnectionUtil {
     consoleView.initUI();
   }
 
-  /** @deprecated use {@link #createAndAttachConsole(String, ProcessHandler, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
+  /** @deprecated use {@link #createAndAttachConsole(String, ProcessHandler, TestConsoleProperties)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"unused", "deprecation"})
   public static ConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                    @NotNull ProcessHandler processHandler,
                                                    @NotNull CommandLineState commandLineState,
@@ -332,8 +353,8 @@ public class SMTestRunnerConnectionUtil {
     return createAndAttachConsole(testFrameworkName, processHandler, consoleProperties, commandLineState.getEnvironment());
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"unused", "deprecation"})
   public static ConsoleView createConsole(@NotNull String testFrameworkName,
                                           @NotNull CommandLineState commandLineState,
                                           @NotNull ModuleRunConfiguration config,

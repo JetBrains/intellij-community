@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,13 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
@@ -159,7 +160,7 @@ public class ProjectUtil {
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
-      if (isSameProject(path, project)) {
+      if (!project.isDefault() && isSameProject(path, project)) {
         focusProjectWindow(project, false);
         return project;
       }
@@ -233,7 +234,7 @@ public class ProjectUtil {
   }
 
   private static boolean isSameProject(String path, Project p) {
-    final IProjectStore projectStore = ((ProjectEx)p).getStateStore();
+    final IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(p);
 
     String toOpen = FileUtil.toSystemIndependentName(path);
     String existing = FileUtil.toSystemIndependentName(projectStore.getProjectFilePath());
@@ -263,7 +264,7 @@ public class ProjectUtil {
           f.toFront();
           //f.requestFocus();
         }
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       }
     };
 
@@ -284,5 +285,10 @@ public class ProjectUtil {
     //noinspection HardCodedStringLiteral
     return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
            "Projects";
+  }
+
+  public static boolean isDirectoryBased(@NotNull Project project) {
+    IComponentStore store = ComponentsPackage.getStateStore(project);
+    return store instanceof IProjectStore && StorageScheme.DIRECTORY_BASED.equals(((IProjectStore)store).getStorageScheme());
   }
 }

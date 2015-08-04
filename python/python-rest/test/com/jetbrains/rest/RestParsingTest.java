@@ -2,7 +2,6 @@ package com.jetbrains.rest;
 
 import com.intellij.testFramework.ParsingTestCase;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.rest.parsing.RestParserDefinition;
 
 /**
@@ -12,7 +11,6 @@ public class RestParsingTest extends ParsingTestCase {
 
   public RestParsingTest() {
     super("", "rst", new RestParserDefinition());
-    PyTestCase.initPlatformPrefix();
   }
 
   public void testTitle() {

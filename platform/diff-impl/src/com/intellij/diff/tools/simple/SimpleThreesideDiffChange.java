@@ -92,14 +92,14 @@ public class SimpleThreesideDiffChange {
       if (end < document.getTextLength()) end++;
     }
 
-    myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type));
 
     if (startLine == endLine) {
-      if (startLine != 0) myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
+      if (startLine != 0) myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
     }
     else {
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
     }
   }
 
@@ -132,20 +132,13 @@ public class SimpleThreesideDiffChange {
   public boolean processChange(int oldLine1, int oldLine2, int shift, @NotNull ThreeSide side) {
     int line1 = getStartLine(side);
     int line2 = getEndLine(side);
+    int sideIndex = side.getIndex();
 
-    if (line2 <= oldLine1) return false;
-    if (line1 >= oldLine2) {
-      myLineStartShifts[side.getIndex()] += shift;
-      myLineEndShifts[side.getIndex()] += shift;
-      return false;
-    }
+    DiffUtil.UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift);
+    myLineStartShifts[sideIndex] += newRange.startLine - line1;
+    myLineEndShifts[sideIndex] += newRange.endLine - line2;
 
-    if (line1 <= oldLine1 && line2 >= oldLine2) {
-      myLineEndShifts[side.getIndex()] += shift;
-      return false;
-    }
-
-    return true;
+    return newRange.damaged;
   }
 
   //

@@ -36,4 +36,6 @@ public interface ExternalProjectInfo {
   long getLastSuccessfulImportTimestamp();
 
   long getLastImportTimestamp();
+
+  ExternalProjectInfo copy();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,12 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>super</code> expression in a super method call. Note that the qualifier of
- * a super constructor call is represented as a {@link PsiKeyword} rather than a <code>PsiSuperExpression</code>.  
+ * Represents a Java {@code super} expression in a superclass member reference (but not in a super constructor call,
+ * where the {@code super} qualifier is represented as a {@link PsiKeyword} wrapped in a {@link PsiReferenceExpression}).
  */
 public interface PsiSuperExpression extends PsiQualifiedExpression {
   /**
-   * Returns the expression representing the class name qualifying the <code>super</code>
-   * expression.
-   *
-   * @return the qualifier, or null if the expression has no qualifier.
+   * Returns an expression representing a type name qualifying the {@code super} expression.
    */
   @Override
   @Nullable

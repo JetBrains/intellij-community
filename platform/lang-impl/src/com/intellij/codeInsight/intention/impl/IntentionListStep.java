@@ -87,7 +87,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
                     @NotNull PsiFile file,
                     @NotNull Project project) {
     this(intentionHintComponent, editor, file, project);
-    updateActions(intentions);
+    wrapAndUpdateActions(intentions, false); // when create bulb do not update actions again since it would impede the EDT
   }
 
   IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
@@ -102,16 +102,17 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   }
 
   //true if something changed
-  boolean updateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    boolean changed = wrapActionsTo(intentions.errorFixesToShow, myCachedErrorFixes);
-    changed |= wrapActionsTo(intentions.inspectionFixesToShow, myCachedInspectionFixes);
-    changed |= wrapActionsTo(intentions.intentionsToShow, myCachedIntentions);
-    changed |= wrapActionsTo(intentions.guttersToShow, myCachedGutters);
+  boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions, boolean callUpdate) {
+    boolean changed = wrapActionsTo(intentions.errorFixesToShow, myCachedErrorFixes, callUpdate);
+    changed |= wrapActionsTo(intentions.inspectionFixesToShow, myCachedInspectionFixes, callUpdate);
+    changed |= wrapActionsTo(intentions.intentionsToShow, myCachedIntentions, callUpdate);
+    changed |= wrapActionsTo(intentions.guttersToShow, myCachedGutters, callUpdate);
     return changed;
   }
 
   private boolean wrapActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
-                                @NotNull Set<IntentionActionWithTextCaching> cachedActions) {
+                                @NotNull Set<IntentionActionWithTextCaching> cachedActions,
+                                boolean callUpdate) {
     final int caretOffset = myEditor.getCaretModel().getOffset();
     final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
     PsiElement element;
@@ -154,12 +155,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     Set<IntentionActionWithTextCaching> wrappedNew = new THashSet<IntentionActionWithTextCaching>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
       final IntentionAction action = descriptor.getAction();
-      if (element != null && element != hostElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action)) {
+      if (element != null && element != hostElement && (!callUpdate || ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
         IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, element, injectedFile, injectedEditor);
         wrappedNew.add(cachedAction);
         changed |= cachedActions.add(cachedAction);
       }
-      else if (hostElement != null && ShowIntentionActionsHandler.availableFor(myFile, myEditor, action)) {
+      else if (hostElement != null && (!callUpdate || ShowIntentionActionsHandler.availableFor(myFile, myEditor, action))) {
         IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, hostElement, myFile, myEditor);
         wrappedNew.add(cachedAction);
         changed |= cachedActions.add(cachedAction);

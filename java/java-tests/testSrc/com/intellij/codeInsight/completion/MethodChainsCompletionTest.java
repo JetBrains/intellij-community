@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeature;
-import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder;
 import com.intellij.compiler.classFilesIndex.chainsSearch.ChainRelevance;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsCompletionContributor;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
@@ -233,36 +232,26 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   private void doTestRendering() {
-    final ClassFilesIndexFeaturesHolder indicesHolder = ClassFilesIndexFeaturesHolder.getInstance(getProject());
     PropertiesComponent.getInstance(getProject())
       .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(true));
-    indicesHolder.projectOpened();
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getBeforeCompletionFilePath());
     myFixture.complete(CompletionType.BASIC, MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
     PropertiesComponent.getInstance(getProject())
       .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(false));
     myFixture.checkResultByFile(getAfterCompletionFilePath());
-    indicesHolder.projectClosed();
   }
 
   private List<WeightableChainLookupElement> doCompletion() {
-    final ClassFilesIndexFeaturesHolder indicesHolder = ClassFilesIndexFeaturesHolder.getInstance(getProject());
-    try {
-      indicesHolder.projectOpened();
-      compileAndIndexData(TEST_INDEX_FILE_NAME);
-      final LookupElement[] allLookupElements = runCompletion();
-      final List<WeightableChainLookupElement> targetLookupElements = new SmartList<WeightableChainLookupElement>();
-      for (final LookupElement lookupElement : allLookupElements) {
-        if (lookupElement instanceof WeightableChainLookupElement) {
-          targetLookupElements.add((WeightableChainLookupElement)lookupElement);
-        }
+    compileAndIndexData(TEST_INDEX_FILE_NAME);
+    final LookupElement[] allLookupElements = runCompletion();
+    final List<WeightableChainLookupElement> targetLookupElements = new SmartList<WeightableChainLookupElement>();
+    for (final LookupElement lookupElement : allLookupElements) {
+      if (lookupElement instanceof WeightableChainLookupElement) {
+        targetLookupElements.add((WeightableChainLookupElement)lookupElement);
       }
-      return targetLookupElements;
     }
-    finally {
-      indicesHolder.projectClosed();
-    }
+    return targetLookupElements;
   }
 
   private LookupElement[] runCompletion() {

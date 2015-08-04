@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,11 +289,6 @@ public class PlatformTestUtil {
     return now.after(raidDate(bombedAnnotation));
   }
 
-  public static boolean isRotten(Bombed bomb) {
-    long bombRotPeriod = 30L * 24 * 60 * 60 * 1000; // month
-    return new Date().after(new Date(raidDate(bomb).getTime() + bombRotPeriod));
-  }
-
   public static StringBuilder print(AbstractTreeStructure structure,
                                     Object node,
                                     int currentLevel,
@@ -374,7 +369,7 @@ public class PlatformTestUtil {
     assertNotNull(action);
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
-    final AnActionEvent event = new AnActionEvent(null, context, "", presentation, ActionManager.getInstance(), 0);
+    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
     action.update(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
@@ -418,19 +413,6 @@ public class PlatformTestUtil {
    */
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
     return new TestInfo(test, expectedMs,message);
-  }
-
-  // calculates average of the median values in the selected part of the array. E.g. for part=3 returns average in the middle third.
-  public static long averageAmongMedians(@NotNull long[] time, int part) {
-    assert part >= 1;
-    int n = time.length;
-    Arrays.sort(time);
-    long total = 0;
-    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
-      total += time[i];
-    }
-    int middlePartLength = n / part;
-    return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 
   public static boolean canRunTest(@NotNull Class testCaseClass) {

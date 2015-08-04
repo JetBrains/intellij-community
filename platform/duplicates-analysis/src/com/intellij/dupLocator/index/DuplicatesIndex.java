@@ -24,8 +24,6 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,21 +51,20 @@ import java.util.Map;
  */
 public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex {
   static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.duplicates.online.calculation",
-                                                                  isEnabledByDefault());
-  static boolean ourEnabledLightProfiles = true;
-
-  private static boolean isEnabledByDefault() {
-    Application application = ApplicationManager.getApplication();
-    return application.isInternal() && !application.isUnitTestMode();
-  }
+                                                                  true);
+  static final boolean ourEnabledLightProfiles = true;
+  private static boolean ourEnabledOldProfiles = false;
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 15;
+  private static final int myBaseVersion = 20;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {
-      return ourEnabled && findDuplicatesProfile(file.getFileType()) != null;
+      return ourEnabled &&
+             findDuplicatesProfile(file.getFileType()) != null &&
+             file.isInLocalFileSystem() // skip library sources
+        ;
     }
   };
 
@@ -124,12 +121,12 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
             @Override
-            public void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash) {
+            public void process(int hash, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes) {
               TIntArrayList list = result.get(hash);
               if (list == null) {
                 result.put(hash, list = new TIntArrayList(1));
               }
-              list.add(node.getStartOffset());
+              list.add(nodes[0].getStartOffset());
             }
           });
           return result;
@@ -151,12 +148,14 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     if (!(fileType instanceof LanguageFileType)) return null;
     Language language = ((LanguageFileType)fileType).getLanguage();
     DuplicatesProfile profile = DuplicatesProfile.findProfileForLanguage(language);
-    return profile != null && (profile.supportDuplicatesIndex() || profile instanceof LightDuplicateProfile) ? profile : null;
+    return profile != null &&
+           (ourEnabledOldProfiles && profile.supportDuplicatesIndex() ||
+            profile instanceof LightDuplicateProfile) ? profile : null;
   }
 
   @Override
   public int getVersion() {
-    return myBaseVersion + (ourEnabled ? 0xFF : 0) + (ourEnabledLightProfiles ? 0x7F : 0);
+    return myBaseVersion + (ourEnabled ? 0xFF : 0) + (ourEnabledLightProfiles ? 0x7F : 0) + (ourEnabledOldProfiles ? 0x21 : 0);
   }
 
   @Override
@@ -234,6 +233,13 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   public static boolean setEnabled(boolean value) {
     boolean old = ourEnabled;
     ourEnabled = value;
+    return old;
+  }
+
+  @TestOnly
+  public static boolean setEnabledOldProfiles(boolean value) {
+    boolean old = ourEnabledOldProfiles;
+    ourEnabledOldProfiles = value;
     return old;
   }
 

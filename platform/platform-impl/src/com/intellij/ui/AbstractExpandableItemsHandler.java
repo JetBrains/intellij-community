@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
@@ -25,6 +26,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,68 +74,53 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent.validate();
     myPopup = new MovablePopup(myComponent, myTipComponent);
 
-    MouseAdapter tipMouseAdapter = new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        // don't hide the hint if mouse exited to myComponent
-        if (myComponent.getMousePosition() == null) {
-          hideHint();
-        }
-      }
-
+    myTipComponent.addMouseWheelListener(new MouseWheelListener() {
       @Override
       public void mouseWheelMoved(MouseWheelEvent e) {
-        Point p = e.getLocationOnScreen();
-        SwingUtilities.convertPointFromScreen(p, myComponent);
-        myComponent.dispatchEvent(new MouseWheelEvent(myComponent,
-                                                        e.getID(),
-                                                        e.getWhen(),
-                                                        e.getModifiers(),
-                                                        p.x, p.y,
-                                                        e.getClickCount(),
-                                                        e.isPopupTrigger(),
-                                                        e.getScrollType(),
-                                                        e.getScrollAmount(),
-                                                        e.getWheelRotation()));
+        dispatchEvent(myComponent, e);
       }
+    });
 
+    myTipComponent.addMouseListener(new MouseListener() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        Point p = e.getLocationOnScreen();
-        SwingUtilities.convertPointFromScreen(p, myComponent);
-        myComponent.dispatchEvent(new MouseEvent(myComponent,
-                                                      e.getID(),
-                                                      e.getWhen(),
-                                                      e.getModifiers(),
-                                                      p.x, p.y,
-                                                      e.getClickCount(),
-                                                      e.isPopupTrigger(),
-                                                      e.getButton()));
+        dispatchEvent(myComponent, e);
       }
 
       @Override
       public void mousePressed(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
 
       @Override
+      public void mouseEntered(MouseEvent e) {
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        // don't hide the hint if mouse exited to owner component
+        if (myComponent.getMousePosition() == null) {
+          hideHint();
+        }
+      }
+    });
+
+    myTipComponent.addMouseMotionListener(new MouseMotionListener() {
+      @Override
       public void mouseMoved(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
 
       @Override
       public void mouseDragged(MouseEvent e) {
-        mouseClicked(e);
+        dispatchEvent(myComponent, e);
       }
-    };
-    myTipComponent.addMouseListener(tipMouseAdapter);
-    myTipComponent.addMouseWheelListener(tipMouseAdapter);
-    myTipComponent.addMouseMotionListener(tipMouseAdapter);
+    });
 
     myComponent.addMouseListener(
       new MouseListener() {
@@ -348,7 +335,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
     Window focus = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    boolean focused = SystemInfo.isWindows || owner.isFocused();
     for (Window other : owner.getOwnedWindows()) {
+      if (!focused && !SystemInfo.isWindows) {
+        focused = other.isFocused();
+      }
       if (popup != other && other.isVisible() && bounds.x + 10 >= other.getX() && bounds.intersects(other.getBounds())) {
         return false;
       }
@@ -356,7 +347,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         focus = null; // already checked
       }
     }
-    return focus == owner || focus == null || !owner.getBounds().intersects(focus.getBounds());
+    return focused && (focus == owner || focus == null || !owner.getBounds().intersects(focus.getBounds()));
   }
 
   private void hideHint() {
@@ -475,4 +466,12 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 
   protected abstract KeyType getCellKeyForPoint(Point point);
+
+  private static void dispatchEvent(JComponent component, MouseEvent event) {
+    if (component != null && event != null) {
+      Point point = event.getLocationOnScreen();
+      SwingUtilities.convertPointFromScreen(point, component);
+      component.dispatchEvent(MouseEventAdapter.convert(event, component, point.x, point.y));
+    }
+  }
 }

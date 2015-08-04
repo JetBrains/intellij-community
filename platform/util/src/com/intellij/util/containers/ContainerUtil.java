@@ -456,8 +456,15 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <E> Set<E> immutableSet(@NotNull E ... elements) {
-    return Collections.unmodifiableSet(new THashSet<E>(Arrays.asList(elements)));
+  public static <E> Set<E> immutableSet(@NotNull E... elements) {
+    switch (elements.length) {
+      case 0:
+        return Collections.emptySet();
+      case 1:
+        return Collections.singleton(elements[0]);
+      default:
+        return Collections.unmodifiableSet(new THashSet<E>(Arrays.asList(elements)));
+    }
   }
 
   @NotNull
@@ -2385,6 +2392,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
+    //noinspection deprecation
+    return new ConcurrentIntObjectHashMap<V>(initialCapacity, loadFactor, concurrencyLevel);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
     //noinspection deprecation
     return new ConcurrentSoftValueIntObjectHashMap<V>();
@@ -2456,12 +2470,27 @@ public class ContainerUtil extends ContainerUtilRt {
   }
   @NotNull
   @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap(int initialCapacity,
+                                 float loadFactor,
+                                 int concurrencyLevel,
+                                 @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    //noinspection deprecation
+    return new ConcurrentSoftHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+  @NotNull
+  @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(int initialCapacity,
                                  float loadFactor,
                                  int concurrencyLevel,
                                  @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    //noinspection deprecation
+    return new ConcurrentWeakHashMap<K, V>(hashingStrategy);
   }
 
   /**

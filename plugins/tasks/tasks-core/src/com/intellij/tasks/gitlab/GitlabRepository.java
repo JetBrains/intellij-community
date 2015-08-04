@@ -52,7 +52,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
     @Override
     public String getName() {
-      return "-- from all projects --";
+      return "-- all issues created by you --";
     }
 
     @Override
@@ -101,7 +101,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
-    return ContainerUtil.map2Array(fetchIssues((offset / limit) + 1, limit), GitlabTask.class, new Function<GitlabIssue, GitlabTask>() {
+    final List<GitlabIssue> issues = fetchIssues((offset / limit) + 1, limit, !withClosed);
+    return ContainerUtil.map2Array(issues, GitlabTask.class, new Function<GitlabIssue, GitlabTask>() {
       @Override
       public GitlabTask fun(GitlabIssue issue) {
         return new GitlabTask(GitlabRepository.this, issue);
@@ -159,14 +160,19 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   }
 
   @NotNull
-  public List<GitlabIssue> fetchIssues(int pageNumber, int pageSize) throws Exception {
+  public List<GitlabIssue> fetchIssues(int pageNumber, int pageSize, boolean openedOnly) throws Exception {
     ensureProjectsDiscovered();
-    final URI url = new URIBuilder(getIssuesUrl())
+    final URIBuilder uriBuilder = new URIBuilder(getIssuesUrl())
       .addParameter("page", String.valueOf(pageNumber))
       .addParameter("per_page", String.valueOf(pageSize))
-      .build();
+      // Ordering was added in v7.8
+      .addParameter("order_by", "updated_at");
+    if (openedOnly) {
+      // Filtering by state was added in v7.3
+      uriBuilder.addParameter("state", "opened");
+    }
     final ResponseHandler<List<GitlabIssue>> handler = new GsonMultipleObjectsDeserializer<GitlabIssue>(GSON, LIST_OF_ISSUES_TYPE);
-    return getHttpClient().execute(new HttpGet(url), handler);
+    return getHttpClient().execute(new HttpGet(uriBuilder.build()), handler);
   }
 
   private String getIssuesUrl() {

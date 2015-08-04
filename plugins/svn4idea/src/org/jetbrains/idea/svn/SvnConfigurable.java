@@ -17,12 +17,14 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -34,7 +36,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
+import com.intellij.util.net.HttpProxyConfigurable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +89,7 @@ public class SvnConfigurable implements Configurable {
   private JBRadioButton myAllRadioButton;
   private JLabel mySSLExplicitly;
   private SshSettingsPanel mySshSettingsPanel;
+  private LinkLabel<Object> myNavigateToCommonProxyLink;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -139,6 +145,16 @@ public class SvnConfigurable implements Configurable {
     myConfigurationDirectoryLabel.setLabelFor(myConfigurationDirectoryText);
 
     myUseCommonProxy.setText(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
+    myNavigateToCommonProxyLink.setListener(new LinkListener<Object>() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myComponent));
+
+        if (settings != null) {
+          settings.select(settings.find(HttpProxyConfigurable.class));
+        }
+      }
+    }, null);
     myEditProxiesButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -385,6 +401,8 @@ public class SvnConfigurable implements Configurable {
     int value = configuration.getMaxAnnotateRevisions();
     value = (value == -1) ? SvnConfiguration.ourMaxAnnotateRevisionsDefault : value;
     myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
+
+    myNavigateToCommonProxyLink = new LinkLabel<Object>(SvnBundle.message("navigate.to.idea.proxy.settings"), null);
 
     final Long maximum = 30 * 60 * 1000L;
     final long connection = configuration.getSshConnectionTimeout() <= maximum ? configuration.getSshConnectionTimeout() : maximum;

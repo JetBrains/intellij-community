@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -46,6 +47,7 @@ class TestDirectory extends TestPackage {
     super(configuration, environment);
   }
 
+  @Nullable
   @Override
   public SourceScope getSourceScope() {
     final String dirName = getConfiguration().getPersistentData().getDirName();
@@ -103,6 +105,16 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
+  protected GlobalSearchScope filterScope(JUnitConfiguration.Data data) throws CantRunException {
+    return GlobalSearchScope.allScope(getConfiguration().getProject());
+  }
+
+  @Override
+  protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+    return "";
+  }
+
+  @Override
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
     final String dirName = data.getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
@@ -113,11 +125,7 @@ class TestDirectory extends TestPackage {
     if (directory == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    if (aPackage == null) {
-      throw new CantRunException("Package not found in directory");
-    }
-    return aPackage;
+    return null;
   }
 
   @Override

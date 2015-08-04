@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -401,7 +401,7 @@ public class DomBasicsTest extends DomTestCase {
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         element2.copyFrom(element);
       }
     }.execute();
@@ -433,7 +433,7 @@ public class DomBasicsTest extends DomTestCase {
     element1.getChild().getChild().getGenericValue().setStringValue("abc");
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         element2.copyFrom(element1);
       }
     }.execute();
@@ -472,7 +472,7 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement oldElement1 = oldElement;
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         oldElement1.undefine();
       }
     }.execute();
@@ -539,7 +539,7 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement copy = (MyElement) child.createStableCopy();
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         parent.undefine();
         element.addChildElement().getChild().ensureXmlElementExists();
       }

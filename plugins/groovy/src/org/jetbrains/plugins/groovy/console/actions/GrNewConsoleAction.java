@@ -49,7 +49,7 @@ public class GrNewConsoleAction extends AnAction {
 
     final VirtualFile contentFile = ConsoleHistoryController.getContentFile(
       GroovyConsoleRootType.getInstance(),
-      "groovy-console",
+      GroovyConsoleRootType.CONTENT_ID,
       ScratchFileService.Option.create_new_always
     );
     assert contentFile != null;

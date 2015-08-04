@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,14 @@ import java.util.Map;
  */
 public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener {
   private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = ContainerUtil.createConcurrentWeakMap();
-  private volatile boolean mySetsInitialized = false;
+  private volatile boolean mySetsInitialized;
   private static final Object LOCK = new Object();
 
   public EnforcedPlainTextFileTypeManager() {
     ProjectManager.getInstance().addProjectManagerListener(this);
   }
 
-  public boolean isMarkedAsPlainText(VirtualFile file) {
+  public boolean isMarkedAsPlainText(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
     if (!mySetsInitialized) {
       synchronized (LOCK) {
@@ -58,8 +58,10 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
         }
       }
     }
-    for (Collection<VirtualFile> projectSet : myPlainTextFileSets.values()) {
-      if (projectSet != null && projectSet.contains(file)) return true;
+    if (!myPlainTextFileSets.isEmpty()) {
+      for (Collection<VirtualFile> projectSet : myPlainTextFileSets.values()) {
+        if (projectSet != null && projectSet.contains(file)) return true;
+      }
     }
     return false;
   }
@@ -77,15 +79,15 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }
 
-  public void markAsPlainText(@NotNull Project project, VirtualFile... files) {
+  public void markAsPlainText(@NotNull Project project, @NotNull VirtualFile... files) {
     setPlainTextStatus(project, true, files);
   }
 
-  public void resetOriginalFileType(@NotNull Project project, VirtualFile... files) {
+  public void resetOriginalFileType(@NotNull Project project, @NotNull VirtualFile... files) {
     setPlainTextStatus(project, false, files);
   }
 
-  private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, final VirtualFile... files) {
+  private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, @NotNull final VirtualFile... files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -112,12 +114,8 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     }
   }
 
-  private static class EnforcedPlainTextFileTypeManagerHolder {
-    private static final EnforcedPlainTextFileTypeManager ourInstance = ServiceManager.getService(EnforcedPlainTextFileTypeManager.class);
-  }
-
   public static EnforcedPlainTextFileTypeManager getInstance() {
-    return EnforcedPlainTextFileTypeManagerHolder.ourInstance;
+    return ServiceManager.getService(EnforcedPlainTextFileTypeManager.class);
   }
 
   @Override

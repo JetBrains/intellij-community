@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.mac.foundation.Foundation;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -66,14 +67,17 @@ public class IntelliJLaf extends DarculaLaf {
         }
       }
     }
-    Font menuFont = new Font("Lucida Grande", Font.PLAIN, 14);
+    FontUIResource buttonFont = new FontUIResource("HelveticaNeue-Medium", Font.PLAIN, 13);
+    defaults.put("Button.font", buttonFont);
+    Font menuFont = new FontUIResource("Lucida Grande", Font.PLAIN, 14);
     defaults.put("Menu.font", menuFont);
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
   }
 
   public static boolean isGraphite() {
-    Color c = UIManager.getColor("controlHighlight");
-    return c != null && c.getBlue() < 150;
+    // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
+    // NSGraphiteControlTint = 6
+    return Foundation.invoke("NSColor", "currentControlTint").intValue() == 6;
   }
 }

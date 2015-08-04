@@ -76,6 +76,22 @@ public class GitConfigTest extends GitPlatformTest {
                }));
   }
 
+  // IDEA-143363 Check that remote.pushdefault (generic, without remote name) doesn't fail the config parsing procedure
+  public void test_remote_unspecified_section() throws Exception {
+    GitTestUtil.createRepository(myProject, myProjectPath, true);
+    git("remote add origin git@github.com:foo/bar.git");
+    git("config remote.pushdefault origin");
+
+    File gitDir = new File(myProjectPath, ".git");
+    GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
+    Collection<GitRemote> remotes = config.parseRemotes();
+    assertEquals(1, remotes.size());
+    GitRemote remote = ContainerUtil.getFirstItem(remotes);
+    assertNotNull(remote);
+    assertEquals("origin", remote.getName());
+    assertEquals("git@github.com:foo/bar.git", remote.getFirstUrl());
+  }
+
   private void doTestRemotes(String testName, File configFile, File resultFile) throws IOException {
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile));

@@ -241,16 +241,27 @@ public class ControlFlowUtils {
     final PsiExpression condition = ifStatement.getCondition();
     final Object value = ExpressionUtils.computeConstantExpression(condition);
     final PsiStatement thenBranch = ifStatement.getThenBranch();
-    final boolean thenCompletesNormally = statementMayCompleteNormally(thenBranch);
     if (value == Boolean.TRUE) {
-      return thenCompletesNormally;
+      return statementMayCompleteNormally(thenBranch);
     }
     final PsiStatement elseBranch = ifStatement.getElseBranch();
-    final boolean elseCompletesNormally = statementMayCompleteNormally(elseBranch);
     if (value == Boolean.FALSE) {
-      return elseCompletesNormally;
+      return statementMayCompleteNormally(elseBranch);
     }
-    return thenCompletesNormally || elseCompletesNormally;
+    // process branch with fewer statements first
+    PsiStatement branch1;
+    PsiStatement branch2;
+    if ((thenBranch == null ? 0 : thenBranch.getTextLength()) < (elseBranch == null ? 0 : elseBranch.getTextLength())) {
+      branch1 = thenBranch;
+      branch2 = elseBranch;
+    }
+    else {
+      branch2 = thenBranch;
+      branch1 = elseBranch;
+    }
+    if (statementMayCompleteNormally(branch1)) return true;
+    if (statementMayCompleteNormally(branch2)) return true;
+    return false;
   }
 
   private static boolean labeledStatementMayCompleteNormally(@NotNull PsiLabeledStatement labeledStatement) {
@@ -453,9 +464,11 @@ public class ControlFlowUtils {
   }
 
   private static boolean statementIsLastInBlock(@NotNull PsiCodeBlock block, @NotNull PsiStatement statement) {
-    final PsiStatement[] statements = block.getStatements();
-    for (int i = statements.length - 1; i >= 0; i--) {
-      final PsiStatement childStatement = statements[i];
+    for (PsiElement child = block.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (!(child instanceof PsiStatement)) {
+        continue;
+      }
+      final PsiStatement childStatement = (PsiStatement)child;
       if (statement.equals(childStatement)) {
         return true;
       }

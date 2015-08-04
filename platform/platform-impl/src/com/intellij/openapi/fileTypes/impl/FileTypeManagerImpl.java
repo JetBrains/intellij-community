@@ -79,20 +79,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  private static final int VERSION = 14;
+  private static final int VERSION = 15;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
   private static final int DETECT_BUFFER_SIZE = 8192; // the number of bytes to read from the file to feed to the file type detector
 
-  @NonNls
+  // must be sorted
   private static final String DEFAULT_IGNORED =
-    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;.tox;_svn;rcs;vssver.scc;vssver2.scc;";
+    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.git;.hg;.svn;.tox;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
-  private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
+  private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
   private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
@@ -128,7 +128,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
   @NonNls
-  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
+  static final String FILE_SPEC = "filetypes";
 
   // these flags are stored in 'packedFlags' as chunks of four bits
   private static final int AUTO_DETECTED_AS_TEXT_MASK = 1;     // set if the file was auto-detected as text
@@ -304,12 +304,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static boolean toLog() {
-    return RE_DETECT_ASYNC && ApplicationManager.getApplication().isUnitTestMode();
+  boolean toLog;
+  private boolean toLog() {
+    return toLog;
   }
 
   private static void log(@SuppressWarnings("UnusedParameters") String message) {
-    //System.out.println(message);
+    System.out.println(message);
   }
 
   private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("File type re-detect", Conditions.alwaysFalse(), -1, new Processor<Collection<VirtualFile>>() {
@@ -425,7 +426,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return type == null ? UnknownFileType.INSTANCE : type;
   }
 
-  public static void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
+  public void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
     file.putUserData(FILE_TYPE_KEY, fileType);
     if (toLog()) {
       log("F: Cached file type for "+file.getName()+" to "+(fileType == null ? null : fileType.getName()));
@@ -443,12 +444,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType != null) return fileType;
     }
 
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < mySpecialFileTypes.size(); i++) {
-      FileTypeIdentifiableByVirtualFile type = mySpecialFileTypes.get(i);
+    for (FileTypeIdentifiableByVirtualFile type : mySpecialFileTypes) {
       if (type.isMyFileType(file)) {
         if (toLog()) {
-          log("F: Special file type for "+file.getName()+"; type: "+type.getName());
+          log("F: Special file type for " + file.getName() + "; type: " + type.getName());
         }
         return type;
       }
@@ -593,7 +592,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public FileType findFileTypeByName(String fileTypeName) {
+  public FileType findFileTypeByName(@NotNull String fileTypeName) {
     FileType type = getStdFileType(fileTypeName);
     // TODO: Abstract file types are not std one, so need to be restored specially,
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
@@ -737,12 +736,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
   }
 
-  private void unregisterFileTypeWithoutNotification(FileType fileType) {
+  private void unregisterFileTypeWithoutNotification(@NotNull FileType fileType) {
     myPatternsTable.removeAllAssociations(fileType);
     mySchemesManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
       final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
-      mySpecialFileTypes.remove(fakeFileType);
+      mySpecialFileTypes = ArrayUtil.remove(mySpecialFileTypes, fakeFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
   }
 
@@ -792,14 +791,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
+  public boolean isFileIgnored(@NotNull VirtualFile file) {
     return myIgnoredFileCache.isFileIgnored(file);
   }
 
   @Override
-  @SuppressWarnings({"deprecation"})
   @NotNull
   public String[] getAssociatedExtensions(@NotNull FileType type) {
+    //noinspection deprecation
     return myPatternsTable.getAssociatedExtensions(type);
   }
 
@@ -896,35 +895,39 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       addIgnore("__pycache__");
     }
 
-    if (savedVersion < 10) {
-      addIgnore(".bundle");
-    }
-
     if (savedVersion < 11) {
       addIgnore("*.rbc");
     }
 
     if (savedVersion < 13) {
       // we want *.lib back since it's an important user artifact for CLion, also for IDEA project itself, since we have some libs.  
-      Set<String> masks = new LinkedHashSet<String>(myIgnoredPatterns.getIgnoreMasks());
-      masks.remove("*.lib");
-      
-      myIgnoredPatterns.clearPatterns();
-      for (String each : masks) {
-        myIgnoredPatterns.addIgnoreMask(each);
-      }
+      unignoreMask("*.lib");
     }
 
     if (savedVersion < 14) {
       addIgnore(".tox");
     }
 
+    if (savedVersion < 15) {
+      // we want .bundle back, bundler keeps useful data there
+      unignoreMask(".bundle");
+    }
     myIgnoredFileCache.clearCache();
 
     String counter = JDOMExternalizer.readString(state, "fileTypeChangedCounter");
     if (counter != null) {
       fileTypeChangedCount.set(StringUtilRt.parseInt(counter, 0));
       autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
+    }
+  }
+
+  private void unignoreMask(@NotNull final String maskToRemove) {
+    final Set<String> masks = new LinkedHashSet<String>(myIgnoredPatterns.getIgnoreMasks());
+    masks.remove(maskToRemove);
+
+    myIgnoredPatterns.clearPatterns();
+    for (final String each : masks) {
+      myIgnoredPatterns.addIgnoreMask(each);
     }
   }
 
@@ -1028,7 +1031,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       FileNameMatcher[] unresolvedMappingKeys = myUnresolvedMappings.keySet().toArray(new FileNameMatcher[myUnresolvedMappings.size()]);
       Arrays.sort(unresolvedMappingKeys, new Comparator<FileNameMatcher>() {
         @Override
-        public int compare(FileNameMatcher o1, FileNameMatcher o2) {
+        public int compare(@NotNull FileNameMatcher o1, @NotNull FileNameMatcher o2) {
           return o1.getPresentableString().compareTo(o2.getPresentableString());
         }
       });
@@ -1075,7 +1078,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private boolean isApproved(FileNameMatcher matcher) {
+  private boolean isApproved(@NotNull FileNameMatcher matcher) {
     Pair<FileType, Boolean> pair = myRemovedMappings.get(matcher);
     return pair != null && pair.getSecond();
   }
@@ -1108,7 +1111,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
    */
   private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<FileNameMatcher> matchers, boolean addScheme) {
     if (addScheme) {
-      mySchemesManager.addNewScheme(fileType, true);
+      mySchemesManager.addScheme(fileType);
     }
     for (FileNameMatcher matcher : matchers) {
       myPatternsTable.addAssociation(matcher, fileType);
@@ -1116,7 +1119,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
-      mySpecialFileTypes.add((FileTypeIdentifiableByVirtualFile)fileType);
+      mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)fileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
   }
 
@@ -1229,7 +1232,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static boolean shouldSave(FileType fileType) {
+  private static boolean shouldSave(@NotNull FileType fileType) {
     return fileType != FileTypes.UNKNOWN && !fileType.isReadOnly();
   }
 
@@ -1243,6 +1246,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return getFileTypeComponentName();
   }
 
+  @NotNull
   public static String getFileTypeComponentName() {
     return PlatformUtils.isIdeaCommunity() ? "CommunityFileTypes" : "FileTypeManager";
   }
@@ -1260,7 +1264,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     for (FileType fileType : fileTypes) {
-      mySchemesManager.addNewScheme(fileType, true);
+      mySchemesManager.addScheme(fileType);
       if (fileType instanceof AbstractFileType) {
         ((AbstractFileType)fileType).initSupport();
       }
@@ -1269,7 +1273,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     fireFileTypesChanged();
   }
 
-  public void associate(FileType fileType, FileNameMatcher matcher, boolean fireChange) {
+  public void associate(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
     if (!myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
@@ -1281,7 +1285,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  public void removeAssociation(FileType fileType, FileNameMatcher matcher, boolean fireChange) {
+  public void removeAssociation(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
     if (myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
@@ -1306,7 +1310,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
   }
 
-  private void registerReDetectedMappings(StandardFileType pair) {
+  private void registerReDetectedMappings(@NotNull StandardFileType pair) {
     FileType fileType = pair.fileType;
     if (fileType == PlainTextFileType.INSTANCE) return;
     for (FileNameMatcher matcher : pair.matchers) {
@@ -1328,6 +1332,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
+  @NotNull
   Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
     return myRemovedMappings;
   }

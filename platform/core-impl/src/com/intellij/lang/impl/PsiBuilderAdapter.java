@@ -101,6 +101,7 @@ public class PsiBuilderAdapter implements PsiBuilder {
     return myDelegate.getCurrentOffset();
   }
 
+  @NotNull
   @Override
   public Marker mark() {
     return myDelegate.mark();
@@ -116,11 +117,13 @@ public class PsiBuilderAdapter implements PsiBuilder {
     return myDelegate.eof();
   }
 
+  @NotNull
   @Override
   public ASTNode getTreeBuilt() {
     return myDelegate.getTreeBuilt();
   }
 
+  @NotNull
   @Override
   public FlyweightCapableTreeStructure<LighterASTNode> getLightTree() {
     return myDelegate.getLightTree();

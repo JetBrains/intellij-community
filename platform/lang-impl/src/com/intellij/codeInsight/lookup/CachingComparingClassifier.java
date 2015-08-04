@@ -52,6 +52,12 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
   }
 
   @Override
+  public void removeElement(LookupElement element, ProcessingContext context) {
+    myWeights.remove(element);
+    super.removeElement(element, context);
+  }
+
+  @Override
   public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
     if (!myWeigher.isPrefixDependent() && myPrimitive) {
       return myNext.classify(source, context);

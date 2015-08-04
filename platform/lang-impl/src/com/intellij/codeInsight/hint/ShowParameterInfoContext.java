@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -137,7 +138,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (editor.isDisposed()) return;
+        if (editor.isDisposed() || DumbService.isDumb(project)) return;
 
         final Document document = editor.getDocument();
         if (document.getTextLength() < elementStart) return;

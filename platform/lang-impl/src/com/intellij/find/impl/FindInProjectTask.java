@@ -383,16 +383,21 @@ class FindInProjectTask {
   }
 
   @NotNull
-  private static Set<VirtualFile> getLocalScopeFiles(@NotNull LocalSearchScope scope) {
-    Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
-    for (PsiElement element : scope.getScope()) {
-      PsiFile file = element.getContainingFile();
-      if (file != null) {
-        ContainerUtil.addIfNotNull(files, file.getVirtualFile());
-        ContainerUtil.addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
+  private static Set<VirtualFile> getLocalScopeFiles(@NotNull final LocalSearchScope scope) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
+      @Override
+      public Set<VirtualFile> compute() {
+        Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+        for (PsiElement element : scope.getScope()) {
+          PsiFile file = element.getContainingFile();
+          if (file != null) {
+            ContainerUtil.addIfNotNull(files, file.getVirtualFile());
+            ContainerUtil.addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
+          }
+        }
+        return files;
       }
-    }
-    return files;
+    });
   }
 
   private boolean canRelyOnIndices() {

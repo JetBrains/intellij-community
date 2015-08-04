@@ -24,9 +24,13 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -56,7 +60,8 @@ public class TestMethods extends TestMethod {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
     final Project project = module.getProject();
-    final GlobalSearchScope searchScope = getConfiguration().getConfigurationModule().getSearchScope();
+    final SourceScope scope = getSourceScope();
+    final GlobalSearchScope searchScope = scope != null ? scope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
     addClassesListToJavaParameters(myFailedTests, new Function<AbstractTestProxy, String>() {
       @Override
       public String fun(AbstractTestProxy testInfo) {
@@ -67,6 +72,11 @@ public class TestMethods extends TestMethod {
     return javaParameters;
   }
 
+  @Override
+  protected boolean configureByModule(Module module) {
+    return super.configureByModule(module) && getConfiguration().getPersistentData().getScope() != TestSearchScope.WHOLE_PROJECT;
+  }
+
   @Nullable
   public static String getTestPresentation(AbstractTestProxy testInfo, Project project, GlobalSearchScope searchScope) {
     final Location location = testInfo.getLocation(project, searchScope);
@@ -75,7 +85,9 @@ public class TestMethods extends TestMethod {
       final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
                                                                           : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {
-        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + testInfo.getName();
+        final String proxyName = testInfo.getName();
+        final String methodName = ((PsiMethod)element).getName();
+        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + proxyName.substring(proxyName.indexOf(methodName));
       }
     }
     return null;

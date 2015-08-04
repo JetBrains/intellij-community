@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,6 +40,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,19 +90,31 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
+    final Ref<Boolean> result = Ref.create(false);
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        result.set(addSupport());
+      }
+    });
+
+    super.doOKAction();
+  }
+
+  private boolean addSupport() {
     final LibraryCompositionSettings librarySettings = myComponent.getLibraryCompositionSettings();
     if (librarySettings != null) {
       final ModifiableRootModel modifiableModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
       if (!askAndRemoveDuplicatedLibraryEntry(modifiableModel, librarySettings.getLibraryDescription())) {
         if (myConfigurable.isOnlyLibraryAdded()) {
           myModifiableModelsProvider.disposeModuleModifiableModel(modifiableModel);
-          return;
+          return false;
         }
-        return;
+        return false;
       }
 
       new WriteAction() {
-        protected void run(final Result result) {
+        protected void run(@NotNull final Result result) {
           myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
         }
       }.execute();
@@ -110,13 +125,13 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
                                               CommonBundle.getWarningTitle(), Messages.getWarningIcon());
         if (answer != Messages.YES) {
-          return;
+          return false;
         }
       }
     }
 
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         final ModifiableRootModel rootModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
         if (librarySettings != null) {
           librarySettings.addLibraries(rootModel, new ArrayList<Library>(), myModel.getLibrariesContainer());
@@ -125,7 +140,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
         myModifiableModelsProvider.commitModuleModifiableModel(rootModel);
       }
     }.execute();
-    super.doOKAction();
+    return true;
   }
 
   @Override

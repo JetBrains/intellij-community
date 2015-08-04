@@ -25,11 +25,6 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="reactiveidea" scope="TEST" />
-    <orderEntry type="module" module-name="reactivemodel" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="com.corundumstudio.socketio:netty-socketio:1.7.6" level="project" />
-    <orderEntry type="library" name="com.github.nkzawa:socket.io-client:0.4.2" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

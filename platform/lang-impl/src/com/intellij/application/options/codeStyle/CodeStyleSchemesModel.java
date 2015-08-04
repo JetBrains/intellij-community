@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -164,24 +165,8 @@ public class CodeStyleSchemesModel {
       myUsePerProjectSettings || myGlobalSelected == null ? null : myGlobalSelected.getName();
     projectSettingsManager.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
 
-    final CodeStyleScheme[] savedSchemes = CodeStyleSchemes.getInstance().getSchemes();
-    final Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(savedSchemes));
-    List<CodeStyleScheme> configuredSchemes = getSchemes();
+    ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemeManager().setSchemes(mySchemes, myGlobalSelected, null);
 
-    for (CodeStyleScheme savedScheme : savedSchemes) {
-      if (!configuredSchemes.contains(savedScheme)) {
-        CodeStyleSchemes.getInstance().deleteScheme(savedScheme);
-      }
-    }
-
-    for (CodeStyleScheme configuredScheme : configuredSchemes) {
-      if (!savedSchemesSet.contains(configuredScheme)) {
-        CodeStyleSchemes.getInstance().addScheme(configuredScheme);
-      }
-    }
-
-    CodeStyleSchemes.getInstance().setCurrentScheme(myGlobalSelected);
-    
     // We want to avoid the situation when 'real code style' differs from the copy stored here (e.g. when 'real code style' changes
     // are 'committed' by pressing 'Apply' button). So, we reset the copies here assuming that this method is called on 'Apply'
     // button processing

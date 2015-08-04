@@ -185,7 +185,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
         final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
         return arrayInitializer == null || isDefaultArrayInitializer(arrayInitializer);
       }
-      else if (initializer instanceof PsiArrayInitializerExpression) {
+      if (initializer instanceof PsiArrayInitializerExpression) {
         final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)initializer;
         final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
         return initializers.length == 0;
@@ -193,27 +193,27 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       return false;
     }
 
-    public static boolean variableIsWritten(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    private static boolean variableIsWritten(@NotNull PsiVariable variable, @NotNull PsiElement context) {
       final VariableReadWriteVisitor visitor = new VariableReadWriteVisitor(variable, true);
       context.accept(visitor);
       return visitor.isPassed();
     }
 
-    public static boolean variableIsRead(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    private static boolean variableIsRead(@NotNull PsiVariable variable, @NotNull PsiElement context) {
       final VariableReadWriteVisitor visitor =
         new VariableReadWriteVisitor(variable, false);
       context.accept(visitor);
       return visitor.isPassed();
     }
 
-    static class VariableReadWriteVisitor extends JavaRecursiveElementVisitor {
+    private static class VariableReadWriteVisitor extends JavaRecursiveElementWalkingVisitor {
 
       @NotNull
       private final PsiVariable variable;
       private final boolean write;
-      private boolean passed = false;
+      private boolean passed;
 
-      VariableReadWriteVisitor(@NotNull PsiVariable variable, boolean write) {
+      private VariableReadWriteVisitor(@NotNull PsiVariable variable, boolean write) {
         this.variable = variable;
         this.write = write;
       }

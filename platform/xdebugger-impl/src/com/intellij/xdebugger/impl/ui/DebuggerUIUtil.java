@@ -16,24 +16,29 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -51,9 +56,7 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DebuggerUIUtil {
@@ -262,6 +265,20 @@ public class DebuggerUIUtil {
       }
     });
 
+    final ComponentAdapter moveListener = new ComponentAdapter() {
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        balloon.hide();
+      }
+    };
+    component.addComponentListener(moveListener);
+    Disposer.register(balloon, new Disposable() {
+      @Override
+      public void dispose() {
+        component.removeComponentListener(moveListener);
+      }
+    });
+
     if (whereToShow == null) {
       balloon.showInCenterOf(component);
     }
@@ -354,11 +371,24 @@ public class DebuggerUIUtil {
    * Checks if value has evaluation expression ready, or calculation is pending
    */
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
-    Promise<String> promise = value.calculateEvaluationExpression();
+    Promise<XExpression> promise = value.calculateEvaluationExpression();
     if (promise.getState() == Promise.State.PENDING) return true;
     if (promise instanceof Getter) {
       return ((Getter)promise).get() != null;
     }
     return true;
+  }
+
+  public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String actionName) {
+    AnAction action = ActionManager.getInstance().getAction(actionName);
+    KeyStroke stroke = KeymapUtil.getKeyStroke(action.getShortcutSet());
+    if (stroke != null) {
+      popup.registerAction("handleSelection " + stroke, stroke, new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          popup.handleSelect(true);
+        }
+      });
+    }
   }
 }

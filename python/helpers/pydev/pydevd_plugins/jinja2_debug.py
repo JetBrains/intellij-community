@@ -1,6 +1,6 @@
 import traceback
 from pydevd_breakpoints import LineBreakpoint, get_exception_name
-from pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains, DictIterItems
+from pydevd_constants import GetThreadId, STATE_SUSPEND, DictContains, DictIterItems, DictKeys
 from pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 import pydevd_vars
 from pydevd_file_utils import GetFileNameAndBaseFromFile
@@ -70,7 +70,7 @@ def _is_jinja2_render_call(frame):
         return False
 
 
-def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK):
+def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     frame = Jinja2TemplateFrame(frame)
 
     if frame.f_lineno is None:
@@ -82,6 +82,9 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK):
     thread.additionalInfo.suspend_type = JINJA2_SUSPEND
     thread.additionalInfo.filename = frame.f_code.co_filename
     thread.additionalInfo.line = frame.f_lineno
+    if cmd == CMD_ADD_EXCEPTION_BREAK:
+        # send exception name as message
+        thread.additionalInfo.message = message
 
     return frame
 
@@ -352,11 +355,12 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
     pydb, filename, info, thread = args
     exception, value, trace = arg
     if pydb.jinja2_exception_break:
+        exception_type = DictKeys(pydb.jinja2_exception_break)[0]
         if get_exception_name(exception) in ('UndefinedError', 'TemplateNotFound', 'TemplatesNotFound'):
             #errors in rendering
             render_frame = _find_jinja2_render_frame(frame)
             if render_frame:
-                suspend_frame = _suspend_jinja2(pydb, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
+                suspend_frame = _suspend_jinja2(pydb, thread, render_frame, CMD_ADD_EXCEPTION_BREAK, message=exception_type)
                 if suspend_frame:
                     add_exception_to_frame(suspend_frame, (exception, value, trace))
                     flag = True
@@ -368,7 +372,7 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
             name = frame.f_code.co_name
             if name in ('template', 'top-level template code') or name.startswith('block '):
                 #Jinja2 translates exception info and creates fake frame on his own
-                pydb_frame.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
+                pydb_frame.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK, message=exception_type)
                 add_exception_to_frame(frame, (exception, value, trace))
                 thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                 flag = True

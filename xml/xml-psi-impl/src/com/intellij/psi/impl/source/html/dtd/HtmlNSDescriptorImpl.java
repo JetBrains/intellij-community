@@ -128,11 +128,6 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  public boolean isHierarhyEnabled() {
-    return false;
-  }
-
-  @Override
   public PsiElement getDeclaration() {
     return myDelegate == null ? null : myDelegate.getDeclaration();
   }

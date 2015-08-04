@@ -51,7 +51,7 @@ public class GitConfig {
 
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
-  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"");
+  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote(?: \"(.*)\")?");
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"");
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"");
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch");
@@ -375,7 +375,11 @@ public class GitConfig {
     RemoteBean remoteBean = section.as(RemoteBean.class, classLoader);
     Matcher matcher = REMOTE_SECTION.matcher(sectionName);
     if (matcher.matches()) {
-      return new Remote(matcher.group(1), remoteBean);
+      String remoteName = matcher.group(1);
+      if (remoteName == null) { // e.g. remote.pushdefault generic setting not specific to any remote
+        return null;
+      }
+      return new Remote(remoteName, remoteBean);
     }
     LOG.error(String.format("Invalid remote section format in .git/config. sectionName: %s section: %s", sectionName, section));
     return null;

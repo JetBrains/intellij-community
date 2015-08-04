@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -54,6 +53,17 @@ public class SheetMessage {
   private Image staticImage;
   private int imageHeight;
   private final boolean restoreFullScreenButton;
+  private final ComponentAdapter myPositionListener = new ComponentAdapter() {
+    @Override
+    public void componentResized(ComponentEvent event) {
+      setPositionRelativeToParent();
+    }
+
+    @Override
+    public void componentMoved(ComponentEvent event) {
+      setPositionRelativeToParent();
+    }
+  };
 
   public SheetMessage(final Window owner,
                       final String title,
@@ -87,7 +97,7 @@ public class SheetMessage {
     myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
 
     imageHeight = 0;
-    registerMoveResizeHandler();
+    myParent.addComponentListener(myPositionListener);
     myWindow.setFocusable(true);
     myWindow.setFocusableWindowState(true);
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
@@ -228,6 +238,8 @@ public class SheetMessage {
           if (restoreFullScreenButton) {
             FullScreenUtilities.setWindowCanFullScreen(myParent, true);
           }
+          myParent.removeComponentListener(myPositionListener);
+          myController.dispose();
           myWindow.dispose();
         }
       }
@@ -245,23 +257,4 @@ public class SheetMessage {
                        myController.SHEET_NC_HEIGHT);
 
   }
-
-  private void registerMoveResizeHandler () {
-    myParent.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(@NotNull ComponentEvent e) {
-        super.componentResized(e);
-        setPositionRelativeToParent();
-      }
-
-      @Override
-      public void componentMoved(@NotNull ComponentEvent e) {
-        super.componentMoved(e);
-        setPositionRelativeToParent();
-      }
-    });
-  }
 }
-
-
-

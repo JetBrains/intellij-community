@@ -27,6 +27,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -219,13 +220,18 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
           }
         };
 
-        ApplicationManager.getApplication().runWriteAction(action);
-        if (myTargetDirectory == null) {
-          CommonRefactoringUtil.showErrorMessage(getTitle(),
-                                                 RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
-          return;
-        }
-        myCallback.run(MoveFilesOrDirectoriesDialog.this);
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(action);
+            if (myTargetDirectory == null) {
+              CommonRefactoringUtil.showErrorMessage(getTitle(),
+                                                     RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
+              return;
+            }
+            myCallback.run(MoveFilesOrDirectoriesDialog.this);
+          }
+        });
       }
     }, RefactoringBundle.message("move.title"), null);
   }

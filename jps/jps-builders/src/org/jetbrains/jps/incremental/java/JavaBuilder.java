@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -59,12 +59,14 @@ import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.tools.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -75,7 +77,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = "java";
-  private static final String DOT_JAVA_EXTENSION = "." + JAVA_EXTENSION;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
@@ -88,18 +89,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
-  public static final FileFilter JAVA_SOURCES_FILTER =
-    SystemInfo.isFileSystemCaseSensitive?
-    new FileFilter() {
-      public boolean accept(File file) {
-        return file.getPath().endsWith(DOT_JAVA_EXTENSION);
-      }
-    } :
-    new FileFilter() {
-      public boolean accept(File file) {
-        return StringUtil.endsWithIgnoreCase(file.getPath(), DOT_JAVA_EXTENSION);
-      }
-    };
+  public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
   private static final String RT_JAR_PATH_SUFFIX = File.separator + "rt.jar";
 
   private final Executor myTaskRunner;
@@ -367,7 +357,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final int chunkSdkVersion = getChunkSdkVersion(chunk);
       
-      final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, chunkSdkVersion, options, compilingTool);
+      Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
       if (_platformCp == null) {
         context.processMessage(
           new CompilerMessage(
@@ -377,6 +367,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
         );
         return true;
       }
+
+      if (chunkSdkVersion >= 9 && !_platformCp.isEmpty()) {
+        // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
+        // because platform classes are stored in jimage binary files with unknown format.
+        // Because of this we are clearing platform classpath so that javac will resolve against its own bootclasspath
+        // and prepending additional jars from the JDK configuration to compilation classpath
+        final Collection<File> joined = new ArrayList<File>(_platformCp.size() + classpath.size());
+        joined.addAll(_platformCp);
+        joined.addAll(classpath);
+        classpath = joined;
+        _platformCp = Collections.emptyList();
+      }
+
       final boolean rc;
       if (!shouldForkCompilerProcess(context, chunkSdkVersion)) {
         rc = JavacMain.compile(
@@ -392,9 +395,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
 
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
-        final ExternalJavacServer server = ensureJavacServerStarted(context);
+        final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
-          context, options, vmOptions, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, sdkHome, compilingTool
+          sdkHome, getExternalJavacHeapSize(context), vmOptions, options, _platformCp, classpath, sourcePath, files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
       }
       return rc;
@@ -404,6 +407,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  private static int getExternalJavacHeapSize(CompileContext context) {
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
+    return options.MAXIMUM_HEAP_SIZE;
+  }
   @Nullable
   public static String validateCycle(ModuleChunk chunk,
                                      JpsJavaExtensionService javaExt,
@@ -458,14 +467,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
-  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, final int chunkSdkVersion, List<String> options, JavaCompilingTool compilingTool) {
-    if (chunkSdkVersion >= 9) {
-      // if chunk's SDK is 9 or higher, there is no way to specify full classpath 
-      // because platform classes are stored in jimage binary files with unknown format
-      // returning empty path so that javac will resolve against its own bootclasspath 
-      return Collections.emptyList();
-    }
-    
+  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
     if (ourDefaultRtJar == null || !(compilingTool instanceof JavacCompilerTool)) {
       return platformCp;
     }
@@ -517,15 +519,23 @@ public class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-  private static synchronized ExternalJavacServer ensureJavacServerStarted(@NotNull CompileContext context) throws Exception {
-    ExternalJavacServer server = ExternalJavacServer.KEY.get(context);
+  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws Exception {
+    ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;
     }
     final int listenPort = findFreePort();
-    server = new ExternalJavacServer();
+    server = new ExternalJavacManager(Utils.getSystemRoot()) {
+      protected ExternalJavacProcessHandler createProcessHandler(Process process) {
+        return new ExternalJavacProcessHandler(process) {
+          protected Future<?> executeOnPooledThread(Runnable task) {
+            return SharedThreadPool.getInstance().executeOnPooledThread(task);
+          }
+        };
+      }
+    };
     server.start(listenPort);
-    ExternalJavacServer.KEY.set(context, server);
+    ExternalJavacManager.KEY.set(context, server);
     return server;
   }
 
@@ -584,7 +594,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     catch (IOException e) {
       e.printStackTrace(System.err);
-      return ExternalJavacServer.DEFAULT_SERVER_PORT;
+      return ExternalJavacManager.DEFAULT_SERVER_PORT;
     }
   }
 
@@ -903,7 +913,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     public void outputLineAvailable(String line) {
       if (!StringUtil.isEmpty(line)) {
-        if (line.contains("java.lang.OutOfMemoryError")) {
+        if (line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX)) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println(line);
+        }
+        else if (line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.err.println(line);
+        }
+        else if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
           myErrorCount++;
         }

@@ -130,6 +130,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
     });
 
+    if (getScopesState().myOrder.size() != myRoot.getChildCount()) {
+      loadStateOrder();
+    }
+
     super.reset();
   }
 

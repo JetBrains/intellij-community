@@ -23,12 +23,12 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.*;
 
 public class UrlUtilTest {
   @Test
@@ -71,5 +71,13 @@ public class UrlUtilTest {
     for (String sshUrl : SSH_URL_VARIANTS) {
       assertEquals("github.com", URLUtil.parseHostFromSshUrl(sshUrl));
     }
+  }
+
+  @Test
+  public void testDataUri() {
+    byte[] test = "test".getBytes(CharsetToolkit.UTF8_CHARSET);
+    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8;base64,dGVzdA=="), equalTo(test));
+    // https://youtrack.jetbrains.com/issue/WEB-14581#comment=27-1014790
+    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA=="), equalTo(test));
   }
 }

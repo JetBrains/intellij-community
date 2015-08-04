@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     final PsiFile containingFile = root.getContainingFile();
     final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules) {
       @Override
-      public void performRefactoring(final UsageInfo[] usages) {
+      public void performRefactoring(@NotNull final UsageInfo[] usages) {
         super.performRefactoring(usages);
         if (editor != null) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -94,12 +94,12 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new TypeMigrationViewDescriptor(myRoot[0]);
   }
 
   @Override
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (hasFailedConversions()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new RuntimeException(StringUtil.join(myLabeler.getFailedConversionsReport(), "\n"));
@@ -123,7 +123,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void previewRefactoring(final UsageInfo[] usages) {
+  protected void previewRefactoring(@NotNull final UsageInfo[] usages) {
     MigrationPanel panel = new MigrationPanel(myRoot[0], myLabeler, myProject, isPreviewUsages());
     String text;
     if (myRoot[0] instanceof PsiField) {
@@ -165,12 +165,12 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(PsiElement[] elements) {
+  protected void refreshElements(@NotNull PsiElement[] elements) {
     myRoot = elements;
   }
 
   @Override
-  public void performRefactoring(UsageInfo[] usages) {
+  public void performRefactoring(@NotNull UsageInfo[] usages) {
     for (PsiElement element : myRoot) {
       if (element instanceof PsiVariable && ((PsiVariable)element).getTypeElement() != null) {
         ((PsiVariable)element).normalizeDeclaration();

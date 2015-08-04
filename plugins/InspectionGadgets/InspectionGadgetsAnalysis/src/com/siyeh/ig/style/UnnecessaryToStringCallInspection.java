@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -56,7 +57,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
   }
 
   @NonNls
-  public static String calculateReplacementText(PsiExpression expression) {
+  static String calculateReplacementText(PsiExpression expression) {
     if (expression == null) {
       return "this";
     }
@@ -67,7 +68,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
 
     private final String replacementText;
 
-    UnnecessaryToStringCallFix(String replacementText) {
+    private UnnecessaryToStringCallFix(String replacementText) {
       this.replacementText = replacementText;
     }
 
@@ -111,6 +112,10 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
       if (!"toString".equals(referenceName)) {
         return;
       }
+      PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
+      if (referenceNameElement == null) {
+        return;
+      }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 0) {
@@ -124,14 +129,14 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
         // do not warn on nonsensical code
         return;
       }
-      else if (qualifier instanceof PsiSuperExpression) {
+      if (qualifier instanceof PsiSuperExpression) {
         return;
       }
       final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.lang.Throwable");
       if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
         return;
       }
-      registerMethodCallError(expression, calculateReplacementText(qualifier));
+      registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, calculateReplacementText(qualifier));
     }
   }
 }

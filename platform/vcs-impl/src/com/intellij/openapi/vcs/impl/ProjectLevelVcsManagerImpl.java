@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -30,7 +30,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -751,15 +750,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings.setDirectoryMappings(mappingsList);
   }
 
-  public void writeDirectoryMappings(final Element element) {
+  public void writeDirectoryMappings(@NotNull Element element) {
     if (myProject.isDefault()) {
       element.setAttribute(ATTRIBUTE_DEFAULT_PROJECT, Boolean.TRUE.toString());
     }
     for (VcsDirectoryMapping mapping : getDirectoryMappings()) {
+      VcsRootSettings rootSettings = mapping.getRootSettings();
+      if (rootSettings == null && StringUtil.isEmpty(mapping.getDirectory()) && StringUtil.isEmpty(mapping.getVcs())) {
+        continue;
+      }
+
       Element child = new Element(ELEMENT_MAPPING);
       child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.getDirectory());
       child.setAttribute(ATTRIBUTE_VCS, mapping.getVcs());
-      final VcsRootSettings rootSettings = mapping.getRootSettings();
       if (rootSettings != null) {
         Element rootSettingsElement = new Element(ELEMENT_ROOT_SETTINGS);
         rootSettingsElement.setAttribute(ATTRIBUTE_CLASS, rootSettings.getClass().getName());
@@ -879,14 +882,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return false;
   }
 
-  private boolean isInDirectoryBasedRoot(final VirtualFile file) {
-    if (file == null) return false;
-    final StorageScheme storageScheme = ((ProjectEx)myProject).getStateStore().getStorageScheme();
-    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-      final VirtualFile baseDir = myProject.getBaseDir();
-      if (baseDir == null) return false;
-      final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      return ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtilCore.isAncestor(ideaDir, file, false);
+  private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {
+    if (file != null && ProjectUtil.isDirectoryBased(myProject)) {
+      VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir != null) {
+        VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+        return ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtilCore.isAncestor(ideaDir, file, false);
+      }
     }
     return false;
   }

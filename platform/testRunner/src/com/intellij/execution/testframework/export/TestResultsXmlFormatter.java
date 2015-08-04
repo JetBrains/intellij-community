@@ -18,15 +18,22 @@ package com.intellij.execution.testframework.export;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -38,31 +45,46 @@ import java.util.*;
 public class TestResultsXmlFormatter {
 
   private static final String ELEM_RUN = "testrun";
-  private static final String ELEM_TEST = "test";
-  private static final String ELEM_SUITE = "suite";
-  private static final String ATTR_NAME = "name";
-  private static final String ATTR_DURATION = "duration";
-  private static final String ELEM_COUNT = "count";
-  private static final String ATTR_VALUE = "value";
-  private static final String ELEM_OUTPUT = "output";
-  private static final String ATTR_OUTPUT_TYPE = "type";
-  private static final String ATTR_STATUS = "status";
-  private static final String TOTAL_STATUS = "total";
+  public static final String ELEM_TEST = "test";
+  public static final String ELEM_SUITE = "suite";
+  public static final String ATTR_NAME = "name";
+  public static final String ATTR_DURATION = "duration";
+  public static final String ATTR_LOCATION = "locationUrl";
+  public static final String ELEM_COUNT = "count";
+  public static final String ATTR_VALUE = "value";
+  public static final String ELEM_OUTPUT = "output";
+  public static final String ATTR_OUTPUT_TYPE = "type";
+  public static final String ATTR_STATUS = "status";
+  public static final String TOTAL_STATUS = "total";
   private static final String ATTR_FOORTER_TEXT = "footerText";
+  public static final String ATTR_CONFIG = "isConfig";
+  public static final String STATUS_PASSED = "passed";
+  public static final String STATUS_FAILED = "failed";
+  public static final String STATUS_ERROR = "error";
+  public static final String STATUS_IGNORED = "ignored";
+  public static final String STATUS_SKIPPED = "skipped";
+
+  public static final String ROOT_ELEM = "root";
+  
 
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
+  private final boolean myHidePassedConfig;
 
-  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler)
+  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, TestConsoleProperties properties, ContentHandler resultHandler)
     throws SAXException {
-    new TestResultsXmlFormatter(root, runtimeConfiguration, resultHandler).execute();
+    new TestResultsXmlFormatter(root, runtimeConfiguration, properties, resultHandler).execute();
   }
 
-  private TestResultsXmlFormatter(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler) {
+  private TestResultsXmlFormatter(AbstractTestProxy root,
+                                  RunConfiguration runtimeConfiguration,
+                                  TestConsoleProperties properties,
+                                  ContentHandler resultHandler) {
     myRuntimeConfiguration = runtimeConfiguration;
     myTestRoot = root;
     myResultHandler = resultHandler;
+    myHidePassedConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
   }
 
   private void execute() throws SAXException {
@@ -102,6 +124,15 @@ public class TestResultsXmlFormatter {
       endElement(ELEM_COUNT);
     }
 
+    final Element config = new Element("config");
+    try {
+      myRuntimeConfiguration.writeExternal(config);
+      config.setAttribute("configId", myRuntimeConfiguration.getType().getId());
+      config.setAttribute("name", myRuntimeConfiguration.getName());
+    }
+    catch (WriteExternalException ignore) {}
+    processJDomElement(config);
+
     CompositeFilter f = new CompositeFilter(myRuntimeConfiguration.getProject());
     for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
       Filter[] filters = eachProvider.getDefaultFilters(myRuntimeConfiguration.getProject());
@@ -111,6 +142,25 @@ public class TestResultsXmlFormatter {
     }
 
 
+    if (myTestRoot instanceof TestProxyRoot) {
+      final String presentation = ((TestProxyRoot)myTestRoot).getPresentation();
+      if (presentation != null) {
+        final LinkedHashMap<String, String> rootAttrs = new LinkedHashMap<String, String>();
+        rootAttrs.put("name", presentation);
+        final String comment = ((TestProxyRoot)myTestRoot).getComment();
+        if (comment != null) {
+          rootAttrs.put("comment", comment);
+        }
+        final String rootLocation = ((TestProxyRoot)myTestRoot).getRootLocation();
+        if (rootLocation != null) {
+          rootAttrs.put("location", rootLocation);
+        }
+        startElement(ROOT_ELEM, rootAttrs);
+        writeOutput(myTestRoot, f);
+        endElement(ROOT_ELEM);
+      }
+    }
+    
     if (myTestRoot.shouldSkipRootNodeForExport()) {
       for (AbstractTestProxy node : myTestRoot.getChildren()) {
         processNode(node, f);
@@ -123,12 +173,26 @@ public class TestResultsXmlFormatter {
     myResultHandler.endDocument();
   }
 
+  private void processJDomElement(Element config) throws SAXException {
+    final String name = config.getName();
+    final LinkedHashMap<String, String> attributes = new LinkedHashMap<String, String>();
+    for (Attribute attribute : config.getAttributes()) {
+      attributes.put(attribute.getName(), attribute.getValue());
+    }
+    startElement(name, attributes);
+    for (Element child : config.getChildren()) {
+      processJDomElement(child);
+    }
+    endElement(name);
+  }
+
   private static void increment(Map<String, Integer> counts, String status) {
     Integer count = counts.get(status);
     counts.put(status, count != null ? count + 1 : 1);
   }
 
   private void processNode(AbstractTestProxy node, final Filter filter) throws SAXException {
+    ProgressManager.checkCanceled();
     Map<String, String> attrs = new HashMap<String, String>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
@@ -136,55 +200,79 @@ public class TestResultsXmlFormatter {
     if (duration != null) {
       attrs.put(ATTR_DURATION, String.valueOf(duration));
     }
+    String locationUrl = node.getLocationUrl();
+    if (locationUrl != null) {
+      attrs.put(ATTR_LOCATION, locationUrl);
+    }
+    if (node.isConfig()) {
+      attrs.put(ATTR_CONFIG, "true");
+    }
+    boolean started = false;
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
-    startElement(elemName, attrs);
     if (node.isLeaf()) {
-      final StringBuilder buffer = new StringBuilder();
-      final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
-      final Ref<SAXException> error = new Ref<SAXException>();
-
-      node.printOn(new Printer() {
-        @Override
-        public void print(String text, ConsoleViewContentType contentType) {
-          if (contentType != lastType.get()) {
-            if (buffer.length() > 0) {
-              try {
-                writeOutput(lastType.get(), buffer, filter);
-              }
-              catch (SAXException e) {
-                error.set(e);
-              }
-            }
-            lastType.set(contentType);
-          }
-          buffer.append(text);
-        }
-
-        @Override
-        public void onNewAvailable(@NotNull Printable printable) {
-        }
-
-        @Override
-        public void printHyperlink(String text, HyperlinkInfo info) {
-        }
-
-        @Override
-        public void mark() {
-        }
-      });
-      if (!error.isNull()) {
-        throw error.get();
-      }
-      if (buffer.length() > 0) {
-        writeOutput(lastType.get(), buffer, filter);
-      }
+      started = true;
+      startElement(elemName, attrs);
+      writeOutput(node, filter);
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
+        if (myHidePassedConfig && child.isConfig() && child.isPassed()) {
+          //ignore configurations during export
+          continue;
+        }
+        if (!started) {
+          started = true;
+          startElement(elemName, attrs);
+        }
         processNode(child, filter);
       }
     }
-    endElement(elemName);
+    if (started) {
+      endElement(elemName);
+    }
+  }
+
+  private void writeOutput(AbstractTestProxy node, final Filter filter) throws SAXException {
+    final StringBuilder buffer = new StringBuilder();
+    final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
+    final Ref<SAXException> error = new Ref<SAXException>();
+
+    final Printer printer = new Printer() {
+      @Override
+      public void print(String text, ConsoleViewContentType contentType) {
+        if (contentType != lastType.get()) {
+          if (buffer.length() > 0) {
+            try {
+              writeOutput(lastType.get(), buffer, filter);
+            }
+            catch (SAXException e) {
+              error.set(e);
+            }
+          }
+          lastType.set(contentType);
+        }
+        buffer.append(text);
+      }
+
+      @Override
+      public void onNewAvailable(@NotNull Printable printable) {
+      }
+
+      @Override
+      public void printHyperlink(String text, HyperlinkInfo info) {
+      }
+
+      @Override
+      public void mark() {
+      }
+    };
+    node.printOwnPrintablesOn(printer);
+    if (!error.isNull()) {
+      throw error.get();
+    }
+    if (buffer.length() > 0) {
+      writeOutput(lastType.get(), buffer, filter);
+    }
   }
 
   private void writeOutput(ConsoleViewContentType type, StringBuilder text, Filter filter) throws SAXException {
@@ -227,17 +315,20 @@ public class TestResultsXmlFormatter {
     // TODO enumeration!
     switch (magnitude) {
       case 0:
-        return "skipped";
+        return STATUS_SKIPPED;
+      case 2:
+      case 4:
+        return STATUS_SKIPPED;
       case 5:
-        return "ignored";
+        return STATUS_IGNORED;
       case 1:
-        return "passed";
+        return STATUS_PASSED;
       case 6:
-        return "failed";
+        return STATUS_FAILED;
       case 8:
-        return "error";
+        return STATUS_ERROR;
       default:
-        return node.isPassed() ? "passed" : "failed";
+        return node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
     }
   }
 

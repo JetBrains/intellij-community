@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.ui;
 
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,14 +28,14 @@ import java.util.Arrays;
 import java.util.List;
 
 @SkipInHeadlessEnvironment
-public class FinderRecursivePanelListModelMergeTest extends PlatformTestCase {
+public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCase {
 
   public void testSelectionKeptSingleItem() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 0, 0, "a");
   }
 
   public void testNoSelectionAfterReplacingAllItems() {
-    assertMerge(new String[0], "a", "b", "c", "d");
+    assertMerge(ArrayUtil.EMPTY_STRING_ARRAY, "a", "b", "c", "d");
   }
 
   public void testNoSelectionNoItems() {

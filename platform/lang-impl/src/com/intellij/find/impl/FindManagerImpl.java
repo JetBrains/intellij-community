@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -303,10 +304,12 @@ public class FindManagerImpl extends FindManager {
     private final VirtualFile myFile;
     private final FindModel myFindModel;
     private final TreeMap<Integer, Integer> mySkipRangesSet;
+    private final CharSequence myText;
 
     private FindExceptCommentsOrLiteralsData(VirtualFile file, FindModel model, CharSequence text) {
       myFile = file;
       myFindModel = model.clone();
+      myText = ImmutableCharSequence.asImmutable(text);
 
       TreeMap<Integer, Integer> result = new TreeMap<Integer, Integer>();
 
@@ -340,8 +343,11 @@ public class FindManagerImpl extends FindManager {
       }
     }
 
-    boolean isAcceptableFor(FindModel model, VirtualFile file) {
-      return Comparing.equal(myFile, file) && myFindModel.equals(model);
+    boolean isAcceptableFor(FindModel model, VirtualFile file, CharSequence text) {
+      return Comparing.equal(myFile, file) &&
+             myFindModel.equals(model) &&
+             myText.length() == text.length()
+        ;
     }
 
     @Override
@@ -367,7 +373,7 @@ public class FindManagerImpl extends FindManager {
     }
 
     FindExceptCommentsOrLiteralsData data = model.getUserData(ourExceptCommentsOrLiteralsDataKey);
-    if (data == null || !data.isAcceptableFor(model, file)) {
+    if (data == null || !data.isAcceptableFor(model, file, text)) {
       model.putUserData(ourExceptCommentsOrLiteralsDataKey, data = new FindExceptCommentsOrLiteralsData(file, model, text));
     }
 
@@ -390,14 +396,32 @@ public class FindManagerImpl extends FindManager {
   }
 
   private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
-    boolean isWordStart = startOffset == 0 ||
-                          !Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) ||
-                          !Character.isJavaIdentifierPart(text.charAt(startOffset)) ||
-                          startOffset > 1 && text.charAt(startOffset - 2) == '\\';
+    boolean isWordStart;
 
-    boolean isWordEnd = endOffset == text.length() ||
-                        !Character.isJavaIdentifierPart(text.charAt(endOffset)) ||
-                        endOffset > 0 && !Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+    if (startOffset != 0) {
+      boolean previousCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) &&
+                                              (startOffset <= 1 || text.charAt(startOffset - 2) != '\\');
+      boolean previousCharacterIsSameAsNext = text.charAt(startOffset - 1) == text.charAt(startOffset);
+
+      boolean firstCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset));
+      isWordStart = !firstCharacterIsIdentifier && !previousCharacterIsSameAsNext ||
+                    firstCharacterIsIdentifier && !previousCharacterIsIdentifier;
+    } else {
+      isWordStart = true;
+    }
+
+    boolean isWordEnd;
+
+    if (endOffset != text.length()) {
+      boolean nextCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(endOffset));
+      boolean nextCharacterIsSameAsPrevious = endOffset > 0 && text.charAt(endOffset) == text.charAt(endOffset - 1);
+      boolean lastSearchedCharacterIsIdentifier = endOffset  > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+
+      isWordEnd = lastSearchedCharacterIsIdentifier && !nextCharacterIsIdentifier ||
+                  !lastSearchedCharacterIsIdentifier && !nextCharacterIsSameAsPrevious;
+    } else {
+      isWordEnd = true;
+    }
 
     return isWordStart && isWordEnd;
   }
@@ -750,13 +774,10 @@ public class FindManagerImpl extends FindManager {
   }
 
   private static String getStringToReplaceByRegexp(@NotNull final FindModel model, Matcher matcher) throws MalformedReplacementStringException{
-    StringBuffer replaced = new StringBuffer();
     if (matcher == null) return null;
     try {
-      String toReplace = StringUtil.unescapeStringCharacters(model.getStringToReplace());
-      matcher.appendReplacement(replaced, toReplace);
-
-      return replaced.substring(matcher.start());
+      String toReplace = model.getStringToReplace();
+      return new RegExReplacementBuilder(matcher).createReplacement(toReplace);
     }
     catch (Exception e) {
       throw createMalformedReplacementException(model, e);
@@ -832,11 +853,18 @@ public class FindManagerImpl extends FindManager {
     else {
       buffer.append(Character.toLowerCase(toReplace.charAt(0)));
     }
+
     if (toReplace.length() == 1) return buffer.toString();
 
     if (foundString.length() == 1) {
       buffer.append(toReplace.substring(1));
       return buffer.toString();
+    }
+
+    boolean isReplacementLowercase = true;
+    for (int i = 0; i < toReplace.length(); i++) {
+      isReplacementLowercase = Character.isLowerCase(toReplace.charAt(i));
+      if (!isReplacementLowercase) break;
     }
 
     boolean isTailUpper = true;
@@ -847,10 +875,10 @@ public class FindManagerImpl extends FindManager {
       if (!isTailUpper && !isTailLower) break;
     }
 
-    if (isTailUpper) {
+    if (isTailUpper && isReplacementLowercase) {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
-    else if (isTailLower) {
+    else if (isTailLower && isReplacementLowercase) {
       buffer.append(toReplace.substring(1).toLowerCase());
     }
     else {

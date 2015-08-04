@@ -411,7 +411,7 @@ public class FormatProcessor {
   ) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();
-    final TextRange wsRange = shiftRange(textRange, shift);
+    final TextRange wsRange = textRange.shiftRight(shift);
     final String newWhiteSpace = _newWhiteSpace.toString();
     TextRange newWhiteSpaceRange = model instanceof FormattingModelEx
                                    ? ((FormattingModelEx) model).replaceWhiteSpace(wsRange, block.getNode(), newWhiteSpace)
@@ -420,7 +420,7 @@ public class FormatProcessor {
     shift += newWhiteSpaceRange.getLength() - textRange.getLength();
 
     if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
-      final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
+      final TextRange currentBlockRange = block.getTextRange().shiftRight(shift);
 
       IndentInside oldBlockIndent = whiteSpace.getInitialLastLineIndent();
       IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
@@ -466,17 +466,14 @@ public class FormatProcessor {
     return result == null ? fallbackIndentOptions : result;
   }
 
-  private static TextRange shiftRange(final TextRange textRange, final int shift) {
-    return new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
-  }
-
   private void processToken() {
     final SpacingImpl spaceProperty = myCurrentBlock.getSpaceProperty();
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
     if (isReformatSelectedRangesContext()) {
-      if (isCurrentBlockAlignmentUsedInRangesToModify() && whiteSpace.isReadOnly()) {
+      if (isCurrentBlockAlignmentUsedInRangesToModify() && whiteSpace.isReadOnly() && spaceProperty != null && !spaceProperty.isReadOnly()) {
         whiteSpace.setReadOnly(false);
+        whiteSpace.setLineFeedsAreReadOnly(true);
       }
     }
 
@@ -531,14 +528,12 @@ public class FormatProcessor {
     AbstractBlockWrapper block = myCurrentBlock;
     AlignmentImpl alignment = myCurrentBlock.getAlignment();
 
-    while (alignment == null
-           && block != null
-           && block.getStartOffset() == myCurrentBlock.getStartOffset())
-    {
+    while (alignment == null) {
       block = block.getParent();
-      if (block != null) {
-        alignment = block.getAlignment();
+      if (block == null || block.getStartOffset() != myCurrentBlock.getStartOffset()) {
+        return false;
       }
+      alignment = block.getAlignment();
     }
 
     return myAlignmentsInsideRangesToModify.contains(alignment);

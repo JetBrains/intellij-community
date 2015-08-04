@@ -19,98 +19,105 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.net.NetUtils;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.io.BuiltInServer;
+import org.jetbrains.io.MessageDecoder;
 
 import javax.swing.*;
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author mike
  */
 public final class SocketLock {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.idea.SocketLock");
-  public static final int SOCKET_NUMBER_START = 6942;
-  public static final int SOCKET_NUMBER_END = SOCKET_NUMBER_START + 50;
+  private static final Logger LOG = Logger.getInstance(SocketLock.class);
 
-  // IMPORTANT: Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
-  private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
-
-  private final ServerSocket serverSocket;
-  private final String[] myLockedPaths = new String[2];
-  @NonNls private static final String LOCK_THREAD_NAME = "Lock thread";
   @NonNls private static final String ACTIVATE_COMMAND = "activate ";
+
+  private final String configPath;
+  private final String systemPath;
 
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
-  private final int acquiredPort;
-  private volatile Consumer<List<String>> activateListener;
+  private final AtomicReference<Consumer<List<String>>> activateListener = new AtomicReference<Consumer<List<String>>>();
 
-  public SocketLock() {
-    serverSocket = acquireSocket();
-    if (serverSocket == null) {
-      String productName = ApplicationNamesInfo.getInstance().getProductName();
-      if (Main.isHeadless()) { //team server inspections
-        throw new RuntimeException("Only one instance of " + productName + " can be run at a time.");
-      }
-      String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
-      JOptionPane.showMessageDialog(
-        JOptionPane.getRootFrame(),
-        CommonBundle.message("cannot.start.other.instance.is.running.error.message", productName, pathToLogFile),
-        CommonBundle.message("title.warning"),
-        JOptionPane.WARNING_MESSAGE
-      );
-      acquiredPort = -1;
-    }
-    else {
-      acquiredPort = serverSocket.getLocalPort();
-      Thread thread = new Thread(new MyRunnable(), LOCK_THREAD_NAME);
-      thread.setPriority(Thread.MIN_PRIORITY);
-      thread.start();
-    }
+  private BuiltInServer server;
+
+  public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
+    this.configPath = configPath;
+    this.systemPath = systemPath;
   }
 
   public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
-    activateListener = consumer;
+    activateListener.set(consumer);
   }
 
-  @TestOnly
   public void dispose() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: destroyProcess()");
     }
+
+    BuiltInServer server = this.server;
+    boolean doRemovePortMarker = server != null;
     try {
-      serverSocket.close();
+      if (server != null) {
+        Disposer.dispose(server);
+      }
     }
-    catch (IOException e) {
-      LOG.debug(e);
+    finally {
+      if (doRemovePortMarker) {
+        try {
+          executeAndClose(new Executor<Void>() {
+            @Override
+            public Void execute(@NotNull List<Closeable> closeables) throws IOException {
+              File config = new File(configPath);
+              File system = new File(systemPath);
+              lockPortMarker(config, closeables);
+              lockPortMarker(system, closeables);
+              FileUtil.delete(new File(config, "port"));
+              FileUtil.delete(new File(system, "port"));
+              return null;
+            }
+          });
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 
-  public int getAcquiredPort() {
-    return acquiredPort;
+  @Nullable
+  public BuiltInServer getServer() {
+    return server;
   }
 
   private static void lockPortMarker(@NotNull File parent, @NotNull List<Closeable> list) throws IOException {
     FileUtilRt.createDirectory(parent);
     FileOutputStream stream = new FileOutputStream(new File(parent, "port.lock"), true);
     list.add(stream);
-    stream.getChannel().lock();
   }
 
   private static void addExistingPort(@NotNull File portMarker, @NotNull String path, @NotNull MultiMap<Integer, String> portToPath) {
@@ -125,41 +132,83 @@ public final class SocketLock {
     }
   }
 
-  @NotNull
-  public ActivateStatus lock(@NotNull String configPath, @NotNull String systemPath, String... args) {
+  @Nullable
+  public ActivateStatus lock() {
+    return lock(ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  @Nullable
+  public ActivateStatus lock(@NotNull final String[] args) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: lock(configPath='" + configPath + "', systemPath='" + systemPath + "')");
     }
 
-    File config = new File(configPath);
-    File system = new File(systemPath);
-    File portMarkerC = new File(config, "port");
-    File portMarkerS = new File(system, "port");
+    try {
+      final File config = new File(configPath);
+      final File system = new File(systemPath);
+      final File portMarkerC = new File(config, "port");
+      final File portMarkerS = new File(system, "port");
+      return executeAndClose(new Executor<ActivateStatus>() {
+        @Override
+        public ActivateStatus execute(@NotNull List<Closeable> closeables) throws Throwable {
+          lockPortMarker(config, closeables);
+          lockPortMarker(system, closeables);
+          MultiMap<Integer, String> portToPath = MultiMap.createSmart();
+          addExistingPort(portMarkerC, configPath, portToPath);
+          addExistingPort(portMarkerS, systemPath, portToPath);
+          if (!portToPath.isEmpty()) {
+            for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
+              ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
+              if (status != ActivateStatus.NO_INSTANCE) {
+                return status;
+              }
+            }
+          }
+
+          final String[] lockedPaths = {configPath, systemPath};
+          server = BuiltInServer.start(1, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
+            @NotNull
+            @Override
+            public ChannelHandler produce() {
+              return new MyChannelInboundHandler(lockedPaths, activateListener);
+            }
+          });
+
+          byte[] portBytes = Integer.toString(server.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
+          FileUtil.writeToFile(portMarkerC, portBytes);
+          FileUtil.writeToFile(portMarkerS, portBytes);
+          return ActivateStatus.NO_INSTANCE;
+        }
+      });
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+
+      if (Main.isHeadless()) {
+        Main.showMessage("Cannot lock system folders", e);
+      }
+      else {
+        String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
+        JOptionPane.showMessageDialog(
+          JOptionPane.getRootFrame(),
+          CommonBundle.message("cannot.start.other.instance.is.running.error.message", ApplicationNamesInfo.getInstance().getProductName(),
+                               pathToLogFile),
+          CommonBundle.message("title.warning"),
+          JOptionPane.WARNING_MESSAGE
+        );
+      }
+      return null;
+    }
+  }
+
+  private interface Executor<T> {
+    T execute(@NotNull List<Closeable> closeables) throws Throwable;
+  }
+
+  private static <T> T executeAndClose(@NotNull Executor<T> executor) throws Throwable {
     List<Closeable> closeables = new ArrayList<Closeable>();
     try {
-      lockPortMarker(config, closeables);
-      lockPortMarker(system, closeables);
-      MultiMap<Integer, String> portToPath = MultiMap.createSmart();
-      addExistingPort(portMarkerC, configPath, portToPath);
-      addExistingPort(portMarkerS, systemPath, portToPath);
-      if (!portToPath.isEmpty()) {
-        for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
-          ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
-          if (status != ActivateStatus.NO_INSTANCE) {
-            return status;
-          }
-        }
-      }
-
-      byte[] portBytes = Integer.toString(acquiredPort).getBytes(CharsetToolkit.UTF8_CHARSET);
-      FileUtil.writeToFile(portMarkerC, portBytes);
-      FileUtil.writeToFile(portMarkerS, portBytes);
-
-      myLockedPaths[0] = configPath;
-      myLockedPaths[1] = systemPath;
-    }
-    catch (IOException e) {
-      LOG.error(e);
+      return executor.execute(closeables);
     }
     finally {
       for (Closeable closeable : closeables) {
@@ -171,18 +220,6 @@ public final class SocketLock {
         }
       }
     }
-
-    portMarkerC.deleteOnExit();
-    portMarkerS.deleteOnExit();
-
-    return ActivateStatus.NO_INSTANCE;
-  }
-
-  public static boolean isPortForbidden(int port) {
-    for (int forbiddenPort : FORBIDDEN_PORTS) {
-      if (port == forbiddenPort) return true;
-    }
-    return false;
   }
 
   @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
@@ -218,7 +255,8 @@ public final class SocketLock {
             return ActivateStatus.ACTIVATED;
           }
         }
-        catch (IOException ignored) {
+        catch (IOException e) {
+          LOG.info(e);
         }
         return ActivateStatus.CANNOT_ACTIVATE;
       }
@@ -240,57 +278,80 @@ public final class SocketLock {
     return ActivateStatus.NO_INSTANCE;
   }
 
-  @Nullable
-  private static ServerSocket acquireSocket() {
-    for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
-      try {
-        if (isPortForbidden(i)) {
-          continue;
-        }
+  private static class MyChannelInboundHandler extends MessageDecoder {
+    private final String[] lockedPaths;
+    private State state = State.HEADER;
+    private final AtomicReference<Consumer<List<String>>> activateListener;
 
-        return new ServerSocket(i, 50, NetUtils.getLoopbackAddress());
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+    public MyChannelInboundHandler(@NotNull String[] lockedPaths, @NotNull AtomicReference<Consumer<List<String>>> activateListener) {
+      this.lockedPaths = lockedPaths;
+      this.activateListener = activateListener;
     }
-    return null;
-  }
 
-  private class MyRunnable implements Runnable {
+    private enum State {HEADER, CONTENT}
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     @Override
-    public void run() {
+    public void channelActive(ChannelHandlerContext context) throws Exception {
+      ByteBuf buffer = context.alloc().ioBuffer(1024);
+      boolean success = false;
       try {
-        while (true) {
-          try {
-            final Socket socket = serverSocket.accept();
-            socket.setSoTimeout(800);
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            synchronized (SocketLock.this) {
-              for (String path: myLockedPaths) {
-                if (path != null) {
-                  out.writeUTF(path);
-                }
-              }
+        ByteBufOutputStream out = new ByteBufOutputStream(buffer);
+        for (String path : lockedPaths) {
+          if (path != null) {
+            out.writeUTF(path);
+          }
+        }
+        out.close();
+        success = true;
+      }
+      finally {
+        if (!success) {
+          buffer.release();
+        }
+      }
+      context.writeAndFlush(buffer);
+    }
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    @Override
+    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
+      while (true) {
+        switch (state) {
+          case HEADER: {
+            ByteBuf buffer = getBufferIfSufficient(input, 2, context);
+            if (buffer == null) {
+              return;
             }
-            DataInputStream stream = new DataInputStream(socket.getInputStream());
-            final String command = stream.readUTF();
-            if (command.startsWith(ACTIVATE_COMMAND)) {
-              List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
-              Consumer<List<String>> listener = activateListener;
+
+            contentLength = buffer.readUnsignedShort();
+            state = State.CONTENT;
+          }
+          break;
+
+          case CONTENT: {
+            CharSequence command = readChars(input);
+            if (command == null) {
+              return;
+            }
+
+            if (StringUtil.startsWith(command, ACTIVATE_COMMAND)) {
+              List<String> args = StringUtil.split(command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString(), "\0");
+              Consumer<List<String>> listener = activateListener.get();
               if (listener != null) {
                 listener.consume(args);
               }
+
+              ByteBuf buffer = context.alloc().ioBuffer(4);
+              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
               out.writeUTF("ok");
+              out.close();
+              context.writeAndFlush(buffer);
             }
-            out.close();
+            context.close();
           }
-          catch (IOException e) {
-            LOG.debug(e);
-          }
+          break;
         }
-      }
-      catch (Throwable ignored) {
       }
     }
   }

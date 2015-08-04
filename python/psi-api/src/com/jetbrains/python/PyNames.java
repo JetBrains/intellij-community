@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -31,6 +34,34 @@ import java.util.regex.Pattern;
 @NonNls
 public class PyNames {
   public static final String SITE_PACKAGES = "site-packages";
+  /**
+   * int type
+   */
+  public static final String TYPE_INT = "int";
+  /**
+   * unicode string type (see {@link #TYPE_STRING_TYPES}
+   */
+  public static final String TYPE_UNICODE = "unicode";
+  /**
+   * string type (see {@link #TYPE_STRING_TYPES}
+   */
+  public static final String TYPE_STR = "str";
+  /**
+   * Any string type
+   */
+  public static final List<String> TYPE_STRING_TYPES = Collections.unmodifiableList(Arrays.asList(TYPE_UNICODE, TYPE_STR));
+  /**
+   * date type
+   */
+  public static final String TYPE_DATE = "datetime.date";
+  /**
+   * datetime type
+   */
+  public static final String TYPE_DATE_TIME = "datetime.datetime";
+  /**
+   * time type
+   */
+  public static final String TYPE_TIME = "datetime.time";
 
   private PyNames() {
   }

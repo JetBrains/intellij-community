@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,16 @@ import com.intellij.psi.util.FileTypeUtils;
 
 public class JavaVetoRenameCondition implements Condition<PsiElement> {
   @Override
-  public boolean value(final PsiElement element) {
+  public boolean value(PsiElement element) {
     if (element instanceof LightMethod) {
-      final PsiClass containingClass = ((LightMethod)element).getContainingClass();
+      PsiClass containingClass = ((LightMethod)element).getContainingClass();
       if (containingClass != null && containingClass.isEnum()) return true;
     }
+
+    if (element instanceof PsiReceiverParameter) {
+      return true;
+    }
+
     return element instanceof PsiJavaFile &&
            !FileTypeUtils.isInServerPageFile(element) &&
            !JavaProjectRootsUtil.isOutsideJavaSourceRoot((PsiFile)element) &&

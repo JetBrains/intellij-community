@@ -116,17 +116,29 @@ public class FileManagerImpl implements FileManager {
             continue;
           }
 
-          for (Language language : provider.getLanguages()) {
-            final PsiFile psi = provider.getPsi(language);
-            if (psi instanceof PsiFileImpl) {
-              ((PsiFileImpl)psi).clearCaches();
-            }
-          }
+          clearPsiCaches(provider);
         }
         removeInvalidFilesAndDirs(false);
         checkLanguageChange();
       }
     });
+  }
+
+  public static void clearPsiCaches(FileViewProvider provider) {
+    if (provider instanceof SingleRootFileViewProvider) {
+      for (PsiFile root : ((SingleRootFileViewProvider)provider).getCachedPsiFiles()) {
+        if (root instanceof PsiFileImpl) {
+          ((PsiFileImpl)root).clearCaches();
+        }
+      }
+    } else {
+      for (Language language : provider.getLanguages()) {
+        final PsiFile psi = provider.getPsi(language);
+        if (psi instanceof PsiFileImpl) {
+          ((PsiFileImpl)psi).clearCaches();
+        }
+      }
+    }
   }
 
   private void checkLanguageChange() {
@@ -205,10 +217,7 @@ public class FileManagerImpl implements FileManager {
     assert !file.isDirectory();
     FileViewProvider viewProvider = findCachedViewProvider(file);
     if (viewProvider != null) return viewProvider;
-    viewProvider = myVFileToViewProviderMap.get(file);
-    if(viewProvider == null) {
-      viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file, true));
-    }
+    viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file, true));
     return viewProvider;
   }
 
@@ -540,12 +549,11 @@ public class FileManagerImpl implements FileManager {
           continue;
         }
 
-        PsiFile psi = view.getPsi(view.getBaseLanguage());
         if (!areViewProvidersEquivalent(view, psiFile1.getViewProvider())) {
           iterator.remove();
         }
-        else if (psi instanceof PsiFileImpl) {
-          ((PsiFileImpl)psi).clearCaches();
+        else {
+          clearPsiCaches(view);
         }
       }
     }
@@ -602,20 +610,12 @@ public class FileManagerImpl implements FileManager {
         return;
       }
 
-      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-      event.setParent(file);
-      event.setFile(file);
-      if (file instanceof PsiFileImpl && ((PsiFileImpl)file).isContentsLoaded()) {
-        event.setOffset(0);
-        event.setOldLength(file.getTextLength());
+      FileViewProvider viewProvider = file.getViewProvider();
+      if (viewProvider instanceof SingleRootFileViewProvider) {
+        ((SingleRootFileViewProvider)viewProvider).onContentReload();
+      } else {
+        LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
       }
-      myManager.beforeChildrenChange(event);
-
-      if (file instanceof PsiFileEx) {
-        ((PsiFileEx)file).onContentReload();
-      }
-
-      myManager.childrenChanged(event);
     }
   }
 }

@@ -221,7 +221,13 @@ public class JUnitStarter {
       }
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
-          return new JUnitForkedStarter().startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, name, out, err, ourForkMode, ourCommandFileName);
+          final List newArgs = new ArrayList();
+          newArgs.add(String.valueOf(isJUnit4));
+          newArgs.addAll(listeners);
+          PrintStream printOutputStream = SM_RUNNER ? ((PrintStream)out) : ((SegmentedOutputStream)out).getPrintStream();
+          PrintStream printErrStream = SM_RUNNER ? ((PrintStream)err) : ((SegmentedOutputStream)err).getPrintStream();
+          return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, printOutputStream, printErrStream, newArgs)
+            .startSplitting(args, name, ourCommandFileName);
         }
       }
       testRunner.setStreams(out, err, 0);

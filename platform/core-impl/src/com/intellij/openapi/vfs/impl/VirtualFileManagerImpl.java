@@ -75,6 +75,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   }
 
   @Override
+  public long getStructureModificationCount() {
+    return 0;
+  }
+
+  @Override
   @Nullable
   public VirtualFileSystem getFileSystem(@Nullable String protocol) {
     if (protocol == null) return null;

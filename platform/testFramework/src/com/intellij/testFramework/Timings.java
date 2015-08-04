@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -49,7 +50,7 @@ public class Timings {
     for (int i=0; i< N; i++) {
       elapsed[i] = measureCPU();
     }
-    CPU_TIMING = PlatformTestUtil.averageAmongMedians(elapsed, 2);
+    CPU_TIMING = ArrayUtil.averageAmongMedians(elapsed, 2);
 
     long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {

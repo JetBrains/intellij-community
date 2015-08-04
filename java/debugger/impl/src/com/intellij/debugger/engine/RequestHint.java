@@ -55,6 +55,7 @@ public class RequestHint {
   private boolean myTargetMethodMatched = false;
 
   private boolean myIgnoreFilters = false;
+  private boolean myResetIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
@@ -109,6 +110,14 @@ public class RequestHint {
 
   public void setIgnoreFilters(boolean ignoreFilters) {
     myIgnoreFilters = ignoreFilters;
+  }
+
+  public void setResetIgnoreFilters(boolean resetIgnoreFilters) {
+    myResetIgnoreFilters = resetIgnoreFilters;
+  }
+
+  public boolean isResetIgnoreFilters() {
+    return myResetIgnoreFilters;
   }
 
   public void setRestoreBreakpoints(boolean restoreBreakpoints) {
@@ -215,7 +224,7 @@ public class RequestHint {
           boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
             public Boolean compute() {
               PsiElement contextElement = PositionUtil.getContextElement(context);
-              return (contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement))? Boolean.TRUE : Boolean.FALSE;
+              return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
             }
           }).booleanValue();
 
@@ -244,7 +253,11 @@ public class RequestHint {
         }
 
         for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
-          if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
+          try {
+            if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
+          }
+          catch (Exception e) {LOG.error(e);}
+          catch (AssertionError e) {LOG.error(e);}
         }
       }
       // smart step feature

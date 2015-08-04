@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -736,7 +736,7 @@ public class AbstractTreeUi {
         }
         ActionCallback callback;
         if (willUpdate) {
-          callback = new ActionCallback.Done();
+          callback = ActionCallback.DONE;
         }
         else {
           callback = updateNodeChildren(getRootNode(), pass, null, false, false, false, true, true);
@@ -1006,7 +1006,7 @@ public class AbstractTreeUi {
     try {
       AbstractTreeUpdater updater = getUpdater();
       if (updater == null) {
-        return new ActionCallback.Rejected();
+        return ActionCallback.REJECTED;
       }
 
       final ActionCallback result = new ActionCallback();
@@ -1034,7 +1034,7 @@ public class AbstractTreeUi {
       return result;
     }
     catch (ProcessCanceledException e) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
   }
 
@@ -1567,7 +1567,7 @@ public class AbstractTreeUi {
                       @Override
                       public ActionCallback run() {
                         expand(element, null);
-                        return new ActionCallback.Done();
+                        return ActionCallback.DONE;
                       }
                     }, pass, node);
                   }
@@ -1695,8 +1695,8 @@ public class AbstractTreeUi {
       @NotNull
       @Override
       public ActionCallback run() {
-        if (pass.isExpired()) return new ActionCallback.Rejected();
-        if (childNodes.isEmpty()) return new ActionCallback.Done();
+        if (pass.isExpired()) return ActionCallback.REJECTED;
+        if (childNodes.isEmpty()) return ActionCallback.DONE;
 
 
         final ActionCallback result = new ActionCallback(childNodes.size());
@@ -1885,7 +1885,7 @@ public class AbstractTreeUi {
 
   @NotNull
   private ActionCallback resetToReadyNow() {
-    if (isReleased()) return new ActionCallback.Rejected();
+    if (isReleased()) return ActionCallback.REJECTED;
 
     assertIsDispatchThread();
 
@@ -2408,7 +2408,7 @@ public class AbstractTreeUi {
 
   @NotNull
   public ActionCallback cancelUpdate() {
-    if (isReleased()) return new ActionCallback.Rejected();
+    if (isReleased()) return ActionCallback.REJECTED;
 
     setCancelRequested(true);
 
@@ -2503,7 +2503,7 @@ public class AbstractTreeUi {
       return callback;
     }
     finally {
-      if (isReleased()) return new ActionCallback.Rejected();
+      if (isReleased()) return ActionCallback.REJECTED;
 
       _getReady().doWhenDone(new TreeRunnable("AbstractTreeUi.batch: finally") {
         @Override
@@ -2991,17 +2991,17 @@ public class AbstractTreeUi {
                                              final boolean forceUpdate,
                                              @Nullable LoadedChildren parentPreloadedChildren) {
     if (pass.isExpired()) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
     if (childDescriptor == null) {
       pass.expire();
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
     final Object oldElement = getElementFromDescriptor(childDescriptor);
     if (oldElement == null) {
       pass.expire();
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
     AsyncResult<Boolean> update = new AsyncResult<Boolean>();
@@ -3347,7 +3347,7 @@ public class AbstractTreeUi {
 
   @NotNull
   private ActionCallback queueToBackground(@NotNull final Runnable bgBuildAction, @Nullable final Runnable edtPostRunnable) {
-    if (!canInitiateNewActivity()) return new ActionCallback.Rejected();
+    if (!canInitiateNewActivity()) return ActionCallback.REJECTED;
     final ActionCallback result = new ActionCallback();
     final AtomicBoolean fail = new AtomicBoolean();
     final Runnable finalizer = new TreeRunnable("AbstractTreeUi.queueToBackground: finalizer") {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.util.text;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A char sequence base on a char array, Gives access to that array. May be used for performance optimizations
+ * A char sequence based on a char array. May be used for performance optimizations.
  * 
  * @author Maxim.Mossienko
  * @see com.intellij.util.text.CharArrayExternalizable
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.util.text.CharArrayUtil#fromSequenceWithoutCopying(CharSequence)  
  */
 public interface CharSequenceBackedByArray extends CharSequence {
+  // NOT guaranteed to return the array of the length of the original charSequence.length() - may be more for performance reasons.
   @NotNull
   char[] getChars();
 

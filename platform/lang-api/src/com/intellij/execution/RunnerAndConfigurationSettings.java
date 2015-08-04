@@ -162,6 +162,20 @@ public interface RunnerAndConfigurationSettings {
   boolean isEditBeforeRun();
 
   /**
+   * Sets the "Before launch: Activate tool window" flag (for activation tool window Run/Debug etc.)
+   *
+   * @param b if true, the tool window will be activated before launching this configuration.
+   */
+  void setActivateToolWindowBeforeRun(boolean activate);
+
+  /**
+   * Returns the "Before launch: Activate tool window" flag (for activation tool window Run/Debug etc.)
+   *
+   * @return if true (it's default value), the tool window will be activated before launching this configuration.
+   */
+  boolean isActivateToolWindowBeforeRun();
+
+  /**
    * Sets the "Single instance only" flag (meaning that only one instance of this run configuration can be run at the same time).
    *
    * @param singleton the "Single instance" flag.

@@ -15,7 +15,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -33,7 +32,6 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
-import com.jetbrains.edu.learning.ui.StudyCondition;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +83,7 @@ public class StudyProjectComponent implements ProjectComponent {
   }
 
   public void registerStudyToolwindow(@Nullable final Course course) {
-    if (course != null) {
+    if (course != null && "PyCharm".equals(course.getCourseType())) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       registerToolWindow(toolWindowManager);
       final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
@@ -134,19 +131,9 @@ public class StudyProjectComponent implements ProjectComponent {
   }
 
   private void registerToolWindow(@NotNull final ToolWindowManager toolWindowManager) {
-    try {
-      Method method = toolWindowManager.getClass().getDeclaredMethod("registerToolWindow", String.class,
-                                                                     JComponent.class,
-                                                                     ToolWindowAnchor.class,
-                                                                     boolean.class, boolean.class, boolean.class);
-      method.setAccessible(true);
-      method.invoke(toolWindowManager, StudyToolWindowFactory.STUDY_TOOL_WINDOW, null, ToolWindowAnchor.LEFT, true, true, true);
-    }
-    catch (Exception e) {
-      final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      if (toolWindow == null) {
-        toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
-      }
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+    if (toolWindow == null) {
+      toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
     }
   }
 
@@ -218,12 +205,12 @@ public class StudyProjectComponent implements ProjectComponent {
 
   @Override
   public void projectClosed() {
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    StudyCondition.VALUE = false;
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course != null) {
-      ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
-        .removeAllContents(false);
+      final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+      if (toolWindow != null) {
+        toolWindow.getContentManager().removeAllContents(false);
+      }
       if (!myDeletedShortcuts.isEmpty()) {
         for (Map.Entry<String, String> shortcut : myDeletedShortcuts.entrySet()) {
           final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
@@ -280,8 +267,9 @@ public class StudyProjectComponent implements ProjectComponent {
 
   public static StudyProjectComponent getInstance(@NotNull final Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
-    return ModuleServiceManager.getService(module, StudyProjectComponent.class);
+    return module.getComponent(StudyProjectComponent.class);
   }
+
   private class FileCreatedByUserListener extends VirtualFileAdapter {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {

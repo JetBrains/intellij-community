@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,6 +76,20 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final StubProcessingHelper myStubProcessingHelper;
 
   private StubIndexState myPreviouslyRegistered;
+  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      try {
+        for (StubIndexKey key : getAllStubIndexKeys()) {
+          flush(key);
+        }
+      } catch (StorageException e) {
+        LOG.info(e);
+        FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
+      }
+    }
+  });
+
 
   public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
     final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
@@ -395,6 +410,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   public void dispose() {
+    myLowMemoryFlusher.stop();
     for (UpdatableIndex index : myIndices.values()) {
       index.dispose();
     }

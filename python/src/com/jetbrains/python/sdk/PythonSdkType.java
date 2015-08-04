@@ -57,9 +57,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remote.CredentialsType;
-import com.intellij.remote.RemoteSdkCredentialsHolder;
-import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -86,7 +84,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -670,13 +667,7 @@ public class PythonSdkType extends SdkType {
           for (String s : inside) {
             if (PYTHON_NN_RE.matcher(s).matches()) {
               File py_lib_root = new File(lib_root, s);
-              String[] flag_files = py_lib_root.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File file, String s) {
-                  return "no-global-site-packages.txt".equals(s);
-                }
-              });
-              if (flag_files != null) return; // don't add hardcoded paths
+              if (new File(py_lib_root, "no-global-site-packages.txt").exists()) return; // don't add hardcoded paths
             }
           }
         }
@@ -1011,6 +1002,29 @@ public class PythonSdkType extends SdkType {
       if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isValid()) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public static boolean hasInvalidRemoteCredentials(Sdk sdk) {
+    if (PySdkUtil.isRemote(sdk)) {
+      final Ref<Boolean> result = Ref.create(false);
+      //noinspection ConstantConditions
+      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(new RemoteSdkConnectionAcceptor() {
+        @Override
+        public void ssh(@NotNull RemoteCredentialsHolder cred) {
+        }
+
+        @Override
+        public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
+          result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
+        }
+
+        @Override
+        public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        }
+      });
+      return result.get();
     }
     return false;
   }

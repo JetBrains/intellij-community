@@ -72,8 +72,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
 
     if (isDebug()) {
       final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
-                                                                                          consoleProperties,
-                                                                                          getEnvironment());
+                                                                                          consoleProperties);
       final ConsoleView consoleView =
         new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()),
                                            testsOutputConsoleView);
@@ -83,8 +82,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     }
     final ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
                                                                                       processHandler,
-                                                                                      consoleProperties,
-                                                                                      getEnvironment());
+                                                                                      consoleProperties);
     addTracebackFilter(project, consoleView, processHandler);
     return consoleView;
   }

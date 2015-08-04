@@ -248,12 +248,15 @@ public abstract class FileColorSettingsTable extends JBTable {
 
       if (dialog.getExitCode() == 0) {
         myConfigurations.add(dialog.getConfiguration());
+        int i = myConfigurations.size() - 1;
+        fireTableRowsInserted(i, i);
       }
     }
 
     @Override
     public void removeRow(int index) {
       myConfigurations.remove(index);
+      fireTableRowsDeleted(index, index);
     }
 
     @Override

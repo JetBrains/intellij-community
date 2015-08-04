@@ -16,7 +16,7 @@
 package com.intellij.remoteServer.util.ssh;
 
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.options.ConfigurationException;
@@ -34,7 +34,6 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
-import com.intellij.remoteServer.statistics.CloudFeaturesProvider;
 import com.intellij.remoteServer.util.*;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ParameterizedRunnable;
@@ -256,7 +255,7 @@ public class SshKeyChecker {
 
     @Override
     protected void uploadKey(final File sskKey) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CloudFeaturesProvider.UPLOAD_SSH_KEY_FEATURE_ID);
+      UsageTrigger.trigger(CloudsTriggerKeys.UPLOAD_SSH_KEY);
       try {
         myServerConfigurable.apply();
       }

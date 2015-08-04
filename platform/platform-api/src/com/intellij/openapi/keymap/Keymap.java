@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,9 @@ public interface Keymap extends Scheme {
 
   /**
    * @return all keyboard shortcuts for the action with the specified <code>actionId</code>
-   * or an ampty array if the action doesn't have any keyboard shortcut.
+   * or an empty array if the action doesn't have any keyboard shortcut.
    */
+  @NotNull
   Shortcut[] getShortcuts(@NonNls String actionId);
 
   /**

@@ -31,7 +31,7 @@ public class HgQImportFromLogAction extends HgLogSingleCommitAction {
 
   @Override
   protected boolean isEnabled(@NotNull MultiMap<HgRepository, VcsFullCommitDetails> grouped) {
-    return super.isEnabled(grouped) && grouped.values().size() == 1 &&
+    return super.isEnabled(grouped) &&
            !HgMqAppliedPatchAction.isAppliedPatch(grouped.keySet().iterator().next(), grouped.values().iterator().next());
   }
 }

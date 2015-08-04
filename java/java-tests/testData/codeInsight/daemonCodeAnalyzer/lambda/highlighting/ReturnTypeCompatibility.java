@@ -25,7 +25,7 @@ class ReturnTypeIncompatibility {
     }
 
     public static void main(String[] args) {
-        call<error descr="Cannot resolve method 'call(<lambda expression>)'">(i-> {return i;})</error>;
+        <error descr="Cannot resolve method 'call(<lambda expression>)'">call</error>(i-> {return i;});
     }
 }
 
@@ -57,7 +57,7 @@ class ReturnTypeCompatibility {
     }
 
     public static void main(String[] args) {
-        call<error descr="Cannot resolve method 'call(<lambda expression>)'">(i-> {return i;})</error>;
+        <error descr="Cannot resolve method 'call(<lambda expression>)'">call</error>(i-> {return i;});
     }
 }
 

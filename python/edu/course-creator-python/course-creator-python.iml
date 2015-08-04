@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="python-ide-community" />
     <orderEntry type="module" module-name="educational" />
+    <orderEntry type="module" module-name="python-educational" />
   </component>
 </module>

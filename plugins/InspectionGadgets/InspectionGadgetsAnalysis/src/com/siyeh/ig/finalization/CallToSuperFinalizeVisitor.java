@@ -20,9 +20,8 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperFinalizeVisitor extends JavaRecursiveElementVisitor {
-
-  private boolean callToSuperFinalizeFound = false;
+class CallToSuperFinalizeVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean callToSuperFinalizeFound;
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
@@ -62,7 +61,7 @@ class CallToSuperFinalizeVisitor extends JavaRecursiveElementVisitor {
     callToSuperFinalizeFound = true;
   }
 
-  public boolean isCallToSuperFinalizeFound() {
+  boolean isCallToSuperFinalizeFound() {
     return callToSuperFinalizeFound;
   }
 }

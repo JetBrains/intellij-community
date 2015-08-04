@@ -1,8 +1,8 @@
 class IntStream {
   private void foo(IntStream s) {
-    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">(i -> 1 << i)</error>;
-    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">(i -> 1)</error>;
-    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">(i -> i)</error>;
+    s.<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">map</error>(i -> 1 << i);
+    s.<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">map</error>(i -> 1);
+    s.<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">map</error>(i -> i);
   }
 
   public static void main(String[] args) {

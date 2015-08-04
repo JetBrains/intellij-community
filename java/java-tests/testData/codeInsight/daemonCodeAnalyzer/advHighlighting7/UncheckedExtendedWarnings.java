@@ -23,7 +23,7 @@ public class DefaultEventSource<<warning descr="Type parameter 'T' is never used
     final Iterator<String> <warning descr="Variable 'keys2' is assigned but never accessed">keys2</warning>;
     keys2 = <warning descr="Unchecked assignment: 'java.util.Iterator' to 'java.util.Iterator<java.lang.String>'. Reason: 'source' has raw type, so result of getKeys is erased">source.getKeys()</warning>;
 
-    for (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String <warning descr="Parameter 'o' is never used">o</warning> : super.getList()</error>) {}
+    for (<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Object'">String <warning descr="Parameter 'o' is never used">o</warning></error> : super.getList()) {}
   }
 }
 

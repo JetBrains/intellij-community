@@ -19,12 +19,13 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
@@ -62,6 +64,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
   public static final BooleanProperty SHOW_INLINE_STATISTICS = new BooleanProperty("showInlineStatistics", true);
   public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
+  public static final BooleanProperty HIDE_SUCCESSFUL_CONFIG = new BooleanProperty("hideConfig", false);
 
   private final Project myProject;
   private final Executor myExecutor;
@@ -91,7 +94,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   @NotNull
   protected GlobalSearchScope initScope() {
-    RunConfiguration configuration = getConfiguration();
+    RunProfile configuration = getConfiguration();
     if (!(configuration instanceof ModuleRunProfile)) {
       return GlobalSearchScope.allScope(myProject);
     }
@@ -161,7 +164,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     myListeners.clear();
   }
 
-  public abstract RunConfiguration getConfiguration();
+  public abstract RunProfile getConfiguration();
 
   /**
    * Allows to make console editable and disable/enable input sending in process stdin stream.
@@ -192,12 +195,24 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     myUsePredefinedMessageFilter = usePredefinedMessageFilter;
   }
 
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, ExecutionEnvironment environment, JComponent parent) { }
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) { }
+  
+  @Nullable
+  protected AnAction createImportAction() {
+    return null;
+  }
 
   @NotNull
-  protected ToggleBooleanProperty createIncludeNonStartedInRerun() {
+  protected ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
-    return new ToggleBooleanProperty(text, null, null, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+    return new ToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+  }
+  
+  @NotNull
+  protected ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
+    String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
+    setIfUndefined(HIDE_SUCCESSFUL_CONFIG, true);
+    return new ToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
   }
 
   @JdkConstants.TreeSelectionMode

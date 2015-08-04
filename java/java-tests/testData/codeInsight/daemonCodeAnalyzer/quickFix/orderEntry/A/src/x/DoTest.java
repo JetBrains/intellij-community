@@ -1,4 +1,4 @@
-// "Add JUnit to classpath" "true"
+// "Add 'JUnit3' to classpath" "true"
 package x;
 public class DoTest extends TestCase<caret>{
 

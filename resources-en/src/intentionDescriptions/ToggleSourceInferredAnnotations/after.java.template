@@ -1,0 +1,8 @@
+class A {
+
+  // An icon for @Contract("_->null") <spot>not</spot> shown in the gutter, but still visible in the intention list
+  Object getObject() {
+    //do smth
+    return null;
+  }
+}                      ]

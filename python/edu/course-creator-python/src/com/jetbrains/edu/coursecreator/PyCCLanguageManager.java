@@ -3,6 +3,7 @@ package com.jetbrains.edu.coursecreator;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.EduNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,18 +28,13 @@ public class PyCCLanguageManager implements CCLanguageManager {
   @Nullable
   @Override
   public FileTemplate getTestsTemplate(@NotNull final Project project) {
-    return getInternalTemplateByName(project, "tests.py");
+    return getInternalTemplateByName(project, EduNames.TESTS_FILE);
   }
 
   @Override
-  public boolean packFile(File pathname) {
+  public boolean doNotPackFile(File pathname) {
     String name = pathname.getName();
-    return !name.contains("__pycache__") && !name.contains(".pyc");
-  }
-
-  @Override
-  public String[] getAdditionalFilesToPack() {
-    return new String[]{"test_helper.py"};
+    return name.contains("__pycache__") || name.contains(".pyc");
   }
 
   private static FileTemplate getInternalTemplateByName(@NotNull final Project project, String name) {

@@ -50,6 +50,7 @@ import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -77,7 +78,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -87,7 +87,7 @@ import java.util.List;
 @State(
   name = "LafManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_OS),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", deprecated = true)
   }
 )
@@ -102,8 +102,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
     "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font",
     "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font", "Table.font", "TableHeader.font",
-    "TextField.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font", "TitledBorder.font", "ToolBar.font",
-    "ToolTip.font", "Tree.font"};
+    "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font",
+    "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
 
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
@@ -451,15 +451,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (arrow == null) return null;
 
     try {
-      final Method method = arrow.getClass().getMethod("getInvertedIcon");
+      final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
       if (method != null) {
-        method.setAccessible(true);
         return (Icon)method.invoke(arrow);
       }
-
-      return null;
-    }
-    catch (NoSuchMethodException e1) {
       return null;
     }
     catch (InvocationTargetException e1) {
@@ -690,19 +685,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       public SynthStyle getStyle(final JComponent c, final Region id) {
         final SynthStyle style = original.getStyle(c, id);
         if (id == Region.POPUP_MENU) {
-          try {
-            Field f = style.getClass().getDeclaredField("xThickness");
-            f.setAccessible(true);
-            final Object x = f.get(style);
-            if (x instanceof Integer && (Integer)x == 0) {
-              // workaround for Sun bug #6636964
-              f.set(style, 1);
-              f = style.getClass().getDeclaredField("yThickness");
-              f.setAccessible(true);
-              f.set(style, 3);
-            }
-          }
-          catch (Exception ignore) {
+          final Integer x = ReflectionUtil.getField(style.getClass(), style, int.class, "xThickness");
+          if (x != null && x == 0) {
+            // workaround for Sun bug #6636964
+            ReflectionUtil.setField(style.getClass(), style, int.class, "xThickness", 1);
+            ReflectionUtil.setField(style.getClass(), style, int.class, "yThickness", 3);
           }
         }
         return style;
@@ -761,6 +748,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
+      JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
       initFontDefaults(uiDefaults, uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
     else {
@@ -776,6 +764,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
+    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/12f);
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {

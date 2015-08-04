@@ -12,9 +12,9 @@ public val ANY_TYPE: String = "any"
 /**
  * Defines schema of WIP metamodel defined in http://svn.webkit.org/repository/webkit/trunk/Source/WebCore/inspector/Inspector.json
  */
-public trait ProtocolMetaModel {
+public interface ProtocolMetaModel {
   JsonType
-  public trait Root {
+  public interface Root {
     JsonOptionalField
     public fun version(): Version
 
@@ -22,13 +22,13 @@ public trait ProtocolMetaModel {
   }
 
   JsonType
-  public trait Version {
+  public interface Version {
     public fun major(): String
     public fun minor(): String
   }
 
   JsonType
-  public trait Domain {
+  public interface Domain {
     public fun domain(): String
 
     JsonOptionalField
@@ -47,7 +47,7 @@ public trait ProtocolMetaModel {
   }
 
   JsonType
-  public trait Command {
+  public interface Command {
     public fun name(): String
 
     JsonOptionalField
@@ -67,7 +67,7 @@ public trait ProtocolMetaModel {
   }
 
   JsonType
-  public trait Parameter : ItemDescriptor.Named {
+  public interface Parameter : ItemDescriptor.Named {
     override fun name(): String
 
     JsonOptionalField
@@ -96,7 +96,7 @@ public trait ProtocolMetaModel {
   }
 
   JsonType
-  public trait Event {
+  public interface Event {
     public fun name(): String
 
     JsonOptionalField
@@ -110,7 +110,7 @@ public trait ProtocolMetaModel {
   }
 
   JsonType
-  public trait StandaloneType : ItemDescriptor.Type {
+  public interface StandaloneType : ItemDescriptor.Type {
     public fun id(): String
 
     JsonOptionalField
@@ -133,7 +133,7 @@ public trait ProtocolMetaModel {
 
 
   JsonType
-  public trait ArrayItemType : ItemDescriptor.Type, ItemDescriptor.Referenceable {
+  public interface ArrayItemType : ItemDescriptor.Type, ItemDescriptor.Referenceable {
     JsonOptionalField
     override fun description(): String
 
@@ -157,7 +157,7 @@ public trait ProtocolMetaModel {
   }
 
   JsonType
-  public trait ObjectProperty : ItemDescriptor.Named {
+  public interface ObjectProperty : ItemDescriptor.Named {
     override fun name(): String
 
     JsonOptionalField

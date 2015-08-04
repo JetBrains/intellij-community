@@ -30,6 +30,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -95,10 +96,13 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setBackground(ERROR_BACKGROUND);
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
+    Disposer.register(this, myCardPanel);
     ActionManager.getInstance().addAnActionListener(this, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
-    myConfigurable = configurable;
-    myCardPanel.select(configurable, true);
+    if (configurable != null) {
+      myConfigurable = configurable;
+      myCardPanel.select(configurable, true);
+    }
     updateCurrent(configurable, false);
   }
 
@@ -125,7 +129,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   @Override
   boolean apply() {
-    return setError(apply(myConfigurable));
+    // do not apply changes of a single configurable if it is not modified
+    return setError(apply(myApplyAction.isEnabled() ? myConfigurable : null));
   }
 
   void openLink(Configurable configurable) {
@@ -194,7 +199,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     Window editor = UIUtil.getWindow(this);
     if (editor != null) {
       Window popup = UIUtil.getWindow(component);
-      if (popup != null && editor == popup.getParent()) {
+      // light-weight popup is located on the layered pane of the same window
+      // heavy-weight popup opens new window with the corresponding parent
+      if (popup == editor || popup != null && editor == popup.getParent()) {
         if (popup instanceof JDialog) {
           JDialog dialog = (JDialog)popup;
           return Dialog.ModalityType.MODELESS == dialog.getModalityType();
@@ -223,6 +230,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   final ActionCallback select(final Configurable configurable) {
+    assert !myDisposed : "Already disposed";
     ActionCallback callback = myCardPanel.select(configurable, false);
     callback.doWhenDone(new Runnable() {
       @Override

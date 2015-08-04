@@ -46,10 +46,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -80,7 +76,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   private final LightDirectoryIndex<RootType> myIndex;
   private final MyLanguages myScratchMapping = new MyLanguages();
 
-  protected ScratchFileServiceImpl(WindowManager windowManager, MessageBus messageBus) {
+  protected ScratchFileServiceImpl(MessageBus messageBus) {
     myIndex = new LightDirectoryIndex<RootType>(messageBus.connect(), NULL_TYPE) {
 
       @Override
@@ -95,7 +91,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
         }
       }
     };
-    initScratchWidget(windowManager);
     initFileOpenedListener(messageBus);
   }
 
@@ -152,28 +147,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       projectListener.projectOpened(project);
     }
     messageBus.connect().subscribe(ProjectManager.TOPIC, projectListener);
-  }
-
-  private static void initScratchWidget(WindowManager windowManager) {
-    final WindowManagerListener windowListener = new WindowManagerListener() {
-      @Override
-      public void frameCreated(IdeFrame frame) {
-        Project project = frame.getProject();
-        StatusBar statusBar = frame.getStatusBar();
-        if (project == null || statusBar == null || statusBar.getWidget(ScratchWidget.WIDGET_ID) != null) return;
-        ScratchWidget widget = new ScratchWidget(project);
-        statusBar.addWidget(widget, "before Encoding", project);
-        statusBar.updateWidget(ScratchWidget.WIDGET_ID);
-      }
-
-      @Override
-      public void beforeFrameReleased(IdeFrame frame) {
-      }
-    };
-    for (IdeFrame frame : windowManager.getAllProjectFrames()) {
-      windowListener.frameCreated(frame);
-    }
-    windowManager.addListener(windowListener);
   }
 
   @NotNull

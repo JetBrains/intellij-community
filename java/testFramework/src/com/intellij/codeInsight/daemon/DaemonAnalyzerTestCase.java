@@ -254,9 +254,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       new Condition<HighlightInfo>() {
         @Override
         public boolean value(HighlightInfo info) {
-          return (info.getSeverity() == HighlightSeverity.INFORMATION) && checkInfos ||
-                 (info.getSeverity() == HighlightSeverity.WARNING) && checkWarnings ||
-                 (info.getSeverity() == HighlightSeverity.WEAK_WARNING) && checkWeakWarnings ||
+          return info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
+                 info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
+                 info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
                   info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0;
         }
       });
@@ -298,6 +298,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
       }
     }
+  }
+
+  @Override
+  protected Editor createEditor(@NotNull VirtualFile file) {
+    allowTreeAccessForFile(file);
+    return super.createEditor(file);
   }
 
   protected void allowTreeAccessForFile(@NotNull VirtualFile file) {
@@ -363,7 +369,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  protected static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
+  public static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
     ArrayList<HighlightInfo> result = new ArrayList<HighlightInfo>();
     for (final HighlightInfo info : infos) {
       if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);

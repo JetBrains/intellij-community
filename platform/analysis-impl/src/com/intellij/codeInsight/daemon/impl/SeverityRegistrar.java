@@ -138,17 +138,10 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   public void readExternal(Element element) throws InvalidDataException {
     myMap.clear();
     myRendererColors.clear();
-    final List children = element.getChildren(INFO_TAG);
-    for (Object child : children) {
-      final Element infoElement = (Element)child;
-
-      final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes(infoElement);
-
-      Color color = null;
-      final String colorStr = infoElement.getAttributeValue(COLOR_ATTRIBUTE);
-      if (colorStr != null){
-        color = new Color(Integer.parseInt(colorStr, 16));
-      }
+    for (Element infoElement : element.getChildren(INFO_TAG)) {
+      SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes(infoElement);
+      String colorStr = infoElement.getAttributeValue(COLOR_ATTRIBUTE);
+      Color color = colorStr == null ? null : new Color(Integer.parseInt(colorStr, 16));
       registerSeverity(highlightInfo, color);
     }
     myReadOrder = new JDOMExternalizableStringList();
@@ -425,7 +418,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     private final HighlightInfoType.HighlightInfoTypeImpl myType;
 
     //read external
-    public SeverityBasedTextAttributes(@NotNull Element element) throws InvalidDataException {
+    public SeverityBasedTextAttributes(@NotNull Element element)  {
       this(new TextAttributes(element), new HighlightInfoType.HighlightInfoTypeImpl(element));
     }
 

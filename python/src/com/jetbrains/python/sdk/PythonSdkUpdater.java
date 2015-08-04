@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -34,6 +35,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
@@ -193,6 +195,7 @@ public class PythonSdkUpdater implements StartupActivity {
     boolean changed = addNewSysPathEntries(sdk, modificator, sysPath);
     changed = removeSourceRoots(sdk, modificator) || changed;
     changed = removeDuplicateClassRoots(sdk, modificator) || changed;
+    changed = updateSkeletonsPath(sdk, modificator) || changed;
     if (changed) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
@@ -255,6 +258,36 @@ public class PythonSdkUpdater implements StartupActivity {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Updates binary skeletons path in the Python SDK table.
+   */
+  private static boolean updateSkeletonsPath(@NotNull Sdk sdk, @NotNull SdkModificator modificator) {
+    boolean changed = false;
+    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
+    if (skeletonsPath != null) {
+      final VirtualFile skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(skeletonsPath);
+      if (skeletonsDir != null) {
+        LOG.info("Binary skeletons directory for SDK \"" + sdk.getName() + "\" (" + sdk.getHomePath() + "): " + skeletonsDir.getPath());
+        final List<VirtualFile> sourceRoots = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+        boolean skeletonsDirFound = false;
+        for (VirtualFile root : sourceRoots) {
+          if (root.equals(skeletonsDir)) {
+            skeletonsDirFound = true;
+          }
+          if (PythonSdkType.isSkeletonsPath(root.getPath()) && !skeletonsDirFound) {
+            modificator.removeRoot(root, OrderRootType.CLASSES);
+            changed = true;
+          }
+        }
+        if (!skeletonsDirFound) {
+          modificator.addRoot(skeletonsDir, OrderRootType.CLASSES);
+          changed = true;
+        }
+      }
+    }
+    return changed;
   }
 
   private static boolean wasOldRoot(@NotNull String root, @NotNull Collection<VirtualFile> oldRoots) {

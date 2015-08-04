@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -30,10 +31,13 @@ public class JBProgressBar extends JProgressBar {
     boolean nativeLaf = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
     if (nativeLaf) {
       ui = new DarculaProgressBarUI();
+      if (UIUtil.isUnderGTKLookAndFeel()) {
+        setBorder(JBUI.Borders.empty());
+      }
     }
     super.setUI(ui);
     if (nativeLaf) {
-      setPreferredSize(new Dimension(getPreferredSize().width, NATIVE_LAF_HEIGHT));
+      setPreferredSize(new Dimension(getPreferredSize().width, JBUI.scale(NATIVE_LAF_HEIGHT)));
     }
   }
 }

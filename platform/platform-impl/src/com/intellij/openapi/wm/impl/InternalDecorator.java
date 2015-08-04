@@ -533,6 +533,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       fireAutoHideChanged(!myInfo.isAutoHide());
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(myInfo.getType() != ToolWindowType.FLOATING && myInfo.getType() != ToolWindowType.WINDOWED);
+    }
   }
 
   private final class ToggleDockModeAction extends ToggleAction implements DumbAware {

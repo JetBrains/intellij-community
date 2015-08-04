@@ -7,6 +7,6 @@ class FooFactory {
 
 class XXX {
   {
-    Foo f = FooFactory.createFoo()<caret>
+    Foo f = FooFactory.createFoo();<caret>
   }
 }

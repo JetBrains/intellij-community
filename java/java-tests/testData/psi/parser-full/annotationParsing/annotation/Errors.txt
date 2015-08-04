@@ -77,7 +77,7 @@ PsiJavaFile:Errors.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:error
           PsiIdentifier:error('error')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
     PsiModifierList:@EJB
@@ -130,7 +130,7 @@ PsiJavaFile:Errors.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:T
           PsiIdentifier:T('T')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
     PsiWhiteSpace(' ')

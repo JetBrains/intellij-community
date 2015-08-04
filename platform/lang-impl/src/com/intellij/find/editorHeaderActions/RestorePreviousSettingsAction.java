@@ -16,12 +16,13 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 
@@ -33,23 +34,29 @@ import java.util.Collections;
 * To change this template use File | Settings | File Templates.
 */
 public class RestorePreviousSettingsAction extends EditorHeaderAction implements DumbAware {
-  private final JTextComponent myTextField;
+  private final JComponent myShortcutHolder;
   private static final KeyboardShortcut SHORTCUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null);
 
-  public RestorePreviousSettingsAction(EditorSearchComponent editorSearchComponent, JTextComponent textField) {
+  public RestorePreviousSettingsAction(EditorSearchComponent editorSearchComponent, JComponent shortcutHolder) {
     super(editorSearchComponent);
-    myTextField = textField;
-    registerShortcutsForComponent(Collections.<Shortcut>singletonList(SHORTCUT), textField);
+    myShortcutHolder = shortcutHolder;
+    registerShortcutsForComponent(Collections.<Shortcut>singletonList(SHORTCUT), shortcutHolder);
   }
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    getEditorSearchComponent().restoreFindModel();
+    final FindModel model = FindManager.getInstance(e.getProject()).getPreviousFindModel();
+    if (model != null) {
+      myEditorSearchComponent.getFindModel().copyFrom(model);
+    }
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(myTextField.getText().isEmpty());
+    e.getPresentation().setEnabled(
+      e.getProject() != null
+      && myEditorSearchComponent.getSearchTextComponent().getText().isEmpty()
+      && FindManager.getInstance(e.getProject()).getPreviousFindModel() != null);
   }
 
   public static String getAd() {

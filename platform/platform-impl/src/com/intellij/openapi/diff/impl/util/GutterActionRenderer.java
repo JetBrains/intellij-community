@@ -17,11 +17,12 @@ package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class GutterActionRenderer extends GutterIconRenderer {
+public class GutterActionRenderer extends GutterIconRenderer implements DumbAware {
   private final AnAction myAction;
 
   public GutterActionRenderer(@NotNull AnAction action) {

@@ -210,7 +210,7 @@ public class BuildRunner {
           }
           fileSet.add(file);
           if (targetTypesToForceBuild.contains(descriptor.getTarget().getTargetType())) {
-            pd.fsState.markDirty(null, file, descriptor, timestamps, false);
+            pd.fsState.markDirty(null, file, descriptor, timestamps);
           }
         }
       }

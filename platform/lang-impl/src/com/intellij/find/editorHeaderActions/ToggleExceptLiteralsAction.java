@@ -19,7 +19,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class ToggleExceptLiteralsAction extends EditorHeaderToggleAction implements SecondaryHeaderAction {
+public class ToggleExceptLiteralsAction extends EditorHeaderToggleAction {
   private static final String TEXT = "Except L&iterals";
 
   public ToggleExceptLiteralsAction(EditorSearchComponent editorSearchComponent) {
@@ -28,11 +28,11 @@ public class ToggleExceptLiteralsAction extends EditorHeaderToggleAction impleme
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return getEditorSearchComponent().getFindModel().isExceptStringLiterals();
+    return myEditorSearchComponent.getFindModel().isExceptStringLiterals();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.EXCEPT_STRING_LITERALS : FindModel.SearchContext.ANY);
+    myEditorSearchComponent.getFindModel().setSearchContext(state ? FindModel.SearchContext.EXCEPT_STRING_LITERALS : FindModel.SearchContext.ANY);
   }
 }

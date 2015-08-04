@@ -35,6 +35,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.*;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import java.io.File;

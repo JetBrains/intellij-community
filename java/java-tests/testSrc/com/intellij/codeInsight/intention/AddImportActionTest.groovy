@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.intention;
-
+package com.intellij.codeInsight.intention
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
+  private CodeStyleSettings settings
+
   public void testMap15() {
     IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
       myFixture.configureByText 'a.java', '''\
@@ -69,7 +75,7 @@ public class Foo {
 }
 '''
     importClass()
-    myFixture.checkResult '''import foo.*;
+    myFixture.checkResult '''import foo.StringValue;
 
 public class Foo {
     String<caret>Value sv;
@@ -390,11 +396,151 @@ package com.rocket.test;
   }
 
 
+  public void "test keep methods formatting on add import"() {
+    settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
+
+    myFixture.configureByText 'Tq.java', '''
+class Tq {
+
+    private Li<caret>st<String> test = null;
+
+    private String varA = "AAA";
+    private String varBLonger = "BBB";
+
+
+    public String getA         () { return varA;       }
+
+    public String getVarBLonger() { return varBLonger; }
+
+}
+'''
+    importClass()
+    myFixture.checkResult '''import java.util.List;
+
+class Tq {
+
+    private List<String> test = null;
+
+    private String varA = "AAA";
+    private String varBLonger = "BBB";
+
+
+    public String getA         () { return varA;       }
+
+    public String getVarBLonger() { return varBLonger; }
+
+}
+'''
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    settings = new CodeStyleSettings()
+    CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings();
+    settings = null
+    super.tearDown();
+  }
+
   private def importClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Import class"))
   }
 
   private def reimportClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with 'import'"))
+  }
+
+  public void "test disprefer deprecated classes"() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package bar; @Deprecated public class Log {}'
+    myFixture.configureByText 'a.java', '''\
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.Log;
+
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+
+  }
+
+  public void "prefer from imported package"() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package foo; public class Imported {}'
+    myFixture.addClass 'package bar; public class Log {}'
+    myFixture.configureByText 'a.java', '''import foo.Imported;
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.Log;
+import foo.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+  }
+
+  public void "test prefer from imported package sibling"() {
+    myFixture.addClass 'package com.foo.doo; public class Log {}'
+    myFixture.addClass 'package com.foo.imported; public class Imported {}'
+    myFixture.addClass 'package com.bar; public class Log {}'
+    myFixture.configureByText 'a.java', '''import com.foo.imported.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import com.foo.doo.Log;
+import com.foo.imported.Imported;
+
+public class Foo {
+    Lo<caret>g l;
+    Imported i;
+}
+'''
+
+  }
+
+  public void "test remember chosen variants"() {
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package bar; public class Log {}'
+
+    def textBefore = '''\
+
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+    def textAfter = '''import bar.Log;
+
+public class Foo {
+    Lo<caret>g l;
+}
+'''
+    myFixture.configureByText 'a.java', textBefore
+    importClass()
+    myFixture.checkResult textAfter
+
+    myFixture.addClass("package aPackage; public class Log {}")
+    myFixture.configureByText 'b.java', textBefore
+    importClass()
+    myFixture.checkResult textAfter
   }
 }

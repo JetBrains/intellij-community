@@ -38,9 +38,7 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -102,10 +100,10 @@ public class JavaDebugProcess extends XDebugProcess {
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(final DebuggerContextImpl newContext, int event) {
-        if (event == DebuggerSession.EVENT_PAUSE
-            || event == DebuggerSession.EVENT_CONTEXT
-            || event == DebuggerSession.EVENT_REFRESH
+      public void changeEvent(final DebuggerContextImpl newContext, DebuggerSession.Event event) {
+        if (event == DebuggerSession.Event.PAUSE
+            || event == DebuggerSession.Event.CONTEXT
+            || event == DebuggerSession.Event.REFRESH
                && myJavaSession.isPaused()) {
           if (getSession().getSuspendContext() != newContext.getSuspendContext()) {
             process.getManagerThread().schedule(new DebuggerContextCommandImpl(newContext) {
@@ -131,7 +129,7 @@ public class JavaDebugProcess extends XDebugProcess {
             });
           }
         }
-        else if (event == DebuggerSession.EVENT_ATTACHED) {
+        else if (event == DebuggerSession.Event.ATTACHED) {
           getSession().rebuildViews(); // to refresh variables views message
         }
       }
@@ -171,12 +169,14 @@ public class JavaDebugProcess extends XDebugProcess {
         }
       }
 
-      private void showAlternativeNotification(XStackFrame frame) {
-        XSourcePosition position = frame.getSourcePosition();
-        if (position != null) {
-          VirtualFile file = position.getFile();
-          if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
-            EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
+      private void showAlternativeNotification(@Nullable XStackFrame frame) {
+        if (frame != null) {
+          XSourcePosition position = frame.getSourcePosition();
+          if (position != null) {
+            VirtualFile file = position.getFile();
+            if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
+              EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
+            }
           }
         }
       }
@@ -301,7 +301,7 @@ public class JavaDebugProcess extends XDebugProcess {
               if (threadsContent.isSelected()) {
                 panel.setUpdateEnabled(true);
                 if (panel.isRefreshNeeded()) {
-                  panel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
+                  panel.rebuildIfVisible(DebuggerSession.Event.CONTEXT);
                 }
               }
               else {

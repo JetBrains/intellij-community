@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -102,8 +103,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     myExprText = getExpressionText(expr);
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
-    myPreview =
-      (EditorEx)EditorFactory.getInstance().createEditor(EditorFactory.getInstance().createDocument(""), project, languageFileType, true);
+    Document document = EditorFactory.getInstance().createDocument("");
+    UndoUtil.disableUndoFor(document);
+    myPreview = (EditorEx)EditorFactory.getInstance().createEditor(document, project, languageFileType, true);
     myPreview.setOneLineMode(true);
     final EditorSettings settings = myPreview.getSettings();
     settings.setAdditionalLinesCount(0);
@@ -230,6 +232,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           updateTitle(getVariable());
           started = AbstractInplaceIntroducer.super.performInplaceRefactoring(nameSuggestions);
           if (started) {
+            onRenameTemplateStarted();
             myDocumentAdapter = new DocumentAdapter() {
               @Override
               public void documentChanged(DocumentEvent e) {
@@ -259,6 +262,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }, getCommandName(), getCommandName());
     return result.get();
   }
+
+  protected void onRenameTemplateStarted() {}
 
   protected int getCaretOffset() {
     RangeMarker r;
@@ -571,7 +576,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (getLocalVariable() != null) {
       new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           getLocalVariable().setName(myLocalName);
         }
       }.execute();

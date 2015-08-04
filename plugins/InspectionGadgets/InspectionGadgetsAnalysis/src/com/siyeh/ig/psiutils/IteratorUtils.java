@@ -57,17 +57,17 @@ public class IteratorUtils {
   }
 
   private static class CallsIteratorNextVisitor
-    extends JavaRecursiveElementVisitor {
+    extends JavaRecursiveElementWalkingVisitor {
 
     private static final Pattern SCANNER_PATTERN = Pattern.compile("next.*");
 
     private final boolean checkTarget;
     private final boolean checkScanner;
     private final PsiVariable target;
-    private boolean doesCallIteratorNext = false;
+    private boolean doesCallIteratorNext;
 
-    CallsIteratorNextVisitor(PsiVariable target, boolean checkTarget,
-                             boolean checkScanner) {
+    private CallsIteratorNextVisitor(PsiVariable target, boolean checkTarget,
+                                     boolean checkScanner) {
       this.checkTarget = checkTarget;
       this.target = target;
       this.checkScanner = checkScanner;
@@ -129,7 +129,7 @@ public class IteratorUtils {
       doesCallIteratorNext = true;
     }
 
-    public boolean callsIteratorNext() {
+    private boolean callsIteratorNext() {
       return doesCallIteratorNext;
     }
   }

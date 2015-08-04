@@ -58,7 +58,6 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.GeneralPath;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -267,9 +266,6 @@ public class UIUtil {
       return true;
     }
   };
-
-  // accessed only from EDT
-  private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
   private static volatile Pair<String, Integer> ourSystemFontData = null;
 
@@ -600,23 +596,7 @@ public class UIUtil {
   }
 
   public static void drawWave(Graphics2D g, Rectangle rectangle) {
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    Stroke oldStroke = g.getStroke();
-    try {
-      g.setStroke(new BasicStroke(0.7F));
-      double cycle = 4;
-      final double wavedAt = rectangle.y + (double)rectangle.height /2 - .5;
-      GeneralPath wavePath = new GeneralPath();
-      wavePath.moveTo(rectangle.x, wavedAt -  Math.cos(rectangle.x * 2 * Math.PI / cycle));
-      for (int x = rectangle.x + 1; x <= rectangle.x + rectangle.width; x++) {
-        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle) );
-      }
-      g.draw(wavePath);
-    }
-    finally {
-      config.restore();
-      g.setStroke(oldStroke);
-    }
+    WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
   @NotNull
@@ -892,6 +872,17 @@ public class UIUtil {
 
   public static Color getTreeSelectionForeground() {
     return UIManager.getColor("Tree.selectionForeground");
+  }
+
+  public static Color getTreeForeground(boolean selected, boolean hasFocus) {
+    if (!selected) {
+      return getTreeForeground();
+    }
+    Color fg = UIManager.getColor("Tree.selectionInactiveForeground");
+    if (!hasFocus && fg != null) {
+      return fg;
+    }
+    return getTreeSelectionForeground();
   }
 
   /**
@@ -1278,7 +1269,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaBasedLookAndFeel() {
-    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
+    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1683,82 +1674,8 @@ public class UIUtil {
       drawLine(g, startX, lineY + 2, endX, lineY + 2);
     }
 
-    // Draw apple like dotted line:
-    //
-    // CCC CCC CCC ...
-    // CCC CCC CCC ...
-    // CCC CCC CCC ...
-    //
-    // (where "C" - colored pixel, " " - white pixel)
-
-    final int step = 4;
-    final int startPosCorrection = startX % step < 3 ? 0 : 1;
-
-    // Optimization - lets draw dotted line using dot sample image.
-
-    // draw one dot by pixel:
-
-    // save old settings
-    final Composite oldComposite = g.getComposite();
-    // draw image "over" on top of background
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-
-    // sample
-    final BufferedImage image = getAppleDotStamp(fgColor, oldColor);
-
-    // Now copy our dot several times
-    final int dotX0 = (startX / step + startPosCorrection) * step;
-    for (int dotXi = dotX0; dotXi < endX; dotXi += step) {
-      g.drawImage(image, dotXi, lineY, null);
-    }
-
-    //restore previous settings
-    g.setComposite(oldComposite);
-  }
-
-  private static BufferedImage getAppleDotStamp(final Color fgColor,
-                                                final Color oldColor) {
-    final Color color = fgColor != null ? fgColor : oldColor;
-
-    // let's avoid of generating tons of GC and store samples for different colors
-    BufferedImage sample = ourAppleDotSamples.get(color);
-    if (sample == null) {
-      sample = createAppleDotStamp(color);
-      ourAppleDotSamples.put(color, sample);
-    }
-    return sample;
-  }
-
-  private static BufferedImage createAppleDotStamp(final Color color) {
-    final BufferedImage image = createImage(3, 3, BufferedImage.TYPE_INT_ARGB);
-    final Graphics2D g = image.createGraphics();
-
-    g.setColor(color);
-
-    // Each dot:
-    // | 20%  | 50%  | 20% |
-    // | 80%  | 80%  | 80% |
-    // | 50%  | 100% | 50% |
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .2f));
-    g.drawLine(0, 0, 0, 0);
-    g.drawLine(2, 0, 2, 0);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 0.7f));
-    g.drawLine(0, 1, 2, 1);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1.0f));
-    g.drawLine(1, 2, 1, 2);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .5f));
-    g.drawLine(1, 0, 1, 0);
-    g.drawLine(0, 2, 0, 2);
-    g.drawLine(2, 2, 2, 2);
-
-    // dispose graphics
-    g.dispose();
-
-    return image;
+    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
+    painter.paint(g, startX, endX, lineY);
   }
 
   /** This method is intended to use when user settings are not accessible yet.
@@ -1969,9 +1886,10 @@ public class UIUtil {
 
   public static void drawStringWithHighlighting(Graphics g, String s, int x, int y, Color foreground, Color highlighting) {
     g.setColor(highlighting);
-    for (int i = x - 1; i <= x + 1; i++) {
-      for (int j = y - 1; j <= y + 1; j++) {
-        g.drawString(s, i, j);
+    boolean isRetina = isRetina();
+    for (float i = x - 1; i <= x + 1; i += isRetina ? .5 : 1) {
+      for (float j = y - 1; j <= y + 1; j += isRetina ? .5 : 1) {
+        ((Graphics2D)g).drawString(s, i, j);
       }
     }
     g.setColor(foreground);
@@ -2030,6 +1948,16 @@ public class UIUtil {
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
       eachParent = eachParent.getParent();
+    }
+    return null;
+  }
+
+  public static <T extends JComponent> T findParentByClass(@NotNull Component c, Class<T> cls) {
+    for (Component component = c; component != null; component = component.getParent()) {
+      if (cls.isAssignableFrom(component.getClass())) {
+        @SuppressWarnings({"unchecked"}) final T t = (T)component;
+        return t;
+      }
     }
     return null;
   }
@@ -3188,6 +3116,9 @@ public class UIUtil {
   }
 
   public static void addUndoRedoActions(@NotNull final JTextComponent textComponent) {
+    if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
+      return;
+    }
     UndoManager undoManager = new UndoManager();
     textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
@@ -3379,5 +3310,14 @@ public class UIUtil {
       }
     }
     return false;
+  }
+
+  public static void setColumns(JTextComponent textComponent, int columns) {
+    if (textComponent instanceof JTextField) {
+      ((JTextField)textComponent).setColumns(columns);
+    }
+    if (textComponent instanceof JTextArea) {
+      ((JTextArea)textComponent).setColumns(columns);
+    }
   }
 }

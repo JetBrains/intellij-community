@@ -339,7 +339,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
 
     @Override
-    public void valueChanged(@Nullable ListSelectionEvent notUsed) {
+    public void valueChanged(@Nullable ListSelectionEvent event) {
+      if (event != null && event.getValueIsAdjusting()) return;
       int rows = getGraphTable().getSelectedRowCount();
       if (rows < 1 || rows > MAX_SELECTED_COMMITS) {
         myChangesLoadingPane.stopLoading();

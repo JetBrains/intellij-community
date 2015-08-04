@@ -331,6 +331,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           params.getProgramParametersList().addParametersString(mavenEmbedderParameters);
         }
 
+        String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+        if (mavenEmbedderCliOptions != null) {
+          params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
+        }
+
         return params;
       }
 

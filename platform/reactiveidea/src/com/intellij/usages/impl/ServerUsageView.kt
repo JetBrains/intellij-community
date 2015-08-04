@@ -70,7 +70,7 @@ public class ServerUsageView(val project: Project,
   val model: UsageViewTreeModelBuilder = UsageViewTreeModelBuilder(presentation, targets);
   val root = model.getRoot() as GroupNode
   val rules = UsageViewImpl.getActiveGroupingRules(project)
-  val builder = UsageNodeTreeBuilder(targets, rules, UsageViewImpl.getActiveFilteringRules(project), root)
+  val builder = UsageNodeTreeBuilder(targets, rules, UsageViewImpl.getActiveFilteringRules(project), root, project)
   val transferToEDTQueue = TransferToEDTQueue("Insert usages", object : Processor<Runnable> {
     override fun process(runnable: Runnable): Boolean {
       runnable.run()

@@ -414,6 +414,14 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRawClassTypeOnConstructorReference() throws Exception {
+    doTest();
+  }
+
+  public void testIncompleteCodeWithMethodReferenceOverLambdaParameter() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

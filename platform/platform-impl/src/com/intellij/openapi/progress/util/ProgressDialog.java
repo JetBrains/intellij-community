@@ -17,6 +17,7 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -221,13 +222,17 @@ class ProgressDialog implements Disposable {
   }
 
   void cancel() {
+    enableCancelButtonIfNeeded(false);
+  }
+
+  void enableCancelButtonIfNeeded(final boolean enable) {
     if (myProgressWindow.myShouldShowCancel) {
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          myCancelButton.setEnabled(false);
+          myCancelButton.setEnabled(enable);
         }
-      });
+      }, ModalityState.any());
     }
   }
 

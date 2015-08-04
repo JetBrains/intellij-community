@@ -57,16 +57,17 @@ class ExternalProjectBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name, Map attributes) {
+    def projectPath = ExternalSystemApiUtil.normalizePath(projectDir.path)
     switch (name) {
       case 'project':
         ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
-        ProjectData projectData = new ProjectData(projectSystemId, attributes.name ?: 'project', projectDir.path, projectDir.path)
+        ProjectData projectData = new ProjectData(projectSystemId, attributes.name ?: 'project', projectPath, projectPath)
         projectNode = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null)
         return projectNode
       case 'module':
         ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
-        String moduleFilePath = attributes.moduleFilePath ?: projectDir.path
-        String externalConfigPath = attributes.externalConfigPath ?: projectDir.path
+        String moduleFilePath = attributes.moduleFilePath ?: projectPath
+        String externalConfigPath = attributes.externalConfigPath ?: projectPath
         ModuleData moduleData = new ModuleData(attributes.name ?: name as String,
                                                projectSystemId,
                                                ModuleTypeId.JAVA_MODULE,

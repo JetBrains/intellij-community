@@ -132,7 +132,8 @@ class BddRunner(object):
         self.__last_test_name = None
         pass
 
-    def _test_failed(self, name, message, details):
+
+    def _test_failed(self, name, message, details, duration=None):
         """
         Report test failure
         :param name: test name
@@ -141,8 +142,13 @@ class BddRunner(object):
         :type message basestring
         :param details: failure details (probably stacktrace)
         :type details str
+        :param duration how long test took
+        :type duration int
         """
-        self.tc_messages.testFailed(name, message=VersionAgnosticUtils().to_unicode(message), details=details)
+        self.tc_messages.testFailed(name,
+                                    message=VersionAgnosticUtils().to_unicode(message),
+                                    details=details,
+                                    duration=duration)
         self.__last_test_name = None
 
     def _test_passed(self, name, duration=None):

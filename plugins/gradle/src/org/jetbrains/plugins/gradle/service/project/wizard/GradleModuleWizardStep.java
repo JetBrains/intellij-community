@@ -31,6 +31,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
+import com.intellij.openapi.externalSystem.service.ui.SelectExternalProjectDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
@@ -121,7 +122,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   private ProjectData doSelectProject(ProjectData current) {
     assert myProjectOrNull != null : "must not be called when creating a new project";
 
-    SelectExternalProjectDialog d = new SelectExternalProjectDialog(myProjectOrNull, current);
+    SelectExternalProjectDialog d = new SelectExternalProjectDialog(GradleConstants.SYSTEM_ID, myProjectOrNull, current);
     if (!d.showAndGet()) {
       return current;
     }

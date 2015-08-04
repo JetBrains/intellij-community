@@ -35,6 +35,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,6 +53,7 @@ import java.util.List;
 class BeforeRunStepsPanel extends JPanel {
 
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
+  private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
   private final JBList myList;
   private final CollectionListModel<BeforeRunTask> myModel;
   private RunConfiguration myRunConfiguration;
@@ -138,12 +140,22 @@ class BeforeRunStepsPanel extends JPanel {
         updateText();
       }
     });
+    myActivateToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
+    myActivateToolWindowBeforeRunCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateText();
+      }
+    });
 
     myPanel = myDecorator.createPanel();
 
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    add(myShowSettingsBeforeRunCheckBox, BorderLayout.SOUTH);
+    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUI.scale(5), JBUI.scale(5)));
+    checkboxPanel.add(myShowSettingsBeforeRunCheckBox);
+    checkboxPanel.add(myActivateToolWindowBeforeRunCheckBox);
+    add(checkboxPanel, BorderLayout.SOUTH);
   }
 
   @Nullable
@@ -165,7 +177,9 @@ class BeforeRunStepsPanel extends JPanel {
     originalTasks.addAll(runManager.getBeforeRunTasks(myRunConfiguration));
     myModel.replaceAll(originalTasks);
     myShowSettingsBeforeRunCheckBox.setSelected(settings.isEditBeforeRun());
-    myShowSettingsBeforeRunCheckBox.setEnabled(!(isUnknown()));
+    myShowSettingsBeforeRunCheckBox.setEnabled(!isUnknown());
+    myActivateToolWindowBeforeRunCheckBox.setSelected(settings.isActivateToolWindowBeforeRun());
+    myActivateToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
     myPanel.setVisible(checkBeforeRunTasksAbility(false));
     updateText();
   }
@@ -209,6 +223,9 @@ class BeforeRunStepsPanel extends JPanel {
         }
       }
     }
+    if (myActivateToolWindowBeforeRunCheckBox.isSelected()) {
+      sb.append(sb.length() > 0 ? ", " : "").append(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
+    }
     if (sb.length() > 0) {
       sb.insert(0, ": ");
     }
@@ -226,6 +243,10 @@ class BeforeRunStepsPanel extends JPanel {
 
   public boolean needEditBeforeRun() {
     return myShowSettingsBeforeRunCheckBox.isSelected();
+  }
+
+  public boolean needActivateToolWindowBeforeRun() {
+    return myActivateToolWindowBeforeRunCheckBox.isSelected();
   }
 
   private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {

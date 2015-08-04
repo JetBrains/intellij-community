@@ -27,11 +27,11 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -78,7 +78,7 @@ public class GroovyConsole {
     myProcessHandler = handler;
   }
 
-  public void execute(@NotNull String command) {
+  private void doExecute(@NotNull String command) {
     // dirty hack
     if (first) {
       first = false;
@@ -94,8 +94,14 @@ public class GroovyConsole {
     send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"));
   }
 
-  public boolean stop() {
-    return ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(defaultExecutor, myContentDescriptor);
+  public void execute(@NotNull String command) {
+    if (!StringUtil.isEmptyOrSpaces(command)) doExecute(command);
+    ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(defaultExecutor, myContentDescriptor);
+  }
+
+  public void stop() {
+    myProcessHandler.destroyProcess(); // use force
+    ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(defaultExecutor, myContentDescriptor);
   }
 
   private static void send(@NotNull ProcessHandler processHandler, @NotNull String command) {
@@ -163,7 +169,13 @@ public class GroovyConsole {
     actionGroup.add(new BuildAndRestartConsoleAction(module, project, defaultExecutor, descriptor, restarter(project, contentFile)));
     actionGroup.addSeparator();
     actionGroup.addAll(consoleView.createConsoleActions());
-    actionGroup.add(new CloseAction(defaultExecutor, descriptor, project));
+    actionGroup.add(new CloseAction(defaultExecutor, descriptor, project) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        processHandler.destroyProcess(); // use force
+        super.actionPerformed(e);
+      }
+    });
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
     toolbar.setTargetComponent(consoleViewComponent);
@@ -172,19 +184,30 @@ public class GroovyConsole {
     ui.add(consoleViewComponent, BorderLayout.CENTER);
     ui.add(toolbar.getComponent(), BorderLayout.WEST);
 
-    consoleView.attachToProcess(processHandler);
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (file.equals(contentFile)) {
+          // if file was closed then kill process and hide console content
+          console.stop();
+        }
+      }
+    });
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
         if (contentFile.getUserData(GROOVY_CONSOLE) == console) {
+          // process terminated either by closing file or by close action
           contentFile.putUserData(GROOVY_CONSOLE, null);
         }
       }
     });
-    processHandler.startNotify();
-    ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultExecutor, descriptor);
 
     contentFile.putUserData(GROOVY_CONSOLE, console);
+    consoleView.attachToProcess(processHandler);
+    processHandler.startNotify();
+
+    ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultExecutor, descriptor);
     return console;
   }
 
@@ -198,7 +221,12 @@ public class GroovyConsole {
       final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
       final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true);
       final Process process = commandLine.createProcess();
-      return new OSProcessHandler(process, commandLine.getCommandLineString());
+      return new OSProcessHandler(process, commandLine.getCommandLineString()) {
+        @Override
+        public boolean isSilentlyDestroyOnClose() {
+          return true;
+        }
+      };
     }
     catch (ExecutionException e) {
       LOG.warn(e);

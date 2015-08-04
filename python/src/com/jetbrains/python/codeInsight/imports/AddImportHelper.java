@@ -26,15 +26,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -46,6 +49,62 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  */
 public class AddImportHelper {
   private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
+
+  public static final Comparator<PyImportStatementBase> IMPORT_BY_NAME_COMPARATOR = new Comparator<PyImportStatementBase>() {
+    @Override
+    public int compare(@NotNull PyImportStatementBase import1, @NotNull PyImportStatementBase import2) {
+      final QualifiedName firstName1 = getImportFirstQualifiedName(import1);
+      final QualifiedName firstName2 = getImportFirstQualifiedName(import2);
+      // Broken imports go last
+      final int comparedByFirstName = compareNullsLast(firstName1, firstName2);
+      // In case of two "from imports" with the same source break tie by the first imported name
+      if (comparedByFirstName != 0 || !(import1 instanceof PyFromImportStatement && import2 instanceof PyFromImportStatement)) {
+        return comparedByFirstName;
+      }
+      // Star imports go first
+      if (((PyFromImportStatement)import1).isStarImport()) {
+        return -1;
+      }
+      if (((PyFromImportStatement)import2).isStarImport()) {
+        return 1;
+      }
+      final PyImportElement importedElem1 = ArrayUtil.getFirstElement(import1.getImportElements());
+      final PyImportElement importedElem2 = ArrayUtil.getFirstElement(import2.getImportElements());
+      return compareNullsLast(importedElem1 == null ? null : importedElem1.getImportedQName(),
+                              importedElem2 == null ? null : importedElem2.getImportedQName());
+    }
+
+    private <T> int compareNullsLast(@Nullable Comparable<? super T> comparable, @Nullable T comparedWith) {
+      if (comparable == null) {
+        return comparedWith == null ? 0 : 1;
+      }
+      else if (comparedWith == null) {
+        return -1;
+      }
+      return comparable.compareTo(comparedWith);
+    }
+
+    @Nullable
+    public QualifiedName getImportFirstQualifiedName(@NotNull PyImportStatementBase importStatement) {
+      if (importStatement instanceof PyFromImportStatement) {
+        return ((PyFromImportStatement)importStatement).getImportSourceQName();
+      }
+      else if (importStatement instanceof PyImportStatement) {
+        final PyImportElement importElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
+        if (importElement != null) {
+          return importElement.getImportedQName();
+        }
+      }
+      return null;
+    }
+  };
+
+  public enum ImportPriority {
+    FUTURE,
+    BUILTIN,
+    THIRD_PARTY,
+    PROJECT
+  }
 
   private AddImportHelper() {
   }
@@ -78,17 +137,14 @@ public class AddImportHelper {
     return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
   }
 
-  public enum ImportPriority {
-    BUILTIN, THIRD_PARTY, PROJECT
-  }
-
   @Nullable
   public static PsiElement getFileInsertPosition(final PsiFile file) {
     return getInsertPosition(file, null, null);
   }
 
   @Nullable
-  private static PsiElement getInsertPosition(final PsiElement insertParent, @Nullable String nameToImport,
+  private static PsiElement getInsertPosition(@NotNull PsiElement insertParent,
+                                              @Nullable PyImportStatementBase newImport,
                                               @Nullable ImportPriority priority) {
     PsiElement feeler = insertParent.getFirstChild();
     if (feeler == null) return null;
@@ -97,10 +153,18 @@ public class AddImportHelper {
     boolean skippedOverDoc = false;
     PsiElement seeker = feeler;
     final boolean isInjected = InjectedLanguageManager.getInstance(feeler.getProject()).isInjectedFragment(feeler.getContainingFile());
+    PyImportStatementBase importAbove = null, importBelow = null;
     do {
       if (feeler instanceof PyImportStatementBase && !isInjected) {
-        if (nameToImport != null && priority != null && shouldInsertBefore(insertParent, (PyImportStatementBase)feeler, nameToImport, priority)) {
-          break;
+        final PyImportStatementBase existingImport = (PyImportStatementBase)feeler;
+        if (priority != null && newImport != null) {
+          if (shouldInsertBefore(newImport, existingImport, priority)) {
+            importBelow = existingImport;
+            break;
+          }
+          else {
+            importAbove = existingImport;
+          }
         }
         seeker = feeler;
         feeler = feeler.getNextSibling();
@@ -112,9 +176,9 @@ public class AddImportHelper {
       }
       // maybe we arrived at the doc comment stmt; skip over it, too
       else if (!skippedOverImports && !skippedOverDoc && insertParent instanceof PyFile) {
-        PsiElement doc_elt =
-          DocStringUtil.findDocStringExpression((PyElement)insertParent); // this gives the literal; its parent is the expr seeker may have encountered
-        if (doc_elt != null && doc_elt.getParent() == feeler) {
+        // this gives the literal; its parent is the expr seeker may have encountered
+        final PsiElement docElem = DocStringUtil.findDocStringExpression((PyElement)insertParent);
+        if (docElem != null && docElem.getParent() == feeler) {
           feeler = feeler.getNextSibling();
           seeker = feeler; // skip over doc even if there's nothing below it
           skippedOverDoc = true;
@@ -128,50 +192,79 @@ public class AddImportHelper {
       }
     }
     while (feeler != null);
+    final ImportPriority priorityAbove = importAbove != null ? getImportPriority(importAbove) : null;
+    final ImportPriority priorityBelow = importBelow != null ? getImportPriority(importBelow) : null;
+    if (priorityAbove != null && priority.compareTo(priorityAbove) > 0) {
+      newImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
+      if (priorityBelow == priority) {
+        importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
+      }
+    }
+    if (priorityBelow != null && priority.compareTo(priorityBelow) < 0) {
+      importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
+    }
     return seeker;
   }
 
-  private static boolean shouldInsertBefore(PsiElement element, PyImportStatementBase relativeTo, String nameToImport,
-                                            ImportPriority priority) {
-    QualifiedName relativeToName;
-    PsiElement source;
-    if (relativeTo instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)relativeTo;
-      if (fromImportStatement.isFromFuture()) {
-        return false;
-      }
-      relativeToName = fromImportStatement.getImportSourceQName();
-      source = fromImportStatement.resolveImportSource();
+  private static boolean shouldInsertBefore(@Nullable PyImportStatementBase newImport,
+                                            @NotNull PyImportStatementBase existingImport,
+                                            @NotNull ImportPriority priority) {
+    final ImportPriority existingImportPriority = getImportPriority(existingImport);
+    final int byPriority = priority.compareTo(existingImportPriority);
+    if (byPriority != 0) {
+      return byPriority < 0;
     }
-    else {
-      final PyImportElement[] importElements = relativeTo.getImportElements();
-      if (importElements.length == 0) {
-        return false;
-      }
-      relativeToName = importElements[0].getImportedQName();
-      source = importElements[0].resolve();
-    }
-    if (relativeToName == null) {
+    if (newImport == null) {
       return false;
     }
-    final PsiFileSystemItem containingFile;
-    if (source instanceof PsiDirectory) {
-      containingFile = (PsiDirectory)source;
+    return IMPORT_BY_NAME_COMPARATOR.compare(newImport, existingImport) < 0;
+  }
+
+  @NotNull
+  public static ImportPriority getImportPriority(@NotNull PyImportStatementBase importStatement) {
+    final PsiElement resolved;
+    if (importStatement instanceof PyFromImportStatement) {
+      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)importStatement;
+      if (fromImportStatement.isFromFuture()) {
+        return ImportPriority.FUTURE;
+      }
+      resolved = fromImportStatement.resolveImportSource();
     }
     else {
-      containingFile = source != null ? source.getContainingFile() : null;
+      final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
+      if (firstImportElement == null) {
+        return ImportPriority.PROJECT;
+      }
+      resolved = firstImportElement.resolve();
     }
-    ImportPriority relativeToPriority = source == null || containingFile == null
-                                        ? ImportPriority.BUILTIN
-                                        : getImportPriority(element, containingFile);
-    final int rc = priority.compareTo(relativeToPriority);
-    if (rc < 0) {
-      return true;
+    if (resolved == null) {
+      return ImportPriority.BUILTIN;
     }
-    if (rc == 0) {
-      return nameToImport.compareTo(relativeToName.toString()) < 0;
+
+    final PsiFileSystemItem resolvedFileOrDir;
+    if (resolved instanceof PsiDirectory) {
+      resolvedFileOrDir = (PsiFileSystemItem)resolved;
     }
-    return false;
+    else {
+      resolvedFileOrDir = resolved.getContainingFile();
+    }
+    return getImportPriority(importStatement, resolvedFileOrDir);
+  }
+
+  @NotNull
+  public static ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
+    final VirtualFile vFile = toImport.getVirtualFile();
+    if (vFile == null) {
+      return ImportPriority.PROJECT;
+    }
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
+    if (projectRootManager.getFileIndex().isInContent(vFile)) {
+      return ImportPriority.PROJECT;
+    }
+    final Module module = ModuleUtilCore.findModuleForPsiElement(importLocation);
+    final Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
+
+    return PythonSdkType.isStdLib(vFile, pythonSdk) ? ImportPriority.BUILTIN : ImportPriority.THIRD_PARTY;
   }
 
   /**
@@ -214,7 +307,7 @@ public class AddImportHelper {
         insertParent.addAfter(importNodeToInsert, anchor);
       }
       else {
-        insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, name, priority));
+        insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, importNodeToInsert, priority));
       }
     }
     catch (IncorrectOperationException e) {
@@ -254,7 +347,7 @@ public class AddImportHelper {
         insertParent = file;
       }
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-        final PsiElement element = insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, from, priority));
+        final PsiElement element = insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, nodeToInsert, priority));
         PsiElement whitespace = element.getNextSibling();
         if (!(whitespace instanceof PsiWhiteSpace)) {
           whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
@@ -266,7 +359,7 @@ public class AddImportHelper {
           insertParent.addAfter(nodeToInsert, anchor);
         }
         else {
-          insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, from, priority));
+          insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, nodeToInsert, priority));
         }
       }
     }
@@ -358,20 +451,5 @@ public class AddImportHelper {
           addOrUpdateFromImportStatement(file, toImportQName.toString(), name, null, priority, element);
       }
     }
-  }
-
-  public static ImportPriority getImportPriority(PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
-    final VirtualFile vFile = toImport.getVirtualFile();
-    if (vFile == null) {
-      return ImportPriority.PROJECT;
-    }
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
-    if (projectRootManager.getFileIndex().isInContent(vFile)) {
-      return ImportPriority.PROJECT;
-    }
-    Module module = ModuleUtilCore.findModuleForPsiElement(importLocation);
-    Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
-
-    return PythonSdkType.isStdLib(vFile, pythonSdk) ? ImportPriority.BUILTIN : ImportPriority.THIRD_PARTY;
   }
 }

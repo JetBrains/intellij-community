@@ -18,7 +18,7 @@ package com.jetbrains.jython;
 import com.intellij.psi.*;
 import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.PythonHelpersLocator;
 import junit.framework.Assert;
 
 /**
@@ -87,6 +87,6 @@ public class PyToJavaResolveTest extends ResolveTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/resolve/pyToJava/";
+    return PythonHelpersLocator.getPythonCommunityPath() + "/testData/resolve/pyToJava/";
   }
 }

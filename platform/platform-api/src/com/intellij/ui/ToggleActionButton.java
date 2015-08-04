@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,14 +48,14 @@ public abstract class ToggleActionButton extends AnActionButton implements Toggl
   public final void actionPerformed(AnActionEvent e) {
     final boolean state = !isSelected(e);
     setSelected(e, state);
-    final Boolean selected = state ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean selected = state;
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
   }
 
   @Override
   public final void updateButton(AnActionEvent e) {
-    final Boolean selected = isSelected(e) ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
   }

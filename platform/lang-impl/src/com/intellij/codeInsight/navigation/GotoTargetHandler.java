@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -128,6 +129,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
       }
     };
+
+    list.setFont(EditorUtil.getEditorFont());
     
     list.setCellRenderer(new DefaultListCellRenderer() {
       @Override
@@ -199,6 +202,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }).
       setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();
+
+    builder.getScrollPane().setBorder(null);
+    builder.getScrollPane().setViewportBorder(null);
+
     if (gotoData.listUpdaterTask != null) {
       gotoData.listUpdaterTask.init((AbstractPopup)popup, list, usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);

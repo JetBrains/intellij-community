@@ -2,6 +2,7 @@ package git4idea.repo;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.util.Function;
@@ -22,7 +23,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -40,12 +40,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   public static Collection<Object[]> data() {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
     File dataDir = new File(new File(pluginRoot, "testData"), "repo");
-    File[] testCases = dataDir.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        return file.isDirectory();
-      }
-    });
+    File[] testCases = dataDir.listFiles(FileUtilRt.ALL_DIRECTORIES);
     return ContainerUtil.map(testCases, new Function<File, Object[]>() {
       @Override
       public Object[] fun(File file) {

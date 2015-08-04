@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -55,6 +56,8 @@ import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.Token;
 import org.apache.velocity.runtime.parser.node.*;
 import org.apache.velocity.runtime.resource.Resource;
+import org.apache.velocity.runtime.resource.ResourceManager;
+import org.apache.velocity.runtime.resource.ResourceManagerImpl;
 import org.apache.velocity.runtime.resource.loader.ResourceLoader;
 import org.apache.velocity.util.StringUtils;
 import org.jetbrains.annotations.NonNls;
@@ -80,6 +83,13 @@ public class FileTemplateUtil{
 
   static {
     try{
+      final Class<?>[] interfaces = ResourceManagerImpl.class.getInterfaces();
+      if (interfaces.length != 1 || !interfaces[0].equals(ResourceManager.class)) {
+        throw new IllegalStateException("Incorrect velocity version in the classpath" +
+                                        ", ResourceManager in " + PathManager.getJarPathForClass(ResourceManager.class) +
+                                        ", ResourceManagerImpl in " + PathManager.getJarPathForClass(ResourceManagerImpl.class));
+      }
+
       LogSystem emptyLogSystem = new LogSystem() {
         @Override
         public void init(RuntimeServices runtimeServices) throws Exception {

@@ -17,13 +17,13 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.impl.ModulePathMacroManager;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -31,23 +31,26 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.module.OptionManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
@@ -58,13 +61,9 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @NotNull private final Project myProject;
   private boolean isModuleAdded;
 
-  @NonNls private static final String OPTION_WORKSPACE = "workspace";
-
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   private String myName;
-
-  private String myModuleType;
 
   private final ModuleScopeProvider myModuleScopeProvider;
 
@@ -76,86 +75,98 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
-    init(filePath);
+    myName = moduleNameByFileName(PathUtil.getFileName(filePath));
+
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+  }
+
+  private void setModuleFilePath(@NotNull String filePath) {
+    String normalizedPath = FileUtilRt.toSystemIndependentName(filePath);
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
+    IComponentStore store = ComponentsPackage.getStateStore(this);
+    store.getStateStorageManager().clearStateStorage(StoragePathMacros.MODULE_FILE);
+    store.setPath(normalizedPath);
   }
 
   @Override
   protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
     super.bootstrapPicoContainer(name);
-    getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }
 
   @NotNull
-  public ModuleStoreImpl getStateStore() {
-    return (ModuleStoreImpl)getPicoContainer().getComponentInstance(IComponentStore.class);
+  private static FileBasedStorage getMainStorage(@NotNull Module module) {
+    return (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
   }
 
   @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-    getStateStore().initComponent(component, service);
-  }
+  public void init(@NotNull final String path, @Nullable final Runnable beforeComponentCreation) {
+    init(ProgressManager.getInstance().getProgressIndicator(), new Runnable() {
+      @Override
+      public void run() {
+        // create ServiceManagerImpl at first to force extension classes registration
+        getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
+        ComponentsPackage.getStateStore(ModuleImpl.this).setPath(path);
 
-  private void init(String filePath) {
-    getStateStore().setModuleFilePath(filePath);
-    myName = moduleNameByFileName(PathUtil.getFileName(filePath));
-
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
-  }
-
-  @Override
-  public void init() {
-    loadComponents();
-    super.init();
-  }
-
-  @Override
-  public void loadModuleComponents() {
-    loadComponents();
+        if (beforeComponentCreation != null) {
+          beforeComponentCreation.run();
+        }
+      }
+    });
   }
 
   @Override
-  protected boolean isComponentSuitable(Map<String, String> options) {
-    if (!super.isComponentSuitable(options)) return false;
-    if (options == null) return true;
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
+  }
 
-    Set<String> optionNames = options.keySet();
-    for (String optionName : optionNames) {
-      if (Comparing.equal(OPTION_WORKSPACE, optionName)) continue;
-      if (!parseOptionValue(options.get(optionName)).contains(getOptionValue(optionName))) return false;
+  @Override
+  protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
+    if (!super.isComponentSuitable(options)) {
+      return false;
+    }
+    if (options == null || options.isEmpty()) {
+      return true;
+    }
+
+    for (String optionName : options.keySet()) {
+      if ("workspace".equals(optionName)) {
+        continue;
+      }
+
+      // we cannot filter using module options because at this moment module file data could be not loaded
+      String message = "Don't specify " + optionName + " in the component registration, transform component to service and implement your logic in your getInstance() method";
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(message);
+      }
+      else {
+        LOG.warn(message);
+      }
     }
 
     return true;
   }
 
-  private static List<String> parseOptionValue(String optionValue) {
-    if (optionValue == null) return new ArrayList<String>(0);
-    return Arrays.asList(optionValue.split(";"));
-  }
-
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    return getStateStore().getModuleFile();
+    return getMainStorage(this).getVirtualFile();
   }
 
   @Override
   public void rename(String newName) {
     myName = newName;
-    final VirtualFile file = getStateStore().getModuleFile();
+    final VirtualFile file = getMainStorage(this).getVirtualFile();
     try {
       if (file != null) {
-        ClasspathStorage.moduleRenamed(this, newName);
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-        getStateStore().setModuleFilePath(VfsUtilCore.virtualToIoFile(file).getCanonicalPath());
-        return;
       }
-
-      // [dsl] we get here if either old file didn't exist or renaming failed
-      final File oldFile = new File(getModuleFilePath());
-      final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      getStateStore().setModuleFilePath(newFile.getCanonicalPath());
+      else {
+        // [dsl] we get here if either old file didn't exist or renaming failed
+        final File oldFile = new File(getModuleFilePath());
+        final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        setModuleFilePath(newFile.getCanonicalPath());
+      }
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -165,7 +176,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @NotNull
   public String getModuleFilePath() {
-    return getStateStore().getModuleFilePath();
+    return getMainStorage(this).getFilePath();
   }
 
   @Override
@@ -184,7 +195,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void projectOpened() {
-    for (ModuleComponent component : getComponents(ModuleComponent.class)) {
+    for (ModuleComponent component : getComponentInstancesOfType(ModuleComponent.class)) {
       try {
         component.projectOpened();
       }
@@ -196,14 +207,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void projectClosed() {
-    List<ModuleComponent> components = new ArrayList<ModuleComponent>(Arrays.asList(getComponents(ModuleComponent.class)));
-    Collections.reverse(components);
-
-    for (ModuleComponent component : components) {
+    List<ModuleComponent> components = getComponentInstancesOfType(ModuleComponent.class);
+    for (int i = components.size() - 1; i >= 0; i--) {
       try {
-        component.projectClosed();
+        components.get(i).projectClosed();
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
@@ -229,36 +238,42 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public void moduleAdded() {
     isModuleAdded = true;
-    for (ModuleComponent component : getComponents(ModuleComponent.class)) {
+    for (ModuleComponent component : getComponentInstancesOfType(ModuleComponent.class)) {
       component.moduleAdded();
     }
   }
 
   @Override
-  public void setOption(@NotNull String optionName, @NotNull String optionValue) {
-    if (ELEMENT_TYPE.equals(optionName)) {
-      myModuleType = optionValue;
+  public void setOption(@NotNull String key, @NotNull String value) {
+    OptionManager manager = getOptionManager();
+    if (manager != null) {
+      manager.setOption(key, value);
     }
-    getStateStore().setOption(optionName, optionValue);
+  }
+
+  @Nullable
+  private OptionManager getOptionManager() {
+    try {
+      return (OptionManager)getMainStorage(this).getStorageData();
+    }
+    catch (StateStorageException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @Override
-  public void clearOption(@NotNull String optionName) {
-    if (ELEMENT_TYPE.equals(optionName)) {
-      myModuleType = null;
+  public void clearOption(@NotNull String key) {
+    OptionManager manager = getOptionManager();
+    if (manager != null) {
+      manager.clearOption(key);
     }
-    getStateStore().clearOption(optionName);
   }
 
   @Override
-  public String getOptionValue(@NotNull String optionName) {
-    if (ELEMENT_TYPE.equals(optionName)) {
-      if (myModuleType == null) {
-        myModuleType = getStateStore().getOptionValue(optionName);
-      }
-      return myModuleType;
-    }
-    return getStateStore().getOptionValue(optionName);
+  public String getOptionValue(@NotNull String key) {
+    OptionManager manager = getOptionManager();
+    return manager == null ? null : manager.getOptionValue(key);
   }
 
   @NotNull
@@ -350,27 +365,22 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private class MyVirtualFileListener extends VirtualFileAdapter {
     @Override
     public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (!isModuleAdded) return;
-      final Object requestor = event.getRequestor();
-      if (MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
-      if (!VirtualFile.PROP_NAME.equals(event.getPropertyName())) return;
+      if (!isModuleAdded || MODULE_RENAMING_REQUESTOR.equals(event.getRequestor()) || !VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        return;
+      }
 
-      final VirtualFile parent = event.getParent();
+      VirtualFile parent = event.getParent();
       if (parent != null) {
-        final String parentPath = parent.getPath();
-        final String ancestorPath = parentPath + "/" + event.getOldValue();
-        final String moduleFilePath = getModuleFilePath();
+        String parentPath = parent.getPath();
+        String ancestorPath = parentPath + "/" + event.getOldValue();
+        String moduleFilePath = getModuleFilePath();
         if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-          final String newValue = (String)event.getNewValue();
-          final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
-          final String newFilePath = parentPath + "/" + newValue + "/" + relativePath;
-          setModuleFilePath(moduleFilePath, newFilePath);
+          setModuleFilePath(moduleFilePath, parentPath + "/" + event.getNewValue() + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
         }
       }
 
-      final VirtualFile moduleFile = getModuleFile();
-      if (moduleFile == null) return;
-      if (moduleFile.equals(event.getFile())) {
+      VirtualFile moduleFile = getModuleFile();
+      if (moduleFile != null && moduleFile.equals(event.getFile())) {
         String oldName = myName;
         myName = moduleNameByFileName(moduleFile.getName());
         ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this, oldName);
@@ -384,19 +394,16 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       modifiableModel.setModuleFilePath(ModuleImpl.this, moduleFilePath, newFilePath);
       modifiableModel.commit();
 
-      getStateStore().setModuleFilePath(newFilePath);
+      ModuleImpl.this.setModuleFilePath(newFilePath);
     }
 
     @Override
     public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      final VirtualFile oldParent = event.getOldParent();
-      final VirtualFile newParent = event.getNewParent();
-      final String dirName = event.getFileName();
-      final String ancestorPath = oldParent.getPath() + "/" + dirName;
-      final String moduleFilePath = getModuleFilePath();
+      String dirName = event.getFileName();
+      String ancestorPath = event.getOldParent().getPath() + "/" + dirName;
+      String moduleFilePath = getModuleFilePath();
       if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-        final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
-        setModuleFilePath(moduleFilePath, newParent.getPath() + "/" + dirName + "/" + relativePath);
+        setModuleFilePath(moduleFilePath, event.getNewParent().getPath() + "/" + dirName + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,15 @@ public class ConfigFilesTreeBuilder {
         }
       }
     }
-    for (VirtualFile file : jars.keySet()) {
+
+    List<VirtualFile> sortedJars = new ArrayList<VirtualFile>(jars.keySet());
+    Collections.sort(sortedJars, new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile o1, VirtualFile o2) {
+        return StringUtil.naturalCompare(o1.getName(), o2.getName());
+      }
+    });
+    for (VirtualFile file : sortedJars) {
       final List<PsiFile> list = new ArrayList<PsiFile>(jars.get(file));
       final PsiFile jar = list.get(0).getManager().findFile(file);
       if (jar != null) {

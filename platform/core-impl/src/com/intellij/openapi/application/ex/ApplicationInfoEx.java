@@ -100,6 +100,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract List<PluginChooserPage> getPluginChooserPages();
 
+  /**
+   * @return {@code true} if the specified plugin is an essential part of the IDE so it cannot be disabled and isn't shown in Settings | Plugins
+   */
+  public abstract boolean isEssentialPlugin(String pluginId);
+
   @Nullable
   public abstract String getCustomizeIDEWizardStepsProvider();
 }

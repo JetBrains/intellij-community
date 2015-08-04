@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -532,7 +532,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKED_COLUMN:
-          return myCheckedMarks[rowIndex] ? Boolean.TRUE : Boolean.FALSE;
+          return myCheckedMarks[rowIndex];
         case FIELD_COLUMN:
           return myFieldNames[rowIndex];
         case GETTER_COLUMN:
@@ -642,9 +642,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
               setForeground(JBColor.RED);
             }
 
-            RowIcon icon = new RowIcon(2);
-            icon.setIcon(methodIcon, 0);
-            icon.setIcon(overrideIcon, 1);
+            RowIcon icon = new RowIcon(methodIcon, overrideIcon);
             setIcon(icon);
             setDisabledIcon(icon);
             break;

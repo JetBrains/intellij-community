@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
@@ -148,7 +149,7 @@ public abstract class ChooseByNameViewModel {
   }
 
   protected static Matcher buildPatternMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
+    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public boolean checkDisposed() {
@@ -486,7 +487,7 @@ public abstract class ChooseByNameViewModel {
                                    boolean checkboxState,
                                    ModalityState modalityState,
                                    Consumer<Set<?>> callback) {
-    new CalcElementsThread(text, checkboxState, callback, modalityState, false).scheduleThread();
+    new CalcElementsThread(text, checkboxState, callback, modalityState).scheduleThread();
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -734,10 +735,9 @@ public abstract class ChooseByNameViewModel {
     }
   }
 
-  protected class CalcElementsThread implements ReadTask {
+  protected class CalcElementsThread extends ReadTask {
     private final String myPattern;
-    private volatile boolean myCheckboxState;
-    private volatile boolean myScopeExpanded;
+    private final boolean myCheckboxState;
     private final Consumer<Set<?>> myCallback;
     protected final ModalityState myModalityState;
 
@@ -746,13 +746,11 @@ public abstract class ChooseByNameViewModel {
     CalcElementsThread(String pattern,
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
-                       @NotNull ModalityState modalityState,
-                       boolean scopeExpanded) {
+                       @NotNull ModalityState modalityState) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
-      myScopeExpanded = scopeExpanded;
     }
 
     protected final Alarm myShowCardAlarm = new Alarm();
@@ -765,27 +763,37 @@ public abstract class ChooseByNameViewModel {
     }
 
     @Override
+    public void runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+      Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          computeInReadAction(indicator);
+        }
+      };
+      if (DumbService.isDumbAware(myModel)) {
+        ApplicationManager.getApplication().runReadAction(r);
+      }
+      else {
+        DumbService.getInstance(myProject).runReadActionInSmartMode(r);
+      }
+    }
+
+
+    @Override
     public void computeInReadAction(@NotNull ProgressIndicator indicator) {
       if (myProject != null && myProject.isDisposed()) return;
 
       final Set<Object> elements = new LinkedHashSet<Object>();
 
-      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
-      addElementsByPattern(myPattern, elements, myProgress, myCheckboxState);
+      boolean scopeExpanded = fillWithScopeExpansion(elements, myPattern);
 
-      if (myProgress.isCanceled()) {
-        myShowCardAlarm.cancelAllRequests();
-        return;
+      String lowerCased = patternToLowerCase(myPattern);
+      if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
+        scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
       }
 
-      if (elements.isEmpty() && !myCheckboxState) {
-        myScopeExpanded = true;
-        myCheckboxState = true;
-        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
-        addElementsByPattern(myPattern, elements, myProgress, true);
-      }
-      final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
-      showCard(cardToShow, 0);
+
+      final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
       final boolean edt = myModel instanceof EdtSortingModel;
       final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
@@ -795,16 +803,29 @@ public abstract class ChooseByNameViewModel {
           if (!checkDisposed() && !myProgress.isCanceled()) {
             ChooseByNameBase.CalcElementsThread currentBgProcess = myCalcElementsThread;
             LOG.assertTrue(currentBgProcess == ChooseByNameBase.CalcElementsThread.this, currentBgProcess);
+            showCard(cardToShow, 0);
             myCallback.consume(edt ? filter(elements) : filtered);
           }
         }
       }, myModalityState);
     }
 
+    private boolean fillWithScopeExpansion(Set<Object> elements, String pattern) {
+      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
+      addElementsByPattern(pattern, elements, myProgress, myCheckboxState);
+
+      if (elements.isEmpty() && !myCheckboxState) {
+        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
+        addElementsByPattern(pattern, elements, myProgress, true);
+        return true;
+      }
+      return false;
+    }
+
     @Override
     public void onCanceled(@NotNull ProgressIndicator indicator) {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
-      new ChooseByNameBase.CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded).scheduleThread();
+      new ChooseByNameBase.CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
     }
 
     protected void addElementsByPattern(@NotNull String pattern,
@@ -910,4 +931,10 @@ public abstract class ChooseByNameViewModel {
       }
     }
   }
+
+  @NotNull
+  protected String patternToLowerCase(String pattern) {
+    return pattern.toLowerCase(Locale.US);
+  }
+
 }

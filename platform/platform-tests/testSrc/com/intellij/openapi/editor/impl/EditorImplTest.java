@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.testFramework.EditorTestUtil;
 
 public class EditorImplTest extends AbstractEditorTest {
@@ -57,7 +58,13 @@ public class EditorImplTest extends AbstractEditorTest {
                           "\t}\n" +
                           "}</selection>");
     CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
-    configureSoftWraps(32);
+    EditorTestUtil.configureSoftWraps(myEditor, 232, 7); // wrap after 32 characters
+
+    // verify initial state
+    assertEquals(4, EditorUtil.getTabSize(myEditor));
+    assertEquals("[FoldRegion +(59:64), placeholder=' { ', FoldRegion +(85:88), placeholder=' }']", myEditor.getFoldingModel().toString());
+    verifySoftWrapPositions(52, 85);
+    
     Document document = myEditor.getDocument();
     for (int i = document.getLineCount() - 1; i >= 0; i--) {
       document.insertString(document.getLineStartOffset(i), "//");
@@ -150,5 +157,22 @@ public class EditorImplTest extends AbstractEditorTest {
     document.replaceString(4, 5, "-");
     document.setInBulkUpdate(false);
     assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getVisualPosition());
+  }
+  
+  public void testSuccessiveBulkModeOperations() throws Exception {
+    initText("some text");
+    DocumentEx document = (DocumentEx)myEditor.getDocument();
+    
+    document.setInBulkUpdate(true);
+    document.replaceString(4, 5, "-");
+    document.setInBulkUpdate(false);
+    
+    myEditor.getCaretModel().moveToOffset(9);
+    
+    document.setInBulkUpdate(true);
+    document.replaceString(4, 5, "+");
+    document.setInBulkUpdate(false);
+    
+    checkResultByText("some+text<caret>");
   }
 }

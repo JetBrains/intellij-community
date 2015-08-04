@@ -132,6 +132,7 @@ public final class JsonReaderEx implements Closeable {
       super(chars);
     }
 
+    @NotNull
     @Override
     public CharSequence subSequence(int start, int end) {
       return start == 0 && end == length() ? this : new String(myChars, myStart + start, end - start);
@@ -743,62 +744,6 @@ public final class JsonReaderEx implements Closeable {
   public CharSequence nextNameAsCharSequence() {
     // todo
     return nextName();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  private static final class MyCharSequence implements CharSequence {
-    private final CharSequence in;
-    private final int offset;
-    private final int length;
-
-    public MyCharSequence(CharSequence in, int offset, int length) {
-      this.in = in;
-      this.offset = offset;
-      this.length = length;
-    }
-
-    @Override
-    public int length() {
-      return length;
-    }
-
-    @Override
-    public char charAt(int index) {
-      return in.charAt(offset + index);
-    }
-
-    @NotNull
-    @Override
-    public CharSequence subSequence(int start, int end) {
-      if ((end - start) > length) {
-        throw new StringIndexOutOfBoundsException(end);
-      }
-      return in.subSequence(offset + start, offset + end);
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return in.subSequence(offset, in.length()).toString();
-    }
-
-    @Override
-    public boolean equals(Object object) {
-      if (!(object instanceof CharSequence)) {
-        return false;
-      }
-
-      CharSequence o = (CharSequence)object;
-      if (o.length() != length) {
-        return false;
-      }
-      for (int i = 0; i < length; i++) {
-        if (o.charAt(i) != charAt(i)) {
-          return false;
-        }
-      }
-      return true;
-    }
   }
 
   public String nextAsString() {

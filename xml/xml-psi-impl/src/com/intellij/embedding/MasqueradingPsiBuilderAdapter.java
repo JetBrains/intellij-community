@@ -222,6 +222,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return true;
   }
 
+  @NotNull
   @Override
   public Marker mark() {
     // In the case of the topmost node all should be inserted
@@ -344,12 +345,12 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     @Override
-    public void doneBefore(IElementType type, Marker before) {
+    public void doneBefore(@NotNull IElementType type, @NotNull Marker before) {
       super.doneBefore(type, getDelegateOrThis(before));
     }
 
     @Override
-    public void doneBefore(IElementType type, Marker before, String errorMessage) {
+    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage) {
       super.doneBefore(type, getDelegateOrThis(before), errorMessage);
     }
 

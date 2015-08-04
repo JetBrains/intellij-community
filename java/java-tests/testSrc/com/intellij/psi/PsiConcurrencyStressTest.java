@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
       Thread.sleep(100);
       new WriteCommandAction(myProject, myFile) {
         @Override
-        protected void run(final Result result) throws Throwable {
+        protected void run(@NotNull final Result result) throws Throwable {
           writeActionInProgress = true;
           documentManager.commitAllDocuments();
           writeStep(random);

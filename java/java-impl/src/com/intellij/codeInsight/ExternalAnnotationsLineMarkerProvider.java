@@ -21,7 +21,11 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.impl.AddAnnotationIntention;
+import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -55,7 +59,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
       
       boolean hasInferred = false;
       boolean hasExternal = false;
-      for (PsiAnnotation annotation : findSignatureNonCodeAnnotations(owner)) {
+      for (PsiAnnotation annotation : findSignatureNonCodeAnnotations(owner, true)) {
         hasExternal |= AnnotationUtil.isExternalAnnotation(annotation);
         hasInferred |= AnnotationUtil.isInferredAnnotation(annotation);
       }
@@ -75,15 +79,9 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
-    PsiElement owner = element.getParent();
-    if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
-    if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
-
-    // support non-Java languages where getNameIdentifier may return non-physical psi with the same range
-    PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
-    if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
-
-    if (findSignatureNonCodeAnnotations((PsiModifierListOwner)owner).isEmpty()) {
+    PsiModifierListOwner owner = getAnnotationOwner(element);
+    boolean includeSourceInferred = CodeInsightSettings.getInstance().SHOW_SOURCE_INFERRED_ANNOTATIONS;
+    if (owner == null || findSignatureNonCodeAnnotations(owner, includeSourceInferred).isEmpty()) {
       return null;
     }
 
@@ -94,19 +92,33 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
                                           GutterIconRenderer.Alignment.RIGHT);
   }
 
-  private static List<PsiAnnotation> findSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
-    List<PsiAnnotation> result = ContainerUtil.newArrayList(findOwnNonCodeAnnotations(owner));
+  @Nullable
+  static PsiModifierListOwner getAnnotationOwner(@Nullable PsiElement element) {
+    if (element == null) return null;
+    
+    PsiElement owner = element.getParent();
+    if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
+    if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
+
+    // support non-Java languages where getNameIdentifier may return non-physical psi with the same range
+    PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
+    if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
+    return (PsiModifierListOwner)owner;
+  }
+
+  static List<PsiAnnotation> findSignatureNonCodeAnnotations(PsiModifierListOwner owner, boolean includeSourceInferred) {
+    List<PsiAnnotation> result = ContainerUtil.newArrayList(findOwnNonCodeAnnotations(owner, includeSourceInferred));
 
     if (owner instanceof PsiMethod) {
       for (PsiParameter parameter : ((PsiMethod)owner).getParameterList().getParameters()) {
-        result.addAll(findOwnNonCodeAnnotations(parameter));
+        result.addAll(findOwnNonCodeAnnotations(parameter, includeSourceInferred));
       }
     }
 
     return result;
   }
 
-  private static List<PsiAnnotation> findOwnNonCodeAnnotations(@NotNull PsiModifierListOwner element) {
+  private static List<PsiAnnotation> findOwnNonCodeAnnotations(@NotNull PsiModifierListOwner element, boolean includeSourceInferred) {
     List<PsiAnnotation> result = ContainerUtil.newArrayList();
     Project project = element.getProject();
     PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element);
@@ -117,12 +129,18 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
         }
       }
     }
-    for (PsiAnnotation annotation : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)) {
-      if (isVisibleAnnotation(annotation)) {
-        result.add(annotation);
+    if (includeSourceInferred || !isSourceCode(element)) {
+      for (PsiAnnotation annotation : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)) {
+        if (isVisibleAnnotation(annotation)) {
+          result.add(annotation);
+        }
       }
     }
     return result;
+  }
+
+  static boolean isSourceCode(PsiModifierListOwner element) {
+    return !(BaseExternalAnnotationsManager.preferCompiledElement(element) instanceof PsiCompiledElement);
   }
 
   private static boolean isVisibleAnnotation(@NotNull PsiAnnotation annotation) {
@@ -167,7 +185,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
     protected JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
-        if (action.isAvailable(project, editor, file)) {
+        if (shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file)) {
           group.add(new ApplyIntentionAction(action, action.getText(), editor, file));
         }
       }
@@ -179,6 +197,15 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
       }
 
       return null;
+    }
+
+    private static boolean shouldShowInGutterPopup(IntentionAction action) {
+      return action instanceof AddAnnotationIntention ||
+             action instanceof DeannotateIntentionAction ||
+             action instanceof EditContractIntention ||
+             action instanceof ToggleSourceInferredAnnotations ||
+             action instanceof MakeInferredAnnotationExplicit ||
+             action instanceof IntentionActionWrapper && shouldShowInGutterPopup(((IntentionActionWrapper)action).getDelegate());
     }
   }
 }

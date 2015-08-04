@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.util.Segment;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,15 +33,10 @@ class PersistentRangeMarkerUtil {
    * @return              <code>true</code> if target document range referenced by the given range marker should be translated via
    *                      diff algorithm; <code>false</code> otherwise
    */
-  static boolean shouldTranslateViaDiff(@NotNull DocumentEventImpl e, @NotNull RangeMarker rangeMarker) {
+  static boolean shouldTranslateViaDiff(@NotNull DocumentEvent e, @NotNull Segment rangeMarker) {
     if (e.isWholeTextReplaced()) {
       // Perform translation if the whole text is replaced.
       return true;
-    }
-
-    if (!rangeMarker.isValid()) {
-      // Don't perform complex processing if current range marker is already invalid.
-      return false;
     }
 
     if (e.getOffset() >= rangeMarker.getEndOffset() || e.getOffset() + e.getOldLength() <= rangeMarker.getStartOffset()) {

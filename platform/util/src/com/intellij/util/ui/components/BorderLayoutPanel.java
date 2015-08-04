@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.components;
 
+import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBUI;
 
 import java.awt.*;

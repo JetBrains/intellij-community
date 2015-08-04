@@ -40,6 +40,7 @@ import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
+import org.testng.TestNGXmlSuiteHelper;
 import org.testng.xml.*;
 
 import java.io.*;
@@ -48,7 +49,7 @@ import java.util.*;
 
 public class SearchingForTestsTask extends SearchForTestsTask {
   private static final Logger LOG = Logger.getInstance("#" + SearchingForTestsTask.class.getName());
-  private final Map<PsiClass, Map<PsiMethod, List<String>>> myClasses;
+  protected final Map<PsiClass, Map<PsiMethod, List<String>>> myClasses;
   private final TestData myData;
   private final Project myProject;
   private final TestNGConfiguration myConfig;
@@ -178,41 +179,14 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       xmlFile = suite.save(new File(PathManager.getSystemPath()));
     }
     else {
-      final XmlSuite xmlSuite = new XmlSuite();
-      XmlTest xmlTest = new XmlTest(xmlSuite);
-      xmlTest.setName(myProject.getName());
-      xmlTest.setParameters(testParams);
-      List<XmlClass> xmlClasses = new ArrayList<XmlClass>();
-      int idx = 0;
-      for (String className : map.keySet()) {
-        final XmlClass xmlClass = new XmlClass(className, idx++, false);
-        final ArrayList<XmlInclude> includedMethods = new ArrayList<XmlInclude>();
-        final Map<String, List<String>> collection = map.get(className);
-        int mIdx = 0;
-        for (String methodName : collection.keySet()) {
-          final List<Integer> includes = new ArrayList<Integer>();
-          for (String include : collection.get(methodName)) {
-            try {
-              includes.add(Integer.parseInt(include));
-            }
-            catch (NumberFormatException e) {
-              LOG.error(e);
-            }
-          }
-          includedMethods.add(new XmlInclude(methodName, includes, mIdx++));
-        }
-        xmlClass.setIncludedMethods(includedMethods);
-        xmlClasses.add(xmlClass);
-      }
-      xmlTest.setXmlClasses(xmlClasses);
-      xmlFile = new File(PathManager.getSystemPath(), "temp-testng-customsuite.xml");
-      final String toXml = xmlSuite.toXml();
-      try {
-        FileUtil.writeToFile(xmlFile, toXml);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      xmlFile = TestNGXmlSuiteHelper.writeSuite(map, testParams, myProject.getName(), 
+                                                PathManager.getSystemPath(),
+                                                new TestNGXmlSuiteHelper.Logger() {
+                                                  @Override
+                                                  public void log(Throwable e) {
+                                                    LOG.error(e);
+                                                  }
+                                                });
     }
     String path = xmlFile.getAbsolutePath() + "\n";
     try {

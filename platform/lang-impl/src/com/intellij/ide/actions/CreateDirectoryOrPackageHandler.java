@@ -25,6 +25,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
@@ -135,8 +137,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   }
 
   @Override
-  public boolean canClose(String inputString) {
-    final String subDirName = inputString;
+  public boolean canClose(final String subDirName) {
 
     if (subDirName.length() == 0) {
       showErrorDialog(IdeBundle.message("error.name.should.be.specified"));
@@ -153,25 +154,44 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         return false;
       }
     }
-    
-    boolean createFile = false;
+
+    final Boolean createFile = suggestCreatingFileInstead(subDirName);
+    if (createFile == null) {
+      return false;
+    }
+
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        doCreateElement(subDirName, createFile);
+      }
+    });
+
+    return myCreatedElement != null;
+  }
+
+  @Nullable
+  private Boolean suggestCreatingFileInstead(String subDirName) {
+    Boolean createFile = false;
     if (StringUtil.countChars(subDirName, '.') == 1 && Registry.is("ide.suggest.file.when.creating.filename.like.directory")) {
       FileType fileType = findFileTypeBoundToName(subDirName);
       if (fileType != null) {
         String message = "The name you entered looks like a file name. Do you want to create a file named " + subDirName + " instead?";
-        int ec = Messages.showYesNoDialog(myProject, message,
-                                           "File Name Detected", "Yes, create file",
-                                           "No, create " + (myIsDirectory ? "directory" : "packages"),
-                                           fileType.getIcon());
+        int ec = Messages.showYesNoCancelDialog(myProject, message,
+                                                "File Name Detected",
+                                                "&Yes, create file",
+                                                "&No, create " + (myIsDirectory ? "directory" : "packages"),
+                                                CommonBundle.getCancelButtonText(),
+                                                fileType.getIcon());
+        if (ec == Messages.CANCEL) {
+          createFile = null;
+        }
         if (ec == Messages.YES) {
           createFile = true;
         }
       }
     }
-
-    doCreateElement(subDirName, createFile);
-
-    return myCreatedElement != null;
+    return createFile;
   }
 
   @Nullable

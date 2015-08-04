@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
@@ -35,9 +36,17 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.*;
 
 public class EduStepicConnector {
@@ -68,13 +77,28 @@ public class EduStepicConnector {
 
     HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100);
     ourCookieStore = new BasicCookieStore();
-    ourClient = builder.setDefaultCookieStore(ourCookieStore).build();
 
     try {
+      // Create a trust manager that does not validate certificate for this connection
+      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+        public X509Certificate[] getAcceptedIssuers() { return null; }
+        public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+        public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+      }};
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, trustAllCerts, new SecureRandom());
+      ourClient = builder.setDefaultCookieStore(ourCookieStore).setSslcontext(sslContext).build();
+
       ourClient.execute(request);
       saveCSRFToken();
     }
     catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    catch (NoSuchAlgorithmException e) {
+      LOG.error(e.getMessage());
+    }
+    catch (KeyManagementException e) {
       LOG.error(e.getMessage());
     }
   }
@@ -142,11 +166,9 @@ public class EduStepicConnector {
   public static List<CourseInfo> getCourses() {
     try {
       List<CourseInfo> result = new ArrayList<CourseInfo>();
-      int pageNumber = 0;
-      boolean hasNext = addCoursesFromStepic(result, pageNumber);
-      while (hasNext) {
+      int pageNumber = 1;
+      while (addCoursesFromStepic(result, pageNumber)) {
         pageNumber += 1;
-        hasNext = addCoursesFromStepic(result, pageNumber);
       }
       return result;
     }
@@ -192,11 +214,11 @@ public class EduStepicConnector {
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
-    final SectionWrapper sectionWrapper = getFromStepic("sections/" + String.valueOf(sectionId), SectionWrapper.class);
-    List<Integer> unitIds = sectionWrapper.sections.get(0).units;
+    final SectionContainer sectionContainer = getFromStepic("sections/" + String.valueOf(sectionId), SectionContainer.class);
+    List<Integer> unitIds = sectionContainer.sections.get(0).units;
     final List<Lesson> lessons = new ArrayList<Lesson>();
     for (Integer unitId : unitIds) {
-      UnitWrapper unit = getFromStepic("units/" + String.valueOf(unitId), UnitWrapper.class);
+      UnitContainer unit = getFromStepic("units/" + String.valueOf(unitId), UnitContainer.class);
       int lessonID = unit.units.get(0).lesson;
       LessonContainer lesson = getFromStepic("lessons/" + String.valueOf(lessonID), LessonContainer.class);
       Lesson realLesson = lesson.lessons.get(0);
@@ -212,9 +234,10 @@ public class EduStepicConnector {
     return lessons;
   }
 
-  private static void createTask(Lesson lesson, Integer s) throws IOException {
-    final Step step = getStep(s);
+  private static void createTask(Lesson lesson, Integer stepicId) throws IOException {
+    final Step step = getStep(stepicId);
     final Task task = new Task();
+    task.setStepicId(stepicId);
     task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
     task.setText(step.text);
     for (TestFileWrapper wrapper : step.options.test) {
@@ -236,12 +259,154 @@ public class EduStepicConnector {
 
 
   public static void showLoginDialog() {
-    final LoginDialog dialog = new LoginDialog();
-    dialog.show();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final LoginDialog dialog = new LoginDialog();
+        dialog.show();
+      }
+    });
+  }
+
+  public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
+    if (ourClient == null) {
+      if (StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)) {
+        return;
+      }
+      else {
+        final boolean success = login(login, password);
+        if (!success) return;
+      }
+    }
+
+    final HttpPost attemptRequest = new HttpPost(stepicApiUrl + "attempts");
+    setHeaders(attemptRequest, "application/json");
+    String attemptRequestBody = new Gson().toJson(new AttemptWrapper(task.getStepicId()));
+    attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse attemptResponse = ourClient.execute(attemptRequest);
+      final String attemptResponseString = EntityUtils.toString(attemptResponse.getEntity());
+      final StatusLine statusLine = attemptResponse.getStatusLine();
+      if (statusLine.getStatusCode() != 201) {
+        LOG.error("Failed to make attempt " + attemptResponseString);
+      }
+      final AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, AttemptContainer.class).attempts.get(0);
+
+      final Map<String, TaskFile> taskFiles = task.getTaskFiles();
+      final ArrayList<SolutionFile> files = new ArrayList<SolutionFile>();
+      for (TaskFile fileEntry : taskFiles.values()) {
+        files.add(new SolutionFile(fileEntry.name, fileEntry.text));
+      }
+      postSubmission(passed, attempt, files);
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
+  private static void postSubmission(boolean passed, AttemptWrapper.Attempt attempt, ArrayList<SolutionFile> files) throws IOException {
+    final HttpPost request = new HttpPost(stepicApiUrl + "submissions");
+    setHeaders(request, "application/json");
+
+    String requestBody = new Gson().toJson(new SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+    final CloseableHttpResponse response = ourClient.execute(request);
+    final String responseString = EntityUtils.toString(response.getEntity());
+    final StatusLine line = response.getStatusLine();
+    if (line.getStatusCode() != 201) {
+      LOG.error("Failed to make submission " + responseString);
+    }
   }
 
 
-  public static void postLesson(Project project, @NotNull final Lesson lesson) {
+  public static void postCourse(Project project, @NotNull final Course course) {
+    final HttpPost request = new HttpPost(stepicApiUrl + "courses");
+    if (ourClient == null) {
+      showLoginDialog();
+    }
+
+    setHeaders(request, "application/json");
+    String requestBody = new Gson().toJson(new CourseWrapper(course));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 201) {
+        LOG.error("Failed to push " + responseString);
+        return;
+      }
+      final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
+
+      final int sectionId = postModule(postedCourse);
+      int position = 1;
+      for (Lesson lesson : course.getLessons()) {
+        final int lessonId = postLesson(project, lesson);
+        postUnit(lessonId, position, sectionId);
+        position += 1;
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
+  private static void postUnit(int lessonId, int position, int sectionId) {
+    final HttpPost request = new HttpPost(stepicApiUrl + "units");
+    setHeaders(request, "application/json");
+    final UnitWrapper unitWrapper = new UnitWrapper();
+    unitWrapper.unit = new Unit();
+    unitWrapper.unit.lesson = lessonId;
+    unitWrapper.unit.position = position;
+    unitWrapper.unit.section = sectionId;
+
+    String requestBody = new Gson().toJson(unitWrapper);
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 201) {
+        LOG.error("Failed to push " + responseString);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
+  private static int postModule(CourseInfo courseInfo) {
+    final HttpPost request = new HttpPost(stepicApiUrl + "sections");
+    setHeaders(request, "application/json");
+    final Section section = new Section();
+    section.course = courseInfo.id;
+    section.title = String.valueOf(courseInfo.getName());
+    section.position = 1;
+    final SectionWrapper sectionContainer = new SectionWrapper();
+    sectionContainer.section = section;
+    String requestBody = new Gson().toJson(sectionContainer);
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 201) {
+        LOG.error("Failed to push " + responseString);
+      }
+      final Section postedSection = new Gson().fromJson(responseString, SectionContainer.class).sections.get(0);
+      return postedSection.id;
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    return -1;
+  }
+
+  public static int postLesson(Project project, @NotNull final Lesson lesson) {
     final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
     if (ourClient == null) {
       showLoginDialog();
@@ -257,23 +422,25 @@ public class EduStepicConnector {
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 201) {
         LOG.error("Failed to push " + responseString);
-        return;
+        return 0;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
       for (Task task : lesson.getTaskList()) {
         postTask(project, task, postedLesson.id);
       }
+      return postedLesson.id;
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
     }
+    return -1;
   }
 
-  public static void postTask(Project project, @NotNull final Task task, int id) {
+  public static void postTask(Project project, @NotNull final Task task, int lessonId) {
     final HttpPost request = new HttpPost(stepicApiUrl + "step-sources");
     setHeaders(request, "application/json");
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
-    String requestBody = gson.toJson(new StepSourceWrapper(project, task, id));
+    final String requestBody = gson.toJson(new StepSourceWrapper(project, task, lessonId));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
     try {
@@ -314,7 +481,7 @@ public class EduStepicConnector {
 
   private static class StepOptions {
     @Expose List<TestFileWrapper> test;
-    @Expose String title;  //HERE
+    @Expose String title;
     @Expose List<TaskFile> files;
     @Expose String text;
 
@@ -322,7 +489,7 @@ public class EduStepicConnector {
       final StepOptions source = new StepOptions();
 
       final String text = task.getTestsText(project);
-      source.test = Collections.singletonList(new TestFileWrapper("tests.py", text));
+      source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, text));
       source.files = new ArrayList<TaskFile>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
@@ -356,8 +523,18 @@ public class EduStepicConnector {
     @Expose
     StepSource stepSource;
 
-    public StepSourceWrapper(Project project, Task task, int id) {
-      stepSource = new StepSource(project, task, id);
+    public StepSourceWrapper(Project project, Task task, int lessonId) {
+      stepSource = new StepSource(project, task, lessonId);
+    }
+  }
+
+  static class CourseWrapper {
+    CourseInfo course;
+
+    public CourseWrapper(Course course) {
+      this.course = new CourseInfo();
+      this.course.setName(course.getName());
+      this.course.setDescription(course.getDescription());
     }
   }
 
@@ -379,8 +556,8 @@ public class EduStepicConnector {
     @Expose int position = 0;
     @Expose int lesson = 0;
 
-    public StepSource(Project project, Task task, int id) {
-      lesson = id;
+    public StepSource(Project project, Task task, int lesson) {
+      this.lesson = lesson;
       position = task.getIndex();
       block = Step.fromTask(project, task);
     }
@@ -396,27 +573,101 @@ public class EduStepicConnector {
     }
   }
 
-  static class SectionWrapper {
-    static class Section {
-      List<Integer> units;
-    }
+  static class Section {
+    List<Integer> units;
+    int course;
+    String title;
+    int position;
+    int id;
+  }
 
+  static class SectionWrapper {
+    Section section;
+  }
+
+  static class SectionContainer {
     List<Section> sections;
     List<Lesson> lessons;
 
-    static class Unit {
+    List<Unit> units;
+  }
+
+  static class Unit {
+    int id;
+    int section;
+    int lesson;
+    int position;
+  }
+
+  static class UnitContainer {
+
+    List<Unit> units;
+  }
+
+  static class UnitWrapper{
+    Unit unit;
+  }
+
+
+  static class AttemptWrapper {
+    static class Attempt {
+      public Attempt(int step) {
+        this.step = step;
+      }
+
+      int step;
       int id;
-      int lesson;
+    }
+    public AttemptWrapper(int step) {
+      attempt = new Attempt(step);
     }
 
-    List<Unit> units;
+    Attempt attempt;
   }
 
-  static class UnitWrapper {
-    static class Unit {
-      int lesson;
+  static class AttemptContainer {
+    List<AttemptWrapper.Attempt> attempts;
+  }
+
+  static class SolutionFile {
+    String name;
+    String text;
+
+    public SolutionFile(String name, String text) {
+      this.name = name;
+      this.text = text;
+    }
+  }
+
+  static class SubmissionWrapper {
+    Submission submission;
+
+
+    public SubmissionWrapper(int attempt, String score, ArrayList<SolutionFile> files) {
+      submission = new Submission(score, attempt, files);
     }
 
-    List<Unit> units;
+    static class Submission {
+      int attempt;
+
+      private final Reply reply;
+
+      public Submission(String score, int attempt, ArrayList<SolutionFile> files) {
+        reply = new Reply(files, score);
+        this.attempt = attempt;
+      }
+
+      static class Reply {
+        String score;
+        List<SolutionFile> solution;
+
+        public Reply(ArrayList<SolutionFile> files, String score) {
+          this.score = score;
+          solution = files;
+        }
+      }
+    }
+
   }
+
 }

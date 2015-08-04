@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -64,7 +63,6 @@ import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -203,15 +201,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
-    final File[] files = baseDir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return FileUtil.namesEqual("pom.xml", name);
-      }
-    });
+    File pomXml = new File(baseDir, "pom.xml");
 
-    if (files != null && files.length != 0) {
-      final VirtualFile file = VfsUtil.findFileByIoFile(files[0], true);
+    if (pomXml.exists()) {
+      final VirtualFile file = VfsUtil.findFileByIoFile(pomXml, true);
       if (file == null) return;
 
       showBalloon(
@@ -1107,15 +1100,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void updateProjectTargetFolders() {
-    updateProjectFolders(true);
-  }
-
-  private void updateProjectFolders(final boolean targetFoldersOnly) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
 
-        MavenFoldersImporter.updateProjectFolders(myProject, targetFoldersOnly);
+        MavenFoldersImporter.updateProjectFolders(myProject, true);
         VirtualFileManager.getInstance().asyncRefresh(null);
       }
     });
@@ -1186,7 +1175,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return projectImporter.getCreatedModules();
   }
 
-  private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
+  private static Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new THashMap<VirtualFile, Module>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);

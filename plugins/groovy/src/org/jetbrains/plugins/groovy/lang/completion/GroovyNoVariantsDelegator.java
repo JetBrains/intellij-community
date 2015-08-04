@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -49,8 +48,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    LinkedHashSet<CompletionResult> plainResults = result.runRemainingContributors(parameters, true);
-    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(plainResults) || suggestMetaAnnotations(parameters);
+    JavaNoVariantsDelegator.ResultTracker tracker = new JavaNoVariantsDelegator.ResultTracker(result);
+    result.runRemainingContributors(parameters, tracker);
+    final boolean empty = tracker.containsOnlyPackages || suggestMetaAnnotations(parameters);
 
     if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();
@@ -65,7 +65,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
           GrMainCompletionProvider.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters) &&
           !GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
-        result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
+        result = result.withPrefixMatcher(tracker.betterMatcher);
         suggestNonImportedClasses(parameters, result);
       }
     }

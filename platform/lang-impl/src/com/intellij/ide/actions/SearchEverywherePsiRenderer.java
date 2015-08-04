@@ -89,7 +89,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     if (in) text = text.substring(3);
     final FontMetrics fm = myList.getFontMetrics(myList.getFont());
     final int maxWidth = myList.getWidth() - fm.stringWidth(name) - 16 - myRightComponentWidth - 20;
-    String left = "(" + (in ? "in " : " ");
+    String left = in ? "(in " : "(";
     String right = ")";
 
     if (fm.stringWidth(left + text + right) < maxWidth) return left + text + right;
@@ -148,7 +148,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
     Color color = list.getForeground();
-    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
     renderer.append(item + " ", nameAttributes);
     ItemPresentation itemPresentation = item.getPresentation();
@@ -157,7 +157,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
 
     String locationString = itemPresentation.getLocationString();
     if (!StringUtil.isEmpty(locationString)) {
-      renderer.append(locationString, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+      renderer.append(locationString, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }
     return true;
   }

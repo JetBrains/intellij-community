@@ -1,5 +1,5 @@
 class AnnotatedMember {
 
-  @SuppressWarnings("ALL")
-  private String s;
+    @SuppressWarnings("ALL")
+    private String s;
 }

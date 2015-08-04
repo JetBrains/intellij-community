@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +59,6 @@ public class PyPsiUtils {
 
   /**
    * Finds the closest comma after the element skipping any whitespaces in-between.
-   * @param element
    */
   @Nullable
   public static PsiElement getPrevComma(@NotNull PsiElement element) {
@@ -66,13 +66,36 @@ public class PyPsiUtils {
     return prevNode != null && prevNode.getNode().getElementType() == PyTokenTypes.COMMA ? prevNode : null;
   }
 
+  /**
+   * Finds first non-whitespace sibling before given PSI element.
+   */
   @Nullable
-  public static PsiElement getPrevNonWhitespaceSibling(@NotNull PsiElement element) {
+  public static PsiElement getPrevNonWhitespaceSibling(@Nullable PsiElement element) {
     return PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
   }
 
   /**
-   * Finds the closest comma before the element skipping any whitespaces in-between.
+   * Finds first non-whitespace sibling before given AST node.
+   */
+  @Nullable
+  public static ASTNode getPrevNonWhitespaceSibling(@NotNull ASTNode node) {
+    return skipSiblingsBackward(node, TokenSet.create(TokenType.WHITE_SPACE));
+  }
+
+  /**
+   * Finds first sibling that is neither comment, nor whitespace before given element.
+   * @param strict prohibit returning element itself
+   */
+  @Nullable
+  public static PsiElement getPrevNonCommentSibling(@Nullable PsiElement start, boolean strict) {
+    if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
+      return start;
+    }
+    return PsiTreeUtil.skipSiblingsBackward(start, PsiWhiteSpace.class, PsiComment.class);
+  }
+
+  /**
+   * Finds the closest comma after the element skipping any whitespaces in-between.
    */
   @Nullable
   public static PsiElement getNextComma(@NotNull PsiElement element) {
@@ -80,9 +103,56 @@ public class PyPsiUtils {
     return nextNode != null && nextNode.getNode().getElementType() == PyTokenTypes.COMMA ? nextNode : null;
   }
 
+  /**
+   * Finds first non-whitespace sibling after given PSI element.
+   */
   @Nullable
-  public static PsiElement getNextNonWhitespaceSibling(@NotNull PsiElement element) {
+  public static PsiElement getNextNonWhitespaceSibling(@Nullable PsiElement element) {
     return PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+  }
+
+  /**
+   * Finds first non-whitespace sibling after given AST node.
+   */
+  @Nullable
+  public static ASTNode getNextNonWhitespaceSibling(@NotNull ASTNode after) {
+    return skipSiblingsForward(after, TokenSet.create(TokenType.WHITE_SPACE));
+  }
+
+  /**
+   * Finds first sibling that is neither comment, nor whitespace after given element.
+   * @param strict prohibit returning element itself
+   */
+  @Nullable
+  public static PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
+    if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
+      return start;
+    }
+    return PsiTreeUtil.skipSiblingsForward(start, PsiWhiteSpace.class, PsiComment.class);
+  }
+
+  /**
+   * Finds first token after given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   * @param ignoreComments ignore commentaries as well
+   */
+  @Nullable
+  public static PsiElement getNextSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
+    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
+      element = PsiTreeUtil.nextLeaf(element);
+    }
+    return element;
+  }
+
+  /**
+   * Finds first token before given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   * @param ignoreComments ignore commentaries as well
+   */
+  @Nullable
+  public static PsiElement getPrevSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
+    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
+      element = PsiTreeUtil.prevLeaf(element);
+    }
+    return element;
   }
 
   /**
@@ -92,6 +162,70 @@ public class PyPsiUtils {
   public static PsiElement getAdjacentComma(@NotNull PsiElement element) {
     final PsiElement nextComma = getNextComma(element);
     return nextComma != null ? nextComma : getPrevComma(element);
+  }
+
+  /**
+   * Works similarly to {@link PsiTreeUtil#skipSiblingsForward(PsiElement, Class[])}, but for AST nodes.
+   */
+  @Nullable
+  public static ASTNode skipSiblingsForward(@Nullable ASTNode node, @NotNull TokenSet types) {
+    if (node == null) {
+      return null;
+    }
+    for (ASTNode next = node.getTreeNext(); next != null; next = next.getTreeNext()) {
+      if (!types.contains(next.getElementType())) {
+        return next;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Works similarly to {@link PsiTreeUtil#skipSiblingsBackward(PsiElement, Class[])}, but for AST nodes.
+   */
+  @Nullable
+  public static ASTNode skipSiblingsBackward(@Nullable ASTNode node, @NotNull TokenSet types) {
+    if (node == null) {
+      return null;
+    }
+    for (ASTNode prev = node.getTreePrev(); prev != null; prev = prev.getTreePrev()) {
+      if (!types.contains(prev.getElementType())) {
+        return prev;
+      }
+    }
+    return null;
+  }
+
+    /**
+   * Returns first child psi element with specified element type or {@code null} if no such element exists.
+   * Semantically it's the same as {@code getChildByFilter(element, TokenSet.create(type), 0)}.
+   *
+   * @param element tree parent node
+   * @param type    element type expected
+   * @return child element described
+   */
+  @Nullable
+  public static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
+    final ASTNode child = element.getNode().findChildByType(type);
+    return child != null ? child.getPsi() : null;
+  }
+
+  /**
+   * Returns child element in the psi tree
+   *
+   * @param filter  Types of expected child
+   * @param number  number
+   * @param element tree parent node
+   * @return PsiElement - child psiElement
+   */
+  @Nullable
+  public static PsiElement getChildByFilter(@NotNull PsiElement element, @NotNull TokenSet filter, int number) {
+    final ASTNode node = element.getNode();
+    if (node != null) {
+      final ASTNode[] children = node.getChildren(filter);
+      return (0 <= number && number < children.length) ? children[number].getPsi() : null;
+    }
+    return null;
   }
 
   public static void addBeforeInParent(@NotNull final PsiElement anchor, @NotNull final PsiElement... newElements) {
@@ -324,22 +458,6 @@ public class PyPsiUtils {
       });
     }
     return result;
-  }
-
-  @Nullable
-  public static PsiElement getSignificantToTheRight(PsiElement element, final boolean ignoreComments) {
-    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
-      element = PsiTreeUtil.nextLeaf(element);
-    }
-    return element;
-  }
-
-  @Nullable
-  public static PsiElement getSignificantToTheLeft(PsiElement element, final boolean ignoreComments) {
-    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
-      element = PsiTreeUtil.prevLeaf(element);
-    }
-    return element;
   }
 
   public static int findArgumentIndex(PyCallExpression call, PsiElement argument) {

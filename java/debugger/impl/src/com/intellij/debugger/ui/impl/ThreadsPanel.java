@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,14 +70,14 @@ public class ThreadsPanel extends DebuggerTreePanel{
     add(ScrollPaneFactory.createScrollPane(getThreadsTree()), BorderLayout.CENTER);
     stateManager.addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
-        if (DebuggerSession.EVENT_ATTACHED == event || DebuggerSession.EVENT_RESUME == event) {
+      public void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+        if (DebuggerSession.Event.ATTACHED == event || DebuggerSession.Event.RESUME == event) {
           startLabelsUpdate();
         }
-        else if (DebuggerSession.EVENT_PAUSE == event || DebuggerSession.EVENT_DETACHED == event || DebuggerSession.EVENT_DISPOSE == event) {
+        else if (DebuggerSession.Event.PAUSE == event || DebuggerSession.Event.DETACHED == event || DebuggerSession.Event.DISPOSE == event) {
           myUpdateLabelsAlarm.cancelAllRequests();
         }
-        if (DebuggerSession.EVENT_DETACHED == event || DebuggerSession.EVENT_DISPOSE == event) {
+        if (DebuggerSession.Event.DETACHED == event || DebuggerSession.Event.DISPOSE == event) {
           stateManager.removeListener(this);
         }
       }

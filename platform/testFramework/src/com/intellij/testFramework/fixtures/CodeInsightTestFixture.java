@@ -41,6 +41,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
@@ -246,6 +247,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Runs highlighting test for the given files.
    * Checks for {@link #ERROR_MARKER} markers by default.
+   * <p/>
+   * Double quotes in "descr" attribute of markers must be escaped by either one or two backslashes
+   * (see {@link ExpectedHighlightingData#extractExpectedHighlightsSet(Document)}).
    *
    * @param checkWarnings     enables {@link #WARNING_MARKER} support.
    * @param checkInfos        enables {@link #INFO_MARKER} support.

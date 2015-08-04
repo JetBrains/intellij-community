@@ -45,10 +45,6 @@ public class SuppressExternalTest extends UsefulTestCase {
 
   private LanguageLevel myLanguageLevel;
 
-  public SuppressExternalTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Override
   public void setUp() throws Exception {
     super.setUp();

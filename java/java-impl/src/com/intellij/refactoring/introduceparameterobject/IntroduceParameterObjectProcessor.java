@@ -136,13 +136,13 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   }
 
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
     return new IntroduceParameterObjectUsageViewDescriptor(method);
   }
 
 
   @Override
-  protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     if (myUseExistingClass) {
       if (existingClass == null) {
@@ -245,7 +245,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
   }
 
-  protected void performRefactoring(UsageInfo[] usageInfos) {
+  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
     final PsiClass psiClass = buildClass();
     if (psiClass != null) {
       fixJavadocForConstructor(psiClass);

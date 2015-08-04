@@ -33,7 +33,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertTrue(new UnInjectLanguageAction().isAvailable(getProject(), myFixture.getEditor(), myFixture.getFile()));
 
     myFixture.configureByText("bar.xml",
-                              "<foo xmlns=\"<error descr=\"URI is not registered (Settings | Project Settings | Schemas and DTDs)\">http://foo.bar</error>\" \n" +
+                              "<foo xmlns=\"<error descr=\"URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)\">http://foo.bar</error>\" \n" +
                               "     xxx=\"<error descr=\"Cannot resolve file 'bar'\">b<caret>ar</error>\"/>");
     myFixture.testHighlighting();
 
@@ -94,6 +94,16 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
                                           "    String bar() {\n" +
                                           "       return \"<error descr=\"Cannot resolve file 'unknown.file'\">unknown.file</error>\";\n" +
                                           "    }  \n" +
+                                          "}");
+    myFixture.testHighlighting();
+  }
+
+  public void testTernary() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {\n" +
+                                          "    void bar() {\n" +
+                                          "        @org.intellij.lang.annotations.Language(\"encoding-reference\")\n" +
+                                          "        String cset = true ? \"<error descr=\"Cannot resolve symbol 'cp1252345'\">cp1252345</error>\" : \"utf-8\";//\n" +
+                                          "    }\n" +
                                           "}");
     myFixture.testHighlighting();
   }

@@ -6,9 +6,9 @@ import java.util.Collections;
 
 class c {
   void m() {
-    Iterables.f<caret>ind(Collections.emptyList(), new Predicate<Object>() {
+    Iterables.f<caret>ind(Collections.emptyList(), new Predicate<String>() {
       @Override
-      public boolean apply(Object input) {
+      public boolean apply(String input) {
         return true;
       }
     });

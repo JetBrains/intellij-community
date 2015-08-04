@@ -1436,23 +1436,35 @@ public class JavaDocInfoGenerator {
   }
 
   private static String createLinkText(final PsiElement[] tagElements) {
-    int predictOffset = tagElements.length > 0
-                        ? tagElements[0].getTextOffset() + tagElements[0].getText().length()
-                        : 0;
-    StringBuilder buffer1 = new StringBuilder();
+    int predictOffset = tagElements.length > 0 ? tagElements[0].getTextOffset() + tagElements[0].getText().length() : 0;
+    StringBuilder buffer = new StringBuilder();
     for (int j = 0; j < tagElements.length; j++) {
       PsiElement tagElement = tagElements[j];
 
-      if (tagElement.getTextOffset() > predictOffset) buffer1.append(" ");
+      if (tagElement.getTextOffset() > predictOffset) buffer.append(" ");
       predictOffset = tagElement.getTextOffset() + tagElement.getText().length();
 
-      buffer1.append(tagElement.getText());
+      collectElementText(buffer, tagElement);
 
       if (j < tagElements.length - 1) {
-        buffer1.append(" ");
+        buffer.append(" ");
       }
     }
-    return buffer1.toString().trim();
+    return buffer.toString().trim();
+  }
+
+  private static void collectElementText(final StringBuilder buffer, PsiElement element) {
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        if (element instanceof PsiWhiteSpace ||
+            element instanceof PsiJavaToken ||
+            element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+          buffer.append(element.getText());
+        }
+      }
+    });
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

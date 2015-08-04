@@ -77,6 +77,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean DICT_NEW_LINE_AFTER_LEFT_BRACE = false;
   public boolean DICT_NEW_LINE_BEFORE_RIGHT_BRACE = false;
 
+  public int BLANK_LINES_AFTER_LOCAL_IMPORTS = 0;
+
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
   }

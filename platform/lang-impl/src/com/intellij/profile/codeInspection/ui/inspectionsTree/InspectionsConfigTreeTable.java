@@ -44,6 +44,8 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.IconTableCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +83,24 @@ public class InspectionsConfigTreeTable extends TreeTable {
     super(model);
 
     final TableColumn severitiesColumn = getColumnModel().getColumn(SEVERITIES_COLUMN);
+    severitiesColumn.setCellRenderer(new IconTableCellRenderer<Icon>() {
+
+      @Override
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column) {
+        Component component = super.getTableCellRendererComponent(table, value, false, focus, row, column);
+        Color bg = selected ? ((focus || table.hasFocus()) ? table.getSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground())
+                            : table.getBackground();
+        component.setBackground(bg);
+        ((JLabel) component).setText("");
+        return component;
+      }
+
+      @Nullable
+      @Override
+      protected Icon getIcon(@NotNull Icon value, JTable table, int row) {
+        return value;
+      }
+    });
     severitiesColumn.setMaxWidth(20);
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);

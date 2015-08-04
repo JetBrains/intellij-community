@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class HighlightControlFlowUtil {
   private HighlightControlFlowUtil() { }
 
   @Nullable
-  public static HighlightInfo checkMissingReturnStatement(@Nullable PsiCodeBlock body, @Nullable PsiType returnType) {
+  static HighlightInfo checkMissingReturnStatement(@Nullable PsiCodeBlock body, @Nullable PsiType returnType) {
     if (body == null || returnType == null || PsiType.VOID.equals(returnType.getDeepComponentType())) {
       return null;
     }
@@ -90,7 +90,7 @@ public class HighlightControlFlowUtil {
     return ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, policy);
   }
 
-  public static HighlightInfo checkUnreachableStatement(@Nullable PsiCodeBlock codeBlock) {
+  static HighlightInfo checkUnreachableStatement(@Nullable PsiCodeBlock codeBlock) {
     if (codeBlock == null) return null;
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
@@ -172,7 +172,7 @@ public class HighlightControlFlowUtil {
     return false;
   }
 
-  public static boolean isRecursivelyCalledConstructor(@NotNull PsiMethod constructor) {
+  static boolean isRecursivelyCalledConstructor(@NotNull PsiMethod constructor) {
     final JavaHighlightUtil.ConstructorVisitorInfo info = new JavaHighlightUtil.ConstructorVisitorInfo();
     JavaHighlightUtil.visitConstructorChain(constructor, info);
     if (info.recursivelyCalledConstructor == null) return false;
@@ -188,7 +188,7 @@ public class HighlightControlFlowUtil {
   }
 
   private static class ParamWriteProcessor implements Processor<PsiReference> {
-    private volatile boolean myIsWriteRefFound = false;
+    private volatile boolean myIsWriteRefFound;
     @Override
     public boolean process(PsiReference reference) {
       final PsiElement element = reference.getElement();
@@ -199,7 +199,7 @@ public class HighlightControlFlowUtil {
       return true;
     }
 
-    public boolean isWriteRefFound() {
+    private boolean isWriteRefFound() {
       return myIsWriteRefFound;
     }
   }
@@ -230,7 +230,7 @@ public class HighlightControlFlowUtil {
 
 
   @Nullable
-  public static HighlightInfo checkFinalFieldInitialized(@NotNull PsiField field) {
+  static HighlightInfo checkFinalFieldInitialized(@NotNull PsiField field) {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
     if (isFieldInitializedAfterObjectConstruction(field)) return null;
 
@@ -341,9 +341,8 @@ public class HighlightControlFlowUtil {
               PsiMethod redirectedConstructor = redirectedConstructors.get(j);
               // variable must be initialized before its usage
               if (offset < redirectedConstructor.getTextRange().getStartOffset()) continue;
-              PsiCodeBlock redirBody = redirectedConstructor.getBody();
-              if (redirBody != null
-                  && variableDefinitelyAssignedIn(variable, redirBody)) {
+              PsiCodeBlock redirectedBody = redirectedConstructor.getBody();
+              if (redirectedBody != null && variableDefinitelyAssignedIn(variable, redirectedBody)) {
                 return null;
               }
             }
@@ -526,8 +525,8 @@ public class HighlightControlFlowUtil {
   }
 
   @NotNull
-  public static Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(@NotNull Map<PsiElement,Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
-                                                                                         @NotNull PsiElement codeBlock) {
+  private static Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(@NotNull Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
+                                                                                          @NotNull PsiElement codeBlock) {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
@@ -544,7 +543,7 @@ public class HighlightControlFlowUtil {
 
 
   @Nullable
-  public static HighlightInfo checkFinalVariableInitializedInLoop(@NotNull PsiReferenceExpression expression, @NotNull PsiElement resolved) {
+  static HighlightInfo checkFinalVariableInitializedInLoop(@NotNull PsiReferenceExpression expression, @NotNull PsiElement resolved) {
     if (ControlFlowUtil.isVariableAssignedInLoop(expression, resolved)) {
       String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
       final HighlightInfo highlightInfo =
@@ -558,7 +557,7 @@ public class HighlightControlFlowUtil {
 
 
   @Nullable
-  public static HighlightInfo checkCannotWriteToFinal(@NotNull PsiExpression expression, @NotNull PsiFile containingFile) {
+  static HighlightInfo checkCannotWriteToFinal(@NotNull PsiExpression expression, @NotNull PsiFile containingFile) {
     PsiReferenceExpression reference = null;
     boolean readBeforeWrite = false;
     if (expression instanceof PsiAssignmentExpression) {
@@ -682,10 +681,8 @@ public class HighlightControlFlowUtil {
         return null;
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
-        final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(context)
-          .descriptionAndTooltip("Variable used in lambda expression should be effectively final")
-          .create();
+        String text = JavaErrorMessages.message("lambda.variable.must.be.final");
+        HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text).create();
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
         return highlightInfo;
       }
@@ -774,7 +771,7 @@ public class HighlightControlFlowUtil {
 
 
   @Nullable
-  public static HighlightInfo checkInitializerCompleteNormally(@NotNull PsiClassInitializer initializer) {
+  static HighlightInfo checkInitializerCompleteNormally(@NotNull PsiClassInitializer initializer) {
     final PsiCodeBlock body = initializer.getBody();
     // unhandled exceptions already reported
     try {

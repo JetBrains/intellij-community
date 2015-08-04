@@ -16,7 +16,6 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
@@ -305,16 +304,8 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       if (myInitialized) {
         return;
       }
-      if (myConfigurationName != null && myConfigurationType != null) {
-        for (RunnerAndConfigurationSettings runConfiguration : RunManagerImpl.getInstanceImpl(myProject).getSortedConfigurations()) {
-          ConfigurationType type = runConfiguration.getType();
-          if (myConfigurationName.equals(runConfiguration.getName())
-              && type != null
-              && myConfigurationType.equals(type.getId())) {
-            setSettings(runConfiguration);
-            return;
-          }
-        }
+      if (myConfigurationType != null && myConfigurationName != null) {
+        setSettings(RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(myConfigurationType, myConfigurationName));
       }
     }
 
@@ -323,7 +314,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       myInitialized = true;
     }
 
-    RunnerAndConfigurationSettings getSettings() {
+    public RunnerAndConfigurationSettings getSettings() {
       init();
       return mySettings;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
         PsiSubstitutor substitutor = null;
 
         for (String name : methods.keySet()) {
-          if (inheritor.findMethodsByName(name, false).length == 0) continue;
+          if (inheritor.findMethodsByName(name, true).length == 0) continue;
 
           for (PsiMethod method : methods.get(name)) {
             if (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&

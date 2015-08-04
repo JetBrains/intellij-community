@@ -44,4 +44,14 @@ public class ConfigurationTypeUtil {
   public static boolean equals(@NotNull ConfigurationType type1, @NotNull ConfigurationType type2) {
     return type1.getId().equals(type2.getId());
   }
+
+  public static ConfigurationType findConfigurationType(String configurationId) {
+    ConfigurationType[] types = Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
+    for (ConfigurationType type : types) {
+      if (type.getId().equals(configurationId)) {
+        return type;
+      }
+    }
+    return null;
+  }
 }

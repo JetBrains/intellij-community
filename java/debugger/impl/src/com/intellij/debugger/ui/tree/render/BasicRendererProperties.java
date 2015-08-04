@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   }
 
   public void setEnabled(final boolean enabled) {
-    myEnabled = enabled? Boolean.TRUE : Boolean.FALSE;
+    myEnabled = enabled;
   }
 
   public String getClassName() {
@@ -79,7 +79,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
       }
       else if (ENABLED_OPTION.equals(optionName)) {
         final String val = option.getAttributeValue("value");
-        myEnabled = "true".equalsIgnoreCase(val)? Boolean.TRUE : Boolean.FALSE;
+        myEnabled = "true".equalsIgnoreCase(val);
       }
       else if (CLASSNAME_OPTION.equals(optionName)) {
         myClassName = option.getAttributeValue("value");

@@ -46,4 +46,13 @@ public class OverloadedVarargsMethodInspectionTest extends LightInspectionTestCa
            "  public void /*Overloaded variable argument method 'method()'*/method/**/(String... ss) {}" +
            "}");
   }
+
+  public void testOverridingMethod() {
+    doTest("interface Base {" +
+           "  void test(String... ss);" +
+           "}" +
+           "class Impl implements Base {" +
+           "  public void test(String... ss) {}" +
+           "}");
+  }
 }

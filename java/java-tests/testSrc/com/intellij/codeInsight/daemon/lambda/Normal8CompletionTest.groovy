@@ -26,7 +26,7 @@ public class Normal8CompletionTest extends LightFixtureCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST;
+    return JAVA_8;
   }
 
   @Override
@@ -109,5 +109,17 @@ class Test88 {
   }
 }
 """
+  }
+
+  public void testCollectorsToList() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('toList') })
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
+  public void testCollectorsToSet() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('toSet') })
+    checkResultByFile(getTestName(false) + "_after.java")
   }
 }

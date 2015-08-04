@@ -20,7 +20,10 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.util.*;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +34,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 2/21/13 2:40 PM
  */
-@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
+@Order(ExternalSystemConstants.BUILTIN_PROJECT_DATA_SERVICE_ORDER)
 public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, Project> {
   
   @NotNull
@@ -42,13 +45,16 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
 
   @Override
   public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
+    // root project can be marked as ignored
+    if(toImport.isEmpty()) return;
+
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
     DataNode<ProjectData> node = toImport.iterator().next();
     ProjectData projectData = node.getData();
 
-    if (!ExternalSystemApiUtil.isNewProjectConstruction() && !ExternalSystemUtil.isOneToOneMapping(project, node)) {
+    if (!ExternalSystemApiUtil.isOneToOneMapping(project, node)) {
       return;
     }
     

@@ -365,6 +365,11 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertNotNull(((PsiClassType)paramType).resolveGenerics().getElement());
   }
 
+  public void testFqnCorrectness() {
+    PsiClass aClass = getFile("$Weird$Name").getClasses()[0].getInnerClasses()[0];
+    assertEquals("pack.$Weird$Name.Inner", aClass.getQualifiedName());
+  }
+
   private PsiJavaFile getFile() {
     return getFile(getTestName(false));
   }

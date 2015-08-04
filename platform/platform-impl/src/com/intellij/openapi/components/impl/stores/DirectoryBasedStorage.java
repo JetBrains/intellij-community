@@ -15,22 +15,18 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.TObjectObjectProcedure;
@@ -41,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData> {
@@ -50,48 +45,18 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   @SuppressWarnings("deprecation")
   private final StateSplitter mySplitter;
 
-  public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
-                               @NotNull File dir,
-                               @SuppressWarnings("deprecation") @NotNull StateSplitter splitter,
-                               @NotNull Disposable parentDisposable,
-                               @Nullable final Listener listener) {
+  public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor, @NotNull File dir, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
     super(pathMacroSubstitutor);
     myDir = dir;
     mySplitter = splitter;
+  }
 
-    VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
-    if (virtualFileTracker != null && listener != null) {
-      virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(myDir.getPath())), new VirtualFileAdapter() {
-        @Override
-        public void contentsChanged(@NotNull VirtualFileEvent event) {
-          notifyIfNeed(event);
-        }
-
-        @Override
-        public void fileDeleted(@NotNull VirtualFileEvent event) {
-          if (event.getFile().equals(myVirtualFile)) {
-            myVirtualFile = null;
-          }
-          notifyIfNeed(event);
-        }
-
-        @Override
-        public void fileCreated(@NotNull VirtualFileEvent event) {
-          notifyIfNeed(event);
-        }
-
-        private void notifyIfNeed(@NotNull VirtualFileEvent event) {
-          // storage directory will be removed if the only child was removed
-          if (event.getFile().isDirectory() || DirectoryStorageData.isStorageFile(event.getFile())) {
-            listener.storageFileChanged(event, DirectoryBasedStorage.this);
-          }
-        }
-      }, false, parentDisposable);
-    }
+  public void setVirtualDir(@Nullable VirtualFile dir) {
+    myVirtualFile = dir;
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // todo reload only changed file, compute diff
     DirectoryStorageData oldData = myStorageData;
     DirectoryStorageData newData = loadData();
@@ -135,7 +100,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   }
 
   @NotNull
-  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) {
+  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) throws IOException {
     //noinspection ResultOfMethodCallIgnored
     ioDir.mkdirs();
     String parentFile = ioDir.getParent();
@@ -143,26 +108,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     if (parentVirtualFile == null) {
       throw new StateStorageException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
     }
-    return getFile(ioDir.getName(), parentVirtualFile, requestor);
-  }
-
-  @NotNull
-  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parentVirtualFile, @NotNull Object requestor) {
-    VirtualFile file = parentVirtualFile.findChild(fileName);
-    if (file != null) {
-      return file;
-    }
-
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
-    try {
-      return parentVirtualFile.createChildData(requestor, fileName);
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
-    }
-    finally {
-      token.finish();
-    }
+    return StorageUtil.getFile(ioDir.getName(), parentVirtualFile, requestor);
   }
 
   private static class MySaveSession extends SaveSessionBase {
@@ -262,15 +208,9 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
               storeElement.setAttribute(StorageData.NAME, componentName);
               storeElement.addContent(element);
 
-              BufferExposingByteArrayOutputStream byteOut;
-              VirtualFile file = getFile(fileName, dir, MySaveSession.this);
-              if (file.exists()) {
-                byteOut = StorageUtil.writeToBytes(storeElement, StorageUtil.loadFile(file).second);
-              }
-              else {
-                byteOut = StorageUtil.writeToBytes(storeElement, SystemProperties.getLineSeparator());
-              }
-              StorageUtil.writeFile(null, MySaveSession.this, file, byteOut, null);
+              VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);
+              // we don't write xml prolog due to historical reasons (and should not in any case)
+              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
             }
             catch (IOException e) {
               LOG.error(e);
@@ -285,7 +225,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
 
     private void deleteFiles(@NotNull VirtualFile dir) throws IOException {
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      AccessToken token = WriteAction.start();
       try {
         for (VirtualFile file : dir.getChildren()) {
           if (removedFileNames.contains(file.getName())) {

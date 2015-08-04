@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.CheckBoxList;
@@ -56,9 +57,8 @@ public class CheckBoxListModelEditor<T> {
         if (item != null) {
           T newItem = consumer.fun(item);
           if (newItem != null) {
-            list.updateItem(item, newItem);
+            list.updateItem(item, newItem, StringUtil.notNullize(toNameConverter.fun(newItem)));
           }
-          list.repaint();
           list.requestFocus();
         }
       }

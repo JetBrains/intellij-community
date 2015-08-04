@@ -20,7 +20,6 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,15 +67,31 @@ public abstract class LookupArranger {
   }
 
   public void prefixChanged(Lookup lookup) {
+    myAdditionalPrefix = ((LookupImpl)lookup).getAdditionalPrefix();
+    rebuildItemCache(lookup);
+  }
+
+  private void rebuildItemCache(Lookup lookup) {
     myMatchingItems.clear();
     myExactPrefixItems.clear();
     myInexactPrefixItems.clear();
 
-    myAdditionalPrefix = ((LookupImpl)lookup).getAdditionalPrefix();
-
     for (LookupElement item : myItems) {
       updateCache(lookup, item);
     }
+  }
+
+  protected List<LookupElement> retainItems(final Set<LookupElement> retained, Lookup lookup) {
+    List<LookupElement> filtered = ContainerUtil.newArrayList();
+    List<LookupElement> removed = ContainerUtil.newArrayList();
+    for (LookupElement item : myItems) {
+      (retained.contains(item) ? filtered : removed).add(item);
+    }
+    myItems.clear();
+    myItems.addAll(filtered);
+
+    rebuildItemCache(lookup);
+    return removed;
   }
 
   public abstract Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction);
@@ -104,12 +119,7 @@ public abstract class LookupArranger {
   }
 
   protected List<LookupElement> getMatchingItems() {
-    return ContainerUtil.filter(myMatchingItems, new Condition<LookupElement>() {
-      @Override
-      public boolean value(LookupElement element) {
-        return element.isValid();
-      }
-    });
+    return myMatchingItems;
   }
 
   public Map<LookupElement,StringBuilder> getRelevanceStrings() {

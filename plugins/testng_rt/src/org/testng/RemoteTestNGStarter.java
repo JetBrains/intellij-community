@@ -28,10 +28,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 public class RemoteTestNGStarter {
   public static boolean SM_RUNNER = System.getProperty("idea.testng.sm_runner") != null;
@@ -39,13 +36,21 @@ public class RemoteTestNGStarter {
   public static void main(String[] args) throws Exception {
     int i = 0;
     String param = null;
+    String commandFileName = null;
+    String workingDirs = null;
     Vector resultArgs = new Vector();
     for (; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith("@name")) {
         param = arg.substring(5);
         continue;
-      } else if (arg.startsWith(SOCKET)) {
+      } else if (arg.startsWith("@w@")) {
+        workingDirs = arg.substring(3);
+        continue;
+      } else if (arg.startsWith("@@@")) {
+        commandFileName = arg.substring(3);
+        continue;
+      }  else if (arg.startsWith(SOCKET)) {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
@@ -72,6 +77,7 @@ public class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
+    final List newArgs = new ArrayList();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {
@@ -91,14 +97,23 @@ public class RemoteTestNGStarter {
           return;
         }
         if (line.equals("end")) break;
-        resultArgs.add(line);
+        newArgs.add(line);
       }
     }
     finally {
       reader.close();
     }
 
+    resultArgs.addAll(newArgs);
+    
     if (SM_RUNNER) {
+      if (commandFileName != null) {
+        if (workingDirs != null && new File(workingDirs).length() > 0) {
+          System.exit(new TestNGForkedSplitter(workingDirs, System.out, System.err, newArgs)
+                        .startSplitting(args, param, commandFileName));
+          return;
+        }
+      }
       final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
       CommandLineArgs cla = new CommandLineArgs();
       RemoteArgs ra = new RemoteArgs();

@@ -20,8 +20,17 @@ import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A rule specifying how specific Usage View elements should be grouped. 
+ * 
+ * During indexing, only instances that implement {@link com.intellij.openapi.project.DumbAware} are executed. 
+ */
 public interface UsageGroupingRule {
   UsageGroupingRule[] EMPTY_ARRAY = new UsageGroupingRule[0];
+
+  /**
+   * @return a group a specific usage should be placed into, or null, if this rule doesn't apply to this kind of usages.
+   */
   @Nullable
   UsageGroup groupUsage(@NotNull Usage usage);
 }

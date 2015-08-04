@@ -18,7 +18,6 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.jps.TimingLog;
@@ -97,9 +96,5 @@ public abstract class JpsLoaderBase {
       catch (InterruptedException ignored) { }
     }
     return JDOMUtil.loadDocument(file).getRootElement();
-  }
-
-  protected static boolean isXmlFile(File file) {
-    return file.isFile() && FileUtilRt.extensionEquals(file.getName(), "xml");
   }
 }

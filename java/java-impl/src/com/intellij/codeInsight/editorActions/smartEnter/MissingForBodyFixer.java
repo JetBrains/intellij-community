@@ -42,12 +42,15 @@ public class MissingForBodyFixer implements Fixer {
     if (body != null && startLine(doc, body) == startLine(doc, forStatement)) return;
 
     PsiElement eltToInsertAfter = forStatement.getRParenth();
-    String text = "{}";
+    String braces = "{\n}";
+    String text = braces;
     if (eltToInsertAfter == null) {
       eltToInsertAfter = forStatement;
-      text = "){}";
+      text = ")" + text;
     }
-    doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
+    int offset = eltToInsertAfter.getTextRange().getEndOffset();
+    doc.insertString(offset, text);
+    editor.getCaretModel().moveToOffset(offset + text.length() - braces.length());
   }
 
   @Nullable

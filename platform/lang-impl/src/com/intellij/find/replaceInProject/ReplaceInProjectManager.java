@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,15 +254,15 @@ public class ReplaceInProjectManager {
       final PsiFile psiFile = elt.getContainingFile();
       if (!psiFile.isWritable()) continue;
 
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+
       Runnable selectOnEditorRunnable = new Runnable() {
         @Override
         public void run() {
-          final VirtualFile virtualFile = psiFile.getVirtualFile();
-
           if (virtualFile != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
             @Override
             public Boolean compute() {
-              return virtualFile.isValid() ? Boolean.TRUE : Boolean.FALSE;
+              return virtualFile.isValid();
             }
           }).booleanValue()) {
 
@@ -274,9 +274,15 @@ public class ReplaceInProjectManager {
         }
       };
 
+      String path = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          return virtualFile != null ? virtualFile.getPath() : null;
+        }
+      });
       CommandProcessor.getInstance()
         .executeCommand(myProject, selectOnEditorRunnable, FindBundle.message("find.replace.select.on.editor.command"), null);
-      String title = FindBundle.message("find.replace.found.usage.title", i + 1, usages.length);
+      String title = FindBundle.message("find.replace.found.usage.title", i + 1, usages.length, path);
 
       int result;
       try {
@@ -479,7 +485,6 @@ public class ReplaceInProjectManager {
     return result;
   }
 
-
   private boolean getStringToReplace(int textOffset,
                                      int textEndOffset,
                                      Document document, FindModel findModel, Ref<String> stringToReplace)
@@ -494,7 +499,9 @@ public class ReplaceInProjectManager {
     final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel, file != null ? file.getVirtualFile() : null);
-    if (!findResult.isStringFound()) {
+    if (!findResult.isStringFound() ||
+        // find result should be in needed range
+        !(findResult.getStartOffset() >= textOffset && findResult.getEndOffset() <= textEndOffset) ) {
       return false;
     }
 

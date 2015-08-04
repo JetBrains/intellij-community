@@ -323,7 +323,9 @@
     <action id="ParameterInfo">
       <keyboard-shortcut first-keystroke="shift meta P" />
     </action>
-    <action id="ExpressionTypeInfo"/>
+    <action id="ExpressionTypeInfo">
+      <keyboard-shortcut first-keystroke="control alt P" />
+    </action>
     <action id="PreviousEditorTab" />
     <action id="PreviousProjectWindow" />
     <action id="Print">
@@ -338,7 +340,6 @@
       <keyboard-shortcut first-keystroke="control F1"/>
       <keyboard-shortcut first-keystroke="alt SPACE"/>
     </action>
-    <action id="RemoveFromFavorites" />
     <action id="RenameElement">
       <keyboard-shortcut first-keystroke="control meta E" />
       <keyboard-shortcut first-keystroke="shift F6" />

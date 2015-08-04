@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.GutterDraggableObject;
-import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -56,8 +54,9 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>> implements XLineBreakpoint<P> {
-  @Nullable private RangeHighlighterEx myHighlighter;
+public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
+  implements XLineBreakpoint<P> {
+  @Nullable private RangeHighlighter myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
   private boolean myDisposed;
@@ -89,7 +88,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
-    RangeHighlighterEx highlighter = myHighlighter;
+    RangeHighlighter highlighter = myHighlighter;
     if (highlighter != null &&
         (!highlighter.isValid()
          || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)
@@ -104,7 +103,18 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     MarkupModelEx markupModel;
     if (highlighter == null) {
       markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-      highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
+      TextRange range = myType.getHighlightRange(this);
+      if (range != null && !range.isEmpty()) {
+        range = range.intersection(DocumentUtil.getLineTextRange(document, getLine()));
+        if (range != null && !range.isEmpty()) {
+          highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                        DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                                                        HighlighterTargetArea.EXACT_RANGE);
+        }
+      }
+      if (highlighter == null) {
+        highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
+      }
       if (highlighter == null) {
         return;
       }
@@ -124,7 +134,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), false);
       if (markupModel != null) {
         // renderersChanged false - we don't change gutter size
-        markupModel.fireAttributesChanged(highlighter, false);
+        markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false);
       }
     }
   }
@@ -230,7 +240,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   private boolean canMoveTo(int line, VirtualFile file) {
-    return file != null && myType.canPutAt(file, line, getProject()) && getBreakpointManager().findBreakpointAtLine(myType, file, line) == null;
+    return file != null &&
+           myType.canPutAt(file, line, getProject()) &&
+           getBreakpointManager().findBreakpointAtLine(myType, file, line) == null;
   }
 
   public void updatePosition() {

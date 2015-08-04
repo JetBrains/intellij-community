@@ -894,9 +894,15 @@ public class Switcher extends AnAction implements DumbAware {
 
     void navigate(final boolean openInNewWindow) {
       final Object[] values = getSelectedList().getSelectedValues();
-      myPopup.closeOk(null);
+      myPopup.cancel(null);
       if (values.length > 0 && values[0] instanceof ToolWindow) {
-        ((ToolWindow)values[0]).activate(null, true, true);
+        final ToolWindow toolWindow = (ToolWindow)values[0];
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+          @Override
+          public void run() {
+            toolWindow.activate(null, true, true);
+          }
+        });
       }
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {

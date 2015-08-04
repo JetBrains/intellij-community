@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -25,7 +26,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFXRenameTest extends JavaFXDaemonAnalyzerTestCase {
+public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();

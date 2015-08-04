@@ -1,7 +1,7 @@
 import traceback
 
 from _prof_imports import TSerialization
-from _prof_imports import TJSONProtocol
+from _prof_imports import TBinaryProtocol
 from _prof_imports import ProfilerRequest
 from _prof_imports import IS_PY3K
 
@@ -15,7 +15,7 @@ def send_message(sock, message):
         to a socket, prepended by its length packed in 4
         bytes (big endian).
     """
-    s = TSerialization.serialize(message, TJSONProtocol.TJSONProtocolFactory())
+    s = TSerialization.serialize(message, TBinaryProtocol.TBinaryProtocolFactory())
     packed_len = struct.pack('>L', len(s))
     sock.sendall(packed_len + s)
 
@@ -29,7 +29,7 @@ def get_message(sock, msgtype):
     msg_buf = socket_read_n(sock, msg_len)
 
     msg = msgtype()
-    TSerialization.deserialize(msg, msg_buf, TJSONProtocol.TJSONProtocolFactory())
+    TSerialization.deserialize(msg, msg_buf, TBinaryProtocol.TBinaryProtocolFactory())
 
     return msg
 

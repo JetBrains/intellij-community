@@ -53,7 +53,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     super(false);
     setTitle("Manage Project Templates");
     final ProjectTemplate[] templates =
-      new ArchivedTemplatesFactory().createTemplates(ProjectTemplatesFactory.CUSTOM_GROUP, new WizardContext(null));
+      new ArchivedTemplatesFactory().createTemplates(ProjectTemplatesFactory.CUSTOM_GROUP, new WizardContext(null, getDisposable()));
     myTemplatesList = new JBList(new CollectionListModel<ProjectTemplate>(Arrays.asList(templates)) {
       @Override
       public void remove(int index) {

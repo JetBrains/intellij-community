@@ -21,7 +21,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -77,8 +76,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
-
-  private static final EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
 
   private EditorWindow myCurrentWindow;
   private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
@@ -161,8 +158,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       super.paintComponent(gg);
       g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
       g.drawLine(0, 0, getWidth(), 0);
-
-      ourPainter.paintEmptyText(this, g);
     }
   }
 
@@ -723,7 +718,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     // Collector for windows in tree ordering:
     class Inner{
-      private final void collect(final JPanel panel){
+      private void collect(final JPanel panel){
         final Component comp = panel.getComponent(0);
         if (comp instanceof Splitter) {
           final Splitter splitter = (Splitter)comp;

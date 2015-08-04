@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.StringFactory;
@@ -859,9 +858,10 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars) {
-    if (chars instanceof String) return chars.hashCode();
-    if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
-    if (chars instanceof CharArrayCharSequence) return chars.hashCode();
+    if (chars instanceof String || chars instanceof CharSequenceWithStringHash) {
+      // we know for sure these classes have conformant (and maybe faster) hashCode()
+      return chars.hashCode();
+    }
 
     return stringHashCode(chars, 0, chars.length());
   }
@@ -962,6 +962,15 @@ public class StringUtil extends StringUtilRt {
   public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
     if (s.endsWith(suffix)) {
       return s.substring(0, s.length() - suffix.length());
+    }
+    return s;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimEnd(@NotNull String s, char suffix) {
+    if (endsWithChar(s, suffix)) {
+      return s.substring(0, s.length() - 1);
     }
     return s;
   }
@@ -1925,6 +1934,14 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, final int end) {
     for (int i = start; i < end; i++) {
+      if (containsChar(chars, s.charAt(i))) return i;
+    }
+    return -1;
+  }
+
+  @Contract(pure = true)
+  public static int lastIndexOfAny(@NotNull CharSequence s, @NotNull final String chars) {
+    for (int i = s.length() - 1; i >= 0; i--) {
       if (containsChar(chars, s.charAt(i))) return i;
     }
     return -1;

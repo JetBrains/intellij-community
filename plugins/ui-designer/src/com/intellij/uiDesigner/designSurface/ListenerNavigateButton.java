@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,11 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       LOG.error(e);
       return null;
     }
-    final LocalSearchScope scope = new LocalSearchScope(boundField.getContainingFile());
+    PsiFile boundClassFile = boundField.getContainingFile();
+    if (boundClassFile == null) {
+      return null;
+    }
+    final LocalSearchScope scope = new LocalSearchScope(boundClassFile);
     ReferencesSearch.search(boundField, scope).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference ref) {
         final PsiElement element = ref.getElement();

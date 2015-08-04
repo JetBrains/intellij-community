@@ -41,7 +41,6 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
-    data.setIcon(InteractiveLearningIcons.Task);
     String valueName = myValue.getName();
     StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(myProject);
     Course course = studyTaskManager.getCourse();
@@ -52,12 +51,12 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       data.clearText();
       data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
       data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      return;
     }
-    if (valueName.contains(EduNames.TASK)) {
+    else if (valueName.contains(EduNames.TASK)) {
       TaskFile file = null;
       for (PsiElement child : myValue.getChildren()) {
-        VirtualFile virtualFile = child.getContainingFile().getVirtualFile();
+        VirtualFile virtualFile = child instanceof PsiDirectory ? ((PsiDirectory)child).getVirtualFile() :
+                                  child.getContainingFile().getVirtualFile();
         file = StudyUtils.getTaskFile(myProject, virtualFile);
         if (file != null) {
           break;
@@ -68,18 +67,17 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         setStudyAttributes(task, data, task.getName());
       }
     }
-    if (valueName.contains(EduNames.LESSON)) {
+    else if (valueName.contains(EduNames.LESSON)) {
       int lessonIndex = Integer.parseInt(valueName.substring(EduNames.LESSON.length())) - 1;
       Lesson lesson = course.getLessons().get(lessonIndex);
       setStudyAttributes(lesson, data, lesson.getName());
+      data.setPresentableText(valueName);
     }
-
-    if (valueName.contains(EduNames.SANDBOX_DIR)) {
+    else if (valueName.contains(EduNames.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {
         if (!myValue.getParent().getName().contains(EduNames.SANDBOX_DIR)) {
           data.setPresentableText(EduNames.SANDBOX_DIR);
           data.setIcon(InteractiveLearningIcons.Sandbox);
-          return;
         }
       }
     }

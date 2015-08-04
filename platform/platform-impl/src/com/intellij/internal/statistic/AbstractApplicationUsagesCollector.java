@@ -21,6 +21,7 @@ import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersiste
 import com.intellij.internal.statistic.persistence.CollectedUsages;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.THashSet;
@@ -36,6 +37,9 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
   public void persistProjectUsages(@NotNull Project project) {
     try {
       persistProjectUsages(project, new CollectedUsages(getProjectUsages(project), System.currentTimeMillis()));
+    }
+    catch (ProcessCanceledException e) {
+      LOG.info(e);
     }
     catch (CollectUsagesException e) {
       LOG.info(e);

@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -541,28 +542,43 @@ public class TemplateState implements Disposable {
       myEditor.getSelectionModel().setSelection(start, end);
     }
 
-    Expression expressionNode = getCurrentExpression();
-    final List<TemplateExpressionLookupElement> lookupItems = getCurrentExpressionLookupItems();
-    final PsiFile psiFile = getPsiFile();
-    if (!lookupItems.isEmpty()) {
-      if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
-        insertSingleItem(lookupItems);
-      }
-      else {
-        for (LookupElement lookupItem : lookupItems) {
-          assert lookupItem != null : expressionNode;
+    DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        Expression expressionNode = getCurrentExpression();
+        List<TemplateExpressionLookupElement> lookupItems;
+        try {
+          lookupItems = getCurrentExpressionLookupItems();
         }
+        catch (IndexNotReadyException e) {
+          lookupItems = Collections.emptyList();
+        }
+        final PsiFile psiFile = getPsiFile();
+        if (!lookupItems.isEmpty()) {
+          if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
+            insertSingleItem(lookupItems);
+          }
+          else {
+            for (LookupElement lookupItem : lookupItems) {
+              assert lookupItem != null : expressionNode;
+            }
 
-        runLookup(lookupItems, expressionNode.getAdvertisingText());
+            runLookup(lookupItems, expressionNode.getAdvertisingText());
+          }
+        }
+        else {
+          try {
+            Result result = expressionNode.calculateResult(getCurrentExpressionContext());
+            if (result != null) {
+              result.handleFocused(psiFile, myDocument, mySegments.getSegmentStart(currentSegmentNumber),
+                                   mySegments.getSegmentEnd(currentSegmentNumber));
+            }
+          }
+          catch (IndexNotReadyException ignore) {
+          }
+        }
       }
-    }
-    else {
-      Result result = expressionNode.calculateResult(getCurrentExpressionContext());
-      if (result != null) {
-        result.handleFocused(psiFile, myDocument, mySegments.getSegmentStart(currentSegmentNumber),
-                             mySegments.getSegmentEnd(currentSegmentNumber));
-      }
-    }
+    });
     focusCurrentHighlighter(true);
   }
 

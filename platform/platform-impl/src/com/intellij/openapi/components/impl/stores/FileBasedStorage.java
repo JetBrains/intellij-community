@@ -18,17 +18,15 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
@@ -43,7 +41,7 @@ import java.nio.CharBuffer;
 import java.util.Set;
 
 public class FileBasedStorage extends XmlElementStorage {
-  private final File myFile;
+  private File myFile;
   private volatile VirtualFile myCachedVirtualFile;
   private LineSeparator myLineSeparator;
 
@@ -52,49 +50,26 @@ public class FileBasedStorage extends XmlElementStorage {
                           @Nullable RoamingType roamingType,
                           @Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           @NotNull String rootElementName,
-                          @NotNull Disposable parentDisposable,
-                          @Nullable final Listener listener,
                           @Nullable StreamProvider streamProvider) {
     super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
 
+    if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(file.getPath(), '$')) {
+      throw new AssertionError("It seems like some macros were not expanded for path: " + file);
+    }
+
     myFile = file;
+  }
 
-    if (listener != null) {
-      VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
-      if (virtualFileTracker != null) {
-        virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(getFilePath()), new VirtualFileAdapter() {
-          @Override
-          public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-            myCachedVirtualFile = null;
-          }
-
-          @Override
-          public void fileDeleted(@NotNull VirtualFileEvent event) {
-            myCachedVirtualFile = null;
-            listener.storageFileChanged(event, FileBasedStorage.this);
-          }
-
-          @Override
-          public void fileCreated(@NotNull VirtualFileEvent event) {
-            myCachedVirtualFile = event.getFile();
-            listener.storageFileChanged(event, FileBasedStorage.this);
-          }
-
-          @Override
-          public void contentsChanged(@NotNull final VirtualFileEvent event) {
-            listener.storageFileChanged(event, FileBasedStorage.this);
-          }
-        }, false, parentDisposable);
-      }
+  // we never set io file to null
+  public void setFile(@Nullable VirtualFile file, @Nullable File ioFileIfChanged) {
+    myCachedVirtualFile = file;
+    if (ioFileIfChanged != null) {
+      myFile = ioFileIfChanged;
     }
   }
 
   protected boolean isUseXmlProlog() {
     return false;
-  }
-
-  protected boolean isUseLfLineSeparatorByDefault() {
-    return isUseXmlProlog();
   }
 
   @NotNull
@@ -103,50 +78,34 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(storageData);
   }
 
-  public void forceSave() throws IOException {
-    XmlElementStorageSaveSession externalizationSession = startExternalization();
-    if (externalizationSession != null) {
-      externalizationSession.forceSave();
-    }
-  }
-
-  private class FileSaveSession extends XmlElementStorageSaveSession {
+  protected class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);
     }
 
     @Override
     protected void doSave(@Nullable Element element) throws IOException {
-      if (myLineSeparator == null) {
-        myLineSeparator = isUseLfLineSeparatorByDefault() ? LineSeparator.LF : LineSeparator.getSystemLineSeparator();
-      }
-
-      BufferExposingByteArrayOutputStream content = element == null ? null : StorageUtil.writeToBytes(element, myLineSeparator.getSeparatorString());
-      if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(myFile.getPath(), '$')) {
-        throw new IOException("It seems like some macros were not expanded for path: " + myFile);
-      }
-
-      try {
-        if (myStreamProvider != null && myStreamProvider.isEnabled()) {
-          // stream provider always use LF separator
-          saveForProvider(myLineSeparator == LineSeparator.LF ? content : null, element);
-        }
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-
       if (LOG.isDebugEnabled() && myFileSpec.equals(StoragePathMacros.MODULE_FILE)) {
         LOG.debug("doSave " + getFilePath());
       }
 
-      VirtualFile virtualFile = getVirtualFile();
-      if (content == null) {
-        StorageUtil.deleteFile(myFile, this, virtualFile);
-        myCachedVirtualFile = null;
+      if (myStreamProvider != null && myStreamProvider.getEnabled()) {
+        // stream provider always use LF separator
+        saveForProvider(element == null ? null : StorageUtil.writeToBytes(element, LineSeparator.LF.getSeparatorString()), element);
       }
       else {
-        myCachedVirtualFile = StorageUtil.writeFile(myFile, this, virtualFile, content, isUseXmlProlog() ? myLineSeparator : null);
+        if (myLineSeparator == null) {
+          myLineSeparator = isUseXmlProlog() ? LineSeparator.LF : LineSeparator.getSystemLineSeparator();
+        }
+
+        VirtualFile virtualFile = getVirtualFile();
+        if (element == null) {
+          StorageUtil.deleteFile(myFile, this, virtualFile);
+          myCachedVirtualFile = null;
+        }
+        else {
+          myCachedVirtualFile = StorageUtil.writeFile(myFile, this, virtualFile, element, isUseXmlProlog() ? myLineSeparator : LineSeparator.LF, isUseXmlProlog());
+        }
       }
     }
   }
@@ -187,7 +146,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
 
       CharBuffer charBuffer = CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(file.contentsToByteArray()));
-      myLineSeparator = StorageUtil.detectLineSeparators(charBuffer, isUseLfLineSeparatorByDefault() ? null : LineSeparator.LF);
+      myLineSeparator = StorageUtil.detectLineSeparators(charBuffer, isUseXmlProlog() ? null : LineSeparator.LF);
       return JDOMUtil.loadDocument(charBuffer).detachRootElement();
     }
     catch (JDOMException e) {

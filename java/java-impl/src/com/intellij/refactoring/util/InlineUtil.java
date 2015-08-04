@@ -397,7 +397,7 @@ public class InlineUtil {
         }
       }
     }
-    return ref.replace(initializer);
+    return ref != initializer ? ref.replace(initializer) : initializer;
   }
 
   public enum TailCallType {

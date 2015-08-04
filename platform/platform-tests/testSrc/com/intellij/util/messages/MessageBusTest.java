@@ -26,6 +26,8 @@ import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MessageBusTest extends TestCase {
   private MessageBus myBus;
@@ -225,7 +227,44 @@ public class MessageBusTest extends TestCase {
       }
     });
   }
-  
+
+  public void testStress() throws Throwable {
+    final int threadsNumber = 10;
+    final int iterationsNumber = 100;
+    final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
+    final CountDownLatch latch = new CountDownLatch(threadsNumber);
+    final MessageBus parentBus = MessageBusFactory.newMessageBus("parent");
+    for (int i = 0; i < threadsNumber; i++) {
+      new Thread(String.valueOf(i)) {
+        @Override
+        public void run() {
+          int remains = iterationsNumber;
+          try {
+            while (remains-- > 0) {
+              //noinspection ThrowableResultOfMethodCallIgnored
+              if (exception.get() != null) {
+                break;
+              }
+              new MessageBusImpl(String.format("child-%s-%s", Thread.currentThread().getName(), remains), parentBus);
+            }
+          }
+          catch (Throwable e) {
+            exception.set(e);
+          }
+          finally {
+            latch.countDown();
+          }
+        }
+      }.start();
+    }
+    latch.await();
+    final Throwable e = exception.get();
+    if (e != null) {
+      throw e;
+    }
+  }
+
+
   private void assertEvents(String... expected) {
     String joinExpected = StringUtil.join(expected, "\n");
     String joinActual = StringUtil.join(myLog, "\n");

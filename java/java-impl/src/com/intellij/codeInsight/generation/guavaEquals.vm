@@ -15,12 +15,12 @@ Object $paramName){
      #set($i = $i + 1)
      #if ($field.primitive)
          #if ($field.double || $field.float)
-           #addDoubleFieldComparisonCondition($field) ##
+           #addDoubleFieldComparisonConditionDirect($field) ##
          #else
-           #addPrimitiveFieldComparisonCondition($field) ##
+           #addPrimitiveFieldComparisonConditionDirect($field) ##
          #end
       #elseif ($field.enum)
-         #addPrimitiveFieldComparisonCondition($field) ##
+         #addPrimitiveFieldComparisonConditionDirect($field) ##
       #else
 com.google.common.base.Objects.equal($field.accessor, ${classInstanceName}.$field.accessor)##
      #end

@@ -37,7 +37,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
   public final void expandForChooseExpression(@NotNull PsiElement expr, @NotNull Editor editor) {
     Project project = expr.getProject();
     Document document = editor.getDocument();
-    PsiElement elementForRemoving = shouldRemoveParent() ? expr.getParent() : expr;
+    PsiElement elementForRemoving = getElementToRemove(expr);
     document.deleteString(elementForRemoving.getTextRange().getStartOffset(), elementForRemoving.getTextRange().getEndOffset());
     TemplateManager manager = TemplateManager.getInstance(project);
 
@@ -78,7 +78,16 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
     return true;
   }
 
+  /** @deprecated use {@link StringBasedPostfixTemplate#getElementToRemove(PsiElement)} (idea 16 to remove) */
   protected boolean shouldRemoveParent() {
     return true;
+  }
+
+  protected PsiElement getElementToRemove(PsiElement expr) {
+    if (shouldRemoveParent()) {
+      return expr.getParent();
+    } else {
+      return expr;
+    }
   }
 }

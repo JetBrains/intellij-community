@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -216,9 +219,8 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Nullable
-  public PsiElement resolveImportSource() {
-    final List<PsiElement> candidates = resolveImportSourceCandidates();
-    return candidates.size() > 0 ? candidates.get(0) : null;
+  public PsiFileSystemItem resolveImportSource() {
+    return as(ContainerUtil.getFirstItem(resolveImportSourceCandidates()), PsiFileSystemItem.class);
   }
 
   @NotNull

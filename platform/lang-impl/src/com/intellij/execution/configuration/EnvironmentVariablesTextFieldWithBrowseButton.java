@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,7 @@ import java.util.List;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
-  // immutable map instance with reliable user-specified iteration order
-  private Map<String, String> myEnvs = Collections.emptyMap();
-  private boolean myPassParentEnvs;
+  private EnvironmentVariablesData myData = EnvironmentVariablesData.DEFAULT;
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EnvironmentVariablesTextFieldWithBrowseButton() {
@@ -60,21 +58,33 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   /**
-   * @return unmodifiable Map instance, use {@link #setEnvs(java.util.Map)} to update env vars
+   * @return unmodifiable Map instance
    */
   @NotNull
   public Map<String, String> getEnvs() {
-    return myEnvs;
+    return myData.getEnvs();
   }
 
   /**
-   * @param envs Map instance with reliable user-specified iteration order,
-   *             like {@link java.util.LinkedHashMap} or {@link com.google.common.collect.ImmutableMap}
+   * @param envs Map instance containing user-defined environment variables
+   *             (iteration order should be reliable user-specified, like {@link LinkedHashMap} or {@link ImmutableMap})
    */
   public void setEnvs(@NotNull Map<String, String> envs) {
-    myEnvs = ImmutableMap.copyOf(envs);
-    String envsStr = stringifyEnvs(myEnvs);
-    setText(envsStr);
+    setData(EnvironmentVariablesData.create(envs, myData.isPassParentEnvs()));
+  }
+
+  @NotNull
+  public EnvironmentVariablesData getData() {
+    return myData;
+  }
+
+  public void setData(@NotNull EnvironmentVariablesData data) {
+    EnvironmentVariablesData oldData = myData;
+    myData = data;
+    setText(stringifyEnvs(data.getEnvs()));
+    if (oldData.isPassParentEnvs() != data.isPassParentEnvs()) {
+      fireStateChanged();
+    }
   }
 
   @NotNull
@@ -93,14 +103,11 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   public boolean isPassParentEnvs() {
-    return myPassParentEnvs;
+    return myData.isPassParentEnvs();
   }
 
   public void setPassParentEnvs(boolean passParentEnvs) {
-    if (myPassParentEnvs != passParentEnvs) {
-      myPassParentEnvs = passParentEnvs;
-      fireStateChanged();
-    }
+    setData(EnvironmentVariablesData.create(myData.getEnvs(), passParentEnvs));
   }
 
   @Override
@@ -152,7 +159,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     protected MyEnvironmentVariablesDialog() {
       super(EnvironmentVariablesTextFieldWithBrowseButton.this, true);
       myEnvVariablesTable = new EnvVariablesTable();
-      myEnvVariablesTable.setValues(convertToVariables(myEnvs, false));
+      myEnvVariablesTable.setValues(convertToVariables(myData.getEnvs(), false));
 
       myUseDefaultCb.setSelected(isPassParentEnvs());
       myWholePanel.add(myEnvVariablesTable.getComponent(), BorderLayout.CENTER);

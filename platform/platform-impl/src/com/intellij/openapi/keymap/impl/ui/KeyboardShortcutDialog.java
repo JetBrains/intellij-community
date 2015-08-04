@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -214,7 +215,8 @@ public class KeyboardShortcutDialog extends DialogWrapper {
       myConflictInfoArea.setForeground(JBColor.RED);
       if (loaded) {
         myConflictInfoArea.setText(KeyMapBundle.message("assigned.to.info.message", buffer.toString()));
-      } else {
+      }
+      else {
         myConflictInfoArea.setText("Assigned to " + buffer.toString() + " which is now not loaded but may be loaded later");
       }
     }
@@ -224,13 +226,10 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     mySecondStrokePanel.setEnabled(myEnableSecondKeystroke.isSelected());
   }
 
+  @Nullable
   public KeyboardShortcut getKeyboardShortcut() {
     KeyStroke firstStroke = myFirstStrokePanel.getKeyStroke();
-    if (firstStroke == null) {
-      return null;
-    }
-    KeyStroke secondStroke = myEnableSecondKeystroke.isSelected() ? mySecondStrokePanel.getKeyStroke() : null;
-    return new KeyboardShortcut(firstStroke, secondStroke);
+    return firstStroke == null ? null : new KeyboardShortcut(firstStroke, myEnableSecondKeystroke.isSelected() ? mySecondStrokePanel.getKeyStroke() : null);
   }
 
   static String getTextByKeyStroke(KeyStroke keyStroke) {

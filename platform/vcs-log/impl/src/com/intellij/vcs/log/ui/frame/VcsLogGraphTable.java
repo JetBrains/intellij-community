@@ -510,6 +510,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection) {
       Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getGraphTableModel(), newVisibleGraph);
       if (!toSelectAndScroll.first.isEmpty()) {
+        myTable.getSelectionModel().setValueIsAdjusting(true);
         toSelectAndScroll.first.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int row) {
@@ -517,7 +518,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
             return true;
           }
         });
-
+        myTable.getSelectionModel().setValueIsAdjusting(false);
       }
       if (scrollToSelection) {
         if (myScrollToTop) {

@@ -104,7 +104,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       if (!multiline) {
         initStringToFindNoMultiline(this, getStringToFind());
       }
-
       isMultiline = multiline;
       notifyObservers();
     }
@@ -140,6 +139,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param model the model to copy settings from.
    */
   public void copyFrom(FindModel model) {
+    boolean changed = !equals(model);
     myStringToFind = model.myStringToFind;
     myStringToReplace = model.myStringToReplace;
     isReplaceState = model.isReplaceState;
@@ -165,10 +165,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     customScope = model.customScope;
     isCustomScope = model.isCustomScope;
     isFindAll = model.isFindAll;
-
     searchContext = model.searchContext;
-
     isMultiline = model.isMultiline;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   @Override

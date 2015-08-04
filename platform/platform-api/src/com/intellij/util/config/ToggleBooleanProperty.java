@@ -43,6 +43,10 @@ public class ToggleBooleanProperty extends ToggleAction {
     return myProperties;
   }
 
+  protected AbstractProperty<Boolean> getProperty() {
+    return myProperty;
+  }
+
   public static abstract class Disablable extends ToggleBooleanProperty {
     public Disablable(String text, String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
       super(text, description, icon, properties, property);

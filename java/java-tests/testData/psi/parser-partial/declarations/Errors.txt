@@ -11,7 +11,7 @@ PsiJavaFile:Errors.java
       PsiJavaToken:LT('<')
       PsiTypeParameter:error
         PsiIdentifier:error('error')
-        PsiElement(EXTENDS_BOUND_LIST)
+        PsiReferenceList
           <empty list>
       PsiErrorElement:'>' expected.
         <empty list>

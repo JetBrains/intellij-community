@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,60 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package com.intellij.codeInsight
 
-import com.intellij.JavaTestUtil;
+import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author ven
  */
-public class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
-  private static final String BASE_DIR = "/codeInsight/overrideImplement/";
-
+class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath();
+    JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement"
   }
 
-  public void testImplementExtensionMethods() { doTest(true); }
-  public void testOverrideExtensionMethods() { doTest(false); }
-  public void testDoNotImplementExtensionMethods() { doTest(true); }
-  public void testSkipUnknownAnnotations() { doTest(true); }
+  public void testImplementExtensionMethods() { doTest(true) }
+  public void testOverrideExtensionMethods() { doTest(false) }
+  public void testDoNotImplementExtensionMethods() { doTest(true) }
+  public void testSkipUnknownAnnotations() { doTest(true) }
+  public void testMultipleInheritedThrows() { doTest(false) }
+  public void testOverrideInInterface() { doTest(false) }
 
-  public void testOverrideInInterface() { doTest(false); }
   public void testImplementInInterface() {
-    myFixture.addClass """
+    myFixture.addClass """\
 interface A {
     void foo();
 }
 """
-    def file = myFixture.addClass("""
+    def file = myFixture.addClass("""\
 interface B extends A {
     <caret>
 }
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def implementMethodsName = ActionsBundle.message("action.ImplementMethods.text")
-    final Presentation presentation = new Presentation();
-    presentation.setText(implementMethodsName);
+    def Presentation presentation = new Presentation()
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
+    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
-    CommandProcessor.instance.executeCommand(project, new Runnable() {
-      @Override
-      void run() {
-        invokeAction(true)
-      }
-    }, presentation.getText(), null)
-    
-
-    myFixture.checkResult """
+    myFixture.checkResult """\
 interface B extends A {
     @Override
     default void foo() {
@@ -74,12 +65,11 @@ interface B extends A {
     }
 }
 """
-
   }
-  public void testMultipleInheritedThrows() {doTest(false);}
 
   public void "test overriding overloaded method"() {
-    myFixture.addClass """package bar;
+    myFixture.addClass """\
+package bar;
 interface A {
     void foo(Foo2 f);
     void foo(Foo1 f);
@@ -87,7 +77,8 @@ interface A {
 """
     myFixture.addClass "package bar; class Foo1 {}"
     myFixture.addClass "package bar; class Foo2 {}"
-    def file = myFixture.addClass("""package bar;
+    def file = myFixture.addClass("""\
+package bar;
 class Test implements A {
     public void foo(Foo1 f) {}
     <caret>
@@ -97,7 +88,8 @@ class Test implements A {
     
     invokeAction(true)
     
-    myFixture.checkResult """package bar;
+    myFixture.checkResult """\
+package bar;
 class Test implements A {
     public void foo(Foo1 f) {}
 
@@ -109,17 +101,51 @@ class Test implements A {
 """
   }
 
+  public void testTypeAnnotationsInImplementedMethod() {
+    myFixture.addClass """\
+      import java.lang.annotation.*;
+      @Target(ElementType.TYPE_USE)
+      public @interface TA { }""".stripIndent()
+
+    myFixture.configureByText "test.java", """\
+      import java.util.*;
+
+      interface I {
+          @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent()
+
+    invokeAction(true)
+
+    myFixture.checkResult """\
+      import java.util.*;
+
+      interface I {
+          @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
+      }
+
+      class C implements I {
+          @Override
+          public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] @TA(3) [] p2) throws @TA IllegalArgumentException {
+              return null;
+          }
+      }""".stripIndent()
+  }
+
   private void doTest(boolean toImplement) {
-    String name = getTestName(false);
-    myFixture.configureByFile(BASE_DIR + "before" + name + ".java");
+    String name = getTestName(false)
+    myFixture.configureByFile("before${name}.java")
     invokeAction(toImplement)
-    myFixture.checkResultByFile(BASE_DIR + "after" + name + ".java");
+    myFixture.checkResultByFile("after${name}.java")
   }
 
   private void invokeAction(boolean toImplement) {
-    int offset = myFixture.getEditor().getCaretModel().getOffset();
-    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false);
-    assert psiClass != null;
-    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement);
+    int offset = myFixture.getEditor().getCaretModel().getOffset()
+    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false)
+    assert psiClass != null
+    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement)
   }
 }

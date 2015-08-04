@@ -39,21 +39,21 @@ import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMP
 /**
  * @author spleaner
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
-
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/";
   }
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     super.setUp();
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     if (state != null) {
@@ -132,7 +132,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     doTestTemplateWithArg("tst#", 'wrap($ARG$)', "tst# arg<caret>", "tst# arg");
   }
 
-  public void testTemplateAtEndOfFile() throws Exception {
+  public void testTemplateAtEndOfFile() {
     configureFromFileText("empty.java", "");
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("empty", "user", '$VAR$');
@@ -142,7 +142,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     checkResultByText("");
   }
 
-  public void testTemplateWithEnd() throws Exception {
+  public void testTemplateWithEnd() {
     configureFromFileText("empty.java", "");
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("empty", "user", '$VAR$$END$');
@@ -153,8 +153,8 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     myFixture.type("foo");
     checkResultByText("foo");
   }
-  
-  public void testTemplateWithIndentedEnd() throws Exception {
+
+  public void testTemplateWithIndentedEnd() {
     configureFromFileText("empty.java", "class C {\n" +
                                         "  bar() {\n" +
                                         "    <caret>\n" +
@@ -176,7 +176,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
   }
 
 
-  public void testTemplateWithEndOnEmptyLine() throws Exception {
+  public void testTemplateWithEndOnEmptyLine() {
     configureFromFileText("empty.java", "class C {\n" +
                                         "  bar() {\n" +
                                         "    <caret>\n" +
@@ -205,7 +205,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText(name, text);
   }
 
-  public void testEndInTheMiddle() throws Exception {
+  public void testEndInTheMiddle() {
     configure();
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("frm", "user", "javax.swing.JFrame frame = new javax.swing.JFrame();\n" +
@@ -291,7 +291,7 @@ class Foo {
     state.gotoEnd();
     checkResult();
   }
-  
+
   def startTemplate(String name, char expandKey) {
     myFixture.type(name)
     myFixture.type(expandKey)
@@ -373,7 +373,7 @@ class Foo {
     checkResult();
   }
 
-  public void _testIterForceBraces() {
+  public void "_testIterForceBraces"() {
     CodeStyleSettingsManager.getSettings(getProject()).IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
 
     try {
@@ -427,7 +427,7 @@ class Foo {
     checkResult();
   }
 
-  public void testJavaStatementContext() throws Exception {
+  public void testJavaStatementContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "other");
     assertFalse(isApplicable("class Foo {{ if (a inst<caret>) }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>inst }}", template));
@@ -441,7 +441,7 @@ class Foo {
     assertTrue(isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template));
   }
 
-  public void testJavaExpressionContext() throws Exception {
+  public void testJavaExpressionContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("toar", "other");
     assertFalse(isApplicable("class Foo {{ if (a <caret>toar) }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>toar }}", template));
@@ -451,7 +451,7 @@ class Foo {
     assertTrue(isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template));
   }
 
-  public void testJavaDeclarationContext() throws Exception {
+  public void testJavaDeclarationContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "other");
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
@@ -491,7 +491,7 @@ class Foo {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
     if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar",
                  "test do replace macro value with empty result",
                  "test do not replace macro value with null result",
@@ -683,8 +683,8 @@ class Outer {
     myFixture.configureByText 'a.java', '''
 import java.util.*;
 class Foo {
-  List<Map.Entry<String, Integer>> foo() { 
-    <caret> 
+  List<Map.Entry<String, Integer>> foo() {
+    <caret>
   }
 }
 '''
@@ -748,8 +748,8 @@ class Foo {
   }
 
   public void "test reuse static import"() {
-    myFixture.addClass("""package foo; 
-public class Bar { 
+    myFixture.addClass("""package foo;
+public class Bar {
   public static void someMethod() {}
   public static void someMethod(int a) {}
 }""")
@@ -869,7 +869,7 @@ class Foo {
     myFixture.checkResult """\
 class Foo {
   {
-    <caret> a.java 
+    <caret> a.java """ + """
   }
 }
 """
@@ -883,7 +883,7 @@ class Foo {
 }
 """
   }
-  
+
   public void "test do replace macro value with empty result"() {
     myFixture.configureByText "a.java", """\
 class Foo {
@@ -903,7 +903,7 @@ class Foo {
     myFixture.checkResult """\
 class Foo {
   {
-    <caret> 
+    <caret> """ + """
   }
 }
 """
@@ -920,7 +920,7 @@ class Foo {
     myFixture.checkResult """\
 class Foo {
   {
-    <caret> 
+    <caret> """ + """
   }
 }
 """
@@ -946,7 +946,7 @@ class Foo {
     @Override
     Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
       def state = TemplateManagerImpl.getTemplateState(context.editor)
-      return state != null ? state.getVariableValue(myVariableName) : null 
+      return state != null ? state.getVariableValue(myVariableName) : null
     }
 
     @Override
@@ -982,10 +982,9 @@ class Foo {
   }
 }
 """)
-    
   }
-  
-    public void "test multicaret expanding with enter"() {
+
+  public void "test multicaret expanding with enter"() {
     myFixture.configureByText "a.java", """\
 class Foo {
   {
@@ -1012,10 +1011,9 @@ class Foo {
   }
 }
 """)
-    
   }
-  
-    public void "test multicaret expanding with tab"() {
+
+  public void "test multicaret expanding with tab"() {
     myFixture.configureByText "a.java", """\
 class Foo {
   {
@@ -1033,7 +1031,7 @@ class Foo {
     finally {
       TemplateSettings.instance.defaultShortcutChar = defaultShortcutChar
     }
-      
+
     myFixture.checkResult("""\
 class Foo {
   {

@@ -193,6 +193,8 @@ public class ExternalSystemTaskActivator {
 
       if (tasks.isEmpty()) continue;
 
+      if (ExternalProjectsManager.getInstance(myProject).isIgnored(activation.systemId, activation.projectPath)) continue;
+
       ExternalSystemTaskExecutionSettings executionSettings = new ExternalSystemTaskExecutionSettings();
       executionSettings.setExternalSystemIdString(activation.systemId.toString());
       executionSettings.setExternalProjectPath(activation.projectPath);

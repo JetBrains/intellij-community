@@ -40,6 +40,14 @@ public class IfStatementSelectioner extends BasicSelectioner {
 
     final PsiKeyword elseKeyword = statement.getElseElement();
     if (elseKeyword != null) {
+      final PsiStatement then = statement.getThenBranch();
+      if (then != null) {
+        final TextRange thenRange = new TextRange(statement.getTextRange().getStartOffset(), then.getTextRange().getEndOffset());
+        if (thenRange.contains(cursorOffset)) {
+          result.addAll(expandToWholeLine(editorText, thenRange, false));
+        }
+      }
+
       result.addAll(expandToWholeLine(editorText,
                                       new TextRange(elseKeyword.getTextRange().getStartOffset(),
                                                     statement.getTextRange().getEndOffset()),
@@ -50,10 +58,13 @@ public class IfStatementSelectioner extends BasicSelectioner {
         PsiIfStatement elseIf = (PsiIfStatement)branch;
         final PsiKeyword element = elseIf.getElseElement();
         if (element != null) {
-          result.addAll(expandToWholeLine(editorText,
-                                          new TextRange(elseKeyword.getTextRange().getStartOffset(),
-                                                        elseIf.getThenBranch().getTextRange().getEndOffset()),
-                                          false));
+          final PsiStatement elseThen = elseIf.getThenBranch();
+          if (elseThen != null) {
+            result.addAll(expandToWholeLine(editorText,
+                                            new TextRange(elseKeyword.getTextRange().getStartOffset(),
+                                                          elseThen.getTextRange().getEndOffset()),
+                                            false));
+          }
         }
       }
     }

@@ -47,6 +47,7 @@ import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
@@ -106,7 +107,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static EditorHighlighter initEmptyEditorHighlighter(@Nullable Project project, @NotNull CharSequence text) {
+  public static EditorHighlighter initEmptyEditorHighlighter(@NotNull CharSequence text) {
     EditorHighlighter highlighter = createEmptyEditorHighlighter();
     highlighter.setText(text);
     return highlighter;
@@ -215,10 +216,6 @@ public class DiffUtil {
     scrollToCaret(editor, animated);
   }
 
-  public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
-    scrollToPoint(editor, point, false);
-  }
-
   public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point, boolean animated) {
     if (editor == null) return;
     if (!animated) editor.getScrollingModel().disableAnimation();
@@ -285,6 +282,11 @@ public class DiffUtil {
     if (actions == null || actions.isEmpty()) return;
     if (group.getChildrenCount() != 0) group.addSeparator();
     group.addAll(actions);
+  }
+
+  @NotNull
+  public static String getSettingsConfigurablePath() {
+    return "Settings | Tools | Diff";
   }
 
   // Titles
@@ -400,8 +402,7 @@ public class DiffUtil {
 
   @NotNull
   private static JComponent createTitlePanel(@NotNull String title) {
-    if (title.isEmpty()) title = " "; // do not collapse
-    return new JLabel(title); // TODO: allow to copy text
+    return CopyableLabel.create(title);
   }
 
   @NotNull
@@ -687,6 +688,62 @@ public class DiffUtil {
   }
 
   //
+  // Updating ranges on change
+  //
+
+  public static int countLinesShift(@NotNull DocumentEvent e) {
+    return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+  }
+
+  @NotNull
+  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift) {
+    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false);
+  }
+
+  @NotNull
+  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift, boolean greedy) {
+    if (end <= changeStart) { // change before
+      return new UpdatedLineRange(start, end, false);
+    }
+    if (start >= changeEnd) { // change after
+      return new UpdatedLineRange(start + shift, end + shift, false);
+    }
+
+    if (start <= changeStart && end >= changeEnd) { // change inside
+      return new UpdatedLineRange(start, end + shift, false);
+    }
+
+    // range is damaged. We don't know new boundaries.
+    // But we can try to return approximate new position
+    int newChangeEnd = changeEnd + shift;
+
+    if (start >= changeStart && end <= changeEnd) { // fully inside change
+      return greedy ? new UpdatedLineRange(changeStart, newChangeEnd, true) :
+                      new UpdatedLineRange(newChangeEnd, newChangeEnd, true);
+    }
+
+    if (start < changeStart) { // bottom boundary damaged
+      return greedy ? new UpdatedLineRange(start, newChangeEnd, true) :
+                      new UpdatedLineRange(start, changeStart, true);
+    } else { // top boundary damaged
+      return greedy ? new UpdatedLineRange(changeStart, end + shift, true) :
+                      new UpdatedLineRange(newChangeEnd, end + shift, true);
+    }
+  }
+
+  public static class UpdatedLineRange {
+    public final int startLine;
+    public final int endLine;
+    public final boolean damaged;
+
+    public UpdatedLineRange(int startLine, int endLine, boolean damaged) {
+      this.startLine = startLine;
+      this.endLine = endLine;
+      this.damaged = damaged;
+    }
+  }
+
+  //
   // Types
   //
 
@@ -817,14 +874,6 @@ public class DiffUtil {
   public static <T> UserDataHolderBase createUserDataHolder(@NotNull Key<T> key, @Nullable T value) {
     UserDataHolderBase holder = new UserDataHolderBase();
     holder.putUserData(key, value);
-    return holder;
-  }
-
-  public static <T> UserDataHolderBase createUserDataHolder(@NotNull Key<T> key1, @Nullable T value1,
-                                                            @NotNull Key<T> key2, @Nullable T value2) {
-    UserDataHolderBase holder = new UserDataHolderBase();
-    holder.putUserData(key1, value1);
-    holder.putUserData(key2, value2);
     return holder;
   }
 
@@ -982,10 +1031,6 @@ public class DiffUtil {
     public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
       this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
            ignorePolicy.isShouldTrimChunks());
-    }
-
-    public DiffConfig() {
-      this(IgnorePolicy.DEFAULT, HighlightPolicy.BY_LINE);
     }
   }
 }

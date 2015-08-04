@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -293,7 +290,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       if (!docsToSave.isEmpty()) {
         new WriteAction() {
           @Override
-          protected void run(Result result) throws Throwable {
+          protected void run(@NotNull Result result) throws Throwable {
             for (Document document : docsToSave) {
               manager.saveDocument(document);
             }
@@ -301,7 +298,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
         }.execute();
       }
 
-      virtualFile.refresh(true, true);
+      VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile);
     }
   }
 }

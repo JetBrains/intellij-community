@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +93,8 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myLookup = lookup;
     myNameComponent = new MySimpleColoredComponent();
-    myNameComponent.setIpad(new Insets(0, 0, 0, 0));
+    myNameComponent.setIpad(JBUI.insetsLeft(2));
+    myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
     myTailComponent.setIpad(new Insets(0, 0, 0, 0));
@@ -133,7 +135,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color background = nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
                              isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
 
-    int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
+    int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getTextIndent();
 
     FontMetrics normalMetrics = getRealFontMetrics(item, false);
     FontMetrics boldMetrics = getRealFontMetrics(item, true);
@@ -168,7 +170,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.clear();
     myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
     myNameComponent.setBackground(background);
-    allowedWidth -= setItemTextLabel(item, new JBColor(isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), foreground), isSelected, presentation, allowedWidth);
+    allowedWidth -= setItemTextLabel(item, new JBColor(isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), presentation.getItemTextForeground()), isSelected, presentation, allowedWidth);
 
     Font customFont = myLookup.getCustomFont(item, false);
     myTailComponent.setFont(customFont != null ? customFont : myNormalFont);
@@ -455,10 +457,9 @@ public class LookupCellRenderer implements ListCellRenderer {
     return RealLookupElementPresentation.calculateWidth(p, getRealFontMetrics(item, false), getRealFontMetrics(item, true)) + AFTER_TAIL + AFTER_TYPE;
   }
 
-  public int getIconIndent() {
-    return myNameComponent.getIconTextGap() + myEmptyIcon.getIconWidth();
+  public int getTextIndent() {
+    return myNameComponent.getIpad().left + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap();
   }
-
 
   private static class MySimpleColoredComponent extends SimpleColoredComponent {
     private MySimpleColoredComponent() {
@@ -483,10 +484,17 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     @Override
     public void paint(Graphics g){
-      if (!myLookup.isFocused() && myLookup.isCompletion()) {
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
-      }
       super.paint(g);
+      if (!myLookup.isFocused() && myLookup.isCompletion()) {
+        g = g.create();
+        try {
+          g.setColor(ColorUtil.withAlpha(BACKGROUND_COLOR, .4));
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+        finally {
+          g.dispose();
+        }
+      }
     }
   }
 }

@@ -58,7 +58,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     if exctype == SkipTest:
         self.messages.testIgnored(self.getTestName(test), message='Skip')
     else:
-        self.messages.testError(self.getTestName(test), message='Error', details=err)
+        self.messages.testError(self.getTestName(test), message='Error', details=err, duration=self.__getDuration(test))
 
   def formatErr(self, err):
     exctype, value, tb = err
@@ -100,7 +100,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     self.messages.testIgnored(self.getTestName(test), message=reason)
 
 
-  def __getSuite(self, test):
+  def _getSuite(self, test):
     if hasattr(test, "suite"):
       suite = strclass(test.suite)
       suite_location = test.suite.location
@@ -172,7 +172,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
 
   def startTest(self, test):
-    location, suite_location = self.__getSuite(test)
+    location, suite_location = self._getSuite(test)
     suite = self.getSuiteName(test)
     if suite != self.current_suite:
       if self.current_suite:
@@ -185,12 +185,15 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
 
   def stopTest(self, test):
-    start = getattr(test, "startTime", datetime.datetime.now())
-    d = datetime.datetime.now() - start
-    duration = d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
+    duration = self.__getDuration(test)
     self.messages.testFinished(self.getTestName(test),
       duration=int(duration))
 
+  def __getDuration(self, test):
+    start = getattr(test, "startTime", datetime.datetime.now())
+    d = datetime.datetime.now() - start
+    duration = d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
+    return duration
 
   def finalize(self, result):
     if self.current_suite:

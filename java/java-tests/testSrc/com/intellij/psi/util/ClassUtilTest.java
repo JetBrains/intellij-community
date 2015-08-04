@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,26 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
  * @author yole
  */
 public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/psi/classUtil/";
+  }
+
   public void testFindPsiClassByJvmName() {
     myFixture.configureByFile("ManyClasses.java");
+
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1$1"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1FooLocal"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1FooLocal$1"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Child"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Child$"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Ma$ked"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Ma$ked$Ne$ted"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Edge"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Edge$"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Edge$$$tu_pid_ne$s"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "Local"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "Local$Sub"));
 
@@ -42,12 +54,8 @@ public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(sub);
     assertEquals("Local$", ((PsiClass)sub.getParent()).getName());
 
-    final PsiClass fooLocal2 = ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$2FooLocal");
-    assertEquals("Runnable", fooLocal2.getImplementsListTypes() [0].getClassName());
-  }
-
-  @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/psi/classUtil/";
+    PsiClass fooLocal2 = ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$2FooLocal");
+    assertNotNull(fooLocal2);
+    assertEquals("Runnable", fooLocal2.getImplementsListTypes()[0].getClassName());
   }
 }

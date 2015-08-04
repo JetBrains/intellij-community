@@ -29,4 +29,6 @@ public interface BookmarksListener {
   void bookmarkRemoved(@NotNull Bookmark b);
 
   void bookmarkChanged(@NotNull Bookmark b);
+
+  void bookmarksOrderChanged();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
           if (parameterValues != null && (parameterValues.size() != 1 || !(parameterValues.get(0) instanceof PsiReferenceExpression))) {
             continue;
           }
-          if (!canCollapse(parameters, i, j)) {
+          if (j > i ? !canCollapse(parameters, i, j) : !canCollapse(parameters, j, i)) {
             continue;
           }
           final PsiJavaToken rParenth = otherSection.getRParenth();
@@ -132,26 +132,15 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
 
     private static boolean canCollapse(PsiParameter[] parameters, int index1, int index2) {
-      if (index2 > index1) {
-        final PsiType type = parameters[index2].getType();
-        for (int i = index1 + 1; i < index2; i++) {
-          final PsiType otherType = parameters[i].getType();
-          if (TypeConversionUtil.isAssignable(type, otherType)) {
-            return false;
-          }
+      if (index2 <= index1) throw new IllegalArgumentException();
+      final PsiType type = parameters[index2].getType();
+      for (int i = index1 + 1; i < index2; i++) {
+        final PsiType otherType = parameters[i].getType();
+        if (TypeConversionUtil.isAssignable(type, otherType)) {
+          return false;
         }
-        return true;
       }
-      else {
-        final PsiType type = parameters[index1].getType();
-        for (int i = index2 + 1; i < index1; i++) {
-          final PsiType otherType = parameters[i].getType();
-          if (TypeConversionUtil.isAssignable(otherType, type)) {
-            return false;
-          }
-        }
-        return true;
-      }
+      return true;
     }
   }
 

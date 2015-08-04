@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    FontLayoutService.setInstance(new MockFontLayoutService(10, 10, 2));
+    FontLayoutService.setInstance(new MockFontLayoutService(10, 10, 2)); // char width matches the one in EditorTestUtil.configureSoftWraps
   }
 
   @Override

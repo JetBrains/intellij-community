@@ -23,6 +23,7 @@ public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase
 
   public void testComments() { doTest(); }
   public void testMultiple() { doTest(); }
+  public void testDependents() { doTest(); }
 
   @Override
   public void setUp() throws Exception {

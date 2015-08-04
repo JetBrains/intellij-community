@@ -4,7 +4,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestTask;
 import com.jetbrains.env.ut.PyUnitTestTask;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.List;
@@ -21,6 +23,28 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
         Assert.assertEquals(2, allTestsCount());
         Assert.assertEquals(2, passedTestsCount());
         allTestsPassed();
+      }
+    });
+  }
+
+  /**
+   * Ensures that skipped and erroneous tests do not lead to suite ignorance
+   */
+  public void testUTSkippedAndIgnored() {
+    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        // This test requires unittest to have decorator "test" that does not exists in 2.6
+        return level.compareTo(LanguageLevel.PYTHON26) > 0;
+      }
+
+      @Override
+      public void after() {
+        assertEquals(4, allTestsCount());
+        assertEquals(2, passedTestsCount());
+        assertEquals(2, failedTestsCount());
+        Assert.assertFalse("Suite is not finished", myTestProxy.isInterrupted());
       }
     });
   }
@@ -115,8 +139,9 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
         final List<String> fileNames = getHighlightedStrings().second;
         Assert.assertThat("No lines highlighted", fileNames, Matchers.not(Matchers.empty()));
         // PyTest highlights file:line_number
-        Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.anyOf(Matchers.endsWith("reference_tests.py:13"),
-                                                                                               Matchers.endsWith("reference_tests.py:7"))));
+        Assert.assertTrue("Assert fail not marked", fileNames.contains("reference_tests.py:7"));
+        Assert.assertTrue("Failed test not marked", fileNames.contains("reference_tests.py:12"));
+        Assert.assertTrue("Failed test not marked", fileNames.contains("reference_tests.py"));
       }
     });
   }

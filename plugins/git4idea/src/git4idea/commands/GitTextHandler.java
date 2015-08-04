@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,6 +140,11 @@ public abstract class GitTextHandler extends GitHandler {
     @Override
     public Charset getCharset() {
       return myCharset;
+    }
+
+    @Override
+    protected boolean useNonBlockingRead() {
+      return !Registry.is("git.blocking.read");
     }
   }
 

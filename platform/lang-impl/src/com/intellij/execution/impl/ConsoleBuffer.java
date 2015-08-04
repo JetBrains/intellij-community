@@ -17,6 +17,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
@@ -120,11 +121,17 @@ public class ConsoleBuffer {
   }
 
   public static boolean useCycleBuffer() {
-    final String useCycleBufferProperty = System.getProperty("idea.cycle.buffer.size");
-    return useCycleBufferProperty == null || !"disabled".equalsIgnoreCase(useCycleBufferProperty);
+    return !"disabled".equalsIgnoreCase(System.getProperty("idea.cycle.buffer.size"));
   }
 
   public static int getCycleBufferSize() {
+    if (UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE) {
+      return UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB * 1024;
+    }
+    return getLegacyCycleBufferSize();
+  }
+
+  public static int getLegacyCycleBufferSize() {
     String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
     if (cycleBufferSizeProperty == null) return 1024 * 1024;
     try {

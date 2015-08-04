@@ -22,14 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @see com.intellij.openapi.project.ex.ProjectEx#getStateStore()
- */
-public interface IProjectStore extends IComponentStore.Reloadable {
-  boolean checkVersion();
+import java.util.List;
 
-  void setProjectFilePath(@NotNull String filePath);
-
+public interface IProjectStore extends IComponentStore {
   @Nullable
   VirtualFile getProjectBaseDir();
 
@@ -40,7 +35,7 @@ public interface IProjectStore extends IComponentStore.Reloadable {
   String getProjectName();
 
   @NotNull
-  TrackingPathMacroSubstitutor[] getSubstitutors();
+  List<TrackingPathMacroSubstitutor> getSubstitutors();
 
   @NotNull
   StorageScheme getStorageScheme();

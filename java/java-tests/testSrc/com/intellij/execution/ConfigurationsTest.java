@@ -529,7 +529,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(), new Condition<String>() {
       @Override
       public boolean value(String value) {
-        return StringUtil.startsWithChar(value, '@');
+        return StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@");
       }
     }).substring(1);
     List<String> lines = readLinesFrom(new File(filePath));

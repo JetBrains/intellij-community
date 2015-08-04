@@ -16,10 +16,6 @@ public class SSRCodeInsightTest extends UsefulTestCase {
    protected CodeInsightTestFixture myFixture;
   private SSBasedInspection myInspection;
 
-  public SSRCodeInsightTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

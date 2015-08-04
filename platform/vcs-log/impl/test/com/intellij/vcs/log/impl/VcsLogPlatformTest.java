@@ -44,11 +44,6 @@ public abstract class VcsLogPlatformTest extends UsefulTestCase {
   private IdeaProjectTestFixture myProjectFixture;
   private String myTestStartedIndicator;
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
-  protected VcsLogPlatformTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

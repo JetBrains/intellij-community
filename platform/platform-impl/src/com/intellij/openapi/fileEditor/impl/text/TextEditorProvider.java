@@ -69,15 +69,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    if (file.isDirectory() || !file.isValid()) {
-      return false;
-    }
-    if (SingleRootFileViewProvider.isTooLargeForContentLoading(file)) {
-      return false;
-    }
-
-    final FileType ft = file.getFileType();
-    return !ft.isBinary() || BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
+    return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file);
   }
 
   @Override
@@ -239,6 +231,15 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
 
     return state;
+  }
+
+  public static boolean isTextFile(@NotNull VirtualFile file) {
+    if (file.isDirectory() || !file.isValid()) {
+      return false;
+    }
+
+    final FileType ft = file.getFileType();
+    return !ft.isBinary() || BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
   }
 
   private static TextEditorState.CaretState createCaretState(LogicalPosition caretPosition, LogicalPosition selectionStartPosition, LogicalPosition selectionEndPosition) {

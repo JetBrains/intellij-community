@@ -79,7 +79,7 @@ public class PushController implements Disposable {
                         @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
     myPushSettings = ServiceManager.getService(project, PushSettings.class);
-    myGlobalRepositoryManager = ServiceManager.getService(project, VcsRepositoryManager.class);
+    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
     myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;

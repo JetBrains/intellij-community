@@ -279,11 +279,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
               } else {
                 target = ((MoveDestination)targetDirectory).getTargetDirectory(defaultTargetDirectory);
               }
-              PsiElement newElement = doCopyClasses(classes, map, copyClassName, target, project);
-              if (newElement != null) {
+              Collection<PsiFile> files = doCopyClasses(classes, map, copyClassName, target, project);
+              if (files != null) {
                 if (openInEditor) {
-                  CopyHandler.updateSelectionInActiveProjectView(newElement, project, selectInActivePanel);
-                  EditorHelper.openInEditor(newElement);
+                  for (PsiFile file : files) {
+                    CopyHandler.updateSelectionInActiveProjectView(file, project, selectInActivePanel);
+                  }
+                  EditorHelper.openFilesInEditor(files.toArray(new PsiFile[files.size()]));
                 }
 
                 result[0] = true;
@@ -314,7 +316,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
    @Nullable
-  public static PsiElement doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
+  public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
                                          final String copyClassName,
                                          final PsiDirectory targetDirectory,
                                          final Project project) throws IncorrectOperationException {
@@ -322,10 +324,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
    }
 
   @Nullable
-  public static PsiElement doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
-                                         @Nullable HashMap<PsiFile, String> map, final String copyClassName,
-                                         final PsiDirectory targetDirectory,
-                                         final Project project) throws IncorrectOperationException {
+  public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
+                                                     @Nullable HashMap<PsiFile, String> map, final String copyClassName,
+                                                     final PsiDirectory targetDirectory,
+                                                     final Project project) throws IncorrectOperationException {
     PsiElement newElement = null;
     final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<PsiClass, PsiElement>();
     for (final PsiClass[] psiClasses : fileToClasses.values()) {
@@ -404,7 +406,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       codeStyleManager.shortenClassReferences(expression);
     }
     new OptimizeImportsProcessor(project, createdFiles.toArray(new PsiFile[createdFiles.size()]), null).run();
-    return newElement != null ? newElement : createdFiles.size() > 0 ? createdFiles.get(0) : null;
+    return createdFiles;
   }
 
   protected static boolean isSynthetic(PsiClass aClass) {
@@ -484,10 +486,11 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
 
   private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<PsiElement> rebindExpressions) {
+    final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<PsiJavaCodeReferenceElement, PsiElement>();
     element.accept(new JavaRecursiveElementVisitor(){
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        decodeRef(expression, oldToNewMap, rebindExpressions);
+        decodeRef(expression, oldToNewMap, rebindMap);
         super.visitReferenceExpression(expression);
       }
 
@@ -495,7 +498,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       public void visitNewExpression(PsiNewExpression expression) {
         final PsiJavaCodeReferenceElement referenceElement = expression.getClassReference();
         if (referenceElement != null) {
-          decodeRef(referenceElement, oldToNewMap, rebindExpressions);
+          decodeRef(referenceElement, oldToNewMap, rebindMap);
         }
         super.visitNewExpression(expression);
       }
@@ -504,22 +507,25 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       public void visitTypeElement(PsiTypeElement type) {
         final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
         if (referenceElement != null) {
-          decodeRef(referenceElement, oldToNewMap, rebindExpressions);
+          decodeRef(referenceElement, oldToNewMap, rebindMap);
         }
         super.visitTypeElement(type);
       }
     });
+    for (Map.Entry<PsiJavaCodeReferenceElement, PsiElement> entry : rebindMap.entrySet()) {
+      rebindExpressions.add(entry.getKey().bindToElement(entry.getValue()));
+    }
     rebindExternalReferences(element, oldToNewMap, rebindExpressions);
   }
 
   private static void decodeRef(final PsiJavaCodeReferenceElement expression,
                                 final Map<PsiClass, PsiElement> oldToNewMap,
-                                Set<PsiElement> rebindExpressions) {
+                                Map<PsiJavaCodeReferenceElement, PsiElement> rebindExpressions) {
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)resolved;
       if (oldToNewMap.containsKey(psiClass)) {
-        rebindExpressions.add(expression.bindToElement(oldToNewMap.get(psiClass)));
+        rebindExpressions.put(expression, oldToNewMap.get(psiClass));
       }
     }
   }

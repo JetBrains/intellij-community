@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
@@ -376,7 +377,7 @@ class GrImportStatementStub {
     //noinspection GroovyResultOfObjectAllocationIgnored
     new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, PsiFile.EMPTY_ARRAY) {
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         new GenerateGetterHandler() {
           @Nullable
           protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
@@ -393,7 +394,7 @@ class GrImportStatementStub {
     //noinspection GroovyResultOfObjectAllocationIgnored
     new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, PsiFile.EMPTY_ARRAY) {
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         new GenerateSetterHandler() {
           @Nullable
           protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
@@ -443,7 +444,7 @@ class GrImportStatementStub {
     }
 
     return new WriteCommandAction(project, new PsiFile[0]) {
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         handler.invoke(project, myFixture.editor, myFixture.file);
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }

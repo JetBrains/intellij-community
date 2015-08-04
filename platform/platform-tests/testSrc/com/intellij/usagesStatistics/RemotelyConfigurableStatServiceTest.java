@@ -20,7 +20,6 @@ import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsSer
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
 import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.internal.statistic.connect.StatisticsResult;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
@@ -34,11 +33,6 @@ import static org.junit.Assert.assertTrue;
 public class RemotelyConfigurableStatServiceTest {
   private static String STAT_URL;
   private static String STAT_CONFIG_URL;
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public RemotelyConfigurableStatServiceTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @BeforeClass
   public static void init() throws Exception {

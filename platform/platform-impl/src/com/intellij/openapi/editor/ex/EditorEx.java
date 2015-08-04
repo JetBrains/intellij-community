@@ -176,14 +176,30 @@ public interface EditorEx extends Editor {
   @Override
   ScrollingModelEx getScrollingModel();
 
+  /**
+   * @deprecated This is an internal method, {@link Editor#visualToLogicalPosition(VisualPosition)} should be used instead.
+   * To be removed in IDEA 16.
+   */
   @NotNull
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware);
 
+  /**
+   * @deprecated This is an internal method, {@link Editor#offsetToLogicalPosition(int)} should be used instead.
+   * To be removed in IDEA 16.
+   */
   @NotNull LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware);
 
+  /**
+   * @deprecated This is an internal method, {@link Editor#logicalToVisualPosition(LogicalPosition)} should be used instead.
+   * To be removed in IDEA 16.
+   */
   @NotNull
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
 
+  /**
+   * @deprecated This is an internal method, {@link Editor#logicalPositionToOffset(LogicalPosition)} should be used instead.
+   * To be removed in IDEA 16.
+   */
   int logicalPositionToOffset(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
 
   /**
@@ -212,6 +228,14 @@ public interface EditorEx extends Editor {
    */
   void setPlaceholder(@Nullable CharSequence text);
 
+  /**
+   * Sets text attributes for a placeholder. Font style and color are currently supported. 
+   * <code>null</code> means default values should be used.
+   * 
+   * @see #setPlaceholder(CharSequence)
+   */
+  void setPlaceholderAttributes(@Nullable TextAttributes attributes);
+  
   /**
    * Controls whether <code>'placeholder text'</code> is visible when editor is focused.
    *

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Bitness;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -24,6 +25,8 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * @author nik
@@ -39,12 +42,42 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
 
   @Override
   @Nullable
-  public String detectJdkVersion(String homePath) {
+  public String detectJdkVersion(@NotNull String homePath) {
     return detectJdkVersion(homePath, ACTION_RUNNER);
   }
 
   @Nullable
-  public String detectJdkVersion(String homePath, final ActionRunner actionRunner) {
+  public String detectJdkVersion(@NotNull String homePath, @NotNull final ActionRunner actionRunner) {
+    final File path = new File(homePath, "jre/lib/rt.jar");
+    try {
+      JarFile runtimeArchive;
+      try {
+        runtimeArchive = new JarFile(path, false);
+      }
+      catch (IOException e) {
+        try {
+          runtimeArchive = new JarFile(path.getParentFile(), false);
+        }
+        catch (IOException e1) {
+          // jdk9 case. Alternatively, if jrt-fs.jar is not available, we could read the 'release' file
+          runtimeArchive = new JarFile(new File(homePath, "jrt-fs.jar"));
+        }
+      }
+      try {
+        final Manifest manifest = runtimeArchive.getManifest();
+        if (manifest != null) {
+          final String version = manifest.getMainAttributes().getValue("Implementation-Version");
+          if (version != null) {
+            return "java version \"" + version + "\"";
+          }
+        }
+      }
+      finally {
+        runtimeArchive.close();
+      }
+    }
+    catch (IOException ignored) {
+    }
     JdkVersionInfo info = detectJdkVersionInfo(homePath, actionRunner);
     if (info != null) {
       return info.getVersion();
@@ -53,18 +86,18 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   }
 
   @Override
-  public JdkVersionInfo detectJdkVersionInfo(String homePath) {
+  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath) {
     return detectJdkVersionInfo(homePath, ACTION_RUNNER);
   }
 
   @Override
-  public JdkVersionInfo detectJdkVersionInfo(String homePath, ActionRunner actionRunner) {
+  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ActionRunner actionRunner) {
     String[] command = {homePath + File.separator + "bin" + File.separator + "java", "-version"};
     return readVersionInfoFromProcessOutput(homePath, command, null, actionRunner);
   }
 
-  public String readVersionFromProcessOutput(String homePath, String[] command, String versionLineMarker,
-                                             ActionRunner actionRunner) {
+  public String readVersionFromProcessOutput(@NotNull String homePath, @NotNull String[] command, String versionLineMarker,
+                                             @NotNull ActionRunner actionRunner) {
     JdkVersionInfo info = readVersionInfoFromProcessOutput(homePath, command, versionLineMarker, actionRunner);
     if (info != null) {
       return info.getVersion();
@@ -72,8 +105,8 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     return null;
   }
 
-  private static JdkVersionInfo readVersionInfoFromProcessOutput(String homePath, String[] command, String versionLineMarker, ActionRunner actionRunner) {
-    if (homePath == null || !new File(homePath).exists()) {
+  private static JdkVersionInfo readVersionInfoFromProcessOutput(@NotNull String homePath, @NotNull String[] command, String versionLineMarker, @NotNull ActionRunner actionRunner) {
+    if (!new File(homePath).exists()) {
       return null;
     }
     try {

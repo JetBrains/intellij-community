@@ -24,7 +24,7 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterPro
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,9 +37,9 @@ public class PyArgumentListFixer extends PyFixer<PyArgumentList> {
 
   @Override
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyArgumentList arguments) throws IncorrectOperationException {
-    final PsiElement rBrace = PyUtil.getChildByFilter(arguments, PyTokenTypes.CLOSE_BRACES, 0);
+    final PsiElement rBrace = PyPsiUtils.getChildByFilter(arguments, PyTokenTypes.CLOSE_BRACES, 0);
     if (arguments.getParent() instanceof PyClass || arguments.getParent() instanceof PyDecorator) {
-      final PsiElement lBrace = PyUtil.getChildByFilter(arguments, PyTokenTypes.OPEN_BRACES, 0);
+      final PsiElement lBrace = PyPsiUtils.getChildByFilter(arguments, PyTokenTypes.OPEN_BRACES, 0);
       if (lBrace != null && rBrace == null) {
         final Document document = editor.getDocument();
         document.insertString(arguments.getTextRange().getEndOffset(), ")");

@@ -66,6 +66,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile LineSet myLineSet;
   private volatile ImmutableText myText;
   private volatile SoftReference<String> myTextString;
+  private volatile FrozenDocument myFrozen;
 
   private boolean myIsReadOnly = false;
   private volatile boolean isStripTrailingSpacesEnabled = true;
@@ -149,8 +150,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       synchronized (myLineSetLock) {
         lineSet = myLineSet;
         if (lineSet == null) {
-          lineSet = new LineSet();
-          lineSet.documentCreated(this);
+          lineSet = LineSet.createLineSet(myText);
           myLineSet = lineSet;
         }
       }
@@ -205,9 +205,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           markers.add(marker);
         }
       }
-      LineSet lineSet = getLineSet();
       lineLoop:
-      for (int line = 0; line < lineSet.getLineCount(); line++) {
+      for (int line = 0; line < getLineCount(); line++) {
+        LineSet lineSet = getLineSet();
         if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
         int whiteSpaceStart = -1;
         final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
@@ -499,7 +499,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
-    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset == 0 && endOffset == getTextLength());
+    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), false);
   }
 
   private void replaceString(int startOffset, int endOffset, @NotNull CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
@@ -528,6 +528,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
            s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)) {
       newEndInString--;
       endOffset--;
+    }
+
+    if (startOffset == 0 && endOffset == getTextLength()) {
+      wholeTextReplaced = true;
     }
 
     CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
@@ -632,7 +636,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void clearLineModificationFlags() {
-    getLineSet().clearModificationFlags();
+    myLineSet = getLineSet().clearModificationFlags();
+    myFrozen = null;
   }
 
   void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
@@ -643,10 +648,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         modifiedLines.add(line);
       }
     }
-    clearLineModificationFlags();
+    lineSet = lineSet.clearModificationFlags();
     for (int i = 0; i < modifiedLines.size(); i++) {
-      lineSet.setModified(modifiedLines.get(i));
+      lineSet = lineSet.setModified(modifiedLines.get(i));
     }
+    myLineSet = lineSet;
+    myFrozen = null;
   }
 
   private void updateText(@NotNull ImmutableText newText,
@@ -669,8 +676,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
       }
       myTextString = null;
+      ImmutableText prevText = myText;
       myText = newText;
-      changedUpdate(event, newModificationStamp);
+      changedUpdate(event, newModificationStamp, prevText);
     }
     finally {
       if (!enableRecursiveModifications) {
@@ -720,11 +728,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
+  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, ImmutableText prevText) {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
-      getLineSet().changedUpdate(event);
+      myLineSet = getLineSet().update(prevText, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewFragment(), event.isWholeTextReplaced());
+      myFrozen = null;
       if (myTabTrackingRequestors > 0) {
         updateMightContainTabs(event.getNewFragment());
       }
@@ -881,7 +890,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public final int getLineCount() {
-    if (getTextLength() == 0) return 0;
     int lineCount = getLineSet().getLineCount();
     assert lineCount >= 0;
     return lineCount;
@@ -968,20 +976,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (myAssertThreading) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    if (myDoingBulkUpdate == value) {
-      // do not fire listeners or otherwise updateStarted() will be called more times than updateFinished()
-      return;
-    }
     if (myUpdatingBulkModeStatus) {
       throw new IllegalStateException("Detected bulk mode status update from DocumentBulkUpdateListener");
     }
+    if (myDoingBulkUpdate == value) {
+      return;
+    }
     myUpdatingBulkModeStatus = true;
     try {
-      myDoingBulkUpdate = value;
       if (value) {
         getPublisher().updateStarted(this);
+        myDoingBulkUpdate = true;
       }
       else {
+        myDoingBulkUpdate = false;
         getPublisher().updateFinished(this);
       }
     }
@@ -1065,4 +1073,19 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       myMightContainTabs = StringUtil.contains(text, 0, text.length(), '\t');
     }
   }
+
+  @NotNull
+  public FrozenDocument freeze() {
+    FrozenDocument frozen = myFrozen;
+    if (frozen == null) {
+      synchronized (myLineSetLock) {
+        frozen = myFrozen;
+        if (frozen == null) {
+          frozen = new FrozenDocument(myText, getLineSet(), myModificationStamp, SoftReference.dereference(myTextString));
+        }
+      }
+    }
+    return frozen;
+  }
+
 }

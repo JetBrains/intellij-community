@@ -15,11 +15,14 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
@@ -28,8 +31,60 @@ import java.util.*;
 public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_COORDINATES;
 
+  private final boolean myUseLuceneIndexes;
+
+  public MavenArtifactSearcher() {
+    this(false);
+  }
+
+  public MavenArtifactSearcher(boolean useLuceneIndexes) {
+    myUseLuceneIndexes = useLuceneIndexes;
+  }
+
+  @Override
+  public List<MavenArtifactSearchResult> search(Project project, String pattern, int maxResult) {
+    return myUseLuceneIndexes ? super.search(project, pattern, maxResult) : getResultsFromIdeaCache(project, pattern, maxResult);
+  }
+
+  @NotNull
+  private static List<MavenArtifactSearchResult> getResultsFromIdeaCache(Project project, String pattern, int maxResult) {
+    List<String> parts = new ArrayList<String>();
+    for (String each : StringUtil.tokenize(pattern, " :")) {
+      parts.add(each);
+    }
+
+    List<MavenArtifactSearchResult> searchResults = ContainerUtil.newSmartList();
+    MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
+    int count = 0;
+    for (String groupId : m.getGroupIds()) {
+      if (count >= maxResult) break;
+      if (parts.size() < 1 || StringUtil.contains(groupId, parts.get(0))) {
+        for (String artifactId : m.getArtifactIds(groupId)) {
+          if (parts.size() < 2 || StringUtil.contains(artifactId, parts.get(1))) {
+            List<MavenArtifactInfo> versions = ContainerUtil.newSmartList();
+            for (String version : m.getVersions(groupId, artifactId)) {
+              if (parts.size() < 3 || StringUtil.contains(version, parts.get(2))) {
+                versions.add(new MavenArtifactInfo(groupId, artifactId, version, "jar", null));
+                if (++count >= maxResult) break;
+              }
+            }
+
+            if (!versions.isEmpty()) {
+              MavenArtifactSearchResult searchResult = new MavenArtifactSearchResult();
+              searchResult.versions.addAll(versions);
+              searchResults.add(searchResult);
+            }
+          }
+
+          if (count >= maxResult) break;
+        }
+      }
+    }
+    return searchResults;
+  }
+
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
-    pattern = pattern.toLowerCase();
+    pattern = StringUtil.toLowerCase(pattern);
     if (pattern.trim().length() == 0) return Pair.create(pattern, (Query)new MatchAllDocsQuery());
 
     List<String> parts = new ArrayList<String>();

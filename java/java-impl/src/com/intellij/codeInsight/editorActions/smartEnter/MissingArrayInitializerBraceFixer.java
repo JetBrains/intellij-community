@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,21 +34,10 @@ public class MissingArrayInitializerBraceFixer implements Fixer {
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiArrayInitializerExpression)) return;
     PsiArrayInitializerExpression expr = (PsiArrayInitializerExpression)psiElement;
-    final Document doc = editor.getDocument();
-    final String exprText = expr.getText();
-    final TextRange textRange = expr.getTextRange();
-    final int endOffset = textRange.getEndOffset();
-    int caretOffset = editor.getCaretModel().getOffset();
-    final int startOffset = textRange.getStartOffset();
-    if (caretOffset > startOffset && caretOffset < endOffset) {
-      final int index = exprText.indexOf('\n', caretOffset - startOffset);
-      if (index >= 0) {
-        doc.insertString(index + startOffset, "}");
-        return;
-      }
-    }
-    if (!exprText.endsWith("}")) {
-      doc.insertString(endOffset, "}");
+    if (!expr.getText().endsWith("}")) {
+      PsiErrorElement err = ContainerUtil.findInstance(expr.getChildren(), PsiErrorElement.class);
+      int endOffset = (err != null ? err : expr).getTextRange().getEndOffset();
+      editor.getDocument().insertString(endOffset, "}");
     }
   }
 }

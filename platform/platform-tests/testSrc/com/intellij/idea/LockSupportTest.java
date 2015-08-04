@@ -16,24 +16,23 @@
 package com.intellij.idea;
 
 import com.intellij.openapi.util.io.FileUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
-/**
- * @author mike
- */
-@Bombed(day = 20, month = Calendar.JUNE)
-public class LockSupportTest extends TestCase {
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
+public class LockSupportTest {
+  @Test(timeout = 30000)
   public void testLock() throws Exception {
-    final SocketLock lock = new SocketLock();
     File temp = FileUtil.createTempDirectory("c", null);
+    SocketLock lock = new SocketLock(temp.getPath() + "/c", temp.getPath() + "/s");
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock(temp.getPath() + "/c", temp.getPath() + "/s"));
+      assertThat(lock.lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
     }
     finally {
       lock.dispose();
@@ -42,17 +41,18 @@ public class LockSupportTest extends TestCase {
     }
   }
 
+  @Test(timeout = 30000)
   public void testTwoLocks() throws Exception {
     List<SocketLock> toClose = new ArrayList<SocketLock>();
     File temp = FileUtil.createTempDirectory("c", null);
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose).lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose).lock(temp.getPath() + "/1.1", temp.getPath() + "/1-1"));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose).lock(temp.getPath() + "/2", temp.getPath() + "/2-"));
+      assertThat(createLock(toClose, temp, "1", "1-").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
+      assertThat(createLock(toClose, temp, "1.1", "1-1").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
+      assertThat(createLock(toClose, temp, "2", "2-").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
 
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose).lock(temp.getPath() + "/2", temp.getPath() + "/2-"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose).lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose).lock(temp.getPath() + "/1.1", temp.getPath() + "/1-1"));
+      assertThat(createLock(toClose, temp, "2", "2-").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
+      assertThat(createLock(toClose, temp, "1", "1-").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
+      assertThat(createLock(toClose, temp, "1.1", "1-1").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
     }
     finally {
       for (SocketLock lock : toClose) {
@@ -64,23 +64,25 @@ public class LockSupportTest extends TestCase {
   }
 
   @NotNull
-  private static SocketLock createLock(@NotNull List<SocketLock> toClose) {
-    SocketLock lock1 = new SocketLock();
-    toClose.add(lock1);
-    return lock1;
+  private static SocketLock createLock(@NotNull List<SocketLock> toClose, @NotNull File dir, @NotNull String c, @NotNull String s) {
+    SocketLock lock = new SocketLock(dir.getPath() + "/" + c, dir.getPath() + "/" + s);
+    toClose.add(lock);
+    return lock;
   }
 
+  @Test(timeout = 30000)
   public void testDispose() throws Exception {
-    final SocketLock lock1 = new SocketLock();
-    final SocketLock lock2 = new SocketLock();
-
     File temp = FileUtil.createTempDirectory("c", null);
+
+    SocketLock lock1 = new SocketLock(temp.getPath() + "/1", temp.getPath() + "/1-");
+    SocketLock lock2 = new SocketLock(temp.getPath() + "/1", temp.getPath() + "/1-");
+
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
+      assertThat(lock1.lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
+      assertThat(lock2.lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
 
       lock1.dispose();
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
+      assertThat(lock2.lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
       lock2.dispose();
     }
     finally {

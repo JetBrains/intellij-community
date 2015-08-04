@@ -85,14 +85,6 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   }
 
   @Override
-  public boolean isHierarhyEnabled() {
-    for (XmlNSDescriptor descriptor : sequence) {
-      if (descriptor.isHierarhyEnabled()) return true;
-    }
-    return false;
-  }
-
-  @Override
   public PsiElement getDeclaration(){
     for (XmlNSDescriptor descriptor : sequence) {
       final PsiElement declaration = descriptor.getDeclaration();

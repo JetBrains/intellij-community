@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   ActionCallback queueSelection(final Configurable configurable) {
     if (myBuilder.isSelectionBeingAdjusted()) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
     final ActionCallback callback = new ActionCallback();
@@ -585,16 +585,16 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   public ActionCallback onModifiedAdded(final Configurable colleague) {
     myTree.repaint();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   public ActionCallback onModifiedRemoved(final Configurable configurable) {
     myTree.repaint();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   public ActionCallback onErrorsChanged() {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   public void processTextEvent(KeyEvent e) {

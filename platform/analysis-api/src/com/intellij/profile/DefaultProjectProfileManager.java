@@ -255,17 +255,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   public static class ProfileStateSplitter extends MainConfigurationStateSplitter {
     @NotNull
     @Override
-    protected String getSubStateFileName(@NotNull Element element) {
-      for (Element option : element.getChildren("option")) {
-        if (option.getAttributeValue("name").equals("myName")) {
-          return option.getAttributeValue("value");
-        }
-      }
-      throw new IllegalStateException();
-    }
-
-    @NotNull
-    @Override
     protected String getComponentStateFileName() {
       return "profiles_settings";
     }

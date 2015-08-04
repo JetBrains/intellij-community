@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -48,6 +47,7 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import com.theoryinpractice.testng.model.TestType;
+import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -64,7 +64,7 @@ public class ConfigurationsTest {
   public void setUp() throws Exception {
     JavaTestFixtureFactory.getFixtureFactory();   // registers Java module fixture builder
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder(getClass().getSimpleName());
     myFixture = fixtureFactory.createTempDirTestFixture();
     myFixture.setUp();
 
@@ -108,7 +108,7 @@ public class ConfigurationsTest {
     renameClass.setSearchInComments(false);
     renameClass.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         renameClass.run();
       }
     }.execute();
@@ -120,7 +120,7 @@ public class ConfigurationsTest {
     renameNotATestMethod.setSearchInComments(false);
     renameNotATestMethod.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         renameNotATestMethod.run();
       }
     }.execute();
@@ -144,7 +144,7 @@ public class ConfigurationsTest {
     renameMethod.setSearchInComments(false);
     renameMethod.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         renameMethod.run();
       }
     }.execute();
@@ -157,7 +157,7 @@ public class ConfigurationsTest {
     renameNotATestMethod1.setSearchInComments(false);
     renameNotATestMethod1.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         renameNotATestMethod1.run();
       }
     }.execute();

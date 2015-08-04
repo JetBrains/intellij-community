@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +30,28 @@ import org.jetbrains.annotations.Nullable;
 public final class DefiniteAssignmentUtil {
 
   public static void checkVariable(PsiVariable variable, DefiniteAssignment definiteAssignment) {
+    if (variable.getInitializer() != null) {
+      throw new IllegalArgumentException("variable has initializer, check for assignment to the field");
+    }
     if (variable instanceof PsiField) {
       final PsiField field = (PsiField)variable;
       checkField(field, definiteAssignment);
+    }
+    else if (variable instanceof PsiParameter) {
+      throw new IllegalArgumentException("parameter has implicit initializer, check for assignment to the parameter");
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      final PsiLocalVariable localVariable = (PsiLocalVariable)variable;
+      final PsiElement parent = localVariable.getParent();
+      assert parent instanceof PsiDeclarationStatement;
+      PsiStatement statement = (PsiStatement)parent;
+      while (statement != null) {
+        checkStatement(statement, definiteAssignment);
+        statement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+      }
+    }
+    else {
+      assert false;
     }
   }
 
@@ -44,42 +64,22 @@ public final class DefiniteAssignmentUtil {
       return;
     }
     final PsiElement[] children = aClass.getChildren();
-    if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      for (PsiElement child : children) {
-        if (child instanceof PsiField) {
-          final PsiField otherField = (PsiField)child;
-          if (!otherField.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
+    final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    for (PsiElement child : children) {
+      if (child instanceof PsiField) {
+        final PsiField otherField = (PsiField)child;
+        if (otherField.hasModifierProperty(PsiModifier.STATIC) == isStatic) {
           checkExpression(otherField.getInitializer(), definiteAssignment, BooleanExpressionValue.UNDEFINED);
         }
-        else if (child instanceof PsiClassInitializer) {
-          final PsiClassInitializer classInitializer = (PsiClassInitializer)child;
-          if (!classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
+      }
+      else if (child instanceof PsiClassInitializer) {
+        final PsiClassInitializer classInitializer = (PsiClassInitializer)child;
+        if (classInitializer.hasModifierProperty(PsiModifier.STATIC) == isStatic) {
           checkCodeBlock(classInitializer.getBody(), definiteAssignment);
         }
       }
     }
-    else {
-      for (PsiElement child : children) {
-        if (child instanceof PsiField) {
-          final PsiField otherField = (PsiField)child;
-          if (otherField.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          checkExpression(otherField.getInitializer(), definiteAssignment, BooleanExpressionValue.UNDEFINED);
-        }
-        else if (child instanceof PsiClassInitializer) {
-          final PsiClassInitializer classInitializer = (PsiClassInitializer)child;
-          if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          checkCodeBlock(classInitializer.getBody(), definiteAssignment);
-        }
-        if (definiteAssignment.stop()) return;
-      }
+    if (!isStatic) {
       final PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length != 0) { // missing from spec?
         final boolean da = definiteAssignment.isDefinitelyAssigned();
@@ -481,14 +481,9 @@ public final class DefiniteAssignmentUtil {
     }
     if (PsiType.BOOLEAN.equals(expression.getType())) {
       final Object result = ExpressionUtils.computeConstantExpression(expression);
-      if (Boolean.TRUE == result) {
-        if (BooleanExpressionValue.WHEN_FALSE == value) {
-          definiteAssignment.set(true, true);
-        }
-        return;
-      }
-      else if (Boolean.FALSE == result) {
-        if (BooleanExpressionValue.WHEN_TRUE == value) {
+      if (result != null) {
+        if (Boolean.TRUE == result && BooleanExpressionValue.WHEN_FALSE == value ||
+            Boolean.FALSE == result && BooleanExpressionValue.WHEN_TRUE == value) {
           definiteAssignment.set(true, true);
         }
         return;

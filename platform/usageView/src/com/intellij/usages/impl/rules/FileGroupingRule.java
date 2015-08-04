@@ -18,6 +18,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -40,7 +41,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class FileGroupingRule implements UsageGroupingRule {
+public class FileGroupingRule implements UsageGroupingRule, DumbAware {
   private final Project myProject;
 
   public FileGroupingRule(Project project) {

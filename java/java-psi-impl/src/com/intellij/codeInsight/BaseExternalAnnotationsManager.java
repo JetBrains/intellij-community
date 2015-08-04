@@ -28,6 +28,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -399,6 +400,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   private static PsiAnnotation markAsExternalAnnotation(@NotNull PsiAnnotation annotation) {
     annotation.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
+    ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).markReadOnly();
     return annotation;
   }
 

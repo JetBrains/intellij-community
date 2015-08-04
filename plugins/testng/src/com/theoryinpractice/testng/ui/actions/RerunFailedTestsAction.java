@@ -37,7 +37,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
 
   @Override
   protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
-    final TestNGConfiguration configuration = (TestNGConfiguration)getModel().getProperties().getConfiguration();
+    final TestNGConfiguration configuration = (TestNGConfiguration)myConsoleProperties.getConfiguration();
     final List<AbstractTestProxy> failedTests = getFailedTests(configuration.getProject());
     return new MyRunProfile(configuration) {
       @Override

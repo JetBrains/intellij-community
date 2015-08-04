@@ -34,11 +34,6 @@ public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
 
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public XmlFoldingTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   private void doTest() throws Throwable {
     doTest(".html");
   }

@@ -37,7 +37,7 @@ public class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
   public static final Color GREEN = new JBColor(new Color(0x6cad74), new Color(0x4a8c53));
-  public static final Color RED = new JBColor(new Color(0xd67b76), new Color(0xb25050));
+  public static final Color RED = new JBColor(new Color(0xd67b76), new Color(0xe55757));
   public static final Color BLUE = new JBColor(new Color(1, 68, 208), JBColor.blue);
   public static final Color YELLOW = new JBColor(new Color(0xa67a21), new Color(0x91703a));
   private static final Color SHADOW1 = new JBColor(Gray._190, UIUtil.getBorderColor()) ;

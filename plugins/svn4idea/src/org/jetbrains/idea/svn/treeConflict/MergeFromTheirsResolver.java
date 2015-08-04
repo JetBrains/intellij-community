@@ -35,7 +35,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
-import com.intellij.openapi.vcs.changes.patch.FilePatchInProgress;
+import com.intellij.openapi.vcs.changes.patch.TextFilePatchInProgress;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -226,7 +226,7 @@ public class MergeFromTheirsResolver {
     }
   }
 
-  private class TreeConflictApplyTheirsPatchExecutor implements ApplyPatchExecutor {
+  private class TreeConflictApplyTheirsPatchExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
     private final SvnVcs myVcs;
     private final ContinuationContext myInner;
     private final VirtualFile myBaseDir;
@@ -243,7 +243,7 @@ public class MergeFromTheirsResolver {
     }
 
     @Override
-    public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups, LocalChangeList localList, String fileName,
+    public void apply(MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups, LocalChangeList localList, String fileName,
                       TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       final List<FilePatch> patches;
       try {
@@ -256,7 +256,7 @@ public class MergeFromTheirsResolver {
 
       final PatchApplier<BinaryFilePatch> patchApplier =
         new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null, null);
-      patchApplier.scheduleSelf(false, myInner, true);  // 3
+      patchApplier.execute(false, true);  // 3
       boolean thereAreCreations = false;
       for (FilePatch patch : patches) {
         if (patch.isNewFile() || ! Comparing.equal(patch.getAfterName(), patch.getBeforeName())) {

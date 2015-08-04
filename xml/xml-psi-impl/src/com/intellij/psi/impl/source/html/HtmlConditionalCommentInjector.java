@@ -21,6 +21,7 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -88,7 +89,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
     Language language = host.getParent().getLanguage();
     ASTNode conditionalStart = pair.first;
     ASTNode conditionalEnd = pair.second;
-    TextRange range = new TextRange(conditionalStart.getTextRange().getEndOffset() - startOffset, conditionalEnd.getStartOffset() - startOffset);
+    TextRange range = new UnfairTextRange(conditionalStart.getTextRange().getEndOffset() - startOffset, conditionalEnd.getStartOffset() - startOffset);
     if (range.getStartOffset() < range.getEndOffset()) {
       registrar.startInjecting(language).addPlace(null, null, (PsiLanguageInjectionHost)host, range).doneInjecting();
     }

@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -41,10 +42,10 @@ public class PyUnconditionalStatementPartFixer extends PyFixer<PyElement> {
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyElement psiElement)
     throws IncorrectOperationException {
     if (PyUtil.instanceOf(psiElement, PyElsePart.class, PyTryPart.class, PyFinallyPart.class)) {
-      final PsiElement colon = PyUtil.getFirstChildOfType(psiElement, PyTokenTypes.COLON);
+      final PsiElement colon = PyPsiUtils.getFirstChildOfType(psiElement, PyTokenTypes.COLON);
       if (colon == null) {
         final TokenSet keywords = TokenSet.create(PyTokenTypes.ELSE_KEYWORD, PyTokenTypes.TRY_KEYWORD, PyTokenTypes.FINALLY_KEYWORD);
-        final PsiElement keywordToken = PyUtil.getChildByFilter(psiElement, keywords, 0);
+        final PsiElement keywordToken = PyPsiUtils.getChildByFilter(psiElement, keywords, 0);
         editor.getDocument().insertString(sure(keywordToken).getTextRange().getEndOffset(), ":");
       }
     }

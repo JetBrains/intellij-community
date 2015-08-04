@@ -40,7 +40,8 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   protected void applyRootProfile(String name, boolean isShared) {
     if (isShared) {
       myProjectProfileManager.setProjectProfile(name);
-    } else {
+    }
+    else {
       myProfileManager.setRootProfile(name);
       myProjectProfileManager.setProjectProfile(null);
     }

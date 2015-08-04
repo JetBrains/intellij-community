@@ -62,7 +62,7 @@ public final class PooledThreadExecutor  {
             }
           }
         };
-        if (ApplicationInfoImpl.getShadowInstance().isEAP() && count > ourReasonableThreadPoolSize) {
+        if (count > ourReasonableThreadPoolSize && ApplicationInfoImpl.getShadowInstance().isEAP()) {
           File file = PerformanceWatcher.getInstance().dumpThreads("newPooledThread/", true);
           LOG.info("Not enough pooled threads" +
                    (file != null ? "; dumped threads into file '"+file.getPath()+"'" : ""));

@@ -64,6 +64,11 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
   }
 
   @Override
+  public void bookmarksOrderChanged() {
+    updateChildren();
+  }
+
+  @Override
   public String getListName(Project project) {
     return "Bookmarks";
   }

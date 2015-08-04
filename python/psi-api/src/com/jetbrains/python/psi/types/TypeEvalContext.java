@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -30,12 +31,6 @@ import java.util.*;
  * @author yole
  */
 public class TypeEvalContext {
-
-  /**
-   * Contexts are cached here to prevent useless recreations (and cache loss)
-   */
-  @NotNull
-  private static final TypeEvalContextCache CACHE = new TypeEvalContextCache();
 
   public static class Key {
     private static final Key INSTANCE = new Key();
@@ -94,7 +89,7 @@ public class TypeEvalContext {
    * the analyzed code was called or may be called. Since this is basically guesswork, the results should be used only for code completion.
    */
   public static TypeEvalContext codeCompletion(@NotNull final Project project, @Nullable final PsiFile origin) {
-    return CACHE.getContext(project, new TypeEvalContext(true, true, true, origin));
+    return getContextFromCache(project, new TypeEvalContext(true, true, true, origin));
   }
 
   /**
@@ -105,7 +100,7 @@ public class TypeEvalContext {
    * For code completion see {@link TypeEvalContext#codeCompletion(Project, PsiFile)}.
    */
   public static TypeEvalContext userInitiated(@NotNull final Project project, @Nullable final PsiFile origin) {
-    return CACHE.getContext(project, new TypeEvalContext(true, true, false, origin));
+    return getContextFromCache(project, new TypeEvalContext(true, true, false, origin));
   }
 
   /**
@@ -115,7 +110,7 @@ public class TypeEvalContext {
    * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
    */
   public static TypeEvalContext codeAnalysis(@NotNull final Project project, @Nullable final PsiFile origin) {
-    return CACHE.getContext(project, new TypeEvalContext(false, false, false, origin));
+    return getContextFromCache(project, new TypeEvalContext(false, false, false, origin));
   }
 
   /**
@@ -128,7 +123,7 @@ public class TypeEvalContext {
   public static TypeEvalContext codeInsightFallback(@Nullable final Project project) {
     final TypeEvalContext anchor = new TypeEvalContext(false, false, false, null);
     if (project != null) {
-      return CACHE.getContext(project, anchor);
+      return getContextFromCache(project, anchor);
     }
     return anchor;
   }
@@ -139,7 +134,20 @@ public class TypeEvalContext {
    * Should be used only when normal code insight context is not enough for getting good results.
    */
   public static TypeEvalContext deepCodeInsight(@NotNull final Project project) {
-    return CACHE.getContext(project, new TypeEvalContext(false, true, false, null));
+    return getContextFromCache(project, new TypeEvalContext(false, true, false, null));
+  }
+
+  /**
+   * Moves context through cache returning one from cache (if exists).
+   *
+   * @param project current project
+   * @param context context to fetch from cache
+   * @return context to use
+   * @see TypeEvalContextCache#getContext(TypeEvalContext)
+   */
+  @NotNull
+  private static TypeEvalContext getContextFromCache(@NotNull final Project project, @NotNull final TypeEvalContext context) {
+    return ServiceManager.getService(project, TypeEvalContextCache.class).getContext(context);
   }
 
   public TypeEvalContext withTracing() {
@@ -191,7 +199,7 @@ public class TypeEvalContext {
         }
       }
       final PyType type = element.getType(this, Key.INSTANCE);
-       assertValid(type, element);
+      assertValid(type, element);
       synchronized (myEvaluated) {
         myEvaluated.put(element, type);
       }

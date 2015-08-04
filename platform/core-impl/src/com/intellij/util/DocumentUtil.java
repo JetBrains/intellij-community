@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -93,5 +94,10 @@ public final class DocumentUtil {
     }
     int lineNumber = document.getLineNumber(offset);
     return document.getLineStartOffset(lineNumber);
+  }
+
+  @NotNull
+  public static TextRange getLineTextRange(@NotNull Document document, int line) {
+    return TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
   }
 }

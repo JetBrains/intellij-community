@@ -27,6 +27,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @NotNull private String myModuleFilePath;
   @Nullable private String group;
   @Nullable private String version;
+  @Nullable private String description;
   @NotNull private List<File> myArtifacts;
 
   private boolean myInheritProjectCompileOutputPath = true;
@@ -127,6 +128,15 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.version = version;
   }
 
+  @Nullable
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(@Nullable String description) {
+    this.description = description;
+  }
+
   @NotNull
   public List<File> getArtifacts() {
     return myArtifacts;
@@ -146,6 +156,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     if (group != null ? !group.equals(that.group) : that.group != null) return false;
     if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
     if (version != null ? !version.equals(that.version) : that.version != null) return false;
+    if (description != null ? !description.equals(that.description) : that.description != null) return false;
 
     return true;
   }
@@ -156,6 +167,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     result = 31 * result + myModuleTypeId.hashCode();
     result = 31 * result + (group != null ? group.hashCode() : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
+    result = 31 * result + (description != null ? description.hashCode() : 0);
     return result;
   }
 

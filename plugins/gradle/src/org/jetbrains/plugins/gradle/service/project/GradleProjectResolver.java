@@ -30,9 +30,9 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
@@ -288,8 +288,15 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private void handleBuildSrcProject(@NotNull final DataNode<ProjectData> resultProjectDataNode,
                                      @NotNull final ProjectConnectionDataNodeFunction projectConnectionDataNodeFunction) {
 
-    if (projectConnectionDataNodeFunction.myIsPreviewMode
-        || !new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) {
+    if (!new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) {
+      return;
+    }
+
+    if (projectConnectionDataNodeFunction.myIsPreviewMode) {
+      ModuleData buildSrcModuleData =
+        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), "buildSrc",
+                       projectConnectionDataNodeFunction.myProjectPath, projectConnectionDataNodeFunction.myProjectPath);
+      resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
     }
 

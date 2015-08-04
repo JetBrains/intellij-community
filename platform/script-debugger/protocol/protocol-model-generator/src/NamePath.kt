@@ -7,7 +7,7 @@ data class NamePath(val lastComponent: String, val parent: NamePath? = null) {
       var current: NamePath? = this
       while (current != null) {
         res++
-        current = current!!.parent
+        current = current.parent
       }
     }
     return res

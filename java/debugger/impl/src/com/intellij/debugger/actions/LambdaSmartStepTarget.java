@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiSubstitutor;
@@ -51,7 +50,7 @@ public class LambdaSmartStepTarget extends SmartStepTarget{
   @Nullable
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.Function;
+    return myLambda.getIcon(0);
   }
 
   @NotNull

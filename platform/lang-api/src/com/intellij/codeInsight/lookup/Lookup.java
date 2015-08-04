@@ -54,6 +54,7 @@ public interface Lookup {
   @Nullable
   PsiElement getPsiElement();
 
+  @NotNull 
   Editor getEditor();
 
   PsiFile getPsiFile();

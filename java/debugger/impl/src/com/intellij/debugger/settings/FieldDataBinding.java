@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Field;
-
-import com.intellij.debugger.DebuggerBundle;
 
 /**
  * @author Eugene Zhuravlev
@@ -71,17 +71,11 @@ public abstract class FieldDataBinding implements DataBinding{
   protected abstract boolean isModified(Object obj, Field field) throws IllegalAccessException;
 
   private Field findField(Object from) {
-    final Class objectClass = Object.class;
-    for (Class aClass = from.getClass(); !aClass.equals(objectClass); aClass = aClass.getSuperclass()) {
-      try {
-        final Field field = aClass.getDeclaredField(myFieldName);
-        field.setAccessible(true);
-        return field;
-      }
-      catch (NoSuchFieldException e) {
-        // ignored, just continue
-      }
+    try {
+      return ReflectionUtil.findField(from.getClass(), null, myFieldName);
     }
-    throw new RuntimeException(DebuggerBundle.message("error.field.not.found.in.class", myFieldName, from.getClass().getName()));
+    catch (NoSuchFieldException e) {
+      throw new RuntimeException(DebuggerBundle.message("error.field.not.found.in.class", myFieldName, from.getClass().getName()));
+    }
   }
 }

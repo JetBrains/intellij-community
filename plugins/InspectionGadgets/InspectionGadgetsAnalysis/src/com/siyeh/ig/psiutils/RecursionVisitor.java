@@ -18,14 +18,13 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class RecursionVisitor extends JavaRecursiveElementVisitor {
+class RecursionVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  private boolean recursive = false;
+  private boolean recursive;
   private final PsiMethod method;
   private final String methodName;
 
-  public RecursionVisitor(@NotNull PsiMethod method) {
-    super();
+  RecursionVisitor(@NotNull PsiMethod method) {
     this.method = method;
     methodName = method.getName();
   }

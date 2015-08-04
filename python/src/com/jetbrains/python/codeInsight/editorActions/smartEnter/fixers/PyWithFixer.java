@@ -23,9 +23,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,8 +38,8 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
 
   @Override
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyWithStatement withStatement) throws IncorrectOperationException {
-    final PsiElement colonToken = PyUtil.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
-    final PsiElement withToken = PyUtil.getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
+    final PsiElement colonToken = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
+    final PsiElement withToken = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
     final Document document = editor.getDocument();
     if (colonToken == null && withToken != null) {
       int insertAt = withToken.getTextRange().getEndOffset();
@@ -52,7 +52,7 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
       else {
         final PyExpression expression = lastItem.getExpression();
         insertAt = expression.getTextRange().getEndOffset();
-        final PsiElement asToken = PyUtil.getFirstChildOfType(lastItem, PyTokenTypes.AS_KEYWORD);
+        final PsiElement asToken = PyPsiUtils.getFirstChildOfType(lastItem, PyTokenTypes.AS_KEYWORD);
         if (asToken != null) {
           insertAt = asToken.getTextRange().getEndOffset();
           final PyExpression target = lastItem.getTarget();

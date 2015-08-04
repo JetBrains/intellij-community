@@ -41,6 +41,8 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private final SelectedTextFormatter mySelectedTextFormatter;
   private SpacesPanelWithoutPreview mySpacesPanel;
 
+  private Runnable mySomethingChangedCallback;
+
   public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
                                             @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
                                             @NotNull Language language,
@@ -51,6 +53,15 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     mySelectedTextFormatter = selectedTextFormatter;
 
     ensureTabs();
+  }
+
+  public void setOnSomethingChangedCallback(Runnable runnable) {
+    mySomethingChangedCallback = runnable;
+  }
+
+  @Override
+  protected void somethingChanged() {
+    mySomethingChangedCallback.run();
   }
 
   @Override
@@ -101,6 +112,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     protected void somethingChanged() {
       mySelectedTextFormatter.restoreSelectedText();
       reformatSelectedTextWithNewSettings();
+      CodeFragmentCodeStyleSettingsPanel.this.somethingChanged();
     }
 
     @Override
@@ -199,6 +211,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     protected void somethingChanged() {
       mySelectedTextFormatter.restoreSelectedText();
       reformatSelectedTextWithNewSettings();
+      CodeFragmentCodeStyleSettingsPanel.this.somethingChanged();
     }
     
     @Override

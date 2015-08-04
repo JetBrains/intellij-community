@@ -59,6 +59,11 @@ public class Ref<T> {
     return new Ref<T>(value);
   }
 
+  @Nullable
+  public static <T> T deref(@Nullable Ref<T> ref) {
+    return ref == null ? null : ref.get();
+  } 
+
   @Override
   public String toString() {
     return String.valueOf(myValue);

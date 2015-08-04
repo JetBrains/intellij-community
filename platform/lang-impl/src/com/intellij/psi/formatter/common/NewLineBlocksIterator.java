@@ -19,10 +19,7 @@ import com.intellij.formatting.Block;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 
 public class NewLineBlocksIterator implements Iterator<Block> {
@@ -74,19 +71,18 @@ public class NewLineBlocksIterator implements Iterator<Block> {
   }
 
   private void popUntilTopBlockStartOffsetGreaterOrEqual(final int lineStartOffset) {
-    if (myStack.isEmpty()) return;
-
-    Block current = myStack.peek();
-    TextRange range = current.getTextRange();
-    int currentStartOffset = range.getStartOffset();
-    int currentEndOffset = range.getEndOffset();
-
-    if (currentStartOffset < lineStartOffset) {
-      myStack.pop();
-      if (currentEndOffset > lineStartOffset) {
-        pushAll(current);
+    while (!myStack.isEmpty()) {
+      Block current = myStack.peek();
+      TextRange range = current.getTextRange();
+      if (range.getStartOffset() < lineStartOffset) {
+        myStack.pop();
+        if (range.getEndOffset() > lineStartOffset) {
+          pushAll(current);
+        }
       }
-      popUntilTopBlockStartOffsetGreaterOrEqual(lineStartOffset);
+      else {
+        break;
+      }
     }
   }
 
@@ -97,13 +93,14 @@ public class NewLineBlocksIterator implements Iterator<Block> {
     }
 
     List<Block> blocks = current.getSubBlocks();
-    Collections.reverse(blocks);
-    for (Block block : blocks) {
-      myStack.push(block);
+    ListIterator<Block> iterator = blocks.listIterator(blocks.size());
+    while (iterator.hasPrevious()) {
+      myStack.push(iterator.previous());
     }
   }
 
   @Override
   public void remove() {
+    throw new UnsupportedOperationException();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,24 @@ import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResult;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class GitCloneDialog extends CloneDvcsDialog {
 
   public GitCloneDialog(@NotNull Project project) {
-    super(project, GitVcs.NAME, GitUtil.DOT_GIT);
+    this(project, null);
+  }
+
+  public GitCloneDialog(@NotNull Project project, @Nullable String defaultUrl) {
+    super(project, GitVcs.NAME, GitUtil.DOT_GIT, defaultUrl);
   }
 
   protected boolean test(@NotNull String url) {

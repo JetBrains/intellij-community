@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PublicMethodWithoutLoggingInspectionBase extends BaseInspection {
-  protected final List<String> loggerClassNames = new ArrayList<String>();
+class PublicMethodWithoutLoggingInspectionBase extends BaseInspection {
+  final List<String> loggerClassNames = new ArrayList<String>();
   @SuppressWarnings("PublicField")
   public String loggerClassName = "java.util.logging.Logger" + ',' +
                                   "org.slf4j.Logger" + ',' +
@@ -100,9 +100,8 @@ public class PublicMethodWithoutLoggingInspectionBase extends BaseInspection {
     }
   }
 
-  private class ContainsLoggingCallVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean containsLoggingCall = false;
+  private class ContainsLoggingCallVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean containsLoggingCall;
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
@@ -135,7 +134,7 @@ public class PublicMethodWithoutLoggingInspectionBase extends BaseInspection {
       }
     }
 
-    public boolean containsLoggingCall() {
+    private boolean containsLoggingCall() {
       return containsLoggingCall;
     }
   }

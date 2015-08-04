@@ -46,12 +46,16 @@ public class StorageData extends StorageDataBase {
     this(COMPONENT);
   }
 
+  public boolean isDirty() {
+    return false;
+  }
+
   public StorageData(@NotNull String rootElementName) {
     myStates = new StateMap();
     myRootElementName = rootElementName;
   }
 
-  StorageData(@NotNull StorageData storageData) {
+  protected StorageData(@NotNull StorageData storageData) {
     myRootElementName = storageData.myRootElementName;
     myStates = new StateMap(storageData.myStates);
   }

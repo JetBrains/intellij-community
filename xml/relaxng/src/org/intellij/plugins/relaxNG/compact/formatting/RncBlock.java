@@ -70,6 +70,7 @@ class RncBlock implements Block {
   @Override
   @Nullable
   public Indent getIndent() {
+    if (myNode.getTreeParent() == null) return null;
     if (isTopLevel()) {
       return Indent.getAbsoluteNoneIndent();
     } else if (myNode.getTreeParent().getPsi() instanceof RncGrammar && !RncTokenTypes.BRACES.contains(myNode.getElementType())) {

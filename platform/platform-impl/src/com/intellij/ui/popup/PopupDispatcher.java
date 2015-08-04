@@ -164,4 +164,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
 
     return disposeActiveWizard();
   }
+
+  @Override
+  public void setRestoreFocusSilentely() {}
 }

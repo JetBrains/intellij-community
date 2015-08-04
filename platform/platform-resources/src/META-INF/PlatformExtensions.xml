@@ -6,6 +6,13 @@
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
+                        serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
+                        serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>
+
+    <applicationService serviceImplementation="com.intellij.configurationStore.DefaultProjectExportableAndSaveTrigger"/>
+
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                         serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
@@ -161,7 +168,9 @@
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                        serviceImplementation="com.intellij.openapi.options.SchemesManagerFactoryImpl"/>
+                        serviceImplementation="com.intellij.configurationStore.ApplicationSchemeManagerFactory"/>
+    <projectService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
+                    serviceImplementation="com.intellij.configurationStore.ProjectSchemeManagerFactory"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
@@ -194,6 +203,8 @@
 
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
 
+    <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
+
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
@@ -218,6 +229,7 @@
                     serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.project.DumbPermissionService" serviceImplementation="com.intellij.openapi.project.DumbPermissionServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"
                     serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
@@ -233,7 +245,9 @@
 
     <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
                     serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
-
+    
+    <projectService serviceInterface="com.intellij.execution.testframework.sm.TestHistoryConfiguration"
+                    serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
                     serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 
@@ -306,6 +320,8 @@
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
+    <projectService serviceImplementation="com.intellij.ui.switcher.SwitchManager"/>
+
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <componentConfigurationMerger implementation="com.intellij.openapi.vcs.changes.shelf.ShelfManagerConfigurationMerger"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
@@ -333,6 +349,8 @@
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>
+
+    <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
 
     <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>
     <virtualFileSystem key="http" implementationClass="com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl"/>
@@ -391,5 +409,6 @@
 
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
+    <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
   </extensions>
 </idea-plugin>

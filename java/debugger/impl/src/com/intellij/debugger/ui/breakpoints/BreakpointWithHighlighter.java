@@ -190,7 +190,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return sourcePosition != null && sourcePosition.getFile().isValid() ? Boolean.TRUE : Boolean.FALSE;
+        return sourcePosition != null && sourcePosition.getFile().isValid();
       }
     }).booleanValue();
   }

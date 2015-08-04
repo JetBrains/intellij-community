@@ -423,8 +423,9 @@ class PyDB:
                 pydev_log.error_once(
                     'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
-            if isThreadAlive(t) and not t.isDaemon():
-                return True
+            if isThreadAlive(t):
+                if not t.isDaemon() or hasattr(t, "__pydevd_main_thread"):
+                    return True
 
         return False
 
@@ -589,11 +590,11 @@ class PyDB:
                                     # add import hooks for matplotlib patches if only debug console was started
                                     try:
                                         self.init_matplotlib_in_debug_console()
-                                        self.mpl_hooks_in_debug_console = True
                                         self.mpl_in_use = True
                                     except:
-                                        pydev_log.error("Matplotlib support in debug console failed\n")
-                                        traceback.print_exc()
+                                        PydevdLog(2, "Matplotlib support in debug console failed", traceback.format_exc())
+                                    finally:
+                                        self.mpl_hooks_in_debug_console = True
 
                                 if int_cmd.canBeExecutedBy(curr_thread_id):
                                     PydevdLog(2, "processing internal command ", str(int_cmd))
@@ -2034,7 +2035,7 @@ def _locked_settrace(
 
         PyDBCommandThread(debugger).start()
         CheckOutputThread(debugger).start()
-        
+
         #Suspend as the last thing after all tracing is in place.
         if suspend:
             debugger.setSuspend(t, CMD_THREAD_SUSPEND)

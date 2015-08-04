@@ -156,7 +156,7 @@ public class RecursionManager {
       }
 
       @Override
-      public void prohibitResultCaching(Object since) {
+      public void prohibitResultCaching(@NotNull Object since) {
         MyKey realKey = new MyKey(id, since, false);
         final CalculationStack stack = ourStack.get();
         stack.enableMemoization(realKey, stack.prohibitResultCaching(realKey));

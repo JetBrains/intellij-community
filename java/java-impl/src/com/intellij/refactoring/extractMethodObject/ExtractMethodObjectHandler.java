@@ -20,6 +20,7 @@
  */
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -42,7 +43,7 @@ import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractMethodObjectHandler implements RefactoringActionHandler {
+public class ExtractMethodObjectHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#" + ExtractMethodObjectHandler.class.getName());
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
@@ -51,6 +52,12 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
         invokeOnElements(project, editor, file, selectedValue);
       }
     });
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    final PsiElement[] elements = ExtractMethodHandler.getElements(file.getProject(), editor, file);
+    return elements != null && elements.length > 0;
   }
 
   private static void invokeOnElements(@NotNull final Project project,

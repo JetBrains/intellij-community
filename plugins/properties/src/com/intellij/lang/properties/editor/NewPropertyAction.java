@@ -131,7 +131,7 @@ class NewPropertyAction extends AnAction {
 
     @Override
     public boolean checkInput(final String inputString) {
-      return true;
+      return !inputString.isEmpty();
     }
 
     @Override

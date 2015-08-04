@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.components.impl;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
@@ -27,8 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
@@ -77,6 +78,10 @@ public class ServiceManagerImpl implements BaseComponent {
           if (oldAdapter == null) {
             throw new RuntimeException("Service: " + descriptor.getInterface() + " doesn't override anything");
           }
+        }
+
+        if (!ComponentManagerImpl.isComponentSuitableForOs(descriptor.os)) {
+          return;
         }
 
         // empty serviceImplementation means we want to unregister service
@@ -144,9 +149,9 @@ public class ServiceManagerImpl implements BaseComponent {
           continue;
         }
 
-        ComponentConfig config = componentManager.getConfig(aClass);
-        if (config != null) {
-          processor.process(aClass, config.pluginDescriptor);
+        PluginId pluginId = componentManager.getConfig(aClass);
+        if (pluginId != null) {
+          processor.process(aClass, PluginManager.getPlugin(pluginId));
         }
       }
     }
@@ -190,61 +195,65 @@ public class ServiceManagerImpl implements BaseComponent {
 
     @Override
     public Class getComponentImplementation() {
-      return loadClass(myDescriptor.getInterface());
-    }
-
-    private Class loadClass(final String className) {
-      try {
-        final ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-
-        return Class.forName(className, true, classLoader);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+      return getDelegate().getComponentImplementation();
     }
 
     @Override
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
       Object instance = myInitializedComponentInstance;
-      if (instance != null) return instance;
+      if (instance != null) {
+        return instance;
+      }
 
-      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
-        @Override
-        public Object compute() {
+      AccessToken readToken = Registry.is("use.read.action.to.init.service", true) ? ReadAction.start() : null;
+      try {
+        synchronized (this) {
+          instance = myInitializedComponentInstance;
+          if (instance != null) {
+            // DCL is fine, field is volatile
+            return instance;
+          }
+
+          ComponentAdapter delegate = getDelegate();
           // prevent storages from flushing and blocking FS
           AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
           try {
-            synchronized (MyComponentAdapter.this) {
-              Object instance = myInitializedComponentInstance;
-              if (instance != null) return instance; // DCL is fine, field is volatile
-              myInitializedComponentInstance = instance = initializeInstance(container);
-              return instance;
+            instance = delegate.getComponentInstance(container);
+            if (instance instanceof Disposable) {
+              Disposer.register(myComponentManager, (Disposable)instance);
             }
+
+            myComponentManager.initializeComponent(instance, true);
+
+            myInitializedComponentInstance = instance;
+            return instance;
           }
           finally {
             token.finish();
           }
         }
-      });
-    }
-
-    protected Object initializeInstance(final PicoContainer container) {
-      final Object serviceInstance = getDelegate().getComponentInstance(container);
-      if (serviceInstance instanceof Disposable) {
-        Disposer.register(myComponentManager, (Disposable)serviceInstance);
       }
-
-      myComponentManager.initializeComponent(serviceInstance, true);
-
-      return serviceInstance;
+      finally {
+        if (readToken != null) {
+          readToken.finish();
+        }
+      }
     }
 
+    @NotNull
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.getImplementation()), null, true);
-      }
+        Class<?> implClass;
+        try {
+          ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+          implClass = Class.forName(myDescriptor.getImplementation(), true, classLoader);
+        }
+        catch (ClassNotFoundException e) {
+          throw new RuntimeException(e);
+        }
 
+        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);
+      }
       return myDelegate;
     }
 

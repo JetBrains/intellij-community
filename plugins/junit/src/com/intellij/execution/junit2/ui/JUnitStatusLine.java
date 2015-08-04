@@ -28,6 +28,7 @@ import com.intellij.execution.junit2.ui.model.StateEvent;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
@@ -36,6 +37,10 @@ import com.intellij.ui.SimpleColoredComponent;
 class JUnitStatusLine extends TestStatusLine {
   private final StateInfo myStateInfo = new StateInfo();
   private boolean myTestsBuilt = false;
+
+  JUnitStatusLine() {
+    super();
+  }
 
   public void setModel(final JUnitRunningModel model) {
     myTestsBuilt = true;
@@ -89,6 +94,7 @@ class JUnitStatusLine extends TestStatusLine {
     }
 
     public void updateLabel(final SimpleColoredComponent label) {
+      label.clear();
       final StringBuilder buffer = new StringBuilder();
       if (myDoneEvent != null && myTerminated) {
         String termMessage = generateTermMessage(getTestCount(0));

@@ -29,6 +29,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -158,7 +159,7 @@ class XBreakpointItem extends BreakpointItem {
   public void removed(Project project) {
     final XBreakpointManagerImpl breakpointManager = getManager();
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         breakpointManager.removeBreakpoint(myBreakpoint);
       }
     }.execute();

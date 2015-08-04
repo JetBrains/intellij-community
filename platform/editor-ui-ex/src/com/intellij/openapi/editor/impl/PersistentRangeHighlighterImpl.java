@@ -59,7 +59,7 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     // todo Denis Zhdanov
     DocumentEventImpl event = (DocumentEventImpl)e;
-    final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this);
+    final boolean shouldTranslateViaDiff = isValid() && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this);
     boolean wasTranslatedViaDiff = shouldTranslateViaDiff;
     if (shouldTranslateViaDiff) {
       wasTranslatedViaDiff = translatedViaDiff(e, event);

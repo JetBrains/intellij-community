@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.groovy;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -76,8 +77,8 @@ class ForkedGroovyc implements GroovycFlavor {
     if ("false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
       vmParams.add("-D" + GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY + "=false");
     }
-    String configScript = System.getProperty(GroovyRtConstants.GROOVYC_CONFIG_SCRIPT);
-    if (configScript != null) {
+    String configScript = settings.configScript;
+    if (StringUtil.isNotEmpty(configScript)) {
       vmParams.add("-D" + GroovyRtConstants.GROOVYC_CONFIG_SCRIPT + "=" + configScript);
     }
 

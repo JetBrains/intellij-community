@@ -33,8 +33,8 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
-import com.intellij.openapi.vcs.changes.patch.FilePatchInProgress;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
+import com.intellij.openapi.vcs.changes.patch.TextFilePatchInProgress;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +55,7 @@ import java.util.Map;
  * Date: 5/17/12
  * Time: 6:02 PM
  */
-public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
+public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ApplyPatchSaveToFileExecutor.class);
 
   private final Project myProject;
@@ -72,7 +72,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
   }
 
   @Override
-  public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
+  public void apply(MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
                     LocalChangeList localList,
                     String fileName,
                     TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -101,17 +101,17 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
     }
   }
 
-  public static List<FilePatch> patchGroupsToOneGroup(MultiMap<VirtualFile, FilePatchInProgress> patchGroups, VirtualFile baseDir)
+  public static List<FilePatch> patchGroupsToOneGroup(MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups, VirtualFile baseDir)
     throws IOException {
     final List<FilePatch> textPatches = new ArrayList<FilePatch>();
     final String baseDirPath = baseDir.getPath();
 
-    for (Map.Entry<VirtualFile, Collection<FilePatchInProgress>> entry : patchGroups.entrySet()) {
+    for (Map.Entry<VirtualFile, Collection<TextFilePatchInProgress>> entry : patchGroups.entrySet()) {
       final VirtualFile vf = entry.getKey();
       final String currBasePath = vf.getPath();
       final String relativePath = VfsUtilCore.getRelativePath(vf, baseDir, '/');
       final boolean toConvert = !StringUtil.isEmptyOrSpaces(relativePath) && !".".equals(relativePath);
-      for (FilePatchInProgress patchInProgress : entry.getValue()) {
+      for (TextFilePatchInProgress patchInProgress : entry.getValue()) {
         final TextFilePatch patch = patchInProgress.getPatch();
         if (toConvert) {
           //correct paths

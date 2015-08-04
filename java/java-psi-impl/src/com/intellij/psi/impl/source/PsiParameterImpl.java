@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,29 +127,19 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       return stub.getName();
     }
 
-    return getParameterIdentifier().getText();
+    return getNameIdentifier().getText();
   }
 
   @Override
   public final PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    if (this instanceof PsiReceiverParameter) {
-      throw new IncorrectOperationException("Cannot rename receiver parameter");
-    }
-
-    PsiImplUtil.setName(getParameterIdentifier(), name);
+    PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
   @Override
-  public final PsiIdentifier getNameIdentifier() {
-    return PsiTreeUtil.getChildOfType(this, PsiIdentifier.class);
-  }
-
   @NotNull
-  private PsiElement getParameterIdentifier() {
-    PsiJavaToken identifier = PsiTreeUtil.getChildOfAnyType(this, PsiIdentifier.class, PsiKeyword.class);
-    assert identifier != null : getClass() + ":" + getText();
-    return identifier;
+  public final PsiIdentifier getNameIdentifier() {
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiIdentifier.class);
   }
 
   @Override
@@ -187,7 +177,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       return getLambdaParameterType(this);
     }
     else {
-      return JavaSharedImplUtil.getType(typeElement, getParameterIdentifier());
+      return JavaSharedImplUtil.getType(typeElement, getNameIdentifier());
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.java.stubs.JavaParameterElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -35,7 +34,7 @@ public class ParameterElement extends CompositeElement {
 
   @Override
   public int getTextOffset() {
-    ASTNode node = findChildByType(JavaParameterElementType.ID_TYPES);
+    ASTNode node = findChildByType(JavaTokenType.IDENTIFIER);
     return node != null ? node.getStartOffset() : getStartOffset();
   }
 

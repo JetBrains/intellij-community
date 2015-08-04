@@ -138,7 +138,7 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
   @Override
   public void setValue(int n) {
     super.setValue(n);
-    TestsUIUtil.showIconProgress(myProject, n, getMaximum(), myProblemsCounter);
+    TestsUIUtil.showIconProgress(myProject, n, getMaximum(), myProblemsCounter, false);
   }
 
   public void dispose() {

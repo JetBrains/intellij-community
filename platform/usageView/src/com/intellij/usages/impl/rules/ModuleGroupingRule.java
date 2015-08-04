@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usageView.UsageViewBundle;
@@ -38,7 +39,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class ModuleGroupingRule implements UsageGroupingRule {
+public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
   @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (usage instanceof UsageInModule) {

@@ -12,7 +12,7 @@ class MS {
 
   void test(boolean cond) {
     m(cond ? () -> 26 : () -> 24);
-    m<error descr="Cannot resolve method 'm(?)'">(cond ? () -> 26 : () -> new Integer(42))</error>;
+    <error descr="Cannot resolve method 'm(?)'">m</error>(cond ? () -> 26 : () -> new Integer(42));
     m(cond ? () -> new Integer(26) : () -> new Integer(42));
   }
 }

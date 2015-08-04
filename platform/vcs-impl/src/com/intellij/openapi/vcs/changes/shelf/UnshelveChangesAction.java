@@ -83,7 +83,7 @@ public class UnshelveChangesAction extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : changeLists) {
           ShelveChangesManager.getInstance(project)
-            .unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList());
+            .unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList(), true);
         }
       }
     });

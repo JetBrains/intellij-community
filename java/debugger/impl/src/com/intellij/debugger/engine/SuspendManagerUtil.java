@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -49,15 +52,27 @@ public class SuspendManagerUtil {
     }
   }
 
-  public static Set<SuspendContextImpl> getSuspendingContexts(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
+  @NotNull
+  public static Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final Set<SuspendContextImpl> result = new HashSet<SuspendContextImpl>();
-    for (final SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
+    Set<SuspendContextImpl> result = new SmartHashSet<SuspendContextImpl>();
+    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
       if (suspendContext.suspends(thread)) {
         result.add(suspendContext);
       }
     }
     return result;
+  }
+
+  @Nullable
+  public static SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
+      if (suspendContext.suspends(thread)) {
+        return suspendContext;
+      }
+    }
+    return null;
   }
 
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {

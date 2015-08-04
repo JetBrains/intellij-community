@@ -26,7 +26,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -90,14 +93,23 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     return currentRepository != null ? currentRepository.getRoot() : roots.get(0);
   }
 
-  protected final void runFinalTasks(Project project, GitVcs vcs, Set<VirtualFile> affectedRoots, String actionName,
-                                     List<VcsException> exceptions) {
-    VcsFileUtil.refreshFiles(project, affectedRoots);
-    for (TransactionRunnable task : myDelayedTasks) {
-      task.run(exceptions);
-    }
-    myDelayedTasks.clear();
-    vcs.showErrors(exceptions, actionName);
+  protected final void runFinalTasks(@NotNull final Project project,
+                                     @NotNull final GitVcs vcs,
+                                     @NotNull final Set<VirtualFile> affectedRoots,
+                                     @NotNull final String actionName,
+                                     @NotNull final List<VcsException> exceptions) {
+    VfsUtil.markDirty(true, false, ArrayUtil.toObjectArray(affectedRoots, VirtualFile.class));
+    LocalFileSystem.getInstance().refreshFiles(affectedRoots, true, true, new Runnable() {
+      @Override
+      public void run() {
+        VcsFileUtil.markFilesDirty(project, affectedRoots);
+        for (TransactionRunnable task : myDelayedTasks) {
+          task.run(exceptions);
+        }
+        myDelayedTasks.clear();
+        vcs.showErrors(exceptions, actionName);
+      }
+    });
   }
 
   /**

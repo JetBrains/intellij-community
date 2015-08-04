@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -83,12 +85,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
         for (ObjectReference objectReference : myKeptReferences) {
-          try {
-            objectReference.enableCollection();
-          }
-          catch (UnsupportedOperationException ignored) {
-            // ignore: some J2ME implementations does not provide this operation
-          }
+          DebuggerUtilsEx.enableCollection(objectReference);
         }
         myKeptReferences.clear();
       }
@@ -141,6 +138,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
+  @Nullable
   @Override
   public ThreadReferenceProxyImpl getThread() {
     return myThread;
@@ -157,7 +155,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myVotesToVote = 1000000000;
   }
 
-  public boolean isExplicitlyResumed(ThreadReferenceProxyImpl thread) {
+  public boolean isExplicitlyResumed(@Nullable ThreadReferenceProxyImpl thread) {
     return myResumedThreads != null && myResumedThreads.contains(thread);
   }
 
@@ -204,12 +202,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
       final boolean added = myKeptReferences.add(reference);
       if (added) {
-        try {
-          reference.disableCollection();
-        }
-        catch (UnsupportedOperationException ignored) {
-          // ignore: some J2ME implementations does not provide this operation
-        }
+        DebuggerUtilsEx.disableCollection(reference);
       }
     }
   }
@@ -274,7 +267,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private static final Comparator<JavaExecutionStack> THREADS_COMPARATOR = new Comparator<JavaExecutionStack>() {
     @Override
     public int compare(JavaExecutionStack th1, JavaExecutionStack th2) {
-      return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
+      int res = Comparing.compare(th2.getThreadProxy().isSuspended(), th1.getThreadProxy().isSuspended());
+      if (res == 0) {
+        return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
+      }
+      return res;
     }
   };
 }

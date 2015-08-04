@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.OutOfSourcesChecker;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -56,8 +55,7 @@ public class CheckinHandlerUtil {
     PsiManager psiManager = PsiManager.getInstance(project);
 
     VirtualFile projectFileDir = null;
-    final StorageScheme storageScheme = ((ProjectEx) project).getStateStore().getStorageScheme();
-    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
+    if (ProjectUtil.isDirectoryBased(project)) {
       VirtualFile baseDir = project.getBaseDir();
       if (baseDir != null) {
         projectFileDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);

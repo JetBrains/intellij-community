@@ -81,6 +81,7 @@ public class ResourceBundlePropertiesUpdateManagerImpl implements ResourceBundle
     final IProperty property = propertiesFile.findPropertyByKey(key);
     if (property != null) {
       property.setValue(value);
+      return;
     }
 
     if (myOrdered) {

@@ -15,13 +15,22 @@
  */
 package org.jetbrains.idea.maven.tasks;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapExtension;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
+import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.keymap.impl.ui.Hyperlink;
+import com.intellij.openapi.keymap.impl.ui.KeymapListener;
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import icons.MavenIcons;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
@@ -29,6 +38,8 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
+import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -36,13 +47,17 @@ import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
+import javax.swing.*;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 
-public class MavenKeymapExtension implements KeymapExtension {
-  public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
+public class MavenKeymapExtension implements ExternalSystemKeymapExtension.ActionsProvider {
+
+  @Override
+  public KeymapGroup createGroup(Condition<AnAction> condition, final Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"),
-                                                                      MavenIcons.PhasesClosed
+                                                                      MavenIcons.MavenLogo
     );
     if (project == null) return result;
 
@@ -55,6 +70,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       = new TreeMap<MavenProject, Set<Pair<String, String>>>(projectComparator);
 
     ActionManager actionManager = ActionManager.getInstance();
+    //noinspection TestOnlyProblems
     for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
       AnAction eachAction = actionManager.getAction(eachId);
 
@@ -82,17 +98,34 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
 
     for (Map.Entry<MavenProject, Set<Pair<String, String>>> each : projectToActionsMapping.entrySet()) {
-      MavenProject mavenProject = each.getKey();
       Set<Pair<String, String>> goalsToActionIds = each.getValue();
-      if (goalsToActionIds.isEmpty()) continue;
-      KeymapGroup group = KeymapGroupFactory.getInstance().createGroup(mavenProject.getDisplayName(),
-                                                                       MavenIcons.PhasesClosed
-      );
-      result.addGroup(group);
       for (Pair<String, String> eachGoalToActionId : goalsToActionIds) {
-        group.addActionId(eachGoalToActionId.getSecond());
+        result.addActionId(eachGoalToActionId.getSecond());
       }
     }
+
+    Icon icon = SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add;
+    ((Group)result).addHyperlink(new Hyperlink(icon, "Choose a phase/goal to assign a shortcut") {
+      @Override
+      public void onClick(MouseEvent e) {
+        SelectMavenGoalDialog dialog = new SelectMavenGoalDialog(project);
+        if (dialog.showAndGet() && dialog.getResult() != null) {
+          MavenProjectsStructure.GoalNode goalNode = dialog.getResult();
+          String goal = goalNode.getGoal();
+          String actionId = MavenShortcutsManager.getInstance(project).getActionId(goalNode.getProjectPath(), goal);
+          getOrRegisterAction(goalNode.getMavenProject(), actionId, goal);
+
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(KeymapListener.CHANGE_TOPIC).processCurrentKeymapChanged();
+          Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(e.getComponent()));
+          KeymapPanel keymapPanel = allSettings != null ? allSettings.find(KeymapPanel.class) : null;
+          if (keymapPanel != null) {
+            // clear actions filter
+            keymapPanel.showOption("");
+            keymapPanel.selectAction(actionId);
+          }
+        }
+      }
+    });
 
     return result;
   }
@@ -102,14 +135,30 @@ public class MavenKeymapExtension implements KeymapExtension {
     createActions(project, mavenProjects);
   }
 
-  private static void createActions(Project project, List<MavenProject> mavenProjects) {
+  public static MavenAction getOrRegisterAction(MavenProject mavenProject, String actionId, String goal) {
+    MavenGoalAction mavenGoalAction = new MavenGoalAction(mavenProject, goal);
     ActionManager manager = ActionManager.getInstance();
+    AnAction anAction = manager.getAction(actionId);
+    if (anAction instanceof MavenGoalAction) {
+      return (MavenGoalAction)anAction;
+    }
+    manager.unregisterAction(actionId);
+    manager.registerAction(actionId, mavenGoalAction);
+    return mavenGoalAction;
+  }
+
+  private static void createActions(Project project, List<MavenProject> mavenProjects) {
+    ActionManager actionManager = ActionManager.getInstance();
+    MavenShortcutsManager shortcutsManager = MavenShortcutsManager.getInstance(project);
     for (MavenProject eachProject : mavenProjects) {
+      //noinspection TestOnlyProblems
       String actionIdPrefix = getActionPrefix(project, eachProject);
       for (MavenGoalAction eachAction : collectActions(eachProject)) {
         String id = actionIdPrefix + eachAction.getGoal();
-        manager.unregisterAction(id);
-        manager.registerAction(id, eachAction);
+        actionManager.unregisterAction(id);
+        if(shortcutsManager.hasShortcuts(eachProject, eachAction.getGoal())) {
+          actionManager.registerAction(id, eachAction);
+        }
       }
     }
   }
@@ -124,6 +173,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   public static void clearActions(Project project) {
     ActionManager manager = ActionManager.getInstance();
+    //noinspection TestOnlyProblems
     for (String each : manager.getActionIds(getActionPrefix(project, null))) {
       manager.unregisterAction(each);
     }
@@ -132,6 +182,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   public static void clearActions(Project project, List<MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
+      //noinspection TestOnlyProblems
       for (String eachAction : manager.getActionIds(getActionPrefix(project, eachProject))) {
         manager.unregisterAction(eachAction);
       }
@@ -172,7 +223,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       myMavenProject = mavenProject;
       myGoal = goal;
       Presentation template = getTemplatePresentation();
-      template.setText(goal, false);
+      template.setText(goal + " (" + mavenProject.getMavenId() + ")", false);
       template.setIcon(MavenIcons.Phase);
     }
 
@@ -186,7 +237,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
-                                                               Arrays.asList(myGoal),
+                                                               Collections.singletonList(myGoal),
                                                                explicitProfiles.getEnabledProfiles(),
                                                                explicitProfiles.getDisabledProfiles());
       MavenRunConfigurationType.runConfiguration(project, params, null);

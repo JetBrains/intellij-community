@@ -56,7 +56,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private float mySideWeight;
   private boolean mySplitMode;
 
-  private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
+  @NotNull private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
   /**
    * Defines order of tool window button inside the stripe.
    * The default value is <code>-1</code>.
@@ -132,6 +132,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     mySideWeight = info.mySideWeight;
     myOrder = info.myOrder;
     mySplitMode = info.mySplitMode;
+    myContentUiType = info.myContentUiType;
   }
 
   /**
@@ -143,12 +144,13 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myAnchor;
   }
 
+  @NotNull
   @Override
   public ToolWindowContentUiType getContentUiType() {
     return myContentUiType;
   }
 
-  void setContentUiType(ToolWindowContentUiType type) {
+  void setContentUiType(@NotNull ToolWindowContentUiType type) {
     myContentUiType = type;
   }
 
@@ -252,39 +254,6 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     mySplitMode =sideTool;
   }
 
-  private static ToolWindowType parseToolWindowType(final String text) {
-    if (ToolWindowType.DOCKED.toString().equalsIgnoreCase(text)) {
-      return ToolWindowType.DOCKED;
-    }
-    if (ToolWindowType.WINDOWED.toString().equalsIgnoreCase(text)) {
-      return ToolWindowType.WINDOWED;
-    }
-    if (ToolWindowType.FLOATING.toString().equalsIgnoreCase(text)) {
-      return ToolWindowType.FLOATING;
-    }
-    if (ToolWindowType.SLIDING.toString().equalsIgnoreCase(text)) {
-      return ToolWindowType.SLIDING;
-    }
-    throw new IllegalArgumentException(text);
-  }
-
-  @NotNull
-  private static ToolWindowAnchor parseToolWindowAnchor(final String text) {
-    if (ToolWindowAnchor.TOP.toString().equalsIgnoreCase(text)) {
-      return ToolWindowAnchor.TOP;
-    }
-    if (ToolWindowAnchor.LEFT.toString().equalsIgnoreCase(text)) {
-      return ToolWindowAnchor.LEFT;
-    }
-    if (ToolWindowAnchor.BOTTOM.toString().equalsIgnoreCase(text)) {
-      return ToolWindowAnchor.BOTTOM;
-    }
-    if (ToolWindowAnchor.RIGHT.toString().equalsIgnoreCase(text)) {
-      return ToolWindowAnchor.RIGHT;
-    }
-    throw new IllegalArgumentException(text);
-  }
-
   @Override
   @SuppressWarnings({"EmptyCatchBlock"})
   public void readExternal(final Element element) {
@@ -296,18 +265,18 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     catch (NumberFormatException ignored) {
     }
     try {
-      myAnchor = parseToolWindowAnchor(element.getAttributeValue(ANCHOR_ATTR));
+      myAnchor = ToolWindowAnchor.fromText(element.getAttributeValue(ANCHOR_ATTR));
     }
     catch (IllegalArgumentException ignored) {
     }
     myAutoHide = Boolean.valueOf(element.getAttributeValue(AUTOHIDE_ATTR)).booleanValue();
     try {
-      myInternalType = parseToolWindowType(element.getAttributeValue(INTERNAL_TYPE_ATTR));
+      myInternalType = ToolWindowType.valueOf(element.getAttributeValue(INTERNAL_TYPE_ATTR));
     }
     catch (IllegalArgumentException ignored) {
     }
     try {
-      setTypeAndCheck(parseToolWindowType(element.getAttributeValue(TYPE_ATTR)));
+      setTypeAndCheck(ToolWindowType.valueOf(element.getAttributeValue(TYPE_ATTR)));
     }
     catch (IllegalArgumentException ignored) {
     }
@@ -448,7 +417,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
            + "; myType=" + myType
            + "; myInternalType=" + myInternalType
            + "; myFloatingBounds=" + myFloatingBounds
-           + "; mySplitMode=" + mySplitMode +
+           + "; mySplitMode=" + mySplitMode
+           + "; myContentUiType=" + myContentUiType.getName() +
            ']';
   }
 

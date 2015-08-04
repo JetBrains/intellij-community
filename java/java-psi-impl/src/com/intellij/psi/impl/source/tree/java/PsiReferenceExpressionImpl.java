@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -492,6 +491,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       return false;
     }
 
+    PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass != null && !seemsScrambled(containingClass)) {
+      return false;
+    }
+
     final String name = aClass.getName();
     return name != null && !name.isEmpty() && name.length() <= 2;
   }
@@ -570,7 +574,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
       if (!preserveQualification) {
-        ref = (PsiExpression)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.UNCOMPLETE_CODE);
+        ref = (PsiExpression)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.INCOMPLETE_CODE);
       }
       return ref;
     }
@@ -715,25 +719,6 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   public boolean isQualified() {
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
-  }
-
-  @Override
-  public void subtreeChanged() {
-    super.subtreeChanged();
-
-    // We want to reformat method call arguments on method name change because there is a possible situation that they are aligned
-    // and method change breaks the alignment.
-    // Example:
-    //     test(1,
-    //          2);
-    // Suppose we're renaming the method to test123. We get the following if parameter list is not reformatted:
-    //     test123(1,
-    //          2);
-    PsiElement methodCallCandidate = getParent();
-    if (methodCallCandidate instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)methodCallCandidate;
-      CodeEditUtil.markToReformat(methodCallExpression.getArgumentList().getNode(), true);
-    }
   }
 
   private String getCachedNormalizedText() {

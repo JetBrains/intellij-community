@@ -421,7 +421,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
           IpnbDeleteCellAction.deleteCell(this);
         }
       }
-      else if (e.getModifiers() == InputEvent.CTRL_MASK) {
+      else if (e.getModifiers() == Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) {
         if (e.getKeyCode() == KeyEvent.VK_X) {
           if (!mySelectedCell.isEditing()) {
             IpnbCutCellAction.cutCell(this);

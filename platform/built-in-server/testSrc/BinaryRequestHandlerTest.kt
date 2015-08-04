@@ -1,5 +1,6 @@
 package org.jetbrains.ide
 
+import com.intellij.testFramework.FixtureRule
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.net.NetUtils

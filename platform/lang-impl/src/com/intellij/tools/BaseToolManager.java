@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public abstract class BaseToolManager<T extends Tool> implements ExportableApplicationComponent {
+public abstract class BaseToolManager<T extends Tool> implements ExportableComponent {
   @NotNull private final ActionManagerEx myActionManager;
   private final SchemesManager<ToolsGroup<T>, ToolsGroup<T>> mySchemesManager;
 
@@ -64,14 +64,6 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
   @NotNull
   public String getPresentableName() {
     return ToolsBundle.message("tools.settings");
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() {
   }
 
   public List<T> getTools() {
@@ -106,11 +98,8 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
     return mySchemesManager.getAllSchemes();
   }
 
-  public void setTools(ToolsGroup[] tools) {
-    mySchemesManager.clearAllSchemes();
-    for (ToolsGroup newGroup : tools) {
-      mySchemesManager.addNewScheme(newGroup, true);
-    }
+  public void setTools(@NotNull List<ToolsGroup<T>> tools) {
+    mySchemesManager.setSchemes(tools);
     registerActions();
   }
 

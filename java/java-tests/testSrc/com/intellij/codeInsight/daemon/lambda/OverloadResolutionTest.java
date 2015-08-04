@@ -126,6 +126,14 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testDoNotCheckConstantIfsDuringValueCompatibleChecks() throws Exception {
+    doTest();
+  }
+
+  public void testFunctionalExpressionTypeErasure() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

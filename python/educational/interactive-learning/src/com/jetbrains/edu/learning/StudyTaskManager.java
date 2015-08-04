@@ -34,6 +34,7 @@ import java.util.Map;
 public class StudyTaskManager implements PersistentStateComponent<StudyTaskManager>, DumbAware {
   private Course myCourse;
   public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
+  public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<TaskFile, StudyStatus>();
   public Map<Task, List<UserTest>> myUserTests = new HashMap<Task, List<UserTest>>();
 
   private StudyTaskManager() {
@@ -89,6 +90,12 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
   }
 
   public void setStatus(TaskFile file, StudyStatus status) {
+    if (file.getAnswerPlaceholders().isEmpty()) {
+      if (myTaskStatusMap == null) {
+        myTaskStatusMap = new HashMap<TaskFile, StudyStatus>();
+      }
+      myTaskStatusMap.put(file, status);
+    }
     for (AnswerPlaceholder answerPlaceholder : file.getAnswerPlaceholders()) {
       setStatus(answerPlaceholder, status);
     }
@@ -128,12 +135,17 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
   }
 
   private StudyStatus getStatus(@NotNull final TaskFile file) {
+    if (file.getAnswerPlaceholders().isEmpty()) {
+      if (myTaskStatusMap == null) return StudyStatus.Solved;
+      return myTaskStatusMap.get(file);
+
+    }
     for (AnswerPlaceholder answerPlaceholder : file.getAnswerPlaceholders()) {
-      StudyStatus windowStatus = getStatus(answerPlaceholder);
-      if (windowStatus == StudyStatus.Failed) {
+      StudyStatus placeholderStatus = getStatus(answerPlaceholder);
+      if (placeholderStatus == StudyStatus.Failed) {
         return StudyStatus.Failed;
       }
-      if (windowStatus == StudyStatus.Unchecked) {
+      if (placeholderStatus == StudyStatus.Unchecked) {
         return StudyStatus.Unchecked;
       }
     }

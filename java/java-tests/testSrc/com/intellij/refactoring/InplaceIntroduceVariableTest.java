@@ -64,6 +64,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
   
+  public void testPlaceInsideLambdaBody() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("expr");
+      }
+    });
+  }
+  
   public void testRanges() throws Exception {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override
@@ -80,6 +89,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
          type("expr");
        }
      });
+  }
+
+  public void testConflictWithField() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("height");
+      }
+    });
   }
 
   public void testCast() throws Exception {

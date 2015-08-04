@@ -15,8 +15,13 @@
  */
 package git4idea.stash;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -25,10 +30,11 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,51 +45,57 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitShelveUtils {
   private static final Logger LOG = Logger.getInstance(GitShelveUtils.class.getName());
 
-  /**
-   * Perform system level unshelve operation
-   *
-   * @param project           the project
-   * @param shelvedChangeList the shelved change list
-   * @param shelveManager     the shelve manager
-   */
-  @AsynchronousExecution
-  public static void doSystemUnshelve(final Project project, final ShelvedChangeList shelvedChangeList,
+  public static void doSystemUnshelve(final Project project,
+                                      final ShelvedChangeList shelvedChangeList,
                                       final ShelveChangesManager shelveManager,
-                                      final @NotNull ContinuationContext context,
-                                      @Nullable final String leftConflictTitle, @Nullable final String rightConflictTitle) {
+                                      @Nullable final String leftConflictTitle,
+                                      @Nullable final String rightConflictTitle) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
 
-    context.next(new TaskDescriptor("Refreshing files before unshelve", Where.POOLED) {
-        @Override
-        public void run(ContinuationContext context) {
-          LOG.info("doSystemUnshelve ");
-          // The changes are temporary copied to the first local change list, the next operation will restore them back
-          // Refresh files that might be affected by unshelve
-          refreshFilesBeforeUnshelve(project, shelvedChangeList, projectPath);
+    LOG.info("refreshing files ");
+    // The changes are temporary copied to the first local change list, the next operation will restore them back
+    // Refresh files that might be affected by unshelve
+    refreshFilesBeforeUnshelve(project, shelvedChangeList, projectPath);
 
-          LOG.info("doSystemUnshelve files refreshed. unshelving in AWT thread.");
-        }
-      }, new TaskDescriptor("", Where.AWT) {
-        @Override
-        public void run(ContinuationContext context) {
-          LOG.info("Unshelving in UI thread. shelvedChangeList: " + shelvedChangeList);
-          // we pass null as target change list for Patch Applier to do NOTHING with change lists
-          shelveManager.scheduleUnshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(project),
-                                                   shelvedChangeList.getBinaryFiles(), null, false, context, true,
-                                                   true, leftConflictTitle, rightConflictTitle);
-        }
-      });
+    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
+    final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
+    // we pass null as target change list for Patch Applier to do NOTHING with change lists
+    shelveManager.unshelveChangeList(shelvedChangeList, changes, shelvedChangeList.getBinaryFiles(), null, false, true,
+                                     true, leftConflictTitle, rightConflictTitle);
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        markUnshelvedFilesNonUndoable(project, changes);
+      }
+    }, ModalityState.defaultModalityState());
   }
 
-  public static void refreshFilesBeforeUnshelve(final Project project, ShelvedChangeList shelvedChangeList, String projectPath) {
+  @CalledInAwt
+  private static void markUnshelvedFilesNonUndoable(@NotNull final Project project,
+                                                    @NotNull List<ShelvedChange> changes) {
+    final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
+    if (undoManager != null && !changes.isEmpty()) {
+      ContainerUtil.process(changes, new Processor<ShelvedChange>() {
+        @Override
+        public boolean process(ShelvedChange change) {
+          final VirtualFile vfUnderProject = VfsUtil.findFileByIoFile(new File(project.getBasePath(), change.getAfterPath()), false);
+          if (vfUnderProject != null) {
+            final DocumentReference documentReference = DocumentReferenceManager.getInstance().create(vfUnderProject);
+            undoManager.nonundoableActionPerformed(documentReference, false);
+            undoManager.invalidateActionsFor(documentReference);
+          }
+          return true;
+        }
+      });
+    }
+  }
+
+  private static void refreshFilesBeforeUnshelve(final Project project, ShelvedChangeList shelvedChangeList, String projectPath) {
     HashSet<File> filesToRefresh = new HashSet<File>();
     for (ShelvedChange c : shelvedChangeList.getChanges(project)) {
       if (c.getBeforePath() != null) {
@@ -98,7 +110,7 @@ public class GitShelveUtils {
         filesToRefresh.add(new File(projectPath + f.BEFORE_PATH));
       }
       if (f.AFTER_PATH != null) {
-        filesToRefresh.add(new File(projectPath + f.BEFORE_PATH));
+        filesToRefresh.add(new File(projectPath + f.AFTER_PATH));
       }
     }
     LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);

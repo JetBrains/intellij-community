@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,10 +76,10 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
 
   @Override
   public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    StringBuffer out = new StringBuffer();
+    StringBuilder out = new StringBuilder();
     final ActionManager actionManager = ActionManager.getInstance();
     final String id = actionManager.getId(action);
-    out.append("id=" + id);
+    out.append("id=").append(id);
     if (id != null) {
       out.append(" shortcuts:");
       final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);

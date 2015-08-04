@@ -121,7 +121,7 @@ def cl = {
 }
 cl()
 ''', '''\
-def cl = {String anObject ->
+def cl = { String anObject ->
     print 'a' + anObject<caret> + 'c'
 }
 cl('b')

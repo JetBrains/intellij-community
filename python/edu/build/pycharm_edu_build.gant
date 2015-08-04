@@ -27,8 +27,6 @@ setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
 
-bundledJDKs()
-
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
 setProperty("system_selector", "PyCharmEdu${p("component.version.major")}0")
@@ -108,12 +106,15 @@ target('default': "Build artifacts") {
   if (!dryRun) {
     forceDelete(paths.sandbox)
     ant.mkdir(dir: paths.sandbox)
+    //Use IdeTipsAndTricks.xml of EDU version.
+    ant.delete(file: "${pythonCommunityHome}/src/META-INF/IdeTipsAndTricks.xml")
   }
 
   ant.tstamp() {
     format(property: "todayYear", pattern: "yyyy")
   }
 
+  bundledJDKs()
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
     include(name: "fileTemplates/**/*")
@@ -196,7 +197,7 @@ public layoutEducational(String classesPath, Set usedJars) {
                    appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
   executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
-  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/bundled.win.jdk"])
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
@@ -204,6 +205,10 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
+  if (p("jdk.bundled.linux") != "false") {
+    buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/jre/bin/*"])
+  }
+
 
   String macAppRoot = isEap() ? "PyCharm Educational ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Educational.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
@@ -298,6 +303,11 @@ private layoutFull(Map args, String target, Set usedJars) {
 
       usedJars.each {
         fileset(file: it)
+      }
+
+      fileset(dir: "$ch/build/kotlinc/lib") {
+        include(name: "kotlin-runtime.jar")
+        include(name: "kotlin-reflect.jar")
       }
 
       dir("libpty") {

@@ -85,7 +85,7 @@ public abstract class RecursionGuard {
    *
    * @param since the id of a computation whose result is safe to cache whilst for more nested ones it's not.
    */
-  public abstract void prohibitResultCaching(Object since);
+  public abstract void prohibitResultCaching(@NotNull Object since);
 
   public interface StackStamp {
 

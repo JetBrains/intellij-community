@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -29,7 +30,7 @@ import java.util.List;
  * @author yole
  */
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
-  private final ChangeListDecorator[] myDecorators;
+  private final List<ChangeListDecorator> myDecorators;
   private final ChangeListManagerEx myClManager;
   private final ChangeListRemoteState myChangeListRemoteState;
 
@@ -37,7 +38,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    myDecorators = project.getComponents(ChangeListDecorator.class);
+    myDecorators = ComponentsPackage.getComponents(project, ChangeListDecorator.class);
   }
 
   @Override
@@ -47,7 +48,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       renderer.appendTextWithIssueLinks(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       appendCount(renderer);
-      for(ChangeListDecorator decorator: myDecorators) {
+      for (ChangeListDecorator decorator: myDecorators) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
       final String freezed = myClManager.isFreezed();
@@ -107,11 +108,13 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
+  @Override
   public int getSortWeight() {
     if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return 1;
     return 2;
   }
 
+  @Override
   public int compareUserObjects(final Object o2) {
     if (o2 instanceof ChangeList) {
       return getUserObject().getName().compareToIgnoreCase(((ChangeList)o2).getName());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInsight.template.impl;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author yole
  */
 public class JavaDefaultLiveTemplatesProvider implements DefaultLiveTemplatesProvider {
-  private static final @NonNls String[] DEFAULT_TEMPLATES = new String[]{
+  private static final String[] DEFAULT_TEMPLATES = {
     "/liveTemplates/iterations",
     "/liveTemplates/other",
     "/liveTemplates/output",

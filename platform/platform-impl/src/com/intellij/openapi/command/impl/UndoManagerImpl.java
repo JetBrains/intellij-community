@@ -27,7 +27,6 @@ import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -577,12 +576,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   static Document getOriginal(Document document) {
-    Document result = document.getUserData(FragmentContent.ORIGINAL_DOCUMENT);
+    Document result = document.getUserData(ORIGINAL_DOCUMENT);
     return result == null ? document : result;
   }
 
   static boolean isCopy(Document d) {
-    return d.getUserData(FragmentContent.ORIGINAL_DOCUMENT) != null;
+    return d.getUserData(ORIGINAL_DOCUMENT) != null;
   }
 
   protected void compact() {

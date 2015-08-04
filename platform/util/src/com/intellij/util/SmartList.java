@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ import java.util.*;
  * A List which is optimised for the sizes of 0 and 1,
  * in which cases it would not allocate array at all.
  */
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings("unchecked")
 public class SmartList<E> extends AbstractList<E> implements RandomAccess {
-  private int mySize = 0;
-  private Object myElem = null; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
+  private int mySize;
+  private Object myElem; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
 
   public SmartList() { }
 

@@ -137,7 +137,7 @@ public class SpacingBuilder {
 
     public SpacingBuilder lineBreakInCode() {
       for (RuleCondition condition : myConditions) {
-        myRules.add(new SpacingRule(condition, 0, 0, 1,
+        myRules.add(new SpacingRule(condition, 1, 0, 1,
                                     myCodeStyleSettings.KEEP_LINE_BREAKS, myCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE));
       }
       return SpacingBuilder.this;

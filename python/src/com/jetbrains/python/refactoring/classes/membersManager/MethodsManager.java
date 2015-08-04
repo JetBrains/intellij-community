@@ -26,6 +26,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.PyType;
@@ -161,8 +162,7 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param nameToImport what to import
    */
   private static void addImportFromAbc(@NotNull final PsiFile file, @NotNull final String nameToImport) {
-    AddImportHelper.addFromImportStatement(file, ABC_META_PACKAGE, nameToImport, null,
-                                           AddImportHelper.ImportPriority.BUILTIN, null);
+    AddImportHelper.addOrUpdateFromImportStatement(file, ABC_META_PACKAGE, nameToImport, null, ImportPriority.BUILTIN, null);
   }
 
   /**

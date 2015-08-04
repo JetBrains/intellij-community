@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ import java.nio.charset.Charset;
 
 public abstract class OutputReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.OutputReader");
+  private static final int READ_FULLY_TIMEOUT = 10;
 
   private final Semaphore myReadFullySemaphore = new Semaphore();
 
@@ -60,10 +62,8 @@ public abstract class OutputReader extends BaseOutputReader {
           break;
         }
 
-        Thread.sleep(mySleepingPolicy.getTimeToSleep(read));
+        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
       }
-    }
-    catch (InterruptedException ignore) {
     }
     catch (IOException e) {
       LOG.info(e);
@@ -81,14 +81,32 @@ public abstract class OutputReader extends BaseOutputReader {
     }
   }
 
-  public void readFully() throws InterruptedException {
-    myReadFullySemaphore.down();
-    while (!myReadFullySemaphore.waitForUnsafe(10)) {
-      if (isStopped) {
-        waitFor();
-        return;
-      }
+  @Override
+  protected void onBufferExhaustion() {
+    if (mySleepingPolicy == SleepingPolicy.BLOCKING) {
+      myReadFullySemaphore.up();
     }
   }
 
+  public void readFully() throws InterruptedException {
+    if (mySleepingPolicy != SleepingPolicy.BLOCKING) {
+      myReadFullySemaphore.down();
+      while (!myReadFullySemaphore.waitForUnsafe(READ_FULLY_TIMEOUT)) {
+        if (isStopped) {
+          waitFor();
+          return;
+        }
+      }
+    }
+    else {
+      do {
+        myReadFullySemaphore.down();
+      }
+      while (myReadFullySemaphore.waitForUnsafe(READ_FULLY_TIMEOUT));
+
+      myReadFullySemaphore.up();
+
+      if (isStopped) waitFor();
+    }
+  }
 }

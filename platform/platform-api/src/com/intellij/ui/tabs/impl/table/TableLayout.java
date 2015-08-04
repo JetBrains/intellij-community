@@ -20,6 +20,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -184,7 +185,61 @@ public class TableLayout extends TabLayout {
   }
 
   @Override
+  public boolean isDragOut(@NotNull TabLabel tabLabel, int deltaX, int deltaY) {
+    if (myLastTableLayout == null) {
+      return super.isDragOut(tabLabel, deltaX, deltaY);
+    }
+
+    Rectangle area = new Rectangle(myLastTableLayout.toFitRec.width, tabLabel.getBounds().height);
+    for (int i = 0; i < myLastTableLayout.myVisibleInfos.size(); i++) {
+      area = area.union(myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i)).getBounds());
+    }
+    return Math.abs(deltaY) > area.height * getDragOutMultiplier();
+  }
+
+  @Override
   public int getDropIndexFor(Point point) {
-    return -1;
+    if (myLastTableLayout == null) return -1;
+    int result = -1;
+
+    Component c = myTabs.getComponentAt(point);
+
+    if (c instanceof JBTabsImpl) {
+      for (int i = 0; i < myLastTableLayout.myVisibleInfos.size() - 1; i++) {
+        TabLabel first = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i));
+        TabLabel second = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i + 1));
+
+        Rectangle firstBounds = first.getBounds();
+        Rectangle secondBounds = second.getBounds();
+
+        final boolean between = firstBounds.getMaxX() < point.x
+                    && secondBounds.getX() > point.x
+                    && firstBounds.y < point.y
+                    && secondBounds.getMaxY() > point.y;
+
+        if (between) {
+          c = first;
+          break;
+        }
+      }
+    }
+
+    if (c instanceof TabLabel) {
+      TabInfo info = ((TabLabel)c).getInfo();
+      int index = myLastTableLayout.myVisibleInfos.indexOf(info);
+      boolean isDropTarget = myTabs.isDropTarget(info);
+      if (!isDropTarget) {
+        for (int i = 0; i <= index; i++) {
+          if (myTabs.isDropTarget(myLastTableLayout.myVisibleInfos.get(i))) {
+            index -= 1;
+            break;
+          }
+        }
+        result = index;
+      } else if (index < myLastTableLayout.myVisibleInfos.size()) {
+        result = index;
+      }
+    }
+    return result;
   }
 }

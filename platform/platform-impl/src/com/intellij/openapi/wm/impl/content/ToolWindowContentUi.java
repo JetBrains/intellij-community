@@ -299,7 +299,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         if (window instanceof IdeFrame) return;
 
         final Point windowLocation = window.getLocationOnScreen();
-        final Point newPoint = MouseInfo.getPointerInfo().getLocation();
+        PointerInfo info = MouseInfo.getPointerInfo();
+        if (info == null) return;
+        final Point newPoint = info.getLocation();
         Point p = myLastPoint[0];
         windowLocation.translate(newPoint.x - p.x, newPoint.y - p.y);
         window.setLocation(windowLocation);
@@ -550,7 +552,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           }
         }
       } else {
-        actions[i] = new DumbAwareAction(content.getTabName()) {
+        actions[i] = new DumbAwareAction() {
+          {
+            getTemplatePresentation().setText(content.getTabName(), false);
+          }
+
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             myManager.setSelectedContent(content, true, true);

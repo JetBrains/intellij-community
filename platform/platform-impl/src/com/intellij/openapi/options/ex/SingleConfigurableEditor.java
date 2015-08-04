@@ -47,7 +47,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   private JComponent myCenterPanel;
   private final String myDimensionKey;
   private final boolean myShowApplyButton;
-  private boolean myChangesWereApplied;
+  private boolean mySaveAllOnClose;
 
   public SingleConfigurableEditor(@Nullable Project project,
                                   Configurable configurable,
@@ -166,18 +166,16 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    if (myChangesWereApplied) {
-      ApplicationManager.getApplication().saveAll();
-    }
     super.doCancelAction();
   }
 
   @Override
   protected void doOKAction() {
     try {
-      if (myConfigurable.isModified()) myConfigurable.apply();
-
-      ApplicationManager.getApplication().saveAll();
+      if (myConfigurable.isModified()) {
+        myConfigurable.apply();
+        mySaveAllOnClose = true;
+      }
     }
     catch (ConfigurationException e) {
       if (e.getMessage() != null) {
@@ -237,7 +235,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
         myPerformAction = true;
         if (myConfigurable.isModified()) {
           myConfigurable.apply();
-          myChangesWereApplied = true;
+          mySaveAllOnClose = true;
           setCancelButtonText(CommonBundle.getCloseButtonText());
         }
       }
@@ -275,5 +273,9 @@ public class SingleConfigurableEditor extends DialogWrapper {
     super.dispose();
     myConfigurable.disposeUIResources();
     myConfigurable = null;
+
+    if (mySaveAllOnClose) {
+      ApplicationManager.getApplication().saveAll();
+    }
   }
 }

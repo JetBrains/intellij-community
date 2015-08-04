@@ -91,13 +91,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
         return null;
       }
     }
-    boolean hasNonStaticFields = false;
-    for (PsiField field : aClass.getFields()) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        hasNonStaticFields = true;
-        break;
-      }
-    }
+    boolean hasNonStaticFields = hasNonStaticFields(aClass);
     if (!hasNonStaticFields) {
       HintManager.getInstance().showErrorHint(editor, "No fields to include in equals/hashCode have been found");
       return null;
@@ -111,6 +105,20 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     myHashCodeFields = wizard.getHashCodeFields();
     myNonNullFields = wizard.getNonNullFields();
     return DUMMY_RESULT;
+  }
+
+  private static boolean hasNonStaticFields(PsiClass aClass) {
+    for (PsiField field : aClass.getFields()) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  protected boolean hasMembers(@NotNull PsiClass aClass) {
+    return hasNonStaticFields(aClass);
   }
 
   @Override

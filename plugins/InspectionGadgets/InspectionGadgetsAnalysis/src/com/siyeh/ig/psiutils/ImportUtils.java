@@ -167,7 +167,7 @@ public final class ImportUtils {
     return false;
   }
 
-  public static boolean hasExactImportConflict(String fqName, PsiJavaFile file) {
+  private static boolean hasExactImportConflict(String fqName, PsiJavaFile file) {
     final PsiImportList imports = file.getImportList();
     if (imports == null) {
       return false;
@@ -472,7 +472,7 @@ public final class ImportUtils {
   }
 
   private static List<PsiImportStaticStatement> getMatchingImports(@NotNull PsiImportList importList, @NotNull String className) {
-    final List<PsiImportStaticStatement> imports = new ArrayList();
+    final List<PsiImportStaticStatement> imports = new ArrayList<PsiImportStaticStatement>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       final PsiClass psiClass = staticStatement.resolveTargetClass();
       if (psiClass == null) {
@@ -534,23 +534,12 @@ public final class ImportUtils {
     return visitor.isReferenceFound();
   }
 
-  private static boolean membersReferenced(PsiMember[] members, PsiElement context) {
-    final MemberReferenceVisitor visitor = new MemberReferenceVisitor(members);
-    context.accept(visitor);
-    return visitor.isReferenceFound();
-  }
-
-  private static class MemberReferenceVisitor extends JavaRecursiveElementVisitor {
-
+  private static class MemberReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
     private final PsiMember[] members;
-    private boolean referenceFound = false;
+    private boolean referenceFound;
 
-    public MemberReferenceVisitor(PsiMember member) {
+    private MemberReferenceVisitor(PsiMember member) {
       members = new PsiMember[]{member};
-    }
-
-    public MemberReferenceVisitor(PsiMember[] members) {
-      this.members = members;
     }
 
     @Override
@@ -571,7 +560,7 @@ public final class ImportUtils {
       }
     }
 
-    public boolean isReferenceFound() {
+    private boolean isReferenceFound() {
       return referenceFound;
     }
   }
@@ -579,7 +568,7 @@ public final class ImportUtils {
   /**
    * @return true, if the element contains a reference to a different class than fullyQualifiedName but which has the same class name
    */
-  public static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
+  private static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
     final Map<String, Boolean> cachedValue =
       CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<String, Boolean>>() {
         @Nullable
@@ -602,11 +591,11 @@ public final class ImportUtils {
     return conflictingRef.booleanValue();
   }
 
-  private static class ConflictingClassReferenceVisitor extends JavaRecursiveElementVisitor {
+  private static class ConflictingClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final String name;
     private final String fullyQualifiedName;
-    private boolean referenceFound = false;
+    private boolean referenceFound;
 
     private ConflictingClassReferenceVisitor(String fullyQualifiedName) {
       name = ClassUtil.extractClassName(fullyQualifiedName);
@@ -642,7 +631,7 @@ public final class ImportUtils {
       referenceFound = true;
     }
 
-    public boolean isConflictingReferenceFound() {
+    private boolean isConflictingReferenceFound() {
       return referenceFound;
     }
   }

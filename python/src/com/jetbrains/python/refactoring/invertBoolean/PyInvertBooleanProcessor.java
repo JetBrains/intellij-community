@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,12 @@ public class PyInvertBooleanProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new PyInvertBooleanUsageViewDescriptor(myElement);
   }
 
   @Override
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (!myNewName.equals(myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText())) {
       if (myRenameProcessor.preprocessUsages(refUsages)) {
         prepareSuccessful();
@@ -150,7 +150,7 @@ public class PyInvertBooleanProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     for (final PsiElement element : myRenameProcessor.getElements()) {
       try {
         RenameUtil.doRename(element, myRenameProcessor.getNewName(element), extractUsagesForElement(element, usages), myProject, null);

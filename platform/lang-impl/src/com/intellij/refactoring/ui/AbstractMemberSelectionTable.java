@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,7 +269,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       switch (columnIndex) {
         case CHECKED_COLUMN:
           if (myTable.myMemberInfoModel.isMemberEnabled(memberInfo)) {
-            return memberInfo.isChecked() ? Boolean.TRUE : Boolean.FALSE;
+            return memberInfo.isChecked();
           }
           else {
             return myTable.myMemberInfoModel.isCheckedWhenDisabled(memberInfo);
@@ -347,9 +347,12 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
         changedInfo.add(memberInfo);
       }
       fireMemberInfoChange(changedInfo);
-      final int selectedRow = getSelectedRow();
+      final int[] selectedRows = getSelectedRows();
       myTableModel.fireTableDataChanged();
-      setRowSelectionInterval(selectedRow, selectedRow);
+      final ListSelectionModel selectionModel = getSelectionModel();
+      for (int selectedRow : selectedRows) {
+        selectionModel.addSelectionInterval(selectedRow, selectedRow);
+      }
     }
 
     @Override

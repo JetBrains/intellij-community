@@ -430,6 +430,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
   }
 
+  @Override
   @Nullable
   public PsiElement findExportedName(String name) {
     final List<String> stack = myFindExportedNameStack.get();

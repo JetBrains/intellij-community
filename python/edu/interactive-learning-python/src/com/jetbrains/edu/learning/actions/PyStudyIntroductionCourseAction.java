@@ -58,11 +58,12 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       if (introCourse == null) {
         introCourse = StudyUtils.getFirst(courses);
       }
-      generator.setSelectedCourse(introCourse);
+
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
 
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
+      generator.setSelectedCourse(introCourse);
 
       final Project project = ProjectManager.getInstance().getDefaultProject();
       final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();

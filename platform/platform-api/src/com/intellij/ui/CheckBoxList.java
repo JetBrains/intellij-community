@@ -109,9 +109,15 @@ public class CheckBoxList<T> extends JBList {
     ((DefaultListModel) getModel()).addElement(checkBox);
   }
 
-  public void updateItem(@NotNull T oldItem, @NotNull T newItem) {
+  public void updateItem(@NotNull T oldItem, @NotNull T newItem, @NotNull String newText) {
     JCheckBox checkBox = myItemMap.remove(oldItem);
     myItemMap.put(newItem, checkBox);
+    checkBox.setText(newText);
+    DefaultListModel model = (DefaultListModel)getModel();
+    int ind = model.indexOf(checkBox);
+    if (ind >= 0) {
+      model.set(ind, checkBox); // to fire contentsChanged event
+    }
   }
 
   @Nullable
@@ -127,7 +133,7 @@ public class CheckBoxList<T> extends JBList {
   }
 
   public boolean isItemSelected(int index) {
-    return ((JCheckBox)getModel().getElementAt(index)).isSelected();  
+    return ((JCheckBox)getModel().getElementAt(index)).isSelected();
   }
 
   public boolean isItemSelected(T item) {
@@ -163,7 +169,7 @@ public class CheckBoxList<T> extends JBList {
     this.checkBoxListListener = checkBoxListListener;
   }
 
-  protected void adjustRendering(final JCheckBox checkBox, final boolean selected, final boolean hasFocus) {
+  protected void adjustRendering(final JCheckBox checkBox, int index, final boolean selected, final boolean hasFocus) {
   }
 
   private class CellRenderer implements ListCellRenderer {
@@ -224,7 +230,7 @@ public class CheckBoxList<T> extends JBList {
 
       rootComponent.setBorder(isSelected ? mySelectedBorder : myBorder);
 
-      adjustRendering(checkbox, isSelected, cellHasFocus);
+      adjustRendering(checkbox, index, isSelected, cellHasFocus);
       return rootComponent;
     }
   }

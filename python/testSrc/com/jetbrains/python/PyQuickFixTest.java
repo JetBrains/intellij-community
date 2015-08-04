@@ -29,6 +29,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author dcheryasov
  */
@@ -322,11 +324,13 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-1445
   public void testConvertSingleQuotedDocstring() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doInspectionTest(PySingleQuotedDocstringInspection.class, PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
   }
 
   // PY-8926
   public void testConvertSingleQuotedDocstringEscape() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doInspectionTest(PySingleQuotedDocstringInspection.class, PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
   }
 
@@ -374,6 +378,26 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
   }
 
+  // PY-16420
+  public void testAddCallSuperRepeatedOptionalParamsPassedToSuperConstructor() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+
+  // PY-16420
+  public void testAddCallSuperRepeatedOptionalTupleParamsPassedToSuperConstructor() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+  
+  // PY-16258
+  public void testAddCallSuperCommentAfterColonPreserved() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+
+  // PY-16348
+  public void testAddCallSuperCommentsInFunctionBodyPreserved() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+
   // PY-491, PY-13297
   public void testAddEncoding() {
     doInspectionTest(PyMandatoryEncodingInspection.class, PyBundle.message("QFIX.add.encoding"), true, true);
@@ -415,6 +439,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3394
   public void testDocstringParams() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
@@ -427,6 +452,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testDocstringParams1() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
@@ -548,17 +574,17 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.enableInspections(inspectionClass);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(quickFixName);
+    final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(quickFixName);
     if (available) {
-      assertNotNull(intentionAction);
+      assertOneElement(intentionActions);
       if (applyFix) {
-        myFixture.launchAction(intentionAction);
+        myFixture.launchAction(intentionActions.get(0));
 
         myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
       }
     }
     else {
-      assertNull(intentionAction);
+      assertEmpty("Quick fix \"" + quickFixName + "\" should not be available", intentionActions);
     }
   }
 

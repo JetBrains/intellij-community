@@ -26,6 +26,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegateBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,9 +41,9 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
 
   @Nullable
   @Override
-  public Collection<? extends PsiElement> getElementsToSearch(PsiElement element,
+  public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
                                                               @Nullable Module module,
-                                                              Collection<PsiElement> allElementsToDelete) {
+                                                              @NotNull Collection<PsiElement> allElementsToDelete) {
     return Collections.singleton(element);
   }
 
@@ -53,15 +54,15 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
 
   @Nullable
   @Override
-  public NonCodeUsageSearchInfo findUsages(PsiElement element, PsiElement[] allElementsToDelete, List<UsageInfo> result) {
+  public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete, @NotNull List<UsageInfo> result) {
     SafeDeleteProcessor.findGenericElementUsages(element, result, allElementsToDelete);
     return new NonCodeUsageSearchInfo(SafeDeleteProcessor.getDefaultInsideDeletedCondition(allElementsToDelete), element);
   }
 
   @Nullable
   @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(PsiElement element,
-                                                              Collection<PsiElement> allElementsToDelete,
+  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element,
+                                                              @NotNull Collection<PsiElement> allElementsToDelete,
                                                               boolean askUser) {
     final IProperty property = (IProperty)element;
     final String key = property.getKey();
@@ -84,7 +85,7 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
 
   @Nullable
   @Override
-  public Collection<String> findConflicts(PsiElement element, PsiElement[] allElementsToDelete) {
+  public Collection<String> findConflicts(@NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete) {
     return null;
   }
 

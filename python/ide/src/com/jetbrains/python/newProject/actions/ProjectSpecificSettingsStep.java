@@ -133,11 +133,10 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   }
 
   @Nullable
-  @Override
   protected JPanel extendBasePanel() {
     if (myProjectGenerator instanceof PythonProjectGenerator)
       return ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
-    return super.extendBasePanel();
+    return null;
   }
 
   @Override

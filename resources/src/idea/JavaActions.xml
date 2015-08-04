@@ -150,6 +150,10 @@
             text="List Used Icons">
       <add-to-group group-id="Internal"/>
     </action>
+    <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
+            text="Collect Java Expression Statistics">
+      <add-to-group group-id="Internal"/>
+    </action>
 
     <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
             text="List Static Field Initializers">
@@ -293,8 +297,8 @@
     </group>
 
     <group id="Debugger.ThreadsPanelPopup">
-      <!--<reference ref="Debugger.ResumeThread"/>-->
-      <!--<reference ref="Debugger.FreezeThread"/>-->
+      <reference ref="Debugger.ResumeThread"/>
+      <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.InterruptThread"/>
       <!--<reference ref="Debugger.ShowFrame"/>-->
       <reference ref="Debugger.PopFrame"/>

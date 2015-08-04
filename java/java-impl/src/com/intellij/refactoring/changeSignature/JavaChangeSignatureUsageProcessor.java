@@ -631,9 +631,22 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
-  private static boolean needDefaultValue(ChangeInfo changeInfo, PsiMethod method) {
-    return !(changeInfo instanceof JavaChangeInfoImpl) ||
-           !((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.contains(method);
+  private static boolean needDefaultValue(ChangeInfo changeInfo, @Nullable PsiMethod method) {
+    if (!(changeInfo instanceof JavaChangeInfoImpl)) {
+      return true;
+    }
+    if (method != null) {
+      final Set<PsiMethod> parametersMethods = ((JavaChangeInfoImpl)changeInfo).propagateParametersMethods;
+      if (parametersMethods.contains(method)) {
+        return false;
+      }
+      for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+        if (parametersMethods.contains(superMethod)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {

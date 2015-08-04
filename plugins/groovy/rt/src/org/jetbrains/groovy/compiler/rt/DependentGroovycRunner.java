@@ -46,7 +46,7 @@ public class DependentGroovycRunner {
   public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
   private static final String STUB_DIR = "stubDir";
 
-  public static boolean runGroovyc(boolean forStubs, String argsPath, Queue mailbox) {
+  public static boolean runGroovyc(boolean forStubs, String argsPath, String configScript, Queue mailbox) {
     File argsFile = new File(argsPath);
     final CompilerConfiguration config = new CompilerConfiguration();
     config.setClasspath("");
@@ -83,8 +83,7 @@ public class DependentGroovycRunner {
     catch (NoSuchMethodError ignored) { // old groovyc's don't have optimization options
     }
 
-    String configScript = System.getProperty(GroovyRtConstants.GROOVYC_CONFIG_SCRIPT);
-    if (configScript != null) {
+    if (configScript != null && configScript.length() > 0) {
       try {
         applyConfigurationScript(new File(configScript), config);
       }

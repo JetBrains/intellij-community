@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.lang.java.parser.partial;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
-import org.jetbrains.annotations.NonNls;
 
 public class ExpressionParserTest extends JavaParsingTestCase {
   public ExpressionParserTest() {
@@ -112,6 +110,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testQualifiedSuperMethodCall0() { doParserTest("new D().super(0)"); }
   public void testQualifiedSuperMethodCall1() { doParserTest("d.super(0)"); }
   public void testQualifiedSuperMethodCall2() { doParserTest("(new O()).<T>super()"); }
+  public void testQualifiedSuperMethodCall3() { doParserTest("C.A.super()"); }
   public void testSuperMethodCallTypeParameterList() { doParserTest("super()"); }
   public void testPrimitiveClassObjectAccess() { doParserTest("int.class"); }
   public void testPrimitiveFieldAccess() { doParserTest("int.x"); }
@@ -149,13 +148,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testLambdaExpression19() { doParserTest("(@A T t) -> (null)"); }
   public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
 
-  private void doParserTest(@NonNls final String text) {
-    doParserTest(text, new MyTestParser());
-  }
-  private static class MyTestParser implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getExpressionParser().parse(builder);
-    }
+  private void doParserTest(String text) {
+    doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
   }
 }

@@ -65,7 +65,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
     };
   }
 
-  protected void applyCreate(final VirtualFile newFile, CommitContext commitContext) throws IOException {
+  protected void applyCreate(Project project, final VirtualFile newFile, CommitContext commitContext) throws IOException {
     final Document document = FileDocumentManager.getInstance().getDocument(newFile);
     if (document == null) {
       throw new IOException("Failed to set contents for new file " + newFile.getPath());

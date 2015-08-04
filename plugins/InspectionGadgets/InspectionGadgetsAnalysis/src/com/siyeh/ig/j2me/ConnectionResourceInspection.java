@@ -166,13 +166,11 @@ public class ConnectionResourceInspection extends BaseInspection {
     }
   }
 
-  private static class CloseVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean containsClose = false;
+  private static class CloseVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean containsClose;
     private final PsiVariable objectToClose;
 
     private CloseVisitor(PsiVariable objectToClose) {
-      super();
       this.objectToClose = objectToClose;
     }
 
@@ -213,7 +211,7 @@ public class ConnectionResourceInspection extends BaseInspection {
       }
     }
 
-    public boolean containsStreamClose() {
+    boolean containsStreamClose() {
       return containsClose;
     }
   }

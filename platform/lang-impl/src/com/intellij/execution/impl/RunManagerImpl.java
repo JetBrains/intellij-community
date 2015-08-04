@@ -38,6 +38,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -64,7 +65,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new THashMap<String, Boolean>();
-  private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = ContainerUtil.createConcurrentWeakMap();
+  private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<RunConfiguration, List<BeforeRunTask>>();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
@@ -683,6 +684,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   public void loadState(Element parentNode) {
+    clear(false);
+
     List<Element> children = parentNode.getChildren(CONFIGURATION);
     Element[] sortedElements = children.toArray(new Element[children.size()]);
     // ensure templates are loaded first
@@ -1128,6 +1131,17 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     if (name == null) return null;
     for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
       if (name.equals(each.getName())) return each;
+    }
+    return null;
+  }
+
+  @Nullable
+  public RunnerAndConfigurationSettings findConfigurationByTypeAndName(@NotNull String typeId, @NotNull String name) {
+    for (RunnerAndConfigurationSettings settings : getSortedConfigurations()) {
+      ConfigurationType t = settings.getType();
+      if (t != null && typeId.equals(t.getId()) && name.equals(settings.getName())) {
+        return settings;
+      }
     }
     return null;
   }

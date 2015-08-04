@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
@@ -69,8 +71,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author max
  */
-public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable,
-                                                                          RoamingTypeDisabled {
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
   private static final String EXCLUDED_CONVERTED_TO_IGNORED_OPTION = "EXCLUDED_CONVERTED_TO_IGNORED";
 
@@ -144,6 +145,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myVfsListener = ApplicationManager.getApplication().getComponent(VcsDirtyScopeVfsListener.class);
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        myVfsListener.flushDirt();
+      }
+    });
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
@@ -279,9 +286,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             vcsManager.addVcsListener(myVcsListener);
           }
         });
-    }
 
-    myConflictTracker.startTracking();
+      myConflictTracker.startTracking();
+    }
   }
 
   private void broadcastStateAfterLoad() {
@@ -304,9 +311,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             setDefaultChangeList(list);
 
             if (myIgnoredIdeaLevel.isEmpty()) {
-              final String name = myProject.getName();
-              myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(name + WorkspaceFileType.DOT_DEFAULT_EXTENSION, myProject));
-              myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml", myProject));
+              for (String path : predefinedIgnorePaths()) {
+                myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(path, myProject));
+              }
             }
           }
           if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
@@ -316,6 +323,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
+  }
+
+  @NotNull
+  List<String> predefinedIgnorePaths() {
+    List<String> myIgnoredIdeaLevel = new ArrayList<String>();
+    myIgnoredIdeaLevel.add(myProject.getName() + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
+    myIgnoredIdeaLevel.add(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml");
+
+    return myIgnoredIdeaLevel;
   }
 
   void convertExcludedToIgnored() {

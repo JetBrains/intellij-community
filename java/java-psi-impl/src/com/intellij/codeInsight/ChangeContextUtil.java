@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class ChangeContextUtil {
         }
       }
       else if (canChangeQualifier) {
-        refExpr.putCopyableUserData(CAN_REMOVE_QUALIFIER_KEY, canRemoveQualifier(refExpr) ? Boolean.TRUE : Boolean.FALSE);
+        refExpr.putCopyableUserData(CAN_REMOVE_QUALIFIER_KEY, canRemoveQualifier(refExpr));
       }
     }
     else if (includeRefClasses) {
@@ -202,7 +202,10 @@ public class ChangeContextUtil {
         if (refMember.hasModifierProperty(PsiModifier.STATIC)){
           PsiElement refElement = refExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)){
-            refExpr.setQualifierExpression(factory.createReferenceExpression(containingClass));
+            final PsiClass currentClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
+            if (currentClass == null || !InheritanceUtil.isInheritorOrSelf(currentClass, containingClass, true)) {
+              refExpr.setQualifierExpression(factory.createReferenceExpression(containingClass));
+            }
           }
         }
         else {

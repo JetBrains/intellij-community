@@ -26,7 +26,6 @@ import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,8 +80,8 @@ public class PyAbstractClassInspection extends PyInspection {
       }
     }
 
-    private static boolean isAbstract(@NotNull PyClass pyClass) {
-      final PyType metaClass = pyClass.getMetaClassType(TypeEvalContext.userInitiated(pyClass.getProject(), pyClass.getContainingFile()));
+    private boolean isAbstract(@NotNull PyClass pyClass) {
+      final PyType metaClass = pyClass.getMetaClassType(myTypeEvalContext);
       if (metaClass instanceof PyClassLikeType && PyNames.ABC_META_CLASS.equals(metaClass.getName())) {
         return true;
       }

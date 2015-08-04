@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,23 @@
 package com.intellij.debugger.ui.tree.render.configurables;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.CompletionEditor;
+import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.tree.render.ExpressionChildrenRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
+public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable, Disposable {
   private final ExpressionChildrenRenderer myRenderer;
 
   private JPanel myPanel;
@@ -39,18 +42,18 @@ public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
   private final CompletionEditor myChildrenEditor;
   private final CompletionEditor myExpandableEditor;
 
-  public ClassChildrenExpressionConfigurable(Project project, ExpressionChildrenRenderer renderer) {
+  public ClassChildrenExpressionConfigurable(@NotNull Project project, @NotNull ExpressionChildrenRenderer renderer) {
     myRenderer = renderer;
 
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), project, GlobalSearchScope.allScope(project));
-    myChildrenEditor   = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
-    myExpandableEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
+    myChildrenEditor = new DebuggerExpressionComboBox(project, this, psiClass, "ClassChildrenExpression");
+    myExpandableEditor = new DebuggerExpressionComboBox(project, this, psiClass, "ClassChildrenExpression");
 
     myChildrenPanel.getComponent().setLayout(new BorderLayout());
     myChildrenPanel.getComponent().add(myChildrenEditor);
 
     myExpandablePanel.getComponent().setLayout(new BorderLayout());
-    myExpandablePanel.getComponent().add(myExpandableEditor);    
+    myExpandablePanel.getComponent().add(myExpandableEditor);
   }
 
   public JComponent createComponent() {
@@ -72,8 +75,11 @@ public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
     myExpandableEditor.setText(myRenderer.getChildrenExpandable());
   }
 
+  @Override
+  public void dispose() {
+  }
+
   public void disposeUIResources() {
-    myChildrenEditor.dispose();
-    myExpandableEditor.dispose();
+    Disposer.dispose(this);
   }
 }

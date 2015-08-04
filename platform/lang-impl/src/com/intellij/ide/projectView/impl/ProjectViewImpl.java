@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -552,7 +552,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myContentManager = toolWindow.getContentManager();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      toolWindow.setContentUiType(ToolWindowContentUiType.COMBO, null);
+      toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO);
       ((ToolWindowEx)toolWindow).setAdditionalGearActions(myActionGroup);
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
     }
@@ -783,7 +783,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
@@ -1436,7 +1436,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   public void setAutoscrollToSource(boolean autoscrollMode, String paneId) {
-    myAutoscrollToSource.put(paneId, autoscrollMode ? Boolean.TRUE : Boolean.FALSE);
+    myAutoscrollToSource.put(paneId, autoscrollMode);
   }
 
   @Override
@@ -1528,14 +1528,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @NotNull
   private ActionCallback setPaneOption(@NotNull Map<String, Boolean> optionsMap, boolean value, String paneId, final boolean updatePane) {
-    optionsMap.put(paneId, value ? Boolean.TRUE : Boolean.FALSE);
+    optionsMap.put(paneId, value);
     if (updatePane) {
       final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
       if (pane != null) {
         return pane.updateFromRoot(false);
       }
     }
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   private static boolean getPaneOptionValue(@NotNull Map<String, Boolean> optionsMap, String paneId, boolean defaultValue) {
@@ -1906,6 +1906,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (pane == null) {
       pane = myId2Pane.get(myCurrentViewId);
     }
-    return pane != null ? pane.getReady(requestor) : new ActionCallback.Done();
+    return pane != null ? pane.getReady(requestor) : ActionCallback.DONE;
   }
 }

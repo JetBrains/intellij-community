@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -31,15 +32,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Sergey Simonchik
- */
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class.getName());
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
-  private final List<SMTRunnerEventsListener> myEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
   private final String myTestFrameworkName;
@@ -48,7 +45,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private SMTestLocator myLocator = null;
   private TestProxyPrinterProvider myTestProxyPrinterProvider = null;
 
-  public GeneralIdBasedToSMTRunnerEventsConvertor(@NotNull SMTestProxy.SMRootTestProxy testsRootProxy, @NotNull String testFrameworkName) {
+  public GeneralIdBasedToSMTRunnerEventsConvertor(Project project,
+                                                  @NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
+                                                  @NotNull String testFrameworkName) {
+    super(project);
     myTestsRootProxy = testsRootProxy;
     myTestsRootNode = new Node(0, null, testsRootProxy);
     myTestFrameworkName = testFrameworkName;
@@ -60,16 +60,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     myLocator = locator;
   }
 
-  public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
-    myEventsListeners.add(listener);
-  }
-
   public void onStartTesting() {
     addToInvokeLater(new Runnable() {
       public void run() {
         myTestsRootNode.setState(State.RUNNING, GeneralIdBasedToSMTRunnerEventsConvertor.this);
         myTestsRootProxy.setStarted();
-        fireOnTestingStarted();
+        fireOnTestingStarted(myTestsRootProxy);
       }
     });
   }
@@ -78,7 +74,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onTestsReporterAttached() {
     addToInvokeLater(new Runnable() {
       public void run() {
-        myTestsRootProxy.setTestsReporterAttached();
+        fireOnTestsReporterAttached(myTestsRootProxy);
       }
     });
   }
@@ -108,7 +104,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         myNodeByIdMap.clear();
         myRunningTestNodes.clear();
 
-        fireOnTestingFinished();
+        fireOnTestingFinished(myTestsRootProxy);
       }
     });
     stopEventProcessing();
@@ -263,40 +259,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     });
   }
 
-  public void onCustomProgressTestsCategory(@Nullable final String categoryName,
-                                            final int testCount) {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        fireOnCustomProgressTestsCategory(categoryName, testCount);
-      }
-    });
-  }
-
-  public void onCustomProgressTestStarted() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        fireOnCustomProgressTestStarted();
-      }
-    });
-  }
-
-  @Override
-  public void onCustomProgressTestFinished() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        fireOnCustomProgressTestFinished();
-      }
-    });
-  }
-
-  public void onCustomProgressTestFailed() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        fireOnCustomProgressTestFailed();
-      }
-    });
-  }
-
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     addToInvokeLater(new Runnable() {
       public void run() {
@@ -313,7 +275,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         String stackTrace = testFailedEvent.getStacktrace();
         if (comparisonFailureActualText != null && comparisonFailureExpectedText != null) {
           testProxy.setTestComparisonFailed(failureMessage, stackTrace,
-                                            comparisonFailureActualText, comparisonFailureExpectedText);
+                                            comparisonFailureActualText, comparisonFailureExpectedText, testFailedEvent.getFilePath());
         } else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
           testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
         } else {
@@ -322,6 +284,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                      + comparisonFailureExpectedText + "\n"
                      + "Actual:\n"
                      + comparisonFailureActualText);
+        }
+        long duration = testFailedEvent.getDurationMillis();
+        if (duration >= 0) {
+          testProxy.setDuration(duration);
         }
 
         // fire event
@@ -391,86 +357,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     return myNodeByIdMap.get(treeNodeEvent.getId());
   }
 
-  private void fireOnTestingStarted() {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestingStarted(myTestsRootProxy);
-    }
+  @Nullable
+  public SMTestProxy findProxyById(int id) {
+    Node node = myNodeByIdMap.get(id);
+    return node != null ? node.getProxy() : null;
   }
-
-  private void fireOnTestingFinished() {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestingFinished(myTestsRootProxy);
-    }
-  }
-
-  private void fireOnTestsCountInSuite(final int count) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestsCountInSuite(count);
-    }
-  }
-
-
-  private void fireOnTestStarted(final SMTestProxy test) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestStarted(test);
-    }
-  }
-
-  private void fireOnTestFinished(final SMTestProxy test) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestFinished(test);
-    }
-  }
-
-  private void fireOnTestFailed(final SMTestProxy test) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestFailed(test);
-    }
-  }
-
-  private void fireOnTestIgnored(final SMTestProxy test) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestIgnored(test);
-    }
-  }
-
-  private void fireOnSuiteStarted(final SMTestProxy suite) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onSuiteStarted(suite);
-    }
-  }
-
-  private void fireOnSuiteFinished(final SMTestProxy suite) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onSuiteFinished(suite);
-    }
-  }
-
-
-  private void fireOnCustomProgressTestsCategory(@Nullable final String categoryName, int testCount) {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onCustomProgressTestsCategory(categoryName, testCount);
-    }
-  }
-
-  private void fireOnCustomProgressTestStarted() {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onCustomProgressTestStarted();
-    }
-  }
-
-  private void fireOnCustomProgressTestFinished() {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onCustomProgressTestFinished();
-    }
-  }
-
-  private void fireOnCustomProgressTestFailed() {
-    for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onCustomProgressTestFailed();
-    }
-  }
-
+  
   /*
    * Remove listeners,  etc
    */
@@ -478,7 +370,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     super.dispose();
     addToInvokeLater(new Runnable() {
       public void run() {
-        myEventsListeners.clear();
+        disconnectListeners();
 
         if (!myRunningTestNodes.isEmpty()) {
           Application application = ApplicationManager.getApplication();

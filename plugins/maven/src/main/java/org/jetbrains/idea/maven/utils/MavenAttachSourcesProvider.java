@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,12 +66,14 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
       public ActionCallback perform(List<LibraryOrderEntry> orderEntries) {
         // may have been changed by this time...
         Collection<MavenProject> mavenProjects = getMavenProjects(psiFile);
-        if (mavenProjects.isEmpty()) return new ActionCallback.Rejected();
+        if (mavenProjects.isEmpty()) {
+          return ActionCallback.REJECTED;
+        }
 
         MavenProjectsManager manager = MavenProjectsManager.getInstance(psiFile.getProject());
 
         Collection<MavenArtifact> artifacts = findArtifacts(mavenProjects, orderEntries);
-        if (artifacts.isEmpty()) return new ActionCallback.Rejected();
+        if (artifacts.isEmpty()) return ActionCallback.REJECTED;
 
         final AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
         manager.scheduleArtifactsDownloading(mavenProjects, artifacts, true, false, result);

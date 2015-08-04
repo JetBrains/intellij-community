@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,21 @@ package com.intellij.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author yole
  */
-public class CollectionComboBoxModel extends AbstractCollectionComboBoxModel {
-  private final List myItems;
-
-  public CollectionComboBoxModel(final List items, @Nullable final Object selection) {
-    super(selection);
-    myItems = Collections.unmodifiableList(items);
+public class CollectionComboBoxModel<T> extends AbstractCollectionComboBoxModel<T> {
+  public CollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
+    super(selection, items);
   }
 
-  public CollectionComboBoxModel(List items) {
-    super(items.isEmpty() ? null : items.get(0));
-    myItems = items;
+  public CollectionComboBoxModel(@NotNull List<T> items) {
+    super(items.isEmpty() ? null : items.get(0), items);
   }
 
-  @NotNull
-  final protected List getItems() {
-    return myItems;
+  public CollectionComboBoxModel() {
+    super(null);
   }
 }

@@ -19,10 +19,10 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.tools.util.base.DiffPanelBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class SimpleDiffPanel extends DiffPanelBase {
   private static final String GOOD_CONTENT = "GoodContent";
@@ -32,10 +32,7 @@ public class SimpleDiffPanel extends DiffPanelBase {
                          @NotNull DataProvider dataProvider,
                          @NotNull DiffContext context) {
     super(context.getProject(), dataProvider, context);
-
-    JPanel centerPanel = new JPanel(new BorderLayout());
-    centerPanel.add(myNotificationsPanel, BorderLayout.NORTH);
-    centerPanel.add(editorPanel, BorderLayout.CENTER);
+    JPanel centerPanel = JBUI.Panels.simplePanel(editorPanel).addToTop(myNotificationsPanel);
 
     myContentPanel.add(centerPanel, GOOD_CONTENT);
     myContentPanel.add(DiffUtil.createMessagePanel("Error"), ERROR_CONTENT);

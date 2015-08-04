@@ -21,9 +21,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -129,13 +127,25 @@ public class ProjectSdksModel implements SdkModel {
     if (!canApply(errorString, configurable, addedOnly)) {
       throw new ConfigurationException(errorString[0]);
     }
-    final Sdk[] allFromTable = ProjectJdkTable.getInstance().getAllJdks();
-    final ArrayList<Sdk> itemsInTable = new ArrayList<Sdk>();
-    // Delete removed and fill itemsInTable
+
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        doApply();
+      }
+    });
+    myModified = false;
+  }
+
+  private void doApply() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
+        final ArrayList<Sdk> itemsInTable = new ArrayList<Sdk>();
         final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+        final Sdk[] allFromTable = jdkTable.getAllJdks();
+
+        // Delete removed and fill itemsInTable
         for (final Sdk tableItem : allFromTable) {
           if (myProjectSdks.containsKey(tableItem)) {
             itemsInTable.add(tableItem);
@@ -144,13 +154,8 @@ public class ProjectSdksModel implements SdkModel {
             jdkTable.removeJdk(tableItem);
           }
         }
-      }
-    });
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+        
         // Now all removed items are deleted from table, itemsInTable contains all items in table
-        final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
         for (Sdk originalJdk : itemsInTable) {
           final Sdk modifiedJdk = myProjectSdks.get(originalJdk);
           LOG.assertTrue(modifiedJdk != null);
@@ -168,7 +173,6 @@ public class ProjectSdksModel implements SdkModel {
         }
       }
     });
-    myModified = false;
   }
 
   private boolean canApply(String[] errorString, @Nullable MasterDetailsComponent rootConfigurable, boolean addedOnly) throws ConfigurationException {

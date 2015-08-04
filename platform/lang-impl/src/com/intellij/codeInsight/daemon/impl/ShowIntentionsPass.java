@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -101,6 +102,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
       RangeMarker range = pair.second;
       if (!range.isValid()) continue;
+
+      if (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(actionInGroup.getAction())) {
+        continue;
+      }
+      
       int start = range.getStartOffset();
       int end = range.getEndOffset();
       final Project project = file.getProject();
@@ -257,9 +263,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     else if (result == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
       myHasToRecreate = true;
     }
-    else {
-      myShowBulb = false;  // nothing to apply
-    }
   }
 
   public static void getActionsToShow(@NotNull final Editor hostEditor,
@@ -317,7 +320,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                   hostDocument.getLineEndOffset(line), new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
-          GutterIntentionAction.addActions(highlighter, intentions.guttersToShow);
+          GutterIntentionAction.addActions(hostEditor.getProject(), highlighter, intentions.guttersToShow);
           return true;
         }
       });

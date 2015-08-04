@@ -11,12 +11,12 @@ class Test {
   }
 
   void test(boolean cond) {
-    m<error descr="Cannot resolve method 'm(<lambda expression>)'">(() -> {
+    <error descr="Cannot resolve method 'm(<lambda expression>)'">m</error>(() -> {
       if (cond)
         return 42;
       else
         return foo();
-    })</error>;
+    });
 
     m(() -> {
       return foo();

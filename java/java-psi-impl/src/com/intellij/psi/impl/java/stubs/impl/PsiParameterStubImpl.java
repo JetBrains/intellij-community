@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -50,11 +49,6 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
   @Override
   public boolean isParameterTypeEllipsis() {
     return myIsEllipsis;
-  }
-
-  @Override
-  public boolean isReceiver() {
-    return PsiKeyword.THIS.equals(getName());
   }
 
   @Override

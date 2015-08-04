@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -238,7 +239,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       return;
     }
 
-    processor.addFileFilter(new FileFilter() {
+    processor.addFileFilter(new VirtualFileFilter() {
       @Override
       public boolean accept(@NotNull VirtualFile file) {
         if (scope instanceof LocalSearchScope) {
@@ -259,7 +260,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     final Pattern pattern = getFileTypeMaskPattern(fileTypeMask);
     if (pattern != null) {
-      processor.addFileFilter(new FileFilter() {
+      processor.addFileFilter(new VirtualFileFilter() {
         @Override
         public boolean accept(@NotNull VirtualFile file) {
           return pattern.matcher(file.getName()).matches();

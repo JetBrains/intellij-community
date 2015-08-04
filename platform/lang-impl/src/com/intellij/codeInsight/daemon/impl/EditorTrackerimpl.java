@@ -29,14 +29,11 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -48,31 +45,28 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public class EditorTrackerimpl extends AbstractProjectComponent implements EditorTracker {
+public class EditorTrackerImpl extends AbstractProjectComponent implements EditorTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.EditorTracker");
 
   private final WindowManager myWindowManager;
   private final EditorFactory myEditorFactory;
-  private final SmartPointerManagerImpl mySmartPointerManager;
 
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
   private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
-  private List<Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
+  private List<Editor> myActiveEditors = Collections.emptyList();
 
   private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
   private IdeFrameImpl myIdeFrame;
-  private Window myActiveWindow;
+  private Window myActiveWindow = null;
 
-  public EditorTrackerimpl(Project project,
+  public EditorTrackerImpl(final Project project,
                            final WindowManager windowManager,
-                           final EditorFactory editorFactory,
-                           SmartPointerManager manager) {
+                           final EditorFactory editorFactory) {
     super(project);
     myWindowManager = windowManager;
     myEditorFactory = editorFactory;
-    mySmartPointerManager = (SmartPointerManagerImpl)manager;
   }
 
   @Override
@@ -87,11 +81,11 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
     });
 
     final MyEditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
-    myEditorFactory.addEditorFactoryListener(myEditorFactoryListener,myProject);
+    myEditorFactory.addEditorFactoryListener(myEditorFactoryListener, myProject);
     Disposer.register(myProject, new Disposable() {
       @Override
       public void dispose() {
-        myEditorFactoryListener.executeOnRelease(null);
+        myEditorFactoryListener.dispose(null);
       }
     });
   }
@@ -134,7 +128,7 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
       myWindowToEditorsMap.put(window, list);
 
       if (!(window instanceof IdeFrameImpl)) {
-        WindowFocusListener listener =  new WindowFocusListener() {
+        WindowFocusListener listener = new WindowFocusListener() {
           @Override
           public void windowGainedFocus(WindowEvent e) {
             if (LOG.isDebugEnabled()) {
@@ -191,10 +185,8 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
     return window;
   }
 
-  @Override
   @NotNull
   public List<Editor> getActiveEditors() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myActiveEditors;
   }
 
@@ -218,7 +210,6 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
   }
 
   void setActiveEditors(@NotNull List<Editor> editors) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myActiveEditors = editors;
 
     if (LOG.isDebugEnabled()) {
@@ -232,9 +223,8 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
     myDispatcher.getMulticaster().activeEditorsChanged(editors);
   }
 
-  @Override
   public void addEditorTrackerListener(@NotNull EditorTrackerListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener,parentDisposable);
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   private class MyEditorFactoryListener implements EditorFactoryListener {
@@ -244,7 +234,7 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile == null) return;
 
       final JComponent component = editor.getComponent();
@@ -252,7 +242,7 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
 
       final HierarchyListener hierarchyListener = new HierarchyListener() {
         @Override
-        public void hierarchyChanged(@NotNull HierarchyEvent e) {
+        public void hierarchyChanged(HierarchyEvent e) {
           registerEditor(editor);
         }
       };
@@ -260,32 +250,23 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
 
       final FocusListener focusListener = new FocusListener() {
         @Override
-        public void focusGained(@NotNull FocusEvent e) {
+        public void focusGained(FocusEvent e) {
           editorFocused(editor);
         }
 
         @Override
-        public void focusLost(@NotNull FocusEvent e) {
+        public void focusLost(FocusEvent e) {
         }
       };
       contentComponent.addFocusListener(focusListener);
 
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
       myExecuteOnEditorRelease.put(event.getEditor(), new Runnable() {
         @Override
         public void run() {
           component.removeHierarchyListener(hierarchyListener);
           contentComponent.removeFocusListener(focusListener);
-          // allow range markers in smart pointers to be collected
-          if (virtualFile != null) {
-            mySmartPointerManager.unfastenBelts(virtualFile, 0);
-          }
         }
       });
-      // materialize all range markers and do not let them to be collected to improve responsiveness
-      if (virtualFile != null) {
-        mySmartPointerManager.fastenBelts(virtualFile, 0, null);
-      }
     }
 
     @Override
@@ -293,10 +274,10 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       unregisterEditor(editor);
-      executeOnRelease(editor);
+      dispose(editor);
     }
 
-    private void executeOnRelease(Editor editor) {
+    private void dispose(Editor editor) {
       if (editor == null) {
         for (Runnable r : myExecuteOnEditorRelease.values()) {
           r.run();

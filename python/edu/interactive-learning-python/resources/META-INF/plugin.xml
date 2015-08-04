@@ -44,4 +44,11 @@
       <interface-class>com.jetbrains.edu.learning.PyStudyShowTutorial</interface-class>
     </component>
   </project-components>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.edu.learning.PyStudyInitialConfigurator</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </application-components>
 </idea-plugin>

@@ -242,10 +242,10 @@ public class ControlFlowWrapper {
     return true;
   }
 
-  public List<PsiVariable> getInputVariables(final PsiElement codeFragment, PsiElement[] elements) {
+  public List<PsiVariable> getInputVariables(final PsiElement codeFragment, PsiElement[] elements, PsiVariable[] outputVariables) {
     final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     List<PsiVariable> myInputVariables;
-    if (myGenerateConditionalExit) {
+    if (skipVariablesFromExitStatements(outputVariables)) {
       List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
       removeParametersUsedInExitsOnly(codeFragment, inputVariableList);
       myInputVariables = inputVariableList;
@@ -341,8 +341,16 @@ public class ControlFlowWrapper {
     return getUsedVariables(myFlowEnd);
   }
 
-  public List<PsiVariable> getUsedVariablesInBody() {
-    return getUsedVariables(myFlowStart, myFlowEnd);
+  public List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
+    final List<PsiVariable> variables = getUsedVariables(myFlowStart, myFlowEnd);
+    if (skipVariablesFromExitStatements(outputVariables)) {
+      removeParametersUsedInExitsOnly(codeFragment, variables);
+    }
+    return variables;
+  }
+
+  private boolean skipVariablesFromExitStatements(PsiVariable[] outputVariables) {
+    return myGenerateConditionalExit && outputVariables.length == 0;
   }
 
   public Collection<ControlFlowUtil.VariableInfo> getInitializedTwice() {

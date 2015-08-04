@@ -103,6 +103,6 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   @Override
   public int getVersion() {
-    return DomApplicationComponent.getInstance().getCumulativeVersion();
+    return DomApplicationComponent.getInstance().getCumulativeVersion(false);
   }
 }

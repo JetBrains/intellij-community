@@ -4,13 +4,13 @@
     <file>A.java</file>
     <line>2</line>
     <problem_class>unused declaration</problem_class>
-    <description>Method has usage(s) but they all belong to recursive calls chain that has no members reachable from entry points.</description>
+    <description>Method has usage(s) but they all belong to calls chain that has no members reachable from entry points.</description>
   </problem>
   <problem>
     <file>A.java</file>
     <line>5</line>
     <problem_class>unused declaration</problem_class>
-    <description>Method has usage(s) but they all belong to recursive calls chain that has no members reachable from entry points.</description>
+    <description>Method has usage(s) but they all belong to calls chain that has no members reachable from entry points.</description>
   </problem>
 </problems>
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,16 +37,18 @@ import java.util.Map;
 
 class JrtHandler extends ArchiveHandler {
   static {
+    //noinspection ConstantConditions
     assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
   }
+
   private static final URI ROOT_URI = URI.create("jrt:/");
   private static final Map<String, Object> EMPTY_ENV = Collections.emptyMap();
 
   private static class JrtEntryInfo extends EntryInfo {
     private final String myModule;
 
-    public JrtEntryInfo(EntryInfo parent, @NotNull String shortName, @NotNull String module, long length, long timestamp) {
-      super(parent, shortName, false, length, timestamp);
+    public JrtEntryInfo(@NotNull String shortName, @NotNull String module, long length, long timestamp, EntryInfo parent) {
+      super(shortName, false, length, timestamp, parent);
       myModule = module;
     }
   }
@@ -115,8 +118,8 @@ class JrtHandler extends ArchiveHandler {
           boolean dir = (Boolean)call(isDirectory, attributes);
           long length = (Long)call(size, attributes);
           long modified = (Long)call(toMillis, call(lastModifiedTime, attributes));
-          EntryInfo entry = dir ? new EntryInfo(parent, shortName, true, length, modified)
-                                : new JrtEntryInfo(parent, shortName, module, length, modified);
+          EntryInfo entry = dir ? new EntryInfo(shortName, true, length, modified, parent)
+                                : new JrtEntryInfo(shortName, module, length, modified, parent);
           map.put(path, entry);
 
           return null;
@@ -164,26 +167,15 @@ class JrtHandler extends ArchiveHandler {
   }
 
   private static Class<?> cls(String name, boolean array) {
-    try {
-      if (array) name = "[L" + name + ";";
-      return Class.forName(name);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    if (array) name = "[L" + name + ";";
+    return ReflectionUtil.forName(name);
   }
 
   private static Method method(String name, Class<?>... parameterTypes) {
-    try {
-      List<String> parts = StringUtil.split(name, "#");
-      Class<?> aClass = cls(parts.get(0));
-      Method method = aClass.getMethod(parts.get(1), parameterTypes);
-      method.setAccessible(true);
-      return method;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    List<String> parts = StringUtil.split(name, "#");
+    Class<?> aClass = cls(parts.get(0));
+    String methodName = parts.get(1);
+    return ReflectionUtil.getMethod(aClass, methodName, parameterTypes);
   }
 
   private static Object call(Method method, Object... args) {

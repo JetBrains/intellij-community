@@ -260,17 +260,22 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   }
 
   private Indent calcCurrentIndent(final ASTNode child, final int state) {
-    if (isRBrace(child) || child.getElementType() == JavaTokenType.AT) {
+    IElementType elementType = child.getElementType();
+    if (isRBrace(child) || elementType == JavaTokenType.AT) {
       return Indent.getNoneIndent();
     }
 
     if (state == BEFORE_FIRST) return Indent.getNoneIndent();
 
-    if (child.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
+    if (elementType == JavaElementType.SWITCH_LABEL_STATEMENT) {
       return getCodeBlockInternalIndent(myChildrenIndent);
     }
     if (state == BEFORE_LBRACE) {
-      if (isLBrace(child)) {
+      if (isLBrace(child)
+          || elementType == JavaTokenType.CLASS_KEYWORD
+          || elementType == JavaTokenType.INTERFACE_KEYWORD
+          || elementType == JavaTokenType.IDENTIFIER
+          || elementType == JavaTokenType.ENUM_KEYWORD) {
         return Indent.getNoneIndent();
       }
       else {

@@ -2,9 +2,7 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/system/log" />
-    </content>
+    <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="annotations" />
@@ -111,8 +109,8 @@
     <orderEntry type="module" module-name="json" />
     <orderEntry type="module" module-name="json-tests" scope="TEST" />
     <orderEntry type="module" module-name="typeMigration" />
+    <orderEntry type="module" module-name="platform-tests" />
+    <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="reactiveidea" />
-    <orderEntry type="module" module-name="reactivemodel" />
-    <orderEntry type="module" module-name="platform-tests" scope="TEST" />
   </component>
 </module>

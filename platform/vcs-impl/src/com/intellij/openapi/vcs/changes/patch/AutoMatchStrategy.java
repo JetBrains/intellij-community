@@ -28,21 +28,24 @@ import java.util.List;
 
 abstract class AutoMatchStrategy {
   protected final VirtualFile myBaseDir;
-  protected MultiMap<String,VirtualFile> myFolderDecisions;
-  protected final List<FilePatchInProgress> myResult;
+  protected MultiMap<String, VirtualFile> myFolderDecisions;
+  protected final List<TextFilePatchInProgress> myResult;
 
   AutoMatchStrategy(final VirtualFile baseDir) {
     myBaseDir = baseDir;
-    myResult = new LinkedList<FilePatchInProgress>();
+    myResult = new LinkedList<TextFilePatchInProgress>();
     myFolderDecisions = MultiMap.createSet();
   }
 
   public abstract void acceptPatch(TextFilePatch patch, final Collection<VirtualFile> foundByName);
+
   public abstract void processCreation(TextFilePatch creation);
+
   public abstract void beforeCreations();
+
   public abstract boolean succeeded();
 
-  public List<FilePatchInProgress> getResult() {
+  public List<TextFilePatchInProgress> getResult() {
     return myResult;
   }
 
@@ -65,9 +68,10 @@ abstract class AutoMatchStrategy {
   protected void processCreationBasedOnFolderDecisions(final TextFilePatch creation) {
     final Collection<VirtualFile> variants = suggestFolderForCreation(creation);
     if (variants != null) {
-      myResult.add(new FilePatchInProgress(creation, variants, myBaseDir));
-    } else {
-      myResult.add(new FilePatchInProgress(creation, null, myBaseDir));
+      myResult.add(new TextFilePatchInProgress(creation, variants, myBaseDir));
+    }
+    else {
+      myResult.add(new TextFilePatchInProgress(creation, null, myBaseDir));
     }
   }
 
@@ -79,7 +83,7 @@ abstract class AutoMatchStrategy {
     final Collection<VirtualFile> result = new LinkedList<VirtualFile>();
     for (VirtualFile vf : in) {
       final String vfPath = vf.getPath();
-      if ((caseSensitive && vfPath.endsWith(path)) || ((! caseSensitive) && StringUtil.endsWithIgnoreCase(vfPath, path))) {
+      if ((caseSensitive && vfPath.endsWith(path)) || ((!caseSensitive) && StringUtil.endsWithIgnoreCase(vfPath, path))) {
         result.add(vf);
       }
     }
@@ -95,28 +99,32 @@ abstract class AutoMatchStrategy {
   }
 
   @Nullable
-  protected FilePatchInProgress processMatch(final TextFilePatch patch, final VirtualFile file) {
+  protected TextFilePatchInProgress processMatch(final TextFilePatch patch, final VirtualFile file) {
     final String beforeName = patch.getBeforeName();
     if (beforeName == null) return null;
     final String[] parts = beforeName.replace('\\', '/').split("/");
     VirtualFile parent = file.getParent();
     int idx = parts.length - 2;
     while ((parent != null) && (idx >= 0)) {
-      if (! parent.getName().equals(parts[idx])) {
+      if (!parent.getName().equals(parts[idx])) {
         break;
       }
       parent = parent.getParent();
-      -- idx;
+      --idx;
     }
     if (parent != null) {
-      final FilePatchInProgress result = new FilePatchInProgress(patch, null, myBaseDir);
+      final TextFilePatchInProgress result = new TextFilePatchInProgress(patch, null, myBaseDir);
       result.setNewBase(parent);
       int numDown = idx + 1;
-      for (int i = 0; i < numDown; i++) {
-        result.up();
-      }
+      processStipUp(result, numDown);
       return result;
     }
     return null;
+  }
+
+  public static void processStipUp(AbstractFilePatchInProgress patchInProgress, int num) {
+    for (int i = 0; i < num; i++) {
+      patchInProgress.up();
+    }
   }
 }

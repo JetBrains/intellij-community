@@ -35,7 +35,7 @@ import java.awt.*;
  * @author zajac
  * @since 6.05.2012
  */
-public class BookmarkItem extends ItemWrapper {
+public class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem>{
   private final Bookmark myBookmark;
 
   public BookmarkItem(Bookmark bookmark) {
@@ -128,5 +128,10 @@ public class BookmarkItem extends ItemWrapper {
   @Override
   public void removed(Project project) {
     BookmarkManager.getInstance(project).removeBookmark(getBookmark());
+  }
+
+  @Override
+  public int compareTo(BookmarkItem o) {
+    return myBookmark.compareTo(o.myBookmark);
   }
 }

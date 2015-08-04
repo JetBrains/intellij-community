@@ -61,7 +61,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myProject = psiFile.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     Disposer.register(progressIndicator, this);
-    if (progressIndicator.isDisposed()) {
+    if (progressIndicator.isCanceled()) {
       Disposer.dispose(progressIndicator); //dispose both progress indicator and this session in case we managed to register after indicator dispose to avoid mem leaks
     }
   }
@@ -73,10 +73,11 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return map == null ? null : map.get(psiFile);
   }
 
+  @NotNull
   static HighlightingSession getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
                                                             @Nullable Editor editor,
                                                             @NotNull DaemonProgressIndicator progressIndicator,
-                                                            EditorColorsScheme editorColorsScheme) {
+                                                            @Nullable EditorColorsScheme editorColorsScheme) {
     HighlightingSession session = getHighlightingSession(psiFile, progressIndicator);
     if (session == null) {
       session = new HighlightingSessionImpl(psiFile, editor, progressIndicator, editorColorsScheme);

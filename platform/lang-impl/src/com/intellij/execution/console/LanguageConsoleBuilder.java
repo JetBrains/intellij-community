@@ -186,18 +186,22 @@ public final class LanguageConsoleBuilder {
 
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     private final GutterContentProvider gutterContentProvider;
-    @Nullable
-    private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
     public GutteredLanguageConsole(@NotNull String title,
                                    @NotNull Project project,
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
-                                   @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, title, new LightVirtualFile(title, language, ""), psiFileFactory);
+                                   @Nullable final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+      super(new Helper(project, new LightVirtualFile(title, language, "")) {
+        @NotNull
+        @Override
+        public PsiFile getFile() {
+          return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
+        }
+
+      });
 
       this.gutterContentProvider = gutterContentProvider == null ? new BasicGutterContentProvider() : gutterContentProvider;
-      this.psiFileFactory = psiFileFactory;
     }
 
     @Override
@@ -208,18 +212,6 @@ public final class LanguageConsoleBuilder {
     @Override
     int getMinHistoryLineCount() {
       return 1;
-    }
-
-    @NotNull
-    @Override
-    protected PsiFile createFile(@NotNull Project project,
-                                 @NotNull VirtualFile virtualFile) {
-      if (psiFileFactory == null) {
-        return super.createFile(project, virtualFile);
-      }
-      else {
-        return psiFileFactory.fun(virtualFile, project);
-      }
     }
 
     @Override

@@ -276,7 +276,7 @@ grammar {
         "    metadata: Metadata Element\x{a}" ~
         "  "
     ]
-    SVG.metadata.content = empty # bugfix -- hsivonen
+    SVG.metadata.content = text
     metadata =
         element metadata { attlist.metadata, SVG.metadata.content }
     attlist.metadata &= SVG.Core.attrib

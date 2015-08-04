@@ -30,7 +30,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.*;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.BitUtil;
@@ -209,7 +212,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       @Override
       protected void updateActionTooltips() {
-        for (ActionButton actionButton : JBSwingUtilities.uiTraverser().preOrderTraversal(myButtonPanel).filter(ActionButton.class)) {
+        for (ActionButton actionButton : JBSwingUtilities.uiTraverser().preOrderDfsTraversal(myButtonPanel).filter(ActionButton.class)) {
           actionButton.updateTooltip();
         }
       }
@@ -542,10 +545,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null;
-      final AnActionEvent event =
-        new AnActionEvent(inputEvent, dataContext, ActionPlaces.TOOLWINDOW_TITLE, action.getTemplatePresentation(),
-                          ActionManager.getInstance(),
-                          0);
+      final AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.TOOLWINDOW_TITLE, dataContext);
       actionManager.fireBeforeActionPerformed(action, dataContext, event);
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component != null && !component.isShowing()) {

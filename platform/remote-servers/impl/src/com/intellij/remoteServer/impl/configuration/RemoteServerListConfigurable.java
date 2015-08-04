@@ -4,17 +4,21 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
@@ -51,6 +55,23 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     myServersManager = manager;
     myServerType = type;
     initTree();
+  }
+
+  @Nullable
+  @Override
+  protected String getEmptySelectionString() {
+    final String typeNames = StringUtil.join(Extensions.getExtensions(ServerType.EP_NAME),
+                    new Function<ServerType, String>() {
+                      @Override
+                      public String fun(ServerType type) {
+                        return type.getPresentableName();
+                      }
+                    }, ", ");
+
+    if (typeNames.length() > 0) {
+      return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);
+    }
+    return null;
   }
 
   public static RemoteServerListConfigurable createConfigurable(@NotNull ServerType<?> type) {

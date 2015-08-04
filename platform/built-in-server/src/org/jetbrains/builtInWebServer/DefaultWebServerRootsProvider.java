@@ -47,19 +47,22 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     @NotNull
     @Override
     protected OrderRootType[] compute() {
-      OrderRootType javaDocRootType;
-      try {
-        javaDocRootType = JavadocOrderRootType.getInstance();
-      }
-      catch (Throwable e) {
-        javaDocRootType = null;
-      }
-
+      OrderRootType javaDocRootType = getJavadocOrderRootType();
       return javaDocRootType == null
              ? new OrderRootType[]{OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES}
              : new OrderRootType[]{javaDocRootType, OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES};
     }
   };
+
+  @Nullable
+  private static OrderRootType getJavadocOrderRootType() {
+    try {
+      return JavadocOrderRootType.getInstance();
+    }
+    catch (Throwable e) {
+      return null;
+    }
+  }
 
   @Nullable
   @Override
@@ -83,13 +86,14 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
           resolver = WebServerPathToFileManager.getInstance(project).getResolver(path);
 
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-          PathInfo result = findByRelativePath(path, moduleRootManager.getSourceRoots(), resolver, moduleName);
-          if (result == null) {
-            result = findByRelativePath(path, moduleRootManager.getContentRoots(), resolver, moduleName);
-            if (result == null) {
-              result = findInModuleLibraries(path, module, resolver);
+          for (RootProvider rootProvider : RootProvider.values()) {
+            PathInfo result = findByRelativePath(path, rootProvider.getRoots(moduleRootManager), resolver, moduleName);
+            if (result != null) {
+              return result;
             }
           }
+
+          PathInfo result = findInModuleLibraries(path, module, resolver);
           if (result != null) {
             return result;
           }
@@ -107,15 +111,13 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     }
 
     resolver = WebServerPathToFileManager.getInstance(project).getResolver(path);
-    PathInfo result = findByRelativePath(project, path, modules, true, resolver);
-    if (result == null) {
-      // let's find in content roots
-      result = findByRelativePath(project, path, modules, false, resolver);
-      if (result == null) {
-        return findInLibraries(project, modules, path, resolver);
+    for (RootProvider rootProvider : RootProvider.values()) {
+      PathInfo result = findByRelativePath(project, path, modules, rootProvider, resolver);
+      if (result != null) {
+        return result;
       }
     }
-    return result;
+    return findInLibraries(project, modules, path, resolver);
   }
 
   @Nullable
@@ -250,7 +252,7 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
 
   @Nullable
   private static PathInfo getInfoForDocJar(@NotNull final VirtualFile file, @NotNull final Project project) {
-    final OrderRootType javaDocRootType = JavadocOrderRootType.getInstance();
+    final OrderRootType javaDocRootType = getJavadocOrderRootType();
     if (javaDocRootType == null) {
       return null;
     }
@@ -329,12 +331,12 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
   private static PathInfo findByRelativePath(@NotNull Project project,
                                              @NotNull String path,
                                              @NotNull Module[] modules,
-                                             boolean inSourceRoot,
+                                             @NotNull RootProvider rootProvider,
                                              @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver) {
     for (Module module : modules) {
       if (!module.isDisposed()) {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        PathInfo result = findByRelativePath(path, inSourceRoot ? moduleRootManager.getSourceRoots() : moduleRootManager.getContentRoots(), resolver, null);
+        PathInfo result = findByRelativePath(path, rootProvider.getRoots(moduleRootManager), resolver, null);
         if (result != null) {
           result.moduleName = getModuleNameQualifier(project, module);
           return result;
@@ -342,5 +344,28 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
       }
     }
     return null;
+  }
+
+  private enum RootProvider {
+    SOURCE {
+      @Override
+      public VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager) {
+        return rootManager.getSourceRoots();
+      }
+    },
+    CONTENT {
+      @Override
+      public VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager) {
+        return rootManager.getContentRoots();
+      }
+    },
+    EXCLUDED {
+      @Override
+      public VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager) {
+        return rootManager.getExcludeRoots();
+      }
+    };
+
+    public abstract VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager);
   }
 }

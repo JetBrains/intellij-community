@@ -900,4 +900,17 @@ public class ArrayUtil extends ArrayUtilRt {
     }
     return 0;
   }
+
+  // calculates average of the median values in the selected part of the array. E.g. for part=3 returns average in the middle third.
+  public static long averageAmongMedians(@NotNull long[] time, int part) {
+    assert part >= 1;
+    int n = time.length;
+    Arrays.sort(time);
+    long total = 0;
+    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+      total += time[i];
+    }
+    int middlePartLength = n / part;
+    return middlePartLength == 0 ? 0 : total / middlePartLength;
+  }
 }

@@ -45,11 +45,6 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
   private boolean myJava6;
   private IdeaProjectTestFixture myFixture;
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public NotNullVerifyingInstrumenterTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

@@ -6,6 +6,6 @@ import java.util.Collections;
 
 class c {
   void m() {
-    Collections.emptyList().stream().filter(input -> true).findFirst().get();
+    Collections.<String>emptyList().stream().filter(input -> true).findFirst().get();
   }
 }

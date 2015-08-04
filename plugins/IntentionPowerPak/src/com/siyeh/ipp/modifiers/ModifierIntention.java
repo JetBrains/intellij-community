@@ -87,7 +87,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       final PsiElement sibling = modifierList.getNextSibling();
       if (sibling instanceof PsiWhiteSpace) {
         sibling.replace(whitespace);
-        CodeStyleManager.getInstance(project).reformatRange(member, modifierList.getTextOffset() + 1,
+        CodeStyleManager.getInstance(project).reformatRange(member, modifierList.getTextOffset(),
                                                             modifierList.getNextSibling().getTextOffset());
       }
     }

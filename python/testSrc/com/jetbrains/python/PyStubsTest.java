@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -41,6 +39,7 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -205,7 +204,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         pyClass.setName("RenamedClass");
         assertEquals("RenamedClass", pyClass.getName());
       }
@@ -214,20 +213,15 @@ public class PyStubsTest extends PyTestCase {
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
 
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, myFixture.getProject(), null);
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(Result result) throws Throwable {
-        fileImpl.unloadContent();
+      protected void run(@NotNull Result result) throws Throwable {
+        ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
       }
     }.execute();
-    assertNull(fileImpl.getTreeElement()); // Test unload successed.
+    assertNull(fileImpl.getTreeElement()); // Test unload succeeded.
 
-    fileStub = fileImpl.getStub();
-    assertNotNull("After tree element have been unloaded we must be able to create updated stub", fileStub);
-
-    final PyClassStub newclassstub = (PyClassStub)fileStub.getChildrenStubs().get(0);
-    assertEquals("RenamedClass", newclassstub.getName());
+    assertEquals("RenamedClass", fileImpl.getTopLevelClasses().get(0).getName());
   }
 
   public void testImportStatement() {

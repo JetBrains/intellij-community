@@ -55,6 +55,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
     ConfigurationFactoryEx factory = configurationType.getFactory();
     RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
+    factory.onNewConfigurationCreated(settings.getConfiguration());
     DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();
     if (remoteServer != null) {
       runConfiguration.setServerName(remoteServer.getName());

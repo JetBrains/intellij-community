@@ -9,15 +9,15 @@
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule"/>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
-       <category>Concurrency</category>
+       <category>Java/Concurrency</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToThreadLocalIntention</className>
-      <category>Concurrency</category>
+      <category>Java/Concurrency</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ChangeClassParametersIntention</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
   </extensions>
 </idea-plugin>

@@ -1,0 +1,9 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
+
+  <actions>
+    <actio<caret>n id="a"/>
+  </actions>
+  
+</idea-plugin>

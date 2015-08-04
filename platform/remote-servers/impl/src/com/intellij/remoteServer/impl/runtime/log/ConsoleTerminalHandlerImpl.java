@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,22 +28,6 @@ import java.io.*;
 public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
 
   private static final Logger LOG = Logger.getInstance("#" + ConsoleTerminalHandlerImpl.class.getName());
-
-  public static final CloudTerminalProvider PROVIDER = new CloudTerminalProvider() {
-
-    @Override
-    public TerminalHandlerBase createTerminal(@NotNull String presentableName,
-                                              @NotNull Project project,
-                                              @NotNull InputStream terminalOutput,
-                                              @NotNull OutputStream terminalInput) {
-      return new ConsoleTerminalHandlerImpl(presentableName, project, terminalOutput, terminalInput);
-    }
-
-    @Override
-    public boolean isTtySupported() {
-      return false;
-    }
-  };
 
   private final LoggingHandlerImpl myLoggingHandler;
 

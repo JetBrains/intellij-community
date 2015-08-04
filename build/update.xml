@@ -42,20 +42,6 @@
         <arg value="-f"/>
         <arg value="gant.xml"/>
       </java>
-
-      <java classname="com.intellij.util.io.zip.ReorderJarsMain" fork="true">
-        <jvmarg line="-Djava.awt.headless=true"/>
-        <arg value="${build}/order.txt"/>
-        <arg value="@{deploy}"/>
-        <arg value="@{deploy}"/>
-        <arg value="${project.home}/lib"/>
-        <classpath>
-          <pathelement location="${modules.output}/production/util-rt"/>
-          <pathelement location="${modules.output}/production/util"/>
-          <pathelement location="${project.home}/lib/jna.jar"/>
-          <pathelement location="${project.home}/lib/trove4j.jar"/>
-        </classpath>
-      </java>
     </sequential>
   </macrodef>
 

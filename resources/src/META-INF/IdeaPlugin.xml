@@ -68,6 +68,10 @@
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
+    
+    <component>
+      <implementation-class>com.intellij.execution.testDiscovery.TestDiscoveryIndex</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -155,6 +159,9 @@
 
     <extensionPoint name="debugger.extraSteppingFilter"
                     interface="com.intellij.debugger.engine.ExtraSteppingFilter"/>
+
+    <extensionPoint name="debugger.sourcePositionHighlighter"
+                    interface="com.intellij.debugger.engine.SourcePositionHighlighter"/>
 
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -278,6 +285,8 @@
     <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
 
+    <extensionPoint name="codeInsight.externalLibraryResolver" interface="com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver"/>
+
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
     <extensionPoint name="hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
@@ -337,6 +346,7 @@
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
     <annotatedPackagesSearch implementation="com.intellij.psi.impl.search.AnnotatedPackagesSearcher"/>
     <directClassInheritorsSearch implementation="com.intellij.psi.impl.search.JavaDirectInheritorsSearcher"/>
+    <classInheritorsSearch implementation="com.intellij.psi.impl.search.JavaClassInheritorsSearcher"/>
     <overridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaOverridingMethodsSearcher"/>
     <allOverridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaAllOverridingMethodsSearcher"/>
     <methodReferencesSearch implementation="com.intellij.psi.impl.search.MethodUsagesSearcher"/>
@@ -346,6 +356,7 @@
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
     
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
+    <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionIndex"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
@@ -418,8 +429,6 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
-    <applicationService serviceInterface="com.intellij.psi.util.PsiEditorUtil"
-                        serviceImplementation="com.intellij.psi.util.PsiUtilBase"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
@@ -733,7 +742,7 @@
                      displayName="Block marker comment"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
                      groupBundle="messages.InspectionsBundle"
-                     groupName="Code style issues" enabledByDefault="false" level="WARNING"
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
                      displayName="Pseudo functional expression using static class"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
@@ -746,208 +755,222 @@
                      groupName="Performance issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Collection.addAll() can be replaced with parametrized constructor"/>
-
+    <localInspection groupPath="Java" language="JAVA" shortName="GuavaFluentIterable"
+                     groupBundle="messages.InspectionsBundle"
+                     groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18StreamApi.GuavaFluentIterableInspection"
+                     displayName="Guava's FluentIterable can be replaced by java.util.stream.Stream"/>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InvertIfConditionAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.dataFlow.EditContractIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.MakeInferredAnnotationExplicit</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>MakeInferredAnnotationExplicit</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.ToggleSourceInferredAnnotations</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>ToggleSourceInferredAnnotations</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>
-      <category>Control Flow</category>
+      <category>Java/Annotations</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateSwitchIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BindFieldsFromParametersAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateCastExpressionFromInstanceofAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.GenerateMissedTestsAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateSubclassAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ImplementAbstractMethodAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CopyAbstractMethodImplementationAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitDeclarationAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.JoinDeclarationAndAssignmentAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.PushConditionInCallAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.intention.MoveInitializerToSetUpMethodAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveFieldAssignmentToInitializerAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MakeTypeGenericAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOverrideAnnotationAction</className>
-      <category>Declaration</category>
+      <category>Java/Annotations</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.IntroduceVariableIntentionAction</className>
-      <category>Refactorings</category>
+      <category>Java/Refactorings</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.EncapsulateFieldAction</className>
-      <category>Refactorings</category>
+      <category>Java/Refactorings</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SimplifyBooleanExpressionAction</className>
-      <category>Boolean</category>
+      <category>Java/Boolean</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
-      <category>I18N</category>
+      <category>Java/I18N</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
-      <category>I18N</category>
+      <category>Java/I18N</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction</className>
-      <category>Imports</category>
+      <category>Java/Imports</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction</className>
-      <category>Imports</category>
+      <category>Java/Imports</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExpandStaticImportAction</className>
-      <category>Imports</category>
+      <category>Java/Imports</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInspection.actions.UnimplementInterfaceAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInspection.actions.ReplaceImplementsWithStaticImportAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertColorRepresentationIntentionAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddJavadocIntention</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
@@ -962,36 +985,32 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
-      <category>Other</category>
+      <category>Java/Imports</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
-      <category>Other</category>
+      <category>Java/Strings</category>
     </intentionAction>
 
-
-    <intentionAction>
-      <className>com.intellij.codeInspection.concurrencyAnnotations.JCiPOrderEntryFix</className>
-    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.RemoveLiteralUnderscoresAction</className>
-      <category>Numbers</category>
+      <category>Java/Numbers</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InsertLiteralUnderscoresAction</className>
-      <category>Numbers</category>
+      <category>Java/Numbers</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
-      <category>Strings</category>
+      <category>Java/Strings</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction</className>
-      <category>Declaration</category>
+      <category>Java/Try Statements</category>
     </intentionAction>
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
@@ -1046,10 +1065,12 @@
     <codeInsight.gotoSuper language="SPI" implementationClass="com.intellij.spi.SPIGotoSuperHandler"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.linkHandler prefix="#javaClass/" handlerClass="com.intellij.codeInsight.daemon.impl.JavaClassTooltipLinkHandler"/>
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider"/>
     <colorProvider implementation="com.intellij.codeInsight.daemon.impl.JavaColorProvider" />
     <regExpModifierProvider language="JAVA" implementationClass="com.intellij.codeInsight.JavaRegExpModifierProvider" />
+
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
+    <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
 
     <annotator language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaDocAnnotator"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement"
@@ -1188,7 +1209,6 @@
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider"/>
 
     <preFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.FormatCommentsProcessor"/>
-    <preFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.FieldInColumnsPreFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.BracePostFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.ImportPostFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.TabPostFormatProcessor"/>
@@ -1203,6 +1223,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestIndexNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GuessElementTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpectedTypeMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpressionTypeMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.AnnotatedMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodNameMacro"/>
@@ -1453,6 +1474,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaStaticMemberTypeIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
 
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
@@ -1471,6 +1493,7 @@
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
 
     <callHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider"/>
     <methodHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.method.JavaMethodHierarchyProvider"/>
@@ -1528,6 +1551,7 @@
     <debugger.simplePropertyGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
     <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
     <debugger.sourcePositionProvider implementation="com.intellij.debugger.engine.DefaultSourcePositionProvider" order="last"/>
+    <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
 
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ImageObjectRenderer"/>
@@ -1583,6 +1607,7 @@
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector" order="first"/>
 
     <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
+    <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
 
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
@@ -1625,6 +1650,9 @@
     <generation.toStringClassFilter implementation="org.jetbrains.generate.tostring.GenerateToStringInterfaceFilter" order="last"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
+    <codeInsight.externalLibraryResolver
+        implementation="com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.concurrencyAnnotations.JCiPExternalLibraryResolver"/>
 
     <refactoring.pullUpHelperFactory language="JAVA" implementationClass="com.intellij.refactoring.memberPullUp.JavaPullUpHelperFactory"/>
     <hierarchy.referenceProcessor implementation="com.intellij.ide.hierarchy.call.JavaCallReferenceProcessor"/>

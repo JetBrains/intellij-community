@@ -31,6 +31,12 @@ import javax.swing.*;
  */
 public abstract class EditorNotifications extends AbstractProjectComponent {
 
+  /**
+   * An extension allowing to add custom notifications to the top of file editors.
+   * 
+   * During indexing, only {@link com.intellij.openapi.project.DumbAware} instances are executed. 
+   * @param <T> the type of the notification UI component
+   */
   public abstract static class Provider<T extends JComponent> {
     @NotNull
     public abstract Key<T> getKey();

@@ -5,49 +5,49 @@
     <file>UnnecessaryFullyQualifiedName.java</file>
     <line>14</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Fully qualified name &lt;code&gt;java.util.List&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.util&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryFullyQualifiedName.java</file>
     <line>15</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Fully qualified name &lt;code&gt;java.util.Map&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.util&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryFullyQualifiedName.java</file>
     <line>17</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Fully qualified name &lt;code&gt;java.lang.System&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.lang&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryFullyQualifiedName.java</file>
     <line>18</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Fully qualified name &lt;code&gt;java.lang.System&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.lang&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryFullyQualifiedName.java</file>
     <line>41</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Fully qualified name &lt;code&gt;java.   util.   List&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.   util&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryFQNJavadoc.java</file>
     <line>4</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Fully qualified name &lt;code&gt;java.util.Map&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.util&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryFQNJavadoc.java</file>
     <line>5</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Fully qualified name &lt;code&gt;java.util.HashMap&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.util&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
 

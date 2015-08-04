@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private ToolWindowFactory myContentFactory;
 
   @NotNull
-  private ActionCallback myActivation = new ActionCallback.Done();
+  private ActionCallback myActivation = ActionCallback.DONE;
   private final BusyObject.Impl myShowing = new BusyObject.Impl() {
     @Override
     public boolean isReady() {
@@ -239,7 +239,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable) {
+  public void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setContentUiType(myId, type);
     if (runnable != null) {
@@ -252,6 +252,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myToolWindowManager.setDefaultContentUiType(this, type);
   }
 
+  @NotNull
   @Override
   public ToolWindowContentUiType getContentUiType() {
     ApplicationManager.getApplication().assertIsDispatchThread();

@@ -25,6 +25,7 @@ import com.intellij.lang.java.parser.JavadocParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.tree.*;
@@ -122,6 +123,8 @@ public interface JavaDocElementType {
 
     @Override
     public boolean isParsable(final CharSequence buffer, Language fileLanguage, final Project project) {
+      if (!StringUtil.startsWith(buffer, "/**") || !StringUtil.endsWith(buffer, "*/")) return false;
+
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       lexer.start(buffer);
       if (lexer.getTokenType() == DOC_COMMENT) {

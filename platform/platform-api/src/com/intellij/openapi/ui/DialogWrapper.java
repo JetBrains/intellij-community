@@ -459,7 +459,7 @@ public abstract class DialogWrapper {
     List<JButton> buttons = new ArrayList<JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if ((UIUtil.isUnderAquaLookAndFeel() || (UIUtil.isUnderDarcula() && SystemInfo.isMac)) 
+    if ((UIUtil.isUnderAquaBasedLookAndFeel())
         && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
@@ -1192,7 +1192,10 @@ public abstract class DialogWrapper {
           myHeight = height;
           myResizeInProgress = true;
           myErrorText.setMinimumSize(new Dimension(0, height));
-          myPeer.getRootPane().validate();
+          JRootPane root = myPeer.getRootPane();
+          if (root != null) {
+            root.validate();
+          }
           if (myActualSize != null) {
             myPeer.setSize(myActualSize.width, myActualSize.height + height);
           }

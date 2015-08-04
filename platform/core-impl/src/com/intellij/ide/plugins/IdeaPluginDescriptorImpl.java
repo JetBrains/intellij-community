@@ -669,6 +669,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean isBundled() {
+    if (PluginManagerCore.CORE_PLUGIN_ID.equals(myId.getIdString())) {
+      return true;
+    }
+
     String path;
     try {
       //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin

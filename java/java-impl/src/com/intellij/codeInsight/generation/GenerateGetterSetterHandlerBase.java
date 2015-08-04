@@ -75,6 +75,11 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   }
 
   @Override
+  protected boolean hasMembers(@NotNull PsiClass aClass) {
+    return !GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass).isEmpty();
+  }
+
+  @Override
   protected String getHelpId() {
     return "Getter and Setter Templates Dialog";
   }

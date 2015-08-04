@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-class MethodReferenceVisitor extends JavaRecursiveElementVisitor {
+class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private boolean m_referencesStaticallyAccessible = true;
   private final PsiMember m_method;

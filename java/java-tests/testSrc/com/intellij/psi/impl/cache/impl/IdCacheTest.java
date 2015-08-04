@@ -27,13 +27,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.TodoCacheManager;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.TodoAttributesUtil;
+import com.intellij.psi.search.TodoPattern;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 
 import java.io.File;
 import java.util.Arrays;
@@ -47,9 +47,6 @@ public class IdCacheTest extends CodeInsightTestCase{
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    FileBasedIndex.getInstance().requestRebuild(IdIndex.NAME);
-    FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
 
     String root = JavaTestUtil.getJavaTestDataPath()+ "/psi/impl/cache/";
 

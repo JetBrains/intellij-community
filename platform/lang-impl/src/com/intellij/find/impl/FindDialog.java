@@ -44,7 +44,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
@@ -320,6 +319,69 @@ public class FindDialog extends DialogWrapper {
         }
       );
     }
+
+    if (!myModel.isReplaceState()) {
+      makeResultsPreviewActionOverride(
+        comboBox,
+        KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0),
+        "choosePrevious",
+        new Runnable() {
+          @Override
+          public void run() {
+            int row = myResultsPreviewTable.getSelectedRow();
+            if (row > 0) myResultsPreviewTable.setRowSelectionInterval(row - 1, row - 1);
+            TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
+          }
+        }
+      );
+
+      makeResultsPreviewActionOverride(
+        comboBox,
+        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0),
+        "chooseNext",
+        new Runnable() {
+          @Override
+          public void run() {
+            int row = myResultsPreviewTable.getSelectedRow();
+            if (row >= 0 && row + 1 < myResultsPreviewTable.getRowCount()) {
+              myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
+              TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
+            }
+          }
+        }
+      );
+
+      new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (myResultsPreviewTable != null &&
+              myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
+            navigateToSelectedUsage(myResultsPreviewTable);
+          }
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox);
+    }
+  }
+
+  private void makeResultsPreviewActionOverride(final JComboBox component, KeyStroke keyStroke, String newActionKey, final Runnable newAction) {
+    InputMap inputMap = component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    Object action = inputMap.get(keyStroke);
+    inputMap.put(keyStroke, newActionKey);
+    final Action previousAction = action != null ? component.getActionMap().get(action) : null;
+    component.getActionMap().put(newActionKey, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (previousAction != null && component.isPopupVisible()) {
+          previousAction.actionPerformed(e);
+          return;
+        }
+
+        if(myResultsPreviewTable != null &&
+          myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
+          newAction.run();
+        }
+      }
+    });
   }
 
   private void handleComboBoxValueChanged(@NotNull ComboBox comboBox) {
@@ -670,19 +732,6 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void doOKAction(boolean findAll) {
-    if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Find in Path is not available while indexing is in progress", "Indexing", null);
-      return;
-    }
-
-    if (myResultsPreviewTable != null &&
-        myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX &&
-        myResultsPreviewTable.getSelectedRowCount() != 0
-       ) {
-      navigateToSelectedUsage(myResultsPreviewTable);
-      return;
-    }
-
     FindModel validateModel = myModel.clone();
     applyTo(validateModel, findAll);
 
@@ -838,25 +887,25 @@ public class FindDialog extends DialogWrapper {
 
     myCbCaseSensitive = createCheckbox(FindBundle.message("find.options.case.sensitive"));
     findOptionsPanel.add(myCbCaseSensitive);
-    ItemListener l = new ItemListener() {
+    ItemListener liveResultsPreviewUpdateListener = new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         scheduleResultsUpdate();
       }
     };
-    myCbCaseSensitive.addItemListener(l);
+    myCbCaseSensitive.addItemListener(liveResultsPreviewUpdateListener);
 
     myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
-    myCbPreserveCase.addItemListener(l);
+    myCbPreserveCase.addItemListener(liveResultsPreviewUpdateListener);
     findOptionsPanel.add(myCbPreserveCase);
     myCbPreserveCase.setVisible(myModel.isReplaceState());
     myCbWholeWordsOnly = createCheckbox(FindBundle.message("find.options.whole.words.only"));
-    myCbWholeWordsOnly.addItemListener(l);
+    myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
 
     findOptionsPanel.add(myCbWholeWordsOnly);
 
     myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
-    myCbRegularExpressions.addItemListener(l);
+    myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
 
     final JPanel regExPanel = new JPanel();
     regExPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1026,13 +1075,13 @@ public class FindDialog extends DialogWrapper {
                                    ? FindBundle.message("find.scope.all.projects.radio")
                                    : FindBundle.message("find.scope.whole.project.radio"), true);
     scopePanel.add(myRbProject, gbConstraints);
-    ItemListener l = new ItemListener() {
+    ItemListener resultsPreviewUpdateListener = new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         scheduleResultsUpdate();
       }
     };
-    myRbProject.addItemListener(l);
+    myRbProject.addItemListener(resultsPreviewUpdateListener);
 
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
@@ -1042,7 +1091,7 @@ public class FindDialog extends DialogWrapper {
                                   ? FindBundle.message("find.scope.project.radio")
                                   : FindBundle.message("find.scope.module.radio"), false);
     scopePanel.add(myRbModule, gbConstraints);
-    myRbModule.addItemListener(l);
+    myRbModule.addItemListener(resultsPreviewUpdateListener);
 
     gbConstraints.gridx = 1;
     gbConstraints.gridwidth = 2;
@@ -1074,7 +1123,7 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     myRbDirectory = new JRadioButton(FindBundle.message("find.scope.directory.radio"), false);
     scopePanel.add(myRbDirectory, gbConstraints);
-    myRbDirectory.addItemListener(l);
+    myRbDirectory.addItemListener(resultsPreviewUpdateListener);
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
@@ -1107,6 +1156,7 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.insets = new Insets(0, 16, 0, 0);
     myCbWithSubdirectories = createCheckbox(true, FindBundle.message("find.scope.directory.recursive.checkbox"));
     myCbWithSubdirectories.setSelected(true);
+    myCbWithSubdirectories.addItemListener(resultsPreviewUpdateListener);
     scopePanel.add(myCbWithSubdirectories, gbConstraints);
 
 
@@ -1128,7 +1178,7 @@ public class FindDialog extends DialogWrapper {
         scheduleResultsUpdate();
       }
     });
-    myRbCustomScope.addItemListener(l);
+    myRbCustomScope.addItemListener(resultsPreviewUpdateListener);
 
     Disposer.register(myDisposable, myScopeCombo);
     scopePanel.add(myScopeCombo, gbConstraints);

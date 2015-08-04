@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -140,7 +142,8 @@ public class CreateTestDialog extends DialogWrapper {
       String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
       myFixLibraryLabel.setText(text);
 
-      myFixLibraryButton.setVisible(descriptor.getLibraryPath() != null);
+      myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework ? !((JavaTestFramework)descriptor).getLibraryPaths().isEmpty()
+                                                                            : descriptor.getLibraryPath() != null);
     }
 
     String superClass = descriptor.getDefaultSuperClass();
@@ -344,13 +347,14 @@ public class CreateTestDialog extends DialogWrapper {
         }
       }
     });
+    final boolean hasTestRoots = !ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.TESTS).isEmpty();
     final List<TestFramework> attachedLibraries = new ArrayList<TestFramework>();
     final String defaultLibrary = getDefaultLibraryName();
     TestFramework defaultDescriptor = null;
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myLibrariesCombo.getModel();
     for (final TestFramework descriptor : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
       model.addElement(descriptor);
-      if (descriptor.isLibraryAttached(myTargetModule)) {
+      if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
       }
 
@@ -377,13 +381,18 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+          @Override
           public void run() {
-            if (mySelectedFramework instanceof JavaTestFramework) {
-              ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
-            } else {
-              OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
-            }
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                if (mySelectedFramework instanceof JavaTestFramework) {
+                  ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
+                } else {
+                  OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
+                }
+              }
+            });
           }
         });
         myFixLibraryPanel.setVisible(false);
@@ -460,7 +469,12 @@ public class CreateTestDialog extends DialogWrapper {
     }
 
     if (errorMessage != null) {
-      Messages.showMessageDialog(myProject, errorMessage, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      final int result = Messages
+        .showOkCancelDialog(myProject, errorMessage + ". Update existing class?", CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      if (result == Messages.CANCEL) {
+        super.close(CANCEL_EXIT_CODE);
+        return;
+      }
     }
 
     saveDefaultLibraryName();
@@ -474,7 +488,7 @@ public class CreateTestDialog extends DialogWrapper {
     final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
 
     final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
         CreateTestAction.checkForTestRoots(myTargetModule, testFolders);
         List<VirtualFile> roots;
@@ -498,7 +512,7 @@ public class CreateTestDialog extends DialogWrapper {
     if (selectedRoot == null) return null;
 
     return new WriteCommandAction<PsiDirectory>(myProject, CodeInsightBundle.message("create.directory.command")) {
-      protected void run(Result<PsiDirectory> result) throws Throwable {
+      protected void run(@NotNull Result<PsiDirectory> result) throws Throwable {
         result.setResult(RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
       }
     }.execute().getResultObject();

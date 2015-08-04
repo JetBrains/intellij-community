@@ -18,7 +18,10 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -90,6 +93,14 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
   }
 
+  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, 
+                                                              final String name, 
+                                                              boolean caseSensitively,
+                                                              final GlobalSearchScope scope) {
+    if (caseSensitively) return getVirtualFilesByName(project, name, scope);
+    return getVirtualFilesByNameIgnoringCase(name, scope, null);
+  }
+
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
@@ -99,17 +110,32 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Project project,
-                                           @Nullable IdFilter idFilter
-                                       ) {
-    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+                                           @Nullable IdFilter idFilter) {
+    return processFilesByName(name, includeDirs, true, processor, scope, project, idFilter);
+  }
+  
+  public static boolean processFilesByName(@NotNull final String name,
+                                           boolean includeDirs,
+                                           boolean caseSensitively,
+                                           @NotNull Processor<? super PsiFileSystemItem> processor,
+                                           @NotNull final GlobalSearchScope scope,
+                                           @NotNull final Project project,
+                                           @Nullable IdFilter idFilter) {
+    final Set<VirtualFile> files;
 
-    FileBasedIndex.getInstance().processValues(NAME, name, null, new FileBasedIndex.ValueProcessor<Void>() {
-      @Override
-      public boolean process(final VirtualFile file, final Void value) {
-        files.add(file);
-        return true;
-      }
-    }, scope, idFilter);
+    if (caseSensitively) {
+      files = new THashSet<VirtualFile>();
+      FileBasedIndex.getInstance().processValues(NAME, name, null, new FileBasedIndex.ValueProcessor<Void>() {
+        @Override
+        public boolean process(final VirtualFile file, final Void value) {
+          files.add(file);
+          return true;
+        }
+      }, scope, idFilter);
+    }
+    else {
+      files = getVirtualFilesByNameIgnoringCase(name, scope, idFilter);
+    }
 
     if (files.isEmpty()) return false;
     PsiManager psiManager = PsiManager.getInstance(project);
@@ -132,6 +158,30 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
       }
     }
     return processedFiles > 0;
+  }
+
+  @NotNull
+  private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
+                                                                    @NotNull final GlobalSearchScope scope,
+                                                                    @Nullable final IdFilter idFilter) {
+    final Set<String> keys = new THashSet<String>();
+    final FileBasedIndex index = FileBasedIndex.getInstance();
+    index.processAllKeys(NAME, new Processor<String>() {
+      @Override
+      public boolean process(String value) {
+        if (name.equalsIgnoreCase(value)) {
+          keys.add(value);
+        }
+        return true;
+      }
+    }, scope, idFilter);
+
+    // values accessed outside of provessAllKeys 
+    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+    for (String each : keys) {
+      files.addAll(index.getContainingFiles(NAME, each, scope));
+    }
+    return files;
   }
 
   public static PsiFileSystemItem[] getFilesByName(final Project project,

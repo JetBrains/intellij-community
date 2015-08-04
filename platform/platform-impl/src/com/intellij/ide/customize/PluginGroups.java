@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 public class PluginGroups {
   static final String CORE = "Core";
@@ -49,18 +50,47 @@ public class PluginGroups {
   private IdeaPluginDescriptor[] myAllPlugins;
   private boolean myInitialized = false;
   private Set<String> myFeaturedIds = new HashSet<String>();
+  private Runnable myLoadingCallback = null;
 
   public PluginGroups() {
     myAllPlugins = PluginManagerCore.loadDescriptors(null);
-    try {
-      myPluginsFromRepository.addAll(RepositoryHelper.loadPlugins(null));
-    }
-    catch (Exception e) {
-      //OK, it's offline
-    }
+    SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
+      @Override
+      protected List<IdeaPluginDescriptor> doInBackground() throws Exception {
+        try {
+          return RepositoryHelper.loadPlugins(null);
+        }
+        catch (Exception e) {
+          //OK, it's offline
+          return Collections.emptyList();
+        }
+      }
+
+      @Override
+      protected void done() {
+        try {
+          myPluginsFromRepository.addAll(get());
+          if (myLoadingCallback != null) myLoadingCallback.run();
+        }
+        catch (InterruptedException e) {
+          if (myLoadingCallback != null) myLoadingCallback.run();
+        }
+        catch (ExecutionException e) {
+          if (myLoadingCallback != null) myLoadingCallback.run();
+        }
+      }
+    };
+    worker.execute();
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
     initGroups(myTree, myFeaturedPlugins);
+  }
+
+  public void setLoadingCallback(Runnable loadingCallback) {
+    myLoadingCallback = loadingCallback;
+    if (!myPluginsFromRepository.isEmpty()) {
+      myLoadingCallback.run();
+    }
   }
 
   protected void

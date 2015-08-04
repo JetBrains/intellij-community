@@ -33,9 +33,9 @@ public class SafeFileOutputStream extends OutputStream {
 
   private final File myTargetFile;
   private final boolean myPreserveAttributes;
-  private final File myBackDoorFile;
-  private final OutputStream myBackDoorStream;
-  private boolean failed = false;
+  private final File myBackupFile;
+  private final OutputStream myBackupStream;
+  private boolean myFailed = false;
 
   public SafeFileOutputStream(File target) throws FileNotFoundException {
     this(target, false);
@@ -44,19 +44,19 @@ public class SafeFileOutputStream extends OutputStream {
   public SafeFileOutputStream(File target, boolean preserveAttributes) throws FileNotFoundException {
     myTargetFile = target;
     myPreserveAttributes = preserveAttributes;
-    myBackDoorFile = new File(myTargetFile.getParentFile(), myTargetFile.getName() + EXTENSION_BAK);
+    myBackupFile = new File(myTargetFile.getParentFile(), myTargetFile.getName() + EXTENSION_BAK);
     //noinspection IOResourceOpenedButNotSafelyClosed
-    myBackDoorStream = new FileOutputStream(myBackDoorFile);
+    myBackupStream = new FileOutputStream(myBackupFile);
   }
 
   @Override
   public void write(byte[] b) throws IOException {
     try {
-      myBackDoorStream.write(b);
+      myBackupStream.write(b);
     }
     catch (IOException e) {
       LOG.warn(e);
-      failed = true;
+      myFailed = true;
       throw e;
     }
   }
@@ -64,11 +64,11 @@ public class SafeFileOutputStream extends OutputStream {
   @Override
   public void write(int b) throws IOException {
     try {
-      myBackDoorStream.write(b);
+      myBackupStream.write(b);
     }
     catch (IOException e) {
       LOG.warn(e);
-      failed = true;
+      myFailed = true;
       throw e;
     }
   }
@@ -76,11 +76,11 @@ public class SafeFileOutputStream extends OutputStream {
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
     try {
-      myBackDoorStream.write(b, off, len);
+      myBackupStream.write(b, off, len);
     }
     catch (IOException e) {
       LOG.warn(e);
-      failed = true;
+      myFailed = true;
       throw e;
     }
   }
@@ -88,11 +88,11 @@ public class SafeFileOutputStream extends OutputStream {
   @Override
   public void flush() throws IOException {
     try {
-      myBackDoorStream.flush();
+      myBackupStream.flush();
     }
     catch (IOException e) {
       LOG.warn(e);
-      failed = true;
+      myFailed = true;
       throw e;
     }
   }
@@ -100,16 +100,16 @@ public class SafeFileOutputStream extends OutputStream {
   @Override
   public void close() throws IOException {
     try {
-      myBackDoorStream.close();
+      myBackupStream.close();
     }
     catch (IOException e) {
       LOG.warn(e);
-      FileUtil.delete(myBackDoorFile);
+      FileUtil.delete(myBackupFile);
       throw e;
     }
 
-    if (failed) {
-      throw new IOException(CommonBundle.message("safe.write.failed", myTargetFile, myBackDoorFile.getName()));
+    if (myFailed) {
+      throw new IOException(CommonBundle.message("safe.write.failed", myTargetFile, myBackupFile.getName()));
     }
 
     final File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
@@ -118,15 +118,15 @@ public class SafeFileOutputStream extends OutputStream {
     }
     catch (IOException e) {
       LOG.warn(e);
-      throw new IOException(CommonBundle.message("safe.write.rename.original", myTargetFile, myBackDoorFile.getName()));
+      throw new IOException(CommonBundle.message("safe.write.rename.original", myTargetFile, myBackupFile.getName()));
     }
 
     try {
-      FileUtil.rename(myBackDoorFile, myTargetFile);
+      FileUtil.rename(myBackupFile, myTargetFile);
     }
     catch (IOException e) {
       LOG.warn(e);
-      throw new IOException(CommonBundle.message("safe.write.rename.backup", myTargetFile, oldFile.getName(), myBackDoorFile.getName()));
+      throw new IOException(CommonBundle.message("safe.write.rename.backup", myTargetFile, oldFile.getName(), myBackupFile.getName()));
     }
 
     if (myPreserveAttributes) {

@@ -80,6 +80,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class also controls the auto-reparse and auto-hints.
@@ -301,7 +302,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @NotNull List<TextEditor> textEditors,
                                 @NotNull int[] toIgnore,
                                 boolean canChangeDocument,
-                                @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
+                                @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -343,36 +344,32 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     myPassExecutorService.submitPasses(map, progress);
     try {
       while (progress.isRunning()) {
-        try {
-          progress.checkCanceled();
-          if (callbackWhileWaiting != null) {
-            callbackWhileWaiting.run();
+        wrap(new ThrowableRunnable() {
+          @Override
+          public void run() throws Throwable {
+            progress.checkCanceled();
+            if (callbackWhileWaiting != null) {
+              callbackWhileWaiting.run();
+            }
+            myPassExecutorService.waitFor(50);
+            UIUtil.dispatchAllInvocationEvents();
+            Throwable savedException = PassExecutorService.getSavedException(progress);
+            if (savedException != null) throw savedException;
           }
-          myPassExecutorService.waitFor(50);
-          UIUtil.dispatchAllInvocationEvents();
-          Throwable savedException = PassExecutorService.getSavedException(progress);
-          if (savedException != null) throw savedException;
-        }
-        catch (RuntimeException e) {
-          throw e;
-        }
-        catch (Error e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          throw new RuntimeException(e);
-        }
+        });
       }
-      HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getHighlightingSession(file, progress);
-      try {
-        myPassExecutorService.waitFor(50000);
-        if (session != null) {
+
+      final HighlightingSessionImpl session =
+        (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, textEditors.get(0).getEditor(), progress, null);
+      wrap(new ThrowableRunnable() {
+        @Override
+        public void run() throws Throwable {
+          if (!myPassExecutorService.waitFor(60000)) {
+            throw new TimeoutException("Unable to complete in 60s");
+          }
           session.waitForHighlightInfosApplied();
         }
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(e);
-      }
+      });
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();
@@ -901,5 +898,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @NotNull
   private List<Editor> getActiveEditors() {
     return myEditorTracker.getActiveEditors();
+  }
+
+  private static void wrap(@NotNull ThrowableRunnable runnable) {
+    try {
+      runnable.run();
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Error e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
   }
 }

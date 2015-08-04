@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
@@ -46,7 +47,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -338,6 +343,18 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
   }
 
+  protected void assertArtifacts(String... expectedNames) {
+    final List<String> actualNames = ContainerUtil.map(
+      ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid(), new Function<Artifact, String>() {
+        @Override
+        public String fun(Artifact artifact) {
+          return artifact.getName();
+        }
+      });
+
+    assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
   protected Module getModule(final String name) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
@@ -378,6 +395,26 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return ModuleRootManager.getInstance(getModule(module));
   }
 
+  protected void ignoreData(BooleanFunction<DataNode<?>> booleanFunction, final boolean ignored) {
+    final ExternalProjectInfo externalProjectInfo = ProjectDataManager.getInstance().getExternalProjectData(
+      myProject, getExternalSystemId(), getCurrentExternalProjectSettings().getExternalProjectPath());
+    assertNotNull(externalProjectInfo);
+
+    final DataNode<ProjectData> projectDataNode = externalProjectInfo.getExternalProjectStructure();
+    assertNotNull(projectDataNode);
+
+    final Collection<DataNode<?>> nodes = ExternalSystemApiUtil.findAllRecursively(projectDataNode, booleanFunction);
+    for (DataNode<?> node : nodes) {
+      ExternalSystemApiUtil.visit(node, new Consumer<DataNode<?>>() {
+        @Override
+        public void consume(DataNode dataNode) {
+          dataNode.setIgnored(ignored);
+        }
+      });
+    }
+    ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
+  }
+
   protected void importProject(@NonNls String config) throws IOException {
     createProjectConfig(config);
     importProject();
@@ -413,8 +450,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
                 ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
                   @Override
                   public void run() {
-                    ServiceManager.getService(ProjectDataManager.class).importData(
-                      externalProject.getKey(), Collections.singleton(externalProject), myProject, true);
+                    ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
                   }
                 });
               }

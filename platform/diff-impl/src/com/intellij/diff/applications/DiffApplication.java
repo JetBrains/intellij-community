@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +58,7 @@ public class DiffApplication extends ApplicationStarterBase {
     if (file1 == null) throw new Exception("Can't find file " + path1);
     if (file2 == null) throw new Exception("Can't find file " + path2);
 
-    file1.refresh(false, true);
-    file2.refresh(false, true);
+    VfsUtil.markDirtyAndRefresh(false, false, false, file1, file2);
     DiffRequest request = DiffRequestFactory.getInstance().createFromFiles(null, file1, file2);
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();

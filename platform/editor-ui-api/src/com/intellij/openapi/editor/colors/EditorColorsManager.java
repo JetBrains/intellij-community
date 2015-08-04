@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public abstract class EditorColorsManager {
   @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
 
@@ -29,7 +31,12 @@ public abstract class EditorColorsManager {
 
   public abstract void addColorsScheme(@NotNull EditorColorsScheme scheme);
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public abstract void removeAllSchemes();
+
+  @Deprecated
+  public abstract void setSchemes(@NotNull List<EditorColorsScheme> schemes);
 
   @NotNull
   public abstract EditorColorsScheme[] getAllSchemes();

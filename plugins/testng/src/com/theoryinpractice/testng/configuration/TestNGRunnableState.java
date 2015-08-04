@@ -16,18 +16,18 @@
 
 package com.theoryinpractice.testng.configuration;
 
+import com.beust.jcommander.JCommander;
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.theoryinpractice.testng.model.*;
@@ -48,13 +49,13 @@ import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
-import org.testng.annotations.AfterClass;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
@@ -83,6 +84,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @NotNull
   @Override
   protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+    appendForkInfo(executor);
     return startProcess();
   }
 
@@ -169,30 +171,15 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return TESTNG_TEST_FRAMEWORK_NAME;
   }
 
-  @NotNull
-  @Override
-  protected AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties,
-                                                                        ConsoleView consoleView) {
-    return new RerunFailedTestsAction(consoleView, testConsoleProperties);
-  }
-
   @Override
   protected boolean configureByModule(Module module) {
     return module != null && getConfiguration().getPersistantData().getScope() != TestSearchScope.WHOLE_PROJECT;
   }
 
-  @NotNull
   @Override
-  protected SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
-    return new TestNGConsoleProperties(getConfiguration(), executor);
-  }
-
-  @Override
-  protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
+  protected void configureRTClasspath(JavaParameters javaParameters) {
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(AfterClass.class));
-
-    super.configureClasspath(javaParameters);
+    javaParameters.getClassPath().addTail(PathUtil.getJarPathForClass(JCommander.class));
   }
 
   @Override
@@ -237,7 +224,40 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   public SearchingForTestsTask createSearchingForTestsTask() {
-    return new SearchingForTestsTask(myServerSocket, config, myTempFile, client);
+    return new SearchingForTestsTask(myServerSocket, config, myTempFile, client) {
+      @Override
+      protected void onFound() {
+        super.onFound();
+
+        if (forkPerModule()) {
+          final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>(new Comparator<Module>() {
+            @Override
+            public int compare(Module o1, Module o2) {
+              return StringUtil.compare(o1.getName(), o2.getName(), true);
+            }
+          });
+
+          for (final PsiClass psiClass : myClasses.keySet()) {
+            final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
+            if (module != null) {
+              List<String> list = perModule.get(module);
+              if (list == null) {
+                list = new ArrayList<String>();
+                perModule.put(module, list);
+              }
+              list.add(psiClass.getQualifiedName());
+            }
+          }
+
+          try {
+            writeClassesPerModule(getConfiguration().getPackage(), getJavaParameters(), perModule);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      }
+    };
   }
 
   public static boolean supportSerializationProtocol(TestNGConfiguration config) {
@@ -285,7 +305,20 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return getConfiguration().getPersistantData().getScope();
   }
 
-  protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
-    getJavaParameters().getProgramParametersList().add("-forkMode", forkMode + ',' + tempFile.getAbsolutePath());
+  protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
+    final ParametersList parametersList = parameters.getProgramParametersList();
+    final List<String> params = parametersList.getParameters();
+    int paramIdx = params.size() - 1;
+    for (int i = 0; i < params.size(); i++) {
+      String param = params.get(i);
+      if ("-temp".equals(param)) {
+        paramIdx = i;
+        break;
+      }
+    }
+    parametersList.addAt(paramIdx, "@@@" + tempFile.getAbsolutePath());
+    if (getForkSocket() != null) {
+      parametersList.addAt(paramIdx, ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
+    }
   }
 }

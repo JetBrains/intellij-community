@@ -17,7 +17,7 @@ public class MissingClassBodyFixer implements Fixer {
 
     if (psiClass.getLBrace() == null) {
       int offset = psiClass.getTextRange().getEndOffset();
-      editor.getDocument().insertString(offset, " {\n}");
+      editor.getDocument().insertString(offset, "{\n}");
       editor.getCaretModel().moveToOffset(offset);
     }
   }

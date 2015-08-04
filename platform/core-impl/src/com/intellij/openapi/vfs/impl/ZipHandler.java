@@ -156,7 +156,7 @@ public class ZipHandler extends ArchiveHandler {
                                  long time,
                                  @NotNull String entryName) {
     CharSequence sequence = shortName instanceof ByteArrayCharSequence ? shortName : ByteArrayCharSequence.convertToBytesIfAsciiString(shortName);
-    EntryInfo info = new EntryInfo(parentInfo, sequence, isDirectory, size, time);
+    EntryInfo info = new EntryInfo(sequence, isDirectory, size, time, parentInfo);
     map.put(entryName, info);
     return info;
   }
@@ -194,6 +194,8 @@ public class ZipHandler extends ArchiveHandler {
       if (entry != null) {
         InputStream stream = zip.getInputStream(entry);
         if (stream != null) {
+          // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks
+          // no sense to create BufferedInputStream
           try {
             return FileUtil.loadBytes(stream, (int)entry.getSize());
           }

@@ -35,8 +35,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.zip.JBZipEntry;
-import com.intellij.util.io.zip.JBZipFile;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -45,12 +43,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author anna
@@ -283,13 +284,18 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static int getIdeaClassFileVersion(File apiJar) {
     try {
-      JBZipFile zipFile = new JBZipFile(apiJar);
+      ZipFile zipFile = new ZipFile(apiJar);
       try {
-        JBZipEntry entry = zipFile.getEntry(PsiManager.class.getName().replace('.', '/') + ".class");
+        ZipEntry entry = zipFile.getEntry(PsiManager.class.getName().replace('.', '/') + ".class");
         if (entry != null) {
-          byte[] bytes = entry.getData();
-          if (bytes != null && bytes.length > 8) {
-            return ((int)bytes[6] << 8) + (int)bytes[7];
+          DataInputStream stream = new DataInputStream(zipFile.getInputStream(entry));
+          try {
+            if (stream.skip(6) == 6) {
+              return stream.readUnsignedShort();
+            }
+          }
+          finally {
+            stream.close();
           }
         }
       }
@@ -297,7 +303,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         zipFile.close();
       }
     }
-    catch (IOException ignored) { }
+    catch (IOException e) {
+      LOG.info(e);
+    }
 
     return -1;
   }

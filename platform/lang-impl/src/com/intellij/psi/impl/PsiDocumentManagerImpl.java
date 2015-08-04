@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -37,11 +36,11 @@ import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,14 +57,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
 
   public PsiDocumentManagerImpl(@NotNull final Project project,
                                 @NotNull PsiManager psiManager,
-                                @NotNull SmartPointerManager smartPointerManager,
                                 @NotNull EditorFactory editorFactory,
                                 @NotNull MessageBus bus,
                                 @NonNls @NotNull final DocumentCommitThread documentCommitThread) {
-    super(project, psiManager, smartPointerManager, bus, documentCommitThread);
+    super(project, psiManager, bus, documentCommitThread);
     myDocumentCommitThread = documentCommitThread;
     editorFactory.getEventMulticaster().addDocumentListener(this, project);
-    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+    MessageBusConnection busConnection = bus.connect();
+    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
         PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
@@ -77,7 +76,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         fireDocumentCreated(document, psiFile);
       }
     });
-    bus.connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+    busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
       public void updateFinished(@NotNull Document doc) {
         documentCommitThread.queueCommit(project, doc, "Bulk update finished");
@@ -122,12 +121,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         commitAllDocuments();
       }
     }
-  }
-
-  @Override
-  boolean shouldNotifySmartPointers(@NotNull VirtualFile virtualFile) {
-    // for an open file do not do fasten/unfasten, they should always stay fastened to improve responsiveness
-    return !myProject.isDefault() && !FileEditorManager.getInstance(myProject).isFileOpen(virtualFile);
   }
 
   @Override

@@ -3,6 +3,5 @@ class A:
         pass
 
 class B(A):
-    def __init__(self, d: str, a: int, b: float, *args: tuple, e: bytes, c: complex,
-                 **kwargs: dict) -> list:
+    def __init__(self, d: str, a: int, b: float, *args: tuple, e: bytes, c: complex, **kwargs: dict) -> list:
         super().__init__(a, b, *args, c=c, **kwargs)

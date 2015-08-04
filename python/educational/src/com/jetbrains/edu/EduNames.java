@@ -28,6 +28,8 @@ public class EduNames {
   public static final String WINDOW_POSTFIX = "_window.";
   public static final String TASK = "task";
   public static final String USER_TESTS = "userTests";
+  public static final String TESTS_FILE = "tests.py";
+
   public static final String SANDBOX_DIR = "Sandbox";
 
   private EduNames() {

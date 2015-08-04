@@ -17,20 +17,24 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author yole
@@ -52,17 +56,30 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   };
   private final UpdateSettings mySettings;
 
-  public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
+  public UpdateCheckerComponent(@NotNull final Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
 
-    if (mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
+    if (mySettings.isSecureConnection() && !mySettings.canUseSecureConnection()) {
+      mySettings.setSecureConnection(false);
+
+      boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
+      final String title = IdeBundle.message("update.notifications.title");
+      final String message = IdeBundle.message(tooOld ? "update.sni.not.available.message" : "update.sni.disabled.message");
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
-          String title = IdeBundle.message("update.notifications.title");
-          boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
-          String message = IdeBundle.message(tooOld ? "update.sni.not.available.notification" : "update.sni.disabled.notification");
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, null).notify(null);
+          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              notification.expire();
+              app.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
+                }
+              }, ModalityState.NON_MODAL);
+            }
+          }).notify(null);
         }
       }, ModalityState.NON_MODAL);
     }
@@ -70,13 +87,8 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     scheduleOnStartCheck(app);
   }
 
-  @Override
-  public void initComponent() {
-    PluginsAdvertiser.ensureDeleted();
-  }
-
   private void scheduleOnStartCheck(@NotNull Application app) {
-    if (!mySettings.isCheckNeeded() || mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
+    if (!mySettings.isCheckNeeded()) {
       return;
     }
 
@@ -98,6 +110,11 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   private void queueNextCheck(long interval) {
     myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
+  }
+
+  @Override
+  public void initComponent() {
+    PluginsAdvertiser.ensureDeleted();
   }
 
   @Override

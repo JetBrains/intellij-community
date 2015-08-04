@@ -169,12 +169,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private static class PositionedStripe {
-    private final Color color;
+    @NotNull private Color color;
     private int yEnd;
     private final boolean thin;
     private final int layer;
 
-    private PositionedStripe(Color color, int yEnd, boolean thin, int layer) {
+    private PositionedStripe(@NotNull Color color, int yEnd, boolean thin, int layer) {
       this.color = color;
       this.yEnd = yEnd;
       this.thin = thin;
@@ -244,7 +244,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int getOffset(int visualLine, boolean startLine) {
-    int logicalLine = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0), true).line;
+    int logicalLine = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
     return startLine? myEditor.getDocument().getLineStartOffset(logicalLine) : myEditor.getDocument().getLineEndOffset(logicalLine);
   }
 
@@ -501,20 +501,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         if (myErrorStripeRenderer != null) {
-          if (isMirrored() && g instanceof Graphics2D) {
-            Graphics2D g2d = (Graphics2D)g;
-            AffineTransform old = g2d.getTransform();
-            AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
-            tx.translate(-getErrorIconWidth(), 0);
-            g2d.transform(tx);
-            myErrorStripeRenderer.paint(this, g2d, new Rectangle(0, 0, getErrorIconWidth(), getErrorIconHeight()));
-            g2d.setTransform(old);
-          }
-          else {
-            int x = getThinGap() + myMinMarkHeight;
-            final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
-            myErrorStripeRenderer.paint(this, g, b);
-          }
+          int x = isMirrored() ? 0 : (getThinGap() + myMinMarkHeight);
+          final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
+          myErrorStripeRenderer.paint(this, g, b);
         }
       }
       finally {
@@ -746,8 +735,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int startOffset = yPositionToOffset(clip.y - myMinMarkHeight, true);
       int endOffset = yPositionToOffset(clip.y + clip.height, false);
 
+      Shape oldClip = g.getClip();
+      g.clipRect(clip.x, clip.y, clip.width, clip.height);
+
       drawMarkup(g, startOffset, endOffset,
-                 (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true),EditorMarkupModelImpl.this);
+                 (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true), EditorMarkupModelImpl.this);
+
+      g.setClip(oldClip);
     }
 
     private void drawMarkup(@NotNull final Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup1, @NotNull MarkupModelEx markup2) {
@@ -764,8 +758,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       });
       // sorted by layer
-      final List<PositionedStripe> thinStripes = new ArrayList<PositionedStripe>();
-      final List<PositionedStripe> wideStripes = new ArrayList<PositionedStripe>();
+      final List<PositionedStripe> thinStripes = new ArrayList<PositionedStripe>(); // layer desc
+      final List<PositionedStripe> wideStripes = new ArrayList<PositionedStripe>(); // layer desc
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
@@ -810,7 +804,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             }
             if (stripe == null) {
               // started new stripe, draw previous above
-              if (yStart[0] != ys) {
+              if (i == 0 && yStart[0] != ys) {
                 if (!stripes.isEmpty()) {
                   PositionedStripe top = stripes.get(0);
                   drawSpot(g, top.thin, yStart[0], ys, top.color);
@@ -822,8 +816,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               ends.offer(stripe);
             }
             else {
-              // key changed, reinsert into queue
-              if (stripe.yEnd != ye) {
+              if (stripe.yEnd < ye) {
+                if (!color.equals(stripe.color)) {
+                  // paint previous stripe on this layer
+                  if (i == 0 && yStart[0] != ys) {
+                    drawSpot(g, stripe.thin, yStart[0], ys, stripe.color);
+                    yStart[0] = ys;
+                  }
+                  stripe.color = color;
+                }
+
+                // key changed, reinsert into queue
                 ends.remove(stripe);
                 stripe.yEnd = ye;
                 ends.offer(stripe);
@@ -863,8 +866,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return yStart;
     }
 
-    private void drawSpot(@NotNull Graphics g, boolean thinErrorStripeMark, int yStart, int yEnd, @Nullable Color color) {
-      if (color == null) return;
+    private void drawSpot(@NotNull Graphics g, boolean thinErrorStripeMark, int yStart, int yEnd, @NotNull Color color) {
       int paintWidth;
       int x;
       if (thinErrorStripeMark) {

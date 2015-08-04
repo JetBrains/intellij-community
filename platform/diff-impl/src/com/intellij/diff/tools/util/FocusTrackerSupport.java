@@ -17,13 +17,11 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusAdapter;
@@ -34,34 +32,13 @@ public class FocusTrackerSupport<T> {
   public static class TwosideFocusTrackerSupport {
     @NotNull private Side myCurrentSide;
 
-    private final boolean myDumbMode;
-    @Nullable private final MyFocusListener myListener1;
-    @Nullable private final MyFocusListener myListener2;
+    public TwosideFocusTrackerSupport(@NotNull List<? extends EditorHolder> holders) {
+      assert holders.size() == 2;
 
-    public TwosideFocusTrackerSupport(@Nullable Editor editor1, @Nullable Editor editor2) {
-      this(getComponent(editor1), getComponent(editor2));
-    }
+      myCurrentSide = Side.RIGHT;
 
-    public TwosideFocusTrackerSupport(@Nullable FileEditor editor1, @Nullable FileEditor editor2) {
-      this(getComponent(editor1), getComponent(editor2));
-    }
-
-    public TwosideFocusTrackerSupport(@Nullable JComponent component1, @Nullable JComponent component2) {
-      assert component1 != null || component2 != null;
-      myCurrentSide = component2 != null ? Side.RIGHT : Side.LEFT;
-
-      myDumbMode = component1 == null || component2 == null;
-      if (!myDumbMode) {
-        myListener1 = new MyFocusListener(Side.LEFT);
-        component1.addFocusListener(myListener1);
-
-        myListener2 = new MyFocusListener(Side.RIGHT);
-        component2.addFocusListener(myListener2);
-      }
-      else {
-        myListener1 = null;
-        myListener2 = null;
-      }
+      addListener(holders, Side.LEFT);
+      addListener(holders, Side.RIGHT);
     }
 
     @NotNull
@@ -70,7 +47,6 @@ public class FocusTrackerSupport<T> {
     }
 
     public void setCurrentSide(@NotNull Side side) {
-      if (myDumbMode) return;
       myCurrentSide = side;
     }
 
@@ -80,8 +56,11 @@ public class FocusTrackerSupport<T> {
     }
 
     public void updateContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
-      if (myDumbMode) return;
       context.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, myCurrentSide);
+    }
+
+    private void addListener(@NotNull List<? extends EditorHolder> holders, @NotNull Side side) {
+      side.select(holders).installFocusListener(new MyFocusListener(side));
     }
 
     private class MyFocusListener extends FocusAdapter {
@@ -100,47 +79,12 @@ public class FocusTrackerSupport<T> {
   public static class ThreesideFocusTrackerSupport {
     @NotNull private ThreeSide myCurrentSide;
 
-    private final boolean myDumbMode;
-    @Nullable private final MyFocusListener myListener1;
-    @Nullable private final MyFocusListener myListener2;
-    @Nullable private final MyFocusListener myListener3;
+    public ThreesideFocusTrackerSupport(@NotNull List<? extends EditorHolder> holders) {
+      myCurrentSide = ThreeSide.BASE;
 
-    public ThreesideFocusTrackerSupport(@NotNull List<? extends Editor> editors) {
-      this(editors.get(0), editors.get(1), editors.get(2));
-    }
-
-    public ThreesideFocusTrackerSupport(@Nullable Editor editor1, @Nullable Editor editor2, @Nullable Editor editor3) {
-      this(getComponent(editor1), getComponent(editor2), getComponent(editor3));
-    }
-
-    public ThreesideFocusTrackerSupport(@Nullable FileEditor editor1, @Nullable FileEditor editor2, @Nullable FileEditor editor3) {
-      this(getComponent(editor1), getComponent(editor2), getComponent(editor3));
-    }
-
-    public ThreesideFocusTrackerSupport(@Nullable JComponent component1, @Nullable JComponent component2, @Nullable JComponent component3) {
-      assert component1 != null || component2 != null || component3 != null;
-      myCurrentSide = component2 != null ? ThreeSide.BASE : component1 != null ? ThreeSide.LEFT : ThreeSide.RIGHT;
-
-      boolean c1 = component1 != null;
-      boolean c2 = component2 != null;
-      boolean c3 = component3 != null;
-      myDumbMode = (!c1 && !c2) || (!c1 && !c3) || (!c2 && !c3); // only one not-null element
-
-      if (!myDumbMode) {
-        myListener1 = component1 != null ? new MyFocusListener(ThreeSide.LEFT) : null;
-        if (component1 != null) component1.addFocusListener(myListener1);
-
-        myListener2 = component2 != null ? new MyFocusListener(ThreeSide.BASE) : null;
-        if (component2 != null) component2.addFocusListener(myListener2);
-
-        myListener3 = component3 != null ? new MyFocusListener(ThreeSide.RIGHT) : null;
-        if (component3 != null) component3.addFocusListener(myListener3);
-      }
-      else {
-        myListener1 = null;
-        myListener2 = null;
-        myListener3 = null;
-      }
+      addListener(holders, ThreeSide.LEFT);
+      addListener(holders, ThreeSide.BASE);
+      addListener(holders, ThreeSide.RIGHT);
     }
 
     @NotNull
@@ -149,7 +93,6 @@ public class FocusTrackerSupport<T> {
     }
 
     public void setCurrentSide(@NotNull ThreeSide side) {
-      if (myDumbMode || side.select(myListener1, myListener2, myListener3) == null) return;
       myCurrentSide = side;
     }
 
@@ -159,8 +102,11 @@ public class FocusTrackerSupport<T> {
     }
 
     public void updateContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
-      if (myDumbMode) return;
       context.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE, myCurrentSide);
+    }
+
+    private void addListener(@NotNull List<? extends EditorHolder> holders, @NotNull ThreeSide side) {
+      side.select(holders).installFocusListener(new MyFocusListener(side));
     }
 
     private class MyFocusListener extends FocusAdapter {
@@ -174,15 +120,5 @@ public class FocusTrackerSupport<T> {
         myCurrentSide = mySide;
       }
     }
-  }
-
-  @Nullable
-  private static JComponent getComponent(@Nullable Editor editor) {
-    return editor != null ? editor.getContentComponent() : null;
-  }
-
-  @Nullable
-  private static JComponent getComponent(@Nullable FileEditor editor) {
-    return editor != null ? editor.getComponent() : null;
   }
 }

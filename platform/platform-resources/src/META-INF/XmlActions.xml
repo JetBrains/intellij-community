@@ -72,6 +72,12 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
+    <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction"
+            text="Encode XML/HTML Special Characters"
+            description="Escape XML/HTML special characters with entities">
+      <add-to-group group-id="EditMenu" anchor="last"/>
+    </action>
+
     <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
             text="Open in default _browser" description="Open selected file in default browser"
@@ -105,12 +111,14 @@
         <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward"
                 text="Next Emmet Edit Point" description="Go to next Emmet edit point">
           <keyboard-shortcut first-keystroke="alt shift CLOSE_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X" replace-all="true"/>
           <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X 10.5+" replace-all="true"/>
         </action>
 
         <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward"
                 text="Previous Emmet Edit Point" description="Go to previous Emmet edit point">
           <keyboard-shortcut first-keystroke="alt shift OPEN_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X" replace-all="true"/>
           <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X 10.5+" replace-all="true"/>
         </action>
       </group>

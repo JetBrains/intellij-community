@@ -49,6 +49,10 @@ public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
     assertQuickfixNotAvailable("Replace 'E' with 'String' in cast");
   }
 
+  public void testReplaceInstanceofInFront() {
+    doTest("replaceInstanceofInFront", "Replace 'String' with 'Integer' in instanceof");
+  }
+
   @Override
   protected String getRelativePath() {
     return "bugs/castConflicts";

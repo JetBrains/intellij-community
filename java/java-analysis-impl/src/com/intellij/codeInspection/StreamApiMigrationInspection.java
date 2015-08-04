@@ -303,7 +303,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
           simplifyRedundantCast(callStatement);
 
-          CodeStyleManager.getInstance(project).reformat(callStatement);
+          CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(callStatement));
         }
       }
     }

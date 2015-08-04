@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ public class VfsData {
 
   public static class Segment {
     // user data for files, DirectoryData for folders
-    final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<Object>(SEGMENT_SIZE);
+    private final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<Object>(SEGMENT_SIZE);
 
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);

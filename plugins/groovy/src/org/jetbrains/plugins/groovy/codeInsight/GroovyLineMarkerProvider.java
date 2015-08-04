@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
@@ -60,18 +61,15 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ilyas
  * Same logic as for Java LMP
  */
 public class GroovyLineMarkerProvider implements LineMarkerProvider {
-  protected final DaemonCodeAnalyzerSettings myDaemonSettings;
-  protected final EditorColorsManager myColorsManager;
+  private final DaemonCodeAnalyzerSettings myDaemonSettings;
+  private final EditorColorsManager myColorsManager;
 
   public GroovyLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
     myDaemonSettings = daemonSettings;
@@ -152,7 +150,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider {
     return null;
   }
 
-  private static boolean hasSuperMethods(GrMethod method) {
+  private static boolean hasSuperMethods(@NotNull GrMethod method) {
     final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
     if (reflectedMethods.length > 0) {
       for (GrReflectedMethod reflectedMethod : reflectedMethods) {
@@ -166,7 +164,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider {
     }
   }
 
-  private static int getGroovyCategory(PsiElement element, CharSequence documentChars) {
+  private static int getGroovyCategory(@NotNull PsiElement element, @NotNull CharSequence documentChars) {
     if (element instanceof GrVariableDeclarationImpl) {
       GrVariable[] variables = ((GrVariableDeclarationImpl)element).getVariables();
       if (variables.length == 1 && variables[0] instanceof GrField && variables[0].getInitializerGroovy() instanceof GrClosableBlock) {
@@ -193,6 +191,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider {
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
+    Map<PsiClass, PsiClass> subClassCache = FindSuperElementsHelper.createSubClassCache();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
       if (element instanceof GrField) {
@@ -208,13 +207,13 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider {
         }
       }
       else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-        JavaLineMarkerProvider.collectInheritingClasses((PsiClass)element, result);
+        JavaLineMarkerProvider.collectInheritingClasses((PsiClass)element, result, subClassCache);
       }
     }
     collectOverridingMethods(methods, result);
   }
 
-  private static void collectOverridingMethods(final Set<PsiMethod> methods, Collection<LineMarkerInfo> result) {
+  private static void collectOverridingMethods(@NotNull final Set<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
     final Set<PsiElement> overridden = new HashSet<PsiElement>();
 
     Set<PsiClass> classes = new THashSet<PsiClass>();
@@ -264,7 +263,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider {
     }
   }
 
-  private static boolean isCorrectTarget(PsiMethod method) {
+  private static boolean isCorrectTarget(@NotNull PsiMethod method) {
     if (method instanceof GrTraitMethod) return false;
 
     final PsiElement navigationElement = method.getNavigationElement();

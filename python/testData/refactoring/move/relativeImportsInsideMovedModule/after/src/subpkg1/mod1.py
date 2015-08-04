@@ -1,7 +1,7 @@
 from pkg1 import subpkg2
 from pkg1.subpkg2 import mod2
 from pkg1.subpkg2.mod2 import VAR
-from subpkg1 import mod3
+from . import mod3
 
 # malformed imports
 from

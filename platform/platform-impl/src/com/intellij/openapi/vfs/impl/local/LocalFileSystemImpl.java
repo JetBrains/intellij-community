@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -30,10 +31,10 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,12 +43,13 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
   private static final String FS_ROOT = "/";
 
   private final Object myLock = new Object();
-  private final List<WatchRequestImpl> myRootsToWatch = new ArrayList<WatchRequestImpl>();
+  private final Set<WatchRequestImpl> myRootsToWatch = new THashSet<WatchRequestImpl>();
   private TreeNode myNormalizedTree = null;
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
@@ -102,7 +104,16 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     myManagingFS = managingFS;
     myWatcher = new FileWatcher(myManagingFS);
     if (myWatcher.isOperational()) {
-      new StoreRefreshStatusThread().start();
+      final int PERIOD = 1000;
+      Runnable runnable = new Runnable() {
+        public void run() {
+          final Application application = ApplicationManager.getApplication();
+          if (application == null || application.isDisposed()) return;
+          storeRefreshStatusToFiles();
+          JobScheduler.getScheduler().schedule(this, PERIOD, TimeUnit.MILLISECONDS);
+        }
+      };
+      JobScheduler.getScheduler().schedule(runnable, PERIOD, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -332,27 +343,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
 
       myWatcher.setWatchRoots(myRecursiveRoots, myFlatRoots);
-    }
-  }
-
-  private class StoreRefreshStatusThread extends Thread {
-    private static final long PERIOD = 1000;
-
-    public StoreRefreshStatusThread() {
-      super(StoreRefreshStatusThread.class.getSimpleName());
-      setPriority(MIN_PRIORITY);
-      setDaemon(true);
-    }
-
-    @Override
-    public void run() {
-      while (true) {
-        final Application application = ApplicationManager.getApplication();
-        if (application == null || application.isDisposed()) break;
-
-        storeRefreshStatusToFiles();
-        TimeoutUtil.sleep(PERIOD);
-      }
     }
   }
 

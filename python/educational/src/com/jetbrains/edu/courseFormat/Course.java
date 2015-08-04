@@ -24,7 +24,9 @@ public class Course {
   private boolean myUpToDate;
 
   @Expose @SerializedName("language")
-  private String myLanguage;
+  private String myLanguage="Python";
+
+  private String courseType="PyCharm";
 
   /**
    * Initializes state of course
@@ -126,5 +128,13 @@ public class Course {
 
   public void setAuthors(List<CourseInfo.Instructor> instructors) {
     this.authors = instructors;
+  }
+
+  public String getCourseType() {
+    return courseType;
+  }
+
+  public void setCourseType(String courseType) {
+    this.courseType = courseType;
   }
 }

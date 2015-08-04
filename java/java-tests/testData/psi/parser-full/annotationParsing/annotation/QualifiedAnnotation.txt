@@ -46,7 +46,7 @@ PsiJavaFile:QualifiedAnnotation.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:T
           PsiIdentifier:T('T')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
       PsiWhiteSpace(' ')

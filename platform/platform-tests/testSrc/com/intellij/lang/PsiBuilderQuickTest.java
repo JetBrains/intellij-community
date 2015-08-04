@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.idea.Bombed;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
@@ -34,6 +35,7 @@ import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class PsiBuilderQuickTest extends LightPlatformTestCase {
@@ -483,6 +485,28 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "      PsiWhiteSpace(' ')\n");
   }
 
+  @Bombed(month = Calendar.AUGUST, day = 15)
+  public void testEmptyCollapsedNode() {
+    doTest("a<<b",
+           new Parser() {
+             @Override
+             public void parse(PsiBuilder builder) {
+               builder.advanceLexer();
+               builder.mark().collapse(COLLAPSED);
+               while (builder.getTokenType() != null) {
+                 builder.advanceLexer();
+               }
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(LETTER)('a')\n" +
+           "  PsiElement(COLLAPSED)('')\n" +
+           "  PsiElement(OTHER)('<')\n" +
+           "  PsiElement(OTHER)('<')\n" +
+           "  PsiElement(LETTER)('b')\n"
+    );
+  }
+
   private interface Parser {
     void parse(PsiBuilder builder);
   }
@@ -539,8 +563,8 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
         public void nodeInserted(@NotNull ASTNode oldParent, @NotNull LighterASTNode newNode, int pos) {
           fail("inserted(" + oldParent + "," + newNode.getTokenType() + ")");
         }
-      }
-    );
+      },
+      root.getText());
   }
 
   private static void doFailTest(@NonNls final String text, final Parser parser, @NonNls final String expected) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class ParameterCanBeLocalInspection extends ParameterCanBeLocalInspection
         final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, method, false, visibilityModifier,
                                                                          method.getName(), method.getReturnType(), newParams) {
           @Override
-          protected void performRefactoring(UsageInfo[] usages) {
+          protected void performRefactoring(@NotNull UsageInfo[] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
             final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
             super.performRefactoring(usages);

@@ -14,7 +14,7 @@ class Test {
   void m1(ILong l, Object i) {}
 
   void test() {
-    m<error descr="Ambiguous method call: both 'Test.m(IInt, Long)' and 'Test.m(ILong, Integer)' match">(() -> 1, null)</error>;
+    <error descr="Ambiguous method call: both 'Test.m(IInt, Long)' and 'Test.m(ILong, Integer)' match">m</error>(() -> 1, null);
     m1(() -> 1, null);
   }
 }

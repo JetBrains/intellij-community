@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 
 /**
  * Adds appropriate first parameter to a freshly-typed method declaration.
@@ -40,7 +42,7 @@ import com.jetbrains.python.psi.PyUtil;
 public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
-    if (!(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
+    if (DumbService.isDumb(project) || !(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
     if (character == '(') {
       if (!PyCodeInsightSettings.getInstance().INSERT_SELF_FOR_METHODS) {
         return Result.CONTINUE;
@@ -54,7 +56,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
 
       final ASTNode token_node = token.getNode();
       if (token_node != null && token_node.getElementType() == PyTokenTypes.IDENTIFIER) {
-        PsiElement maybe_def = PyUtil.getFirstNonCommentBefore(token.getPrevSibling());
+        PsiElement maybe_def = PyPsiUtils.getPrevNonCommentSibling(token.getPrevSibling(), false);
         if (maybe_def != null) {
           ASTNode def_node = maybe_def.getNode();
           if (def_node != null && def_node.getElementType() == PyTokenTypes.DEF_KEYWORD) {

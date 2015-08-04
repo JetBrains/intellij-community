@@ -17,11 +17,8 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMap;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 
 class IndividualPiecesStrategy extends AutoMatchStrategy {
   private boolean mySucceeded;
@@ -39,9 +36,9 @@ class IndividualPiecesStrategy extends AutoMatchStrategy {
     final Collection<VirtualFile> variants = filterVariants(patch, foundByName);
 
     if ((variants != null) && (! variants.isEmpty())) {
-      final FilePatchInProgress filePatchInProgress = new FilePatchInProgress(patch, variants, myBaseDir);
-      myResult.add(filePatchInProgress);
-      registerFolderDecision(patch.getBeforeName(), filePatchInProgress.getBase());
+      final TextFilePatchInProgress textFilePatchInProgress = new TextFilePatchInProgress(patch, variants, myBaseDir);
+      myResult.add(textFilePatchInProgress);
+      registerFolderDecision(patch.getBeforeName(), textFilePatchInProgress.getBase());
     } else {
       mySucceeded = false;
     }

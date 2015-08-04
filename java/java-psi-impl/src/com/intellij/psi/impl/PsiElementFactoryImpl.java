@@ -609,9 +609,18 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   @Override
-  public PsiDeclarationStatement createVariableDeclarationStatement(@NotNull String name,
+  public PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name,
                                                                     @NotNull PsiType type,
                                                                     @Nullable PsiExpression initializer) throws IncorrectOperationException {
+    return createVariableDeclarationStatement(name, type, initializer, null);
+  }
+
+  @NotNull
+  @Override
+  public PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name,
+                                                                    @NotNull PsiType type,
+                                                                    @Nullable PsiExpression initializer,
+                                                                    @Nullable PsiElement context) throws IncorrectOperationException {
     if (!isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
     }
@@ -620,7 +629,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
 
     String text = "X " + name + (initializer != null ? " = x" : "") + ";";
-    PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, null);
+    PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, context);
 
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
     replace(variable.getTypeElement(), createTypeElement(type), text);

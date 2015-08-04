@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
-public class PsiMethodReferenceHighlightingUtil {
-  public static HighlightInfo checkRawConstructorReference(PsiMethodReferenceExpression expression) {
+class PsiMethodReferenceHighlightingUtil {
+  static HighlightInfo checkRawConstructorReference(@NotNull PsiMethodReferenceExpression expression) {
     if (expression.isConstructor()) {
       PsiType[] typeParameters = expression.getTypeParameters();
       if (typeParameters.length > 0) {

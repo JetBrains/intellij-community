@@ -19,9 +19,8 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperTeardownVisitor extends JavaRecursiveElementVisitor {
-
-  private boolean callToSuperTearDownFound = false;
+class CallToSuperTeardownVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean callToSuperTearDownFound;
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
@@ -51,7 +50,7 @@ class CallToSuperTeardownVisitor extends JavaRecursiveElementVisitor {
     callToSuperTearDownFound = true;
   }
 
-  public boolean isCallToSuperTeardownFound() {
+  boolean isCallToSuperTeardownFound() {
     return callToSuperTearDownFound;
   }
 }

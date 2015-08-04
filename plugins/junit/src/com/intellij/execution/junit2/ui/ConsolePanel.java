@@ -25,7 +25,6 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestTreeView;
@@ -34,7 +33,6 @@ import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.SimpleColoredComponent;
@@ -43,7 +41,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -66,9 +63,8 @@ public class ConsolePanel extends TestResultsPanel {
   public ConsolePanel(final JComponent console,
                       final TestsOutputConsolePrinter printer,
                       final JUnitConsoleProperties properties,
-                      final ExecutionEnvironment environment,
                       AnAction[] consoleActions) {
-    super(console, consoleActions, properties, environment, PROPORTION_PROPERTY, DEFAULT_PROPORTION);
+    super(console, consoleActions, properties, PROPORTION_PROPERTY, DEFAULT_PROPORTION);
     myPrinter = printer;
   }
 
@@ -86,7 +82,7 @@ public class ConsolePanel extends TestResultsPanel {
 
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    return new JUnitToolbarPanel(myProperties, myEnvironment, this);
+    return new JUnitToolbarPanel(myProperties, this);
   }
 
   @Override

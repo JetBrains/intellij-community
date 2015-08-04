@@ -169,10 +169,13 @@ public class TestsPresentationUtil {
                                                    final TestTreeRenderer renderer) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
     if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-      renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
-      renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
-                      SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      if (!testProxy.getChildren().isEmpty()) {
+        formatRootNodeWithChildren(testProxy, renderer);
+      } else {
+        renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
+        renderer.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
+                        SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     } else if (magnitude == TestStateInfo.Magnitude.NOT_RUN_INDEX) {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(SMTestsRunnerBundle.message(
@@ -216,15 +219,29 @@ public class TestsPresentationUtil {
     final SMTestProxy parent = testProxy.getParent();
     final String name = testProxy.getName();
 
+    if (name == null) {
+      return NO_NAME_TEST;
+    }
+
     String presentationCandidate = name;
     if (parent != null) {
-      final String parentName = parent.getName();
-      if (name.startsWith(parentName)) {
-        presentationCandidate = name.substring(parentName.length());
-
-        // remove "." separator
-        if (presentationCandidate.startsWith(".")) {
-          presentationCandidate = presentationCandidate.substring(1);
+      String parentName = parent.getName();
+      if (parentName != null) {
+        boolean parentStartsWith = name.startsWith(parentName);
+        if (!parentStartsWith && parent instanceof SMTestProxy.SMRootTestProxy) {
+          final String presentation = ((SMTestProxy.SMRootTestProxy)parent).getPresentation();
+          if (presentation != null) {
+            parentName = presentation;
+            parentStartsWith = name.startsWith(parentName);
+          }
+        }
+        if (parentStartsWith) {
+          presentationCandidate = name.substring(parentName.length());
+  
+          // remove "." separator
+          if (presentationCandidate.startsWith(".")) {
+            presentationCandidate = presentationCandidate.substring(1);
+          }
         }
       }
     }

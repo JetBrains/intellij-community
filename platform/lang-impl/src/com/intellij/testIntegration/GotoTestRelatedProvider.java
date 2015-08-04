@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class GotoTestRelatedProvider extends GotoRelatedProvider {
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file == null) return Collections.emptyList();
 
-    List<PsiElement> result;
+    Collection<PsiElement> result;
     final boolean isTest = TestFinderHelper.isTest(file);
     if (isTest) {
       result = TestFinderHelper.findClassesForTest(file);

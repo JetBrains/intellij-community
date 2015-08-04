@@ -417,9 +417,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
                   myManager.childReplaced(treeEvent);
                 }
                 else {
-                  if (oldPsiFile instanceof PsiFileImpl) {
-                    ((PsiFileImpl)oldPsiFile).clearCaches();
-                  }
+                  FileManagerImpl.clearPsiCaches(oldFileViewProvider);
+
                   treeEvent.setElement(oldPsiFile);
                   treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_FILE_NAME);
                   treeEvent.setOldValue(event.getOldValue());

@@ -18,13 +18,19 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -42,9 +48,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
+ * Use {@link SMRunnerConsolePropertiesProvider} so importer {@link AbstractImportTestsAction.ImportRunProfile#ImportRunProfile(VirtualFile, Project)}
+ * would be able to create properties by read configuration and test navigation, rerun failed tests etc. would work on imported results
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
-  private final RunConfiguration myConfiguration;
+  private final RunProfile myConfiguration;
+  @NotNull private final String myTestFrameworkName;
   private final CompositeFilter myCustomFilter;
   private boolean myIdBasedTestTree = false;
   private boolean myPrintTestingStartedTime = true;
@@ -55,9 +64,17 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * @param executor
    */
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
-    super(getStorage(testFrameworkName), config.getProject(), executor);
+    this(config.getProject(), config, testFrameworkName, executor);
+  }
+  
+  public SMTRunnerConsoleProperties(@NotNull Project project, 
+                                    @NotNull RunProfile config,
+                                    @NotNull String testFrameworkName, 
+                                    @NotNull Executor executor) {
+    super(getStorage(testFrameworkName), project, executor);
     myConfiguration = config;
-    myCustomFilter = new CompositeFilter(config.getProject());
+    myTestFrameworkName = testFrameworkName;
+    myCustomFilter = new CompositeFilter(project);
   }
 
   /** @deprecated {@use #setPrintTestingStartedTime} (to be removed in IDEA 16) */
@@ -76,8 +93,14 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   }
 
   @Override
-  public RunConfiguration getConfiguration() {
+  public RunProfile getConfiguration() {
     return myConfiguration;
+  }
+
+  @Nullable
+  @Override
+  protected AnAction createImportAction() {
+    return new ImportTestsGroup(this);
   }
 
   public boolean isIdBasedTestTree() {
@@ -102,6 +125,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return getErrorNavigatable(location.getProject(), stacktrace);
   }
 
+  @Nullable
   @Override
   public Navigatable getErrorNavigatable(@NotNull final Project project, final @NotNull String stacktrace) {
     if (myCustomFilter.isEmpty()) {
@@ -189,5 +213,15 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Nullable
   public TestProxyFilterProvider getFilterProvider() {
     return null;
+  }
+  
+  @Nullable
+  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
+    return null;
+  }
+
+  @NotNull
+  public String getTestFrameworkName() {
+    return myTestFrameworkName;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,24 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class SurroundAutoCloseableActionTest extends JavaCodeInsightFixtureTestCase {
-  private String myIntention;
-
+public class SurroundAutoCloseableActionTest extends LightCodeInsightFixtureTestCase {
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myIntention = CodeInsightBundle.message("intention.surround.resource.with.ARM.block");
-  }
-
-  @Override
-  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_7);
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/surroundAutoCloseable/";
   }
 
   public void testSimple() { doTest(); }
   public void testUsage() { doTest(); }
   public void testMixedUsages() { doTest(); }
   public void testLastDeclaration() { doTest(); }
+  public void testSplitVar() { doTest(); }
 
   private void doTest() {
     String name = getTestName(false);
-    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, name + ".java", name + "_after.java");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/surroundAutoCloseable/";
+    String intention = CodeInsightBundle.message("intention.surround.resource.with.ARM.block");
+    CodeInsightTestUtil.doIntentionTest(myFixture, intention, name + ".java", name + "_after.java");
   }
 }

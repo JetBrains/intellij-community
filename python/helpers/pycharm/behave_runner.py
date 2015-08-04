@@ -152,7 +152,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                 error_message = utils.to_unicode(element.error_message)
                 if "Traceback " in error_message:
                     error_message = ""  # No reason to duplicate output (see PY-13647)
-                self._test_failed(step_name, error_message, trace)
+                self._test_failed(step_name, error_message, trace, duration=element.duration)
             elif element.status == 'undefined':
                 self._test_undefined(step_name, element.location)
             else:

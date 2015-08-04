@@ -32,11 +32,11 @@ import java.awt.*;
 public class DarculaTextBorder implements Border, UIResource {
   @Override
   public Insets getBorderInsets(Component c) {
-    int vOffset = DarculaTextFieldUI.isSearchField(c) ? 6 : 4;
-    if (DarculaTextFieldUI.isSearchFieldWithHistoryPopup(c)) {
+    int vOffset = TextFieldWithPopupHandlerUI.isSearchField(c) ? 6 : 4;
+    if (TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup(c)) {
       return JBUI.insets(vOffset, 7 + 16 + 3, vOffset, 7 + 16).asUIResource();
     }
-    else if (DarculaTextFieldUI.isSearchField(c)) {
+    else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
       return JBUI.insets(vOffset, 4 + 16 + 3, vOffset, 7 + 16).asUIResource();
     }
     else {

@@ -57,10 +57,8 @@
                        groupName="TestNG" enabledByDefault="true" level="ERROR"
                        implementationClass="com.theoryinpractice.testng.inspection.DataProviderReturnTypeInspection"/>
 
-      <intentionAction>
-          <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
-        </intentionAction>
-        <testFramework implementation="com.theoryinpractice.testng.TestNGFramework"/>
+      <testFramework implementation="com.theoryinpractice.testng.TestNGFramework"/>
+      <codeInsight.externalLibraryResolver implementation="com.theoryinpractice.testng.intention.TestNGExternalLibraryResolver"/>
       <standardResource url="http://testng.org/testng-1.0.dtd" path="resources/standardSchemas/testng-1.0.dtd"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
       <forcedElementWeigher implementation="com.theoryinpractice.testng.TestNGForcedElementWeigher"/>
@@ -73,7 +71,14 @@
       <localInspection groupPath="Java" language="JAVA" shortName="TestNGDataProvider"
                        implementationClass="com.theoryinpractice.testng.inspection.TestNGDataProviderInspection" displayName="Data provider problems"
                        groupName="TestNG" enabledByDefault="true" level="WARNING"/>
+      <programRunner implementation="com.theoryinpractice.testng.configuration.TestNGDebuggerRunner"/>
+      <runConfigurationProducer
+          implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
+      <configurationType implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationType"/>
     </extensions>
+  <extensions defaultExtensionNs="com.theoryinpractice.testng">
+    <listener implementation="org.testng.TestNGTestDiscoveryListener"/>
+  </extensions>
     <extensionPoints >
       <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>
     </extensionPoints>

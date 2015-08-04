@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 class NonFinalFieldsVisitor extends BaseInspectionVisitor {
-  protected void checkUsedNonFinalFields(PsiMethod method) {
-    method.accept(new JavaRecursiveElementVisitor() {
+  void checkUsedNonFinalFields(PsiMethod method) {
+    method.accept(new JavaRecursiveElementWalkingVisitor() {
 
       @Override
       public void visitClass(PsiClass aClass) {

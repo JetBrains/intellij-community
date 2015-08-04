@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -62,7 +62,7 @@ public class DomTableView extends AbstractTableView<DomElement> {
     if (domElement.isValid()) {
       new WriteCommandAction(getProject(), DomUtil.getFile(domElement)) {
         @Override
-        protected void run(final Result result) throws Throwable {
+        protected void run(@NotNull final Result result) throws Throwable {
           valueSetter.run();
         }
       }.execute();

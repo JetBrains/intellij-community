@@ -74,8 +74,14 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
+  @Deprecated
   public boolean isWrapWhenTypingReachesRightMargin() {
     return CodeStyleSettingsManager.getSettings(myProject).WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
+  }
+
+  @Override
+  public boolean isWrapOnTyping(@Nullable Language language) {
+    return CodeStyleSettingsManager.getSettings(myProject).isWrapOnTyping(language);
   }
 
   @Override

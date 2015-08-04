@@ -1,9 +1,10 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -52,9 +53,12 @@ public class ExternalSystemConstants {
   public static final char PATH_SEPARATOR = '/';
 
   // Order.
-  public static final int BUILTIN_SERVICE_ORDER             = 42;
-  public static final int BUILTIN_TOOL_WINDOW_SERVICE_ORDER = 62;
-  public static final int UNORDERED                         = 1000;
+  public static final int BUILTIN_PROJECT_DATA_SERVICE_ORDER = Integer.MIN_VALUE;
+  public static final int BUILTIN_MODULE_DATA_SERVICE_ORDER = BUILTIN_PROJECT_DATA_SERVICE_ORDER + 1;
+  public static final int BUILTIN_LIBRARY_DATA_SERVICE_ORDER = BUILTIN_MODULE_DATA_SERVICE_ORDER + 1;
+  public static final int BUILTIN_SERVICE_ORDER = BUILTIN_LIBRARY_DATA_SERVICE_ORDER + 1;
+  public static final int BUILTIN_TOOL_WINDOW_SERVICE_ORDER = BUILTIN_SERVICE_ORDER + 1;
+  public static final int UNORDERED = 1000;
 
   public static final int TEXT_FIELD_WIDTH_IN_COLUMNS = 20;
 }

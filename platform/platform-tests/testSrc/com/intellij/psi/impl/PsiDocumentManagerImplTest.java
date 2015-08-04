@@ -134,7 +134,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
         getPsiDocumentManager().getSynchronizer().performAtomically(file, new Runnable() {
           @Override
           public void run() {
-            getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
+            changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
           }
         });
       }
@@ -150,7 +150,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
-        getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
+        changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
       }
     });
 
@@ -166,13 +166,19 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
-        getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
+        changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
       }
     });
 
 
     getPsiDocumentManager().commitDocument(document);
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+  }
+
+  private static void changeDocument(Document document, PsiDocumentManagerImpl manager) {
+    DocumentEventImpl event = new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false);
+    manager.beforeDocumentChange(event);
+    manager.documentChanged(event);
   }
 
   public void testCommitAllDocument_RemovesFromUncommittedList() throws Exception {
@@ -183,7 +189,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
-        getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
+        changeDocument(document, getPsiDocumentManager());
       }
     });
 
@@ -218,20 +224,19 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
-          getPsiDocumentManager()
-            .documentChanged(new DocumentEventImpl(alienDocument, 0, "", "", alienDocument.getModificationStamp(), false));
+          changeDocument(alienDocument, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
           assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
           assertEquals(0, alienDocManager.getUncommittedDocuments().length);
 
-          alienDocManager.documentChanged(new DocumentEventImpl(alienDocument, 0, "", "", alienDocument.getModificationStamp(), false));
+          changeDocument(alienDocument, alienDocManager);
           assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
           assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
-          getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
+          changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
           assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
           assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
-          alienDocManager.documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
+          changeDocument(document, alienDocManager);
           assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
           assertEquals(1, alienDocManager.getUncommittedDocuments().length);
         }

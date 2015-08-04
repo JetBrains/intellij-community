@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  */
 public class SPIGotoSuperHandler extends JavaGotoSuperHandler {
   @Override
-  protected PsiElement getElement(PsiFile file, int offset) {
+  protected PsiElement getElement(@NotNull PsiFile file, int offset) {
     final SPIClassProviderReferenceElement
       providerElement = PsiTreeUtil.getParentOfType(super.getElement(file, offset), SPIClassProviderReferenceElement.class);
     if (providerElement != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @SkipInHeadlessEnvironment
-public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
+public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCase {
 
   public void testUpdate() throws InterruptedException {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject());
@@ -57,6 +57,7 @@ public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
   }
 
 
+  @SuppressWarnings("InnerClassMayBeStatic")
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
 
     private JBList myList;

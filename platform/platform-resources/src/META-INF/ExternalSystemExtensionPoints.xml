@@ -7,10 +7,13 @@
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator"/>
     <extensionPoint name="externalSystemNotificationExtension"
                     interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"/>
+    <extensionPoint name="externalSystemKeymapProvider"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension$ActionsProvider"/>
     <extensionPoint name="externalSystemTaskNotificationListener"
                     interface="com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener"/>
     <extensionPoint name="externalSystemExecutionConsoleManager"
                     interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager"/>
     <extensionPoint name="externalSystemViewContributor" interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"/>
+    <extensionPoint name="externalProjectStructureCustomizer" interface="com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer"/>
   </extensionPoints>
 </idea-plugin>

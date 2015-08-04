@@ -1,9 +1,23 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -12,7 +26,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -57,33 +70,14 @@ public abstract class StubProcessingHelperBase {
         psiFile = (PsiFileWithStubSupport)stubBindingRoot;
         stubTree = psiFile.getStubTree();
         if (stubTree == null && psiFile instanceof PsiFileImpl) {
-          IElementType contentElementType = ((PsiFileImpl)psiFile).getContentElementType();
-          if (contentElementType instanceof IStubFileElementType) {
+          IStubFileElementType elementType = ((PsiFileImpl)psiFile).getElementTypeForStubBuilder();
+          if (elementType != null) {
             stubTree = ((PsiFileImpl)psiFile).calcStubTree();
           }
           else {
             customStubs = true;
-            assert BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) != null : "unable to get stub builder for " + psiFile.getFileType();
-          }
-        }
-      }
-      if (!customStubs && stubTree != null) {
-        final List<PsiFileStub> roots = new SmartList<PsiFileStub>(stubTree.getRoot());
-        final List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = StubTreeBuilder.getStubbedRoots(viewProvider);
-        for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
-          if (stubbedRoot.second == stubBindingRoot) continue;
-          if (stubbedRoot.second instanceof PsiFileImpl) {
-            final StubTree secondaryStubTree = ((PsiFileImpl)stubbedRoot.second).calcStubTree();
-            if (secondaryStubTree != null) {
-              final PsiFileStub root = secondaryStubTree.getRoot();
-              roots.add(root);
-            }
-          }
-        }
-        final PsiFileStub[] rootsArray = roots.toArray(new PsiFileStub[roots.size()]);
-        for (PsiFileStub root : rootsArray) {
-          if (root instanceof PsiFileStubImpl) {
-            ((PsiFileStubImpl)root).setStubRoots(rootsArray);
+            LOG.assertTrue(BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) != null,
+                           "unable to get stub builder for " + psiFile.getFileType());
           }
         }
       }

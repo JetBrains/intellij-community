@@ -99,7 +99,9 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
                   injected.set(Boolean.TRUE);
                   element.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, registry.getLanguageInjectionSupport());
                   for (PsiLanguageInjectionHost.Shred place : places) {
-                    references.addAll(Arrays.asList(injector.getReferences(element, context, place.getRangeInsideHost())));
+                    if (place.getHost() == element) {
+                      references.addAll(Arrays.asList(injector.getReferences(element, context, place.getRangeInsideHost())));
+                    }
                   }
               }
             });

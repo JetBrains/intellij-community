@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,6 +27,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.jar.Manifest;
 
 /**
  * @author Eugene Zhuravlev
@@ -100,21 +102,10 @@ public class ExternalProcessUtil {
         final Class wrapperClass = getCommandLineWrapperClass();
         if (wrapperClass != null) {
           try {
-            File classpathFile = FileUtil.createTempFile("classpath", null);
-            final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(classpathFile)));
-            try {
-              for (String path : classpath) {
-                writer.println(path);
-              }
-            }
-            finally {
-              writer.close();
-            }
+            final String classpathFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), classpath).getAbsolutePath();
             commandLineWrapperArgs = Arrays.asList(
               "-classpath",
-              ClasspathBootstrap.getResourcePath(wrapperClass),
-              wrapperClass.getName(),
-              classpathFile.getAbsolutePath()
+              classpathFile
             );
           }
           catch (IOException ex) {

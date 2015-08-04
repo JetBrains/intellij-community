@@ -46,8 +46,11 @@ public class MethodCallInstruction extends Instruction {
   private final List<MethodContract> myContracts;
   private final MethodType myMethodType;
   @Nullable private final DfaValue myPrecalculatedReturnValue;
+  private final boolean myOfNullable;
   private final boolean myVarArgCall;
   private final Map<PsiExpression, Nullness> myArgRequiredNullability;
+  private boolean myOnlyNullArgs = true;
+  private boolean myOnlyNotNullArgs = true;
 
   public enum MethodType {
     BOXING, UNBOXING, REGULAR_METHOD_CALL, CAST
@@ -64,6 +67,7 @@ public class MethodCallInstruction extends Instruction {
     myPrecalculatedReturnValue = null;
     myTargetMethod = null;
     myVarArgCall = false;
+    myOfNullable = false;
     myArgRequiredNullability = Collections.emptyMap();
   }
 
@@ -91,6 +95,7 @@ public class MethodCallInstruction extends Instruction {
 
     myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall();
     myPrecalculatedReturnValue = precalculatedReturnValue;
+    myOfNullable = call instanceof PsiMethodCallExpression && DfaOptionalSupport.resolveOfNullable((PsiMethodCallExpression)call) != null;
   }
 
   private Map<PsiExpression, Nullness> calcArgRequiredNullability(PsiSubstitutor substitutor, PsiParameter[] parameters) {
@@ -191,4 +196,25 @@ public class MethodCallInstruction extends Instruction {
              ? "BOX" :
              "CALL_METHOD: " + (myCall == null ? "null" : myCall.getText());
   }
+
+  public boolean updateOfNullable(DfaMemoryState memState, DfaValue arg) {
+    if (!myOfNullable) return false;
+    
+    if (!memState.isNotNull(arg)) {
+      myOnlyNotNullArgs = false;
+    } 
+    if (!memState.isNull(arg)) {
+      myOnlyNullArgs = false;
+    }
+    return true;
+  }
+
+  public boolean isOptionalAlwaysNullProblem() {
+    return myOfNullable && myOnlyNullArgs;
+  }
+
+  public boolean isOptionalAlwaysNotNullProblem() {
+    return myOfNullable && myOnlyNotNullArgs;
+  }
+
 }

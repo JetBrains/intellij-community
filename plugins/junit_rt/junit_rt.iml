@@ -9,7 +9,5 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="library" name="tcServiceMessages" level="project" />
   </component>
 </module>
-

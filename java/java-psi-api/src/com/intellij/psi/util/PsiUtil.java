@@ -1126,10 +1126,15 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Nullable
-  public static PsiMethod getResourceCloserMethod(@NotNull final PsiResourceVariable resource) {
-    final PsiType resourceType = resource.getType();
-    if (!(resourceType instanceof PsiClassType)) return null;
-    return getResourceCloserMethodForType((PsiClassType)resourceType);
+  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceListElement resource) {
+    PsiType resourceType = resource.getType();
+    return resourceType instanceof PsiClassType ? getResourceCloserMethodForType((PsiClassType)resourceType) : null;
+  }
+
+  /** @deprecated use {@link #getResourceCloserMethod(PsiResourceListElement)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceVariable resource) {
+    return getResourceCloserMethod((PsiResourceListElement)resource);
   }
 
   @Nullable
@@ -1142,7 +1147,7 @@ public final class PsiUtil extends PsiUtilCore {
     final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
     if (autoCloseable == null) return null;
 
-    if (!InheritanceUtil.isInheritorOrSelf(resourceClass, autoCloseable, true)) return null;
+    if (JavaClassSupers.getInstance().getSuperClassSubstitutor(autoCloseable, resourceClass, resourceType.getResolveScope(), PsiSubstitutor.EMPTY) == null) return null;
 
     final PsiMethod[] closes = autoCloseable.findMethodsByName("close", false);
     return closes.length == 1 ? resourceClass.findMethodBySignature(closes[0], true) : null;
@@ -1185,6 +1190,14 @@ public final class PsiUtil extends PsiUtilCore {
         }
       }
       throw new AssertionError("Invalid type: " + type + " of class " + type.getClass() + " " + customMessage);
+    }
+    for (PsiAnnotation annotation : type.getAnnotations()) {
+      try {
+        PsiUtilCore.ensureValid(annotation);
+      }
+      catch (PsiInvalidElementAccessException e) {
+        throw customMessage == null? e : new RuntimeException(customMessage, e);
+      }
     }
   }
 

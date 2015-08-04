@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class CloudTerminalProviderImpl implements CloudTerminalProvider {
+public class CloudTerminalProviderImpl extends CloudTerminalProvider {
 
   @Override
   public TerminalHandlerBase createTerminal(@NotNull String presentableName,

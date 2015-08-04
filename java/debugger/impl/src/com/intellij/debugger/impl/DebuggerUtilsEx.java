@@ -22,15 +22,12 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.execution.filters.ExceptionFilters;
@@ -46,8 +43,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -63,6 +58,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -238,12 +234,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
-  public static boolean isFiltered(String qName, ClassFilter[] classFilters) {
+  public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
     return isFiltered(qName, Arrays.asList(classFilters));
   }
   
-  public static boolean isFiltered(String qName, List<ClassFilter> classFilters) {
-    if(qName.indexOf('[') != -1) {
+  public static boolean isFiltered(@NotNull String qName, List<ClassFilter> classFilters) {
+    if (qName.indexOf('[') != -1) {
       return false; //is array
     }
 
@@ -463,8 +459,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
-
-  public abstract CompletionEditor createEditor(Project project, PsiElement context, @NonNls String recentsId);
 
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
@@ -751,11 +745,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     @Nullable
     @Override
-    public RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes) {
-      if (mySourcePosition instanceof ExecutionPointHighlighter.HighlighterProvider) {
-        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).createHighlighter(document, project, attributes);
-      }
-      return null;
+    public TextRange getHighlightRange() {
+      return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
   }
 
@@ -789,16 +780,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  public static List<PsiLambdaExpression> collectLambdas(SourcePosition position, final boolean onlyOnTheLine) {
+  public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
-    int line = position.getLine();
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final int line = position.getLine();
+    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null || line >= document.getLineCount()) {
       return Collections.emptyList();
     }
     PsiElement element = position.getElementAt();
-    final TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     do {
       PsiElement parent = element.getParent();
       if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
@@ -813,19 +804,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
-        if (!onlyOnTheLine || lineRange.intersects(expression.getTextRange())) {
+        if (!onlyOnTheLine || getFirstElementOnTheLine(expression, document, line) != null) {
           lambdas.add(expression);
         }
       }
     };
     element.accept(lambdaCollector);
     // add initial lambda if we're inside already
-    NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+    PsiElement method = getContainingMethod(element);
     if (method instanceof PsiLambdaExpression) {
       lambdas.add((PsiLambdaExpression)method);
     }
     for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
-      if (!lineRange.intersects(sibling.getTextRange())) {
+      if (!intersects(lineRange, sibling)) {
         break;
       }
       sibling.accept(lambdaCollector);
@@ -833,20 +824,33 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return lambdas;
   }
 
+  public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {
+    TextRange elemRange = elem.getTextRange();
+    return elemRange != null && elemRange.intersects(range);
+  }
+
   @Nullable
   public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
-    if (!lineRange.intersects(lambda.getTextRange())) return null;
+    TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+    if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
+    if (body == null || !intersects(lineRange, body)) return null;
     if (body instanceof PsiCodeBlock) {
       for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
-        if (lineRange.intersects(statement.getTextRange())) {
+        if (intersects(lineRange, statement)) {
           return statement;
         }
       }
+      return null;
     }
     return body;
+  }
+
+  public static boolean inTheMethod(@NotNull SourcePosition pos, @NotNull PsiElement method) {
+    PsiElement elem = pos.getElementAt();
+    if (elem == null) return false;
+    return Comparing.equal(getContainingMethod(elem), method);
   }
 
   public static boolean inTheSameMethod(@NotNull SourcePosition pos1, @NotNull SourcePosition pos2) {
@@ -855,10 +859,45 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     PsiElement elem2 = pos2.getElementAt();
     if (elem1 == null) return elem2 == null;
     if (elem2 != null) {
-      NavigatablePsiElement expectedMethod = PsiTreeUtil.getParentOfType(elem1, PsiMethod.class, PsiLambdaExpression.class);
-      NavigatablePsiElement currentMethod = PsiTreeUtil.getParentOfType(elem2, PsiMethod.class, PsiLambdaExpression.class);
+      PsiElement expectedMethod = getContainingMethod(elem1);
+      PsiElement currentMethod = getContainingMethod(elem2);
       return Comparing.equal(expectedMethod, currentMethod);
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
+    return PsiTreeUtil.getParentOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
+  }
+
+  @Nullable
+  public static PsiElement getContainingMethod(@NotNull SourcePosition position) {
+    return getContainingMethod(position.getElementAt());
+  }
+
+  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = new Comparator<Method>() {
+    @Override
+    public int compare(Method m1, Method m2) {
+      return LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
+    }
+  };
+
+  public static void disableCollection(ObjectReference reference) {
+    try {
+      reference.disableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
+  }
+
+  public static void enableCollection(ObjectReference reference) {
+    try {
+      reference.enableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
   }
 }

@@ -19,21 +19,15 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -43,7 +37,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
@@ -66,7 +59,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class StorageUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
+  static final Logger LOG = Logger.getInstance(StorageUtil.class);
+
+  @TestOnly
+  public static String DEBUG_LOG = null;
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
@@ -74,8 +70,20 @@ public class StorageUtil {
 
   private StorageUtil() { }
 
-  public static boolean isChangedByStorageOrSaveSession(@NotNull VirtualFileEvent event) {
-    return event.getRequestor() instanceof StateStorage.SaveSession || event.getRequestor() instanceof StateStorage;
+  public static void checkUnknownMacros(@NotNull final ComponentManager componentManager, @NotNull final Project project) {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
+      // should be invoked last
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+        @Override
+        public void run() {
+          TrackingPathMacroSubstitutor substitutor = ComponentsPackage.getStateStore(componentManager).getStateStorageManager().getMacroSubstitutor();
+          if (substitutor != null) {
+            notifyUnknownMacros(substitutor, project, null);
+          }
+        }
+      });
+    }
   }
 
   public static void notifyUnknownMacros(@NotNull TrackingPathMacroSubstitutor substitutor,
@@ -127,8 +135,9 @@ public class StorageUtil {
   public static VirtualFile writeFile(@Nullable File file,
                                       @NotNull Object requestor,
                                       @Nullable VirtualFile virtualFile,
-                                      @NotNull BufferExposingByteArrayOutputStream content,
-                                      @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+                                      @NotNull Element element,
+                                      @NotNull LineSeparator lineSeparator,
+                                      boolean prependXmlProlog) throws IOException {
     final VirtualFile result;
     if (file != null && (virtualFile == null || !virtualFile.isValid())) {
       result = getOrCreateVirtualFile(requestor, file);
@@ -138,46 +147,54 @@ public class StorageUtil {
       assert result != null;
     }
 
-    boolean equals = isEqualContent(result, lineSeparatorIfPrependXmlProlog, content);
-    if (equals) {
-      LOG.warn("Content equals, but it must be handled not on this level: " + result.getName());
-    }
-    else {
-      if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
-        DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
+    if (LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
+      BufferExposingByteArrayOutputStream content = writeToBytes(element, lineSeparator.getSeparatorString());
+      if (isEqualContent(result, lineSeparator, content)) {
+        throw new IllegalStateException("Content equals, but it must be handled not on this level: " + result.getName());
       }
-      doWrite(requestor, result, content, lineSeparatorIfPrependXmlProlog);
+      else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        DEBUG_LOG = result.getPath() + ":\n" + content + "\nOld Content:\n" + LoadTextUtil.loadText(result) + "\n---------";
+      }
     }
+
+    doWrite(requestor, result, element, lineSeparator, prependXmlProlog);
     return result;
   }
 
-  @TestOnly
-  public static String DEBUG_LOG = "";
-
   private static void doWrite(@NotNull final Object requestor,
                               @NotNull final VirtualFile file,
-                              @NotNull final BufferExposingByteArrayOutputStream content,
-                              @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
-    LOG.debug("Save " + file.getPresentableUrl());
+                              @NotNull Object content,
+                              @NotNull final LineSeparator lineSeparator,
+                              final boolean prependXmlProlog) throws IOException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Save " + file.getPresentableUrl());
+    }
     AccessToken token = WriteAction.start();
     try {
       OutputStream out = file.getOutputStream(requestor);
       try {
-        if (lineSeparatorIfPrependXmlProlog != null) {
+        if (prependXmlProlog) {
           out.write(XML_PROLOG);
-          out.write(lineSeparatorIfPrependXmlProlog.getSeparatorBytes());
+          out.write(lineSeparator.getSeparatorBytes());
         }
-        content.writeTo(out);
+        if (content instanceof Element) {
+          JDOMUtil.writeParent((Element)content, out, lineSeparator.getSeparatorString());
+        }
+        else {
+          ((BufferExposingByteArrayOutputStream)content).writeTo(out);
+        }
       }
       finally {
         out.close();
       }
     }
     catch (FileNotFoundException e) {
+      // may be element is not long-lived, so, we must write it to byte array
+      final BufferExposingByteArrayOutputStream byteArray = content instanceof Element ? writeToBytes((Element)content, lineSeparator.getSeparatorString()) : ((BufferExposingByteArrayOutputStream)content);
       throw new ReadOnlyModificationException(file, e, new StateStorage.SaveSession() {
         @Override
         public void save() throws IOException {
-          doWrite(requestor, file, content, lineSeparatorIfPrependXmlProlog);
+          doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog);
         }
       });
     }
@@ -186,28 +203,27 @@ public class StorageUtil {
     }
   }
 
-  private static boolean isEqualContent(VirtualFile result,
+  private static boolean isEqualContent(@NotNull VirtualFile result,
                                         @Nullable LineSeparator lineSeparatorIfPrependXmlProlog,
                                         @NotNull BufferExposingByteArrayOutputStream content) throws IOException {
-    boolean equals = true;
     int headerLength = lineSeparatorIfPrependXmlProlog == null ? 0 : XML_PROLOG.length + lineSeparatorIfPrependXmlProlog.getSeparatorBytes().length;
-    int toWriteLength = headerLength + content.size();
+    if (result.getLength() != (headerLength + content.size())) {
+      return false;
+    }
 
-    if (result.getLength() != toWriteLength) {
-      equals = false;
+    byte[] oldContent = result.contentsToByteArray();
+
+    if (lineSeparatorIfPrependXmlProlog != null &&
+        (!ArrayUtil.startsWith(oldContent, XML_PROLOG) || !ArrayUtil.startsWith(oldContent, XML_PROLOG.length, lineSeparatorIfPrependXmlProlog.getSeparatorBytes()))) {
+      return false;
     }
-    else {
-      byte[] bytes = result.contentsToByteArray();
-      if (lineSeparatorIfPrependXmlProlog != null) {
-        if (!ArrayUtil.startsWith(bytes, XML_PROLOG) || !ArrayUtil.startsWith(bytes, XML_PROLOG.length, lineSeparatorIfPrependXmlProlog.getSeparatorBytes())) {
-          equals = false;
-        }
-      }
-      if (!ArrayUtil.startsWith(bytes, headerLength, content.toByteArray())) {
-        equals = false;
+
+    for (int i = headerLength; i < oldContent.length; i++) {
+      if (oldContent[i] != content.getInternalBuffer()[i - headerLength]) {
+        return false;
       }
     }
-    return equals;
+    return true;
   }
 
   public static void deleteFile(@NotNull File file, @NotNull final Object requestor, @Nullable final VirtualFile virtualFile) throws IOException {
@@ -236,7 +252,7 @@ public class StorageUtil {
   }
 
   public static void deleteFile(@NotNull Object requestor, @NotNull VirtualFile virtualFile) throws IOException {
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+    AccessToken token = WriteAction.start();
     try {
       virtualFile.delete(requestor);
     }
@@ -320,13 +336,29 @@ public class StorageUtil {
   /**
    * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
    */
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type, boolean async) throws IOException {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
     BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
-    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
+    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type);
   }
 
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
     return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals(StoragePathMacros.MODULE_FILE);
+  }
+
+  @NotNull
+  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parent, @NotNull Object requestor) throws IOException {
+    VirtualFile file = parent.findChild(fileName);
+    if (file != null) {
+      return file;
+    }
+
+    AccessToken token = WriteAction.start();
+    try {
+      return parent.createChildData(requestor, fileName);
+    }
+    finally {
+      token.finish();
+    }
   }
 }

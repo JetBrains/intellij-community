@@ -12,19 +12,19 @@ public class ToggleSelectionOnlyAction extends EditorHeaderToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return !getEditorSearchComponent().getFindModel().isGlobal();
+    return !myEditorSearchComponent.getFindModel().isGlobal();
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    final boolean replaceState = getEditorSearchComponent().getFindModel().isReplaceState();
+    final boolean replaceState = myEditorSearchComponent.getFindModel().isReplaceState();
     e.getPresentation().setVisible(replaceState);
     e.getPresentation().setEnabled(replaceState);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setGlobal(!state);
+    myEditorSearchComponent.getFindModel().setGlobal(!state);
   }
 }

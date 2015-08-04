@@ -31,7 +31,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author peter
  */
@@ -202,6 +201,20 @@ public class SocketChannel {
 
     p = LookupElementPresentation.renderElement(myFixture.lookup.items.find { it.lookupString == 'isConnected' })
     assert p.itemTextForeground == JBColor.foreground()
+  }
+
+  public void "test seemingly scrambled subclass"() {
+    PsiTestUtil.addLibrary(myModule, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar")
+    myFixture.configureByText 'a.java', '''import test.Books;
+
+class Foo {{ Books.Test.v<caret> }}
+'''
+    myFixture.completeBasic()
+    myFixture.checkResult '''import test.Books;
+
+class Foo {{ Books.Test.v1<caret> }}
+'''
+
   }
 
 }

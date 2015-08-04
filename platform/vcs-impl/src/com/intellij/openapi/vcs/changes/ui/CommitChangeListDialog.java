@@ -24,9 +24,12 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
@@ -68,6 +71,7 @@ import java.util.List;
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private final static String outCommitHelpId = "reference.dialogs.vcs.commit";
   private static final int LAYOUT_VERSION = 2;
+  private static final Logger LOG = Logger.getInstance(CommitChangeListDialog.class);
   private final CommitContext myCommitContext;
   private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
@@ -651,12 +655,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return;
     }
     boolean isOK = true;
-    if (SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage())!= null) {
+    final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
+    if (configurationUI != null) {
       DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
                                                       getProject(),
                                                       session,
                                                       getIncludedChanges(),
-                                                      getCommitMessage());
+                                                      getCommitMessage(), configurationUI);
       isOK = sessionDialog.showAndGet();
     }
     if (isOK) {
@@ -670,7 +675,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
               new Runnable() {
                 @Override
                 public void run() {
-                  session.execute(getIncludedChanges(), getCommitMessage());
+                  DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+                    @Override
+                    public void run() {
+                      session.execute(getIncludedChanges(), getCommitMessage());
+                    }
+                  });
                 }
               }, commitExecutor.getActionText(), true, getProject());
 
@@ -692,7 +702,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                      commitExecutor.getActionText());
 
             for (CheckinHandler handler : myHandlers) {
-              handler.checkinFailed(Arrays.asList(new VcsException(e)));
+              handler.checkinFailed(Collections.singletonList(new VcsException(e)));
             }
           }
           finally {
@@ -707,8 +717,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
         }
       }, commitExecutor);
-
-
     }
     else {
       session.executionCanceled();

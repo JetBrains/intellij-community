@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package com.intellij.refactoring.rename.naming;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public interface AutomaticRenamerFactory {
   ExtensionPointName<AutomaticRenamerFactory> EP_NAME = ExtensionPointName.create("com.intellij.automaticRenamerFactory");
 
-  boolean isApplicable(PsiElement element);
+  boolean isApplicable(@NotNull PsiElement element);
 
   @Nullable
   String getOptionName();

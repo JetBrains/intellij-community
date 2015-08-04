@@ -639,9 +639,9 @@ class NetCommandFactory:
 
                 #print "name is ", myName
 
-                filename, base = pydevd_file_utils.GetFilenameAndBase(curFrame)
+                abs_path, real_path, base = pydevd_file_utils.GetNormPathsAndBase(curFrame)
 
-                myFile = pydevd_file_utils.NormFileToClient(filename)
+                myFile = pydevd_file_utils.NormFileToClient(abs_path)
                 if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
                     # myFile is a byte string encoded using the file system encoding
                     # convert it to utf8

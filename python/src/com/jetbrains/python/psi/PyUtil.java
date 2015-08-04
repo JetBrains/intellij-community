@@ -51,7 +51,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
@@ -65,6 +64,7 @@ import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -98,44 +98,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 public class PyUtil {
 
   private PyUtil() {
-  }
-
-  public static ASTNode getNextNonWhitespace(ASTNode after) {
-    ASTNode node = after;
-    do {
-      node = node.getTreeNext();
-    }
-    while (isWhitespace(node));
-    return node;
-  }
-
-  public static ASTNode getPreviousNonWhitespace(ASTNode after) {
-    ASTNode node = after;
-    do {
-      node = node.getTreePrev();
-    }
-    while (isWhitespace(node));
-    return node;
-  }
-
-  private static boolean isWhitespace(ASTNode node) {
-    return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
-  }
-
-  @Nullable
-  public static PsiElement getFirstNonCommentAfter(PsiElement start) {
-    PsiElement seeker = start;
-    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) seeker = seeker.getNextSibling();
-    return seeker;
-  }
-
-  @Nullable
-  public static PsiElement getFirstNonCommentBefore(PsiElement start) {
-    PsiElement seeker = start;
-    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
-      seeker = seeker.getPrevSibling();
-    }
-    return seeker;
   }
 
   @NotNull
@@ -551,6 +513,15 @@ public class PyUtil {
     return f1 == f2;
   }
 
+  public static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(e1.getProject());
+    final Document document = documentManager.getDocument(e1.getContainingFile());
+    if (document == null || document != documentManager.getDocument(e2.getContainingFile())) {
+      return false;
+    }
+    return document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
+  }
+
   public static boolean isTopLevel(@NotNull PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
       final StubElement stub = ((StubBasedPsiElement)element).getStub();
@@ -810,7 +781,7 @@ public class PyUtil {
     if (folder != null) {
       LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
       if (level == null) level = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
-      if (level != null) return level;
+      return level;
     }
     else {
       // However this allows us to setup language level per file manually
@@ -824,8 +795,23 @@ public class PyUtil {
           return languageLevel;
         }
       }
+      return guessLanguageLevelWithCaching(project);
     }
-    return guessLanguageLevel(project);
+  }
+
+  public static void invalidateLanguageLevelCache(@NotNull Project project) {
+    project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, null);
+  }
+
+  @NotNull
+  public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
+    LanguageLevel languageLevel = project.getUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL);
+    if (languageLevel == null) {
+      languageLevel = guessLanguageLevel(project);
+      project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, languageLevel);
+    }
+
+    return languageLevel;
   }
 
   @NotNull
@@ -918,38 +904,6 @@ public class PyUtil {
   }
 
   /**
-   * Returns child element in the psi tree
-   *
-   * @param filter  Types of expected child
-   * @param number  number
-   * @param element tree parent node
-   * @return PsiElement - child psiElement
-   */
-  @Nullable
-  public static PsiElement getChildByFilter(@NotNull final PsiElement element, final @NotNull TokenSet filter, final int number) {
-    final ASTNode node = element.getNode();
-    if (node != null) {
-      final ASTNode[] children = node.getChildren(filter);
-      return (0 <= number && number < children.length) ? children[number].getPsi() : null;
-    }
-    return null;
-  }
-
-  /**
-   * Returns first child psi element with specified element type or {@code null} if no such element exists.
-   * Semantically it's the same as {@code getChildByFilter(element, TokenSet.create(type), 0)}.
-   *
-   * @param element tree parent node
-   * @param type    element type expected
-   * @return child element described
-   */
-  @Nullable
-  public static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
-    final ASTNode child = element.getNode().findChildByType(type);
-    return child != null ? child.getPsi() : null;
-  }
-
-  /**
    * If argument is a PsiDirectory, turn it into a PsiFile that points to __init__.py in that directory.
    * If there's no __init__.py there, null is returned, there's no point to resolve to a dir which is not a package.
    * Alas, resolve() and multiResolve() can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
@@ -960,7 +914,7 @@ public class PyUtil {
    * @return a PsiFile if target was a PsiDirectory, or null, or target unchanged.
    */
   @Nullable
-  public static PsiElement turnDirIntoInit(PsiElement target) {
+  public static PsiElement turnDirIntoInit(@Nullable PsiElement target) {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
       final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
@@ -1132,8 +1086,23 @@ public class PyUtil {
     return PyNames.isIdentifier(name);
   }
 
-  public static LookupElement createNamedParameterLookup(String name) {
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").withIcon(PlatformIcons.PARAMETER_ICON);
+  /**
+   * Constructs new lookup element for completion of keyword argument with equals sign appended.
+   *
+   * @param name    name of the parameter
+   * @param project project instance to check code style settings and surround equals sign with spaces if necessary
+   * @return lookup element
+   */
+  @NotNull
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @Nullable Project project) {
+    final String suffix;
+    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
+      suffix = " = ";
+    }
+    else {
+      suffix = "=";
+    }
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(PlatformIcons.PARAMETER_ICON);
     lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }

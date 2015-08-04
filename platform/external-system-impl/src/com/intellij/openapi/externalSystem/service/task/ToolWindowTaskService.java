@@ -20,10 +20,11 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -32,12 +33,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+
 
 /**
  * @author Denis Zhdanov
@@ -81,9 +83,11 @@ public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
 
-    Map<ExternalConfigPathAware, List<DataNode<TaskData>>> grouped = ExternalSystemApiUtil.groupBy(nodes, TASK_HOLDER_RETRIEVAL_STRATEGY);
+    ExternalSystemKeymapExtension.updateActions(project, nodes);
+
+    MultiMap<ExternalConfigPathAware, DataNode<TaskData>> grouped = ExternalSystemApiUtil.groupBy(nodes, TASK_HOLDER_RETRIEVAL_STRATEGY);
     Map<String, Collection<ExternalTaskPojo>> data = ContainerUtilRt.newHashMap();
-    for (Map.Entry<ExternalConfigPathAware, List<DataNode<TaskData>>> entry : grouped.entrySet()) {
+    for (Map.Entry<ExternalConfigPathAware, Collection<DataNode<TaskData>>> entry : grouped.entrySet()) {
       data.put(entry.getKey().getLinkedExternalProjectPath(), ContainerUtilRt.map2List(entry.getValue(), MAPPER));
     }
 

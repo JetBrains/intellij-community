@@ -15,11 +15,9 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ToolbarPanel;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
 import javax.swing.*;
 
@@ -28,9 +26,8 @@ import javax.swing.*;
  */
 public class SMTRunnerToolbarPanel extends ToolbarPanel {
   public SMTRunnerToolbarPanel(final TestConsoleProperties properties,
-                               final ExecutionEnvironment environment,
                                final TestFrameworkRunningModel model, JComponent contentPane) {
-    super(properties, environment, contentPane);
+    super(properties, contentPane);
     //TODO rerun failed test
     //TODO coverage
     setModel(model);

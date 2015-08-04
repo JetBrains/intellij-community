@@ -60,13 +60,13 @@ public class FileNameCache {
 
   private static int calcStripeIdFromNameId(int id) {
     int h = id;
-    h -= (h<<6);
-    h ^= (h>>17);
-    h -= (h<<9);
-    h ^= (h<<4);
-    h -= (h<<3);
-    h ^= (h<<10);
-    h ^= (h>>15);
+    h -= h<<6;
+    h ^= h>>17;
+    h -= h<<9;
+    h ^= h<<4;
+    h -= h<<3;
+    h ^= h<<10;
+    h ^= h>>15;
     return h % ourNameCache.length;
   }
 

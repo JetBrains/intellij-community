@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class GeneratedFileEditingNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+public class GeneratedFileEditingNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("generated.source.file.editing.notification.panel");
   private final GeneratedSourceFileChangeTracker myChangeTracker;
 

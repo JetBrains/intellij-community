@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Bas Leijdekkers
+ * Copyright 2009-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@ public class FinalUtils {
   private FinalUtils() {}
 
   public static boolean canBeFinal(@NotNull PsiVariable variable) {
+    if (variable.getInitializer() != null || variable instanceof PsiParameter) {
+      // parameters have an implicit initializer
+      return !VariableAccessUtils.variableIsAssigned(variable);
+    }
     final FinalDefiniteAssignment definiteAssignment = new FinalDefiniteAssignment(variable);
     DefiniteAssignmentUtil.checkVariable(variable, definiteAssignment);
     return definiteAssignment.isDefinitelyAssigned() &&

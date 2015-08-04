@@ -18,7 +18,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBCardLayout;
-import com.intellij.util.ui.components.JBPanel;
 
 import java.awt.*;
 import java.util.ArrayList;

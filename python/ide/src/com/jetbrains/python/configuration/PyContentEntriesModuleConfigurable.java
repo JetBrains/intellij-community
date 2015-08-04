@@ -22,6 +22,7 @@ import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
@@ -33,6 +34,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.openapi.project.DumbModePermission.MAY_START_BACKGROUND;
 
 public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.Parent.Abstract {
   private final Module myModule;
@@ -107,10 +110,15 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
     final boolean editorWasModified = myEditor.isModified();
     myEditor.apply();
     if (editorWasModified) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      DumbService.allowStartingDumbModeInside(MAY_START_BACKGROUND, new Runnable() {
         @Override
         public void run() {
-          myModifiableModel.commit();
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              myModifiableModel.commit();
+            }
+          });
         }
       });
       resetEditor();

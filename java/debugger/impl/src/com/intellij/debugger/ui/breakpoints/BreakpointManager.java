@@ -25,10 +25,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerContextListener;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
-import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,13 +94,13 @@ public class BreakpointManager {
       private DebuggerSession myPreviousSession;
 
       @Override
-      public void changeEvent(@NotNull DebuggerContextImpl newContext, int event) {
-        if (event == DebuggerSession.EVENT_ATTACHED) {
+      public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
+        if (event == DebuggerSession.Event.ATTACHED) {
           for (XBreakpoint breakpoint : getXBreakpointManager().getAllBreakpoints()) {
             if (checkAndNotifyPossiblySlowBreakpoint(breakpoint)) break;
           }
         }
-        if (newContext.getDebuggerSession() != myPreviousSession || event == DebuggerSession.EVENT_DETACHED) {
+        if (newContext.getDebuggerSession() != myPreviousSession || event == DebuggerSession.Event.DETACHED) {
           updateBreakpointsUI();
           myPreviousSession = newContext.getDebuggerSession();
         }

@@ -183,6 +183,10 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   private static MyFetchResult doCheckUrl(@NotNull String url) {
+    if (url.startsWith("mailto")) {
+      return MyFetchResult.OK;
+    }
+
     try {
       return HttpRequests.request(url).connectTimeout(3000).readTimeout(3000).connect(new HttpRequests.RequestProcessor<MyFetchResult>() {
         @Override

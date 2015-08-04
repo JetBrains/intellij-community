@@ -101,12 +101,14 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return true;
     }
 
-    Collection<PsiReferenceList> candidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiReferenceList>>() {
-      @Override
-      public Collection<PsiReferenceList> compute() {
-        return JavaSuperClassNameOccurenceIndex.getInstance().get(searchKey, project, scope);
-      }
-    });
+    Collection<PsiReferenceList> candidates = MethodUsagesSearcher.resolveInReadAction(project,
+                                                                                       new Computable<Collection<PsiReferenceList>>() {
+                                                                                         @Override
+                                                                                         public Collection<PsiReferenceList> compute() {
+                                                                                           return JavaSuperClassNameOccurenceIndex
+                                                                                             .getInstance().get(searchKey, project, scope);
+                                                                                         }
+                                                                                       });
 
     Map<String, List<PsiClass>> classes = new HashMap<String, List<PsiClass>>();
 
@@ -118,7 +120,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           return referenceList.getParent();
         }
       });
-      if (!checkInheritance(p, aClass, candidate)) continue;
+      if (!checkInheritance(p, aClass, candidate, project)) continue;
 
       String fqn = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Override
@@ -142,16 +144,19 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     if (p.includeAnonymous()) {
-      Collection<PsiAnonymousClass> anonymousCandidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiAnonymousClass>>() {
-        @Override
-        public Collection<PsiAnonymousClass> compute() {
-          return JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(searchKey, project, scope);
-        }
-      });
+      Collection<PsiAnonymousClass> anonymousCandidates = MethodUsagesSearcher.resolveInReadAction(project,
+                                                                                                   new Computable<Collection<PsiAnonymousClass>>() {
+                                                                                                     @Override
+                                                                                                     public Collection<PsiAnonymousClass> compute() {
+                                                                                                       return JavaAnonymousClassBaseRefOccurenceIndex
+                                                                                                         .getInstance()
+                                                                                                         .get(searchKey, project, scope);
+                                                                                                     }
+                                                                                                   });
 
       for (PsiAnonymousClass candidate : anonymousCandidates) {
         ProgressIndicatorProvider.checkCanceled();
-        if (!checkInheritance(p, aClass, candidate)) continue;
+        if (!checkInheritance(p, aClass, candidate, project)) continue;
 
         if (!consumer.process(candidate)) return false;
       }
@@ -190,8 +195,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return true;
   }
 
-  private static boolean checkInheritance(final DirectClassInheritorsSearch.SearchParameters p, final PsiClass aClass, final PsiClass candidate) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+  private static boolean checkInheritance(final DirectClassInheritorsSearch.SearchParameters p, final PsiClass aClass, final PsiClass candidate, Project project) {
+    return MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         return !p.isCheckInheritance() || candidate.isInheritor(aClass, false);

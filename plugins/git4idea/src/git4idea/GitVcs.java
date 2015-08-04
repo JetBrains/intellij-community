@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
@@ -97,6 +96,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public static final String NAME = "Git";
+  public static final String ID = "git";
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
@@ -301,7 +301,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myBranchWidget = new GitBranchWidget(myProject);
-      DvcsUtil.installStatusBarWidget(myProject, myBranchWidget);
+      myBranchWidget.activate();
     }
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
@@ -335,7 +335,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     if (myBranchWidget != null) {
-      DvcsUtil.removeStatusBarWidget(myProject, myBranchWidget);
+      myBranchWidget.deactivate();
       myBranchWidget = null;
     }
   }

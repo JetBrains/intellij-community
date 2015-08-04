@@ -18,7 +18,6 @@ package org.jetbrains.plugins.javaFX.packaging;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -137,11 +136,7 @@ public abstract class AbstractJavaFxPackager {
         final String fileName = file.getName();
         if (ArrayUtilRt.find(generatedItems, fileName) < 0) {
           final File destination = new File(tempUnzippedArtifactOutput, fileName);
-          if (file.isFile()) {
-            FileUtil.copy(file, destination);
-          } else {
-            FileUtil.copyDir(file, destination, true);
-          }
+          FileUtil.copyFileOrDir(file, destination);
         }
       }
     }

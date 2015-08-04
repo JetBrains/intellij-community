@@ -67,6 +67,8 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.*;
+
 /**
  * @author irengrig
  */
@@ -91,23 +93,22 @@ public class LineStatusTrackerDrawing {
     final int x = r.x + r.width - 3;
     final int endX = gutter.getWhitespaceSeparatorOffset();
 
-    if (range.getInnerRanges() == null) { // actual painter
-      if (r.height > 0) {
-        paintRect(g, gutterColor, borderColor, x, r.y, endX, r.y + r.height);
+    final int y = lineToY(editor, range.getLine1());
+    final int endY = lineToY(editor, range.getLine2());
+
+    if (range.getInnerRanges() == null) { // Mode.DEFAULT
+      if (y != endY) {
+        paintRect(g, gutterColor, borderColor, x, y, endX, endY);
       }
       else {
-        paintTriangle(g, gutterColor, borderColor, x, endX, r.y);
+        paintTriangle(g, gutterColor, borderColor, x, endX, y);
       }
     }
-    else { // registry: diff.status.tracker.smart
-      if (range.getType() == Range.DELETED) {
-        final int y = lineToY(editor, range.getLine1());
+    else { // Mode.SMART
+      if (y == endY) {
         paintTriangle(g, gutterColor, borderColor, x, endX, y);
       }
       else {
-        final int y = lineToY(editor, range.getLine1());
-        int endY = lineToY(editor, range.getLine2());
-
         List<Range.InnerRange> innerRanges = range.getInnerRanges();
         for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() == Range.DELETED) continue;
@@ -148,9 +149,9 @@ public class LineStatusTrackerDrawing {
 
   private static int lineToY(@NotNull Editor editor, int line) {
     Document document = editor.getDocument();
-    if (line >= document.getLineCount()) {
-      int y = lineToY(editor, document.getLineCount() - 1);
-      return y + editor.getLineHeight() * (line - document.getLineCount() + 1);
+    if (line >= getLineCount(document)) {
+      int y = lineToY(editor, getLineCount(document) - 1);
+      return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
     }
     return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
   }
@@ -217,6 +218,8 @@ public class LineStatusTrackerDrawing {
     Pair<JComponent, Integer> editorComponent = createEditorComponent(range, editor, tracker, wordDiff);
 
     ActionToolbar toolbar = buildToolbar(range, editor, tracker, disposable);
+    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
+
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent.first, editorComponent.second);
 
     LightweightHint hint = new LightweightHint(popupPanel);
@@ -313,9 +316,9 @@ public class LineStatusTrackerDrawing {
     for (DiffFragment fragment : wordDiff) {
       int currentStart = currentStartShift + fragment.getStartOffset2();
       int currentEnd = currentStartShift + fragment.getEndOffset2();
-      TextDiffType type = DiffUtil.getDiffType(fragment);
+      TextDiffType type = getDiffType(fragment);
 
-      highlighters.add(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
+      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
     }
 
     Disposer.register(parentDisposable, new Disposable() {
@@ -348,7 +351,7 @@ public class LineStatusTrackerDrawing {
       for (DiffFragment fragment : wordDiff) {
         int vcsStart = vcsStartShift + fragment.getStartOffset1();
         int vcsEnd = vcsStartShift + fragment.getEndOffset1();
-        TextDiffType type = DiffUtil.getDiffType(fragment);
+        TextDiffType type = getDiffType(fragment);
 
         DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
       }
@@ -371,7 +374,7 @@ public class LineStatusTrackerDrawing {
 
   public static void moveToRange(final Range range, final Editor editor, final LineStatusTracker tracker) {
     final Document document = tracker.getDocument();
-    int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, document.getLineCount() - 1);
+    int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
     final int lastOffset = document.getLineStartOffset(line);
     editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -53,5 +54,13 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
 
   public String getText() {
     return getChildComponent().getText();
+  }
+
+  public void setText(@NotNull String text) {
+    getChildComponent().setText(text);
+  }
+
+  public void setTextAndAddToHistory(@NotNull String text) {
+    getChildComponent().setTextAndAddToHistory(text);
   }
 }

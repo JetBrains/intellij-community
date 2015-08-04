@@ -71,7 +71,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
     final JavaMethodCallElement element = new GlobalMethodCallElement(overloads.get(0), shouldImport, true);
-    element.putUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, overloads);
+    JavaCompletionUtil.putAllMethods(element, overloads);
     return element;
   }
 

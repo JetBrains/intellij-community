@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,6 +145,8 @@ class MoverWrapper {
     }
 
     caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
+    myMover.afterMove(editor, file, myInfo, myIsDown);
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     if (myInfo.indentTarget) {
       indentLinesIn(editor, file, document, project, myInfo.range2);
     }
@@ -152,7 +154,6 @@ class MoverWrapper {
       indentLinesIn(editor, file, document, project, myInfo.range1);
     }
 
-    myMover.afterMove(editor, file, myInfo, myIsDown);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 

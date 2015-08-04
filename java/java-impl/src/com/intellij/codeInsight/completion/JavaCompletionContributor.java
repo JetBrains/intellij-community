@@ -15,16 +15,16 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
-import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -233,6 +233,13 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
     }
 
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
+      CollectConversion.addCollectConversion((PsiReferenceExpression)parent, expected, 
+                                             JavaSmartCompletionContributor.decorateWithoutTypeCheck(result, expected));
+    }
+
     if (IMPORT_REFERENCE.accepts(position)) {
       result.addElement(LookupElementBuilder.create("*"));
     }
@@ -254,7 +261,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     addAllClasses(parameters, result, inheritors);
 
-    final PsiElement parent = position.getParent();
     if (parent instanceof PsiReferenceExpression &&
         !((PsiReferenceExpression)parent).isQualified() &&
         parameters.isExtendedCompletion() &&
@@ -595,26 +601,15 @@ public class JavaCompletionContributor extends CompletionContributor {
     final String ad = advertise(parameters);
     final String suffix = ad == null ? "" : "; " + StringUtil.decapitalize(ad);
     if (parameters.getCompletionType() == CompletionType.SMART) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      PsiExpression expression = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
+      if (expression instanceof PsiLiteralExpression) {
+        return LangBundle.message("completion.no.suggestions") + suffix;
+      }
 
-        final Project project = parameters.getPosition().getProject();
-        final PsiFile file = parameters.getOriginalFile();
-
-        PsiExpression expression = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
-        if (expression != null && expression.getParent() instanceof PsiExpressionList) {
-          int lbraceOffset = expression.getParent().getTextRange().getStartOffset();
-          ShowParameterInfoHandler.invoke(project, editor, file, lbraceOffset, null);
-        }
-
-        if (expression instanceof PsiLiteralExpression) {
+      if (expression instanceof PsiInstanceOfExpression) {
+        final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
+        if (PsiTreeUtil.isAncestor(instanceOfExpression.getCheckType(), parameters.getPosition(), false)) {
           return LangBundle.message("completion.no.suggestions") + suffix;
-        }
-
-        if (expression instanceof PsiInstanceOfExpression) {
-          final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
-          if (PsiTreeUtil.isAncestor(instanceOfExpression.getCheckType(), parameters.getPosition(), false)) {
-            return LangBundle.message("completion.no.suggestions") + suffix;
-          }
         }
       }
 

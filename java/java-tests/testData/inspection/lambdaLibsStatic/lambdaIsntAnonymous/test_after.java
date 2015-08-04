@@ -6,13 +6,13 @@ import java.util.Collections;
 
 class c {
   void m() {
-    Collections.emptyList().stream().allMatch(getPredicate(100));
+    Collections.<String>emptyList().stream().allMatch(getPredicate(100)::apply);
   }
 
-  public java.util.function.Predicate<String> getPredicate(final int param) {
-    return new java.util.function.Predicate<String>() {
+  public Predicate<String> getPredicate(final int param) {
+    return new Predicate<String>() {
       @Override
-      public boolean test(String input) {
+      public boolean apply(String input) {
         System.out.println("lambda param " + param);
         return false;
       }

@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.Responses;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -102,6 +103,10 @@ public abstract class RestService extends HttpRequestHandler {
     return false;
   }
 
+  protected boolean activateToolBeforeExecution() {
+    return true;
+  }
+
   @NotNull
   /**
    * Use human-readable name or UUID if it is an internal service.
@@ -113,6 +118,13 @@ public abstract class RestService extends HttpRequestHandler {
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     try {
+      if (activateToolBeforeExecution()) {
+        IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+        if (frame instanceof Window) {
+          ((Window)frame).toFront();
+        }
+      }
+
       String error = execute(urlDecoder, request, context);
       if (error != null) {
         Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), error, request);

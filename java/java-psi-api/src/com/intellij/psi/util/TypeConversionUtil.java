@@ -25,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -1279,6 +1278,12 @@ public class TypeConversionUtil {
   public static PsiType erasure(@Nullable final PsiType type, @NotNull final PsiSubstitutor beforeSubstitutor) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {
+      @Nullable
+      @Override
+      public PsiType visitType(PsiType type) {
+        return type;
+      }
+
       @Override
       public PsiType visitClassType(PsiClassType classType) {
         final PsiClass aClass = classType.resolve();

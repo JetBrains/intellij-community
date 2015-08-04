@@ -1844,18 +1844,39 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String in = "class X {{ Math.abs(-1); }}";
     final String what = "Math.abs('a)";
     final String by = "Math.abs($a$)";
+    final boolean save = options.isToUseStaticImport();
     options.setToUseStaticImport(true);
+    try {
+      final String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
+      assertEquals("Replacing with static import", expected, replacer.testReplace(in, what, by, options, true));
 
-    final String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
-    assertEquals("Replacing with static import", expected, replacer.testReplace(in, what, by, options, true));
+      final String in2 = "class X { void m(java.util.Random r) { Math.abs(r.nextInt()); }}";
+      final String expected2 = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
+      assertEquals("don't add broken static imports", expected2, replacer.testReplace(in2, what, by, options, true));
 
-    final String in2 = "class X { void m(java.util.Random r) { Math.abs(r.nextInt()); }}";
-    final String expected2 = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
-    assertEquals("don't add broken static imports", expected2, replacer.testReplace(in2, what, by, options, true));
+      final String by2 = "new java.util.AbstractMap.SimpleEntry(\"\", \"\")";
+      final String expected3 = "import static java.util.AbstractMap.SimpleEntry;class X {{ new SimpleEntry(\"\", \"\"); }}";
+      assertEquals("", expected3, replacer.testReplace(in, what, by2, options, true));
 
-    final String by2 = "new java.util.AbstractMap.SimpleEntry(\"\", \"\")";
-    final String expected3 = "import static java.util.AbstractMap.SimpleEntry;class X {{ new SimpleEntry(\"\", \"\"); }}";
-    assertEquals("", expected3, replacer.testReplace(in, what, by2, options, true));
+      final String in3 = "import java.util.Collections;" +
+                         "class X {" +
+                         "  void m() {" +
+                         "    System.out.println(Collections.<String>emptyList());" +
+                         "  }" +
+                         "}";
+      final String what3 = "'_q.'_method:[regex( println )]('a)";
+      final String by3 = "$q$.$method$($a$)";
+      final String expected4 = "import java.util.Collections;" +
+                               "import static java.lang.System.out;" +
+                               "class X {" +
+                               "  void m() {" +
+                               "    out.println(Collections.<String>emptyList());" +
+                               "  }" +
+                               "}";
+      assertEquals("don't break references with type parameters", expected4, replacer.testReplace(in3, what3, by3, options, true));
+    } finally {
+      options.setToUseStaticImport(save);
+    }
   }
 
   public void testUseStaticStarImport() {
@@ -1866,15 +1887,20 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                       "}}";
     final String what = "Math.'m('_a*)";
     final String by = "Math.$m$($a$)";
+    final boolean save = options.isToUseStaticImport();
     options.setToUseStaticImport(true);
+    try {
 
-    // depends on default setting being equal to 3 for names count to use import on demand
-    final String expected = "import static java.lang.Math.*;class ImportTest {{\n" +
-                            "    abs(-0.5);\n" +
-                            "    sin(0.5);\n" +
-                            "    max(1,2);\n" +
-                            "}}";
-    assertEquals("Replacing with static star import", expected, replacer.testReplace(in, what, by, options, true));
+      // depends on default setting being equal to 3 for names count to use import on demand
+      final String expected = "import static java.lang.Math.*;class ImportTest {{\n" +
+                              "    abs(-0.5);\n" +
+                              "    sin(0.5);\n" +
+                              "    max(1,2);\n" +
+                              "}}";
+      assertEquals("Replacing with static star import", expected, replacer.testReplace(in, what, by, options, true));
+    } finally {
+      options.setToUseStaticImport(save);
+    }
   }
 
   public void testReformatAndShortenClassRefPerformance() throws IOException {
@@ -1885,15 +1911,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     options.setToReformatAccordingToStyle(true);
     options.setToShortenFQN(true);
 
-    PlatformTestUtil.startPerformanceTest("SSR should work fast", 3500, new ThrowableRunnable() {
-        public void run() {
-          doTest(testName, ext, message);
-        }
-      }
-    ).cpuBound().assertTiming();
-
-    options.setToReformatAccordingToStyle(false);
-    options.setToShortenFQN(false);
+    try {
+      PlatformTestUtil.startPerformanceTest("SSR should work fast", 3500, new ThrowableRunnable() {
+                                              public void run() {
+                                                doTest(testName, ext, message);
+                                              }
+                                            }
+      ).cpuBound().assertTiming();
+    } finally {
+      options.setToReformatAccordingToStyle(false);
+      options.setToShortenFQN(false);
+    }
   }
 
   private void doTest(final String testName, final String ext, final String message) {

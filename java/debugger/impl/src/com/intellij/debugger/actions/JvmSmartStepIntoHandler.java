@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,9 @@ import com.intellij.debugger.engine.BasicStepMethodFilter;
 import com.intellij.debugger.engine.LambdaMethodFilter;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.awt.RelativePoint;
@@ -38,10 +34,8 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -78,27 +72,9 @@ public abstract class JvmSmartStepIntoHandler {
             session.stepInto(true, createMethodFilter(chosenTarget));
           }
         });
-        final ListPopup popup = new ListPopupImpl(popupStep) {
-          @Override
-          protected JComponent createContent() {
-            registerExtraHandleShortcuts(XDebuggerActions.STEP_INTO);
-            registerExtraHandleShortcuts(XDebuggerActions.SMART_STEP_INTO);
-            return super.createContent();
-          }
-
-          private void registerExtraHandleShortcuts(String actionName) {
-            AnAction action = ActionManager.getInstance().getAction(actionName);
-            KeyStroke stroke = KeymapUtil.getKeyStroke(action.getShortcutSet());
-            if (stroke != null) {
-              registerAction("handleSelection " + stroke, stroke, new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                  handleSelect(true);
-                }
-              });
-            }
-          }
-        };
+        ListPopupImpl popup = new ListPopupImpl(popupStep);
+        DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO);
+        DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.SMART_STEP_INTO);
         popup.addListSelectionListener(new ListSelectionListener() {
           public void valueChanged(ListSelectionEvent e) {
             popupStep.getScopeHighlighter().dropHighlight();

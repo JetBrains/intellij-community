@@ -23,7 +23,10 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -113,12 +116,20 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
               showHint(handler, editor, point, type);
             }
           }
-        }, handler.getValueLookupDelay(myProject));
+        }, getDelay(handler));
       }
     }
     else {
       showHint(handler, editor, point, type);
     }
+  }
+
+  private int getDelay(QuickEvaluateHandler handler) {
+    int delay = handler.getValueLookupDelay(myProject);
+    if (myRequest != null && !myRequest.isHintHidden()) {
+      delay = Math.max(100, delay); // if hint is showing, delay should not be too small, see IDEA-141464
+    }
+    return delay;
   }
 
   public void hideHint() {

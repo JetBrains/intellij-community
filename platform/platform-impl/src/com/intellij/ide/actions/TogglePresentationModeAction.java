@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,7 @@ import java.util.Map;
  */
 public class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = ContainerUtil.newLinkedHashMap();
+  private static float ourSavedScaleFactor = JBUI.scale(1f);
   private static int ourSavedConsoleFontSize;
 
   @Override
@@ -145,14 +147,17 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
           }
         }
       }
+      float scaleFactor =  settings.PRESENTATION_MODE_FONT_SIZE / 12f;
+      ourSavedScaleFactor = JBUI.scale(1f);
+      JBUI.setScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {
         Object v = ourSavedValues.get(key);
         if (v instanceof Font) {
           Font font = (Font)v;
-          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), Math.min(20, settings.PRESENTATION_MODE_FONT_SIZE)));
+          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), JBUI.scale(font.getSize())));
         }
         else if (v instanceof Integer) {
-          defaults.put(key, ((Integer)v).intValue() * 3 / 2);
+          defaults.put(key, JBUI.scale(((Integer)v).intValue()));
         }
       }
     }
@@ -160,6 +165,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       for (Object key : ourSavedValues.keySet()) {
         defaults.put(key, ourSavedValues.get(key));
       }
+      JBUI.setScaleFactor(ourSavedScaleFactor);
       ourSavedValues.clear();
     }
   }

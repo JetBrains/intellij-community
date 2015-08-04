@@ -67,7 +67,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
   private JCheckBox myCbWrapWhenTypingReachesRightMargin;
-  private JPanel myDefaultIndentOptionsPanel;
   private JCheckBox myEnableFormatterTags;
   private JTextField myFormatterOnTagField;
   private JTextField myFormatterOffTagField;
@@ -79,7 +78,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myAdditionalSettingsPanel;
   private JCheckBox myAutodetectIndentsBox;
   private JCheckBox myShowDetectedIndentNotification;
-  private final SmartIndentOptionsEditor myIndentOptionsEditor;
+  private JPanel myDefaultOptionsPanel;
+  private JPanel myIndentsDetectionPanel;
   private final JScrollPane myScrollPane;
 
 
@@ -93,9 +93,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     addPanelToWatch(myPanel);
 
     myRightMarginSpinner.setModel(new SpinnerNumberModel(settings.getDefaultRightMargin(), 1, 1000000, 1));
-
-    myIndentOptionsEditor = new SmartIndentOptionsEditor();
-    myDefaultIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
 
     myEnableFormatterTags.addActionListener(new ActionListener() {
       @Override
@@ -112,6 +109,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         myShowDetectedIndentNotification.setEnabled(isDetectIndent);
       }
     });
+
+    myDefaultOptionsPanel
+      .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.default.options")));
+    myIndentsDetectionPanel
+      .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.indents.detection")));
 
     myMarkersPanel.setBorder(IdeBorderFactory.createTitledBorder(
       ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
@@ -157,10 +159,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
-    settings.setDefaultRightMargin(((Number) myRightMarginSpinner.getValue()).intValue());
+    settings.setDefaultRightMargin(((Number)myRightMarginSpinner.getValue()).intValue());
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
-    myIndentOptionsEditor.setEnabled(true);
-    myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
 
     settings.FORMATTER_TAGS_ENABLED = myEnableFormatterTags.isSelected();
     settings.FORMATTER_TAGS_ACCEPT_REGEXP = myAcceptRegularExpressionsCheckBox.isSelected();
@@ -228,7 +228,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
 
     if (!Comparing.equal(myRightMarginSpinner.getValue(), settings.getDefaultRightMargin())) return true;
-    myIndentOptionsEditor.setEnabled(true);
 
     if (myEnableFormatterTags.isSelected()) {
       if (
@@ -253,7 +252,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
+    return false;
   }
 
   @Override
@@ -280,8 +279,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myRightMarginSpinner.setValue(settings.getDefaultRightMargin());
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
-    myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
-    myIndentOptionsEditor.setEnabled(true);
 
     myAcceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);
     myEnableFormatterTags.setSelected(settings.FORMATTER_TAGS_ENABLED);

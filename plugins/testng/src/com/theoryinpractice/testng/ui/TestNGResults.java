@@ -23,7 +23,6 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -88,10 +87,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
-                       final TestNGConsoleView console,
-                       final ExecutionEnvironment environment) {
+                       final TestNGConsoleView console) {
     super(component, console.getConsole().createConsoleActions(), console.getProperties(),
-          environment, TESTNG_SPLITTER_PROPERTY, 0.5f);
+          TESTNG_SPLITTER_PROPERTY, 0.5f);
     this.configuration = configuration;
     this.project = configuration.getProject();
 
@@ -149,7 +147,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myEnvironment, this);
+    final ToolbarPanel panel = new ToolbarPanel(getProperties(), this);
     panel.setModel(this);
     return panel;
   }
@@ -311,7 +309,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     myStatusLine.setFraction((double)count / total);
     updateStatusLine();
-    TestsUIUtil.showIconProgress(project, count, total, failed.size());
+    TestsUIUtil.showIconProgress(project, count, total, failed.size(), false);
   }
 
   private TestProxy getPackageClassNodeFor(final TestResultMessage result) {

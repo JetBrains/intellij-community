@@ -105,7 +105,7 @@ class FileInEditorProcessor {
                 DataManager manager = DataManager.getInstance();
                 if (manager != null) {
                   DataContext context = manager.getDataContext(myEditor.getContentComponent());
-                  action.actionPerformed(new AnActionEvent(null, context, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0));
+                  action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
                 }
               }
             };

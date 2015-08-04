@@ -68,6 +68,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     warnThatBranchesDivergedIfNeeded();
   }
 
+  @NotNull
   public ListPopup asListPopup() {
     return myPopup;
   }

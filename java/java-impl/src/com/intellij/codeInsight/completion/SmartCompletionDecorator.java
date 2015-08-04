@@ -67,7 +67,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
     final PsiExpression enclosing = PsiTreeUtil.getContextOfType(myPosition, PsiExpression.class, true);
 
-    if (enclosing != null && object instanceof PsiElement) {
+    if (enclosing != null) {
       final PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
       final TailType itemType = item != null ? item.getTailType() : TailType.NONE;
       if (type != null && type.isValid()) {

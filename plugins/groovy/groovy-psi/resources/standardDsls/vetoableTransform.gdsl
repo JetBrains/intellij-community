@@ -88,8 +88,9 @@ def vetoableMethods = {
 
 contributor(ctype:hasField(hasAnnotation("groovy.beans.Vetoable"))) {
   if (psiClass?.fields?.find {it.hasAnnotation("groovy.beans.Vetoable")}) {
-    vetoableMethods.delegate = delegate
-    vetoableMethods.resolveStrategy = Closure.DELEGATE_FIRST
-    vetoableMethods()
+    Closure c = vetoableMethods.clone()
+    c.delegate = delegate
+    c.resolveStrategy = Closure.DELEGATE_FIRST
+    c()
   }
 }

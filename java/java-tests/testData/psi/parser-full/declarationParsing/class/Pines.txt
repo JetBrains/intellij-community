@@ -12,7 +12,7 @@ PsiJavaFile:Pines.java
       PsiTypeParameter:T
         PsiIdentifier:T('T')
         PsiWhiteSpace(' ')
-        PsiElement(EXTENDS_BOUND_LIST)
+        PsiReferenceList
           PsiKeyword:extends('extends')
           PsiWhiteSpace(' ')
           PsiJavaCodeReferenceElement:List<String>

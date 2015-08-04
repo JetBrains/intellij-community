@@ -316,10 +316,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   private static class MyDocument extends UserDataHolderBase implements DocumentEx {
 
     RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this) {};
-    LineSet myLineSet = new LineSet();
-
     char[] myChars = ArrayUtil.EMPTY_CHAR_ARRAY;
     String myString = "";
+    LineSet myLineSet = LineSet.createLineSet(myString);
 
     @Override
     public void setText(@NotNull CharSequence text) {
@@ -327,7 +326,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       myChars = new char[s.length()];
       s.getChars(0, s.length(), myChars, 0);
       myString = new String(myChars);
-      myLineSet.documentCreated(this);
+      myLineSet = LineSet.createLineSet(myString);
     }
 
     @Override

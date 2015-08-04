@@ -22,13 +22,10 @@ import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConvertor;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -36,20 +33,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class QuickListsManager implements ExportableApplicationComponent {
-  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/quicklists";
-
   private static final String LIST_TAG = "list";
 
   private final ActionManager myActionManager;
-  private final SchemesManager<QuickList, QuickList> mySchemesManager;
+  private final SchemesManager<QuickList, QuickList> mySchemeManager;
 
   public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
     myActionManager = actionManager;
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC,
-                                                                  new BaseSchemeProcessor<QuickList>() {
+    mySchemeManager = schemesManagerFactory.createSchemesManager("quicklists",
+                                                                 new BaseSchemeProcessor<QuickList>() {
                                                                     @NotNull
                                                                     @Override
                                                                     public QuickList readScheme(@NotNull Element element) {
@@ -63,9 +59,10 @@ public class QuickListsManager implements ExportableApplicationComponent {
                                                                       return element;
                                                                     }
                                                                   },
-                                                                  RoamingType.PER_USER);
+                                                                 RoamingType.PER_USER);
   }
 
+  @NotNull
   public static QuickListsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(QuickListsManager.class);
   }
@@ -73,7 +70,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   @Override
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{mySchemesManager.getRootDirectory()};
+    return new File[]{mySchemeManager.getRootDirectory()};
   }
 
   @NotNull
@@ -99,19 +96,15 @@ public class QuickListsManager implements ExportableApplicationComponent {
   public void initComponent() {
     for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
       for (final String path : provider.getBundledListsRelativePaths()) {
-        mySchemesManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
+        mySchemeManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
           @Override
           public QuickList convert(Element element) throws Throwable {
-            QuickList item = createItem(element);
-            item.getExternalInfo().setHash(JDOMUtil.getTreeHash(element, true));
-            item.getExternalInfo().setPreviouslySavedName(item.getName());
-            item.getExternalInfo().setCurrentFileName(PathUtilRt.getFileName(path));
-            return item;
+            return createItem(element);
           }
         });
       }
     }
-    mySchemesManager.loadSchemes();
+    mySchemeManager.loadSchemes();
     registerActions();
   }
 
@@ -120,15 +113,20 @@ public class QuickListsManager implements ExportableApplicationComponent {
   }
 
   @NotNull
+  public SchemesManager<QuickList, QuickList> getSchemeManager() {
+    return mySchemeManager;
+  }
+
+  @NotNull
   public QuickList[] getAllQuickLists() {
-    Collection<QuickList> lists = mySchemesManager.getAllSchemes();
+    Collection<QuickList> lists = mySchemeManager.getAllSchemes();
     return lists.toArray(new QuickList[lists.size()]);
   }
 
   private void registerActions() {
     // to prevent exception if 2 or more targets have the same name
     Set<String> registeredIds = new THashSet<String>();
-    for (QuickList list : mySchemesManager.getAllSchemes()) {
+    for (QuickList list : mySchemeManager.getAllSchemes()) {
       String actionId = list.getActionId();
       if (registeredIds.add(actionId)) {
         myActionManager.registerAction(actionId, new InvokeQuickListAction(list));
@@ -142,12 +140,9 @@ public class QuickListsManager implements ExportableApplicationComponent {
     }
   }
 
-  public void setQuickLists(@NotNull QuickList[] quickLists) {
-    mySchemesManager.clearAllSchemes();
+  public void setQuickLists(@NotNull List<QuickList> quickLists) {
     unregisterActions();
-    for (QuickList quickList : quickLists) {
-      mySchemesManager.addNewScheme(quickList, true);
-    }
+    mySchemeManager.setSchemes(quickLists);
     registerActions();
   }
 

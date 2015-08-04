@@ -152,7 +152,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
-          return myVariableData[rowIndex].passAsParameter ? Boolean.TRUE : Boolean.FALSE;
+          return myVariableData[rowIndex].passAsParameter;
         }
         case PARAMETER_NAME_COLUMN: {
           return myVariableData[rowIndex].name;

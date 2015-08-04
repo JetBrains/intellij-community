@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,26 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 public class Page {
-  public static final int PAGE_SIZE = 4 * 1024;
+  public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
   private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
+    @NotNull
     @Override
     public ByteBuffer create() {
       return ByteBuffer.allocate(PAGE_SIZE);
     }
 
     @Override
-    public void cleanup(final ByteBuffer byteBuffer) {
+    public void cleanup(@NotNull final ByteBuffer byteBuffer) {
     }
   });
 

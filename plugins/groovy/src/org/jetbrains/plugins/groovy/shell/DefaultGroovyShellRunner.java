@@ -69,9 +69,8 @@ public class DefaultGroovyShellRunner extends GroovyShellConfig {
   public static boolean hasGroovyWithNeededJars(Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
-    return (facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null ||
-            facade.findClass("groovyjarjarcommonscli.CommandLineParser", scope) != null) &&
-           facade.findClass("groovy.ui.GroovyMain", scope) != null &&
+    return facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null &&
+           facade.findClass("org.codehaus.groovy.tools.shell.Main", scope) != null &&
            facade.findClass("org.fusesource.jansi.AnsiConsole", scope) != null;
   }
 

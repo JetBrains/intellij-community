@@ -13,5 +13,5 @@ public class CourseCreatorPythonIcons {
     return IconLoader.getIcon(path, CourseCreatorPythonIcons.class);
   }
 
-  public static final Icon CourseCreationProjectType = load("/icons/CourseCreationProjectType.png"); // 32x32
+  public static final Icon CourseCreationProjectType = load("/icons/CourseCreationProjectType.png"); // 16x16
 }

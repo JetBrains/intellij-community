@@ -30,6 +30,7 @@ class JetGradlePlugin implements Plugin<Project> {
 }
 
 try {
+  System.setProperty("idea.active", "true");
   String[] paths = ${EXTENSIONS_JARS_PATH}
   URL[] urls = paths.collect{ new File(it).toURI().toURL() }
   URLClassLoader classLoader = new URLClassLoader(urls, getClass().classLoader)

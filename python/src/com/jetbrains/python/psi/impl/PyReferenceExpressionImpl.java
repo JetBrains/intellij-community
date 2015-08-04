@@ -125,7 +125,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
 
-  private final QualifiedResolveResult EMPTY_RESULT = new QualifiedResolveResultEmpty();
+  private static final QualifiedResolveResult EMPTY_RESULT = new QualifiedResolveResultEmpty();
 
   @NotNull
   public QualifiedResolveResult followAssignmentsChain(PyResolveContext resolveContext) {
@@ -458,7 +458,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public static class QualifiedResolveResultEmpty implements QualifiedResolveResult {
     // a trivial implementation
 
-    public QualifiedResolveResultEmpty() {
+    private QualifiedResolveResultEmpty() {
     }
 
     @Override

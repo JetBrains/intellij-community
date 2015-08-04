@@ -78,6 +78,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 			form.data.nonemptystring
 		}
 
+	shared-form.attrs.inputmode =
+		attribute inputmode {
+			string
+		}
+
 ## Shared attributes for <input>
 		
 	shared-input.attrs =
@@ -127,6 +132,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.pattern?
 		&	shared-form.attrs.required?
 		&	shared-form.attrs.placeholder?
+		&	shared-form.attrs.inputmode?
 		)
 
 ## Password Field: <input type='password'>, Extensions
@@ -657,6 +663,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 				&	textarea.attrs.cols?
 				)
 			)
+		&	shared-form.attrs.inputmode?
 		)
 		textarea.attrs.wrap.hard =
 			attribute wrap {

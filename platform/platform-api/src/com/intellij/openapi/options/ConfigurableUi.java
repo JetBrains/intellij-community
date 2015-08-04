@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * Implement {@link com.intellij.openapi.Disposable} if you need explicit dispose logic.
+ */
 public interface ConfigurableUi<S> {
   void reset(@NotNull S settings);
 
   boolean isModified(@NotNull S settings);
 
-  void apply(@NotNull S settings);
+  void apply(@NotNull S settings) throws ConfigurationException;
 
   @NotNull
   JComponent getComponent();

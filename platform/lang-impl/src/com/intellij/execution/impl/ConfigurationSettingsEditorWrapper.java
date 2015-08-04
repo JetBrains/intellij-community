@@ -18,7 +18,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.UnknownRunConfiguration;
+import com.intellij.execution.configurations.WithoutOwnBeforeRunSteps;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -92,7 +92,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void doReset(RunnerAndConfigurationSettings settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     myBeforeRunStepsPanel.doReset(settings);
-    myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof UnknownRunConfiguration));
+    myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof WithoutOwnBeforeRunSteps));
   }
 
   @Override
@@ -130,8 +130,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+      runManagerSettings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
     } else {
       settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+      settings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
     }
   }
 

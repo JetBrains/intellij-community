@@ -15,15 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring.introduceParameter;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -38,6 +29,14 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -63,7 +62,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
 
     @NotNull
-    protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
+    protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }
 
@@ -103,11 +102,11 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return usageInfos;
     }
 
-    protected void refreshElements(PsiElement[] psiElements) {
+    protected void refreshElements(@NotNull PsiElement[] psiElements) {
         // TODO When's that called? What should it do?
     }
 
-    protected void performRefactoring(UsageInfo[] usageInfos) {
+    protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
         XmlTag tag;
         if (myTemplate != null) {
             tag = myTemplate.getTag();

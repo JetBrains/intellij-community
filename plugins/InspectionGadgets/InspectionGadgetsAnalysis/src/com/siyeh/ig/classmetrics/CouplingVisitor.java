@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-class CouplingVisitor extends JavaRecursiveElementVisitor {
-  private boolean m_inClass = false;
+class CouplingVisitor extends JavaRecursiveElementWalkingVisitor {
+  private int m_inClass;
   private final PsiClass m_class;
   private final boolean m_includeJavaClasses;
   private final boolean m_includeLibraryClasses;
@@ -36,7 +36,6 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
 
   CouplingVisitor(PsiClass aClass, boolean includeJavaClasses,
                   boolean includeLibraryClasses) {
-    super();
     m_class = aClass;
     m_includeJavaClasses = includeJavaClasses;
     m_includeLibraryClasses = includeLibraryClasses;
@@ -99,16 +98,21 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
 
   @Override
   public void visitClass(@NotNull PsiClass aClass) {
-    final boolean wasInClass = m_inClass;
-    if (!m_inClass) {
-
-      m_inClass = true;
+    final int wasInClass = m_inClass++;
+    if (wasInClass == 0) {
       super.visitClass(aClass);
     }
-    m_inClass = wasInClass;
     final PsiType[] superTypes = aClass.getSuperTypes();
     for (PsiType superType : superTypes) {
       addDependency(superType);
+    }
+  }
+
+  @Override
+  protected void elementFinished(@NotNull PsiElement element) {
+    super.elementFinished(element);
+    if (element instanceof PsiClass) {
+      m_inClass--;
     }
   }
 
@@ -185,7 +189,7 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
     m_dependencies.add(baseTypeName);
   }
 
-  public int getNumDependencies() {
+  int getNumDependencies() {
     return m_dependencies.size();
   }
 }

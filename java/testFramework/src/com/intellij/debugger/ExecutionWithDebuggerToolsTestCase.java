@@ -36,10 +36,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -91,7 +87,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected void resume(SuspendContextImpl context) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOW));
+    debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
+  }
+
+  protected void stepInto(SuspendContextImpl context) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    debugProcess.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, false, null));
   }
 
   protected void waitBreakpoints() {
@@ -113,11 +114,16 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void onBreakpoint(SuspendContextRunnable runnable) {
+    addDefaultBreakpointListener();
+    myScriptRunnables.add(runnable);
+  }
+
+  protected void addDefaultBreakpointListener() {
     if (myPauseScriptListener == null) {
       final DebugProcessImpl debugProcess = getDebugProcess();
-      
+
       assertTrue("Debug process was not started", debugProcess != null);
-      
+
       myPauseScriptListener = new DelayedEventsProcessListener(
         new DebugProcessAdapterImpl() {
           @Override
@@ -138,7 +144,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             }
             catch (AssertionError e) {
               addException(e);
-              paused(suspendContext);
+              resume(suspendContext);
             }
 
             if (myScriptRunnables.isEmpty()) {
@@ -163,7 +169,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       );
       debugProcess.addDebugProcessListener(myPauseScriptListener);
     }
-    myScriptRunnables.add(runnable);
   }
 
   protected void printFrameProxy(StackFrameProxyImpl frameProxy) throws EvaluateException {
@@ -400,33 +405,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  private Sdk getTestJdk() {
-    try {
-      ProjectJdkImpl jdk = (ProjectJdkImpl)JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().clone();
-      jdk.setName("JDK");
-      return jdk;
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
-  protected void setTestJDK() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Sdk jdk = ProjectJdkTable.getInstance().findJdk("JDK");
-        if (jdk != null) {
-          ProjectJdkTable.getInstance().removeJdk(jdk);
-        }
-
-        ProjectJdkTable.getInstance().addJdk(getTestJdk());
-      }
-    });
-  }
-
-  private class DelayedEventsProcessListener implements DebugProcessListener {
+  private static class DelayedEventsProcessListener implements DebugProcessListener {
     private final DebugProcessAdapterImpl myTarget;
 
     public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
@@ -473,7 +452,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myTarget.attachException(state, exception, remoteConnection);
     }
 
-    private void pauseExecution() {
+    private static void pauseExecution() {
       TimeoutUtil.sleep(10);
     }
   }

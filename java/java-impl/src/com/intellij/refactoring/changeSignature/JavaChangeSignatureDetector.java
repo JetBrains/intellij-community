@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
     new WriteCommandAction(element.getProject(), MOVE_PARAMETER){
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
         final int deltaOffset = editor.getCaretModel().getOffset() - parameter.getTextRange().getStartOffset();

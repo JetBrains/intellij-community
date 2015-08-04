@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @deprecated Use {@link com.intellij.openapi.externalSystem.model.ExternalProject} model instead.
+ * @deprecated Use {@link ExternalProject} model instead.
  *
  * @author Vladislav.Soroka
  * @since 11/5/13

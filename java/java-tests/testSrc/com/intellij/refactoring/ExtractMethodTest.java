@@ -583,6 +583,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testFromLambdaBodyToAnonymous() throws Exception {
     doTest();
   }
+  
+  public void testFromLambdaBodyToToplevelInsideCodeBlock() throws Exception {
+    doTest();
+  }
 
   public void testFromLambdaBodyWithReturn() throws Exception {
     doTest();
@@ -747,6 +751,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
     catch (PrepareFailedException ignore) {
     }
+  }
+
+  public void testConditionalExitCombinedWithNullabilityShouldPreserveVarsUsedInExitStatements() throws Exception {
+    doTest();
   }
 
   private void doTestDisabledParam() throws PrepareFailedException {

@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -114,6 +115,9 @@ public final class NavigationUtil {
       }
     };
     list.setCellRenderer(renderer);
+
+    list.setFont(EditorUtil.getEditorFont());
+
     if (selection != null) {
       list.setSelectedValue(selection, true);
     }
@@ -137,7 +141,12 @@ public final class NavigationUtil {
     }
     renderer.installSpeedSearch(builder, true);
 
-    return builder.setItemChoosenCallback(runnable).createPopup();
+    JBPopup popup = builder.setItemChoosenCallback(runnable).createPopup();
+
+    builder.getScrollPane().setBorder(null);
+    builder.getScrollPane().setViewportBorder(null);
+
+    return popup;
   }
 
   public static boolean activateFileWithPsiElement(@NotNull PsiElement elt) {

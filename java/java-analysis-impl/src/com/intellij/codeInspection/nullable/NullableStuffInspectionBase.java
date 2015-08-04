@@ -25,6 +25,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -77,7 +78,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+    final PsiFile file = holder.getFile();
+    if (!PsiUtil.isLanguageLevel5OrHigher(file) || nullabilityAnnotationsNotAvailable(file)) {
       return new PsiElementVisitor() { };
     }
     return new JavaElementVisitor() {
@@ -144,6 +146,18 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         return false;
       }
     };
+  }
+
+  private static boolean nullabilityAnnotationsNotAvailable(final PsiFile file) {
+    final Project project = file.getProject();
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    return ContainerUtil.find(NullableNotNullManager.getInstance(project).getNullables(), new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return facade.findClass(s, scope) != null;
+      }
+    }) == null;
   }
 
   private static boolean checkNonStandardAnnotations(PsiField field,

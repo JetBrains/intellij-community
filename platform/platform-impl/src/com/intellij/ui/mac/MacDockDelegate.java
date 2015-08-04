@@ -18,7 +18,6 @@ package com.intellij.ui.mac;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -68,9 +67,7 @@ public class MacDockDelegate implements SystemDock.Delegate {
       menuItem.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(null),
-                                                   ActionPlaces.DOCK_MENU, action.getTemplatePresentation(),
-                                                   ActionManager.getInstance(), 0));
+          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.DOCK_MENU, DataManager.getInstance().getDataContext(null)));
         }
       });
       recentProjectsMenu.add(menuItem);

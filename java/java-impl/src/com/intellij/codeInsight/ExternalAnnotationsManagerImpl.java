@@ -207,7 +207,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     }
     new WriteCommandAction(project) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         appendChosenAnnotationsRoot(entry, newRoot);
         XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
         if (xmlFileInRoot != null) { //file already exists under appeared content root
@@ -311,7 +311,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     new WriteCommandAction(project) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         if (existingXml != null) {
           annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value);
         }

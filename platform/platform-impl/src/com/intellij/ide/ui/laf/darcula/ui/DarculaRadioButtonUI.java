@@ -44,24 +44,17 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public synchronized void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-    AbstractButton b = (AbstractButton) c;
-    ButtonModel model = b.getModel();
 
     Dimension size = c.getSize();
-    Font f = c.getFont();
-    g.setFont(f);
-    FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
 
     Rectangle viewRect = new Rectangle(size);
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
-
-    Insets i = c.getInsets();
-    viewRect.x += i.left;
-    viewRect.y += i.top;
-    viewRect.width -= (i.right + viewRect.x);
-    viewRect.height -= (i.bottom + viewRect.y);
-
+    AbstractButton b = (AbstractButton) c;
+    //ButtonModel model = b.getModel();
+    Font f = c.getFont();
+    g.setFont(f);
+    FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
 
     String text = SwingUtilities.layoutCompoundLabel(
       c, fm, b.getText(), getDefaultIcon(),
@@ -71,9 +64,21 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
     // fill background
     if(c.isOpaque()) {
-      g.setColor(b.getBackground());
+      g.setColor(c.getBackground());
       g.fillRect(0,0, size.width, size.height);
     }
+
+
+    paintIcon(c, g, viewRect, iconRect);
+    drawText(b, g, text, textRect, fm);
+  }
+
+  protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
+    Insets i = c.getInsets();
+    viewRect.x += i.left;
+    viewRect.y += i.top;
+    viewRect.width -= (i.right + viewRect.x);
+    viewRect.height -= (i.bottom + viewRect.y);
 
     int rad = JBUI.scale(5);
 
@@ -89,14 +94,15 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
     //setup AA for lines
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    final boolean focus = b.hasFocus();
-    if (UIUtil.isUnderDarcula() || !b.isSelected()) {
+    final boolean focus = c.hasFocus();
+    final boolean selected = ((AbstractButton)c).isSelected();
+    if (UIUtil.isUnderDarcula() || !selected) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5),
                                          0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
     } else {
       g.setPaint(ijGradient);
     }
-    if (!UIUtil.isUnderDarcula() && b.isSelected()) {
+    if (!UIUtil.isUnderDarcula() && selected) {
       final GraphicsConfig fillOvalConf = new GraphicsConfig(g);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
       g.fillOval(0, 1, w, h);
@@ -111,7 +117,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
     if (focus) {
       if (UIUtil.isRetina() || JBUI.isHiDPI()) {
-        DarculaUIUtil.paintFocusOval(g, JBUI.scale(1), JBUI.scale(1)+1, w-JBUI.scale(2), h-JBUI.scale(2));
+        DarculaUIUtil.paintFocusOval(g, JBUI.scale(1), JBUI.scale(1) + 1, w - JBUI.scale(2), h - JBUI.scale(2));
       } else {
         DarculaUIUtil.paintFocusOval(g, 0, JBUI.scale(1), w, h);
       }
@@ -123,15 +129,15 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
         g.setPaint(Gray._40.withAlpha(200));
         g.drawOval(0, JBUI.scale(1), w - 1, h - 1);
       } else {
-        g.setPaint(b.isSelected() ? ijGradient : b.isEnabled() ? Gray._30 : Gray._130);
-        if (!b.isSelected()) {
+        g.setPaint(selected ? ijGradient : c.isEnabled() ? Gray._30 : Gray._130);
+        if (!selected) {
           g.drawOval(0, JBUI.scale(1), w - 1, h - 1);
         }
       }
     }
 
-    if (b.isSelected()) {
-      final boolean enabled = b.isEnabled();
+    if (selected) {
+      final boolean enabled = c.isEnabled();
       g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledShadowColor" : "RadioButton.darcula.selectionDisabledShadowColor"));// ? Gray._30 : Gray._60);
       final int yOff = 1 + JBUI.scale(1);
       g.fillOval(w/2 - rad/2, h/2 - rad/2 + yOff , rad, rad);
@@ -140,22 +146,24 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     }
     config.restore();
     g.translate(-x, -y);
+  }
 
+  protected void drawText(AbstractButton b, Graphics2D g, String text, Rectangle textRect, FontMetrics fm) {
     // Draw the Text
     if(text != null) {
-      View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+      View v = (View) b.getClientProperty(BasicHTML.propertyKey);
       if (v != null) {
         v.paint(g, textRect);
       } else {
         int mnemIndex = b.getDisplayedMnemonicIndex();
-        if(model.isEnabled()) {
+        if(b.isEnabled()) {
           // *** paint the text normally
           g.setColor(b.getForeground());
         } else {
           // *** paint the text disabled
           g.setColor(getDisabledTextColor());
         }
-        SwingUtilities2.drawStringUnderlineCharAt(c, g, text,
+        SwingUtilities2.drawStringUnderlineCharAt(b, g, text,
                                                   mnemIndex, textRect.x, textRect.y + fm.getAscent());
       }
     }

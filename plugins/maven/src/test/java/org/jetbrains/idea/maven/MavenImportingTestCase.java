@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    VfsRootAccess.allowRootAccess(PathManager.getOptionsPath());
+    VfsRootAccess.allowRootAccess(PathManager.getConfigPath());
     super.setUp();
     myGlobalSettingsFile =
       MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
@@ -86,9 +86,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       if (myGlobalSettingsFile != null) {
         VfsRootAccess.disallowRootAccess(myGlobalSettingsFile.getAbsolutePath());
       }
-      VfsRootAccess.disallowRootAccess(PathManager.getOptionsPath());
+      VfsRootAccess.disallowRootAccess(PathManager.getConfigPath());
       Messages.setTestDialog(TestDialog.DEFAULT);
-      myProjectsManager.projectClosed();
       removeFromLocalRepository("test");
       FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }

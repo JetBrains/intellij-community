@@ -26,6 +26,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -238,15 +239,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
       }
     }
+  }
 
-    private String formatVersion(String version, String build) {
-      String[] parts = version.split("\\.", 3);
-      String major = parts.length > 0 ? parts[0] : "0";
-      String minor = parts.length > 1 ? parts[1] : "0";
-      String patch = parts.length > 2 ? parts[2] : "0";
-      version = major + '.' + minor + '.' + patch;
-
-      return IdeBundle.message("updates.version.info", version, build);
-    }
+  protected static String formatVersion(String versionString, String build) {
+    Version version = Version.parseVersion(versionString);
+    String formattedVersion = version != null ? version.toString() : versionString;
+    return IdeBundle.message("updates.version.info", formattedVersion, build);
   }
 }

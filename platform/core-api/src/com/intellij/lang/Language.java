@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,10 +56,16 @@ public abstract class Language extends UserDataHolderBase {
       //noinspection HardCodedStringLiteral
       return "Language: ANY";
     }
+
+    @Nullable
+    @Override
+    public LanguageFileType getAssociatedFileType() {
+      return null;
+    }
   };
 
-  protected Language(@NotNull @NonNls String id) {
-    this(id, ArrayUtil.EMPTY_STRING_ARRAY);
+  protected Language(@NotNull @NonNls String ID) {
+    this(ID, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   protected Language(@NotNull @NonNls final String ID, @NotNull @NonNls final String... mimeTypes) {
@@ -181,6 +187,9 @@ public abstract class Language extends UserDataHolderBase {
     return this == another;
   }
 
+  /**
+   * @return whether identifiers in this language are case-sensitive. By default, delegates to the base language (if present) or returns false (otherwise).
+   */
   public boolean isCaseSensitive() {
     return myBaseLanguage != null && myBaseLanguage.isCaseSensitive();
   }
@@ -214,8 +223,8 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   /** Fake language identifier without registering */
-  protected Language(@NotNull String id, @SuppressWarnings("UnusedParameters") boolean register) {
-    myID = id;
+  protected Language(@NotNull String ID, @SuppressWarnings("UnusedParameters") boolean register) {
+    myID = ID;
     myBaseLanguage = null;
     myMimeTypes = null;
   }

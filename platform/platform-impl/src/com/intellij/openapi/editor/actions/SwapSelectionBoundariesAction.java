@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -42,27 +41,29 @@ public class SwapSelectionBoundariesAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      if (!(editor instanceof EditorEx)) {
+    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+      assert caret != null;
+      
+      if (!caret.hasSelection()) {
         return;
       }
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      if (!selectionModel.hasSelection()) {
-        return;
+      final int start = caret.getSelectionStart();
+      final int end = caret.getSelectionEnd();
+      boolean moveToEnd = caret.getOffset() == start;
+      
+      if (editor instanceof EditorEx) {
+        EditorEx editorEx = (EditorEx)editor;
+        if (editorEx.isStickySelection()) {
+          editorEx.setStickySelection(false);
+          editorEx.setStickySelection(true);
+        }
       }
       
-      EditorEx editorEx = (EditorEx)editor;
-      final int start = selectionModel.getSelectionStart();
-      final int end = selectionModel.getSelectionEnd();
-      final CaretModel caretModel = editor.getCaretModel();
-      boolean moveToEnd = caretModel.getOffset() == start;
-      editorEx.setStickySelection(false);
-      editorEx.setStickySelection(true);
       if (moveToEnd) {
-        caretModel.moveToOffset(end);
+        caret.moveToOffset(end);
       }
       else {
-        caretModel.moveToOffset(start);
+        caret.moveToOffset(start);
       }
     }
   }

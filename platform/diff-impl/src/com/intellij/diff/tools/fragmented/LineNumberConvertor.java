@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class LineNumberConvertor {
+class LineNumberConvertor {
   // Oneside -> Twoside
   @NotNull private final TreeMap<Integer, Integer> myFragments1;
   @NotNull private final TreeMap<Integer, Integer> myFragments2;
@@ -172,20 +172,6 @@ public class LineNumberConvertor {
     @NotNull
     public LineNumberConvertor build() {
       return new LineNumberConvertor(myFragments1, myFragments2, myInvertedFragments1, myInvertedFragments2);
-    }
-
-    @NotNull
-    public static LineNumberConvertor createLeft(int lines) {
-      Builder builder = new Builder();
-      builder.put1(0, 0, lines);
-      return builder.build();
-    }
-
-    @NotNull
-    public static LineNumberConvertor createRight(int lines) {
-      Builder builder = new Builder();
-      builder.put2(0, 0, lines);
-      return builder.build();
     }
   }
 

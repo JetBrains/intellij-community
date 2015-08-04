@@ -119,6 +119,13 @@ class Intf {
     assert elements == [m, mod]
   }
 
+  public void "test consider dot-idea files out of project"() {
+    def outside = myFixture.addFileToProject(".idea/workspace.xml", "")
+    def inside = myFixture.addFileToProject("workspace.txt", "")
+    assert getPopupElements(new GotoFileModel(project), "work", false) == [inside]
+    assert getPopupElements(new GotoFileModel(project), "work", true) == [inside, outside]
+  }
+
   public void "test prefer better path matches"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
@@ -232,6 +239,13 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'foo.bar.Bar') == [bar]
     assert getPopupElements(new GotoClassModel2(project), 'goo.Bar') == [bar2]
     assert getPopupElements(new GotoClassModel2(project), 'goo.baz.Bar') == [bar2]
+  }
+
+  public void "test try lowercase pattern if nothing matches"() {
+    def match = myFixture.addClass("class IPRoi { }")
+    def nonMatch = myFixture.addClass("class InspectionProfileImpl { }")
+    assert getPopupElements(new GotoClassModel2(project), 'IPRoi') == [match]
+    assert getPopupElements(new GotoClassModel2(project), 'IproImpl') == [nonMatch]
   }
 
   private static filterJavaItems(List<Object> items) {

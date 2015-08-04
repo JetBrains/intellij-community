@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
@@ -76,6 +77,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private SMTestLocator myLocator = null;
   private Printer myPreferredPrinter = null;
   private String myPresentableName;
+  private boolean myConfig = false;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
@@ -90,6 +92,10 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setLocator(@NotNull SMTestLocator testLocator) {
     myLocator = testLocator;
+  }
+
+  public void setConfig(boolean config) {
+    myConfig = config;
   }
 
   /** @deprecated use {@link #setLocator(SMTestLocator)} (to be removed in IDEA 16) */
@@ -182,11 +188,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Override
-  public boolean isInterrupted() {
-    return myState.wasTerminated();
-  }
-
-  boolean hasPassedTests() {
+  public boolean hasPassedTests() {
     if (myHasPassedTestsCached) {
       return myHasPassedTests;
     }
@@ -197,6 +199,11 @@ public class SMTestProxy extends AbstractTestProxy {
       myHasPassedTestsCached = true;
     }
     return hasPassedTests;
+
+  }
+  @Override
+  public boolean isInterrupted() {
+    return myState.wasTerminated();
   }
 
   private boolean calcPassedTests() {
@@ -213,8 +220,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Override
   public boolean isIgnored() {
-    return !hasPassedTests() &&
-           myState.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX;
+    return myState.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX;
   }
 
   public boolean isPassed() {
@@ -264,6 +270,11 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public boolean isConfig() {
+    return myConfig;
   }
 
   @Nullable
@@ -642,7 +653,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  protected String getLocationUrl() {
+  public String getLocationUrl() {
     return myLocationUrl;
   }
 
@@ -775,13 +786,22 @@ public class SMTestProxy extends AbstractTestProxy {
       containerSuite.invalidateCachedDurationForContainerSuites();
     }
   }
+  
+  public SMRootTestProxy getRoot() {
+    SMTestProxy parent = getParent();
+    while (parent != null && !(parent instanceof SMRootTestProxy)) {
+      parent = parent.getParent();
+    }
+    return parent instanceof SMRootTestProxy ? (SMRootTestProxy)parent : null;
+  }
 
-  public static class SMRootTestProxy extends SMTestProxy {
+  public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
     private boolean myTestsReporterAttached; // false by default
 
     private String myPresentation;
     private String myComment;
     private String myRootLocationUrl;
+    private ProcessHandler myHandler;
 
     public SMRootTestProxy() {
       super("[root]", true, null);
@@ -795,6 +815,7 @@ public class SMTestProxy extends AbstractTestProxy {
       return myTestsReporterAttached;
     }
 
+    @Override
     public String getPresentation() {
       return myPresentation;
     }
@@ -807,12 +828,27 @@ public class SMTestProxy extends AbstractTestProxy {
       myComment = comment;
     }
 
+    @Override
     public String getComment() {
       return myComment;
     }
 
     public void setRootLocationUrl(String locationUrl) {
       myRootLocationUrl = locationUrl;
+    }
+
+    @Override
+    public String getRootLocation() {
+      return myRootLocationUrl;
+    }
+
+    public ProcessHandler getHandler() {
+      return myHandler;
+    }
+
+    @Override
+    public void setHandler(ProcessHandler handler) {
+      myHandler = handler;
     }
 
     @Nullable

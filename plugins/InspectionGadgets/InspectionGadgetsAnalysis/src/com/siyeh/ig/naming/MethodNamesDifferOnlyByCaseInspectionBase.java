@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,19 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 public class MethodNamesDifferOnlyByCaseInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -57,30 +62,48 @@ public class MethodNamesDifferOnlyByCaseInspectionBase extends BaseInspection {
   }
 
   private class MethodNamesDifferOnlyByCaseVisitor extends BaseInspectionVisitor {
-
     @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      if (method.isConstructor()) {
-        return;
-      }
-      final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-      if (nameIdentifier == null) {
-        return;
-      }
-      final String methodName = method.getName();
-      if (ignoreIfMethodIsOverride && MethodUtils.hasSuper(method)) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getAllMethods();
-      for (PsiMethod testMethod : methods) {
-        final String testMethodName = testMethod.getName();
-        if (!methodName.equals(testMethodName) && methodName.equalsIgnoreCase(testMethodName)) {
-          registerError(nameIdentifier, testMethodName);
+    public void visitClass(PsiClass aClass) {
+      super.visitClass(aClass);
+      PsiMethod[] methods = aClass.getAllMethods();
+      Map<String, PsiMethod> methodNames = new THashMap<String, PsiMethod>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      Map<PsiIdentifier, String> errorNames = new THashMap<PsiIdentifier, String>();
+      for (PsiMethod method : methods) {
+        ProgressManager.checkCanceled();
+        if (method.isConstructor()) continue;
+        if (ignoreIfMethodIsOverride && MethodUtils.hasSuper(method)) {
+          continue;
         }
+
+        String name = method.getName();
+        PsiMethod existing = methodNames.get(name);
+        if (existing == null) {
+          methodNames.put(name, method);
+        }
+        else {
+          PsiClass methodClass = method.getContainingClass();
+          PsiClass existingMethodClass = existing.getContainingClass();
+          String existingName = existing.getName();
+          if (!name.equals(existingName)) {
+            if (existingMethodClass == aClass) {
+              PsiIdentifier identifier = existing.getNameIdentifier();
+              if (identifier != null) {
+                errorNames.put(identifier, name);
+              }
+            }
+            if (methodClass == aClass) {
+              PsiIdentifier identifier = method.getNameIdentifier();
+              if (identifier != null) {
+                errorNames.put(identifier, existingName);
+              }
+            }
+          }
+        }
+      }
+      for (Map.Entry<PsiIdentifier, String> entry : errorNames.entrySet()) {
+        PsiIdentifier identifier = entry.getKey();
+        String otherName = entry.getValue();
+        registerError(identifier, otherName);
       }
     }
   }

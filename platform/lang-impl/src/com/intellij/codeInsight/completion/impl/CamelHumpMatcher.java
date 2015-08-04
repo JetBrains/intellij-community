@@ -1,7 +1,7 @@
-
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /**
@@ -44,7 +45,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean isStartMatch(LookupElement element) {
-    for (String s : element.getAllLookupStrings()) {
+    for (String s : CompletionUtil.iterateLookupStrings(element)) {
       FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
       if (ranges == null) continue;
       if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
@@ -138,15 +139,25 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public int matchingDegree(String string) {
-    FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(string);
-    if (ranges != null && !ranges.isEmpty()) {
-      int matchStart = ranges.get(0).getStartOffset();
-      int underscoreEnd = skipUnderscores(string);
-      if (matchStart > 0 && matchStart <= underscoreEnd) {
-        return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart), true) - 1;
+    return matchingDegree(string, matchingFragments(string));
+  }
+
+  public FList<TextRange> matchingFragments(String string) {
+    return myMatcher.matchingFragments(string);
+  }
+
+  public int matchingDegree(String string, @Nullable FList<TextRange> fragments) {
+    int underscoreEnd = skipUnderscores(string);
+    if (underscoreEnd > 0) {
+      FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
+      if (ciRanges != null && !ciRanges.isEmpty()) {
+        int matchStart = ciRanges.get(0).getStartOffset();
+        if (matchStart > 0 && matchStart <= underscoreEnd) {
+          return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart), true) - 1;
+        }
       }
     }
 
-    return myMatcher.matchingDegree(string, true);
+    return myMatcher.matchingDegree(string, true, fragments);
   }
 }

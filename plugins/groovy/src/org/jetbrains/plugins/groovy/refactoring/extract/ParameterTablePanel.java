@@ -279,7 +279,7 @@ public abstract class ParameterTablePanel extends JPanel {
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
-          return myParameterInfos[rowIndex].passAsParameter() ? Boolean.TRUE : Boolean.FALSE;
+          return myParameterInfos[rowIndex].passAsParameter();
         }
         case PARAMETER_NAME_COLUMN: {
           return myParameterInfos[rowIndex].getName();

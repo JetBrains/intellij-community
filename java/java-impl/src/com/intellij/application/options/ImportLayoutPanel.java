@@ -242,7 +242,7 @@ public abstract class ImportLayoutPanel extends JPanel {
           return entry.getPackageName();
         }
         if (col == 2) {
-          return entry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
+          return entry.isWithSubpackages();
         }
         throw new IllegalArgumentException(String.valueOf(col));
       }

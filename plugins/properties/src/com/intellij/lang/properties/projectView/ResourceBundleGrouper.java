@@ -101,15 +101,14 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
 
   public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
     if (selected == null) return null;
-    for (AbstractTreeNode selectedElement : selected) {
-      Object element = selectedElement.getValue();
-      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataName)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataName)) {
+      for (AbstractTreeNode selectedElement : selected) {
+        Object element = selectedElement.getValue();
         if (element instanceof ResourceBundle) {
-          return new ResourceBundleDeleteProvider((ResourceBundle)element);
+          return new ResourceBundleDeleteProvider();
         }
       }
-    }
-    if (ResourceBundle.ARRAY_DATA_KEY.is(dataName)) {
+    } else if (ResourceBundle.ARRAY_DATA_KEY.is(dataName)) {
       final List<ResourceBundle> selectedElements = new ArrayList<ResourceBundle>();
       for (AbstractTreeNode node : selected) {
         final Object value = node.getValue();

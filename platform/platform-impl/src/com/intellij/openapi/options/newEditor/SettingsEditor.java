@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -61,9 +62,10 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final ConfigurableEditor myEditor;
   private final OnePixelSplitter mySplitter;
   private final SpotlightPainter mySpotlightPainter;
+  private final LoadingDecorator myLoadingDecorator;
   private final Banner myBanner;
 
-  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, String filter) {
+  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);
@@ -110,9 +112,17 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       public ActionCallback onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.ByID.getID(configurable));
+          myLoadingDecorator.startLoading(false);
         }
         checkModified(oldConfigurable);
-        return myEditor.select(configurable);
+        ActionCallback result = myEditor.select(configurable);
+        result.doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            myLoadingDecorator.stopLoading();
+          }
+        });
+        return result;
       }
 
       @Override
@@ -181,10 +191,12 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         mySettings.select(configurable);
       }
     };
+    myEditor.setPreferredSize(JBUI.size(800, 600));
+    myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
     mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     JComponent left = myTreeView;
-    JComponent right = myEditor;
+    JComponent right = myLoadingDecorator.getComponent();
     if (Registry.is("ide.settings.old.style")) {
       myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
       mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -206,7 +218,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
       right = new JPanel(new BorderLayout());
       right.add(BorderLayout.NORTH, myBanner);
-      right.add(BorderLayout.CENTER, myEditor);
+      right.add(BorderLayout.CENTER, myLoadingDecorator.getComponent());
     }
     else {
       myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -248,8 +260,12 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         configurable = ConfigurableVisitor.ALL.find(groups);
       }
     }
-    myFilter.update(filter, false, true);
-    myTreeView.select(configurable);
+    myTreeView.select(configurable).doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        myFilter.update(filter, false, true);
+      }
+    });
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
   }
@@ -339,6 +355,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myEditor.getApplyAction().setEnabled(!myFilter.myContext.getModified().isEmpty());
       myEditor.getResetAction().setEnabled(myFilter.myContext.isModified(configurable) || exception != null);
       myEditor.setError(exception);
+      myEditor.revalidate();
     }
     if (configurable != null) {
       new Alarm().addRequest(new Runnable() {

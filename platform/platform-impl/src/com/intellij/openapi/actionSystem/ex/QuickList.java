@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.openapi.options.ExternalInfo;
-import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,48 +26,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class QuickList implements ExternalizableScheme {
+public class QuickList extends ExternalizableSchemeAdapter {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
   public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
   private static final String ID_TAG = "id";
-  private static final String READONLY_TAG = "readonly";
   private static final String ACTION_TAG = "action";
   private static final String DISPLAY_NAME_TAG = "display";
   private static final String DESCRIPTION_TAG = "description";
 
-  private String myName;
   private String myDescription;
-  private String[] myActionIds;
-  private boolean myReadonly;
-  private final ExternalInfo myExternalInfo = new ExternalInfo();
+  private String[] myActionIds = ArrayUtil.EMPTY_STRING_ARRAY;
 
   /**
    * With read external to be called immediately after in mind
    */
   QuickList() {
+    myName = "";
   }
 
-  public QuickList(@NotNull String displayName, @Nullable String description, String[] actionIds, boolean isReadonly) {
-    myName = displayName;
+  public QuickList(@NotNull String name, @Nullable String description, String[] actionIds) {
+    myName = name;
     myDescription = StringUtil.nullize(description);
     myActionIds = actionIds;
-    myReadonly = isReadonly;
-  }
-
-  @Deprecated
-  public String getDisplayName() {
-    return myName;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return myName;
-  }
-
-  public boolean isReadonly() {
-    return myReadonly;
   }
 
   @Nullable
@@ -75,8 +56,16 @@ public class QuickList implements ExternalizableScheme {
     return myDescription;
   }
 
+  public void setDescription(@Nullable String value) {
+    myDescription = StringUtil.nullize(value);
+  }
+
   public String[] getActionIds() {
     return myActionIds;
+  }
+
+  public void setActionIds(@NotNull String[] value) {
+    myActionIds = value;
   }
 
   public boolean equals(Object o) {
@@ -95,6 +84,11 @@ public class QuickList implements ExternalizableScheme {
     return 29 * myName.hashCode() + Comparing.hashcode(myDescription);
   }
 
+  @Override
+  public String toString() {
+    return getName() + " " + getDescription();
+  }
+
   @NotNull
   public String getActionId() {
     return QUICK_LIST_PREFIX + getName();
@@ -105,9 +99,6 @@ public class QuickList implements ExternalizableScheme {
     if (myDescription != null) {
       groupElement.setAttribute(DESCRIPTION_TAG, myDescription);
     }
-    if (myReadonly) {
-      groupElement.setAttribute(READONLY_TAG, "true");
-    }
 
     for (String actionId : getActionIds()) {
       groupElement.addContent(new Element(ACTION_TAG).setAttribute(ID_TAG, actionId));
@@ -117,23 +108,11 @@ public class QuickList implements ExternalizableScheme {
   public void readExternal(@NotNull Element element) {
     myName = element.getAttributeValue(DISPLAY_NAME_TAG);
     myDescription = StringUtil.nullize(element.getAttributeValue(DESCRIPTION_TAG));
-    myReadonly = Boolean.valueOf(element.getAttributeValue(READONLY_TAG, "false")).booleanValue();
 
     List<Element> actionElements = element.getChildren(ACTION_TAG);
     myActionIds = new String[actionElements.size()];
     for (int i = 0, n = actionElements.size(); i < n; i++) {
       myActionIds[i] = actionElements.get(i).getAttributeValue(ID_TAG);
     }
-  }
-
-  @Override
-  @NotNull
-  public ExternalInfo getExternalInfo() {
-    return myExternalInfo;
-  }
-
-  @Override
-  public void setName(@NotNull String newName) {
-    myName = newName;
   }
 }

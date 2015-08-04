@@ -39,7 +39,7 @@ public class VirtualFileListenerTest extends PlatformTestCase {
       }
     }, myTestRootDisposable);
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         try {
           dir.createChildData(this, "x.txt");
         }

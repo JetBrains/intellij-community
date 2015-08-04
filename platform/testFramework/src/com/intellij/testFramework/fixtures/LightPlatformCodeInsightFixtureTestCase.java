@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -40,15 +40,11 @@ import java.io.File;
 @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
 public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTestCase {
 
-  public LightPlatformCodeInsightFixtureTestCase() {
-    this(true);
-  }
+  public LightPlatformCodeInsightFixtureTestCase() { }
 
-  protected LightPlatformCodeInsightFixtureTestCase(boolean autodetect) {
-    if (autodetect) {
-      PlatformTestCase.autodetectPlatformPrefix();
-    }
-  }
+  /** @deprecated call {@link #LightPlatformCodeInsightFixtureTestCase()} instead (to be removed in IDEA 16) */
+  @SuppressWarnings("unused")
+  protected LightPlatformCodeInsightFixtureTestCase(boolean autodetect) { }
 
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;
@@ -117,7 +113,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     if (isWriteActionRequired()) {
       new WriteCommandAction(getProject()) {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           doRunTests();
         }
       }.execute();

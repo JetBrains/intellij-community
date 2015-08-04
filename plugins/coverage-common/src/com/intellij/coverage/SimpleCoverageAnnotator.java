@@ -181,6 +181,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
+    if (!shouldCollectCoverageInsideLibraryDirs()) {
+      if (index.isInLibrarySource(dir) || index.isInLibraryClasses(dir)) {
+        return null;
+      }
+    }
     visitedDirs.add(dir);
 
     final boolean isInTestSrcContent = index.isInTestSourceContent(dir);
@@ -250,6 +255,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     return dirCoverageInfo;
+  }
+
+  protected boolean shouldCollectCoverageInsideLibraryDirs() {
+    // By default returns "true" for backward compatibility
+    return true;
   }
 
   public void annotate(@NotNull final VirtualFile contentRoot,

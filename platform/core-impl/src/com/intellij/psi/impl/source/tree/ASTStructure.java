@@ -83,4 +83,14 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   public CharSequence toString(@NotNull ASTNode node) {
     return node.getChars();
   }
+
+  @Override
+  public int getStartOffset(@NotNull ASTNode node) {
+    return node.getStartOffset();
+  }
+
+  @Override
+  public int getEndOffset(@NotNull ASTNode node) {
+    return node.getStartOffset() + node.getTextLength();
+  }
 }

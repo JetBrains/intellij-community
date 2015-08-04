@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.*;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -29,10 +28,6 @@ import org.junit.Assert;
 import java.util.List;
 
 public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
-
-  static {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
 
   @NotNull
   protected abstract String getFileNameWithExtension();
@@ -91,7 +86,7 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
   }
 
   @NotNull
-  private static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
+  public static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
     IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
     return detector.getIndentOptions();
   }

@@ -270,8 +270,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         parm.getModifierList().addAfter(notNull, null);
       }
 
-      constructor.getParameterList().add(parm);
-      dummyConstructor.getParameterList().add(parm.copy());
+      if (constructor.isVarArgs()) {
+        final PsiParameterList parameterList = constructor.getParameterList();
+        parameterList.addBefore(parm, parameterList.getParameters()[parameterList.getParametersCount() - 1]);
+        final PsiParameterList dummyParameterlist = dummyConstructor.getParameterList();
+        dummyParameterlist.addBefore(parm.copy(), dummyParameterlist.getParameters()[dummyParameterlist.getParametersCount() - 1]);
+      } else {
+        constructor.getParameterList().add(parm);
+        dummyConstructor.getParameterList().add(parm.copy());
+      }
       fieldParams.add(parm);
     }
 

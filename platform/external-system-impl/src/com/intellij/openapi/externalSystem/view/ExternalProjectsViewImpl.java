@@ -78,7 +78,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 9/19/2014
  */
-public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView {
+public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
   @NotNull
@@ -171,6 +171,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public void init() {
+    Disposer.register(myProject, this);
     initTree();
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
@@ -299,12 +300,18 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   private ActionGroup createAdditionalGearActionsGroup() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    String[] ids = new String[]{"ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks"};
+    String[] ids = new String[]{"ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks", "ExternalSystem.ShowIgnored"};
     for (String id : ids) {
       final AnAction gearAction = actionManager.getAction(id);
       if (gearAction instanceof ExternalSystemViewGearAction) {
         ((ExternalSystemViewGearAction)gearAction).setView(this);
         group.add(gearAction);
+        Disposer.register(myProject, new Disposable() {
+          @Override
+          public void dispose() {
+            ((ExternalSystemViewGearAction)gearAction).setView(null);
+          }
+        });
       }
     }
     return group;
@@ -312,6 +319,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   private void initStructure() {
     myStructure = new ExternalProjectsStructure(myProject, myTree);
+    Disposer.register(this, myStructure);
     myStructure.init(this);
   }
 
@@ -418,14 +426,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
                                                  @Nullable ExternalSystemNode<?> parent,
                                                  @NotNull DataNode<?> dataNode) {
     final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
-    final Map<Key<?>, List<DataNode<?>>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
+    final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
       List<Key<?>> keys = contributor.getKeys();
 
       final MultiMap<Key<?>, DataNode<?>> dataNodes = MultiMap.create();
       for (Key<?> key : keys) {
-        final List<DataNode<?>> values = groups.get(key);
-        if(key != null && values != null) {
+        final Collection<DataNode<?>> values = groups.get(key);
+        if(key != null) {
           dataNodes.put(key, values);
         }
       }
@@ -464,8 +472,24 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     myState = state;
   }
 
+  public boolean getShowIgnored() {
+    return myState.showIgnored;
+  }
+
+  public void setShowIgnored(boolean value) {
+    if (myState.showIgnored != value) {
+      myState.showIgnored = value;
+      scheduleStructureUpdate();
+    }
+  }
+
   public boolean getGroupTasks() {
     return myState.groupTasks;
+  }
+
+  @Override
+  public boolean useTasksNode() {
+    return true;
   }
 
   public void setGroupTasks(boolean value) {
@@ -635,5 +659,12 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (navigatable != null) navigatables.add(navigatable);
     }
     return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+  }
+
+  @Override
+  public void dispose() {
+    this.listeners.clear();
+    this.myStructure = null;
+    this.myTree = null;
   }
 }

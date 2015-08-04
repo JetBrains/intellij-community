@@ -28,9 +28,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -142,6 +146,69 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(element);
     assertTrue(element instanceof PsiClass);
     assertTrue(element.isValid());
+  }
+
+  public void testRetrieveOnUncommittedDocument() {
+    PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
+    assertNotNull(aClass);
+
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
+    document.insertString(0, "/******/");
+
+    SmartPointerEx pointer = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(aClass.getNameIdentifier());
+
+    //noinspection UnusedAssignment
+    aClass = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getCachedElement());
+
+    assertNotNull(pointer.getElement());
+
+    document.insertString(0, "/**/");
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    PsiElement element = pointer.getElement();
+    assertNotNull(element);
+    assertTrue(element.getParent() instanceof PsiClass);
+    assertTrue(element.isValid());
+  }
+
+  public void testNoAstLoadingWithoutDocumentChanges() {
+    PsiClass aClass = myJavaFacade.findClass("Test",GlobalSearchScope.allScope(getProject()));
+    assertNotNull(aClass);
+    PsiFileImpl file = (PsiFileImpl)aClass.getContainingFile();
+
+    createEditor(file.getVirtualFile());
+    assertFalse(file.isContentsLoaded());
+
+    SmartPointerEx pointer = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(aClass);
+    assertFalse(file.isContentsLoaded());
+
+    //noinspection UnusedAssignment
+    aClass = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getCachedElement());
+
+    assertNotNull(pointer.getElement());
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testTextFileClearingDoesNotCrash() {
+    configureByText(PlainTextFileType.INSTANCE, "foo bar goo\n");
+    SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(myFile.getFirstChild());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertEquals(myFile.getFirstChild(), pointer.getElement());
+
+    Document document = myFile.getViewProvider().getDocument();
+    document.deleteString(0, document.getTextLength());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertEquals(myFile.getFirstChild(), pointer.getElement());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getElement());
   }
 
   public void testChangeInPsi() {
@@ -588,23 +655,69 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
   
   public void testEqualPointersWhenCreatedFromStubAndAST() {
-    final PsiFile file = configureByText(JavaFileType.INSTANCE,
-                                         "class S {\n" +
-                                         "}");
-
+    PsiJavaFile file = (PsiJavaFile)myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject())).getContainingFile();
 
     final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
-    int hash1 = ((PsiJavaFile)file).getClasses()[0].hashCode();
-    final SmartPsiElementPointer<PsiClass> pointer1 = manager.createSmartPsiElementPointer(((PsiJavaFile)file).getClasses()[0]);
+    int hash1 = file.getClasses()[0].hashCode();
+    final SmartPsiElementPointer<PsiClass> pointer1 = manager.createSmartPsiElementPointer(file.getClasses()[0]);
     assertNotNull(((PsiFileImpl)file).getStubTree());
     
     PlatformTestUtil.tryGcSoftlyReachableObjects();
 
     final FileASTNode node = file.getNode();
-    final SmartPsiElementPointer<PsiClass> pointer2 = manager.createSmartPsiElementPointer(((PsiJavaFile)file).getClasses()[0]);
-    assertFalse(hash1 == ((PsiJavaFile)file).getClasses()[0].hashCode());
+    final SmartPsiElementPointer<PsiClass> pointer2 = manager.createSmartPsiElementPointer(file.getClasses()[0]);
+    assertFalse(hash1 == file.getClasses()[0].hashCode());
     assertEquals(pointer1, pointer2);
     assertEquals(pointer1.getRange(), pointer2.getRange());
     assertNotNull(node);
+  }
+
+  public void testSmartPointersForOpenFilesAreFastened() {
+    PsiJavaFile file = (PsiJavaFile)myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject())).getContainingFile();
+
+    SmartPointerManagerImpl manager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
+    VirtualFile virtualFile = file.getVirtualFile();
+
+    assertFalse(manager.areBeltsFastened(virtualFile));
+    FileEditor[] editors = FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
+    assertTrue(editors.length != 0);
+
+    assertTrue(manager.areBeltsFastened(virtualFile));
+
+    FileEditorManager.getInstance(myProject).closeFile(virtualFile);
+    assertFalse(manager.areBeltsFastened(virtualFile));
+
+    SmartPsiElementPointer<PsiClass> pointer = manager.createSmartPsiElementPointer(file.getClasses()[0]);
+
+    assertFalse(manager.areBeltsFastened(virtualFile));
+    editors = FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
+    assertTrue(editors.length != 0);
+
+    assertTrue(manager.areBeltsFastened(virtualFile));
+
+    FileEditorManager.getInstance(myProject).closeFile(virtualFile);
+    assertFalse(manager.areBeltsFastened(virtualFile));
+
+    assertEquals(file.getClasses()[0], pointer.getElement()); // retain pointer from gc
+  }
+
+  public void testLargeFileWithManyChanges() {
+    configureByText(PlainTextFileType.INSTANCE, StringUtil.repeat("foo foo \n", 50000));
+    final TextRange range = TextRange.from(10, 10);
+    final SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, range);
+
+    final Document document = myFile.getViewProvider().getDocument();
+    assertNotNull(document);
+    
+    for (int i = 0; i < 10000; i++) {
+      document.insertString(i * 20 + 100, "x\n");
+      assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+      if (i % 500 == 0) {
+        assertEquals(range, pointer.getRange());
+      }
+    }
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(range, pointer.getRange());
   }
 }

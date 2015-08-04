@@ -16,10 +16,12 @@
 package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
 import com.intellij.util.ui.JBUI;
@@ -58,6 +60,11 @@ public class Main {
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
     if (args.length == 1 && "%f".equals(args[0])) {
+      args = NO_ARGS;
+    }
+
+    if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
+      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
       args = NO_ARGS;
     }
 
@@ -136,7 +143,53 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
-  private static void installPatch() throws IOException {
+  private static boolean checkBundledJava(File java) throws Exception {
+    String[] command = new String[]{java.getPath(), "-version"};
+    try {
+      Process process = Runtime.getRuntime().exec(command);
+      String line = (new BufferedReader(new InputStreamReader(process.getErrorStream()))).readLine();
+      if (line != null && (line.toLowerCase().startsWith("java version") || (line.toLowerCase().startsWith("openjdk version")))){
+        int pos = line.indexOf('.');
+        if (pos > 0){
+          int majorVersion = Integer.parseInt(line.substring(pos-1, pos));
+          int minorVersion = Integer.parseInt(line.substring(pos+1, pos+2));
+          if (majorVersion > 1 || minorVersion > 5) {
+            return true;
+          }
+        }
+      }
+    } catch (Exception e) {
+      System.out.println("updater: the java: " + command[0] + " is invalid.");
+    }
+    return false;
+  }
+
+  private static String getBundledJava(String javaHome) throws Exception {
+    String javaHomeCopy = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/jre";
+    File javaCopy = SystemInfoRt.isWindows ? new File(javaHomeCopy + "/bin/java.exe") : new File(javaHomeCopy + "/bin/java");
+    if (javaCopy != null && javaCopy.isFile() && checkBundledJava(javaCopy)) {
+      javaHome = javaHomeCopy;
+    }
+    if (javaHome != javaHomeCopy) {
+      File javaHomeCopyDir = new File(javaHomeCopy);
+      if (javaHomeCopyDir.exists()) FileUtil.delete(javaHomeCopyDir);
+      System.out.println("Updater: java: " + javaHome + " copied to " + javaHomeCopy);
+      FileUtil.copyDir(new File(javaHome), javaHomeCopyDir);
+      javaHome = javaHomeCopy;
+    }
+    return javaHome;
+  }
+
+  private static String getJava() throws Exception {
+    String javaHome = System.getProperty("java.home");
+    if (javaHome.toLowerCase().startsWith(PathManager.getHomePath().toLowerCase())) {
+      System.out.println("Updater: uses bundled java.");
+      javaHome = getBundledJava(javaHome);
+    }
+    return javaHome + "/bin/java";
+  }
+
+  private static void installPatch() throws Exception {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
@@ -174,11 +227,13 @@ public class Main {
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
+        Restarter.createTempExecutable(new File(PathManager.getBinPath(), "restarter.exe"));
       }
 
       //noinspection SpellCheckingInspection
+      String java = getJava();
       Collections.addAll(args,
-                         System.getProperty("java.home") + "/bin/java",
+                         java,
                          "-Xmx750m",
                          "-Djna.nosys=true",
                          "-Djna.boot.library.path=",

@@ -55,18 +55,18 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
 
   @Override
   public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column) {
-    return tune(value, isSelected, row, table);
+    return tune(value, isSelected, row, table, false);
   }
 
   @Override
   public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row, final int column) {
-    return tune(value, isSelected, row, table);
+    return tune(value, isSelected, row, table, hasFocus);
   }
 
-  private JCheckBox tune(final Object value, final boolean isSelected, final int row, final JTable table) {
+  private JCheckBox tune(final Object value, final boolean isSelected, final int row, final JTable table, boolean hasFocus) {
     final Color bg = UIUtil.isUnderNimbusLookAndFeel() && row % 2 == 1 ? UIUtil.TRANSPARENT_COLOR : table.getBackground();
     final Color fg = table.getForeground();
-    final Color selBg = table.getSelectionBackground();
+    final Color selBg = (hasFocus || table.hasFocus()) ? table.getSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
     final Color selFg = table.getSelectionForeground();
 
     setForeground(isSelected ? selFg : fg);

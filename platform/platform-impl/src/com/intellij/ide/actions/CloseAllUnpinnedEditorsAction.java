@@ -53,22 +53,22 @@ public class CloseAllUnpinnedEditorsAction extends CloseEditorsActionBase {
     final ArrayList<Pair<EditorComposite,EditorWindow>> filesToClose = getFilesToClose(event);
     if (filesToClose.isEmpty()) return false;
     Set<EditorWindow> checked = new HashSet<EditorWindow>();
+    boolean hasPinned = false;
+    boolean hasUnpinned = false;
     for (Pair<EditorComposite, EditorWindow> pair : filesToClose) {
       final EditorWindow window = pair.second;
-      if (!checked.contains(window)) {
-        checked.add(window);
-        if (hasPinned(window)) {
+      if (checked.add(window)) {
+        for (EditorWithProviderComposite e : window.getEditors()) {
+          if (e.isPinned()) {
+            hasPinned = true;
+          }
+          else {
+            hasUnpinned = true;
+          }
+        }
+        if (/*hasPinned && */hasUnpinned) {
           return true;
         }
-      }
-    }
-    return false;
-  }
-
-  private static boolean hasPinned(final EditorWindow window) {
-    for (EditorWithProviderComposite e : window.getEditors()) {
-      if (e.isPinned()) {
-        return true;
       }
     }
     return false;

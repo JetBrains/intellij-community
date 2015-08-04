@@ -16,6 +16,7 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatus;
@@ -35,7 +36,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class UsageScopeGroupingRule implements UsageGroupingRule {
+public class UsageScopeGroupingRule implements UsageGroupingRule, DumbAware {
   @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (!(usage instanceof PsiElementUsage)) {

@@ -3,12 +3,12 @@ PsiJavaFile:TypeParams1.java
     PsiJavaToken:LT('<')
     PsiTypeParameter:T
       PsiIdentifier:T('T')
-      PsiElement(EXTENDS_BOUND_LIST)
+      PsiReferenceList
         <empty list>
     PsiJavaToken:COMMA(',')
     PsiWhiteSpace(' ')
     PsiTypeParameter:U
       PsiIdentifier:U('U')
-      PsiElement(EXTENDS_BOUND_LIST)
+      PsiReferenceList
         <empty list>
     PsiJavaToken:GT('>')

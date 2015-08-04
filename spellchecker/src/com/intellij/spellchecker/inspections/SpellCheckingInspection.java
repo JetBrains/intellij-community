@@ -257,7 +257,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
     @Override
     public void consume(TextRange textRange) {
-      final String word = textRange.substring(myText);
+      String word = textRange.substring(myText);
       if (myHolder.isOnTheFly() && myAlreadyChecked.contains(word)) {
         return;
       }
@@ -268,6 +268,13 @@ public class SpellCheckingInspection extends LocalInspectionTool {
       }
 
       boolean hasProblems = myManager.hasProblem(word);
+      if (hasProblems) {
+        int aposIndex = word.indexOf('\'');
+        if (aposIndex != -1) {
+          word = word.substring(0, aposIndex); // IdentifierSplitter.WORD leaves &apos;
+        }
+        hasProblems = myManager.hasProblem(word);
+      }
       if (hasProblems) {
         if (myHolder.isOnTheFly()) {
           addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);

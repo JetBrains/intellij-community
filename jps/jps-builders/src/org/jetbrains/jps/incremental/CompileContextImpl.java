@@ -18,9 +18,11 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
@@ -42,7 +44,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final MessageHandler myDelegateMessageHandler;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
 
-  private volatile long myCompilationStartStamp;
+  private final TObjectLongHashMap<BuildTarget<?>> myCompilationStartStamp = new TObjectLongHashMap<BuildTarget<?>>();
   private final ProjectDescriptor myProjectDescriptor;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
@@ -57,19 +59,23 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myProjectDescriptor = pd;
     myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
-    myCompilationStartStamp = System.currentTimeMillis();
     myScope = scope;
     myDelegateMessageHandler = delegateMessageHandler;
   }
-
+                    // todo: add timestamp-setting code
   @Override
-  public long getCompilationStartStamp() {
-    return myCompilationStartStamp;
+  public long getCompilationStartStamp(BuildTarget<?> target) {
+    synchronized (myCompilationStartStamp) {
+      return myCompilationStartStamp.get(target);
+    }
   }
 
-  @Override
-  public void updateCompilationStartStamp() {
-    myCompilationStartStamp = System.currentTimeMillis();
+  public void setCompilationStartStamp(Collection<BuildTarget<?>> targets, long stamp) {
+    synchronized (myCompilationStartStamp) {
+      for (BuildTarget<?> target : targets) {
+        myCompilationStartStamp.put(target, stamp);
+      }
+    }
   }
 
   @Override

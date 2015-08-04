@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,13 +70,13 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new BaseUsageViewDescriptor(myLocal);
   }
 
 
   @Override
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final UsageInfo[] usages = refUsages.get();
     for (UsageInfo usage : usages) {
@@ -87,7 +87,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
+  protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof ClosureUsage) return true;
     }
@@ -192,7 +192,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
     final GrExpression initializer = mySettings.getInitializer();

@@ -188,7 +188,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), myConfig.getMappingSettings());
     }
     else {
-      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, myConfig.getProject());
+      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
       processHandler = doCreateProcess(commandLine);
       ProcessTerminatedListener.attach(processHandler);
     }

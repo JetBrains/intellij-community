@@ -397,7 +397,7 @@ public class GithubShareAction extends DumbAwareAction {
       handler.endOptions();
       handler.run();
 
-      VcsFileUtil.refreshFiles(project, modified);
+      VcsFileUtil.markFilesDirty(project, modified);
     }
     catch (VcsException e) {
       LOG.warn(e);

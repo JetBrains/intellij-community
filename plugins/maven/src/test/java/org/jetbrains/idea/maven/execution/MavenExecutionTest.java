@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import javax.swing.*;
@@ -53,7 +54,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     new WriteAction<Object>() {
       @Override
-      protected void run(Result<Object> objectResult) throws Throwable {
+      protected void run(@NotNull Result<Object> objectResult) throws Throwable {
         createProjectPom("<groupId>test</groupId>" +
                          "<artifactId>project</artifactId>" +
                          "<version>1</version>");
@@ -72,7 +73,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     new WriteAction<Object>() {
       @Override
-      protected void run(Result<Object> objectResult) throws Throwable {
+      protected void run(@NotNull Result<Object> objectResult) throws Throwable {
         createStdProjectFolders();
 
         importProject("<groupId>test</groupId>" +

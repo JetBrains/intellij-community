@@ -266,6 +266,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    */
   @Deprecated
   public int RIGHT_MARGIN = 120;
+  /**
+   * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
+   * overwrite this one. Call {@link #isWrapOnTyping(Language)} method instead.</b>
+   *
+   * @see #WRAP_ON_TYPING
+   */
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
 
@@ -957,4 +963,23 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public void setDefaultRightMargin(int rightMargin) {
     RIGHT_MARGIN = rightMargin;
   }
+
+  /**
+   * Defines whether or not wrapping should occur when typing reaches right margin.
+   * @param language  The language to check the option for or null for a global option.
+   * @return True if wrapping on right margin is enabled.
+   */
+  public boolean isWrapOnTyping(@Nullable Language language) {
+    if (language != null) {
+      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      if (langSettings != null) {
+        if (langSettings.WRAP_ON_TYPING != WrapOnTyping.DEFAULT.intValue) {
+          return langSettings.WRAP_ON_TYPING == WrapOnTyping.WRAP.intValue;
+        }
+      }
+    }
+    //noinspection deprecation
+    return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
+  }
+
 }

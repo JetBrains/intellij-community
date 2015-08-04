@@ -106,6 +106,7 @@ public class DiffIterableUtil {
 
   @NotNull
   public static FairDiffIterable fair(@NotNull DiffIterable iterable) {
+    if (iterable instanceof FairDiffIterable) return (FairDiffIterable)iterable;
     FairDiffIterable wrapper = new FairDiffIterableWrapper(iterable);
     verifyFair(wrapper);
     return wrapper;

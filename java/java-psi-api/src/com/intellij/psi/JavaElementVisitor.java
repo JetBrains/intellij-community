@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
 
-@SuppressWarnings({"JavaDoc"})
 public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
@@ -208,6 +207,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitVariable(parameter);
   }
 
+  public void visitReceiverParameter(PsiReceiverParameter parameter) {
+    visitVariable(parameter);
+  }
+
   public void visitParameterList(PsiParameterList list) {
     visitElement(list);
   }
@@ -240,6 +243,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
    * PsiRecursiveElement visitor works that around and implements this method accordingly.
    * All other visitor must decide themselves what implementation (visitReferenceElement() or visitExpression() or none or LOG.error())
    * is appropriate for them.
+   *
    * @param expression
    */
   public void visitReferenceExpression(PsiReferenceExpression expression) {}
@@ -304,8 +308,12 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(resourceList);
   }
 
-  public void visitResourceVariable(PsiResourceVariable resourceVariable) {
-    visitLocalVariable(resourceVariable);
+  public void visitResourceVariable(PsiResourceVariable variable) {
+    visitLocalVariable(variable);
+  }
+
+  public void visitResourceExpression(PsiResourceExpression expression) {
+    visitElement(expression);
   }
 
   public void visitTypeElement(PsiTypeElement type) {

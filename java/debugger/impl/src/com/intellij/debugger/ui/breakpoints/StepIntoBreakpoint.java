@@ -22,12 +22,14 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.LambdaMethodFilter;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import java.util.*;
 
@@ -35,7 +37,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Sep 13, 2006
  */
-public class StepIntoBreakpoint extends RunToCursorBreakpoint {
+public class StepIntoBreakpoint<P extends JavaBreakpointProperties> extends RunToCursorBreakpoint<P> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint");
   @NotNull
   private final BreakpointStepMethodFilter myFilter;
@@ -79,11 +81,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             final LambdaMethodFilter lambdaFilter = (LambdaMethodFilter)myFilter;
             if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
               final Method[] candidates = methods.toArray(new Method[methodsFound]);
-              Arrays.sort(candidates, new Comparator<Method>() {
-                public int compare(Method m1, Method m2) {
-                  return LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
-                }
-              });
+              Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
               location = candidates[lambdaFilter.getLambdaOrdinal()].location();
             }
           }

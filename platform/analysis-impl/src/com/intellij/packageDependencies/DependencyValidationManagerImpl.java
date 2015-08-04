@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.*;
   name = "DependencyValidationManager",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/scopes/", scheme = StorageScheme.DIRECTORY_BASED,
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/scopes", scheme = StorageScheme.DIRECTORY_BASED,
       stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)}
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {

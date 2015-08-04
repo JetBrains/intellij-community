@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -38,6 +39,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -50,6 +53,9 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ThreadDeathRequest;
 import com.sun.jdi.request.ThreadStartRequest;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author lex
@@ -185,17 +191,44 @@ public class DebugProcessEvents extends DebugProcessImpl {
             getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
               @Override
               protected void action() throws Exception {
-                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL && !DebuggerSession.enableBreakpointsDuringEvaluation()) {
+                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-                      eventSet.resume();
-                      return;
+                      if (Registry.is("debugger.step.resumes.one.thread") && getStepEvent(eventSet) != null) {
+                        // if step event is present - switch context
+                        getSuspendManager().resume(context);
+                        //((SuspendManagerImpl)getSuspendManager()).popContext(context);
+                        continue;
+                      }
+                      if (!DebuggerSession.enableBreakpointsDuringEvaluation()) {
+                        eventSet.resume();
+                        return;
+                      }
                     }
                   }
                 }
 
-                final SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(eventSet);
+                SuspendContextImpl suspendContext = null;
+
+                StepEvent stepEvent = getStepEvent(eventSet);
+                if (Registry.is("debugger.step.resumes.one.thread") && stepEvent != null) {
+                  for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
+                    ThreadReferenceProxyImpl threadProxy = getVirtualMachineProxy().getThreadReferenceProxy(stepEvent.thread());
+                    if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
+                        context.isExplicitlyResumed(threadProxy)) {
+                      context.myResumedThreads.remove(threadProxy);
+                      suspendContext = context;
+                      suspendContext.myVotesToVote = eventSet.size();
+                      break;
+                    }
+                  }
+                }
+
+                if (suspendContext == null) {
+                  suspendContext = getSuspendManager().pushSuspendContext(eventSet);
+                }
+
                 for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
                   final Event event = eventIterator.nextEvent();
                   //if (LOG.isDebugEnabled()) {
@@ -407,6 +440,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
           final String message = "Method <b>" + ((NamedMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
           XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
+        if (hint.wasStepTargetMethodMatched() && hint.isResetIgnoreFilters()) {
+          List<ClassFilter> activeFilters = getActiveFilters();
+          String currentClassName = getCurrentClassName(suspendContext.getThread());
+          if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
+            mySession.resetIgnoreStepFiltersFlag();
+          }
+        }
       }
     }
   }
@@ -495,6 +535,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       }
     });
+  }
+
+  @Nullable
+  private static StepEvent getStepEvent(EventSet eventSet) {
+    for (Event event : eventSet) {
+      if (event instanceof StepEvent) {
+        return (StepEvent)event;
+      }
+    }
+    return null;
   }
 
   private void processDefaultEvent(SuspendContextImpl suspendContext) {

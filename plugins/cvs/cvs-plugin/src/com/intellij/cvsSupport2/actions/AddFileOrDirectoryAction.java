@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,11 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui.AbstractAddOptionsDialog
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -100,14 +103,20 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       LOG.error(filesToAdd);
     }
 
-    if (showDialog) {
-      final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
-      if (!dialog.showAndGet()) {
-        return CvsHandler.NULL;
-      }
+    if (!showDialog) {
+      return CommandCvsHandler.createAddFilesHandler(project, roots);
     }
+    final Ref<CvsHandler> handler = new Ref<CvsHandler>();
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
+        handler.set(!dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots));
+      }
+    };
+    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.any());
 
-    return CommandCvsHandler.createAddFilesHandler(project, roots);
+    return handler.get();
   }
 
   @Override

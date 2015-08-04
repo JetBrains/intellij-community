@@ -380,6 +380,7 @@ public class ExtractMethodSignatureSuggester {
       myDuplicatesNumber = duplicatesNumber;
       setTitle("Extract Parameters to Replace Duplicates");
       setOKButtonText("Accept Signature Change");
+      setCancelButtonText("Keep Original Signature");
       init();
     }
 

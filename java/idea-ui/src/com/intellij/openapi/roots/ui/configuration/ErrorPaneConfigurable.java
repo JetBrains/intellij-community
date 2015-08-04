@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     add(pane);
-    myAlarm = new Alarm(this);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
     myContent.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
@@ -110,28 +110,31 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        String html = "<html>" +
-                      "<header><style type='text/css'>" +
-                      "body {" +
-                      "  color: #" + ColorUtil.toHex(new JBColor(Gray.x33, UIUtil.getLabelForeground())) + ";" +
-                      "  font-family: '" + UIUtil.getLabelFont().getName() + ",serif';" +
-                      "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
-                      "}" +
-                      "li {" +
-                      "  margin-bottom: 5;" +
-                      "}" +
-                      "ol {" +
-                      "}" +
-                      "a {" +
-                      " text-decoration: none;" +
-                      "}" +
-                      "</style>" +
-                      "</header>" +
-                      "<body>";
+        final String header = "<html>" +
+                            "<header><style type='text/css'>" +
+                            "body {" +
+                            "  color: #" + ColorUtil.toHex(new JBColor(Gray.x33, UIUtil.getLabelForeground())) + ";" +
+                            "  font-family: '" + UIUtil.getLabelFont().getName() + ",serif';" +
+                            "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
+                            "}" +
+                            "li {" +
+                            "  margin-bottom: 5;" +
+                            "}" +
+                            "ol {" +
+                            "}" +
+                            "a {" +
+                            " text-decoration: none;" +
+                            "}" +
+                            "</style>" +
+                            "</header>" +
+                            "<body>";
+        final StringBuilder html = new StringBuilder(header);
         int i = 0;
-        html += "<ol>";
+        html.append("<ol>");
         for (ConfigurationError error : myErrors) {
           i++;
+          if (i > 100) break;
+          html.append("<li>");
           String description = error.getDescription();
           if (description.startsWith("<html>") && description.endsWith("</html>")) {
             description = description.substring(6, description.length() - 7);
@@ -146,10 +149,17 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
           if (error.canBeFixed()) {
             description += " <a href='http://fix/" + i + "'>[Fix]</a>";
           }
-          html+= "<li>" + description + "</li>";
+          html.append(description).append("</li>");
         }
-        html += "</ol></body></html>";
-        myContent.setText(html);
+        html.append("</ol></body></html>");
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (!Disposer.isDisposed(ErrorPaneConfigurable.this)) {
+              myContent.setText(html.toString());
+            }
+          }
+        });
         if (myOnErrorsChanged != null) {
           myOnErrorsChanged.run();
         }

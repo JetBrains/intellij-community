@@ -20,14 +20,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor {
+class ParameterClassCheckVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiParameter parameter;
 
-  private boolean checked = false;
+  private boolean checked;
 
   ParameterClassCheckVisitor(@NotNull PsiParameter parameter) {
-    super();
     this.parameter = parameter;
   }
 

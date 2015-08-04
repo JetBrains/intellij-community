@@ -23,7 +23,7 @@ class Test {
 
   void test() {
     call(() -> { });
-    call<error descr="Ambiguous method call: both 'Test.call(I1)' and 'Test.call(IVarargs)' match">(p1 -> { })</error>;
+    <error descr="Ambiguous method call: both 'Test.call(I1)' and 'Test.call(IVarargs)' match">call</error>(p1 -> { });
     call((p1, p2) -> {});
   }
 }

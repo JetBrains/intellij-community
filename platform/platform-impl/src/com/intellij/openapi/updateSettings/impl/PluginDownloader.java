@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,12 +191,16 @@ public class PluginDownloader {
     return true;
   }
 
-  public static int compareVersionsSkipBroken(IdeaPluginDescriptor descriptor, String newPluginVersion) {
-    int state = StringUtil.compareVersionNumbers(newPluginVersion, descriptor.getVersion());
+  public static int compareVersionsSkipBroken(@NotNull IdeaPluginDescriptor descriptor, String newPluginVersion) {
+    int state = comparePluginVersions(newPluginVersion, descriptor.getVersion());
     if (PluginManagerCore.isBrokenPlugin(descriptor) && state < 0) {
       state = 1;
     }
     return state;
+  }
+
+  public static int comparePluginVersions(String newPluginVersion, String oldPluginVersion) {
+    return VersionComparatorUtil.compare(newPluginVersion, oldPluginVersion);
   }
 
   @Nullable
@@ -345,7 +350,7 @@ public class PluginDownloader {
       uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
       uriBuilder.addParameter("build", buildNumberAsString);
       uriBuilder.addParameter("uuid", uuid);
-      return uriBuilder.toString();
+      return uriBuilder.build().toString();
     }
   }
 

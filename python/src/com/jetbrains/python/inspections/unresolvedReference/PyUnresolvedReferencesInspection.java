@@ -486,10 +486,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                                          ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
             actions.add(new UnresolvedRefCreateFunctionQuickFix(callExpression, expr));
           }
-          PyFunction parentFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-          PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
-          PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
-          if (parentFunction != null && decorator == null && importStatement == null) {
+          final PyFunction parentFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+          final PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
+          final PyAnnotation annotation = PsiTreeUtil.getParentOfType(element, PyAnnotation.class);
+          final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
+          if (parentFunction != null && decorator == null && annotation == null && importStatement == null) {
             actions.add(new UnresolvedReferenceAddParameterQuickFix(refName));
           }
           actions.add(new PyRenameUnresolvedRefQuickFix());
@@ -665,6 +666,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, element);
               if (name != null) {
                 ContainerUtil.addIfNotNull(result, name.append(exprName));
+              }
+            }
+            else if (type instanceof PyImportedModuleType) {
+              final PyImportedModule module = ((PyImportedModuleType)type).getImportedModule();
+              final PsiElement resolved = module.resolve();
+              if (resolved != null) {
+                final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(resolved, element);
+                if (path != null) {
+                  ContainerUtil.addIfNotNull(result, path.append(exprName));
+                }
               }
             }
             else if (type instanceof PyUnionType) {

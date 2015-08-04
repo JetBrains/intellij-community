@@ -34,12 +34,14 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -70,7 +72,13 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
     addModuleNodes(externalProjectsView, dataNodes, result);
     // add tasks
-    result.add(new TasksNode(externalProjectsView, dataNodes.get(ProjectKeys.TASK)));
+    TasksNode tasksNode = new TasksNode(externalProjectsView, dataNodes.get(ProjectKeys.TASK));
+    if(externalProjectsView.useTasksNode()) {
+      result.add(tasksNode);
+    } else {
+      ContainerUtil.addAll(result, tasksNode.getChildren());
+    }
+
     addDependenciesNode(externalProjectsView, dataNodes, result);
 
     return result;

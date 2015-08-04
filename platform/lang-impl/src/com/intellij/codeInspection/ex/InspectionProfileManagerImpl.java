@@ -66,9 +66,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   },
-  additionalExportFile = InspectionProfileManager.FILE_SPEC
+  additionalExportFile = InspectionProfileManager.INSPECTION_DIR
 )
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
+
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -84,7 +85,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<InspectionProfileImpl>() {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(INSPECTION_DIR, new BaseSchemeProcessor<InspectionProfileImpl>() {
       @NotNull
       @Override
       public InspectionProfileImpl readScheme(@NotNull Element element) {
@@ -131,10 +132,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       }
 
       @Override
-      public void onCurrentSchemeChanged(final Scheme oldCurrentScheme) {
+      public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
         Profile current = mySchemesManager.getCurrentScheme();
         if (current != null) {
-          fireProfileChanged((Profile)oldCurrentScheme, current, null);
+          fireProfileChanged((Profile)oldScheme, current, null);
         }
         onProfilesChanged();
       }
@@ -229,7 +230,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public void updateProfile(@NotNull Profile profile) {
-    mySchemesManager.addNewScheme(profile, true);
+    mySchemesManager.addScheme(profile);
     updateProfileImpl(profile);
   }
 
@@ -287,9 +288,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   public void setRootProfile(String rootProfile) {
     Profile current = mySchemesManager.getCurrentScheme();
     if (current != null && !Comparing.strEqual(rootProfile, current.getName())) {
-      fireProfileChanged(current, getProfile(rootProfile), null);
+      Profile scheme = getProfile(rootProfile);
+      fireProfileChanged(current, scheme, null);
+      mySchemesManager.setCurrent(scheme, false);
     }
-    mySchemesManager.setCurrentSchemeName(rootProfile);
   }
 
   @Override
@@ -323,7 +325,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public void addProfile(@NotNull final Profile profile) {
-    mySchemesManager.addNewScheme(profile, true);
+    mySchemesManager.addScheme(profile);
   }
 
   @Override

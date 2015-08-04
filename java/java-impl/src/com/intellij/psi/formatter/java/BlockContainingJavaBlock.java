@@ -161,10 +161,21 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       else if (isSimpleStatement(child) || StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())){
         return getCodeBlockInternalIndent(1);
       }
+      else if (isNodeParentMethod(child) && 
+               (child.getElementType() == JavaElementType.TYPE
+                || child.getElementType() == JavaTokenType.IDENTIFIER
+                || child.getElementType() == JavaElementType.THROWS_LIST
+                || child.getElementType() == JavaElementType.TYPE_PARAMETER_LIST)) {
+        return Indent.getNoneIndent();
+      }
       else {
         return Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
       }
     }
+  }
+
+  private static boolean isNodeParentMethod(@NotNull ASTNode node) {
+    return node.getTreeParent() != null && node.getTreeParent().getElementType() == JavaElementType.METHOD;
   }
 
   private Indent calcIndentBefore(final ASTNode child, final int state) {

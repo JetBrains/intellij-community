@@ -197,17 +197,6 @@ public class JsonPsiImplUtils {
     JsonPsiChangeUtils.removeCommaSeparatedFromList(myNode, myNode.getTreeParent());
   }
 
-  @Nullable
-  public static JsonProperty findProperty(@NotNull JsonObject object, @NotNull String name) {
-    final Collection<JsonProperty> properties = PsiTreeUtil.findChildrenOfType(object, JsonProperty.class);
-    for (JsonProperty property : properties) {
-      if (property.getName().equals(name)) {
-        return property;
-      }
-    }
-    return null;
-  }
-
   @NotNull
   public static String getValue(@NotNull JsonStringLiteral literal) {
     return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(literal.getText()));

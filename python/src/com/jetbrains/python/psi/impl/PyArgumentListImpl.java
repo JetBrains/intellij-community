@@ -157,7 +157,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       }
     }
     else {
-      ASTNode before = PyUtil.getNextNonWhitespace(pars[0]);
+      ASTNode before = PyPsiUtils.getNextNonWhitespaceSibling(pars[0]);
       ASTNode anchorBefore;
       if (before != null && elementPrecedesElementsOfType(before, PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens())) {
         ASTNode comma = createComma();
@@ -265,7 +265,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         break;
       }
       else if (type == PyTokenTypes.COMMA) {
-        ASTNode next = PyUtil.getNextNonWhitespace(node);
+        ASTNode next = PyPsiUtils.getNextNonWhitespaceSibling(node);
         if (next == null) {
           addArgumentLastWithoutComma(argument);
         }

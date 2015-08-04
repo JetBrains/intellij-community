@@ -24,6 +24,11 @@ public class IntroduceVariableQuickFixTest extends LightIntentionActionTestCase 
   public void test() throws Exception { doAllTests(); }
 
   @Override
+  protected boolean shouldBeAvailableAfterExecution() {
+    return true;
+  }
+
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/introduceVariable";
   }

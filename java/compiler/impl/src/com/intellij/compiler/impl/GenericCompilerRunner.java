@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.compiler.impl;
 
 import com.intellij.compiler.impl.generic.GenericCompilerCache;
 import com.intellij.compiler.impl.generic.GenericCompilerPersistentData;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
@@ -111,7 +110,7 @@ public class GenericCompilerRunner {
 
     final Set<String> targetsToRemove = new HashSet<String>(data.getAllTargets());
     new ReadAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         for (T target : instance.getAllTargets()) {
           targetsToRemove.remove(target.getId());
         }
@@ -290,7 +289,7 @@ public class GenericCompilerRunner {
         }
 
         final RunResult runResult = new ReadAction() {
-          protected void run(final Result result) throws Throwable {
+          protected void run(@NotNull final Result result) throws Throwable {
             for (Item item : processedItems) {
               SourceState sourceState = sourceStates.get(item);
               if (sourceState == null) {

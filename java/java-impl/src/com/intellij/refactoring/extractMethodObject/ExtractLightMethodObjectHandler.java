@@ -134,6 +134,9 @@ public class ExtractLightMethodObjectHandler {
     final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
                                                                             firstElementCopy.getTextRange().getStartOffset(),
                                                                             anchor.getTextRange().getStartOffset());
+    if (elementsCopy.length == 0) {
+      return null;
+    }
     if (elementsCopy[elementsCopy.length - 1] instanceof PsiExpressionStatement) {
       final PsiExpression expr = ((PsiExpressionStatement)elementsCopy[elementsCopy.length - 1]).getExpression();
       if (!(expr instanceof PsiAssignmentExpression)) {

@@ -114,7 +114,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
   private final Map<LookupElement, PrefixMatcher> myMatchers =
-    ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.<LookupElement>identityStrategy());
   private final Map<LookupElement, Font> myCustomFonts = ContainerUtil.createConcurrentWeakMap(10, 0.75f, Runtime.getRuntime().availableProcessors(),
     ContainerUtil.<LookupElement>identityStrategy());
   private boolean myStartCompletionWhenNothingMatches;
@@ -134,6 +134,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myEditor = editor;
     myArranger = arranger;
     myPresentableArranger = arranger;
+
+    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
@@ -535,7 +537,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       public void perform(Caret caret) {
         EditorModificationUtil.deleteSelectedText(hostEditor);
         final int caretOffset = hostEditor.getCaretModel().getOffset();
-        int lookupStart = Math.max(caretOffset - prefix, 0);
+        int lookupStart = Math.min(caretOffset, Math.max(caretOffset - prefix, 0));
 
         int len = hostEditor.getDocument().getTextLength();
         LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
@@ -654,8 +656,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       hide();
       return false;
     }
-
-    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
     return true;
   }
@@ -958,6 +958,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
+  @NotNull 
   public Editor getEditor() {
     return myEditor;
   }

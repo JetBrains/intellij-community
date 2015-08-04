@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,22 +38,23 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return false;
   }
 
+  @NotNull
   @Override
   public PsiElement shortenClassReferences(@NotNull PsiElement element,
-                                           @MagicConstant(flags = {DO_NOT_ADD_IMPORTS, UNCOMPLETE_CODE}) int flags)
+                                           @MagicConstant(flags = {DO_NOT_ADD_IMPORTS, INCOMPLETE_CODE}) int flags)
     throws IncorrectOperationException {
-    return null;
+    return element;
   }
 
   @NotNull
   @Override
-  public String getPrefixByVariableKind(VariableKind variableKind) {
+  public String getPrefixByVariableKind(@NotNull VariableKind variableKind) {
     return "";
   }
 
   @NotNull
   @Override
-  public String getSuffixByVariableKind(VariableKind variableKind) {
+  public String getSuffixByVariableKind(@NotNull VariableKind variableKind) {
     return "";
   }
 
@@ -80,6 +81,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return null;
   }
 
+  @NotNull
   @Override
   public SuggestedNameInfo suggestVariableName(@NotNull VariableKind kind,
                                                @Nullable String propertyName,
@@ -89,18 +91,21 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return SuggestedNameInfo.NULL_INFO;
   }
 
+  @NotNull
   @Override
-  public String variableNameToPropertyName(@NonNls String name, VariableKind variableKind) {
-    return null;
+  public String variableNameToPropertyName(@NotNull @NonNls String name, @NotNull VariableKind variableKind) {
+    return name;
   }
 
+  @NotNull
   @Override
-  public String propertyNameToVariableName(@NonNls String propertyName, VariableKind variableKind) {
-    return null;
+  public String propertyNameToVariableName(@NotNull @NonNls String propertyName, @NotNull VariableKind variableKind) {
+    return propertyName;
   }
 
+  @NotNull
   @Override
-  public String suggestUniqueVariableName(@NonNls String baseName, PsiElement place, boolean lookForward) {
+  public String suggestUniqueVariableName(@NotNull @NonNls String baseName, PsiElement place, boolean lookForward) {
     int index = 0;
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
@@ -172,6 +177,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     };
   }
 
+  @NotNull
   @Override
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
     return element;
@@ -182,7 +188,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   }
 
   @Override
-  public Collection<PsiImportStatementBase> findRedundantImports(PsiJavaFile file) {
+  public Collection<PsiImportStatementBase> findRedundantImports(@NotNull PsiJavaFile file) {
     return null;
   }
 }

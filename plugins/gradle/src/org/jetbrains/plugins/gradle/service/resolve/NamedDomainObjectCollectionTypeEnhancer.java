@@ -82,6 +82,10 @@ public class NamedDomainObjectCollectionTypeEnhancer extends GrReferenceTypeEnha
         final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(ref.getProject());
         return psiManager.createTypeByFQClassName(GradleCommonClassNames.GRADLE_API_TASK, ref.getResolveScope());
       }
+      else if (GradleCommonClassNames.GRADLE_API_DISTRIBUTION_CONTAINER.equals(fqName)) {
+        final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(ref.getProject());
+        return psiManager.createTypeByFQClassName(GradleCommonClassNames.GRADLE_API_DISTRIBUTION, ref.getResolveScope());
+      }
     }
 
     return null;

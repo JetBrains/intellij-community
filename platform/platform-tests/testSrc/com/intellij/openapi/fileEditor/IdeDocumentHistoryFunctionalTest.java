@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,19 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.testFramework.EditorTestUtil;
 
 public class IdeDocumentHistoryFunctionalTest extends HeavyFileEditorManagerTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(getProject())).projectOpened();
+    EditorHistoryManager.getInstance(getProject()).projectOpened();
+  }
+
   public void testNavigateBetweenEditLocations() {
     myFixture.configureByText(getTestName(false) + ".txt",
                               "<caret>line1\n" +

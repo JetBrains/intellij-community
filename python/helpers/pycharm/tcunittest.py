@@ -111,7 +111,7 @@ class TeamcityTestResult(TestResult):
 
     self.messages.testStarted(self.getTestName(test), location=location)
     self.messages.testError(self.getTestName(test),
-                            message='Error', details=err)
+                            message='Error', details=err, duration=self.__getDuration(test))
 
   def find_error_value(self, err):
     error_value = traceback.extract_tb(err)
@@ -142,15 +142,16 @@ class TeamcityTestResult(TestResult):
     err = self._exc_info_to_string(err, test)
 
     self.messages.testStarted(self.getTestName(test), location=location)
+    duration = self.__getDuration(test)
     self.messages.testFailed(self.getTestName(test),
-                             message='Failure', details=err, expected=first, actual=second)
+                             message='Failure', details=err, expected=first, actual=second, duration=duration)
 
   def addSkip(self, test, reason):
     self.init_suite(test)
     self.current_failed = True
     self.messages.testIgnored(self.getTestName(test), message=reason)
 
-  def __getSuite(self, test):
+  def _getSuite(self, test):
     if hasattr(test, "suite"):
       suite = strclass(test.suite)
       suite_location = test.suite.location
@@ -183,7 +184,7 @@ class TeamcityTestResult(TestResult):
     setattr(test, "startTime", datetime.datetime.now())
 
   def init_suite(self, test):
-    suite, location, suite_location = self.__getSuite(test)
+    suite, location, suite_location = self._getSuite(test)
     if suite != self.current_suite:
       if self.current_suite:
         self.messages.testSuiteFinished(self.current_suite)
@@ -192,9 +193,7 @@ class TeamcityTestResult(TestResult):
     return location
 
   def stopTest(self, test):
-    start = getattr(test, "startTime", datetime.datetime.now())
-    d = datetime.datetime.now() - start
-    duration = d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
+    duration = self.__getDuration(test)
     if not self.subtest_suite:
       if not self.current_failed:
         location = self.init_suite(test)
@@ -204,6 +203,11 @@ class TeamcityTestResult(TestResult):
       self.messages.testSuiteFinished(self.subtest_suite)
       self.subtest_suite = None
 
+  def __getDuration(self, test):
+    start = getattr(test, "startTime", datetime.datetime.now())
+    d = datetime.datetime.now() - start
+    duration = d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
+    return duration
 
   def addSubTest(self, test, subtest, err):
     suite_name = self.getTestName(test)  # + " (subTests)"
@@ -220,7 +224,7 @@ class TeamcityTestResult(TestResult):
     if err is not None:
       error = self._exc_info_to_string(err, test)
       self.messages.testStarted(name)
-      self.messages.testFailed(name, message='Failure', details=error)
+      self.messages.testFailed(name, message='Failure', details=error, duration=None)
     else:
       self.messages.testStarted(name)
       self.messages.testFinished(name)

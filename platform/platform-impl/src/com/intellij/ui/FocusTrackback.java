@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -249,7 +249,7 @@ public class FocusTrackback {
   private ActionCallback _restoreFocus() {
     final List<FocusTrackback> stack = getCleanStack();
 
-    if (!stack.contains(this)) return new ActionCallback.Rejected();
+    if (!stack.contains(this)) return ActionCallback.REJECTED;
 
     Component toFocus = queryToFocus(stack, this, true);
 
@@ -268,11 +268,11 @@ public class FocusTrackback {
       if (myParentWindow != null) {
         final Window to = UIUtil.getWindow(toFocus);
         if (to != null && UIUtil.findUltimateParent(to) == UIUtil.findUltimateParent(myParentWindow)) {  // IDEADEV-34537
-          toFocus.requestFocus();
+          requestFocus(toFocus);
           result.setDone();
         }
       } else {
-        toFocus.requestFocus();
+        requestFocus(toFocus);
         result.setDone();
       }
     }
@@ -285,6 +285,14 @@ public class FocusTrackback {
     dispose();
 
     return result;
+  }
+
+  private void requestFocus(Component toFocus) {
+    if (myForcedRestore) {
+      toFocus.requestFocus();
+    } else {
+      toFocus.requestFocusInWindow();
+    }
   }
 
   private static Component queryToFocus(final List<FocusTrackback> stack, final FocusTrackback trackback, boolean mustBeLastInStack) {

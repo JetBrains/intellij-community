@@ -82,7 +82,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirty(context, round, file, rd, pd.timestamps.getStorage(), false);
+      pd.fsState.markDirty(context, round, file, rd, pd.timestamps.getStorage());
     }
   }
 
@@ -245,7 +245,7 @@ public class FSOperations {
           // if it is full project rebuild, all storages are already completely cleared;
           // so passing null because there is no need to access the storage to clear non-existing data
           final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
-          context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
+          context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker);
         }
         if (currentFiles != null) {
           currentFiles.add(file);

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="surround">
+
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.braces"
             name="B" toReformat="true" toShortenFQNames="true" value="{$SELECTION$}">
     <context>
@@ -15,6 +16,7 @@
       <option name="OTHER" value="true" />
     </context>
   </template>
+
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.parens"
             name="P" toReformat="false" toShortenFQNames="true" value="($SELECTION$)">
     <context>
@@ -30,30 +32,37 @@
       <option name="OTHER" value="true" />
     </context>
   </template>
+
   <template name="C" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.callable"
-            value="java.util.concurrent.Callable&lt;$RET$&gt; callable = new java.util.concurrent.Callable&lt;$RET$&gt;() {&#10;  public $RET$ call() throws Exception {&#10;    $SELECTION$&#10;    $END$ &#10;  }&#10;};" toReformat="true" toShortenFQNames="true">
+            value="java.util.concurrent.Callable&lt;$RET$&gt; callable = new java.util.concurrent.Callable&lt;$RET$&gt;() {&#10;  public $RET$ call() throws Exception {&#10;    $SELECTION$&#10;    $END$ &#10;  }&#10;};"
+            toReformat="true" toShortenFQNames="true">
     <variable name="RET" expression="" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="true" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+
   <template name="RL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.read.lock"
-            value="$LOCK$.readLock().lock();&#10;try { &#10;  $SELECTION$&#10;} finally {&#10;  $LOCK$.readLock().unlock();&#10;}&#10;" toReformat="true" toShortenFQNames="true">
+            value="$LOCK$.readLock().lock();&#10;try { &#10;  $SELECTION$&#10;} finally {&#10;  $LOCK$.readLock().unlock();&#10;}&#10;"
+            toReformat="true" toShortenFQNames="true">
     <variable name="LOCK" expression="variableOfType(&quot;java.util.concurrent.locks.ReadWriteLock&quot;)" defaultValue="" alwaysStopAt="true" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template name="WL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.write.lock" 
-            value="$LOCK$.writeLock().lock();&#10;try { &#10;  $SELECTION$&#10;} finally {&#10;  $LOCK$.writeLock().unlock();&#10;}&#10;" toReformat="true" toShortenFQNames="true">
+
+  <template name="WL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.write.lock"
+            value="$LOCK$.writeLock().lock();&#10;try { &#10;  $SELECTION$&#10;} finally {&#10;  $LOCK$.writeLock().unlock();&#10;}&#10;"
+            toReformat="true" toShortenFQNames="true">
     <variable name="LOCK" expression="variableOfType(&quot;java.util.concurrent.locks.ReadWriteLock&quot;)" defaultValue="" alwaysStopAt="true" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+
   <template name="I" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
     <variable name="ELEMENT_TYPE" expression="iterableComponentType(SELECTION)" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="false" />
@@ -63,4 +72,15 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+
+  <template name="TR" value="try ($ELEMENT_TYPE$ $VAR$ = $SELECTION$) {&#10;  $END$&#10;}&#10;"
+            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.ARM" toReformat="true" toShortenFQNames="true">
+    <variable name="ELEMENT_TYPE" expression="expressionType(SELECTION)" defaultValue="java.lang.AutoCloseable" alwaysStopAt="false" />
+    <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
+
 </templateSet>

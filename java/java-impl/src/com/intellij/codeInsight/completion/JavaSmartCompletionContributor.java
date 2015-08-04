@@ -215,12 +215,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider() {
       @Override
       protected void addCompletions(final CompletionParameters params, final CompletionResultSet result, final Collection<ExpectedTypeInfo> _infos) {
-        Consumer<LookupElement> noTypeCheck = new Consumer<LookupElement>() {
-          @Override
-          public void consume(final LookupElement lookupElement) {
-            result.addElement(decorate(lookupElement, _infos));
-          }
-        };
+        Consumer<LookupElement> noTypeCheck = decorateWithoutTypeCheck(result, _infos);
 
         THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
         List<Runnable> chainedEtc = new ArrayList<Runnable>();
@@ -230,6 +225,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           ContainerUtil.addIfNotNull(chainedEtc, slowContinuation);
         }
         addExpectedTypeMembers(params, mergedInfos, true, noTypeCheck);
+
+        PsiElement parent = params.getPosition().getParent();
+        if (parent instanceof PsiReferenceExpression) {
+          CollectConversion.addCollectConversion((PsiReferenceExpression)parent, mergedInfos, noTypeCheck);
+        }
 
         for (final ExpectedTypeInfo info : mergedInfos) {
           BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), new Consumer<LookupElement>() {
@@ -361,6 +361,16 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.SMART, LAMBDA, new FunctionalExpressionCompletionProvider());
     extend(CompletionType.SMART, METHOD_REFERENCE, new MethodReferenceCompletionProvider());
+  }
+
+  @NotNull
+  static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
+    return new Consumer<LookupElement>() {
+      @Override
+      public void consume(final LookupElement lookupElement) {
+        result.addElement(decorate(lookupElement, infos));
+      }
+    };
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,

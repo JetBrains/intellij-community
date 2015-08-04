@@ -19,7 +19,6 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,7 +66,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     StorageData result = createStorageData();
     Element element;
     // we don't use local data if has stream provider
-    if (myStreamProvider != null && myStreamProvider.isEnabled()) {
+    if (myStreamProvider != null && myStreamProvider.getEnabled()) {
       try {
         element = loadDataFromStreamProvider();
         if (element != null) {
@@ -121,13 +118,13 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   protected abstract XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData);
 
   @Nullable
-  protected final Element getElement(@NotNull StorageData data, boolean collapsePaths, @NotNull Map<String, Element> newLiveStates) {
+  protected final Element getElement(@NotNull StorageData data, @NotNull Map<String, Element> newLiveStates) {
     Element element = data.save(newLiveStates);
     if (element == null || JDOMUtil.isEmpty(element)) {
       return null;
     }
 
-    if (collapsePaths && myPathMacroSubstitutor != null) {
+    if (myPathMacroSubstitutor != null) {
       try {
         myPathMacroSubstitutor.collapsePaths(element);
       }
@@ -140,7 +137,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     StorageData oldData = myStorageData;
     StorageData newData = getStorageData(true);
     if (oldData == null) {
@@ -160,8 +157,9 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     }
   }
 
-  protected abstract class XmlElementStorageSaveSession extends SaveSessionBase {
+  public abstract class XmlElementStorageSaveSession extends SaveSessionBase {
     private final StorageData myOriginalStorageData;
+    @Nullable
     private StorageData myCopiedStorageData;
 
     private final Map<String, Element> myNewLiveStates = new THashMap<String, Element>();
@@ -173,7 +171,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     @Nullable
     @Override
     public final SaveSession createSaveSession() {
-      return checkIsSavingDisabled() || myCopiedStorageData == null ? null : this;
+      return checkIsSavingDisabled() || (myCopiedStorageData == null && !myOriginalStorageData.isDirty()) ? null : this;
     }
 
     @Override
@@ -186,34 +184,27 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
       }
     }
 
-    public void forceSave() throws IOException {
-      LOG.assertTrue(myCopiedStorageData == null);
-
-      if (myBlockSavingTheContent) {
-        return;
-      }
-
-      doSave(getElement(myOriginalStorageData, isCollapsePathsOnSave(), Collections.<String, Element>emptyMap()));
-    }
-
     @Override
     public final void save() throws IOException {
       if (myBlockSavingTheContent) {
         return;
       }
 
-      doSave(getElement(myCopiedStorageData, isCollapsePathsOnSave(), myNewLiveStates));
-      myStorageData = myCopiedStorageData;
-    }
+      StorageData storageData = myCopiedStorageData;
+      if (storageData == null) {
+        storageData = myOriginalStorageData;
+        if (!storageData.isDirty()) {
+          LOG.warn("Copied storage data must be not null because original storage data is not dirty");
+        }
+      }
 
-    // only because default project store hack
-    protected boolean isCollapsePathsOnSave() {
-      return true;
+      doSave(getElement(storageData, myNewLiveStates));
+      myStorageData = storageData;
     }
 
     protected abstract void doSave(@Nullable Element element) throws IOException;
 
-    protected void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
+    protected final void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
       if (!myStreamProvider.isApplicable(myFileSpec, myRoamingType)) {
         return;
       }
@@ -228,10 +219,10 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
     private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @Nullable BufferExposingByteArrayOutputStream content) throws IOException {
       if (content == null) {
-        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType, true);
+        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType);
       }
       else {
-        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType, true);
+        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType);
       }
     }
   }

@@ -15,21 +15,23 @@
  */
 package com.intellij.remoteServer.impl.runtime.log;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public interface CloudTerminalProvider {
+public abstract class CloudTerminalProvider {
 
-  ExtensionPointName<CloudTerminalProvider> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.CloudTerminalProvider");
+  public static CloudTerminalProvider getInstance() {
+    return ServiceManager.getService(CloudTerminalProvider.class);
+  }
 
-  TerminalHandlerBase createTerminal(@NotNull String presentableName,
-                                     @NotNull Project project,
-                                     @NotNull InputStream terminalOutput,
-                                     @NotNull OutputStream terminalInput);
+  public abstract TerminalHandlerBase createTerminal(@NotNull String presentableName,
+                                                     @NotNull Project project,
+                                                     @NotNull InputStream terminalOutput,
+                                                     @NotNull OutputStream terminalInput);
 
-  boolean isTtySupported();
+  public abstract boolean isTtySupported();
 }

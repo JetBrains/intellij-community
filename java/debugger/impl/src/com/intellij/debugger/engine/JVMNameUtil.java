@@ -475,10 +475,17 @@ public class JVMNameUtil {
   }
 
   @Nullable
-  public static String getClassVMName(PsiClass containingClass) {
+  public static String getClassVMName(@Nullable PsiClass containingClass) {
+    // no support for local classes for now
+    if (containingClass == null || PsiUtil.isLocalClass(containingClass)) return null;
     if (containingClass instanceof PsiAnonymousClass) {
-      return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) +
-             JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
+      String parentName = getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class));
+      if (parentName == null) {
+        return null;
+      }
+      else {
+        return parentName + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
+      }
     }
     return ClassUtil.getJVMClassName(containingClass);
   }

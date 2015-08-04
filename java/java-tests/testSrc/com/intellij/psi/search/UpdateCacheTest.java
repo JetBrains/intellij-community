@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -52,15 +51,7 @@ import java.io.File;
 import java.util.*;
 
 @PlatformTestCase.WrapInCommand
-public class UpdateCacheTest extends PsiTestCase{
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    FileBasedIndex.getInstance().requestRebuild(IdIndex.NAME);
-    FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
-  }
-
+public class UpdateCacheTest extends PsiTestCase {
   @Override
   protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();

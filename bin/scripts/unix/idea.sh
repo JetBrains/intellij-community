@@ -61,7 +61,7 @@ IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
-elif [ -x "$IDE_HOME/jre/bin/java" ] && "$IDE_HOME/jre/bin/java" -version > /dev/null 2>&1 ; then
+elif [ -x "$IDE_HOME/jre/jre/bin/java" ] && "$IDE_HOME/jre/jre/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre"
 elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
@@ -113,7 +113,7 @@ if [ -z "$JDK" ]; then
 fi
 
 VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
-"$JDK/bin/java" -version 2> "$VERSION_LOG"
+"$JDK/jre/bin/java" -version 2> "$VERSION_LOG"
 "$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
@@ -134,11 +134,6 @@ fi
 
 if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
-fi
-
-MAIN_CLASS_NAME="$@@product_uc@@_MAIN_CLASS_NAME"
-if [ -z "$MAIN_CLASS_NAME" ]; then
-  MAIN_CLASS_NAME="com.intellij.idea.Main"
 fi
 
 VM_OPTIONS=""
@@ -173,7 +168,7 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/bin/java" \
+LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/jre/bin/java" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
@@ -182,8 +177,7 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/bin/java" \
   -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
   $IDE_PROPERTIES_PROPERTY \
   $IDE_JVM_ARGS \
-  $REQUIRED_JVM_ARGS \
-  $MAIN_CLASS_NAME \
+  com.intellij.idea.Main \
   "$@"
 EC=$?
 test $EC -ne 88 && exit $EC

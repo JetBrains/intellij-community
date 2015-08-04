@@ -108,10 +108,10 @@
       <keyboard-shortcut first-keystroke="shift alt RIGHT" />
     </action>
     <action id="EditorMoveToPageBottom">
-      <keyboard-shortcut first-keystroke="shift alt PAGE_DOWN" />
+      <keyboard-shortcut first-keystroke="shift alt END" />
     </action>
     <action id="EditorMoveToPageTop">
-      <keyboard-shortcut first-keystroke="shift alt PAGE_UP" />
+      <keyboard-shortcut first-keystroke="shift alt HOME" />
     </action>
     <action id="EditorScrollToCenter" />
     <action id="EditorSelectWord">
@@ -245,10 +245,10 @@
       <keyboard-shortcut first-keystroke="control M" />
     </action>
     <action id="MoveStatementDown">
-      <keyboard-shortcut first-keystroke="shift alt DOWN" />
+      <keyboard-shortcut first-keystroke="shift alt PAGE_DOWN" />
     </action>
     <action id="MoveStatementUp">
-      <keyboard-shortcut first-keystroke="shift alt UP" />
+      <keyboard-shortcut first-keystroke="shift alt PAGE_UP" />
     </action>
     <action id="NewElement">
       <keyboard-shortcut first-keystroke="alt INSERT" />
@@ -366,8 +366,12 @@
     <action id="ValidateXml">
       <keyboard-shortcut first-keystroke="shift alt F9" />
     </action>
-    <action id="MoveLineDown" />
-    <action id="MoveLineUp" />
+    <action id="MoveLineDown">
+      <keyboard-shortcut first-keystroke="shift alt DOWN" />
+    </action>
+    <action id="MoveLineUp">
+      <keyboard-shortcut first-keystroke="shift alt UP" />
+    </action>
     <action id="Vcs.ShowMessageHistory">
       <keyboard-shortcut first-keystroke="control M"/>
       <keyboard-shortcut first-keystroke="shift F4"/>

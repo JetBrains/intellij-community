@@ -19,7 +19,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangedBlock {
+class ChangedBlock {
   private final int myStartOffset1;
   private final int myEndOffset1;
   private final int myStartOffset2;

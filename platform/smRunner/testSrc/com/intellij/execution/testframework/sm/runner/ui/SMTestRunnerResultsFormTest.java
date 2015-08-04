@@ -57,11 +57,11 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     final ExecutionEnvironment environment = new ExecutionEnvironment();
 
-    myConsole = new SMTRunnerConsoleView(myConsoleProperties, environment);
+    myConsole = new SMTRunnerConsoleView(myConsoleProperties);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myTestsRootNode = myResultsViewer.getTestsRootNode();
-    myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode(), "SMTestFramework");
+    myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myConsoleProperties.getProject(), myResultsViewer.getTestsRootNode(), "SMTestFramework");
     myEventsProcessor.addEventsListener(myResultsViewer);
     myTreeModel = myResultsViewer.getTreeView().getModel();
   }

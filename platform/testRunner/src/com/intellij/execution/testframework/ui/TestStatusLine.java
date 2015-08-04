@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBProgressBar;
@@ -36,18 +37,15 @@ public class TestStatusLine extends JPanel {
 
   protected final JProgressBar myProgressBar = new JBProgressBar();
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
+  private final JPanel myProgressPanel;
 
   public TestStatusLine() {
     super(new BorderLayout());
-    JPanel progressPanel = new JPanel(new GridBagLayout());
-    add(progressPanel, BorderLayout.WEST);
+    myProgressPanel = new JPanel(new GridBagLayout());
+    add(myProgressPanel, BorderLayout.WEST);
     myProgressBar.setMaximum(100);
-    final Dimension size = new JBDimension(450, -1);
-    progressPanel.setMaximumSize(size);
-    progressPanel.setMinimumSize(size);
-    progressPanel.setPreferredSize(size);
-    progressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                            new Insets(2, 8, 0, 8), 0, 0));
+    myProgressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                                                              new Insets(2, 8, 0, 8), 0, 0));
     setStatusColor(ColorProgressBar.GREEN);
     add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
@@ -123,6 +121,13 @@ public class TestStatusLine extends JPanel {
     myProgressBar.setValue(fraction);
   }
 
+  public void setPreferredSize(boolean orientation) {
+    final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
+    myProgressPanel.setMaximumSize(size);
+    myProgressPanel.setMinimumSize(size);
+    myProgressPanel.setPreferredSize(size);
+  }
+  
   public void setText(String progressStatus_text) {
     myState.clear();
     myState.append(progressStatus_text);

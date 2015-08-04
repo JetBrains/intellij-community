@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
+import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +84,7 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(editor.getDocument().getImmutableCharSequence(), lineStartOffset, lineEndOffset);
-    List<BidiRun> runs = createRuns(editor, chars);
+    List<BidiRun> runs = createRuns(editor, chars, lineStartOffset);
     for (BidiRun run : runs) {
       IterationState it = new IterationState(editor, lineStartOffset + run.startOffset, lineStartOffset + run.endOffset, 
                                              false, false, false, false);
@@ -100,7 +104,7 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(text);
-    List<BidiRun> runs = createRuns(editor, chars);
+    List<BidiRun> runs = createRuns(editor, chars, -1);
     for (BidiRun run : runs) {
       addFragments(run, chars, run.startOffset, run.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
       assert !run.fragments.isEmpty();
@@ -108,15 +112,61 @@ class LineLayout {
     return runs;
   }
   
-  private static List<BidiRun> createRuns(EditorImpl editor, char[] text) {
-    if (editor.myDisableRtl) return Collections.singletonList(new BidiRun((byte)0, 0, text.length));
-    Bidi bidi = new Bidi(text, 0, null, 0, text.length, Bidi.DIRECTION_LEFT_TO_RIGHT);
-    int runCount = bidi.getRunCount();
-    List<BidiRun> runs = new ArrayList<BidiRun>(runCount);
-    for (int i = 0; i < runCount; i++) {
-      runs.add(new BidiRun((byte)bidi.getRunLevel(i), bidi.getRunStart(i), bidi.getRunLimit(i)));
+  private static List<BidiRun> createRuns(EditorImpl editor, char[] text, int startOffsetInEditor) {
+    int textLength = text.length;
+    if (editor.myDisableRtl) return Collections.singletonList(new BidiRun((byte)0, 0, textLength));
+    List<BidiRun> runs = new ArrayList<BidiRun>();
+    if (startOffsetInEditor >= 0) {
+      // running bidi algorithm separately for text fragments corresponding to different lexer tokens
+      int lastOffset = startOffsetInEditor;
+      IElementType lastToken = null;
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(startOffsetInEditor);
+      int endOffsetInEditor = startOffsetInEditor + textLength;
+      while (!iterator.atEnd() && iterator.getStart() < endOffsetInEditor) {
+        IElementType currentToken = iterator.getTokenType();
+        if (distinctTokens(lastToken, currentToken)) {
+          int tokenStart = Math.max(iterator.getStart(), startOffsetInEditor);
+          addRuns(runs, text, lastOffset - startOffsetInEditor, tokenStart - startOffsetInEditor);
+          lastToken = currentToken;
+          lastOffset = tokenStart;
+        }
+        iterator.advance();
+      }
+      addRuns(runs, text, lastOffset - startOffsetInEditor, endOffsetInEditor - startOffsetInEditor);
+    }
+    else {
+      addRuns(runs, text, 0, textLength);
     }
     return runs;
+  }
+
+  private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
+    if (token1 == token2) return false;
+    if (token1 == null || token2 == null) return true;
+    if (!token1.getLanguage().is(token2.getLanguage())) return true;
+    BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.INSTANCE.forLanguage(token1.getLanguage());
+    return separator.createBorderBetweenTokens(token1, token2);
+  }
+  
+  private static void addRuns(List<BidiRun> runs, char[] text, int start, int end) {
+    if (start >= end) return;
+    Bidi bidi = new Bidi(text, start, null, 0, end - start, Bidi.DIRECTION_LEFT_TO_RIGHT);
+    int runCount = bidi.getRunCount();
+    for (int i = 0; i < runCount; i++) {
+      addOrMergeRun(runs, new BidiRun((byte)bidi.getRunLevel(i), start + bidi.getRunStart(i), start + bidi.getRunLimit(i)));
+    }
+  }
+
+  private static void addOrMergeRun(List<BidiRun> runs, BidiRun run) {
+    int size = runs.size();
+    if (size > 0 && runs.get(size - 1).level == 0 && run.level == 0) {
+      BidiRun lastRun = runs.remove(size - 1);
+      assert lastRun.endOffset == run.startOffset;
+      runs.add(new BidiRun((byte)0, lastRun.startOffset, run.endOffset));
+    }
+    else {
+      runs.add(run);
+    }
   }
   
   private static void addFragments(BidiRun run, char[] text, int start, int end, int fontStyle,
@@ -170,20 +220,27 @@ class LineLayout {
     return new Iterable<VisualFragment>() {
       @Override
       public Iterator<VisualFragment> iterator() {
-        return new VisualOrderIterator(startX, 0, myBidiRunsInVisualOrder);
+        return new VisualOrderIterator(startX, 0, 0, 0, myBidiRunsInVisualOrder);
       }
     };
   }
 
-  Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX, final int startVisualColumn, int startOffset, int endOffset) {
+  Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX, 
+                                                     final int startVisualColumn, 
+                                                     final int startOffset, 
+                                                     int endOffset) {
     assert startOffset <= endOffset;
     final BidiRun[] runs;
+    int startLogicalColumn = 0;
     if (startOffset == endOffset) {
       runs = new BidiRun[0];
     }
     else {
       List<BidiRun> runList = new ArrayList<BidiRun>();
       for (BidiRun run : myBidiRunsInLogicalOrder) {
+        if (run.startOffset < startOffset) {
+          startLogicalColumn = run.getLogicalColumn(startLogicalColumn, Math.min(startOffset, run.endOffset));
+        }
         if (run.endOffset <= startOffset) continue;
         if (run.startOffset >= endOffset) break;
         runList.add(run.subRun(startOffset, endOffset));
@@ -191,10 +248,11 @@ class LineLayout {
       runs = runList.toArray(new BidiRun[runList.size()]);
       reorderRunsVisually(runs);
     }
+    final int finalStartLogicalColumn = startLogicalColumn;
     return new Iterable<VisualFragment>() {
       @Override
       public Iterator<VisualFragment> iterator() {
-        return new VisualOrderIterator(startX, startVisualColumn, runs);
+        return new VisualOrderIterator(startX, startVisualColumn, finalStartLogicalColumn, startOffset, runs);
       }
     };
   }
@@ -211,46 +269,32 @@ class LineLayout {
     return false;
   }
 
-  boolean isDirectionBoundary(int offset) {
-    boolean prevIsRtl = false;
-    for (BidiRun run : myBidiRunsInLogicalOrder) {
-      boolean curIsRtl = run.isRtl();
-      if (offset == run.startOffset && curIsRtl != prevIsRtl) return true;
-      if (offset < run.endOffset) return false;
-      prevIsRtl = curIsRtl;
-    }
-    return prevIsRtl;
-  }
-
   int findNearestDirectionBoundary(int offset, boolean lookForward) {
     if (lookForward) {
-      boolean foundOrigin = false;
-      boolean originIsRtl = false;
+      byte originLevel = -1;
       for (BidiRun run : myBidiRunsInLogicalOrder) {
-        if (foundOrigin) {
-          if (run.isRtl() != originIsRtl) return run.startOffset;
+        if (originLevel >= 0) {
+          if (run.level != originLevel) return run.startOffset;
         }
         else if (run.endOffset > offset) {
-          foundOrigin = true;
-          originIsRtl = run.isRtl();
+          originLevel = run.level;
         }
       }
-      return originIsRtl ? myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset : -1;
+      return originLevel > 0 ? myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset : -1;
     }
     else {
-      boolean foundOrigin = false;
-      boolean originIsRtl = false;
+      byte originLevel = -1;
       for (int i = myBidiRunsInLogicalOrder.length - 1; i >= 0; i--) {
         BidiRun run = myBidiRunsInLogicalOrder[i];
-        if (foundOrigin) {
-          if (run.isRtl() != originIsRtl) return run.endOffset;
+        if (originLevel >= 0) {
+          if (run.level != originLevel) return run.endOffset;
         }
         else if (run.startOffset < offset) {
-          foundOrigin = true;
-          originIsRtl = run.isRtl();
+          originLevel = run.level;
+
         }
       }
-      return originIsRtl ? 0 : -1;
+      return originLevel > 0 ? 0 : -1;
     }
   }
 
@@ -290,6 +334,19 @@ class LineLayout {
       }
       return run;
     }
+
+    private int getLogicalColumn(int startLogicalColumn, int offset) {
+      assert offset >= startOffset;
+      assert offset <= endOffset;
+      int currentStartOffset = startOffset;
+      for (LineFragment fragment : fragments) {
+        int currentEndOffset = currentStartOffset + fragment.getLength();
+        startLogicalColumn = fragment.offsetToLogicalColumn(startLogicalColumn, Math.min(offset, currentEndOffset) - currentStartOffset);
+        currentStartOffset = currentEndOffset;
+        if (offset <= currentStartOffset) break;
+      }
+      return startLogicalColumn;
+    }
   }
 
   private static class VisualOrderIterator implements Iterator<VisualFragment> {
@@ -299,10 +356,12 @@ class LineLayout {
     private int myOffsetInsideRun = 0;
     private VisualFragment myFragment = new VisualFragment();
 
-    public VisualOrderIterator(float startX, int startVisualColumn, BidiRun[] runsInVisualOrder) {
+    private VisualOrderIterator(float startX, int startVisualColumn, int startLogicalColumn, int startOffset, BidiRun[] runsInVisualOrder) {
       myRuns = runsInVisualOrder;
       myFragment.startX = startX;
       myFragment.startVisualColumn = startVisualColumn;
+      myFragment.startLogicalColumn = startLogicalColumn;
+      myFragment.startOffset = startOffset;
     }
 
     @Override
@@ -317,7 +376,10 @@ class LineLayout {
       }
       BidiRun run = myRuns[myRunIndex];
 
-      if (myRunIndex > 0 || myFragmentIndex > 0) {
+      if (myRunIndex == 0 && myFragmentIndex == 0) {
+        myFragment.startLogicalColumn += (run.isRtl() ? run.endOffset : run.startOffset) - myFragment.startOffset; 
+      }
+      else {
         myFragment.startLogicalColumn = myFragment.getEndLogicalColumn();
         if (myFragmentIndex == 0) {
           myFragment.startLogicalColumn += (run.isRtl() ? run.endOffset : run.startOffset) - myFragment.getEndOffset();
@@ -330,10 +392,6 @@ class LineLayout {
       myFragment.delegate = run.fragments.get(run.isRtl() ? run.fragments.size() - 1 - myFragmentIndex : myFragmentIndex);
       myFragment.startOffset = run.isRtl() ? run.endOffset - myOffsetInsideRun : run.startOffset + myOffsetInsideRun;
       
-      if (myRunIndex == 0 && myFragmentIndex == 0) {
-        myFragment.startLogicalColumn = myFragment.startOffset;
-      }
-
       myOffsetInsideRun += myFragment.getLength();
       myFragmentIndex++;
       if (myFragmentIndex >= run.fragments.size()) {

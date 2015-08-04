@@ -37,7 +37,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -417,10 +416,14 @@ public class AbstractPopup implements JBPopup {
   public static Point getCenterOf(final Component aContainer, final JComponent content) {
     final JComponent component = getTargetComponent(aContainer);
 
-    Point containerScreenPoint = component.getVisibleRect().getLocation();
-    SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
+    Rectangle visibleBounds = component != null
+                              ? component.getVisibleRect()
+                              : new Rectangle(aContainer.getSize());
 
-    return UIUtil.getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), content.getPreferredSize());
+    Point containerScreenPoint = visibleBounds.getLocation();
+    SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
+    visibleBounds.setLocation(containerScreenPoint);
+    return UIUtil.getCenterPoint(visibleBounds, content.getPreferredSize());
   }
 
   @Override
@@ -782,7 +785,7 @@ public class AbstractPopup implements JBPopup {
       myMouseOutCanceller.myEverEntered = targetBounds.equals(original);
     }
 
-    myOwner = IdeFrameImpl.findNearestModalComponent(owner);
+    myOwner = getFrameOrDialog(owner); // use correct popup owner for non-modal dialogs too
     if (myOwner == null) {
       myOwner = owner;
     }
@@ -928,7 +931,7 @@ public class AbstractPopup implements JBPopup {
         public ActionCallback run() {
           if (isDisposed()) {
             removeActivity();
-            return new ActionCallback.Done();
+            return ActionCallback.DONE;
           }
 
           _requestFocus();
@@ -958,14 +961,14 @@ public class AbstractPopup implements JBPopup {
                   @Override
                   public ActionCallback run() {
                     if (isDisposed()) {
-                      return new ActionCallback.Rejected();
+                      return ActionCallback.REJECTED;
                     }
 
                     _requestFocus();
 
                     afterShowRunnable.run();
 
-                    return new ActionCallback.Done();
+                    return ActionCallback.DONE;
                   }
                 }, true).notify(result).doWhenProcessed(new Runnable() {
                   @Override
@@ -1122,15 +1125,14 @@ public class AbstractPopup implements JBPopup {
 
     mySpeedSearchPatternField = new JTextField();
     if (SystemInfo.isMac) {
-      Font f = mySpeedSearchPatternField.getFont();
-      if (f != null) {
-        mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
-      }
+      RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
   }
 
   private Window updateMaskAndAlpha(Window window) {
     if (window == null) return null;
+
+    if (window.isDisplayable() && window.isShowing()) return window;
 
     final WindowManagerEx wndManager = getWndManager();
     if (wndManager == null) return window;
@@ -1181,7 +1183,7 @@ public class AbstractPopup implements JBPopup {
       @Override
       public ActionCallback run() {
         _requestFocus();
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       }
     }, true);
 
@@ -1794,7 +1796,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myWindow != null) {
-      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myWindow.getLocationOnScreen());
+      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myWindow.getLocation());
       int width = Math.min(screenRectangle.width, myMinSize.width);
       int height = Math.min(screenRectangle.height, myMinSize.height);
       myWindow.setMinimumSize(new Dimension(width, height));
@@ -1864,5 +1866,23 @@ public class AbstractPopup implements JBPopup {
 
   private boolean isBusy() {
     return myResizeListener != null && myResizeListener.isBusy() || myMoveListener != null && myMoveListener.isBusy();
+  }
+
+  /**
+   * Returns the first frame (or dialog) ancestor of the component.
+   * Note that this method returns the component itself if it is a frame (or dialog).
+   *
+   * @param component the component used to find corresponding frame (or dialog)
+   * @return the first frame (or dialog) ancestor of the component; or {@code null}
+   *         if the component is not a frame (or dialog) and is not contained inside a frame (or dialog)
+   *
+   * @see UIUtil#getWindow
+   */
+  private static Component getFrameOrDialog(Component component) {
+    while (component != null) {
+      if (component instanceof Frame || component instanceof Dialog) return component;
+      component = component.getParent();
+    }
+    return null;
   }
 }

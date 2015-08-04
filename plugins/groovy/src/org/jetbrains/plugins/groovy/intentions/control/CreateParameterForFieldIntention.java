@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ public class CreateParameterForFieldIntention extends Intention {
     final String finalParameterName = parameterName;
     final GrChangeSignatureProcessor processor = new GrChangeSignatureProcessor(project, grChangeInfo) {
       @Override
-      protected void performRefactoring(UsageInfo[] usages) {
+      protected void performRefactoring(@NotNull UsageInfo[] usages) {
         super.performRefactoring(usages);
 
         final GrOpenBlock block = constructor.getBlock();

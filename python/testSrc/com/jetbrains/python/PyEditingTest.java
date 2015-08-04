@@ -17,7 +17,6 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.CommandProcessor;
@@ -117,8 +116,7 @@ public class PyEditingTest extends PyTestCase {
       @Override
       public void run() {
         CommentByLineCommentAction action = new CommentByLineCommentAction();
-        action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
-                                                 ActionManager.getInstance(), 0));
+        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
       }
     }, "", null);
     myFixture.checkResultByFile("/editing/uncommentWithSpace.after.py", true);

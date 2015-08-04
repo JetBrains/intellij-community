@@ -41,7 +41,7 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
 
   @Override
   protected TestResultsPanel createTestResultsPanel() {
-    myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties, myEnvironment,
+    myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties,
                                       getConsole().createConsoleActions());
     return myConsolePanel;
   }

@@ -83,7 +83,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    String fqn = getFqn(name, myShortName);
+    String fqn = getFqn(name, myShortName, myParent instanceof PsiClassStub ? ((PsiClassStub)myParent).getQualifiedName() : null);
     String shortName = myShortName != null && name.endsWith(myShortName) ? myShortName : PsiNameHelper.getShortClassName(fqn);
 
     int flags = myAccess | access;
@@ -149,7 +149,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  public static String getFqn(@NotNull String internalName, @Nullable String shortName) {
+  public static String getFqn(@NotNull String internalName, @Nullable String shortName, @Nullable String parentName) {
     if (shortName == null || !internalName.endsWith(shortName)) {
       return getClassName(internalName);
     }
@@ -157,7 +157,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       return shortName;
     }
     else {
-      return getClassName(internalName.substring(0, internalName.length() - shortName.length() - 1)) + "." + shortName;
+      if (parentName == null) {
+        parentName = getClassName(internalName.substring(0, internalName.length() - shortName.length() - 1));
+      }
+      return parentName + "." + shortName;
     }
   }
 
@@ -339,7 +342,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
     if (!isCorrectName(name)) return null;
 
-    byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
+    byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false, false);
     TypeInfo type = fieldType(desc, signature);
     String initializer = constToString(value, type.text.getString(), false);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
@@ -403,7 +406,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (!isConstructor && !isCorrectName(name)) return null;
 
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false, false);
 
     String canonicalMethodName = isConstructor ? myResult.getName() : name;
     List<String> args = new ArrayList<String>();

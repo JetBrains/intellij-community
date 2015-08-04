@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -32,7 +33,7 @@ import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -96,12 +97,13 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
   };
 
-  public DebuggerExpressionComboBox(Project project, @NonNls String recentsId) {
-    this(project, null, recentsId, DefaultCodeFragmentFactory.getInstance());
+  public DebuggerExpressionComboBox(@NotNull Project project, @NotNull Disposable parentDisposable, @Nullable PsiElement context, @Nullable String recentsId) {
+    this(project, parentDisposable, context, recentsId, DefaultCodeFragmentFactory.getInstance());
   }
 
-  public DebuggerExpressionComboBox(Project project, PsiElement context, @NonNls String recentsId, final CodeFragmentFactory factory) {
-    super(project, context, recentsId, factory);
+  public DebuggerExpressionComboBox(@NotNull Project project, @NotNull Disposable parentDisposable, @Nullable PsiElement context, @Nullable String recentsId, @NotNull CodeFragmentFactory factory) {
+    super(project, factory, parentDisposable, context, recentsId);
+
     setLayout(new BorderLayout(0, 0));
 
     myComboBox = new ComboBox(new MyComboboxModel(getRecents()), 100);

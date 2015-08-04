@@ -1,5 +1,6 @@
 package org.jetbrains.ide;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -9,7 +10,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.ShutDownTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,20 +84,15 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
     return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        int defaultPort = getDefaultPort();
-        int workerCount = 1;
-        // if user set special port number for some service (eg built-in web server), we should slightly increase worker count
-        if (Runtime.getRuntime().availableProcessors() > 1) {
-          for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
-            if (customPortServerManager.getPort() != defaultPort) {
-              workerCount = 2;
-              break;
-            }
-          }
-        }
-
         try {
-          server = BuiltInServer.start(workerCount, defaultPort, PORTS_COUNT, true);
+          BuiltInServer mainServer = StartupUtil.getServer();
+          if (mainServer == null && ApplicationManager.getApplication().isUnitTestMode()) {
+            server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
+          }
+          else {
+            LOG.assertTrue(mainServer != null);
+            server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
+          }
           bindCustomPorts(server);
         }
         catch (Throwable e) {
@@ -111,15 +106,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
         LOG.info("built-in server started, port " + server.getPort());
 
         Disposer.register(ApplicationManager.getApplication(), server);
-        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
-          public void run() {
-            if (!Disposer.isDisposed(server)) {
-              // something went wrong
-              Disposer.dispose(server);
-            }
-          }
-        });
       }
     });
   }

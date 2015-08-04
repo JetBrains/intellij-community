@@ -221,14 +221,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiClass psiClass = (PsiClass)dereferenceInReadAction(sortedID);
         if (psiClass == null) continue;
-        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
-          new Computable<String>() {
-            @Override
-            public String compute() {
-              return psiClass.getQualifiedName();
-            }
-          }
-        ));
+        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, getClassPresentableName(psiClass));
 
         final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
         LOG.assertTrue(processors != null, psiClass.getClass().getName());
@@ -282,14 +275,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final List<UsagesProcessor> processors = myClassUsagesRequests.get(sortedID);
 
         LOG.assertTrue(processors != null, psiClass.getClass().getName());
-        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
-          new Computable<String>() {
-            @Override
-            public String compute() {
-              return psiClass.getQualifiedName();
-            }
-          }
-        ));
+        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, getClassPresentableName(psiClass));
 
         ReferencesSearch.search(psiClass, searchScope, false)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
@@ -314,6 +300,18 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
       myMethodUsagesRequests = null;
     }
+  }
+
+  private String getClassPresentableName(final PsiClass psiClass) {
+    return ApplicationManager.getApplication().runReadAction(
+      new Computable<String>() {
+        @Override
+        public String compute() {
+          final String qualifiedName = psiClass.getQualifiedName();
+          return qualifiedName != null ? qualifiedName : psiClass.getName();
+        }
+      }
+    );
   }
 
   private static PsiElement dereferenceInReadAction(final SmartPsiElementPointer sortedID) {

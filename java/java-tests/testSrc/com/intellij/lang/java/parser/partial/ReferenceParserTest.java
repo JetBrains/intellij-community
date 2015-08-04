@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java.parser.partial;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.ReferenceParser;
@@ -51,44 +50,19 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testTypeParams7() { doTypeParamsParserTest("<T extends X, Y>"); }
   public void testTypeParams8() { doTypeParamsParserTest("<?>"); }
 
-  public void testAnyType() {
-    setLanguageLevel(LanguageLevel.JDK_1_9);
-    doTypeParamsParserTest("<any T>");
+  public void testAnyTypeParams() { setLanguageLevel(LanguageLevel.JDK_X); doTypeParamsParserTest("<any T>"); }
+  public void testAnyTypeArgs() { setLanguageLevel(LanguageLevel.JDK_X); doTypeParserTest("T<E_SRC, any, E_DST, ?>"); }
+
+  private void doRefParserTest(String text, boolean incomplete) {
+    doParserTest(text, builder -> JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, incomplete, false, false, false));
   }
 
-  private void doRefParserTest(final String text, final boolean incomplete) {
-    doParserTest(text, new MyTestParser(incomplete));
-  }
-  private static class MyTestParser implements TestParser {
-    private final boolean myIncomplete;
-
-    public MyTestParser(boolean incomplete) {
-      myIncomplete = incomplete;
-    }
-
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, myIncomplete, false, false, false);
-    }
+  private void doTypeParserTest(String text) {
+    int flags = ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS;
+    doParserTest(text, builder -> JavaParser.INSTANCE.getReferenceParser().parseType(builder, flags));
   }
 
-  private void doTypeParserTest(final String text) {
-    doParserTest(text, new MyTestParser2());
-  }
-  private static class MyTestParser2 implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
-    }
-  }
-
-  private void doTypeParamsParserTest(final String text) {
-    doParserTest(text, new MyTestParser3());
-  }
-  private static class MyTestParser3 implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser().parseTypeParameters(builder);
-    }
+  private void doTypeParamsParserTest(String text) {
+    doParserTest(text, builder -> JavaParser.INSTANCE.getReferenceParser().parseTypeParameters(builder));
   }
 }

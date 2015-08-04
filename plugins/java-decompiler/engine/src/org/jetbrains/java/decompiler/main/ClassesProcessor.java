@@ -47,10 +47,10 @@ public class ClassesProcessor {
 
   public ClassesProcessor(StructContext context) {
 
-    HashMap<String, Object[]> mapInnerClasses = new HashMap<String, Object[]>();
-    HashMap<String, HashSet<String>> mapNestedClassReferences = new HashMap<String, HashSet<String>>();
-    HashMap<String, HashSet<String>> mapEnclosingClassReferences = new HashMap<String, HashSet<String>>();
-    HashMap<String, String> mapNewSimpleNames = new HashMap<String, String>();
+    Map<String, Object[]> mapInnerClasses = new HashMap<String, Object[]>();
+    Map<String, Set<String>> mapNestedClassReferences = new HashMap<String, Set<String>>();
+    Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<String, Set<String>>();
+    Map<String, String> mapNewSimpleNames = new HashMap<String, String>();
 
     boolean bDecompileInner = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_INNER);
 
@@ -65,18 +65,16 @@ public class ClassesProcessor {
             for (int i = 0; i < inner.getClassEntries().size(); i++) {
 
               int[] entry = inner.getClassEntries().get(i);
-              String[] strentry = inner.getStringEntries().get(i);
-
+              String[] strEntry = inner.getStringEntries().get(i);
               Object[] arr = new Object[4]; // arr[0] not used
-
-              String innername = strentry[0];
+              String innerName = strEntry[0];
 
               // nested class type
               arr[2] = entry[1] == 0 ? (entry[2] == 0 ? ClassNode.CLASS_ANONYMOUS : ClassNode.CLASS_LOCAL) : ClassNode.CLASS_MEMBER;
 
               // original simple name
-              String simpleName = strentry[2];
-              String savedName = mapNewSimpleNames.get(innername);
+              String simpleName = strEntry[2];
+              String savedName = mapNewSimpleNames.get(innerName);
 
               if (savedName != null) {
                 simpleName = savedName;
@@ -84,8 +82,8 @@ public class ClassesProcessor {
               else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
                 IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
                 if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassName(innername, simpleName);
-                  mapNewSimpleNames.put(innername, simpleName);
+                  simpleName = renamer.getNextClassName(innerName, simpleName);
+                  mapNewSimpleNames.put(innerName, simpleName);
                 }
               }
 
@@ -97,36 +95,36 @@ public class ClassesProcessor {
               // enclosing class
               String enclClassName;
               if (entry[1] != 0) {
-                enclClassName = strentry[1];
+                enclClassName = strEntry[1];
               }
               else {
                 enclClassName = cl.qualifiedName;
               }
 
-              if (!innername.equals(enclClassName)) {  // self reference
+              if (!innerName.equals(enclClassName)) {  // self reference
                 StructClass enclosing_class = context.getClasses().get(enclClassName);
                 if (enclosing_class != null && enclosing_class.isOwn()) { // own classes only
 
-                  Object[] arrold = mapInnerClasses.get(innername);
-                  if (arrold == null) {
-                    mapInnerClasses.put(innername, arr);
+                  Object[] arrOld = mapInnerClasses.get(innerName);
+                  if (arrOld == null) {
+                    mapInnerClasses.put(innerName, arr);
                   }
-                  else if (!InterpreterUtil.equalObjectArrays(arrold, arr)) {
-                    String message = "Inconsistent inner class entries for " + innername + "!";
+                  else if (!InterpreterUtil.equalObjectArrays(arrOld, arr)) {
+                    String message = "Inconsistent inner class entries for " + innerName + "!";
                     DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
                   }
 
                   // reference to the nested class
-                  HashSet<String> set = mapNestedClassReferences.get(enclClassName);
+                  Set<String> set = mapNestedClassReferences.get(enclClassName);
                   if (set == null) {
                     mapNestedClassReferences.put(enclClassName, set = new HashSet<String>());
                   }
-                  set.add(innername);
+                  set.add(innerName);
 
                   // reference to the enclosing class
-                  set = mapEnclosingClassReferences.get(innername);
+                  set = mapEnclosingClassReferences.get(innerName);
                   if (set == null) {
-                    mapEnclosingClassReferences.put(innername, set = new HashSet<String>());
+                    mapEnclosingClassReferences.put(innerName, set = new HashSet<String>());
                   }
                   set.add(enclClassName);
                 }
@@ -148,7 +146,7 @@ public class ClassesProcessor {
         // root class?
         if (!mapInnerClasses.containsKey(ent.getKey())) {
 
-          HashSet<String> setVisited = new HashSet<String>();
+          Set<String> setVisited = new HashSet<String>();
           LinkedList<String> stack = new LinkedList<String>();
 
           stack.add(ent.getKey());
@@ -157,13 +155,19 @@ public class ClassesProcessor {
           while (!stack.isEmpty()) {
 
             String superClass = stack.removeFirst();
-            ClassNode supernode = mapRootClasses.get(superClass);
+            ClassNode superNode = mapRootClasses.get(superClass);
 
-            HashSet<String> setNestedClasses = mapNestedClassReferences.get(superClass);
+            Set<String> setNestedClasses = mapNestedClassReferences.get(superClass);
             if (setNestedClasses != null) {
 
-              StructClass scl = supernode.classStruct;
+              StructClass scl = superNode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
+
+              if (inner == null || inner.getStringEntries().isEmpty()) {
+                DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);
+                continue;
+              }
+
               for (int i = 0; i < inner.getStringEntries().size(); i++) {
                 String nestedClass = inner.getStringEntries().get(i)[0];
                 if (!setNestedClasses.contains(nestedClass)) {
@@ -174,8 +178,8 @@ public class ClassesProcessor {
                   continue;
                 }
 
-                ClassNode nestednode = mapRootClasses.get(nestedClass);
-                if (nestednode == null) {
+                ClassNode nestedNode = mapRootClasses.get(nestedClass);
+                if (nestedNode == null) {
                   DecompilerContext.getLogger().writeMessage("Nested class " + nestedClass + " missing!", IFernflowerLogger.Severity.WARN);
                   continue;
                 }
@@ -186,16 +190,16 @@ public class ClassesProcessor {
                   // FIXME: check for consistent naming
                 //}
 
-                nestednode.type = (Integer)arr[2];
-                nestednode.simpleName = (String)arr[1];
-                nestednode.access = (Integer)arr[3];
+                nestedNode.type = (Integer)arr[2];
+                nestedNode.simpleName = (String)arr[1];
+                nestedNode.access = (Integer)arr[3];
 
-                if (nestednode.type == ClassNode.CLASS_ANONYMOUS) {
-                  StructClass cl = nestednode.classStruct;
+                if (nestedNode.type == ClassNode.CLASS_ANONYMOUS) {
+                  StructClass cl = nestedNode.classStruct;
 
                   // remove static if anonymous class
                   // a common compiler bug
-                  nestednode.access &= ~CodeConstants.ACC_STATIC;
+                  nestedNode.access &= ~CodeConstants.ACC_STATIC;
 
                   int[] interfaces = cl.getInterfaces();
 
@@ -204,22 +208,22 @@ public class ClassesProcessor {
                       String message = "Inconsistent anonymous class definition: " + cl.qualifiedName;
                       DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
                     }
-                    nestednode.anonymousClassType = new VarType(cl.getInterface(0), true);
+                    nestedNode.anonymousClassType = new VarType(cl.getInterface(0), true);
                   }
                   else {
-                    nestednode.anonymousClassType = new VarType(cl.superClass.getString(), true);
+                    nestedNode.anonymousClassType = new VarType(cl.superClass.getString(), true);
                   }
                 }
-                else if (nestednode.type == ClassNode.CLASS_LOCAL) {
+                else if (nestedNode.type == ClassNode.CLASS_LOCAL) {
                   // only abstract and final are permitted
                   // a common compiler bug
-                  nestednode.access &= (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_FINAL);
+                  nestedNode.access &= (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_FINAL);
                 }
 
-                supernode.nested.add(nestednode);
-                nestednode.parent = supernode;
+                superNode.nested.add(nestedNode);
+                nestedNode.parent = superNode;
 
-                nestednode.enclosingClasses.addAll(mapEnclosingClassReferences.get(nestedClass));
+                nestedNode.enclosingClasses.addAll(mapEnclosingClassReferences.get(nestedClass));
 
                 stack.add(nestedClass);
               }
@@ -258,11 +262,8 @@ public class ClassesProcessor {
       TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
       new ClassWriter().classToJava(root, classBuffer, 0, null);
 
-      int total_offset_lines = 0;
-
       int index = cl.qualifiedName.lastIndexOf("/");
       if (index >= 0) {
-        total_offset_lines+=2;
         String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
 
         buffer.append("package ");
@@ -275,16 +276,15 @@ public class ClassesProcessor {
       int import_lines_written = importCollector.writeImports(buffer);
       if (import_lines_written > 0) {
         buffer.appendLineSeparator();
-        total_offset_lines += import_lines_written + 1;
       }
-      //buffer.append(lineSeparator);
 
-      total_offset_lines = buffer.countLines();
+      int offsetLines = buffer.countLines();
+
       buffer.append(classBuffer);
 
       if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
         BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
-        mapper.addTotalOffset(total_offset_lines);
+        mapper.addTotalOffset(offsetLines);
         if (DecompilerContext.getOption(IFernflowerPreferences.DUMP_ORIGINAL_LINES)) {
           buffer.dumpOriginalLineNumbers(mapper.getOriginalLinesMapping());
         }

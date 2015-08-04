@@ -21,9 +21,13 @@ import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.ActionUrl;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
@@ -36,12 +40,14 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
+import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.*;
@@ -49,13 +55,21 @@ import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.Set;
 
 /**
@@ -66,6 +80,7 @@ public class PyCharmEduInitialConfigurator {
   @NonNls private static final String DISPLAYED_PROPERTY = "PyCharmEDU.initialConfigurationShown";
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
+  @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -84,16 +99,23 @@ public class PyCharmEduInitialConfigurator {
                                        CodeInsightSettings codeInsightSettings,
                                        final PropertiesComponent propertiesComponent,
                                        FileTypeManager fileTypeManager,
-                                       final ProjectManagerEx projectManager,
-                                       RecentProjectsManager recentProjectsManager) {
+                                       final ProjectManagerEx projectManager) {
+    final UISettings uiSettings = UISettings.getInstance();
+    if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
+      patchMainMenu();
+      uiSettings.SHOW_NAVIGATION_BAR = false;
+      propertiesComponent.setValue(CONFIGURED_V1, "true");
+    }
+
     if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
-      UISettings uiSettings = UISettings.getInstance();
+
       uiSettings.HIDE_TOOL_STRIPES = false;
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
+
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
       Registry.get("ide.new.settings.dialog").setValue(true);
@@ -179,12 +201,94 @@ public class PyCharmEduInitialConfigurator {
     });
   }
 
+  private static void patchMainMenu() {
+    final CustomActionsSchema schema = new CustomActionsSchema();
+
+    final JTree actionsTree = new Tree();
+    Group rootGroup = new Group("root", null, null);
+    final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
+    DefaultTreeModel model = new DefaultTreeModel(root);
+    actionsTree.setModel(model);
+
+    schema.fillActionGroups(root);
+    hideActionFromMainMenu(root, schema);
+
+    CustomActionsSchema.getInstance().copyFrom(schema);
+  }
+
+  private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
+                                             @NotNull final CustomActionsSchema schema){
+    final TreeNode mainMenu = root.getFirstChild();
+
+    for (int i = 0; i < mainMenu.getChildCount(); i++) {
+      final DefaultMutableTreeNode menuItem = (DefaultMutableTreeNode)mainMenu.getChildAt(i);
+      if ("File".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"ExportToHTML", "SaveAll", "Export/Import Actions", "Synchronize", "ChangeFileEncodingAction",
+          "Line Separators", "ToggleReadOnlyAttribute"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
+      else if ("Edit".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"CopyAsPlainText", "CopyAsReachText", "CopyReference", "EditorPasteSimple", "Macros", "EditorToggleCase",
+          "TemplateParametersNavigation", "EscapeEntities"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
+      else if ("View".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo", "ShowErrorDescription",
+          "RecentChanges", "CompareActions", "QuickChangeScheme"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
+      else if ("Navigate".equals(getItemId(menuItem))) {
+        final String[] fileItems = {"GotoCustomRegion", "JumpToLastChange", "JumpToNextChange", "SelectIn", "GotoTypeDeclaration",
+        "GotoTest", "GotoRelated", "ShowFilePath", "Hierarchy Actions", "Goto Error/Bookmark Actions", "GoToEditPointGroup",
+          "Change Navigation Actions", "Method Navigation Actions"};
+        for (String item : fileItems) {
+          hideAction(schema, root, menuItem, item);
+        }
+      }
+    }
+
+    final String[] menuItems = {"Tools", "VCS", "Refactor", "Code", "Window", "Run"};
+    for (String item : menuItems) {
+      hideAction(schema, root, mainMenu, item);
+    }
+  }
+
+  private static void hideAction(@NotNull final CustomActionsSchema schema, @NotNull final DefaultMutableTreeNode root,
+                                 @NotNull final TreeNode actionGroup, @NotNull final String actionId) {
+    for(int i = 0; i < actionGroup.getChildCount(); i++){
+      final DefaultMutableTreeNode child = (DefaultMutableTreeNode)actionGroup.getChildAt(i);
+      final int childCount = child.getChildCount();
+      if (childCount > 0) {
+        hideAction(schema, child, child, actionId);
+      }
+      final String childId = getItemId(child);
+      if (childId != null && childId.equals(actionId)){
+        final TreePath treePath = TreeUtil.getPath(root, child);
+        final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
+        schema.addAction(url);
+      }
+    }
+  }
+
+  @Nullable
+  private static String getItemId(@NotNull final DefaultMutableTreeNode child) {
+    final Object userObject = child.getUserObject();
+    if (userObject instanceof String) return (String)userObject;
+    return userObject instanceof Group ? ((Group)userObject).getName() : null;
+  }
+
   private static void patchRootAreaExtensions() {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
-          || "Structure".equals(ep.id)) {
+          || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {
         rootArea.getExtensionPoint(ToolWindowEP.EP_NAME).unregisterExtension(ep);
       }
     }
@@ -210,20 +314,30 @@ public class PyCharmEduInitialConfigurator {
   }
 
   private static void patchProjectAreaExtensions(@NotNull final Project project) {
+    ExtensionsArea projectArea = Extensions.getArea(project);
+
     for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
-      if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId())) {
-        Extensions.getArea(project).getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
+      if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId()) ||
+          ToolWindowId.STRUCTURE_VIEW.equals(target.getToolWindowId())) {
+        projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
+      }
+    }
+
+    for (AbstractProjectViewPane pane : Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, project)) {
+      if (pane.getId().equals(ScopeViewPane.ID)) {
+        Disposer.dispose(pane);
+        projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);
       }
     }
   }
 
   private static void patchKeymap() {
     Set<String> droppedActions = ContainerUtil.newHashSet(
-      "AddToFavoritesPopup", "RemoveFromFavorites",
+      "AddToFavoritesPopup",
       "DatabaseView.ImportDataSources",
       "CompileDirty", "Compile",
       // hidden
-      "AddNewFavoritesList", "EditFavorites", "RemoveFromFavorites", "RenameFavoritesList", "RemoveFavoritesList");
+      "AddNewFavoritesList", "EditFavorites", "RenameFavoritesList", "RemoveFavoritesList");
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
 
 

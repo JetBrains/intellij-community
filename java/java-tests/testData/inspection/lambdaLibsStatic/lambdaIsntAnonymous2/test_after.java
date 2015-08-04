@@ -6,7 +6,7 @@ import java.util.Collections;
 
 class c {
   void m() {
-    Collections.emptyList().stream().allMatch(getPredicate(100)::apply);
+    Collections.<String>emptyList().stream().allMatch(getPredicate(100)::apply);
   }
 
   public Predicate<String> getPredicate(final int param) {

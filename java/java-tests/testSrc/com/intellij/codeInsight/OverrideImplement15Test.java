@@ -16,10 +16,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -29,6 +31,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.MapDataContext;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +69,7 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
   public void testMultipleInterfaceInheritance() { doTest(false); }
   public void testResolveTypeParamConflict() { doTest(false); }
   public void testRawInheritance() { doTest(false); }
+  public void testRawInheritanceWithMethodTypeParameters() { doTest(false); }
 
   public void testLongFinalParameterList() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
@@ -134,7 +138,9 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     PsiElement context = getFile().findElementAt(offset);
     final PsiClass aClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
     assertTrue(aClass != null && aClass.isAnnotationType());
-    assertFalse(new JavaOverrideMethodsHandler().isValidFor(getEditor(), getFile()));
+    final JavaOverrideMethodsHandler handler = new JavaOverrideMethodsHandler();
+    assertTrue(handler.isValidFor(getEditor(), getFile()));
+    assertFalse(handler.isAvailableForQuickList(getEditor(), getFile(), new MapDataContext()));
   }
 
   private void doTest(boolean copyJavadoc) { doTest(copyJavadoc, null); }
@@ -152,7 +158,8 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
       assert superClass != null;
       PsiMethod method = superClass.getMethods()[0];
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
-      final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method, substitutor));
+      final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method, 
+                                                                                             OverrideImplementExploreUtil.correctSubstitutor(method, substitutor)));
       OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
     }
     else {

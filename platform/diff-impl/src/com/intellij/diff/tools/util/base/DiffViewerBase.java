@@ -168,6 +168,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return myRequest;
   }
 
+  @NotNull
+  public DiffContext getContext() {
+    return myContext;
+  }
+
   public boolean isDisposed() {
     return myDisposed;
   }

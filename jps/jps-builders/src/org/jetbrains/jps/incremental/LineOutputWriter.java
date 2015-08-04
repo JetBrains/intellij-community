@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.jetbrains.jps.incremental;
+
+import com.intellij.util.text.CharArrayCharSequence;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -146,7 +148,7 @@ public abstract class LineOutputWriter extends Writer {
     }
 
     CharSequenceIterator(final char[] chars, final int offset, final int length) {
-      this(new ArrayCharSequence(chars, offset, length));
+      this(new CharArrayCharSequence(chars, offset, offset+length));
     }
 
     CharSequenceIterator(CharSequence sequence) {
@@ -182,34 +184,6 @@ public abstract class LineOutputWriter extends Writer {
 
     public CharSequence subSequence(int start, int end) {
       throw new RuntimeException("Method subSequence not implemented");
-    }
-  }
-
-  private static class ArrayCharSequence implements CharSequence {
-    private final char[] myChars;
-    private final int myOffset;
-    private final int myLength;
-
-    public ArrayCharSequence(char[] chars, int offset, int length) {
-      myChars = chars;
-      myOffset = offset;
-      myLength = length;
-    }
-
-    public int length() {
-      return myLength;
-    }
-
-    public char charAt(int index) {
-      return myChars[index];
-    }
-
-    public CharSequence subSequence(int start, int end) {
-      return new ArrayCharSequence(myChars, start, end - start);
-    }
-
-    public String toString() {
-      return new String(myChars, myOffset, myLength);
     }
   }
 }

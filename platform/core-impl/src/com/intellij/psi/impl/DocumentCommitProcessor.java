@@ -62,6 +62,7 @@ public abstract class DocumentCommitProcessor {
     // when failed it's canceled
     @NotNull public final ProgressIndicator indicator; // progress to commit this doc under.
     @NotNull public final Object reason;
+    private final CharSequence myLastCommittedText;
     public boolean removed; // task marked as removed, should be ignored.
 
     public CommitTask(@NotNull Document document,
@@ -72,6 +73,7 @@ public abstract class DocumentCommitProcessor {
       this.project = project;
       this.indicator = indicator;
       this.reason = reason;
+      myLastCommittedText = PsiDocumentManager.getInstance(project).getLastCommittedText(document);
     }
 
     @NonNls
@@ -121,7 +123,7 @@ public abstract class DocumentCommitProcessor {
     }
 
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-    final DiffLog diffLog = blockSupport.reparseRange(file, changedPsiRange, chars, task.indicator);
+    final DiffLog diffLog = blockSupport.reparseRange(file, changedPsiRange, chars, task.indicator, task.myLastCommittedText);
 
     return new Processor<Document>() {
       @Override
@@ -243,7 +245,8 @@ public abstract class DocumentCommitProcessor {
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
         BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-        final DiffLog diffLog = blockSupport.reparseRange(file, new TextRange(0, documentText.length()), documentText, createProgressIndicator());
+        final DiffLog diffLog = blockSupport.reparseRange(file, new TextRange(0, documentText.length()), documentText, createProgressIndicator(),
+                                                          myTreeElementBeingReparsedSoItWontBeCollected.getText());
         doActualPsiChange(file, diffLog);
 
         if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {

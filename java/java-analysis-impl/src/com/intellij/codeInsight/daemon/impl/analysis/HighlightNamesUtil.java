@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,17 +47,17 @@ public class HighlightNamesUtil {
   private static final Logger LOG = Logger.getInstance("#" + HighlightNamesUtil.class.getName());
 
   @Nullable
-  public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
-                                                  final PsiElement elementToHighlight,
-                                                  final boolean isDeclaration,
-                                                  @NotNull TextAttributesScheme colorsScheme) {
+  static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
+                                           final PsiElement elementToHighlight,
+                                           final boolean isDeclaration,
+                                           @NotNull TextAttributesScheme colorsScheme) {
     return highlightMethodName(method, elementToHighlight, elementToHighlight.getTextRange(), colorsScheme, isDeclaration);
   }
 
   @Nullable
-  public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
-                                                  final PsiElement elementToHighlight,
-                                                  TextRange range, @NotNull TextAttributesScheme colorsScheme, final boolean isDeclaration) {
+  static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
+                                           final PsiElement elementToHighlight,
+                                           TextRange range, @NotNull TextAttributesScheme colorsScheme, final boolean isDeclaration) {
     boolean isInherited = false;
 
     if (!isDeclaration) {
@@ -105,7 +105,7 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
+  static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
     HighlightInfoType type = getClassNameHighlightType(aClass, elementToHighlight);
     if (elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
@@ -138,9 +138,9 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightVariableName(final PsiVariable variable,
-                                                    final PsiElement elementToHighlight,
-                                                    @NotNull TextAttributesScheme colorsScheme) {
+  static HighlightInfo highlightVariableName(final PsiVariable variable,
+                                             final PsiElement elementToHighlight,
+                                             @NotNull TextAttributesScheme colorsScheme) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
       if (variable instanceof PsiField) {
@@ -157,8 +157,8 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightClassNameInQualifier(final PsiJavaCodeReferenceElement element,
-                                                            @NotNull TextAttributesScheme colorsScheme) {
+  static HighlightInfo highlightClassNameInQualifier(final PsiJavaCodeReferenceElement element,
+                                                     @NotNull TextAttributesScheme colorsScheme) {
     PsiElement qualifierExpression = element.getQualifier();
     if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
       PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
@@ -219,7 +219,7 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightReassignedVariable(PsiVariable variable, PsiElement elementToHighlight) {
+  static HighlightInfo highlightReassignedVariable(PsiVariable variable, PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE).range(elementToHighlight).create();
     }

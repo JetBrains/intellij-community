@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.JavaFileElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -31,25 +30,11 @@ public interface JavaStubElementTypes {
   JavaAnnotationParameterListType ANNOTATION_PARAMETER_LIST = new JavaAnnotationParameterListType();
   JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
+  JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
   JavaTypeParameterListElementType TYPE_PARAMETER_LIST = new JavaTypeParameterListElementType();
   JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
-
-  JavaParameterElementType PARAMETER = new JavaParameterElementType("PARAMETER") {
-    @NotNull
-    @Override
-    public ASTNode createCompositeNode() {
-      return new ParameterElement(JavaElementType.PARAMETER);
-    }
-  };
-  JavaParameterElementType RECEIVER_PARAMETER = new JavaParameterElementType("RECEIVER") {
-    @NotNull
-    @Override
-    public ASTNode createCompositeNode() {
-      return new ParameterElement(JavaElementType.RECEIVER_PARAMETER);
-    }
-  };
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
     @NotNull

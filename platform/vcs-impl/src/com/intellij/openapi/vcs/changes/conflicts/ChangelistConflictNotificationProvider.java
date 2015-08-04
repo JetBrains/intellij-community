@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class ChangelistConflictNotificationProvider extends EditorNotifications.Provider<ChangelistConflictNotificationPanel> {
+public class ChangelistConflictNotificationProvider extends EditorNotifications.Provider<ChangelistConflictNotificationPanel> implements
+                                                                                                                              DumbAware {
 
   private static final Key<ChangelistConflictNotificationPanel> KEY = Key.create("changelistConflicts");
 

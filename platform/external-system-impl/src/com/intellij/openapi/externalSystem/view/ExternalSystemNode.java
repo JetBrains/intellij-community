@@ -17,8 +17,8 @@ package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
-import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -93,6 +93,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myParent = parent;
   }
 
+  public boolean isAutoExpandNode() {
+    SimpleNode parent = getParent();
+    return parent != null && parent.getChildCount() == 1;
+  }
+
   public void setParent(@Nullable ExternalSystemNode parent) {
     myParent = parent;
   }
@@ -128,13 +133,13 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Nullable
-  public <T extends ExternalSystemNode> T findParent(Class<T> parentClass) {
+  public <DataType extends ExternalSystemNode> DataType findParent(Class<DataType> parentClass) {
     ExternalSystemNode node = this;
     while (true) {
       node = node.myParent;
       if (node == null || parentClass.isInstance(node)) {
         //noinspection unchecked
-        return (T)node;
+        return (DataType)node;
       }
     }
   }
@@ -153,7 +158,21 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   public boolean isVisible() {
-    return getDisplayKind() != ExternalProjectsStructure.DisplayKind.NEVER;
+    return getDisplayKind() != ExternalProjectsStructure.DisplayKind.NEVER && !(isIgnored() && !myExternalProjectsView.getShowIgnored());
+  }
+
+  public boolean isIgnored() {
+    if (myDataNode != null) {
+      return myDataNode.isIgnored();
+    }
+    final SimpleNode parent = getParent();
+    return parent instanceof ExternalSystemNode && ((ExternalSystemNode)parent).isIgnored();
+  }
+
+  public void setIgnored(final boolean ignored) {
+    if (myDataNode != null) {
+      ExternalProjectsManager.getInstance(myExternalProjectsView.getProject()).setIgnored(myDataNode, ignored);
+    }
   }
 
   public ExternalProjectsStructure.DisplayKind getDisplayKind() {
@@ -283,7 +302,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
   }
 
-  public void setDataNode(DataNode<T> dataNode) {
+  protected void setDataNode(DataNode<T> dataNode) {
     myDataNode = dataNode;
   }
 
@@ -324,9 +343,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   protected void setNameAndTooltip(String name, @Nullable String tooltip, @Nullable String hint) {
-    setNameAndTooltip(name, tooltip, getPlainAttributes());
+    final boolean ignored = isIgnored();
+    final SimpleTextAttributes textAttributes = ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : getPlainAttributes();
+    setNameAndTooltip(name, tooltip, textAttributes);
     if (!StringUtil.isEmptyOrSpaces(hint)) {
-      addColoredFragment(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      addColoredFragment(" (" + hint + ")", ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 
@@ -357,7 +378,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   protected String message(@NotNull String key, @NotNull Object... params) {
-    return ExternalSystemBundle.message(key);
+    return ExternalSystemBundle.message(key, params);
   }
 
   @Nullable

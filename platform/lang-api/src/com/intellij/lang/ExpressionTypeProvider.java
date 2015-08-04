@@ -21,15 +21,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * @see com.intellij.codeInsight.hint.actions.ShowExpressionTypeAction
+ *
  * @author gregsh
  */
 public abstract class ExpressionTypeProvider<T extends PsiElement> {
+  /**
+   * Returns HTML string for type info hint.
+   * @see com.intellij.openapi.util.text.StringUtil#escapeXml(String)
+   */
   @NotNull
   public abstract String getInformationHint(@NotNull T element);
 
+  /**
+   * Returns HTML string if no target found at position.
+   */
   @NotNull
   public abstract String getErrorHint();
 
+  /**
+   * Returns the list of all possible targets at specified position.
+   */
   @NotNull
   public abstract List<T> getExpressionsAt(@NotNull PsiElement elementAt);
 }

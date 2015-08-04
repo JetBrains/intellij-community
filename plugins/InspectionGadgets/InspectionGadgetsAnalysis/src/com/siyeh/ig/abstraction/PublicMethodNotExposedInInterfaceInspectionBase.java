@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,10 +30,10 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicMethodNotExposedInInterfaceInspectionBase extends BaseInspection {
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations =
     new ExternalizableStringSet();
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean onlyWarnIfContainingClassImplementsAnInterface = false;
 
   @Override
@@ -115,7 +117,11 @@ public class PublicMethodNotExposedInInterfaceInspectionBase extends BaseInspect
     }
 
     private boolean exposedInInterface(PsiMethod method) {
-      final PsiMethod[] superMethods = method.findSuperMethods();
+      PsiMethod[] superMethods = method.findSuperMethods();
+      PsiMethod siblingInherited = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+      if (siblingInherited != null && !ArrayUtil.contains(siblingInherited, superMethods)) {
+        superMethods = ArrayUtil.append(superMethods, siblingInherited);
+      }
       for (final PsiMethod superMethod : superMethods) {
         final PsiClass superClass = superMethod.getContainingClass();
         if (superClass == null) {

@@ -1,10 +1,10 @@
 public class X {
     {
-        new Comparable<<spam>Object</spam>>() {
+        new Comparable<<spot>Object</spot>>() {
             @Override
             public int compareTo(Object o) {
               return 0;
             }
-        }
+        };
     }
 }
