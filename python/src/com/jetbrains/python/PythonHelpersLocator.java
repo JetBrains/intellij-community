@@ -35,13 +35,13 @@ public enum PythonHelpersLocator implements PythonHelper {
   RUN_IN_CONSOLE("pydev_run_in_console", "pydev");
 
   @NotNull
-  private PathPythonHelper findModule(String moduleName, String path) {
+  private PathPythonHelper findModule(String moduleEntryPoint, String path) {
     if (getHelperFile(path + ".zip").isFile()) {
-      return new ModulePythonHelper(moduleName, path + ".zip");
+      return new ModulePythonHelper(moduleEntryPoint, path + ".zip");
     }
 
     if (getHelperFile(path).isDirectory()) {
-        return new ModulePythonHelper(moduleName, path);
+        return new ModulePythonHelper(moduleEntryPoint, path);
     }
 
     if (getHelperFile(path).isFile()) {
