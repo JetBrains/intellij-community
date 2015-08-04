@@ -29,7 +29,7 @@ import javax.swing.text.PlainDocument;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-public class EduSettingsPanel {
+public class StudySettingsPanel {
   private static final String DEFAULT_PASSWORD_TEXT = "************";
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
@@ -38,7 +38,7 @@ public class EduSettingsPanel {
 
   private boolean myCredentialsModified;
 
-  public EduSettingsPanel() {
+  public StudySettingsPanel() {
     myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -100,8 +100,8 @@ public class EduSettingsPanel {
   }
 
   public void reset() {
-    final EduSettings eduSettings = EduSettings.getInstance();
-    setLogin(eduSettings.getLogin());
+    final StudySettings studySettings = StudySettings.getInstance();
+    setLogin(studySettings.getLogin());
     setPassword(DEFAULT_PASSWORD_TEXT);
 
     resetCredentialsModification();
@@ -109,9 +109,9 @@ public class EduSettingsPanel {
 
   public void apply() {
     if (myCredentialsModified) {
-      final EduSettings eduSettings = EduSettings.getInstance();
-      eduSettings.setLogin(getLogin());
-      eduSettings.setPassword(getPassword());
+      final StudySettings studySettings = StudySettings.getInstance();
+      studySettings.setLogin(getLogin());
+      studySettings.setPassword(getPassword());
       EduStepicConnector.login(getLogin(), getPassword());
     }
     resetCredentialsModification();

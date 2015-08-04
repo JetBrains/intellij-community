@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
   name = "GithubSettings",
   storages = {@Storage(
     file = StoragePathMacros.APP_CONFIG + "/stepic_settings.xml")})
-public class EduSettings implements PersistentStateComponent<EduSettings.State> {
+public class StudySettings implements PersistentStateComponent<StudySettings.State> {
 
   private State myState = new State();
 
@@ -37,10 +37,10 @@ public class EduSettings implements PersistentStateComponent<EduSettings.State> 
   }
 
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
-  private static final Logger LOG = Logger.getInstance(EduSettings.class.getName());
+  private static final Logger LOG = Logger.getInstance(StudySettings.class.getName());
 
-  public static EduSettings getInstance() {
-    return ServiceManager.getService(EduSettings.class);
+  public static StudySettings getInstance() {
+    return ServiceManager.getService(StudySettings.class);
   }
 
   @NotNull
@@ -50,7 +50,7 @@ public class EduSettings implements PersistentStateComponent<EduSettings.State> 
 
     String password;
     try {
-      password = PasswordSafe.getInstance().getPassword(null, EduSettings.class, STEPIC_SETTINGS_PASSWORD_KEY);
+      password = PasswordSafe.getInstance().getPassword(null, StudySettings.class, STEPIC_SETTINGS_PASSWORD_KEY);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
@@ -62,7 +62,7 @@ public class EduSettings implements PersistentStateComponent<EduSettings.State> 
 
   public void setPassword(@NotNull String password) {
     try {
-      PasswordSafe.getInstance().storePassword(null, EduSettings.class, STEPIC_SETTINGS_PASSWORD_KEY, password);
+      PasswordSafe.getInstance().storePassword(null, StudySettings.class, STEPIC_SETTINGS_PASSWORD_KEY, password);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't set password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
@@ -79,12 +79,12 @@ public class EduSettings implements PersistentStateComponent<EduSettings.State> 
   }
   @Nullable
   @Override
-  public EduSettings.State getState() {
+  public StudySettings.State getState() {
     return myState;
   }
 
   @Override
-  public void loadState(EduSettings.State state) {
+  public void loadState(StudySettings.State state) {
     myState = state;
   }
 }

@@ -16,7 +16,7 @@ import com.intellij.util.Consumer;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.EduSettings;
+import com.jetbrains.edu.learning.stepic.StudySettings;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
 import icons.InteractiveLearningIcons;
@@ -256,8 +256,8 @@ public class StudyNewProjectPanel{
       if (!isSuccess) {
         setError("Failed to log in");
       }
-      EduSettings.getInstance().setLogin(myRemoteCourse.getLogin());
-      EduSettings.getInstance().setPassword(myRemoteCourse.getPassword());
+      StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
+      StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
       refreshCoursesList();
     }
   }

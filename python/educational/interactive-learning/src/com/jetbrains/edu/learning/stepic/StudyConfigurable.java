@@ -23,11 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EduConfigurable implements SearchableConfigurable {
+public class StudyConfigurable implements SearchableConfigurable {
   public static final String ID = "com.jetbrains.edu.learning.stepic.EduConfigurable";
-  private EduSettingsPanel mySettingsPane;
+  private StudySettingsPanel mySettingsPane;
 
-  public EduConfigurable() {
+  public StudyConfigurable() {
   }
 
   @NotNull
@@ -58,7 +58,7 @@ public class EduConfigurable implements SearchableConfigurable {
   @Override
   public JComponent createComponent() {
     if (mySettingsPane == null) {
-      mySettingsPane = new EduSettingsPanel();
+      mySettingsPane = new StudySettingsPanel();
     }
     return mySettingsPane.getPanel();
   }
