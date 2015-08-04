@@ -45,6 +45,7 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
+import com.jetbrains.edu.learning.stepic.EduSettings;
 import com.jetbrains.edu.stepic.EduStepicConnector;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -237,9 +238,11 @@ public class StudyCheckAction extends DumbAwareAction {
           return;
         }
         final String failedMessage = testRunner.getTestsOutput(output);
+        final String login = EduSettings.getInstance().getLogin();
+        final String password = EduSettings.getInstance().getPassword();
         if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
           taskManager.setStatus(task, StudyStatus.Solved);
-          EduStepicConnector.postAttempt(task, true);
+          EduStepicConnector.postAttempt(task, true, login, password);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -252,7 +255,7 @@ public class StudyCheckAction extends DumbAwareAction {
             @Override
             public void run() {
               if (taskDir == null) return;
-              EduStepicConnector.postAttempt(task, false);
+              EduStepicConnector.postAttempt(task, false, login, password);
               taskManager.setStatus(task, StudyStatus.Failed);
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();

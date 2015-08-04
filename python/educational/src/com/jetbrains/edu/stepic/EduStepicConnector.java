@@ -36,6 +36,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -267,10 +268,15 @@ public class EduStepicConnector {
     });
   }
 
-  public static void postAttempt(@NotNull final Task task, boolean passed) {
+  public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
     if (ourClient == null) {
-      showLoginDialog();
-      //TODO: store flag to resubmit
+      if (StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)) {
+        return;
+      }
+      else {
+        final boolean success = login(login, password);
+        if (!success) return;
+      }
     }
 
     final HttpPost attemptRequest = new HttpPost(stepicApiUrl + "attempts");
