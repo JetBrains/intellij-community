@@ -11,6 +11,7 @@ public data class ListModel(val list: PersistentVector<Model> = Persistents.vect
         get() = emptyMeta();
     override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitListModel(this)
 
+    public constructor(vararg values: Model): this(Persistents.vector(*values))
     public constructor(l: List<Model>): this(Persistents.vector(l))
 
     override fun assoc(key: Int, value: Model?): ListModel = ListModel(list.plusN(key, value))

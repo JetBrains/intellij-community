@@ -15,7 +15,10 @@
  */
 package com.jetbrains.reactiveidea.usages
 
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.TextEditorLocation
 import com.intellij.pom.Navigatable
+import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.ServerUsageView
 import com.intellij.usages.impl.UsageNode
@@ -27,6 +30,7 @@ import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.createMeta
 import com.jetbrains.reactivemodel.util.emptyMeta
+import java.awt.Color
 import java.util.Enumeration
 import java.util.HashMap
 import javax.swing.tree.DefaultMutableTreeNode
@@ -82,12 +86,32 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
         "children" to ListModel(children))
     if (node is UsageNode) {
       res[tagsField] = ListModel(arrayListOf(PrimitiveModel("usage")))
-      // TODO location
-      // val usage = node.getUsage()
-      // res["location"] = PrimitiveModel(usage.getLocation())
+      val usage = node.getUsage()
+      val chunks = usage.getPresentation().getText()
+      res["chunks"] = ListModel(
+        chunks.map { chunk: TextChunk ->
+          MapModel(hashMapOf(
+              "text" to PrimitiveModel(chunk.getText()),
+              "attr" to convertAttrFlyweight(chunk.getAttributes())
+          ))
+        }
+      )
     }
     return MapModel(res, meta)
   }
+
+  private fun convertAttrFlyweight(attributes: TextAttributes): Model {
+    val map = HashMap<String, Model>()
+    if(attributes.getForegroundColor() != null) {
+      map["foreground"] = PrimitiveModel(colorToHex(attributes.getForegroundColor()))
+    }
+    if(attributes.getBackgroundColor() != null) {
+      map["background"] = PrimitiveModel(colorToHex(attributes.getBackgroundColor()))
+    }
+    return MapModel(map)
+  }
+
+  private fun colorToHex(color: Color) = "#" + Integer.toHexString(color.getRGB()).substring(2)
 
   private fun convertPresentation(presentation: UsageViewPresentation): MapModel {
     return toModel(hashMapOf(
