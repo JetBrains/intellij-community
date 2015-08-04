@@ -314,17 +314,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return defaultStorages
     }
 
-    var actualStorageCount = 0
-    for (storage in storages) {
-      if (!storage.deprecated) {
-        actualStorageCount++
-      }
-    }
-
-    if (actualStorageCount > 1) {
-      LOG.error("State chooser not specified for: " + component.javaClass)
-    }
-
     if (!storages[0].deprecated) {
       var othersAreDeprecated = true
       for (i in 1..storages.size() - 1) {
