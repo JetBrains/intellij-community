@@ -1,8 +1,8 @@
 package com.siyeh.igtest.methodmetrics;
 
-public class NestingDepthInspection
+public class NestingDepth
 {
-    public void fooBar()
+    public void <warning descr="'fooBar' is overly nested (maximum nesting depth = 6)">fooBar</warning>()
     {
         if(bar())
         {
