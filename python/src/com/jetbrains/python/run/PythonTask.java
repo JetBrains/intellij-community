@@ -110,7 +110,7 @@ public class PythonTask {
     if (env != null) {
       commandLine.getEnvironment().putAll(env);
     }
-    PydevConsoleRunner.setCorrectStdOutEncoding(commandLine.getEnvironment(), myModule.getProject()); // To support UTF-8 output
+    PydevConsoleRunner.setCorrectStdOutEncoding(commandLine, myModule.getProject()); // To support UTF-8 output
 
     ProcessHandler handler;
     if (PySdkUtil.isRemote(mySdk)) {
