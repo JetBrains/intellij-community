@@ -363,7 +363,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
         notReloadableComponents.add(componentName)
       }
     }
-    return if (notReloadableComponents == null) emptySet<String>() else notReloadableComponents
+    return notReloadableComponents ?: emptySet<String>()
   }
 
   override fun reinitComponents(componentNames: Set<String>, reloadData: Boolean) {
@@ -443,7 +443,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
       }
       catch (e: ReadOnlyModificationException) {
         LOG.warn(e)
-        readonlyFiles.add(util.Pair.create<SaveSession, VirtualFile>(if (e.getSession() == null) session else e.getSession(), e.getFile()))
+        readonlyFiles.add(util.Pair.create<SaveSession, VirtualFile>(e.getSession() ?: session, e.getFile()))
       }
       catch (e: Exception) {
         if (errors == null) {
