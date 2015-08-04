@@ -20,7 +20,6 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -151,7 +150,7 @@ class SearchForUsagesRunnable implements Runnable {
 
     Runnable searchIncludingProjectFileUsages = processPresentation.searchIncludingProjectFileUsages();
     if (searchIncludingProjectFileUsages != null) {
-      resultLines.add("Occurrences in " + ApplicationNamesInfo.getInstance().getProductName() + " project files are skipped. " +
+      resultLines.add("Occurrences in project configuration files are skipped. " +
                       "<a href='" + SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET + "'>Include them</a>");
       resultListener = addHrefHandling(resultListener, SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET, searchIncludingProjectFileUsages);
     }
