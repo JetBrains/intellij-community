@@ -44,11 +44,7 @@ public enum PythonHelpersLocator implements PythonHelper {
         return new ModulePythonHelper(moduleEntryPoint, path);
     }
 
-    if (getHelperFile(path).isFile()) {
-      return new ScriptPythonHelper(path);
-    }
-
-    throw new IllegalStateException("Corrupted installation. Helper not found: " + name());
+    return new ScriptPythonHelper(path + ".py");
   }
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
