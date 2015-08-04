@@ -19,6 +19,7 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +44,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -476,26 +478,34 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      task.run();
+      return;
+    }
+    
     if (synchronous) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        task.run();
-      }
-      else {
-        UIUtil.invokeAndWaitIfNeeded(task);
-      }
+      app.invokeAndWait(task, ModalityState.defaultModalityState());
     }
     else {
-      UIUtil.invokeLaterIfNeeded(task);
+      app.invokeLater(task, ModalityState.defaultModalityState());
     }
   }
 
-  public static <T> T executeOnEdt(@NotNull Computable<T> task) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+  public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       return task.compute();
     }
-    else {
-      return UIUtil.invokeAndWaitIfNeeded(task);
-    }
+
+    final Ref<T> result = Ref.create();
+    app.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        result.set(task.compute());
+      }
+    }, ModalityState.defaultModalityState());
+    return result.get();
   }
 
   public static <T> T executeOnEdtUnderWriteAction(@NotNull final Computable<T> task) {
