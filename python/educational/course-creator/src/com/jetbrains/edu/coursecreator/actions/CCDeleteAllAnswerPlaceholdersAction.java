@@ -80,6 +80,9 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
+    if (!CCProjectService.setCCActionAvailable(e)) {
+      return;
+    }
     DataContext context = e.getDataContext();
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     final Project project = e.getProject();
