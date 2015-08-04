@@ -347,7 +347,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (externalProject != null) {
       for (ExternalTask task : externalProject.getTasks().values()) {
         String taskName = task.getName();
-        if (taskName.trim().isEmpty() || isIdeaTask(taskName)) {
+        if (taskName.trim().isEmpty() || isIdeaTask(taskName, task.getGroup())) {
           continue;
         }
         TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
@@ -362,7 +362,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     for (GradleTask task : gradleModule.getGradleProject().getTasks()) {
       String taskName = task.getName();
-      if (taskName == null || taskName.trim().isEmpty() || isIdeaTask(taskName)) {
+      if (taskName == null || taskName.trim().isEmpty() || isIdeaTask(taskName, task.getGroup())) {
         continue;
       }
       TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
@@ -832,8 +832,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
   }
 
-  private static boolean isIdeaTask(final String taskName) {
-    return taskName.toLowerCase(Locale.ENGLISH).contains("idea");
+  private static boolean isIdeaTask(final String taskName, @Nullable String group) {
+    return (group == null || "ide".equalsIgnoreCase(group)) && taskName.toLowerCase(Locale.ENGLISH).contains("idea");
   }
 
   private static void addCompileOutputPath(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,
