@@ -52,32 +52,41 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
 
   init {
     init += { m ->
-      reaction(true, "tree reaction", usageView.usagesSignal) { usages ->
-        reactiveModel.transaction { m ->
-          m.putIn(path / tree, convertTree(usageView.root))
+      reaction(false, "tree reaction", usageView.usagesSignal) { usages ->
+        reactiveModel.transaction { model ->
+          model.putIn(path / tree, convertTree(usageView.root))
         }
       }
       m.putIn(path / presentation, convertPresentation(usageView.getPresentation()))
           .putIn(path / name, PrimitiveModel(usageView.getPresentation().getTabName()))
     }
+
     lifetime += {
       usageView.lifetime.terminate()
     }
   }
 
   private fun convertTree(node: DefaultMutableTreeNode): Model {
-    val text = node.text(usageView)
-    val value = if (text.isNotEmpty()) text else " "
+    val value = run {
+      val text = node.text(usageView)
+      if (text.isNotEmpty()) text else " "
+    }
     val meta = if (node is Navigatable) createMeta("host", UsageHost(node)) else emptyMeta()
-    val childs = (node.children() as Enumeration<*>).asSequence()
+    val children = (node.children() as Enumeration<*>).asSequence()
         .map { child ->
           convertTree(child as DefaultMutableTreeNode)
         }.toArrayList()
-    return if (childs.isEmpty()) {
-      PrimitiveModel(value, meta)
-    } else {
-      MapModel(hashMapOf(value to ListModel(childs)), meta)
+
+    val res = hashMapOf(
+        "text" to PrimitiveModel(value),
+        "children" to ListModel(children))
+    if (node is UsageNode) {
+      res[tagsField] = ListModel(arrayListOf(PrimitiveModel("usage")))
+      // TODO location
+      // val usage = node.getUsage()
+      // res["location"] = PrimitiveModel(usage.getLocation())
     }
+    return MapModel(res, meta)
   }
 
   private fun convertPresentation(presentation: UsageViewPresentation): MapModel {

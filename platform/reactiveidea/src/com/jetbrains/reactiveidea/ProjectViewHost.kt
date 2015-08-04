@@ -61,6 +61,9 @@ public class ProjectViewHost(val project: Project,
     private val LOG = Logger.getInstance("#com.jetbrains.reactiveidea.ProjectViewHost")
   }
 
+  override val tags: Array<String>
+    get() = arrayOf("project-view")
+
   init {
 
     init += {
@@ -68,7 +71,7 @@ public class ProjectViewHost(val project: Project,
       val descriptor = treeStructure.createDescriptor(root, null) as AbstractTreeNode<*>
       val current = path / paneId
       val rootNode = createNode(descriptor, lifetime, current, 0)
-      current.putIn(it, MapModel(mapOf(root.toString() to rootNode)))
+      current.putIn(it, MapModel(hashMapOf("0" to rootNode)))
     }
 
     val psiTreeChangeListener = object : PsiTreeChangeAdapter() {
@@ -137,16 +140,16 @@ public class ProjectViewHost(val project: Project,
         else emptyMeta()
 
     map.put("state", PrimitiveModel(state))
-    map.put("order", PrimitiveModel(index))
-    map.put("childs", MapModel())
+    map["text"] = PrimitiveModel(StringUtil.notNullize(descriptor.toString(), "null"))
+    map.put("children", MapModel())
 
     if (state != "leaf") {
-      val stateSignal = reactiveModel.subscribe(meta.lifetime()!!, path / descriptor.toString())
+      val stateSignal = reactiveModel.subscribe(meta.lifetime()!!, path / index.toString())
       reaction(true, "update state of project tree node", stateSignal) { state ->
         if (state != null) {
           state as MapModel
           val openState = (state["state"] as PrimitiveModel<*>).value
-          if (openState == "open" && (state["childs"] == null || (state["childs"] as MapModel).isEmpty())) {
+          if (openState == "open" && (state["children"] == null || (state["children"] as MapModel).isEmpty())) {
             reactiveModel.transaction { m ->
               updateChilds(m, descriptor, path, index)
             }
@@ -159,9 +162,9 @@ public class ProjectViewHost(val project: Project,
 
   private fun updateChilds(m: MapModel, descriptor: AbstractTreeNode<*>, path: Path, index: Int): MapModel {
     descriptor.update();
-    val parentPath = path / descriptor.toString()
+    val parentPath = path / index.toString()
     val parentLifetime = parentPath.getIn(m)!!.meta.lifetime()!!
-    val nodesPath = parentPath / "childs"
+    val nodesPath = parentPath / "children"
     val childsLifetime = Lifetime.create(parentLifetime).lifetime
     if (descriptor.getValue() is PsiDirectory) {
       val ptr = ptrManager.createSmartPsiElementPointer(descriptor.getValue() as PsiDirectory)
@@ -176,8 +179,7 @@ public class ProjectViewHost(val project: Project,
         .filter { descr -> descr.update(); true }
         .sortBy(comp)
         .forEachIndexed { idx, descr ->
-          var name = StringUtil.notNullize(descr.toString(), "null")
-          children[name] = createNode(descr, parentLifetime, nodesPath, idx)
+          children[idx.toString()] = createNode(descr, parentLifetime, nodesPath, idx)
         }
     return nodesPath.putIn(m, MapModel(children, createMeta("lifetime", childsLifetime)))
   }
