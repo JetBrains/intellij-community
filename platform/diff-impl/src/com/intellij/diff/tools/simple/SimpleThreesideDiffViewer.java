@@ -16,10 +16,11 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.comparison.*;
+import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.fragments.MergeWordFragment;
@@ -43,7 +44,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +158,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
             }
           });
 
-          List<MergeWordFragment> wordFragments = getWordFragments(chunks, comparisonPolicy, indicator);
+          List<MergeWordFragment> wordFragments = DiffUtil.compareThreesideInner(chunks, comparisonPolicy, indicator);
           fineLineFragments.add(new MergeLineFragmentImpl(fragment, wordFragments));
         }
 
@@ -184,41 +184,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     int startLine = fragment.getStartLine(side);
     int endLine = fragment.getEndLine(side);
     return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
-  }
-
-  @Nullable
-  private static List<MergeWordFragment> getWordFragments(@NotNull CharSequence[] chunks,
-                                                          @NotNull ComparisonPolicy comparisonPolicy,
-                                                          @NotNull ProgressIndicator indicator) {
-    assert chunks[0] != null || chunks[1] != null || chunks[2] != null; // ---
-    if (chunks[0] == null && chunks[1] == null ||
-        chunks[0] == null && chunks[2] == null ||
-        chunks[1] == null && chunks[2] == null) { // =--, -=-, --=
-      return null;
-    }
-
-    if (chunks[0] != null && chunks[1] != null && chunks[2] != null) { // ===
-      return ByWord.compare(chunks[0], chunks[1], chunks[2], comparisonPolicy, indicator);
-    }
-
-    // ==-, =-=, -==
-    final ThreeSide side1 = chunks[0] != null ? ThreeSide.LEFT : ThreeSide.BASE;
-    final ThreeSide side2 = chunks[2] != null ? ThreeSide.RIGHT : ThreeSide.BASE;
-    CharSequence chunk1 = side1.select(chunks);
-    CharSequence chunk2 = side2.select(chunks);
-
-    if (chunks[1] != null && ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy)) {
-      return null; // unmodified - deleted
-    }
-
-    List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
-
-    return ContainerUtil.map(wordConflicts, new Function<DiffFragment, MergeWordFragment>() {
-      @Override
-      public MergeWordFragment fun(DiffFragment fragment) {
-        return new MyWordFragment(side1, side2, fragment);
-      }
-    });
   }
 
   @NotNull
@@ -417,35 +382,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
           return;
         }
       }
-    }
-  }
-
-  private static class MyWordFragment implements MergeWordFragment {
-    @NotNull private final ThreeSide mySide1;
-    @NotNull private final ThreeSide mySide2;
-    @NotNull private final DiffFragment myFragment;
-
-    public MyWordFragment(@NotNull ThreeSide side1,
-                          @NotNull ThreeSide side2,
-                          @NotNull DiffFragment fragment) {
-      assert side1 != side2;
-      mySide1 = side1;
-      mySide2 = side2;
-      myFragment = fragment;
-    }
-
-    @Override
-    public int getStartOffset(@NotNull ThreeSide side) {
-      if (side == mySide1) return myFragment.getStartOffset1();
-      if (side == mySide2) return myFragment.getStartOffset2();
-      return 0;
-    }
-
-    @Override
-    public int getEndOffset(@NotNull ThreeSide side) {
-      if (side == mySide1) return myFragment.getEndOffset1();
-      if (side == mySide2) return myFragment.getEndOffset2();
-      return 0;
     }
   }
 }

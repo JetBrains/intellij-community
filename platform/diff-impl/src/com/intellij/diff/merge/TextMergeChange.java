@@ -17,6 +17,7 @@ package com.intellij.diff.merge;
 
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUtil.UpdatedLineRange;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @NotNull private final TextMergeTool.TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeTool.TextMergeViewer.MyThreesideViewer myViewer;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+  @NotNull private final List<RangeHighlighter> myInnerHighlighters = new ArrayList<RangeHighlighter>();
 
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
@@ -50,6 +53,9 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private final int[] myEndLines = new int[3];
   private final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
+
+  @Nullable private List<MergeWordFragment> myInnerFragments;
+  private boolean myInnerFragmentsDamaged;
 
   @CalledInAwt
   public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeTool.TextMergeViewer viewer) {
@@ -65,7 +71,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     installHighlighter();
   }
 
-  void installHighlighter() {
+  @CalledInAwt
+  public void destroy() {
+    destroyHighlighter();
+    destroyInnerHighlighter();
+  }
+
+  @CalledInAwt
+  private void installHighlighter() {
     assert myHighlighters.isEmpty();
 
     createHighlighter(ThreeSide.BASE);
@@ -76,7 +89,16 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  void destroyHighlighter() {
+  private void installInnerHighlighter() {
+    assert myInnerHighlighters.isEmpty();
+
+    createInnerHighlighter(ThreeSide.BASE);
+    if (getType().isLeftChange()) createInnerHighlighter(ThreeSide.LEFT);
+    if (getType().isRightChange()) createInnerHighlighter(ThreeSide.RIGHT);
+  }
+
+  @CalledInAwt
+  private void destroyHighlighter() {
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.dispose();
     }
@@ -89,9 +111,23 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  void doReinstallHighlighter() {
+  private void destroyInnerHighlighter() {
+    for (RangeHighlighter highlighter : myInnerHighlighters) {
+      highlighter.dispose();
+    }
+    myInnerHighlighters.clear();
+  }
+
+  @CalledInAwt
+  public void doReinstallHighlighter() {
     destroyHighlighter();
     installHighlighter();
+
+    if (!myInnerFragmentsDamaged) {
+      destroyInnerHighlighter();
+      installInnerHighlighter();
+    }
+
     myViewer.repaintDividers();
   }
 
@@ -115,7 +151,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       if (end < document.getTextLength()) end++;
     }
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, false, HighlighterTargetArea.EXACT_RANGE, resolved));
+    boolean ignored = !resolved && myInnerFragments != null;
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE, resolved));
 
     if (startLine == endLine) {
       if (startLine != 0) {
@@ -128,6 +165,19 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     }
   }
 
+  private void createInnerHighlighter(@NotNull ThreeSide side) {
+    if (isResolved(side)) return;
+    if (myInnerFragments == null) return;
+
+    Editor editor = myViewer.getEditor(side);
+    int start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset();
+    for (MergeWordFragment fragment : myInnerFragments) {
+      int innerStart = start + fragment.getStartOffset(side);
+      int innerEnd = start + fragment.getEndOffset(side);
+      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, getDiffType()));
+    }
+  }
+
   //
   // Getters
   //
@@ -135,6 +185,9 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @CalledInAwt
   void setResolved(@NotNull Side side, boolean value) {
     myResolved[side.getIndex()] = value;
+
+    markInnerFragmentsDamaged();
+    destroyInnerHighlighter();
   }
 
   public boolean isResolved() {
@@ -180,6 +233,18 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   public void setEndLine(@NotNull ThreeSide side, int value) {
     myEndLines[side.getIndex()] = value;
+  }
+
+  public void markInnerFragmentsDamaged() {
+    myInnerFragmentsDamaged = true;
+  }
+
+  @CalledInAwt
+  public void setInnerFragments(@Nullable List<MergeWordFragment> innerFragments) {
+    myInnerFragmentsDamaged = false;
+    if (myInnerFragments == null && innerFragments == null) return;
+    myInnerFragments = innerFragments;
+    doReinstallHighlighter();
   }
 
   //
