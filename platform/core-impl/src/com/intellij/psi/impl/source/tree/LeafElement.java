@@ -140,15 +140,17 @@ public abstract class LeafElement extends TreeElement {
     return start + length;
   }
 
-  public LeafElement rawReplaceWithText(String newText) {
+  @NotNull
+  public LeafElement rawReplaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ASTFactory.leaf(getElementType(), newText);
     copyUserDataTo(newLeaf);
     rawReplaceWithList(newLeaf);
     newLeaf.clearCaches();
     return newLeaf;
   }
-  
-  public LeafElement replaceWithText(String newText) {
+
+  @NotNull
+  public LeafElement replaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
     getTreeParent().replaceChild(this, newLeaf);
     return newLeaf;
@@ -160,7 +162,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
+  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
   public boolean textMatches(@NotNull final CharSequence buf, int start, int end) {
     final CharSequence text = getChars();
     final int len = text.length();
@@ -211,7 +213,7 @@ public abstract class LeafElement extends TreeElement {
     return leafHC(getChars());
   }
 
-  public static int leafHC(CharSequence text) {
+  static int leafHC(CharSequence text) {
     final int len = text.length();
     int hc = 0;
 
