@@ -203,7 +203,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   public void testSetTimeSpend() throws Exception {
     // only REST API 2.0 supports this feature
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
-    Task task = myRepository.findTask("UT-9");
+    Task task = myRepository.findTask("UT-21");
     assertNotNull("Test task not found", task);
 
     // timestamp as comment
@@ -220,6 +220,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     String response = myRepository.executeMethod(request);
     JsonObject object = new Gson().fromJson(response, JsonObject.class);
     JsonArray worklogs = object.get("worklogs").getAsJsonArray();
+    assertTrue("Michael, it's time to clean it!", worklogs.size() < 1000);
     JsonObject last = worklogs.get(worklogs.size() - 1).getAsJsonObject();
 
     assertEquals(comment, last.get("comment").getAsString());
@@ -228,9 +229,9 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testParseVersionNumbers() throws Exception {
-    assertEquals(new JiraVersion("6.1-OD-09-WN").toString(), "6.1.9");
-    assertEquals(new JiraVersion("5.0.6").toString(), "5.0.6");
-    assertEquals(new JiraVersion("4.4.5").toString(), "4.4.5");
+    assertEquals("6.1.9", new JiraVersion("6.1-OD-09-WN").toString());
+    assertEquals("5.0.6", new JiraVersion("5.0.6").toString());
+    assertEquals("4.4.5", new JiraVersion("4.4.5").toString());
   }
 
   @Override
