@@ -16,15 +16,15 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TreeTraverser;
+import com.intellij.util.Function;
+import com.intellij.util.containers.FilteredTraverser;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -64,30 +64,36 @@ public class JBSwingUtilities {
   }
 
   @NotNull
-  public static TreeTraverser<Component> uiTraverser() {
-    return new TreeTraverser<Component>() {
-      @Override
-      public Iterable<Component> children(Component c) {
-        Iterable<Component> result = ContainerUtil.emptyIterable();
-        if (c instanceof JMenu) {
-          result = Arrays.asList(((JMenu)c).getMenuComponents());
-        }
-        else if (c instanceof Container) {
-          result = Arrays.asList(((Container)c).getComponents());
-        }
-        if (c instanceof JComponent) {
-          JComponent jc = (JComponent)c;
-          Iterable<? extends Component> orphans = UIUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
-          if (orphans != null) {
-            result = ContainerUtil.concat(result, orphans);
-          }
-          JPopupMenu jpm = jc.getComponentPopupMenu();
-          if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
-            result = ContainerUtil.concat(result, Collections.singletonList(jpm));
-          }
-        }
-        return result;
-      }
-    };
+  public static FilteredTraverser<Component> uiTraverser() {
+    return new FilteredTraverser<Component>(COMPONENT_CHILDREN);
   }
+
+  private static final Function<Component, Iterable<Component>> COMPONENT_CHILDREN = new Function<Component, Iterable<Component>>() {
+    @NotNull
+    @Override
+    public JBIterable<Component> fun(@NotNull Component c) {
+      JBIterable<Component> result;
+      if (c instanceof JMenu) {
+        result = JBIterable.of(((JMenu)c).getMenuComponents());
+      }
+      else if (c instanceof Container) {
+        result = JBIterable.of(((Container)c).getComponents());
+      }
+      else {
+        result = JBIterable.empty();
+      }
+      if (c instanceof JComponent) {
+        JComponent jc = (JComponent)c;
+        Iterable<? extends Component> orphans = UIUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+        if (orphans != null) {
+          result = result.append(orphans);
+        }
+        JPopupMenu jpm = jc.getComponentPopupMenu();
+        if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
+          result = result.append(Collections.singletonList(jpm));
+        }
+      }
+      return result;
+    }
+  };
 }

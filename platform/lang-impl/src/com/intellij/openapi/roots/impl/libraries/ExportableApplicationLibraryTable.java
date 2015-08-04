@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.components.StoragePathMacros;
  */
 @State(
   name = "libraryTable",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.PER_PLATFORM)
 )
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
 }

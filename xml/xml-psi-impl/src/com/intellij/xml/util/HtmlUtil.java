@@ -26,6 +26,7 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -495,6 +496,18 @@ public class HtmlUtil {
     final PsiFile file = declaration != null ? declaration.getContainingFile() : null;
     final String name = file != null ? file.getName() : null;
     return "meta.rnc".equals(name);
+  }
+
+  public static boolean tagHasHtml5Schema(@NotNull XmlTag context) {
+    XmlElementDescriptor descriptor = context.getDescriptor();
+    if (descriptor != null) {
+      XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
+      XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
+      String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
+      return Comparing.equal(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
+             Comparing.equal(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
+    }
+    return false;
   }
 
   private static class TerminateException extends RuntimeException {

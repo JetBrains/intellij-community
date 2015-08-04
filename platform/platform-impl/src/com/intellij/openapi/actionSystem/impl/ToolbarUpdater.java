@@ -122,7 +122,7 @@ public abstract class ToolbarUpdater implements Activatable {
   protected abstract void updateActionsImpl(boolean transparentOnly, boolean forced);
 
   protected void updateActionTooltips() {
-    for (ActionButton actionButton : JBSwingUtilities.uiTraverser().preOrderTraversal(myComponent).filter(ActionButton.class)) {
+    for (ActionButton actionButton : JBSwingUtilities.uiTraverser().preOrderDfsTraversal(myComponent).filter(ActionButton.class)) {
       actionButton.updateToolTipText();
     }
   }

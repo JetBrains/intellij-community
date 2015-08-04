@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -391,6 +392,10 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   @Override
   public void itemHovered(@Nullable BreadcrumbsPsiItem item) {
+    if (!Registry.is("editor.breadcrumbs.highlight.on.hover")) {
+      return;
+    }
+
     HighlightManager hm = HighlightManager.getInstance(myProject);
     if (myHighlighed != null) {
       for (RangeHighlighter highlighter : myHighlighed) {

@@ -46,17 +46,23 @@ public class TestCaseLoader {
   public static final String TARGET_TEST_GROUP = "idea.test.group";
   public static final String TARGET_TEST_PATTERNS = "idea.test.patterns";
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
+  public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
+  public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
   public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
   private final List<Class> myClassList = new ArrayList<Class>();
+  private final List<Throwable> myClassLoadingErrors = new ArrayList<Throwable>();
   private Class myFirstTestClass;
   private Class myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
-  private final boolean myIsPerformanceTestsRun;
+  private final boolean myForceLoadPerformanceTests;
 
-  public TestCaseLoader(String classFilterName, boolean isPerformanceTestsRun) {
-    myIsPerformanceTestsRun = isPerformanceTestsRun;
-
+  public TestCaseLoader(String classFilterName) {
+    this(classFilterName, false);
+  }
+  
+  public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
+    myForceLoadPerformanceTests = forceLoadPerformanceTests;
     String patterns = System.getProperty(TARGET_TEST_PATTERNS);
     if (patterns != null) {
       myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
@@ -142,7 +148,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
-    if (TestAll.isPerformanceTest(testCaseClass) && !myIsPerformanceTestsRun) return true;
+    if (!myForceLoadPerformanceTests && !TestAll.shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
@@ -167,28 +173,23 @@ public class TestCaseLoader {
     }
     return !PlatformTestUtil.bombExplodes(bombedAnnotation);
   }
-
+  
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
         Class candidateClass = Class.forName(className, false, getClass().getClassLoader());
         addClassIfTestCase(candidateClass, moduleName);
       }
-      catch (ClassNotFoundException e) {
-        System.err.println("Cannot load class " + className + ": " + e.getMessage());
-        e.printStackTrace();
-      }
-      catch (ExceptionInInitializerError e) {
-        System.err.println("Cannot initialize class " + className + ": " + e.getException().getMessage());
-        e.printStackTrace();
-        System.err.println("Root cause:");
-        e.getException().printStackTrace();
-      }
-      catch (LinkageError e) {
-        System.err.println("Cannot load class " + className + ": " + e.getMessage());
-        e.printStackTrace();
+      catch (Throwable e) {
+        String message = "Cannot load class " + className + ": " + e.getMessage();
+        System.err.println(message);
+        myClassLoadingErrors.add(new Throwable(message, e));
       }
     }
+  }
+
+  public List<Throwable> getClassLoadingErrors() {
+    return myClassLoadingErrors;
   }
 
   private static final List<String> ourRankList = getTeamCityRankList();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,12 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 import java.util.Locale;
 
@@ -33,13 +30,11 @@ import java.util.Locale;
  * @author Rustam Vishnyakov
  */
 @State(
-  name="ExportableFileTemplateSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/" + ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE
-    )}
+  name = "ExportableFileTemplateSettings",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/" + ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE),
+  additionalExportFile = StoragePathMacros.ROOT_CONFIG + "/" + FileTemplatesLoader.TEMPLATES_DIR
 )
-public class ExportableFileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element>, ExportableComponent {
+public class ExportableFileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
   public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   static final String ELEMENT_TEMPLATE = "template";
@@ -55,20 +50,6 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
 
   public static ExportableFileTemplateSettings getInstance() {
     return ServiceManager.getService(ExportableFileTemplateSettings.class);
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    File exportableSettingsFile =
-      new File(PathManager.getOptionsPath() + File.separator + EXPORTABLE_SETTINGS_FILE);
-    return new File[] {getDefaultTemplatesManager().getConfigRoot(false), exportableSettingsFile};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return IdeBundle.message("item.file.templates");
   }
 
   @Nullable

@@ -173,6 +173,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           while (pos > 0 && line.charAt(pos - 1) == '\\') {
             pos = line.indexOf('=', pos + 1);
           }
+          line = line.replaceAll("[\\\\]{1}","\\\\\\\\");
           parsed.add(new EnvironmentVariable(
             StringUtil.unescapeStringCharacters(line.substring(0, pos)),
             StringUtil.unescapeStringCharacters(line.substring(pos + 1)),

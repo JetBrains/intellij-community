@@ -32,7 +32,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.FluentIterable;
+import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
@@ -71,7 +71,7 @@ public final class PyExtractSuperclassHelper {
     selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
 
     final RefactoringEventData beforeData = new RefactoringEventData();
-    beforeData.addElements(FluentIterable.from(selectedMemberInfos).transform(new Function<PyMemberInfo<PyElement>, PsiElement>() {
+    beforeData.addElements(JBIterable.from(selectedMemberInfos).transform(new Function<PyMemberInfo<PyElement>, PsiElement>() {
       @Override
       public PsiElement fun(PyMemberInfo<PyElement> info) {
         return info.getMember();

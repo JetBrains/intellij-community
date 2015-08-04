@@ -36,7 +36,6 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -50,14 +49,15 @@ public class SheetController {
   private static final Font regularFont = new Font(fontName, Font.PLAIN, 10);
   private static final Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
   private final DialogWrapper.DoNotAskOption myDoNotAskOption;
-  private JCheckBox doNotAskCheckBox;
   private boolean myDoNotAskResult;
 
   private BufferedImage myShadowImage;
   
   private final JButton[] buttons;
   private JButton myDefaultButton;
-  private JButton myFocusedButton;
+  private JComponent myFocusedComponent;
+
+  private JCheckBox doNotAskCheckBox = new JCheckBox();
 
   public static int SHADOW_BORDER = 5;
 
@@ -99,7 +99,7 @@ public class SheetController {
                   final String[] buttonTitles,
                   final String defaultButtonTitle,
                   final DialogWrapper.DoNotAskOption doNotAskOption,
-                  final String focusedButton) {
+                  final String focusedButtonTitle) {
     if (icon != null) {
       myIcon = icon;
     }
@@ -111,6 +111,11 @@ public class SheetController {
 
     myResult = null;
 
+    int defaultButtonIndex = -1;
+    int focusedButtonIndex = -1;
+
+    boolean moveFocusedToTheLeft = defaultButtonTitle != null && defaultButtonTitle.equals(focusedButtonTitle);
+
     for (int i = 0; i < buttons.length; i++) {
       String buttonTitle = buttonTitles[i];
 
@@ -119,16 +124,29 @@ public class SheetController {
       handleMnemonics(i, buttonTitle);
 
       if (buttonTitle.equals(defaultButtonTitle)) {
-        myDefaultButton = buttons[i];
+        defaultButtonIndex = i;
       }
-      if (buttonTitle.equals(focusedButton)) {
-        myFocusedButton = buttons[i];
+
+      if (buttonTitle.equals("Cancel")) {
+        moveFocusedToTheLeft = true;
+      }
+
+      if (buttonTitle.equals(focusedButtonTitle)) {
+        focusedButtonIndex = moveFocusedToTheLeft ?  buttons.length - 1 : i;
       }
     }
 
-    if (myFocusedButton == null) {
-      myFocusedButton = myDefaultButton;
+    defaultButtonIndex = (focusedButtonIndex == defaultButtonIndex) || defaultButtonTitle == null ? 0 : defaultButtonIndex;
+
+    if (focusedButtonIndex != -1 && !moveFocusedToTheLeft) {
+      myFocusedComponent = buttons[focusedButtonIndex];
+    } else if (doNotAskOption != null) {
+      myFocusedComponent = doNotAskCheckBox;
+    } else {
+      myFocusedComponent = buttons[buttons.length - 1];
     }
+
+    myDefaultButton = (defaultButtonIndex == -1) ? buttons[0] : buttons[defaultButtonIndex];
 
     if (myResult == null) {
       myResult = Messages.CANCEL_BUTTON;
@@ -171,11 +189,11 @@ public class SheetController {
   }
 
   void requestFocus() {
-    if (myFocusedButton == null) return; // it might be we have only one button. it is a default one in that case
+    if (myFocusedComponent == null) return; // it might be we have only one button. it is a default one in that case
     if (SystemInfo.isAppleJvm) {
-      myFocusedButton.requestFocus();
+      myFocusedComponent.requestFocus();
     } else {
-      myFocusedButton.requestFocusInWindow();
+      myFocusedComponent.requestFocusInWindow();
     }
   }
 
@@ -422,11 +440,13 @@ public class SheetController {
   }
 
   private void layoutDoNotAskCheckbox(JPanel sheetPanel) {
-    doNotAskCheckBox = new JCheckBox(myDoNotAskOption.getDoNotShowMessage(), !myDoNotAskOption.isToBeShown());
+    doNotAskCheckBox.setText(myDoNotAskOption.getDoNotShowMessage());
+    doNotAskCheckBox.setSelected(!myDoNotAskOption.isToBeShown());
+
     doNotAskCheckBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
-        myDoNotAskResult = e.getStateChange() == ItemEvent.SELECTED;
+        myDoNotAskResult = (e.getStateChange() == ItemEvent.SELECTED);
       }
     });
     doNotAskCheckBox.repaint();
@@ -434,6 +454,10 @@ public class SheetController {
 
     doNotAskCheckBox.setLocation(LEFT_SHEET_OFFSET, SHEET_HEIGHT);
     sheetPanel.add(doNotAskCheckBox);
+
+    if (myFocusedComponent == null) {
+      myFocusedComponent = doNotAskCheckBox;
+    }
 
     SHEET_HEIGHT += doNotAskCheckBox.getHeight();
   }

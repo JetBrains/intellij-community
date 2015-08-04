@@ -54,6 +54,8 @@ import java.util.*;
  * operations significantly more concise.
  *
  * @author Marcin Mikosik
+ *
+ * @deprecated replaced with JBIterable in IDEA 15.
  */
 public abstract class FluentIterable<E> implements Iterable<E> {
   // We store 'iterable' and use it instead of 'this' to allow Iterables to perform instanceof

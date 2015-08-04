@@ -636,7 +636,7 @@
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
         <separator/>
         <group id="Internal.focusAndModality" popup="true" text="Focus and modality testing">
-          <action id="CheckMessagesButtonsOrderAction" internal="true" class="com.intellij.notification.impl.actions.CheckMessagesButtonsOrderAction"
+          <action id="CheckMessagesButtonsOrderAction" internal="true" class="com.intellij.internal.validation.CheckMessagesButtonsOrderAction"
                   text="Check Messages Buttons Order"/>
           <action id="ShowDelayedMessageInternalAction" internal="true" class="com.intellij.notification.impl.actions.ShowDelayedMessageInternalAction"
                   text="Show Delayed Message"/>
