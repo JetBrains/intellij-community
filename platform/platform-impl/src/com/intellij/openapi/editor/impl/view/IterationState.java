@@ -171,13 +171,13 @@ public class IterationState {
     myDefaultBackground = editor.getColorsScheme().getDefaultBackground();
     myDefaultForeground = editor.getColorsScheme().getDefaultForeground();
 
-    myCaretRowStart = caretModel.getVisualLineStart();
+    myCaretRowStart = useCaretAndSelection ? caretModel.getVisualLineStart() : -1;
     int visualLineEnd = caretModel.getVisualLineEnd();
     if (visualLineEnd == myDocument.getTextLength() && myDocument.getLineCount() > 0 && 
         visualLineEnd > myDocument.getLineStartOffset(myDocument.getLineCount() - 1)) {
       visualLineEnd++;
     }
-    myCaretRowEnd = visualLineEnd;
+    myCaretRowEnd = useCaretAndSelection ? visualLineEnd : -1;
     myCaretRowStartsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowStart) != null;
     myCaretRowEndsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowEnd) != null;
 
