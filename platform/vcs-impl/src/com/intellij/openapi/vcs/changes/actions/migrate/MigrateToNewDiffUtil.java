@@ -31,6 +31,7 @@ import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -277,7 +278,7 @@ public class MigrateToNewDiffUtil {
 
     @Override
     public void update(AnActionEvent e) {
-      if (!ApplicationManager.getApplication().isInternal()) {
+      if (!Registry.is("diff.show.old.diff.action.enabled")) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
