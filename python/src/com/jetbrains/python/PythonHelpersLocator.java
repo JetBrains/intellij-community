@@ -33,7 +33,9 @@ public enum PythonHelpersLocator implements PythonHelper {
   DEBUGGER("pydev", "pydevd"),
   CONSOLE("pydev", "pydevconsole"),
   RUN_IN_CONSOLE("pydev", "pydev_run_in_console"),
+  PROFILER("profiler", "run_profiler"),
 
+  // Test runners
   UT("pycharm", "utrunner"),
   SETUPPY("pycharm", "pycharm_setup_runner"),
   NOSE("pycharm", "noserunner"),
