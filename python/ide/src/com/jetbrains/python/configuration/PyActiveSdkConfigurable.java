@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -44,7 +46,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -316,16 +317,21 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void setSdk(final Sdk item) {
-    final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       @Override
       public void run() {
-        rootManager.setProjectSdk(item);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            ProjectRootManager.getInstance(myProject).setProjectSdk(item);
+          }
+        });
+        if (myModule != null) {
+          ModuleRootModificationUtil.setModuleSdk(myModule, item);
+        }
       }
     });
-    if (myModule != null) {
-      ModuleRootModificationUtil.setModuleSdk(myModule, item);
-    }
+
   }
 
   public static void rehighlightStrings(final @NotNull Project project) {
