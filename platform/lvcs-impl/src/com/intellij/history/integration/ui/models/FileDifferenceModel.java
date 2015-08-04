@@ -71,13 +71,13 @@ public abstract class FileDifferenceModel {
   protected abstract Entry getRightEntry();
 
   public DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
-    if (!hasLeftEntry()) return DiffContentFactory.getInstance().create("");
+    if (!hasLeftEntry()) return DiffContentFactory.getInstance().createEmpty();
     if (!isLeftContentAvailable(p)) return DiffContentFactory.getInstance().create("Content not available");
     return doGetLeftDiffContent(p);
   }
 
   public DiffContent getRightDiffContent(RevisionProcessingProgress p) {
-    if (!hasRightEntry()) return DiffContentFactory.getInstance().create("");
+    if (!hasRightEntry()) return DiffContentFactory.getInstance().createEmpty();
     if (!isRightContentAvailable(p)) return DiffContentFactory.getInstance().create("Content not available");
     if (isRightContentCurrent) return getEditableRightDiffContent(p);
     return getReadOnlyRightDiffContent(p);
