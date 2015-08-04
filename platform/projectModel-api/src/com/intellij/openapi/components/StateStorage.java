@@ -40,6 +40,11 @@ public interface StateStorage {
   @Deprecated
   Topic<Listener> PROJECT_STORAGE_TOPIC = new Topic<Listener>("PROJECT_STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
 
+  /**
+   * You can call this method only once.
+   * If state exists and not archived - not-null result.
+   * If doesn't exists or archived - null result.
+   */
   @Nullable
   <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto);
 

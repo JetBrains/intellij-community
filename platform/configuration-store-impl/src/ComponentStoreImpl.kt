@@ -251,7 +251,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
       LOG.error("$name has default state, but not marked to load it")
     }
 
-    var state = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
+    val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     val storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ)
     val stateStorageChooser = component as? StateStorageChooserEx
     runReadAction {
@@ -262,25 +262,24 @@ public abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = getStateStorageManager().getStateStorage(storageSpec)
-        var forcedState = false
-        if (!storage.hasState(component, name, stateClass, reloadData)) {
-          forcedState = changedStorages != null && changedStorages.contains(storage)
-          if (!forcedState) {
+        var state = storage.getState(component, name, stateClass, defaultState)
+        if (state == null) {
+          if (changedStorages != null && changedStorages.contains(storage)) {
+            // state will be null if file deleted
+            // we must create empty (initial) state to reinit component
+            state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
+          }
+          else {
             continue
           }
         }
 
-        state = storage.getState(component, name, stateClass, state)
-        if (state == null && forcedState) {
-          // state will be null if file deleted
-          // we must create empty (initial) state to reinit component
-          state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)
-        }
-        break
+        component.loadState(state)
+        return name
       }
 
-      if (state != null) {
-        component.loadState(state)
+      if (defaultState != null) {
+        component.loadState(defaultState)
       }
     }
     return name
