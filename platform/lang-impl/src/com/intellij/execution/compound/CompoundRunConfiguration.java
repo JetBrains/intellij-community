@@ -77,9 +77,6 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (getSetToRun().isEmpty()) throw new RuntimeConfigurationException("There is nothing to run");
-    for (RunConfiguration configuration : getSetToRun()) {
-      configuration.checkConfiguration();
-    }
   }
 
   @Nullable
