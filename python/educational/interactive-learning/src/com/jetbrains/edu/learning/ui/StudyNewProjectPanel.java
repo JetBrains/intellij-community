@@ -189,7 +189,7 @@ public class StudyNewProjectPanel{
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
-    myGenerator.flushCache();
+    StudyProjectGenerator.flushCache(myAvailableCourses);
   }
 
 

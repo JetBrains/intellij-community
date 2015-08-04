@@ -37,13 +37,11 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  private final File myCoursesDir = new File(PathManager.getConfigPath(), "courses");
+  private static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
@@ -72,9 +70,9 @@ public class StudyProjectGenerator {
             @Override
             public void run() {
               course.initCourse(false);
-              final File courseDirectory = new File(myCoursesDir, course.getName());
+              final File courseDirectory = new File(ourCoursesDir, course.getName());
               StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-              course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
+              course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
               VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
               StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
               openFirstTask(course, project);
@@ -88,7 +86,7 @@ public class StudyProjectGenerator {
   private Course getCourse() {
     Reader reader = null;
     try {
-      final File courseFile = new File(new File(myCoursesDir, mySelectedCourseInfo.getName()), COURSE_META_FILE);
+      final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), COURSE_META_FILE);
       if (courseFile.exists()) {
         reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
         Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
@@ -147,7 +145,7 @@ public class StudyProjectGenerator {
   }
 
   public void flushCourse(@NotNull final Course course) {
-    final File courseDirectory = new File(myCoursesDir, course.getName());
+    final File courseDirectory = new File(ourCoursesDir, course.getName());
     FileUtil.createDirectory(courseDirectory);
     flushCourseJson(course, courseDirectory);
 
@@ -241,15 +239,15 @@ public class StudyProjectGenerator {
    * Writes courses to cache file {@link StudyProjectGenerator#CACHE_NAME}
    */
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public void flushCache() {
-    File cacheFile = new File(myCoursesDir, CACHE_NAME);
+  public static void flushCache(List<CourseInfo> courses) {
+    File cacheFile = new File(ourCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
     try {
       if (!createCacheFile(cacheFile)) return;
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
 
       writer = new PrintWriter(cacheFile);
-      for (CourseInfo courseInfo : myCourses) {
+      for (CourseInfo courseInfo : courses) {
         final String json = gson.toJson(courseInfo);
         writer.println(json);
       }
@@ -265,9 +263,9 @@ public class StudyProjectGenerator {
     }
   }
 
-  private boolean createCacheFile(File cacheFile) throws IOException {
-    if (!myCoursesDir.exists()) {
-      final boolean created = myCoursesDir.mkdirs();
+  private static boolean createCacheFile(File cacheFile) throws IOException {
+    if (!ourCoursesDir.exists()) {
+      final boolean created = ourCoursesDir.mkdirs();
       if (!created) {
         LOG.error("Cannot flush courses cache. Can't create courses directory");
         return false;
@@ -284,15 +282,12 @@ public class StudyProjectGenerator {
   }
 
   public List<CourseInfo> getCourses(boolean force) {
-    if (myCoursesDir.exists()) {
-      File cacheFile = new File(myCoursesDir, CACHE_NAME);
-      if (cacheFile.exists()) {
-        myCourses = getCoursesFromCache(cacheFile);
-      }
+    if (ourCoursesDir.exists()) {
+      myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
       myCourses = EduStepicConnector.getCourses();
-      flushCache();
+      flushCache(myCourses);
     }
     return myCourses;
   }
@@ -311,8 +306,12 @@ public class StudyProjectGenerator {
     }
   }
 
-  private static List<CourseInfo> getCoursesFromCache(@NotNull final File cacheFile) {
+  public static List<CourseInfo> getCoursesFromCache() {
     List<CourseInfo> courses = new ArrayList<CourseInfo>();
+    final File cacheFile = new File(ourCoursesDir, CACHE_NAME);
+    if (!cacheFile.exists()) {
+      return courses;
+    }
     try {
       final FileInputStream inputStream = new FileInputStream(cacheFile);
       try {
@@ -351,12 +350,12 @@ public class StudyProjectGenerator {
     try {
       String fileName = file.getName();
       String unzippedName = fileName.substring(0, fileName.indexOf("."));
-      File courseDir = new File(myCoursesDir, unzippedName);
+      File courseDir = new File(ourCoursesDir, unzippedName);
       ZipUtil.unzip(null, courseDir, file, null, null, true);
       CourseInfo courseName = addCourse(myCourses, courseDir);
-      flushCache();
+      flushCache(myCourses);
       if (courseName != null && !courseName.getName().equals(unzippedName)) {
-        courseDir.renameTo(new File(myCoursesDir, courseName.getName()));
+        courseDir.renameTo(new File(ourCoursesDir, courseName.getName()));
         courseDir.delete();
       }
       return courseName;

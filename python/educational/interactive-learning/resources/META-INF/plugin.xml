@@ -61,6 +61,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.jetbrains.edu.learning.stepic.StudyCoursesUpdater"/>
+
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.stepic.StudyConfigurable"
                              id="com.jetbrains.edu.learning.stepic.StudyConfigurable"
                              displayName="Educational"/>
