@@ -31,6 +31,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
@@ -390,8 +392,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private static Color readColorValue(final Element colorElement) {
-    String blindness = null; // TODO: get blindness
-    return blindness != null
+    String blindness = Registry.stringValue("color.blindness"); // TODO: get blindness
+    return !StringUtil.isEmpty(blindness)
            ? readColor(colorElement, blindness, OS_VALUE_PREFIX, VALUE_ELEMENT)
            : readColor(colorElement, OS_VALUE_PREFIX, VALUE_ELEMENT);
   }
