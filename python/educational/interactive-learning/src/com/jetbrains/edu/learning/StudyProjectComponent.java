@@ -15,7 +15,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -268,8 +267,9 @@ public class StudyProjectComponent implements ProjectComponent {
 
   public static StudyProjectComponent getInstance(@NotNull final Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
-    return ModuleServiceManager.getService(module, StudyProjectComponent.class);
+    return module.getComponent(StudyProjectComponent.class);
   }
+
   private class FileCreatedByUserListener extends VirtualFileAdapter {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
