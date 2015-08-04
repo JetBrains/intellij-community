@@ -324,18 +324,18 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.toLog = true;
 
     try {
-      log("T: ------");
+      log("T: ------ akjdhfksdjgf");
       File f = createTempFile("xx.asfdasdfas", "akjdhfksdjgf");
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
-      log("T: ------");
+      log("T: ------ TYPE:IDEA_MODULE");
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
-      log("T: ------");
+      log("T: ------ TYPE:IDEA_PROJECT");
       VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
