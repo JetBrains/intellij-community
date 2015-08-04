@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 public enum PythonHelpersLocator implements PythonHelper {
-  COVERAGEPY("coveragepy", ""), COVERAGE("coverage", "run_coverage"),
+  COVERAGEPY("coveragepy", ""), COVERAGE("coverage_runner", "run_coverage"),
   DEBUGGER("pydev", "pydevd"),
   ATTACH_DEBUGGER("pydev", "pydevd_attach_to_process.attach_pydevd"),
 
@@ -203,7 +203,7 @@ public enum PythonHelpersLocator implements PythonHelper {
 
     @Override
     public String asParamString() {
-      return "-m " + myModuleName;
+      return "-m" + myModuleName;
     }
 
     @Override

@@ -2,7 +2,6 @@
 
 import os
 import sys
-import imp
 
 bundled_coverage_path = os.getenv('BUNDLED_COVERAGE_PATH')
 if bundled_coverage_path:
@@ -31,6 +30,16 @@ if run_cov:
     a_file.write(os.getcwd()+"\n")
     for path in sys.path: a_file.write(path + "\n")
     a_file.close()
+
+argv = []
+for arg in sys.argv:
+    if arg.startswith('-m'):
+        argv.append('-m')
+        argv.append(arg[2:])
+    else:
+        argv.append(arg)
+sys.argv = argv
+
 main()
 if run_cov:
     main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])
