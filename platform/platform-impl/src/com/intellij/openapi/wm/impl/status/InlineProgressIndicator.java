@@ -139,15 +139,15 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   protected void updateProgress() {
-    queueProgressUpdate(new Runnable() {
-      public void run() {
-        if (isDisposed()) return;
+    queueProgressUpdate();
+  }
 
-        updateProgressNow();
+  protected void updateAndRepaint() {
+    if (isDisposed()) return;
 
-        myComponent.repaint();
-      }
-    });
+    updateProgressNow();
+
+    myComponent.repaint();
   }
 
   public void updateProgressNow() {
@@ -197,8 +197,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return false;
   }
 
-  protected void queueProgressUpdate(Runnable update) {
-    update.run();
+  protected void queueProgressUpdate() {
+    updateAndRepaint();
   }
 
   protected void queueRunningUpdate(Runnable update) {
