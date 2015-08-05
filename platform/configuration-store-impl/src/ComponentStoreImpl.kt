@@ -43,7 +43,6 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
 import gnu.trove.THashMap
 import org.jdom.Element
-import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
@@ -82,9 +81,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
       else {
         initJdomExternalizable(component as JDOMExternalizable)
       }
-    }
-    catch (e: StateStorageException) {
-      throw e
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -203,13 +199,10 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
     runReadAction {
       try {
-        val defaultState = getDefaultState(component, componentName, javaClass<Element>())
-        if (defaultState != null) {
-          component.readExternal(defaultState)
-        }
+        getDefaultState(component, componentName, javaClass<Element>())?.let { component.readExternal(it) }
       }
-      catch (e: Exception) {
-        LOG.error("Cannot load defaults for ${component.javaClass}", e)
+      catch (e: Throwable) {
+        LOG.error(e)
       }
 
       val element = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null) ?: return null
@@ -290,11 +283,8 @@ public abstract class ComponentStoreImpl : IComponentStore {
       getPathMacroManagerForDefaults()?.expandPaths(documentElement)
       return DefaultStateSerializer.deserializeState(documentElement, stateClass, null)
     }
-    catch (e: IOException) {
-      throw StateStorageException("Error loading state from $url", e)
-    }
-    catch (e: JDOMException) {
-      throw StateStorageException("Error loading state from $url", e)
+    catch (e: Throwable) {
+      throw IOException("Error loading default state from $url", e)
     }
   }
 

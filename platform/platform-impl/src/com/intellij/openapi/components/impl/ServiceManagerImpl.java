@@ -18,10 +18,12 @@ package com.intellij.openapi.components.impl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -199,14 +201,14 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     @Override
-    public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+    public Object getComponentInstance(@NotNull PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
       Object instance = myInitializedComponentInstance;
       if (instance != null) {
         return instance;
       }
 
       // we must take read action before adapter lock - if service requested from EDT (2) and pooled (1), will be a deadlock, because EDT waits adapter lock and Pooled waits read lock
-      AccessToken readToken = Registry.is("use.read.action.to.init.service", !ApplicationManager.getApplication().isUnitTestMode()) ? ReadAction.start() : null;
+      AccessToken readToken = isUseReadActionToInitService() ? ReadAction.start() : null;
       try {
         synchronized (this) {
           instance = myInitializedComponentInstance;
@@ -216,6 +218,11 @@ public class ServiceManagerImpl implements BaseComponent {
           }
 
           ComponentAdapter delegate = getDelegate();
+
+          if (ApplicationManager.getApplication().isWriteAccessAllowed() && PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
+            LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " + myDescriptor.getImplementation()));
+          }
+
           // prevent storages from flushing and blocking FS
           AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
           try {
@@ -277,5 +284,10 @@ public class ServiceManagerImpl implements BaseComponent {
     public String toString() {
       return "ServiceComponentAdapter[" + myDescriptor.getInterface() + "]: implementation=" + myDescriptor.getImplementation() + ", plugin=" + myPluginDescriptor;
     }
+  }
+
+  public static boolean isUseReadActionToInitService() {
+    Application app = ApplicationManager.getApplication();
+    return Registry.is("use.read.action.to.init.service", !(app.isUnitTestMode() || app.isInternal()));
   }
 }

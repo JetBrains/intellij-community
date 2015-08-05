@@ -16,7 +16,9 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -48,12 +50,18 @@ public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
-    Module module = createMainModule(project);
-    handler.moduleCreated(module);
-    VirtualFile sourceRoot = createSourcesRoot(module);
-    if (sourceRoot != null) {
-      handler.sourceRootCreated(sourceRoot);
-      createContentEntry(module, sourceRoot);
+    AccessToken token = WriteAction.start();
+    try {
+      Module module = createMainModule(project);
+      handler.moduleCreated(module);
+      VirtualFile sourceRoot = createSourcesRoot(module);
+      if (sourceRoot != null) {
+        handler.sourceRootCreated(sourceRoot);
+        createContentEntry(module, sourceRoot);
+      }
+    }
+    finally {
+      token.finish();
     }
   }
 
