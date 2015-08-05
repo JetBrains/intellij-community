@@ -15,11 +15,11 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -46,14 +46,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements ApplicationComponent {
+public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Disposable {
   private static final Logger LOG = Logger.getInstance(SaveAndSyncHandler.class);
 
   private final Runnable myIdleListener;
   private final PropertyChangeListener myGeneralSettingsListener;
   private final GeneralSettings mySettings;
   private final ProgressManager myProgressManager;
-  private final SingleAlarm myRefreshDelayAlarm;
+  private final SingleAlarm myRefreshDelayAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      if (canSyncOrSave()) {
+        refreshOpenFiles();
+      }
+      maybeRefresh(ModalityState.NON_MODAL);
+    }
+  }, 300, this);
 
   private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
@@ -89,16 +97,6 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Applic
     };
     mySettings.addPropertyChangeListener(myGeneralSettingsListener);
 
-    myRefreshDelayAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        if (canSyncOrSave()) {
-          refreshOpenFiles();
-        }
-        maybeRefresh(ModalityState.NON_MODAL);
-      }
-    }, 300);
-
     frameStateManager.addListener(new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
@@ -119,17 +117,7 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Applic
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "SaveAndSyncHandler";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() {
-    myRefreshDelayAlarm.cancel();
+  public void dispose() {
     RefreshQueue.getInstance().cancelSession(myRefreshSessionId);
     mySettings.removePropertyChangeListener(myGeneralSettingsListener);
     IdeEventQueue.getInstance().removeIdleListener(myIdleListener);
