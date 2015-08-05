@@ -30,7 +30,6 @@ import java.awt.*;
   name = "WindowStateApplicationService",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/window.state.xml", roamingType = RoamingType.DISABLED)
 )
-@Deprecated
 final class WindowStateApplicationService extends WindowStateServiceImpl {
   @Override
   Point getDefaultLocationFor(Object object, @NotNull String key) {
