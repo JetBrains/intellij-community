@@ -42,41 +42,32 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     assertEquals("parameters", sections.get(0).getTitle());
     final List<SectionField> paramFields = sections.get(0).getFields();
     assertSize(2, paramFields);
-    final SectionField firstParamField = paramFields.get(0);
-    assertNotNull(firstParamField.getName());
-    assertEquals("x", firstParamField.getName().toString());
-    assertNotNull(firstParamField.getType());
-    assertEquals("int", firstParamField.getType().toString());
-    assertNotNull(firstParamField.getDescription());
-    assertEquals("first parameter", firstParamField.getDescription().toString());
+    final SectionField param1 = paramFields.get(0);
+    assertEquals("x", param1.getName());
+    assertEquals("int", param1.getType());
+    assertEquals("first parameter", param1.getDescription());
 
-    final SectionField secondParamField = paramFields.get(1);
-    assertNotNull(secondParamField.getName());
-    assertEquals("y", secondParamField.getName().toString());
-    assertNull(secondParamField.getType());
-    assertNotNull(secondParamField.getDescription());
+    final SectionField param2 = paramFields.get(1);
+    assertEquals("y", param2.getName());
+    assertEmpty(param2.getType());
     assertEquals("second parameter\n" +
-                 "        with longer description", secondParamField.getDescription().toString());
+                 "        with longer description", param2.getDescription());
 
     assertEquals("raises", sections.get(1).getTitle());
     final List<SectionField> exceptionFields = sections.get(1).getFields();
     assertSize(1, exceptionFields);
-    final SectionField firstExcField = exceptionFields.get(0);
-    assertNull(firstExcField.getName());
-    assertNotNull(firstExcField.getType());
-    assertEquals("Exception", firstExcField.getType().toString());
-    assertNotNull(firstExcField.getDescription());
-    assertEquals("if anything bad happens", firstExcField.getDescription().toString());
+    final SectionField exception1 = exceptionFields.get(0);
+    assertEmpty(exception1.getName());
+    assertEquals("Exception", exception1.getType());
+    assertEquals("if anything bad happens", exception1.getDescription());
 
     assertEquals("returns", sections.get(2).getTitle());
     final List<SectionField> returnFields = sections.get(2).getFields();
     assertSize(1, returnFields);
-    final SectionField firstReturnField = returnFields.get(0);
-    assertNull(firstReturnField.getName());
-    assertNotNull(firstReturnField.getType());
-    assertEquals("None", firstReturnField.getType().toString());
-    assertNotNull(firstReturnField.getDescription());
-    assertEquals("always", firstReturnField.getDescription().toString());
+    final SectionField return1 = returnFields.get(0);
+    assertEmpty(return1.getName());
+    assertEquals("None", return1.getType());
+    assertEquals("always", return1.getDescription());
   }
 
   @NotNull
@@ -117,22 +108,20 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     final Section examplesSection = docString.getSections().get(0);
     assertEquals("examples", examplesSection.getTitle());
     assertSize(1, examplesSection.getFields());
-    final SectionField firstExampleField = examplesSection.getFields().get(0);
-    assertNull(firstExampleField.getName());
-    assertNull(firstExampleField.getType());
-    assertNotNull(firstExampleField.getDescription());
+    final SectionField example1 = examplesSection.getFields().get(0);
+    assertEmpty(example1.getName());
+    assertEmpty(example1.getType());
     assertEquals("    Useless call\n" +
-                 "    func() == func()", firstExampleField.getDescription().toString());
+                 "    func() == func()", example1.getDescription());
     
     final Section notesSection = docString.getSections().get(1);
     assertEquals("notes", notesSection.getTitle());
     assertSize(1, notesSection.getFields());
-    final SectionField firstNotesField = notesSection.getFields().get(0);
-    assertNull(firstNotesField.getName());
-    assertNull(firstNotesField.getType());
-    assertNotNull(firstNotesField.getDescription());
+    final SectionField note1 = notesSection.getFields().get(0);
+    assertEmpty(note1.getName());
+    assertEmpty(note1.getType());
     assertEquals("      some\n" +
-                 "        notes", firstNotesField.getDescription().toString());
+                 "        notes", note1.getDescription());
   }
 
   public void testTypeReferences() {
@@ -143,21 +132,16 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     final Section paramSection = docString.getSections().get(0);
     assertSize(1, paramSection.getFields());
     final SectionField param1 = paramSection.getFields().get(0);
-    assertNotNull(param1.getName());
-    assertEquals("a1", param1.getName().toString());
-    assertNotNull(param1.getType());
-    assertEquals(":class:`MyClass`", param1.getType().toString());
-    assertNotNull(param1.getDescription());
-    assertEquals("used to call :def:`my_function` and access :attr:`my_attr`", param1.getDescription().toString());
+    assertEquals("a1", param1.getName());
+    assertEquals(":class:`MyClass`", param1.getType());
+    assertEquals("used to call :def:`my_function` and access :attr:`my_attr`", param1.getDescription());
 
     final Section raisesSection = docString.getSections().get(1);
     assertSize(1, raisesSection.getFields());
     final SectionField exception1 = raisesSection.getFields().get(0);
-    assertNull(exception1.getName());
-    assertNotNull(exception1.getType());
-    assertEquals(":class:`MyException`", exception1.getType().toString());
-    assertNotNull(exception1.getDescription());
-    assertEquals("thrown in case of any error", exception1.getDescription().toString());
+    assertEmpty(exception1.getName());
+    assertEquals(":class:`MyException`", exception1.getType());
+    assertEquals("thrown in case of any error", exception1.getDescription());
   }
 
   @Override

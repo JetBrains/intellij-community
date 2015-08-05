@@ -406,18 +406,33 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       myDescription = description;
     }
 
+    @NotNull
+    public String getName() {
+      return myName == null ? "" : myName.toString();
+    }
+
     @Nullable
-    public Substring getName() {
+    public Substring getNameAsSubstring() {
       return myName;
     }
 
-    @Nullable
-    public Substring getType() {
+    @NotNull
+    public String getType() {
+      return myType == null ? "" : myType.toString();
+    }
+
+    @Nullable 
+    public Substring getTypeAsSubstring() {
       return myType;
     }
 
+    @NotNull
+    public String getDescription() {
+      return myDescription == null ? "" : myDescription.toString();
+    }
+
     @Nullable
-    public Substring getDescription() {
+    public Substring getDescriptionAsSubstring() {
       return myDescription;
     }
 
