@@ -17,7 +17,6 @@ package com.jetbrains.python.toolbox;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.regex.Pattern;
 
 /**
  * Substring with explicit offsets within its parent string.
- * <p>
+ * <p/>
  * Regular java.lang.String objects share a single char buffer for results of substring(), trim(), etc., but the offset and count
  * fields of Strings are unfortunately private.
  *
@@ -42,7 +41,7 @@ public class Substring implements CharSequence {
     }
     return new Substring(s, matcher.start(groupNumber), matcher.end(groupNumber));
   }
-  
+
   @NotNull
   public static Substring fromMatcherGroup(@NotNull Substring s, @NotNull Matcher matcher, int groupNumber) {
     if (matcher.groupCount() < groupNumber || matcher.end(groupNumber) > s.length()) {
@@ -54,7 +53,7 @@ public class Substring implements CharSequence {
   @NotNull private final String myString;
   private final int myStartOffset;
   private final int myEndOffset;
-  
+
   public Substring(@NotNull String s) {
     this(s, 0, s.length());
   }
@@ -106,7 +105,7 @@ public class Substring implements CharSequence {
   public List<Substring> split(@NotNull String regex) {
     return split(regex, Integer.MAX_VALUE);
   }
-  
+
   @NotNull
   public List<Substring> split(@NotNull String regex, int maxSplits) {
     return split(Pattern.compile(regex), maxSplits);
@@ -116,7 +115,7 @@ public class Substring implements CharSequence {
   public List<Substring> split(@NotNull Pattern pattern) {
     return split(pattern, Integer.MAX_VALUE);
   }
-  
+
   @NotNull
   public List<Substring> split(@NotNull Pattern pattern, int maxSplits) {
     final List<Substring> result = new ArrayList<Substring>();
@@ -130,11 +129,13 @@ public class Substring implements CharSequence {
         end = m.start();
         result.add(createAnotherSubstring(start, Math.min(end, myEndOffset)));
         start = m.end();
-      } while (end < myEndOffset && m.find() && splitCount < maxSplits);
+      }
+      while (end < myEndOffset && m.find() && splitCount < maxSplits);
       if (start < myEndOffset) {
         result.add(createAnotherSubstring(start, myEndOffset));
       }
-    } else {
+    }
+    else {
       result.add(createAnotherSubstring(start, end));
     }
     return result;
@@ -147,13 +148,21 @@ public class Substring implements CharSequence {
 
   @NotNull
   public Substring trim() {
+    return trimLeft().trimRight();
+  }
+  
+  @NotNull
+  public Substring trimLeft() {
     int start;
+    for (start = myStartOffset; start < myEndOffset && myString.charAt(start) <= '\u0020'; start++) { /*empty*/ }
+    return createAnotherSubstring(start, myEndOffset);
+  }
+
+  @NotNull
+  public Substring trimRight() {
     int end;
-    for (start = myStartOffset; start < myEndOffset && myString.charAt(start) <= '\u0020'; start++) {
-    }
-    for (end = myEndOffset - 1; end > start && myString.charAt(end) <= '\u0020'; end--) {
-    }
-    return createAnotherSubstring(start, end + 1);
+    for (end = myEndOffset - 1; end > myStartOffset && myString.charAt(end) <= '\u0020'; end--) { /* empty */ }
+    return createAnotherSubstring(myStartOffset, end + 1);
   }
 
   @NotNull
@@ -173,7 +182,7 @@ public class Substring implements CharSequence {
 
   @Override
   public CharSequence subSequence(int start, int end) {
-    return substring(start,  end);
+    return substring(start, end);
   }
 
   public boolean startsWith(@NotNull String prefix) {
@@ -230,19 +239,5 @@ public class Substring implements CharSequence {
 
   public int getEndOffset() {
     return myEndOffset;
-  }
-
-  /**
-   * If both substrings share the same origin, returns new substring that includes both of them. Otherwise return {@code null}.
-   *
-   * @param other substring to concat with
-   * @return new substring as described
-   */
-  @Nullable
-  public Substring getSmallestInclusiveSubstring(@NotNull Substring other) {
-    if (myString.equals(other.myString)) {
-      return new Substring(myString, Math.min(myStartOffset, other.myStartOffset), Math.max(myEndOffset, other.myEndOffset));
-    }
-    return null;
   }
 }

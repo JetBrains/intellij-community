@@ -51,7 +51,7 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     assertEquals("y", param2.getName());
     assertEmpty(param2.getType());
     assertEquals("second parameter\n" +
-                 "        with longer description", param2.getDescription());
+                 "with longer description", param2.getDescription());
 
     assertEquals("raises", sections.get(1).getTitle());
     final List<SectionField> exceptionFields = sections.get(1).getFields();
@@ -111,8 +111,8 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     final SectionField example1 = examplesSection.getFields().get(0);
     assertEmpty(example1.getName());
     assertEmpty(example1.getType());
-    assertEquals("    Useless call\n" +
-                 "    func() == func()", example1.getDescription());
+    assertEquals("Useless call\n" +
+                 "func() == func()", example1.getDescription());
     
     final Section notesSection = docString.getSections().get(1);
     assertEquals("notes", notesSection.getTitle());
@@ -120,8 +120,8 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     final SectionField note1 = notesSection.getFields().get(0);
     assertEmpty(note1.getName());
     assertEmpty(note1.getType());
-    assertEquals("      some\n" +
-                 "        notes", note1.getDescription());
+    assertEquals("some\n" +
+                 "notes", note1.getDescription());
   }
 
   public void testTypeReferences() {
@@ -142,6 +142,24 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     assertEmpty(exception1.getName());
     assertEquals(":class:`MyException`", exception1.getType());
     assertEquals("thrown in case of any error", exception1.getDescription());
+  }
+
+  public void testNestedIndentation() {
+    final GoogleCodeStyleDocString docString = findAndParseDocString();
+    assertSize(1, docString.getSections());
+    final Section section1 = docString.getSections().get(0);
+    assertEquals("parameters", section1.getTitle());
+    assertSize(1, section1.getFields());
+    final SectionField param1 = section1.getFields().get(0);
+    assertEquals("x", param1.getName());
+    assertEquals("int", param1.getType());
+    assertEquals("first line of the description\n" +
+                 "second line\n" +
+                 "  third line\n" +
+                 "\n" +
+                 "Example::\n" +
+                 "\n" +
+                 "    assert func(42) is None", param1.getDescription());
   }
 
   @Override

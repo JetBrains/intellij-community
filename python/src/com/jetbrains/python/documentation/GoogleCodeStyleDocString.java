@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Mikhail Golubev
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
-  private static final Pattern SECTION_HEADER_RE = Pattern.compile("^\\s*(.+?):\\s*$");
+  private static final Pattern SECTION_HEADER_RE = Pattern.compile("^\\s*(\\w[\\s\\w]*):\\s*$");
   private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.+?)\\s*\\)\\s*");
   private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)"); 
 
@@ -85,11 +85,11 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
       }
     }
     description = parts.get(1);
-    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getLineIndent(lineNum), sectionIndent);
+    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getIndent(getLine(lineNum)), sectionIndent);
     final List<Substring> nestedBlock = pair.getFirst();
     if (!nestedBlock.isEmpty()) {
       //noinspection ConstantConditions
-      description = description.getSmallestInclusiveSubstring(ContainerUtil.getLastItem(nestedBlock));
+      description = mergeSubstrings(description, ContainerUtil.getLastItem(nestedBlock));
     }
     assert description != null;
     description = description.trim();

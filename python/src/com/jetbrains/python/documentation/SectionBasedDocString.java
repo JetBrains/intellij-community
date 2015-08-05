@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
@@ -107,7 +108,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     }
     int lineNum = skipEmptyLines(pair.getSecond());
     final List<SectionField> fields = new ArrayList<SectionField>();
-    final int sectionIndent = getLineIndent(sectionStartLine);
+    final int sectionIndent = getIndent(getLine(sectionStartLine));
     while (!isSectionBreak(lineNum, sectionIndent)) {
       final Pair<SectionField, Integer> result = parseField(lineNum, title, sectionIndent);
       if (result.getFirst() == null) {
@@ -136,8 +137,8 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
     if (firstLine != null && lastLine != null) {
-      final Substring mergedSubstring = new Substring(firstLine.getSuperString(), firstLine.getStartOffset(), lastLine.getEndOffset());
-      return Pair.create(new SectionField(null, null, mergedSubstring), pair.getSecond());
+      //noinspection ConstantConditions
+      return Pair.create(new SectionField(null, null, mergeSubstrings(firstLine, lastLine).trim()), pair.getSecond());
     }
     return Pair.create(null, pair.getSecond());
   }
@@ -150,16 +151,6 @@ public abstract class SectionBasedDocString implements StructuredDocString {
 
   @NotNull
   protected abstract Pair<String, Integer> parseSectionHeader(int lineNum);
-
-  protected int getLineIndent(int lineNum) {
-    final Substring line = getLine(lineNum);
-    for (int i = 0; i < line.length(); i++) {
-      if (!Character.isSpaceChar(line.charAt(i))) {
-        return i;
-      }
-    }
-    return 0;
-  }
 
   private int skipEmptyLines(int lineNum) {
     while (lineNum < myLines.size() && isEmpty(lineNum)) {
@@ -189,7 +180,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   private boolean isSectionBreak(int lineNum, int curSectionIndent) {
     return lineNum >= myLines.size() ||
            isSectionStart(lineNum) ||
-           (!isEmpty(lineNum) && getLineIndent(lineNum) <= curSectionIndent);
+           (!isEmpty(lineNum) && getIndent(getLine(lineNum)) <= curSectionIndent);
   }
 
   /**
@@ -201,7 +192,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     final List<Substring> result = new ArrayList<Substring>();
     int lastNonEmpty = lineNum - 1;
     while (!isSectionBreak(lineNum, sectionIndent)) {
-      if (getLineIndent(lineNum) > blockIndent) {
+      if (getIndent(getLine(lineNum)) > blockIndent) {
         // copy all lines after the last non empty including the current one
         for (int i = lastNonEmpty + 1; i <= lineNum; i++) {
           result.add(getLine(lineNum));
@@ -214,6 +205,59 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       lineNum++;
     }
     return Pair.create(result, lineNum);
+  }
+
+  /**
+   * If both substrings share the same origin, returns new substring that includes both of them. Otherwise return {@code null}.
+   *
+   * @param s1
+   * @param s2 substring to concat with
+   * @return new substring as described
+   */
+  @Nullable
+  public static Substring mergeSubstrings(@NotNull Substring s1, @NotNull Substring s2) {
+    if (s1.getSuperString().equals(s2.getSuperString())) {
+      return new Substring(s1.getSuperString(), 
+                           Math.min(s1.getStartOffset(), s2.getStartOffset()), 
+                           Math.max(s1.getEndOffset(), s2.getEndOffset()));
+    }
+    return null;
+  }
+
+  // like Python's textwrap.dedent()
+  @NotNull
+  protected static String stripCommonIndent(@NotNull Substring text, boolean ignoreFirstStringIfNonEmpty) {
+    final List<Substring> lines = text.splitLines();
+    if (lines.isEmpty()) {
+      return "";
+    }
+    final String firstLine = lines.get(0).toString();
+    final boolean skipFirstLine = ignoreFirstStringIfNonEmpty && !StringUtil.isEmptyOrSpaces(firstLine);
+    final Iterable<Substring> workList = lines.subList(skipFirstLine ? 1 : 0, lines.size());
+    int curMinIndent = Integer.MAX_VALUE;
+    for (Substring line : workList) {
+      if (StringUtil.isEmptyOrSpaces(line)) {
+        continue;
+      }
+      curMinIndent = Math.min(curMinIndent, getIndent(line));
+    }
+    final int minIndent = curMinIndent;
+    final List<String> dedentedLines = ContainerUtil.map(workList, new Function<Substring, String>() {
+      @Override
+      public String fun(Substring line) {
+        return line.substring(Math.min(line.length(), minIndent)).toString();
+      }
+    });
+    return StringUtil.join(skipFirstLine ? ContainerUtil.prepend(dedentedLines, firstLine) : dedentedLines, "\n");
+  }
+
+  protected static int getIndent(@NotNull CharSequence line) {
+    for (int i = 0; i < line.length(); i++) {
+      if (!Character.isSpaceChar(line.charAt(i))) {
+        return i;
+      }
+    }
+    return 0;
   }
 
   @NotNull
@@ -428,7 +472,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
 
     @NotNull
     public String getDescription() {
-      return myDescription == null ? "" : myDescription.toString();
+      return myDescription == null ? "" : stripCommonIndent(myDescription, true);
     }
 
     @Nullable
