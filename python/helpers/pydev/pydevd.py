@@ -1840,7 +1840,11 @@ def processCommandLine(argv):
             setup['server'] = True
         elif argv[i] == '--file':
             del argv[i]
-            setup['file'] = argv[i]
+            file = argv[i]
+            if file.startswith('-m'):
+                setup['module'] = True
+                file = file[2:]
+            setup['file'] = file
             i = len(argv) # pop out, file is our last argument
         elif argv[i] == '--DEBUG_RECORD_SOCKET_READS':
             del argv[i]
