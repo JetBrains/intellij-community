@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -64,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -271,16 +271,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
         myFailedModulePaths.remove(modulePath);
       }
-      catch (final IOException e) {
+      catch (IOException e) {
         errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
                                                      modulePath, this));
       }
-      catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+      catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
         errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
-      }
-      catch (StateStorageException e) {
-        errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                     modulePath, this));
       }
     }
 
@@ -742,13 +738,16 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     @NotNull
-    public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, ModuleWithNameAlreadyExists {
+    public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
       assertWritable();
       try {
         return loadModuleInternal(filePath);
       }
-      catch (StateStorageException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
+      catch (FileNotFoundException e) {
+        throw e;
+      }
+      catch (IOException e) {
+        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()), e);
       }
     }
 
@@ -757,7 +756,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       filePath = resolveShortWindowsName(filePath);
       final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {
-        throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
+        throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
       }
 
       final String name = moduleFile.getName();

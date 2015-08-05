@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -77,13 +76,13 @@ public final class StateMap {
   }
 
   @NotNull
-  public Element getElement(@NotNull String key, @NotNull Map<String, Element> newLiveStates) {
+  public Element getElement(@NotNull String key, @NotNull Map<String, Element> newLiveStates) throws IOException {
     Object state = states.get(key);
     return stateToElement(key, state, newLiveStates);
   }
 
   @NotNull
-  static Element stateToElement(@NotNull String key, @Nullable Object state, @NotNull Map<String, Element> newLiveStates) {
+  static Element stateToElement(@NotNull String key, @Nullable Object state, @NotNull Map<String, Element> newLiveStates) throws IOException {
     if (state instanceof Element) {
       return ((Element)state).clone();
     }
@@ -91,7 +90,12 @@ public final class StateMap {
       Element element = newLiveStates.get(key);
       if (element == null) {
         assert state != null;
-        element = unarchiveState((byte[])state);
+        try {
+          element = unarchiveState((byte[])state);
+        }
+        catch (JDOMException e) {
+          throw new IOException(e);
+        }
       }
       return element;
     }
@@ -195,16 +199,8 @@ public final class StateMap {
   }
 
   @NotNull
-  public static Element unarchiveState(@NotNull byte[] state) {
-    try {
-      return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
-    }
-    catch (JDOMException e) {
-      throw new StateStorageException(e);
-    }
+  public static Element unarchiveState(@NotNull byte[] state) throws IOException, JDOMException {
+    return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
   }
 
   @NotNull

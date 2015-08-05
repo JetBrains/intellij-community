@@ -29,6 +29,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
@@ -106,7 +107,7 @@ public class StorageData extends StorageDataBase {
   }
 
   @Nullable
-  protected Element save(@NotNull Map<String, Element> newLiveStates) {
+  protected Element save(@NotNull Map<String, Element> newLiveStates) throws IOException {
     if (myStates.isEmpty()) {
       return null;
     }

@@ -227,13 +227,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Nullable
   private OptionManager getOptionManager() {
-    try {
-      return (OptionManager)getMainStorage(this).getStorageData();
-    }
-    catch (StateStorageException e) {
-      LOG.error(e);
-      return null;
-    }
+    return (OptionManager)getMainStorage(this).getStorageData();
   }
 
   @Override

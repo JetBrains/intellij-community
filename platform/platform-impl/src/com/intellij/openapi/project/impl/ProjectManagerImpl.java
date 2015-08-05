@@ -36,7 +36,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.impl.stores.StoreUtil.ReloadComponentStoreStatus;
 import com.intellij.openapi.diagnostic.Logger;
@@ -290,7 +289,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return message;
   }
 
-  private void initProject(@NotNull ProjectImpl project, @Nullable Project template) throws IOException {
+  private void initProject(@NotNull ProjectImpl project, @Nullable Project template) {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
@@ -563,10 +562,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       project = loadProjectWithProgress(filePath);
       if (project == null) return null;
     }
-    catch (IOException e) {
-      LOG.info(e);
-      throw e;
-    }
     catch (Throwable t) {
       LOG.info(t);
       throw new IOException(t);
@@ -590,20 +585,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    * @return the project, or null if the user has cancelled opening the project.
    */
   @Nullable
-  private Project loadProjectWithProgress(@NotNull final String filePath) throws IOException {
+  private Project loadProjectWithProgress(@NotNull final String filePath) {
     final ProjectImpl project = createProject(null, toCanonicalName(filePath), false, false);
     try {
-      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
+      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Object, RuntimeException>() {
         @Override
         @Nullable
-        public Project compute() throws IOException {
+        public Project compute() {
           initProject(project, null);
           return project;
         }
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-    }
-    catch (StateStorageException e) {
-      throw new IOException(e);
     }
     catch (ProcessCanceledException ignore) {
       return null;
@@ -797,13 +789,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
       if (save) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-            project.save();
-          }
-        });
+        FileDocumentManager.getInstance().saveAllDocuments();
+        project.save();
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {

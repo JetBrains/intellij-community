@@ -118,7 +118,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   protected abstract XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData);
 
   @Nullable
-  protected final Element getElement(@NotNull StorageData data, @NotNull Map<String, Element> newLiveStates) {
+  protected final Element getElement(@NotNull StorageData data, @NotNull Map<String, Element> newLiveStates) throws IOException {
     Element element = data.save(newLiveStates);
     if (element == null || JDOMUtil.isEmpty(element)) {
       return null;

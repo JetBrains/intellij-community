@@ -18,7 +18,6 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateSplitter;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.project.ProjectBundle;
@@ -106,7 +105,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     String parentFile = ioDir.getParent();
     VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.replace(File.separatorChar, '/'));
     if (parentVirtualFile == null) {
-      throw new StateStorageException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
+      throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
     }
     return StorageUtil.getFile(ioDir.getName(), parentVirtualFile, requestor);
   }
@@ -199,24 +198,28 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
               return true;
             }
 
-            Element element = copiedStorageData.stateToElement(fileName, state);
-            if (storage.myPathMacroSubstitutor != null) {
-              storage.myPathMacroSubstitutor.collapsePaths(element);
-            }
-
+            Element element = null;
             try {
+              element = copiedStorageData.stateToElement(fileName, state);
+              if (storage.myPathMacroSubstitutor != null) {
+                storage.myPathMacroSubstitutor.collapsePaths(element);
+              }
+
               storeElement.setAttribute(StorageData.NAME, componentName);
               storeElement.addContent(element);
 
               VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);
               // we don't write xml prolog due to historical reasons (and should not in any case)
-              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
+              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement,
+                                    LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
             }
             catch (IOException e) {
               LOG.error(e);
             }
             finally {
-              element.detach();
+              if (element != null) {
+                element.detach();
+              }
             }
             return true;
           }
