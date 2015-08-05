@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
@@ -139,10 +138,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     cancel();
   }
 
-  private void updateRunning() {
-    queueRunningUpdate(EmptyRunnable.getInstance());
-  }
-
   protected void updateProgress() {
     queueProgressUpdate(new Runnable() {
       public void run() {
@@ -212,10 +207,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   protected void onProgressChange() {
     updateProgress();
-  }
-
-  protected void onRunningChange() {
-    updateRunning();
   }
 
   public JComponent getComponent() {
