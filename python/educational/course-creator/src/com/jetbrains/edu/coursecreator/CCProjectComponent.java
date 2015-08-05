@@ -45,6 +45,7 @@ public class CCProjectComponent implements ProjectComponent {
       public void run() {
         final Course course = CCProjectService.getInstance(myProject).getCourse();
         if (course != null) {
+          course.initCourse(true);
           myProject.getMessageBus().connect(myProject).subscribe(
             FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
               @Override
