@@ -30,6 +30,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -381,78 +382,35 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, new Consumer<VirtualFile>() {
           @Override
           public void consume(VirtualFile file) {
-            if (file == null) return;
-            InspectionProfileImpl profile =
-              new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
-            try {
-              Element rootElement = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(file)).getRootElement();
-              if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
-                rootElement = rootElement.getChildren().get(0);
-              }
-              final Set<String> levels = new HashSet<String>();
-              for (Object o : rootElement.getChildren("inspection_tool")) {
-                final Element inspectElement = (Element)o;
-                addLevelIfNotNull(levels, inspectElement);
-                for (Object s : inspectElement.getChildren("scope")) {
-                  addLevelIfNotNull(levels, ((Element) s));
-                }
-              }
-              for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
-                String level = iterator.next();
-                if (myProfileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
-                  iterator.remove();
-                }
-              }
-              if (!levels.isEmpty()) {
-                if (Messages.showYesNoDialog(wholePanel, "Undefined severities detected: " +
-                                                           StringUtil.join(levels, ", ") +
-                                                           ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
-                    Messages.YES) {
-                  for (String level : levels) {
-                    final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
-                    HighlightInfoType.HighlightInfoTypeImpl info =
-                      new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50),
-                                                                  TextAttributesKey
-                                                                    .createTextAttributesKey(level));
-                    myProfileManager.getOwnSeverityRegistrar()
-                      .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
-                                        textAttributes.getErrorStripeColor());
-                  }
-                }
-              }
-              profile.readExternal(rootElement);
-              profile.setProjectLevel(false);
-              profile.initInspectionTools(getProject());
-              if (getProfilePanel(profile) != null) {
-                if (Messages.showOkCancelDialog(wholePanel, "Profile with name \'" +
+            if (file != null) {
+              final InspectionProfileImpl profile;
+              try {
+                Element rootElement = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(file)).getRootElement();
+                profile = importInspectionProfile(rootElement, myProfileManager, getProject(), wholePanel);
+                if (getProfilePanel(profile) != null) {
+                  if (Messages.showOkCancelDialog(wholePanel, "Profile with name \'" +
                                                               profile.getName() +
                                                               "\' already exists. Do you want to overwrite it?", "Warning",
-                                                Messages.getInformationIcon()) != Messages.OK) {
-                  return;
+                                                  Messages.getInformationIcon()) != Messages.OK) {
+                    return;
+                  }
                 }
+                final ModifiableModel model = profile.getModifiableModel();
+                model.setModified(true);
+                addProfile((InspectionProfileImpl)model, profile);
+
+                //TODO myDeletedProfiles ? really need this
+                myDeletedProfiles.remove(profile);
               }
-              final ModifiableModel model = profile.getModifiableModel();
-              model.setModified(true);
-              addProfile((InspectionProfileImpl)model, profile);
-
-              //TODO myDeletedProfiles ? really need this
-              myDeletedProfiles.remove(profile);
-            }
-            catch (InvalidDataException e1) {
-              LOG.error(e1);
-            }
-            catch (JDOMException e1) {
-              LOG.error(e1);
-            }
-            catch (IOException e1) {
-              LOG.error(e1);
-            }
-          }
-
-          private void addLevelIfNotNull(Set<String> levels, Element inspectElement) {
-            final String level = inspectElement.getAttributeValue("level");
-            if (level != null) {
-              levels.add(level);
+              catch (JDOMException e) {
+                LOG.error(e);
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
+              catch (InvalidDataException e) {
+                LOG.error(e);
+              }
             }
           }
         });
@@ -473,6 +431,69 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
     myPanel.setLayout(myLayout);
     return wholePanel;
+  }
+
+  public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
+                                                              @NotNull InspectionProfileManager profileManager,
+                                                              @NotNull Project project,
+                                                              @Nullable JPanel anchorPanel)
+    throws JDOMException, IOException, InvalidDataException {
+    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (!unitTestMode) {
+      LOG.assertTrue(anchorPanel != null);
+    }
+    InspectionProfileImpl profile =
+      new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), profileManager);
+    if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
+      rootElement = rootElement.getChildren().get(0);
+    }
+    final Set<String> levels = new HashSet<String>();
+    for (Object o : rootElement.getChildren("inspection_tool")) {
+      final Element inspectElement = (Element)o;
+      addLevelIfNotNull(levels, inspectElement);
+      for (Object s : inspectElement.getChildren("scope")) {
+        addLevelIfNotNull(levels, ((Element)s));
+      }
+    }
+    for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
+      String level = iterator.next();
+      if (profileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
+        iterator.remove();
+      }
+    }
+    if (!levels.isEmpty()) {
+      if (!unitTestMode) {
+        if (Messages.showYesNoDialog(anchorPanel, "Undefined severities detected: " +
+                                                  StringUtil.join(levels, ", ") +
+                                                  ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
+            Messages.YES) {
+          for (String level : levels) {
+            final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
+            HighlightInfoType.HighlightInfoTypeImpl info =
+              new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50),
+                                                          TextAttributesKey
+                                                            .createTextAttributesKey(level));
+            profileManager.getOwnSeverityRegistrar()
+              .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
+                                textAttributes.getErrorStripeColor());
+          }
+        }
+      } else {
+        throw new AssertionError("All of levels must exist in unit-test mode, but actual not exist levels = " + levels);
+      }
+    }
+    profile.readExternal(rootElement);
+    profile.setProjectLevel(false);
+    profile.initInspectionTools(project);
+    return profile;
+
+  }
+
+  private static void addLevelIfNotNull(Set<String> levels, Element inspectElement) {
+    final String level = inspectElement.getAttributeValue("level");
+    if (level != null) {
+      levels.add(level);
+    }
   }
 
   protected abstract InspectionProfileImpl getCurrentProfile();
