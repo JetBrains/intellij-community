@@ -229,18 +229,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
             @Override
             public void run() {
               boolean modal = permission != DumbModePermission.MAY_START_BACKGROUND;
-              boolean shouldFinish = modal;
               try {
                 startBackgroundProcess(modal);
               }
               catch (Throwable e) {
-                shouldFinish = true;
+                updateFinished();
                 LOG.error("Failed to start background index update task", e);
-              }
-              finally {
-                if (shouldFinish) {
-                  updateFinished();
-                }
               }
             }
           }, modality, myProject.getDisposed());
@@ -491,14 +485,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private static void invokeAndWaitIfNeeded(Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     }
     else {
       try {
-        SwingUtilities.invokeAndWait(runnable);
-      }
-      catch (InterruptedException ignore) {
+        ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
       }
       catch (Exception e) {
         LOG.error(e);
