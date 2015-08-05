@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
   private static final Pattern SECTION_HEADER_RE = Pattern.compile("^\\s*(.+?):\\s*$");
   private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.+?)\\s*\\)\\s*");
+  private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)"); 
 
   public GoogleCodeStyleDocString(@NotNull String text) {
     super(text);
@@ -62,7 +63,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
   @NotNull
   private Pair<SectionField, Integer> parseField(int lineNum, int sectionIndent, boolean typeBeforeColon) {
     Substring name = null, type = null, description;
-    final List<Substring> parts = getLine(lineNum).split(":", 1);
+    final List<Substring> parts = splitFieldStartLineByColon(getLine(lineNum));
     assert parts.size() <= 2;
     if (parts.size() < 2) {
       return Pair.create(null, lineNum);
@@ -93,6 +94,19 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     description = description.trim();
     return Pair.create(new SectionField(name, type, description), pair.getSecond());
   }
+
+  /**
+   * Partitions line by colon if it contains type references, e.g.
+   * 
+   * <pre><code>
+   *   runtime (:class:`Runtime`): Use it to access the environment.
+   * </code></pre>
+   */
+  @NotNull
+  private List<Substring> splitFieldStartLineByColon(@NotNull Substring line) {
+    return line.split(":", 1);
+  }
+
 
   @NotNull
   @Override
