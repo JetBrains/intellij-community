@@ -34,11 +34,7 @@ import java.util.List;
 public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
   
   public void testSimpleFunctionDocString() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    final String docStringText = findFirstDocString();
-    
-    assertNotNull(docStringText);
-    final GoogleCodeStyleDocString docString = new GoogleCodeStyleDocString(docStringText);
+    final GoogleCodeStyleDocString docString = findAndParseDocString();
     assertEquals("Summary", docString.getSummary());
     final List<Section> sections = docString.getSections();
     assertSize(3, sections);
@@ -83,6 +79,15 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     assertEquals("always", firstReturnField.getDescription().toString());
   }
 
+  @NotNull
+  private GoogleCodeStyleDocString findAndParseDocString() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    final String docStringText = findFirstDocString();
+
+    assertNotNull(docStringText);
+    return new GoogleCodeStyleDocString(docStringText);
+  }
+
   @Nullable
   private String findFirstDocString() {
     final PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
@@ -104,10 +109,7 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
   }
 
   public void testSectionStartAfterQuotes() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    final String docStringText = findFirstDocString();
-    assertNotNull(docStringText);
-    final GoogleCodeStyleDocString docString = new GoogleCodeStyleDocString(docStringText);
+    final GoogleCodeStyleDocString docString = findAndParseDocString();
     assertEmpty(docString.getSummary());
     
     assertSize(2, docString.getSections());
@@ -128,8 +130,34 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     final SectionField firstNotesField = notesSection.getFields().get(0);
     assertNull(firstNotesField.getName());
     assertNull(firstNotesField.getType());
+    assertNotNull(firstNotesField.getDescription());
     assertEquals("      some\n" +
                  "        notes", firstNotesField.getDescription().toString());
+  }
+
+  public void testTypeReferences() {
+    final GoogleCodeStyleDocString docString = findAndParseDocString();
+    assertEmpty(docString.getSummary());
+    assertSize(2, docString.getSections());
+
+    final Section paramSection = docString.getSections().get(0);
+    assertSize(1, paramSection.getFields());
+    final SectionField param1 = paramSection.getFields().get(0);
+    assertNotNull(param1.getName());
+    assertEquals("a1", param1.getName().toString());
+    assertNotNull(param1.getType());
+    assertEquals(":class:`MyClass`", param1.getType().toString());
+    assertNotNull(param1.getDescription());
+    assertEquals("used to call :def:`my_function` and access :attr:`my_attr`", param1.getDescription().toString());
+
+    final Section raisesSection = docString.getSections().get(1);
+    assertSize(1, raisesSection.getFields());
+    final SectionField exception1 = raisesSection.getFields().get(0);
+    assertNull(exception1.getName());
+    assertNotNull(exception1.getType());
+    assertEquals(":class:`MyException`", exception1.getType().toString());
+    assertNotNull(exception1.getDescription());
+    assertEquals("thrown in case of any error", exception1.getDescription().toString());
   }
 
   @Override

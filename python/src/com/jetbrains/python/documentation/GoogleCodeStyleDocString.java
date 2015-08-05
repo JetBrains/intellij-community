@@ -20,6 +20,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,7 +75,6 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
       type = textBeforeColon.trim();
     }
     else {
-      // TODO skip references in types like Napoleon does
       final Matcher matcher = FIELD_NAME_AND_TYPE_RE.matcher(textBeforeColon);
       if (matcher.matches()) {
         name = Substring.fromMatcherGroup(textBeforeColon, matcher, 1).trim();
@@ -103,7 +104,19 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
    * </code></pre>
    */
   @NotNull
-  private List<Substring> splitFieldStartLineByColon(@NotNull Substring line) {
+  private static List<Substring> splitFieldStartLineByColon(@NotNull Substring line) {
+    final List<Substring> parts = line.split(SPHINX_REFERENCE_RE);
+    if (parts.size() > 1) {
+      for (Substring part : parts) {
+        final int i = part.indexOf(":");
+        if (i >= 0){
+          final Substring beforeColon = new Substring(line.getSuperString(), line.getStartOffset(), part.getStartOffset() + i);
+          final Substring afterColon = new Substring(line.getSuperString(), part.getStartOffset() + i + 1, line.getEndOffset());
+          return Arrays.asList(beforeColon, afterColon);
+        }
+      }
+      return Collections.singletonList(line);
+    }
     return line.split(":", 1);
   }
 
