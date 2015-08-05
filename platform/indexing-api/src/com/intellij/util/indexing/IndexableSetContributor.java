@@ -32,8 +32,8 @@ import java.util.Set;
  */
 public abstract class IndexableSetContributor implements IndexedRootsProvider {
   
-  protected static final Set<VirtualFile> EMPTY_FILE_SET = Collections.unmodifiableSet(new HashSet<VirtualFile>());
-  
+  protected static final Set<VirtualFile> EMPTY_FILE_SET = Collections.emptySet();
+
   @Override
   public final Set<String> getRootsToIndex() {
     return ContainerUtil.map2Set(getAdditionalRootsToIndex(), new NotNullFunction<VirtualFile, String>() {

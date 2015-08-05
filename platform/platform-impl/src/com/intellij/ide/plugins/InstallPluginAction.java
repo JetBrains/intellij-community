@@ -91,9 +91,13 @@ public class InstallPluginAction extends AnAction implements DumbAware {
   }
   
   public void install(@Nullable final Runnable onSuccess) {
+    install(onSuccess, false);
+  }
+
+  public void install(@Nullable final Runnable onSuccess, boolean confirmed) {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
-    if (userConfirm(selection)) {
+    if (confirmed || userConfirm(selection)) {
       final List<PluginNode> list = new ArrayList<PluginNode>();
       for (IdeaPluginDescriptor descr : selection) {
         PluginNode pluginNode = null;
