@@ -31,7 +31,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingListener;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -42,12 +45,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   
-  private static final Key<LogicalPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
+  private static final Key<Integer> SAVED_CARET_OFFSET = Key.create("saved.offset.before.folding");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -62,6 +67,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   private int mySavedCaretShift;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
   private boolean myDocumentChangeProcessed = true;
+  private final Set<Caret> myCaretsToMove = new HashSet<Caret>();
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -312,13 +318,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
 
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      LogicalPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
-      if (savedPosition != null) {
-        int savedOffset = myEditor.logicalPositionToOffset(savedPosition);
-
+      Integer savedOffset = caret.getUserData(SAVED_CARET_OFFSET);
+      if (savedOffset != null) {
         FoldRegion[] allCollapsed = myFoldTree.fetchCollapsedAt(savedOffset);
         if (allCollapsed.length == 1 && allCollapsed[0] == region) {
-          caret.moveToLogicalPosition(savedPosition);
+          myCaretsToMove.add(caret);
         }
       }
     }
@@ -338,20 +342,18 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
     List<Caret> carets = myEditor.getCaretModel().getAllCarets();
     for (Caret caret : carets) {
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+      int caretOffset = caret.getOffset();
       
       if (FoldRegionsTree.contains(region, caretOffset)) {
         if (myDoNotCollapseCaret) return;
       }
     }
     for (Caret caret : carets) {
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+      int caretOffset = caret.getOffset();
       
       if (FoldRegionsTree.contains(region, caretOffset)) {
-        if (caret.getUserData(SAVED_CARET_POSITION) == null) {
-          caret.putUserData(SAVED_CARET_POSITION, caretPosition.withoutVisualPositionInfo());
+        if (caret.getUserData(SAVED_CARET_OFFSET) == null) {
+          caret.putUserData(SAVED_CARET_OFFSET, caretOffset);
         }
       }
     }
@@ -373,6 +375,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myEditor.getGutterComponentEx().updateSize();
     myEditor.getGutterComponentEx().repaint();
 
+    for (Caret caret : myCaretsToMove) {
+      Integer savedOffset = caret.getUserData(SAVED_CARET_OFFSET);
+      if (savedOffset != null) {
+        caret.moveToOffset(savedOffset);
+      }
+    }
+    myCaretsToMove.clear();
+    
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
       // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
       // logical lines as well, hence, we can't be sure that target logical position defines correct visual position because fold
@@ -382,39 +392,29 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       int selectionStart = caret.getSelectionStart();
       int selectionEnd = caret.getSelectionEnd();
 
-      LogicalPosition positionToUse = null;
       int offsetToUse = -1;
 
       FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
-      LogicalPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
-      if (savedPosition != null) {
-        int savedOffset = myEditor.logicalPositionToOffset(savedPosition);
+      Integer savedOffset = caret.getUserData(SAVED_CARET_OFFSET);
+      if (savedOffset != null) {
         FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
-        if (collapsedAtSaved == null) {
-          positionToUse = savedPosition;
-        }
-        else {
-          offsetToUse = collapsedAtSaved.getStartOffset();
-        }
+        offsetToUse = collapsedAtSaved == null ? savedOffset : collapsedAtSaved.getStartOffset();
       }
 
-      if (collapsed != null && positionToUse == null) {
-        positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
+      if (collapsed != null && offsetToUse < 0) {
+        offsetToUse = collapsed.getStartOffset();
       }
 
       if (moveCaretFromCollapsedRegion && caret.isUpToDate()) {
         if (offsetToUse >= 0) {
           caret.moveToOffset(offsetToUse);
         }
-        else if (positionToUse != null) {
-          caret.moveToLogicalPosition(positionToUse);
-        }
         else {
           caret.moveToLogicalPosition(caretPosition);
         }
       }
 
-      caret.putUserData(SAVED_CARET_POSITION, savedPosition);
+      caret.putUserData(SAVED_CARET_OFFSET, savedOffset);
 
       if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
         caret.removeSelection();
@@ -488,7 +488,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   public void flushCaretPosition() {
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      caret.putUserData(SAVED_CARET_POSITION, null);
+      caret.putUserData(SAVED_CARET_OFFSET, null);
     }
   }
 
