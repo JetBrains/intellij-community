@@ -78,18 +78,5 @@ public interface StructuredDocString {
   // Tags related methods
 
   @Nullable
-  Substring getTagValue(String... tagNames);
-
-  @Nullable
-  Substring getTagValue(String tagName, @NotNull String argName);
-
-  @Nullable
-  Substring getTagValue(String[] tagNames, @NotNull String argName);
-
-  List<Substring> getTagArguments(String... tagNames);
-
-  @Nullable
   Substring getParamByNameAndKind(@NotNull String name, String kind);
-
-  List<String> getAdditionalTags();
 }

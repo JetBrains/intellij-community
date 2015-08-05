@@ -367,35 +367,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
 
   @Nullable
   @Override
-  public Substring getTagValue(String... tagNames) {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public Substring getTagValue(String tagName, @NotNull String argName) {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public Substring getTagValue(String[] tagNames, @NotNull String argName) {
-    return null;
-  }
-
-  @Override
-  public List<Substring> getTagArguments(String... tagNames) {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public Substring getParamByNameAndKind(@NotNull String name, String kind) {
-    return null;
-  }
-
-  @Override
-  public List<String> getAdditionalTags() {
     return null;
   }
 
@@ -502,10 +474,4 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       return result;
     }
   }
-
-  // MethodsSection
-  // AttributesSection
-  // YieldsSection
-  // RaisesSection
-  // ReturnsSection
 }

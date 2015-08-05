@@ -76,6 +76,8 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
     myDescription = builder.toString();
   }
 
+  public abstract List<String> getAdditionalTags();
+
   @Override
   @NotNull
   public String createParameterType(@NotNull final String name, @NotNull final String type) {
@@ -174,7 +176,6 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
     return result;
   }
 
-  @Override
   @Nullable
   public Substring getTagValue(String... tagNames) {
     for (String tagName : tagNames) {
@@ -186,14 +187,12 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
     return null;
   }
 
-  @Override
   @Nullable
   public Substring getTagValue(String tagName, @NotNull String argName) {
     final Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
     return argValues != null ? argValues.get(new Substring(argName)) : null;
   }
 
-  @Override
   @Nullable
   public Substring getTagValue(String[] tagNames, @NotNull String argName) {
     for (String tagName : tagNames) {
@@ -205,7 +204,6 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
     return null;
   }
 
-  @Override
   public List<Substring> getTagArguments(String... tagNames) {
     for (String tagName : tagNames) {
       final Map<Substring, Substring> map = myArgTagValues.get(tagName);

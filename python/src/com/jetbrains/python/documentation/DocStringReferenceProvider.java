@@ -58,24 +58,25 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final int offset = ranges.get(0).getStartOffset();
         // XXX: It does not work with multielement docstrings
         StructuredDocString docString = DocStringUtil.parse(text);
-        if (docString != null) {
+        if (docString instanceof StructuredDocStringBase) {
+          final StructuredDocStringBase taggedDocString = (StructuredDocStringBase)docString;
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TAGS),
+                                            taggedDocString.getTagArguments(StructuredDocStringBase.PARAM_TAGS),
                                             StructuredDocStringBase.ReferenceType.PARAMETER));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS),
+                                            taggedDocString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS),
                                             StructuredDocStringBase.ReferenceType.PARAMETER_TYPE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             docString.getKeywordArgumentSubstrings(), StructuredDocStringBase.ReferenceType.KEYWORD));
 
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getTagArguments("var"),
+                                            taggedDocString.getTagArguments("var"),
                                             StructuredDocStringBase.ReferenceType.VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getTagArguments("cvar"),
+                                            taggedDocString.getTagArguments("cvar"),
                                             StructuredDocStringBase.ReferenceType.CLASS_VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getTagArguments("ivar"),
+                                            taggedDocString.getTagArguments("ivar"),
                                             StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }

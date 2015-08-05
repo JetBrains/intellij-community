@@ -160,19 +160,22 @@ public class PyStructuredDocstringFormatter {
       }
     }
 
-    final List<String> additionalTags = docString.getAdditionalTags();
-    if (!additionalTags.isEmpty()) {
-      result.append("<br/><br/><b>Additional:</b><br/>");
-      result.append("<table>");
-      for (String tagName : additionalTags) {
-        final List<Substring> args = docString.getTagArguments(tagName);
-        for (Substring arg : args) {
-          final String s = arg.toString();
-          result.append("<tr><td align=\"right\"><b>").append(tagName);
-          result.append(" ").append(s).append(":</b>");
-          result.append("</td><td>").append(docString.getTagValue(tagName, s)).append("</td></tr>");
+    if (docString instanceof StructuredDocStringBase) {
+      final StructuredDocStringBase taggedDocString = (StructuredDocStringBase)docString;
+      final List<String> additionalTags = taggedDocString.getAdditionalTags();
+      if (!additionalTags.isEmpty()) {
+        result.append("<br/><br/><b>Additional:</b><br/>");
+        result.append("<table>");
+        for (String tagName : additionalTags) {
+          final List<Substring> args = taggedDocString.getTagArguments(tagName);
+          for (Substring arg : args) {
+            final String s = arg.toString();
+            result.append("<tr><td align=\"right\"><b>").append(tagName);
+            result.append(" ").append(s).append(":</b>");
+            result.append("</td><td>").append(taggedDocString.getTagValue(tagName, s)).append("</td></tr>");
+          }
+          result.append("</table>");
         }
-        result.append("</table>");
       }
     }
     return result.toString();
