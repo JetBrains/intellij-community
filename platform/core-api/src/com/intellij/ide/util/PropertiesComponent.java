@@ -100,14 +100,26 @@ public abstract class PropertiesComponent {
     return ObjectUtils.notNull(getValue(name), defaultValue);
   }
 
-  public final int getOrInitInt(@NonNls String name, int defaultValue) {
-    return StringUtilRt.parseInt(name, defaultValue);
+  @SuppressWarnings("unused")
+  @Deprecated
+  /**
+   * @deprecated Use {@link #getInt(String, int)}
+   * Init was never performed and in any case is not recommended.
+   */
+  public final int getOrInitInt(@NotNull String name, int defaultValue) {
+    return getInt(name, defaultValue);
+  }
+
+  public int getInt(@NotNull String name, int defaultValue) {
+    return StringUtilRt.parseInt(getValue(name), defaultValue);
   }
 
   public final long getOrInitLong(@NonNls String name, long defaultValue) {
     try {
-      return Long.parseLong(getValue(name));
-    } catch (NumberFormatException e) {
+      String value = getValue(name);
+      return value == null ? defaultValue : Long.parseLong(value);
+    }
+    catch (NumberFormatException e) {
       return defaultValue;
     }
   }
