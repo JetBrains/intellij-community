@@ -53,7 +53,6 @@ public class PluginTable extends JBTable {
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
-    setStriped(true);
     this.setTableHeader(null);
     setTransferHandler(new TransferHandler() {
       @Nullable
