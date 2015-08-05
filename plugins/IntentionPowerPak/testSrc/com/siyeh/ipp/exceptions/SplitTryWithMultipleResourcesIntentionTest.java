@@ -15,19 +15,20 @@
  */
 package com.siyeh.ipp.exceptions;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.intellij.lang.annotations.Language;
+import com.siyeh.ipp.IPPTestCase;
 
 /**
+ * @see SplitTryWithMultipleResourcesIntention
  * @author Bas Leijdekkers
  */
-public class SplitTryWithMultipleResourcesIntentionTest extends LightCodeInsightFixtureTestCase {
+public class SplitTryWithMultipleResourcesIntentionTest extends IPPTestCase {
+
   public void testSimple() {
     doTest(
       "import java.io.*;\n" +
       "class C {\n" +
       "    void foo(File file1, File file2) throws IOException {\n" +
-      "        /*_*/try (FileInputStream in = new FileInputStream(file1); FileOutputStream out = new FileOutputStream(file2)) {\n" +
+      "        /*_Split 'try' statement with multiple resources*/try (FileInputStream in = new FileInputStream(file1); FileOutputStream out = new FileOutputStream(file2)) {\n" +
       "            System.out.println(in + \", \" + out);\n" +
       "        }\n" +
       "    }\n" +
@@ -50,7 +51,7 @@ public class SplitTryWithMultipleResourcesIntentionTest extends LightCodeInsight
       "import java.io.*;\n" +
       "class C {\n" +
       "    void foo(File file1, File file2) {\n" +
-      "        try (FileInputStream in = new FileInputStream(file1); /*_*/FileOutputStream out = new FileOutputStream(file2)) {\n" +
+      "        try (FileInputStream in = new FileInputStream(file1); /*_Split 'try' statement with multiple resources*/FileOutputStream out = new FileOutputStream(file2)) {\n" +
       "            System.out.println(in + \", \" + out);\n" +
       "        } catch (IOException e) {\n" +
       "            e.printStackTrace();\n" +
@@ -78,7 +79,7 @@ public class SplitTryWithMultipleResourcesIntentionTest extends LightCodeInsight
       "class C {\n" +
       "    void m() throws Exception {\n" +
       "        Reader r2 = new StringReader();\n" +
-      "        /*_*/try (Reader r1 = new StringReader(); r2) {\n" +
+      "        /*_Split 'try' statement with multiple resources*/try (Reader r1 = new StringReader(); r2) {\n" +
       "            System.out.println(r1 + \", \" + r2);\n" +
       "        }\n" +
       "    }\n" +
@@ -95,11 +96,5 @@ public class SplitTryWithMultipleResourcesIntentionTest extends LightCodeInsight
       "        }\n" +
       "    }\n" +
       "}");
-  }
-
-  private void doTest(@Language("JAVA") String before, @Language("JAVA") String after) {
-    myFixture.configureByText("a.java", before.replace("/*_*/", "<caret>"));
-    myFixture.launchAction(myFixture.findSingleIntention(new SplitTryWithMultipleResourcesIntention().getText()));
-    myFixture.checkResult(after);
   }
 }
