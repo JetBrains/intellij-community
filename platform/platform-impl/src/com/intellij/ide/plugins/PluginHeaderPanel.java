@@ -261,15 +261,10 @@ public class PluginHeaderPanel {
               public void run() {
                 setPlugin(myPlugin);
               }
-            });
+            }, true);
             break;
           case UNINSTALL:
-            //try {
-              UninstallPluginAction.uninstall(myManager.getInstalled(), myPlugin);
-            //}
-            //catch (IOException e1) {
-            //  e1.printStackTrace();
-            //}
+            UninstallPluginAction.uninstall(myManager.getInstalled(), true, myPlugin);
             break;
           case RESTART:
             if (myManager != null) {
