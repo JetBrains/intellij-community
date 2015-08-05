@@ -3,14 +3,11 @@ package com.intellij.remoteServer.impl.runtime.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,8 +18,9 @@ public class ServersToolWindow {
   private final Project myProject;
   private final ToolWindow myToolWindow;
 
-  public ServersToolWindow(final Project project) {
+  public ServersToolWindow(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     myProject = project;
+    myToolWindow = toolWindow;
 
     for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
       contributor.setupAvailabilityListener(project, new Runnable() {
@@ -43,11 +41,6 @@ public class ServersToolWindow {
         updateWindowAvailable(false);
       }
     });
-
-    myToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(ID, false,
-                                                                              ToolWindowAnchor.BOTTOM);
-
-    myToolWindow.setIcon(RemoteServersIcons.ServersToolWindow);
 
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     final ServersToolWindowContent serversContent = new ServersToolWindowContent(project);
