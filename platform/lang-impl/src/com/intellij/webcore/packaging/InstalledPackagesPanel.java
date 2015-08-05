@@ -177,7 +177,7 @@ public class InstalledPackagesPanel extends JPanel {
           if (packagesShouldBePostponed.contains(packageName)) {
             myWaitingToUpgrade.add((InstalledPackage)packageObj);
           }
-          else if (PackageVersionComparator.VERSION_COMPARATOR.compare(currentVersion, availableVersion) < 0) {
+          else if (isUpdateAvailable(currentVersion, availableVersion)) {
             upgradePackage(pkg, availableVersion);
             upgradedPackages.add(packageName);
           }
@@ -206,8 +206,7 @@ public class InstalledPackagesPanel extends JPanel {
     myPackageManagementService.fetchPackageVersions(pkg.getName(), new CatchingConsumer<List<String>, Exception>() {
       @Override
       public void consume(List<String> releases) {
-        if (!releases.isEmpty() &&
-            PackageVersionComparator.VERSION_COMPARATOR.compare(pkg.getVersion(), releases.get(0)) >= 0) {
+        if (!releases.isEmpty() && !isUpdateAvailable(pkg.getVersion(), releases.get(0))) {
           return;
         }
 
@@ -304,7 +303,7 @@ public class InstalledPackagesPanel extends JPanel {
           final String pyPackageName = pkg.getName();
           final String availableVersion = (String)myPackagesTable.getValueAt(index, 2);
           if (!upgradeAvailable) {
-            upgradeAvailable = PackageVersionComparator.VERSION_COMPARATOR.compare(pkg.getVersion(), availableVersion) < 0 &&
+            upgradeAvailable = isUpdateAvailable(pkg.getVersion(), availableVersion) &&
                                !myCurrentlyInstalling.contains(pyPackageName);
           }
           if (!canUninstall && !canUpgrade) break;
@@ -519,6 +518,14 @@ public class InstalledPackagesPanel extends JPanel {
     return false;
   }
 
+  private boolean isUpdateAvailable(@NotNull String currentVersion, @NotNull String availableVersion) {
+    PackageManagementService service = myPackageManagementService;
+    if (service != null) {
+      return service.compareVersions(currentVersion, availableVersion) < 0;
+    }
+    return PackageVersionComparator.VERSION_COMPARATOR.compare(currentVersion, availableVersion) < 0;
+  }
+
   private void refreshLatestVersions(@NotNull final PackageManagementService packageManagementService) {
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
@@ -556,7 +563,7 @@ public class InstalledPackagesPanel extends JPanel {
     return packageMap;
   }
 
-  private static class MyTableCellRenderer extends DefaultTableCellRenderer {
+  private class MyTableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected,
                                                    final boolean hasFocus, final int row, final int column) {
@@ -565,7 +572,7 @@ public class InstalledPackagesPanel extends JPanel {
       final String availableVersion = (String)table.getValueAt(row, 2);
       boolean update = column == 2 &&
                        StringUtil.isNotEmpty(availableVersion) &&
-                       PackageVersionComparator.VERSION_COMPARATOR.compare(version, availableVersion) < 0;
+                       isUpdateAvailable(version, availableVersion);
       cell.setIcon(update ? AllIcons.Vcs.Arrow_right : null);
       final Object pyPackage = table.getValueAt(row, 0);
       if (pyPackage instanceof InstalledPackage) {
