@@ -20,10 +20,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
 
 public class IdeaTestApplication extends CommandLineApplication implements Disposable {
   private DataProvider myDataContext;
@@ -46,12 +50,31 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
     return getInstance(null);
   }
 
-  public static synchronized IdeaTestApplication getInstance(@Nullable String configPath) {
+  public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
     if (ourInstance == null) {
       PlatformTestCase.doAutodetectPlatformPrefix();
       new IdeaTestApplication();
       PluginManagerCore.getPlugins();
-      ApplicationManagerEx.getApplicationEx().load(configPath);
+      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      if (app.isDispatchThread()) {
+        app.load(configPath);
+      }
+      else {
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              app.load(configPath);
+            }
+          });
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        catch (InvocationTargetException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
     return (IdeaTestApplication)ourInstance;
   }
