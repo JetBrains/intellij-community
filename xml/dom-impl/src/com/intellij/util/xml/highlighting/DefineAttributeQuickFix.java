@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,9 +32,15 @@ import org.jetbrains.annotations.NotNull;
 public class DefineAttributeQuickFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spring.model.highlighting.DefineAttributeQuickFix");
   private final String myAttrName;
+  private final String myNamespace;
 
-  public DefineAttributeQuickFix(@NonNls final String attrName) {
+  public DefineAttributeQuickFix(String attrName) {
+    this(attrName, "");
+  }
+
+  public DefineAttributeQuickFix(@NotNull final String attrName, @NotNull String namespace) {
     myAttrName = attrName;
+    myNamespace = namespace;
   }
 
   @NotNull
@@ -52,7 +57,7 @@ public class DefineAttributeQuickFix implements LocalQuickFix {
     try {
       final XmlTag tag = (XmlTag)descriptor.getPsiElement();
       if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement().getContainingFile())) return;
-      final XmlAttribute attribute = tag.setAttribute(myAttrName, "", "");
+      final XmlAttribute attribute = tag.setAttribute(myAttrName, myNamespace, "");
       new OpenFileDescriptor(project, tag.getContainingFile().getVirtualFile(),
                              attribute.getValueElement().getTextRange().getStartOffset() + 1).navigate(true);
     }

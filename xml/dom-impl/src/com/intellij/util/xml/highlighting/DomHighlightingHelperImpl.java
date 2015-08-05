@@ -69,17 +69,17 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       if (xmlElement == null) {
         if (required.value()) {
           final String xmlElementName = element.getXmlElementName();
+          String namespace = element.getXmlElementNamespace();
           if (element instanceof GenericAttributeValue) {
-            return Collections.singletonList(holder
-                                               .createProblem(element, IdeBundle.message("attribute.0.should.be.defined", xmlElementName),
-                                                              new DefineAttributeQuickFix(xmlElementName)));
+            return Collections.singletonList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", xmlElementName),
+                                                              new DefineAttributeQuickFix(xmlElementName, namespace)));
           }
           return Collections.singletonList(
             holder.createProblem(
               element,
               HighlightSeverity.ERROR,
               IdeBundle.message("child.tag.0.should.be.defined", xmlElementName),
-              new AddRequiredSubtagFix(xmlElementName, element.getXmlElementNamespace())
+              new AddRequiredSubtagFix(xmlElementName, namespace)
             )
           );
         }
