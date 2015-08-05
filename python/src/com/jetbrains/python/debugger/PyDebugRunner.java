@@ -45,7 +45,6 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +101,6 @@ public class PyDebugRunner extends GenericProgramRunner {
             createDebugProcess(session, serverSocket, result, pyState);
 
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
-          initDebugProcess(((PythonRunConfiguration)environment.getRunProfile()).getScriptName(), pyDebugProcess);
           return pyDebugProcess;
         }
       });
@@ -115,9 +113,6 @@ public class PyDebugRunner extends GenericProgramRunner {
                                               PythonCommandLineState pyState) {
     return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
                               pyState.isMultiprocessDebug());
-  }
-
-  protected void initDebugProcess(String name, PyDebugProcess pyDebugProcess) {
   }
 
   @Override

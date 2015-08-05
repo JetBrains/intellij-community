@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -178,12 +177,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void print(@NotNull String text, @NotNull final ConsoleViewContentType outputType) {
-    for (PyConsoleOutputFilter filter : Extensions.getExtensions(PyConsoleOutputFilter.EP_NAME)) {
-      if (filter.reject(text, outputType)) {
-        return;
-      }
-    }
-
     detectIPython(text, outputType);
     if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;

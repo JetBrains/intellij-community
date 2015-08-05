@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyEduStackFrame extends PyStackFrame {
   public static final String MODULE = "<module>";
-  public static final String GLOBAL_FRAME = "Global Frame";
+  public static final String GLOBAL_FRAME = "Globals";
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
 

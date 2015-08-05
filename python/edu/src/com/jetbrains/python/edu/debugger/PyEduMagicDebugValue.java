@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+/**
+ * Represents debug value for content that should be hidden from the python beginners
+ * (e.g. values named with double underscore prefix and postfix)
+ */
 public class PyEduMagicDebugValue extends XNamedValue {
 
   private final Map<String, XValue> myValues;

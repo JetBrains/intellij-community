@@ -1,10 +1,8 @@
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,20 +26,9 @@ public class PyThreadInfo {
                       String message) {
     myId = id;
     myName = name;
-    myFrames = prepareFrames(frames);
+    myFrames = (frames != null && frames.size() > 0 ? Collections.unmodifiableList(frames) : null);
     myStopReason = stopReason;
     myMessage = message;
-  }
-
-  private static List<PyStackFrameInfo> prepareFrames(List<PyStackFrameInfo> frames) {
-    if (frames == null) {
-      return null;
-    }
-    List<PyStackFrameInfo> framesCopy = new ArrayList<PyStackFrameInfo>(frames);
-    for (PyFramesTransformer transformer: Extensions.getExtensions(PyFramesTransformer.EP_NAME)) {
-      framesCopy = transformer.transformFrames(framesCopy);
-    }
-    return framesCopy != null && framesCopy.size() > 0 ? Collections.unmodifiableList(framesCopy) : null;
   }
 
   public String getId() {
@@ -76,7 +63,7 @@ public class PyThreadInfo {
 
   public synchronized void updateState(final State state, final List<PyStackFrameInfo> frames) {
     myState = state;
-    myFrames = prepareFrames(frames);
+    myFrames = (frames != null && frames.size() > 0 ? Collections.unmodifiableList(frames) : null);
   }
 
 

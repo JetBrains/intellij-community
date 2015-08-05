@@ -16,6 +16,9 @@ public abstract class PyRunConfigurationForFileAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
+    if (context.findExisting() == null && context.getConfiguration() == null) {
+      return;
+    }
     Location location = context.getLocation();
     if (location != null && location.getPsiElement().getContainingFile() != null && location.getPsiElement().getContainingFile().getFileType() == PythonFileType.INSTANCE) {
       presentation.setEnabled(true);

@@ -20,7 +20,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
 
 public interface PyDebugValueTransformer {
-  ExtensionPointName<PyDebugValueTransformer> EP_NAME = ExtensionPointName.create("Pythonid.pyDebugValueTransformer");
+  ExtensionPointName<PyDebugValueTransformer> EP_NAME = ExtensionPointName.create("Pythonid.debugValueTransformer");
 
   /**
    * This method is used in python debugger to modify content and presentation of stack frame nodes

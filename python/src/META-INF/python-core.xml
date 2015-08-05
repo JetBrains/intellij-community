@@ -598,9 +598,7 @@
     <extensionPoint qualifiedName="Pythonid.breakpointHandler" interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"/>
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
-    <extensionPoint qualifiedName="Pythonid.pyDebugValueTransformer" interface="com.jetbrains.python.debugger.PyDebugValueTransformer"/>
-    <extensionPoint qualifiedName="Pythonid.pyFramesTransformer" interface="com.jetbrains.python.debugger.PyFramesTransformer"/>
-    <extensionPoint qualifiedName="Pythonid.pyConsoleOutputFilter" interface="com.jetbrains.python.console.PyConsoleOutputFilter"/>
+    <extensionPoint qualifiedName="Pythonid.debugValueTransformer" interface="com.jetbrains.python.debugger.PyDebugValueTransformer"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

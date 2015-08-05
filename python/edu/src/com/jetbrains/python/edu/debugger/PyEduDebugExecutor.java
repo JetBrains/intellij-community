@@ -20,7 +20,7 @@ public class PyEduDebugExecutor extends DefaultDebugExecutor {
 
   @Override
   public String getContextActionId() {
-    return "EduDebugClass";
+    return "EduDebug";
   }
 
   @NotNull
