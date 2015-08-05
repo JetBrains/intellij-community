@@ -492,6 +492,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       try {
         ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
       }
+      catch (ProcessCanceledException ignore) {
+        // thrown instead of InterruptedException by semaphore in invokeAndWait
+      }
       catch (Exception e) {
         LOG.error(e);
       }
