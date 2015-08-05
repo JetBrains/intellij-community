@@ -18,7 +18,10 @@ package com.intellij.execution;
 
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -95,36 +98,36 @@ public class ConfigurationUtil {
       //allScope is used to find all abstract test cases which probably have inheritors in the current 'scope'
       AnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiMember>() {
         public boolean process(final PsiMember annotated) {
-          final PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : ApplicationManager.getApplication()
-            .runReadAction(new Computable<PsiClass>() {
-                @Override
-                public PsiClass compute() {
-                  return annotated.getContainingClass();
-                }
-              });
-          if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
-            if (ApplicationManager.getApplication().runReadAction(
-              new Computable<Boolean>() {
-                @Override
-                public Boolean compute() {
-                  final VirtualFile file = PsiUtilCore.getVirtualFile(containingClass);
-                  return file != null && scope.contains(file) && testClassFilter.isAccepted(containingClass);
-                }
-              })) {
-              found.add(containingClass);
+          final PsiClass containingClass;
+
+          AccessToken token = ReadAction.start();
+          try {
+            containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
+            if (containingClass == null || annotated instanceof PsiMethod != isMethod) {
+              return true;
+            }
+            final VirtualFile file = PsiUtilCore.getVirtualFile(containingClass);
+            if (file != null && scope.contains(file) && testClassFilter.isAccepted(containingClass)) {
+              if (!found.add(containingClass)) {
+                return true;
+              }
               isJUnit4.set(Boolean.TRUE);
             }
-            ClassInheritorsSearch.search(containingClass, scope, true, true, false)
-              .forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-                public boolean execute(@NotNull final PsiClass aClass) {
-                  if (testClassFilter.isAccepted(aClass)) {
-                    found.add(aClass);
-                    isJUnit4.set(Boolean.TRUE);
-                  }
-                  return true;
-                }
-              }));
           }
+          finally {
+            token.finish();
+          }
+
+          ClassInheritorsSearch.search(containingClass, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+            @Override
+            public boolean processInReadAction(PsiClass aClass) {
+              if (testClassFilter.isAccepted(aClass)) {
+                found.add(aClass);
+                isJUnit4.set(Boolean.TRUE);
+              }
+              return true;
+            }
+          });
           return true;
         }
       });
