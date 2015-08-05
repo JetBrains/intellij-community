@@ -49,6 +49,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -270,7 +271,7 @@ public class FileTypesTest extends PlatformTestCase {
     File d = createTempDirectory();
     File f = new File(d, "xx.asfdasdfas");
     byte[] bytes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'};
-    assertEquals(new CharsetToolkit(bytes).guessFromContent(bytes.length), CharsetToolkit.GuessedEncoding.BINARY);
+    assertEquals(CharsetToolkit.GuessedEncoding.BINARY, new CharsetToolkit(bytes).guessFromContent(bytes.length));
     FileUtil.writeToFile(f, bytes);
 
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
@@ -282,7 +283,7 @@ public class FileTypesTest extends PlatformTestCase {
     File d = createTempDirectory();
     File f = new File(d, "xx.asfdasdfas");
     byte[] bytes = {9, 10, 13, 'x', 'a', 'b'};
-    assertEquals(new CharsetToolkit(bytes).guessFromContent(bytes.length), CharsetToolkit.GuessedEncoding.SEVEN_BIT);
+    assertEquals(CharsetToolkit.GuessedEncoding.SEVEN_BIT, new CharsetToolkit(bytes).guessFromContent(bytes.length));
     FileUtil.writeToFile(f, bytes);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
 
@@ -431,26 +432,56 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testPreserveUninstalledPluginAssociations() throws Exception {
-    final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable()) {
+    final FileType typeFromPlugin = new FileType() {
       @NotNull
       @Override
       public String getName() {
         return "Foo files";
       }
 
+      @NotNull
+      @Override
+      public String getDescription() {
+        return "";
+      }
+
+      @NotNull
+      @Override
+      public String getDefaultExtension() {
+        return "fromPlugin";
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
+      @Override
+      public boolean isBinary() {
+        return false;
+      }
+
       @Override
       public boolean isReadOnly() {
-        return true; // prevents from serialization
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+        return null;
       }
     };
     FileTypeFactory factory = new FileTypeFactory() {
       @Override
       public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-        consumer.consume(typeFromPlugin, "fromPlugin");
+        consumer.consume(typeFromPlugin);
       }
     };
     Element element = myFileTypeManager.getState();
     try {
+      myFileTypeManager.clearForTests();
       Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
@@ -488,6 +519,10 @@ public class FileTypesTest extends PlatformTestCase {
 
   // IDEA-139409 Persistent message "File type recognized: File extension *.vm was reassigned to VTL"
   public void testReassign() throws Exception {
+    myFileTypeManager.clearForTests();
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.initComponent();
+
     Element element = JDOMUtil.loadDocument(
       "<component name=\"FileTypeManager\" version=\"13\">\n" +
       "   <extensionMap>\n" +

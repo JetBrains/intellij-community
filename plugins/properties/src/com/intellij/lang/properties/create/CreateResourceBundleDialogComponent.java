@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
@@ -35,6 +36,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +121,22 @@ public class CreateResourceBundleDialogComponent {
 
     @Nullable
     @Override
+    protected ValidationInfo doValidate() {
+      for (String fileName : myComponent.getFileNamesToCreate()) {
+        if (!PathUtil.isValidFileName(fileName)) {
+          return new ValidationInfo(String.format("file name for properties file '%s' is invalid", fileName));
+        } else {
+          if (myDirectory.findFile(fileName) != null) {
+            return new ValidationInfo(String.format("file with name '%s' already exist", fileName));
+          }
+        }
+      }
+
+      return null;
+    }
+
+    @Nullable
+    @Override
     protected JComponent createCenterPanel() {
       return myComponent.getPanel();
     }
@@ -129,13 +147,7 @@ public class CreateResourceBundleDialogComponent {
   }
 
   private List<PsiFile> createPropertiesFiles() {
-    final String name = getBaseName();
-    final Set<String> fileNames = ContainerUtil.map2Set(myLocalesModel.getItems(), new Function<Locale, String>() {
-      @Override
-      public String fun(Locale locale) {
-        return locale == PropertiesUtil.DEFAULT_LOCALE ? (name + ".properties") : (name + "_" + locale.toString() + ".properties");
-      }
-    });
+    final Set<String> fileNames = getFileNamesToCreate();
     final List<PsiFile> createdFiles = ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
       @Override
       public List<PsiFile> compute() {
@@ -149,6 +161,17 @@ public class CreateResourceBundleDialogComponent {
     });
     combineToResourceBundleIfNeed(createdFiles);
     return createdFiles;
+  }
+
+  @NotNull
+  private Set<String> getFileNamesToCreate() {
+    final String name = getBaseName();
+    return ContainerUtil.map2Set(myLocalesModel.getItems(), new Function<Locale, String>() {
+      @Override
+      public String fun(Locale locale) {
+        return locale == PropertiesUtil.DEFAULT_LOCALE ? (name + ".properties") : (name + "_" + locale.toString() + ".properties");
+      }
+    });
   }
 
   private void combineToResourceBundleIfNeed(Collection<PsiFile> files) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
@@ -139,20 +138,16 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     cancel();
   }
 
-  private void updateRunning() {
-    queueRunningUpdate(EmptyRunnable.getInstance());
+  protected void updateProgress() {
+    queueProgressUpdate();
   }
 
-  protected void updateProgress() {
-    queueProgressUpdate(new Runnable() {
-      public void run() {
-        if (isDisposed()) return;
+  protected void updateAndRepaint() {
+    if (isDisposed()) return;
 
-        updateProgressNow();
+    updateProgressNow();
 
-        myComponent.repaint();
-      }
-    });
+    myComponent.repaint();
   }
 
   public void updateProgressNow() {
@@ -202,8 +197,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return false;
   }
 
-  protected void queueProgressUpdate(Runnable update) {
-    update.run();
+  protected void queueProgressUpdate() {
+    updateAndRepaint();
   }
 
   protected void queueRunningUpdate(Runnable update) {
@@ -212,10 +207,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   protected void onProgressChange() {
     updateProgress();
-  }
-
-  protected void onRunningChange() {
-    updateRunning();
   }
 
   public JComponent getComponent() {

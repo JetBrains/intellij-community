@@ -1,4 +1,4 @@
-<scheme name="WarmNeon" version="124" parent_scheme="Default">
+<scheme name="WarmNeon" version="142" parent_scheme="Default">
   <option name="LINE_SPACING" value="1.1" />
   <option name="EDITOR_FONT_SIZE" value="11" />
   <option name="EDITOR_QUICK_DOC_FONT_SIZE" value="MEDIUM" />
@@ -65,6 +65,11 @@
     <option name="CLASS_NAME_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="f2f0b5" />
+      </value>
+    </option>
+    <option name="CONSOLE_BLACK_OUTPUT">
+      <value>
+        <option name="FOREGROUND" value="ffffff" />
       </value>
     </option>
     <option name="CONSOLE_BLUE_BRIGHT_OUTPUT">
@@ -255,6 +260,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="DEFAULT_ATTRIBUTE" baseAttributes="DEFAULT_IDENTIFIER" />
     <option name="DEFAULT_BLOCK_COMMENT">
       <value>
         <option name="FOREGROUND" value="b44141" />
@@ -287,6 +293,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="DEFAULT_IDENTIFIER" baseAttributes="TEXT" />
     <option name="DEFAULT_INSTANCE_FIELD">
       <value>
         <option name="FOREGROUND" value="b9b9b9" />
@@ -326,19 +333,9 @@
         <option name="FOREGROUND" value="f971bb" />
       </value>
     </option>
-    <option name="DEFAULT_PREDEFINED_SYMBOL">
-      <value>
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
     <option name="DEFAULT_STATIC_FIELD">
       <value>
         <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="DEFAULT_STATIC_METHOD">
-      <value>
-        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="DEFAULT_STRING">
@@ -347,6 +344,8 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="DEFAULT_TAG" baseAttributes="TEXT" />
+    <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR" baseAttributes="TEXT" />
     <option name="DEFAULT_VALID_STRING_ESCAPE">
       <value>
         <option name="FOREGROUND" value="97e85a" />
@@ -459,13 +458,6 @@
     <option name="EL_BACKGROUND">
       <value>
         <option name="BACKGROUND" value="2a2a2a" />
-      </value>
-    </option>
-    <option name="ERRORS_ATTRIBUTES">
-      <value>
-        <option name="EFFECT_COLOR" value="ff0000" />
-        <option name="ERROR_STRIPE_COLOR" value="ff0000" />
-        <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
     <option name="EXECUTIONPOINT_ATTRIBUTES">
@@ -707,6 +699,7 @@
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
+    <option name="JS.GLOBAL_VARIABLE" baseAttributes="DEFAULT_GLOBAL_VARIABLE" />
     <option name="JS.LINE_COMMENT">
       <value>
         <option name="FOREGROUND" value="d14c42" />
@@ -851,6 +844,7 @@
         <option name="BACKGROUND" value="2a526e" />
       </value>
     </option>
+    <option name="PHP_VAR" baseAttributes="DEFAULT_LOCAL_VARIABLE" />
     <option name="PROPERTIES.LINE_COMMENT">
       <value>
         <option name="FOREGROUND" value="e75252" />

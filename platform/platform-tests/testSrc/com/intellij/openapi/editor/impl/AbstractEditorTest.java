@@ -87,7 +87,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   protected static FoldRegion addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
     FoldRegion region = addFoldRegion(startOffset, endOffset, placeholder);
-    toggleFoldRegionState(getFoldRegion(startOffset), false);
+    toggleFoldRegionState(region, false);
     return region;
   }
 

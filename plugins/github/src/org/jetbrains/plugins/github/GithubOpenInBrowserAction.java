@@ -182,7 +182,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       if (editor.getDocument().getLineStartOffset(end - 1) == selectionEnd) {
         end -= 1;
       }
-      builder.append("#L").append(begin).append('-').append(end);
+      builder.append("#L").append(begin).append("-L").append(end);
     }
 
     return builder.toString();

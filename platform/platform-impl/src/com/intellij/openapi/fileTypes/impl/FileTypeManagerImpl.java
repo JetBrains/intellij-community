@@ -1343,9 +1343,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @TestOnly
   void clearForTests() {
+    for (StandardFileType fileType : myStandardFileTypes.values()) {
+      myPatternsTable.removeAllAssociations(fileType.fileType);
+    }
     myStandardFileTypes.clear();
     myUnresolvedMappings.clear();
     mySchemesManager.clearAllSchemes();
+
   }
 
   @Override

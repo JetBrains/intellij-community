@@ -1086,7 +1086,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
-  public final List<LookupElement> completeBasicAllCarets() {
+  public final List<LookupElement> completeBasicAllCarets(@Nullable final Character charToTypeAfterCompletion) {
     final CaretModel caretModel = myEditor.getCaretModel();
     final List<Caret> carets = caretModel.getAllCarets();
 
@@ -1104,6 +1104,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (final int originalOffset : originalOffsets) {
       caretModel.moveToOffset(originalOffset);
       final LookupElement[] lookupElements = completeBasic();
+      if (charToTypeAfterCompletion != null) {
+        type(charToTypeAfterCompletion);
+      }
       if (lookupElements != null) {
         result.addAll(Arrays.asList(lookupElements));
       }
