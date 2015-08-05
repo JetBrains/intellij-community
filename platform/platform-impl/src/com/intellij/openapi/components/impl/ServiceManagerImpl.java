@@ -208,7 +208,8 @@ public class ServiceManagerImpl implements BaseComponent {
       }
 
       // we must take read action before adapter lock - if service requested from EDT (2) and pooled (1), will be a deadlock, because EDT waits adapter lock and Pooled waits read lock
-      AccessToken readToken = isUseReadActionToInitService() ? ReadAction.start() : null;
+      boolean useReadActionToInitService = isUseReadActionToInitService();
+      AccessToken readToken = useReadActionToInitService ? ReadAction.start() : null;
       try {
         synchronized (this) {
           instance = myInitializedComponentInstance;
@@ -219,7 +220,8 @@ public class ServiceManagerImpl implements BaseComponent {
 
           ComponentAdapter delegate = getDelegate();
 
-          if (ApplicationManager.getApplication().isWriteAccessAllowed() && PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
+          // useReadActionToInitService is enabled currently only in internal or test mode or explicitly (registry) - we have enough feedback to fix, so, don't disturb all users
+          if (!useReadActionToInitService && ApplicationManager.getApplication().isWriteAccessAllowed() && PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
             LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " + myDescriptor.getImplementation()));
           }
 
