@@ -63,6 +63,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String CLIENT_PARAM = "--client";
   public static final String PORT_PARAM = "--port";
   public static final String FILE_PARAM = "--file";
+  public static final String MODULE_PARAM = "--module";
   public static final String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
   @SuppressWarnings("SpellCheckingInspection")
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
