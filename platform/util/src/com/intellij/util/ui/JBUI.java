@@ -43,6 +43,15 @@ public class JBUI {
       return 1.0f;
     }
 
+    if (SystemInfo.isLinux) {
+      final int dpi = getSystemDPI();
+      if (dpi < 120) return 1f;
+      if (dpi < 144) return 1.25f;
+      if (dpi < 168) return 1.5f;
+      if (dpi < 192) return 1.75f;
+      return 2f;
+    }
+
     int size = -1;
     try {
       if (SystemInfo.isWindows) {
