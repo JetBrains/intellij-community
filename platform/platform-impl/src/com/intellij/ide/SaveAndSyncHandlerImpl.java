@@ -18,7 +18,6 @@ package com.intellij.ide;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -132,17 +131,23 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
     if (!ApplicationManager.getApplication().isDisposed() &&
         mySettings.isSaveOnFrameDeactivation() &&
         myBlockSaveOnFrameDeactivationCount.get() == 0) {
-      LOG.debug("saving documents");
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
-        if (LOG.isDebugEnabled()) LOG.debug("saving project: " + project);
-        project.save();
-      }
-
-      LOG.debug("saving application settings");
-      ApplicationManagerEx.getApplicationEx().saveSettings();
+      doSaveDocumentsAndProjectsAndApp();
     }
+  }
+
+  public static void doSaveDocumentsAndProjectsAndApp() {
+    LOG.debug("saving documents");
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("saving project: " + project);
+      }
+      project.save();
+    }
+
+    LOG.debug("saving application settings");
+    ApplicationManager.getApplication().saveSettings();
   }
 
   @Override
