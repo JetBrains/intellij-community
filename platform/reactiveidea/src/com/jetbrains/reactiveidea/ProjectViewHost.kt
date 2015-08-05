@@ -139,11 +139,15 @@ public class ProjectViewHost(val project: Project,
         else if (value is PsiElement) createMeta("host", LeafHost(ptrManager.createSmartPsiElementPointer(value)))
         else emptyMeta()
 
-    map.put("state", PrimitiveModel(state))
+    map["state"] = PrimitiveModel(state)
     map["text"] = PrimitiveModel(StringUtil.notNullize(descriptor.toString(), "null"))
-    map.put("children", MapModel())
+    map["children"] = MapModel()
+    if (descriptor.canNavigate()) {
+      map[tagsField] = tagsModel("navigable-file")
+    }
 
     if (state != "leaf") {
+      map[tagsField] = tagsModel("state")
       val stateSignal = reactiveModel.subscribe(meta.lifetime()!!, path / index.toString())
       reaction(true, "update state of project tree node", stateSignal) { state ->
         if (state != null) {

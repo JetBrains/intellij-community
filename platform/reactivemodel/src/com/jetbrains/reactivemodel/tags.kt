@@ -18,7 +18,9 @@ package com.jetbrains.reactivemodel
 import com.github.krukow.clj_lang.IPersistentSet
 import com.github.krukow.clj_lang.PersistentHashMap
 import com.github.krukow.clj_lang.PersistentHashSet
+import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.get
 import java.util.*
 
@@ -40,7 +42,6 @@ public val tagsField: String = "@@@--^tags"
 
 public val editorsTag: Tag<MapModel> = Tag("editor")
 
-public fun getTag(name: String): Tag<*>? {
-  return tagMap[name]
-}
+public fun getTag(name: String): Tag<*>? = tagMap[name]
 
+public fun tagsModel(vararg tags: String): Model = ListModel(tags.map { PrimitiveModel(it) }.toArrayList())

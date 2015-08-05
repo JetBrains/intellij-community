@@ -82,8 +82,9 @@ public class ReactiveModelsManager() : ApplicationComponent {
             },
             "go-usage" to { host: UsagesHost.UsageHost ->
               val node = host.node
-              if (node is Navigatable) {
-                node.navigate(true)
+              val userObj = node.getUserObject()
+              if (userObj is Navigatable) {
+                userObj.navigate(true)
               }
             },
             "navigate" to {host: SearchByName ->
