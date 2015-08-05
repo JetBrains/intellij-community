@@ -43,7 +43,6 @@ import java.util.*;
  */
 public class PyCallExpressionHelper {
   private PyCallExpressionHelper() {
-    // none
   }
 
   /**
@@ -262,7 +261,6 @@ public class PyCallExpressionHelper {
   public static int getImplicitArgumentCount(
     @NotNull final PyReferenceExpression callReference,
     @NotNull PyFunction functionBeingCalled) {
-    //return getImplicitArgumentCount(functionBeingCalled, null, null, qualifierIsAnInstance(callReference, TypeEvalContext.fast()));
     final PyDecorator decorator = PsiTreeUtil.getParentOfType(callReference, PyDecorator.class);
     if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), callReference, false)) {
       return 1;
@@ -386,6 +384,7 @@ public class PyCallExpressionHelper {
 
   /**
    * Returns argument if it exists and has appropriate type
+   *
    * @param parameter  argument
    * @param argClass   expected class
    * @param expression call expression
@@ -529,10 +528,6 @@ public class PyCallExpressionHelper {
       final PyCallable callable = (PyCallable)target;
       return Ref.create(callable.getCallType(context, call));
     }
-    /*PyCallExpression.PyMarkedCallee markedCallee = call.resolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(context));
-    if (markedCallee != null) {
-      return Ref.create(markedCallee.getCallable().getCallType(context, call));
-    }*/
     return null;
   }
 
