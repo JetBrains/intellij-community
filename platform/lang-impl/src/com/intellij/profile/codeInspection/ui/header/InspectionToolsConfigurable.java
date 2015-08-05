@@ -392,9 +392,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               final Set<String> levels = new HashSet<String>();
               for (Object o : rootElement.getChildren("inspection_tool")) {
                 final Element inspectElement = (Element)o;
-                levels.add(inspectElement.getAttributeValue("level"));
+                addLevelIfNotNull(levels, inspectElement);
                 for (Object s : inspectElement.getChildren("scope")) {
-                  levels.add(((Element)s).getAttributeValue("level"));
+                  addLevelIfNotNull(levels, ((Element) s));
                 }
               }
               for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
@@ -446,6 +446,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
             }
             catch (IOException e1) {
               LOG.error(e1);
+            }
+          }
+
+          private void addLevelIfNotNull(Set<String> levels, Element inspectElement) {
+            final String level = inspectElement.getAttributeValue("level");
+            if (level != null) {
+              levels.add(level);
             }
           }
         });
