@@ -207,12 +207,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           @Override
           public VirtualFile fun(VFileEvent event) {
             VirtualFile file = event instanceof VFileCreateEvent ? /* avoid expensive find child here */ null : event.getFile();
-            return file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
+            VirtualFile filtered = file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
+            if (toLog()) {
+              log("F: handled " + event + "; filtered file: " + filtered);
+            }
+            return filtered;
           }
         });
         files.remove(null);
         if (toLog()) {
-          log("F: VFS events: " + events);
+          log("F: VFS events: " + events+"; files: "+files);
         }
         if (!files.isEmpty() && RE_DETECT_ASYNC) {
           if (toLog()) {
@@ -1339,9 +1343,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @TestOnly
   void clearForTests() {
+    for (StandardFileType fileType : myStandardFileTypes.values()) {
+      myPatternsTable.removeAllAssociations(fileType.fileType);
+    }
     myStandardFileTypes.clear();
     myUnresolvedMappings.clear();
     mySchemesManager.clearAllSchemes();
+
   }
 
   @Override

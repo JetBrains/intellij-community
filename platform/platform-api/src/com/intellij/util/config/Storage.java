@@ -24,6 +24,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
+@Deprecated
+/**
+ * @deprecated Use {@link PropertiesComponent} directly.
+ * @see {@link JBSplitter}
+ */
 public interface Storage {
   void put(String key, String value);
   String get(String key);

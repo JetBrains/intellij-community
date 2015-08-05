@@ -22,8 +22,8 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
-import com.intellij.openapi.components.impl.stores.DirectoryStorageData
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.service
@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker
@@ -85,12 +84,12 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       updateExtension = processor.isUpgradeNeeded()
     }
     else {
-      schemeExtension = DirectoryStorageData.DEFAULT_EXT
+      schemeExtension = StorageUtil.DEFAULT_EXT
       updateExtension = false
     }
 
     if (useVfs && (provider == null || !provider.enabled)) {
-      if (!Registry.`is`("use.read.action.to.init.service", true)) {
+      if (!ServiceManagerImpl.isUseReadActionToInitService()) {
         // store refreshes root directory, so, we don't need to use refreshAndFindFile
         directory = LocalFileSystem.getInstance().findFileByIoFile(ioDirectory)
         if (directory != null) {
@@ -227,8 +226,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     return if (StringUtilRt.endsWithIgnoreCase(fileName, schemeExtension)) {
       schemeExtension
     }
-    else if (StringUtilRt.endsWithIgnoreCase(fileName, DirectoryStorageData.DEFAULT_EXT)) {
-      DirectoryStorageData.DEFAULT_EXT
+    else if (StringUtilRt.endsWithIgnoreCase(fileName, StorageUtil.DEFAULT_EXT)) {
+      StorageUtil.DEFAULT_EXT
     }
     else if (allowAny) {
       PathUtil.getFileExtension(fileName.toString())!!
@@ -393,7 +392,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   private val ExternalizableScheme.fileName: String?
     get() = schemeToInfo.get(this)?.fileNameWithoutExtension
 
-  private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, DirectoryStorageData.DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
+  private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, StorageUtil.DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
 
   private fun readSchemeFromFile(file: VirtualFile, duringLoad: Boolean): E? {
     val fileName = file.getNameSequence()
@@ -549,11 +548,11 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         var dir = getDirectory()
         if (dir == null || !dir.isValid()) {
           dir = DirectoryBasedStorage.createDir(ioDirectory, this)
-          directory = dir!!
+          directory = dir
         }
 
         if (renamed) {
-          file = dir.findChild(externalInfo!!.fileName)
+          file = dir!!.findChild(externalInfo!!.fileName)
           if (file != null) {
             runWriteAction {
               file!!.rename(this, fileName)
@@ -562,7 +561,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
 
         if (file == null) {
-          file = StorageUtil.getFile(fileName, dir, this)
+          file = StorageUtil.getFile(fileName, dir!!, this)
         }
 
         runWriteAction {

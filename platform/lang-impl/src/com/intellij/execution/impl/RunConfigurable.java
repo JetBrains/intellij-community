@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -45,7 +44,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
@@ -78,7 +76,7 @@ class RunConfigurable extends BaseConfigurable {
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
   private static final Icon SHARED_ICON = AllIcons.Nodes.Shared;
   private static final Icon NON_SHARED_ICON = EmptyIcon.ICON_16;
-  @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
+
   @NonNls private static final Object DEFAULTS = new Object() {
     @Override
     public String toString() {
@@ -94,9 +92,8 @@ class RunConfigurable extends BaseConfigurable {
   final MyTreeModel myTreeModel = new MyTreeModel(myRoot);
   final Tree myTree = new Tree(myTreeModel);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
-  private final Splitter mySplitter = new Splitter(false);
+  private final JBSplitter mySplitter = new JBSplitter("RunConfigurable.dividerProportion", 0.3f);
   private JPanel myWholePanel;
-  private final StorageAccessors myProperties = StorageAccessors.createGlobal("RunConfigurable");
   private Configurable mySelectedConfigurable = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
   private final JTextField myRecentsLimit = new JTextField("5", 2);
@@ -614,6 +611,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     myWholePanel = new JPanel(new BorderLayout());
+
     mySplitter.setFirstComponent(createLeftPanel());
     mySplitter.setSecondComponent(myRightPanel);
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
@@ -624,8 +622,6 @@ class RunConfigurable extends BaseConfigurable {
     d.width = Math.max(d.width, 800);
     d.height = Math.max(d.height, 600);
     myWholePanel.setPreferredSize(d);
-
-    mySplitter.setProportion(myProperties.getFloat(DIVIDER_PROPORTION, 0.3f));
 
     return myWholePanel;
   }
@@ -908,7 +904,6 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     myRightPanel.removeAll();
-    myProperties.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
     mySplitter.dispose();
   }
 

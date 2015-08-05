@@ -69,11 +69,11 @@ public class UninstallPluginAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    uninstall(host, pluginTable.getSelectedObjects());
+    uninstall(host, false, pluginTable.getSelectedObjects());
     pluginTable.updateUI();
   }
 
-  public static void uninstall(PluginManagerMain host, IdeaPluginDescriptor... selection) {
+  public static void uninstall(PluginManagerMain host, boolean confirmed, IdeaPluginDescriptor... selection) {
     String message;
 
     if (selection.length == 1) {
@@ -82,7 +82,8 @@ public class UninstallPluginAction extends AnAction implements DumbAware {
     else {
       message = IdeBundle.message("prompt.uninstall.several.plugins", selection.length);
     }
-    if (Messages.showYesNoDialog(host.getMainPanel(), message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) != Messages.YES) return;
+
+    if (!confirmed && Messages.showYesNoDialog(host.getMainPanel(), message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) != Messages.YES) return;
 
     for (IdeaPluginDescriptor descriptor : selection) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;

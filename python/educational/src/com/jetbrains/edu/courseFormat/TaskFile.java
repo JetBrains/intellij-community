@@ -17,7 +17,7 @@ import java.util.List;
  * which is visible to student in project view
  */
 
-public class TaskFile {
+public class TaskFile implements StudyOrderable {
   @SerializedName("placeholders")
   @Expose
   private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
@@ -180,6 +180,9 @@ public class TaskFile {
     TaskFile that = (TaskFile)o;
 
     if (getIndex() != that.getIndex()) return false;
+    if (name != that.name) return false;
+    if (text != that.text) return false;
+
     final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
     final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();
     if (answerPlaceholders.size() != thatAnswerPlaceholders.size()) return false;
@@ -194,6 +197,8 @@ public class TaskFile {
   @Override
   public int hashCode() {
     int result = getIndex();
+    result = 31 * result + name.hashCode();
+    result = 31 * result + text.hashCode();
     for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
       result = 31 * result + placeholder.hashCode();
     }

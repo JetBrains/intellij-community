@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components;
+package com.siyeh.ig.methodmetrics;
 
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 
-// todo remove?
-public interface XmlConfigurationMerger {
-  @NotNull
-  Element merge(Element original, Element mergeWith);
+/**
+ * @author Bas Leijdekkers
+ */
+public class NestingDepthInspectionTest extends LightInspectionTestCase {
 
-  String getComponentName();
+  public void testNestingDepth() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new NestingDepthInspection();
+  }
 }

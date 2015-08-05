@@ -51,7 +51,7 @@ class ModuleFileData : ProjectStorageData, OptionManager {
     dirty = false
   }
 
-  override fun writeOptions(root: Element, versionString: String) {
+  override fun writeOptions(root: Element) {
     if (!options!!.isEmpty()) {
       for (key in options!!.keySet()) {
         val value = options!!.get(key)
@@ -61,7 +61,7 @@ class ModuleFileData : ProjectStorageData, OptionManager {
       }
     }
     // need be last for compat reasons
-    super<ProjectStorageData>.writeOptions(root, versionString)
+    super<ProjectStorageData>.writeOptions(root)
 
     dirty = false
   }

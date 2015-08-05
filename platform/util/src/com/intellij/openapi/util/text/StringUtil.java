@@ -2157,9 +2157,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean isNotEscapedBackslash(@NotNull char[] chars, int startOffset, int backslashOffset) {
+  public static boolean isEscapedBackslash(@NotNull char[] chars, int startOffset, int backslashOffset) {
     if (chars[backslashOffset] != '\\') {
-      return false;
+      return true;
     }
     boolean escaped = false;
     for (int i = startOffset; i < backslashOffset; i++) {
@@ -2170,13 +2170,13 @@ public class StringUtil extends StringUtilRt {
         escaped = false;
       }
     }
-    return !escaped;
+    return escaped;
   }
 
   @Contract(pure = true)
-  public static boolean isNotEscapedBackslash(@NotNull CharSequence text, int startOffset, int backslashOffset) {
+  public static boolean isEscapedBackslash(@NotNull CharSequence text, int startOffset, int backslashOffset) {
     if (text.charAt(backslashOffset) != '\\') {
-      return false;
+      return true;
     }
     boolean escaped = false;
     for (int i = startOffset; i < backslashOffset; i++) {
@@ -2187,7 +2187,7 @@ public class StringUtil extends StringUtilRt {
         escaped = false;
       }
     }
-    return !escaped;
+    return escaped;
   }
 
   @NotNull

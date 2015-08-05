@@ -308,6 +308,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (myProjectSdkType != null) {
       element.setAttribute(PROJECT_JDK_TYPE_ATTR, myProjectSdkType);
     }
+
+    if (element.getAttributes().size() == 1) {
+      // remove empty element to not write defaults
+      element.removeAttribute(ATTRIBUTE_VERSION);
+    }
   }
 
   private boolean myMergedCallStarted;

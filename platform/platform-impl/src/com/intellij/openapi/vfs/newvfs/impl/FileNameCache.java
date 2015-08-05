@@ -22,6 +22,8 @@ import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @author peter
  */
@@ -70,19 +72,48 @@ public class FileNameCache {
     return h % ourNameCache.length;
   }
 
+  private static final boolean ourTrackStats = false;
+  private static final int ourLOneSize = 1024;
+  private static final IntObjectLinkedMap.MapEntry<CharSequence>[] ourArrayCache = new IntObjectLinkedMap.MapEntry[ourLOneSize];
+
+  private static final AtomicInteger ourQueries = new AtomicInteger();
+  private static final AtomicInteger ourMisses = new AtomicInteger();
+
   @NotNull
   public static CharSequence getVFileName(int nameId) {
     assert nameId > 0;
+
+    if (ourTrackStats) {
+      int frequency = 10000000;
+      int queryCount = ourQueries.incrementAndGet();
+      if (queryCount >= frequency && ourQueries.compareAndSet(queryCount, 0)) {
+        double misses = ourMisses.getAndSet(0);
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("Misses: " + (misses / frequency));
+        ourQueries.set(0);
+      }
+    }
+
+    int l1 = nameId % ourLOneSize;
+    IntObjectLinkedMap.MapEntry<CharSequence> entry = ourArrayCache[l1];
+    if (entry != null && entry.key == nameId) {
+      return entry.value;
+    }
+
+    if (ourTrackStats) {
+      ourMisses.incrementAndGet();
+    }
+
     final int stripe = calcStripeIdFromNameId(nameId);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
-      IntObjectLinkedMap.MapEntry<CharSequence> entry = cache.getCachedEntry(nameId);
-      if (entry != null) {
-        return entry.value;
-      }
+      entry = cache.getCachedEntry(nameId);
     }
-
-    return cacheData(FSRecords.getNameByNameId(nameId), nameId, stripe).value;
+    if (entry == null) {
+      entry = cacheData(FSRecords.getNameByNameId(nameId), nameId, stripe);
+    }
+    ourArrayCache[l1] = entry;
+    return entry.value;
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -174,5 +175,21 @@ public class EditorImplTest extends AbstractEditorTest {
     document.setInBulkUpdate(false);
     
     checkResultByText("some+text<caret>");
+  }
+  
+  public void testCorrectCaretPositionRestorationAfterMultipleFoldRegionsChange() throws Exception {
+    initText("so<caret>me long text");
+    final FoldRegion innerRegion = addCollapsedFoldRegion(0, 4, "...");
+    final FoldRegion outerRegion = addCollapsedFoldRegion(0, 9, "...");
+
+    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getFoldingModel().removeFoldRegion(outerRegion);
+        myEditor.getFoldingModel().removeFoldRegion(innerRegion);
+      }
+    });
+
+    checkResultByText("so<caret>me long text");
   }
 }

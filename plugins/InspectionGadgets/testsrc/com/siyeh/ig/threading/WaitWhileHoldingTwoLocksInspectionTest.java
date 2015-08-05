@@ -13,11 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components;
+package com.siyeh.ig.threading;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 
-public interface StateStorageChooser<T> {
-  @NotNull
-  Storage[] selectStorages(Storage[] storages, T component, @NotNull StateStorageOperation operation);
+/**
+ * @author Bas Leijdekkers
+ */
+public class WaitWhileHoldingTwoLocksInspectionTest extends LightInspectionTestCase {
+
+  public void testWaitWhileHoldingTwoLocks() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new WaitWhileHoldingTwoLocksInspection();
+  }
 }

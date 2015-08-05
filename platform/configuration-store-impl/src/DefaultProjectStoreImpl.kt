@@ -33,12 +33,15 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
   }
 
   init {
-    service<DefaultProjectExportableAndSaveTrigger>()!!.project = project
+    service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
   private val storage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
   private val storageManager = object : StateStorageManager {
+    override fun rename(path: String, newName: String) {
+    }
+
     override fun getMacroSubstitutor() = null
 
     override fun getStateStorage(storageSpec: Storage) = storage
@@ -46,9 +49,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
 
     override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileBasedStorage>> = Couple(emptyList<FileBasedStorage>(), emptyList<FileBasedStorage>())
-
-    override fun clearStateStorage(file: String) {
-    }
 
     override fun startExternalization(): StateStorageManager.ExternalizationSession? {
       val externalizationSession = storage.startExternalization()
@@ -64,10 +64,9 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun setStreamProvider(streamProvider: StreamProvider?) = throw UnsupportedOperationException("Method setStreamProvider not implemented in " + javaClass)
 
     override fun getStreamProvider() = throw UnsupportedOperationException("Method getStreamProviders not implemented in " + javaClass)
-
-    override fun getStorageFileNames() = throw UnsupportedOperationException("Method getStorageFileNames not implemented in " + javaClass)
   }
 
+  // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
 
   override fun getMessageBus() = project.getMessageBus()

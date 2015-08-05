@@ -119,11 +119,6 @@ public final class StoreUtil {
     return null;
   }
 
-  @NotNull
-  public static String getComponentName(@NotNull PersistentStateComponent<?> persistentStateComponent) {
-    return getStateSpec(persistentStateComponent).name();
-  }
-
   public enum ReloadComponentStoreStatus {
     RESTART_AGREED,
     RESTART_CANCELLED,

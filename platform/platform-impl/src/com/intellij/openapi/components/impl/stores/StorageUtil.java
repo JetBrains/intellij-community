@@ -30,7 +30,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,6 +58,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class StorageUtil {
+  public static final String DEFAULT_EXT = ".xml";
+
   static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   @TestOnly
@@ -287,12 +288,14 @@ public class StorageUtil {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       return parentVirtualFile.createChildData(requestor, file.getName());
     }
-    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        return parentVirtualFile.createChildData(requestor, file.getName());
-      }
-    });
+
+    AccessToken token = WriteAction.start();
+    try {
+      return parentVirtualFile.createChildData(requestor, file.getName());
+    }
+    finally {
+      token.finish();
+    }
   }
 
   /**

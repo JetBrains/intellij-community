@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -30,12 +29,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * @author spleaner
  */
 public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || ProjectUtil.isDirectoryBased(project) || Messages.showOkCancelDialog(project,
@@ -50,15 +49,10 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
 
     File ideaDir = new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER + File.separatorChar);
     if ((ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir)) {
-      IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(project);
-
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
 
-      final StateStorageManager storageManager = projectStore.getStateStorageManager();
-      for (String file : new ArrayList<String>(storageManager.getStorageFileNames())) {
-        storageManager.clearStateStorage(file);
-      }
-
+      IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(project);
+      projectStore.clearStorages();
       projectStore.setPath(baseDir.getPath());
       project.save();
       ProjectUtil.closeAndDispose(project);

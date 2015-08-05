@@ -96,6 +96,10 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
     presentableUrl = null
   }
 
+  override fun clearStorages() {
+    storageManager.clearStorages()
+  }
+
   override fun getProjectBaseDir(): VirtualFile? {
     val path = getProjectBasePath() ?: return null
     return LocalFileSystem.getInstance().findFileByPath(path)
@@ -182,7 +186,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
   private val workspaceStorage: FileBasedStorage?
     get() = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
 
-  override fun loadProjectFromTemplate(defaultProject: ProjectImpl) {
+  override fun loadProjectFromTemplate(defaultProject: Project) {
     defaultProject.save()
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy()
@@ -247,10 +251,10 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
 
   override fun getMessageBus() = project.getMessageBus()
 
-  override fun <T> getComponentStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
-    val result = super<BaseFileConfigurableStoreImpl>.getComponentStorageSpecs(component, stateSpec, operation)
+    val result = super<BaseFileConfigurableStoreImpl>.getStorageSpecs(component, stateSpec, operation)
     // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
     for (storage in result) {
       if (storage.file == StoragePathMacros.PROJECT_FILE) {

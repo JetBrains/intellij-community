@@ -31,6 +31,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -280,7 +281,7 @@ public class DirectoryStorageData extends StorageDataBase {
   }
 
   @NotNull
-  public Element stateToElement(@NotNull String key, @Nullable Object state) {
+  public Element stateToElement(@NotNull String key, @Nullable Object state) throws IOException {
     return StateMap.stateToElement(key, state, Collections.<String, Element>emptyMap());
   }
 

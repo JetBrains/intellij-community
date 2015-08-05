@@ -85,10 +85,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @Override
     protected void doSave(@Nullable Element element) throws IOException {
-      if (LOG.isDebugEnabled() && myFileSpec.equals(StoragePathMacros.MODULE_FILE)) {
-        LOG.debug("doSave " + getFilePath());
-      }
-
       if (myStreamProvider != null && myStreamProvider.getEnabled()) {
         // stream provider always use LF separator
         saveForProvider(element == null ? null : StorageUtil.writeToBytes(element, LineSeparator.LF.getSeparatorString()), element);
@@ -181,7 +177,6 @@ public class FileBasedStorage extends XmlElementStorage {
     super.setDefaultState(element);
   }
 
-  @SuppressWarnings("unused")
   public void updatedFromStreamProvider(@NotNull Set<String> changedComponentNames, boolean deleted) {
     if (myRoamingType == RoamingType.DISABLED) {
       // storage roaming was changed to DISABLED, but settings repository has old state

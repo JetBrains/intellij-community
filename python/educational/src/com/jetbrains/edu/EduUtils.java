@@ -34,27 +34,38 @@ public class EduUtils {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
+  public static void commitAndSaveModel(final ModifiableRootModel model) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+        model.getProject().save();
+      }
+    });
+  }
 
-  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
+  @Nullable
+  public static ModifiableRootModel getModel(@NotNull VirtualFile dir, @NotNull Project project) {
     final Module module = ModuleUtilCore.findModuleForFile(dir, project);
     if (module == null) {
       LOG.info("Module for " + dir.getPath() + " was not found");
+      return null;
+    }
+    return ModuleRootManager.getInstance(module).getModifiableModel();
+  }
+
+  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
+    final ModifiableRootModel model = getModel(dir, project);
+    if (model == null) {
       return;
     }
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
     if (entry == null) {
       LOG.info("Content entry for " + dir.getPath() + " was not found");
       return;
     }
     entry.addSourceFolder(dir, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-        module.getProject().save();
-      }
-    });
+    commitAndSaveModel(model);
   }
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {

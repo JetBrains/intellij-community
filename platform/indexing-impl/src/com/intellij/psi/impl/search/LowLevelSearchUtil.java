@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,12 +100,12 @@ public class LowLevelSearchUtil {
     if (start < 0) {
       throw new AssertionError("offset=" + offset + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement + "  scope=" + scope);
     }
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
+    lastElement = leafNode;
     boolean contains = false;
     PsiElement prev = null;
     TreeElement prevNode = null;
     PsiElement run = null;
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
-    lastElement = leafNode;
     while (run != scope) {
       if (progress != null) progress.checkCanceled();
       if (useTree) {
@@ -145,16 +145,14 @@ public class LowLevelSearchUtil {
   }
 
   private static TreeElement findNextLeafElementAt(ASTNode scopeNode, TreeElement last, int offset) {
-    TreeElement leafNode;
     int offsetR = offset;
     if (last !=null) {
-      offsetR -= (last.getStartOffset() - scopeNode.getStartOffset()) + last.getTextLength();
-      out:
+      offsetR -= last.getStartOffset() - scopeNode.getStartOffset() + last.getTextLength();
       while (offsetR >= 0) {
         TreeElement next = last.getTreeNext();
         if (next == null) {
           last = last.getTreeParent();
-          continue out;
+          continue;
         }
         int length = next.getTextLength();
         offsetR -= length;
@@ -163,16 +161,15 @@ public class LowLevelSearchUtil {
       scopeNode = last;
       offsetR += scopeNode.getTextLength();
     }
-    leafNode = (LeafElement)scopeNode.findLeafElementAt(offsetR);
-    return leafNode;
+    return (LeafElement)scopeNode.findLeafElementAt(offsetR);
   }
 
   //@RequiresReadAction
-  public static boolean processElementsContainingWordInElement(@NotNull TextOccurenceProcessor processor,
+  public static boolean processElementsContainingWordInElement(@NotNull final TextOccurenceProcessor processor,
                                                                @NotNull final PsiElement scope,
-                                                               @NotNull StringSearcher searcher,
+                                                               @NotNull final StringSearcher searcher,
                                                                final boolean processInjectedPsi,
-                                                               ProgressIndicator progress) {
+                                                               final ProgressIndicator progress) {
     if (progress != null) progress.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
@@ -185,32 +182,25 @@ public class LowLevelSearchUtil {
       return true;
     }
 
-    int scopeStart = range.getStartOffset();
-    int startOffset = scopeStart;
+    final int scopeStart = range.getStartOffset();
+    final int startOffset = scopeStart;
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
       diagnoseInvalidRange(scope, file, viewProvider, buffer, range);
       return true;
     }
 
-    final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
-
-    Project project = file.getProject();
-    TreeElement lastElement = null;
-    do {
-      if (progress != null) progress.checkCanceled();
-      startOffset  = searchWord(buffer, bufferArray, startOffset, endOffset, searcher, progress);
-      if (startOffset < 0) {
-        return true;
+    final Project project = file.getProject();
+    final TreeElement[] lastElement = {null};
+    return processTextOccurrences(buffer, startOffset, endOffset, searcher, progress, new TIntProcedure() {
+      @Override
+      public boolean execute(int offset) {
+        if (progress != null) progress.checkCanceled();
+        lastElement[0] = processTreeUp(project, processor, scope, searcher, offset - scopeStart, processInjectedPsi, progress,
+                                       lastElement[0]);
+        return lastElement[0] != null;
       }
-      lastElement = processTreeUp(project, processor, scope, searcher, startOffset - scopeStart, processInjectedPsi, progress, lastElement);
-      if (lastElement==null) return false;
-
-      startOffset++;
-    }
-    while (startOffset < endOffset);
-
-    return true;
+    });
   }
 
   private static void diagnoseInvalidRange(@NotNull PsiElement scope,
@@ -234,60 +224,59 @@ public class LowLevelSearchUtil {
     LOG.error(msg);
   }
 
-  public static int searchWord(@NotNull CharSequence text,
-                               int startOffset,
-                               int endOffset,
-                               @NotNull StringSearcher searcher,
-                               @Nullable ProgressIndicator progress) {
-    return searchWord(text, null, startOffset, endOffset, searcher, progress);
-  }
-
-  public static int searchWord(@NotNull CharSequence text,
-                               @Nullable char[] textArray,
-                               int startOffset,
-                               int endOffset,
-                               @NotNull StringSearcher searcher,
-                               @Nullable ProgressIndicator progress) {
+  public static boolean processTextOccurrences(@NotNull CharSequence text,
+                                               int startOffset,
+                                               int endOffset,
+                                               @NotNull StringSearcher searcher,
+                                               @Nullable ProgressIndicator progress,
+                                               @NotNull TIntProcedure processor) {
     if (endOffset > text.length()) {
       throw new AssertionError("end>length");
     }
-
     for (int index = startOffset; index < endOffset; index++) {
       if (progress != null) progress.checkCanceled();
       //noinspection AssignmentToForLoopParameter
-      index = searcher.scan(text, textArray, index, endOffset);
-      if (index < 0) return -1;
-      if (!searcher.isJavaIdentifier()) {
-        return index;
+      index = searcher.scan(text, index, endOffset);
+      if (index < 0) break;
+      if (checkJavaIdentifier(text, startOffset, endOffset, searcher, index)) {
+        if (!processor.execute(index)) return false;
       }
-
-      if (index > startOffset) {
-        char c = textArray != null ? textArray[index - 1]:text.charAt(index - 1);
-        if (Character.isJavaIdentifierPart(c) && c != '$') {
-          if (!searcher.isHandleEscapeSequences() || (index < 2 || !isNotEscapedBackslash(text, textArray, startOffset, index-2))) { //escape sequence
-            continue;
-          }
-        }
-        else if (index > 0 && searcher.isHandleEscapeSequences() && isNotEscapedBackslash(text, textArray, startOffset, index-1)) {
-          continue;
-        }
-      }
-
-      final int patternLength = searcher.getPattern().length();
-      if (index + patternLength < endOffset) {
-        char c = textArray != null ? textArray[index + patternLength]:text.charAt(index + patternLength);
-        if (Character.isJavaIdentifierPart(c) && c != '$') {
-          continue;
-        }
-      }
-      return index;
     }
-    return -1;
+    return true;
   }
 
-  private static boolean isNotEscapedBackslash(CharSequence text, char[] textArray, int startOffset, int index) {
-    return textArray != null
-                 ? StringUtil.isNotEscapedBackslash(textArray, startOffset, index)
-                 : StringUtil.isNotEscapedBackslash(text, startOffset, index);
+  private static boolean checkJavaIdentifier(@NotNull CharSequence text,
+                                             int startOffset,
+                                             int endOffset,
+                                             @NotNull StringSearcher searcher,
+                                             int index) {
+    if (!searcher.isJavaIdentifier()) {
+      return true;
+    }
+
+    if (index > startOffset) {
+      char c = text.charAt(index - 1);
+      if (Character.isJavaIdentifierPart(c) && c != '$') {
+        if (!searcher.isHandleEscapeSequences() || index < 2 || isEscapedBackslash(text, startOffset, index - 2)) { //escape sequence
+          return false;
+        }
+      }
+      else if (index > 0 && searcher.isHandleEscapeSequences() && !isEscapedBackslash(text, startOffset, index - 1)) {
+        return false;
+      }
+    }
+
+    final int patternLength = searcher.getPattern().length();
+    if (index + patternLength < endOffset) {
+      char c = text.charAt(index + patternLength);
+      if (Character.isJavaIdentifierPart(c) && c != '$') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean isEscapedBackslash(CharSequence text, int startOffset, int index) {
+    return StringUtil.isEscapedBackslash(text, startOffset, index);
   }
 }

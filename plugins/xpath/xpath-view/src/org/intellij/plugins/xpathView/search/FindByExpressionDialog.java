@@ -27,6 +27,7 @@ import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.intellij.plugins.xpathView.ui.Mode;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -77,6 +78,7 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
         super.doOKAction();
     }
 
+    @NotNull
     protected String getPrivateDimensionServiceKey() {
         return "XPathView.FindDialog.DIMENSION_SERVICE_KEY";
     }

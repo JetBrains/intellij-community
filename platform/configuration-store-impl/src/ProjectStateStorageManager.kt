@@ -20,18 +20,15 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.project.impl.ProjectImpl
-import org.jdom.Element
 
 class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl("project", macroSubstitutor, project) {
-  override fun createStorageData(fileSpec: String, filePath: String) = ProjectStorageData(rootTagName)
+  override fun createStorageData(fileSpec: String) = ProjectStorageData(rootTagName)
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     val workspace = project.isWorkspaceComponent(component.javaClass)
-    var fileSpec = if (workspace) StoragePathMacros.WORKSPACE_FILE else StoragePathMacros.PROJECT_FILE
-    val storage = getOrCreateStorage(fileSpec, if (workspace) RoamingType.DISABLED else RoamingType.PER_USER)
-    if (operation == StateStorageOperation.READ && workspace && !storage.hasState(component, componentName, javaClass<Element>(), false)) {
-      fileSpec = StoragePathMacros.PROJECT_FILE
+    if (workspace && (operation != StateStorageOperation.READ || getOrCreateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).hasState(componentName, false))) {
+      return StoragePathMacros.WORKSPACE_FILE
     }
-    return fileSpec
+    return StoragePathMacros.PROJECT_FILE
   }
 }

@@ -108,8 +108,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
+    throwExceptionsIfAny();
+  }
+
+  protected void throwExceptionsIfAny() throws CompositeException {
     synchronized (myException) {
-      if (!myException.isEmpty()) throw myException;
+      myException.throwIfNotEmpty();
     }
   }
 

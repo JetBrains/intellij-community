@@ -40,10 +40,12 @@ public interface StateStorageManager {
   @NotNull
   Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted);
 
-  @NotNull
-  Collection<String> getStorageFileNames();
-
-  void clearStateStorage(@NotNull String fileSpec);
+  /**
+   * Rename file
+   * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)
+   * @param newName Only new file name (foo.iml)
+   */
+  void rename(@NotNull String path, @NotNull String newName);
 
   @Nullable
   ExternalizationSession startExternalization();

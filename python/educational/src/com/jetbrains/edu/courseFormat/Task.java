@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
-public class Task implements Named {
+public class Task implements Named, StudyOrderable {
   @Expose
   private String name;
 
@@ -101,6 +101,7 @@ public class Task implements Named {
   public void addTaskFile(@NotNull final String name, int index) {
     TaskFile taskFile = new TaskFile();
     taskFile.setIndex(index);
+    taskFile.setTask(this);
     taskFiles.put(name, taskFile);
   }
 

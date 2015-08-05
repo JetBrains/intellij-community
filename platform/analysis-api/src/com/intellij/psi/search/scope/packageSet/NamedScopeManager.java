@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -33,11 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @State(
-  name="NamedScopeManager",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
+  name = "NamedScopeManager",
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class NamedScopeManager extends NamedScopesHolder {
   public OrderState myOrderState = new OrderState();
@@ -58,8 +55,8 @@ public class NamedScopeManager extends NamedScopesHolder {
 
   @Override
   public Element getState() {
-    final Element state = super.getState();
-    XmlSerializer.serializeInto(myOrderState, state);
+    Element state = super.getState();
+    XmlSerializer.serializeInto(myOrderState, state, new SkipDefaultValuesSerializationFilters());
     return state;
   }
 
@@ -77,5 +74,19 @@ public class NamedScopeManager extends NamedScopesHolder {
     @Tag("order")
     @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
     public List<String> myOrder = new ArrayList<String>();
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      OrderState state = (OrderState)o;
+      return !(myOrder != null ? !myOrder.equals(state.myOrder) : state.myOrder != null);
+    }
+
+    @Override
+    public int hashCode() {
+      return myOrder != null ? myOrder.hashCode() : 0;
+    }
   }
 }

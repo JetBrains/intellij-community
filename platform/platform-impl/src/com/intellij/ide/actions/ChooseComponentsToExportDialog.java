@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     myPathPanel = new FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, browseAction, null);
 
-    String exportPath = PropertiesComponent.getInstance().getOrInit("export.settings.path", DEFAULT_PATH);
+    String exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH);
     myPathPanel.setText(exportPath);
     myPathPanel.setChangeListener(new Runnable() {
       @Override
@@ -143,7 +143,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText());
+    PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText(), DEFAULT_PATH);
     super.doOKAction();
   }
 

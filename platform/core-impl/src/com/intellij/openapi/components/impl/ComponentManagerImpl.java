@@ -19,7 +19,10 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -528,9 +531,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         }
       }
       catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (StateStorageException e) {
         throw e;
       }
       catch (Throwable t) {

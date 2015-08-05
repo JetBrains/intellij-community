@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,8 @@ public class ChangeUtil {
     return element;
   }
 
-  public static LeafElement copyLeafWithText(LeafElement original, String text) {
+  @NotNull
+  public static LeafElement copyLeafWithText(@NotNull LeafElement original, @NotNull String text) {
     LeafElement element = ASTFactory.leaf(original.getElementType(), text);
     original.copyCopyableDataTo(element);
     encodeInformation(element, original);

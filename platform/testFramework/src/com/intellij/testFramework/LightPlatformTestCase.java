@@ -33,8 +33,10 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -228,50 +230,50 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
 
-    final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
-
-    new WriteCommandAction.Simple(null) {
-      @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-      @Override
-      protected void run() throws Throwable {
-        if (ourProject != null) {
-          closeAndDeleteProject();
-        }
-        else {
-          cleanPersistedVFSContent();
-        }
-
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-
-        ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
-        ourPathToKeep = projectFile.getPath();
-        if (!ourHaveShutdownHook) {
-          ourHaveShutdownHook = true;
-          registerShutdownHook();
-        }
-        ourPsiManager = null;
-
-        ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
-          @Override
-          public void moduleCreated(@NotNull Module module) {
-            ourModule = module;
-          }
-
-          @Override
-          public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
-            ourSourceRoot = sourceRoot;
-          }
-        });
+    AccessToken token = WriteAction.start();
+    try {
+      if (ourProject != null) {
+        closeAndDeleteProject();
       }
-    }.execute().throwException();
+      else {
+        cleanPersistedVFSContent();
+      }
+    }
+    finally {
+      token.finish();
+    }
+
+    final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
+
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
+
+    ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
+    ourPathToKeep = projectFile.getPath();
+    if (!ourHaveShutdownHook) {
+      ourHaveShutdownHook = true;
+      registerShutdownHook();
+    }
+    ourPsiManager = null;
+
+    ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
+      @Override
+      public void moduleCreated(@NotNull Module module) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourModule = module;
+      }
+
+      @Override
+      public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourSourceRoot = sourceRoot;
+      }
+    });
 
     // project creation may make a lot of pointers, do not regard them as leak
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
   }
-
 
   /**
    * @return The only source root
