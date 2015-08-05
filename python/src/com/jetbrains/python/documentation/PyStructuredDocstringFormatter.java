@@ -67,7 +67,7 @@ public class PyStructuredDocstringFormatter {
     final String preparedDocstring = StringUtil.join(lines, "\n");
 
     final String formatter;
-    final StructuredDocStringBase structuredDocString;
+    final TagBasedDocString structuredDocString;
     if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
         DocStringUtil.isEpydocDocString(preparedDocstring)) {
       formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
@@ -160,8 +160,8 @@ public class PyStructuredDocstringFormatter {
       }
     }
 
-    if (docString instanceof StructuredDocStringBase) {
-      final StructuredDocStringBase taggedDocString = (StructuredDocStringBase)docString;
+    if (docString instanceof TagBasedDocString) {
+      final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
       final List<String> additionalTags = taggedDocString.getAdditionalTags();
       if (!additionalTags.isEmpty()) {
         result.append("<br/><br/><b>Additional:</b><br/>");

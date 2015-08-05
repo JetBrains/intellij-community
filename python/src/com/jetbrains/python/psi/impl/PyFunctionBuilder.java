@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.documentation.StructuredDocStringBase;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,7 +113,7 @@ public class PyFunctionBuilder {
   @NotNull
   public PyFunctionBuilder parameterWithType(@NotNull final String name,
                                              @NotNull final String type,
-                                             @NotNull final StructuredDocStringBase docStyle) {
+                                             @NotNull final StructuredDocString docStyle) {
     parameter(name);
     docString(docStyle.createParameterType(name, type));
     return this;

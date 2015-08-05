@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public abstract class StructuredDocStringBase implements StructuredDocString {
+public abstract class TagBasedDocString implements StructuredDocString {
   protected final String myDescription;
 
   protected final Map<String, Substring> mySimpleTagValues = Maps.newHashMap();
@@ -56,7 +56,7 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
 
   public static String TYPE = "type";
 
-  protected StructuredDocStringBase(@NotNull String docStringText, String tagPrefix) {
+  protected TagBasedDocString(@NotNull String docStringText, String tagPrefix) {
     myTagPrefix = tagPrefix;
     final Substring docString = new Substring(docStringText);
     final List<Substring> lines = docString.splitLines();

@@ -58,26 +58,26 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final int offset = ranges.get(0).getStartOffset();
         // XXX: It does not work with multielement docstrings
         StructuredDocString docString = DocStringUtil.parse(text);
-        if (docString instanceof StructuredDocStringBase) {
-          final StructuredDocStringBase taggedDocString = (StructuredDocStringBase)docString;
+        if (docString instanceof TagBasedDocString) {
+          final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            taggedDocString.getTagArguments(StructuredDocStringBase.PARAM_TAGS),
-                                            StructuredDocStringBase.ReferenceType.PARAMETER));
+                                            taggedDocString.getTagArguments(TagBasedDocString.PARAM_TAGS),
+                                            TagBasedDocString.ReferenceType.PARAMETER));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            taggedDocString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS),
-                                            StructuredDocStringBase.ReferenceType.PARAMETER_TYPE));
+                                            taggedDocString.getTagArguments(TagBasedDocString.PARAM_TYPE_TAGS),
+                                            TagBasedDocString.ReferenceType.PARAMETER_TYPE));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getKeywordArgumentSubstrings(), StructuredDocStringBase.ReferenceType.KEYWORD));
+                                            docString.getKeywordArgumentSubstrings(), TagBasedDocString.ReferenceType.KEYWORD));
 
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("var"),
-                                            StructuredDocStringBase.ReferenceType.VARIABLE));
+                                            TagBasedDocString.ReferenceType.VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("cvar"),
-                                            StructuredDocStringBase.ReferenceType.CLASS_VARIABLE));
+                                            TagBasedDocString.ReferenceType.CLASS_VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("ivar"),
-                                            StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE));
+                                            TagBasedDocString.ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
         return result.toArray(new PsiReference[result.size()]);
@@ -101,7 +101,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                         int offset,
                                                         StructuredDocString docString,
                                                         List<Substring> paramNames,
-                                                        StructuredDocStringBase.ReferenceType refType) {
+                                                        TagBasedDocString.ReferenceType refType) {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
       final String s = name.toString();
@@ -109,7 +109,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final TextRange range = name.getTextRange().shiftRight(offset);
         result.add(new DocStringParameterReference(element, range, refType));
       }
-      if (refType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE)) {
+      if (refType.equals(TagBasedDocString.ReferenceType.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
         if (type != null) {
           result.addAll(parseTypeReferences(element, type, offset));
