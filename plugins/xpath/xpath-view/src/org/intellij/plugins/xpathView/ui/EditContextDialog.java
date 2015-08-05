@@ -24,16 +24,12 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.Table;
@@ -69,7 +65,7 @@ public class EditContextDialog extends DialogWrapper {
   private final JTable myNamespaceTable;
   private final NamespaceTableModel myNamespaceTableModel;
   private final ContextProvider myContextProvider;
-  private Splitter mySplitter;
+  private JBSplitter mySplitter;
 
   public EditContextDialog(Project project,
                            Set<String> unresolvedPrefixes,
@@ -154,9 +150,7 @@ public class EditContextDialog extends DialogWrapper {
         }).disableUpDownActions().createPanel();
     UIUtil.addBorder(n, IdeBorderFactory.createTitledBorder("Namespaces", false));
 
-    int extendedState = myDimensionService.getExtendedState(getDimensionServiceKey());
-    if (extendedState == -1) extendedState = 400;
-    mySplitter = new Splitter(true, extendedState / 1000f);
+    mySplitter = new JBSplitter(true, getDimensionServiceKey(), 400 / 1000f);
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(n);
     mySplitter.setSecondComponent(p);
@@ -164,7 +158,7 @@ public class EditContextDialog extends DialogWrapper {
     return mySplitter;
   }
 
-
+  @NotNull
   protected String getDimensionServiceKey() {
     return getClass().getName() + ".DIMENSION_SERVICE_KEY";
   }
@@ -197,13 +191,6 @@ public class EditContextDialog extends DialogWrapper {
       }
     }
     super.doOKAction();
-  }
-
-  public void show() {
-    super.show();
-    if (mySplitter != null) {
-      myDimensionService.setExtendedState(getDimensionServiceKey(), (int)(mySplitter.getProportion() * 1000));
-    }
   }
 
   private String getError(final Expression expression) {
