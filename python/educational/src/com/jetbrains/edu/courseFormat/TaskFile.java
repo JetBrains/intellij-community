@@ -180,6 +180,9 @@ public class TaskFile implements StudyOrderable {
     TaskFile that = (TaskFile)o;
 
     if (getIndex() != that.getIndex()) return false;
+    if (name != that.name) return false;
+    if (text != that.text) return false;
+
     final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
     final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();
     if (answerPlaceholders.size() != thatAnswerPlaceholders.size()) return false;
@@ -194,6 +197,8 @@ public class TaskFile implements StudyOrderable {
   @Override
   public int hashCode() {
     int result = getIndex();
+    result = 31 * result + name.hashCode();
+    result = 31 * result + text.hashCode();
     for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
       result = 31 * result + placeholder.hashCode();
     }
