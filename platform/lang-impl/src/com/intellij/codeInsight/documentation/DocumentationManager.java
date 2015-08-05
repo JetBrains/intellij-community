@@ -32,6 +32,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +42,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.preview.PreviewManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -88,6 +94,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final Logger LOG = Logger.getInstance("#" + DocumentationManager.class.getName());
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
+  
+  private static final long DOC_GENERATION_TIMEOUT_MILLISECONDS = 60000;
 
   private Editor myEditor;
   private final Alarm myUpdateDocAlarm;
@@ -1148,16 +1156,37 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
       }
-      return ApplicationManager.getApplication().runReadAction(
-          new Computable<String>() {
+      
+      long deadline = System.currentTimeMillis() + DOC_GENERATION_TIMEOUT_MILLISECONDS;
+      do {
+        final Disposable disposable = Disposer.newDisposable();
+        try {
+          ProgressIndicator progressIndicator = new StandardProgressIndicatorBase();
+          ProgressIndicatorUtils.forceWriteActionPriority(progressIndicator, disposable);
+          final Ref<String> result = new Ref<String>();
+          ProgressManager.getInstance().runProcess(new Runnable() {
             @Override
-            @Nullable
-            public String compute() {
-              final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
-              return provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
+            public void run() {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
+                    String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
+                    result.set(doc);
+                  }
+                }
+              );
             }
-          }
-      );
+          }, progressIndicator);
+          return result.get();
+        }
+        catch (ProcessCanceledException ignored) {}
+        finally {
+          Disposer.dispose(disposable);
+        }
+      }
+      while (System.currentTimeMillis() < deadline);
+      return null;
     }
 
     @Override
