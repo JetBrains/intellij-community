@@ -96,7 +96,6 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       }
     }
     mySummary = summary;
-    
   }
 
   @NotNull
@@ -132,7 +131,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   }
 
   @NotNull
-  protected Pair<SectionField,Integer> parseGeneralField(int lineNum, int sectionIndent) {
+  protected Pair<SectionField, Integer> parseGeneralField(int lineNum, int sectionIndent) {
     final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum, sectionIndent, sectionIndent);
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
@@ -144,10 +143,10 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   }
 
   @NotNull
-  protected abstract Pair<SectionField,Integer> parseFieldWithType(int lineNum, int sectionIndent);
+  protected abstract Pair<SectionField, Integer> parseFieldWithType(int lineNum, int sectionIndent);
 
   @NotNull
-  protected abstract Pair<SectionField,Integer> parseFieldWithNameAndOptionalType(int lineNum, int sectionIndent);
+  protected abstract Pair<SectionField, Integer> parseFieldWithNameAndOptionalType(int lineNum, int sectionIndent);
 
   @NotNull
   protected abstract Pair<String, Integer> parseSectionHeader(int lineNum);
@@ -193,14 +192,27 @@ public abstract class SectionBasedDocString implements StructuredDocString {
            (!isEmpty(lineNum) && getLineIndent(lineNum) <= curSectionIndent);
   }
 
+  /**
+   * Consumes all lines that are indented more than {@code blockIndent} and don't contain start of a new section.
+   * Trailing empty lines (e.g. due to indentation of closing triple quotes) are omitted in result.
+   */
   @NotNull
   protected Pair<List<Substring>, Integer> parseIndentedBlock(int lineNum, int blockIndent, int sectionIndent) {
     final List<Substring> result = new ArrayList<Substring>();
-    while (!isSectionBreak(lineNum, sectionIndent) && (isEmpty(lineNum) || getLineIndent(lineNum) > blockIndent)) {
-      result.add(getLine(lineNum));
+    int lastNonEmpty = lineNum - 1;
+    while (!isSectionBreak(lineNum, sectionIndent)) {
+      if (getLineIndent(lineNum) > blockIndent) {
+        // copy all lines after the last non empty including the current one
+        for (int i = lastNonEmpty + 1; i <= lineNum; i++) {
+          result.add(getLine(lineNum));
+        }
+        lastNonEmpty = lineNum;
+      }
+      else if (!isEmpty(lineNum)) {
+        break;
+      }
       lineNum++;
     }
-    
     return Pair.create(result, lineNum);
   }
 

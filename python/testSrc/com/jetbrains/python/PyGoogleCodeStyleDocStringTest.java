@@ -101,7 +101,36 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
     final PsiElement foundElement = processor.getFoundElement();
     assertNotNull(foundElement);
     return ((PyStringLiteralExpression)foundElement).getStringValue();
-  } 
+  }
+
+  public void testSectionStartAfterQuotes() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    final String docStringText = findFirstDocString();
+    assertNotNull(docStringText);
+    final GoogleCodeStyleDocString docString = new GoogleCodeStyleDocString(docStringText);
+    assertEmpty(docString.getSummary());
+    
+    assertSize(2, docString.getSections());
+    
+    final Section examplesSection = docString.getSections().get(0);
+    assertEquals("examples", examplesSection.getTitle());
+    assertSize(1, examplesSection.getFields());
+    final SectionField firstExampleField = examplesSection.getFields().get(0);
+    assertNull(firstExampleField.getName());
+    assertNull(firstExampleField.getType());
+    assertNotNull(firstExampleField.getDescription());
+    assertEquals("    Useless call\n" +
+                 "    func() == func()", firstExampleField.getDescription().toString());
+    
+    final Section notesSection = docString.getSections().get(1);
+    assertEquals("notes", notesSection.getTitle());
+    assertSize(1, notesSection.getFields());
+    final SectionField firstNotesField = notesSection.getFields().get(0);
+    assertNull(firstNotesField.getName());
+    assertNull(firstNotesField.getType());
+    assertEquals("      some\n" +
+                 "        notes", firstNotesField.getDescription().toString());
+  }
 
   @Override
   protected String getTestDataPath() {
