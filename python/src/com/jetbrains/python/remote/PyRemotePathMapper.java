@@ -32,7 +32,7 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
   private final MultiMap<PyPathMappingType, PathMappingSettings.PathMapping> myPathMappings = MultiMap.create();
 
   @NotNull
-  public static PyRemotePathMapper fromSettings(@NotNull PathMappingSettings settings, PyPathMappingType mappingType) {
+  public static PyRemotePathMapper fromSettings(@NotNull PathMappingSettings settings, @NotNull PyPathMappingType mappingType) {
     PyRemotePathMapper mapper = new PyRemotePathMapper();
     mapper.addAll(settings.getPathMappings(), mappingType);
     return mapper;
