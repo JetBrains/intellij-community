@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class ExternalDiffToolUtil {
   public static boolean canCreateFile(@NotNull DiffContent content) {
@@ -248,26 +251,69 @@ public class ExternalDiffToolUtil {
     commandLine.setExePath(settings.getMergeExePath());
 
     commandLine.addParameters(args);
-    commandLine.createProcess();
+    final Process process = commandLine.createProcess();
 
-    ProgressManager.getInstance().run(new Task.Modal(project, "Launching external tool", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        TimeoutUtil.sleep(1000);
-      }
-    });
+    boolean success;
+    if (settings.isMergeTrustExitCode()) {
+      final Ref<Boolean> resultRef = new Ref<Boolean>();
 
-    // TODO: respect exit code of process
-    if (Messages.showYesNoDialog(project,
-                                 "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
-                                 "Merge In External Tool", "Mark as Resolved", "Revert", null) != Messages.YES) {
-      request.applyResult(MergeResult.CANCEL);
-      return;
+      ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for external tool", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          final Semaphore semaphore = new Semaphore(0);
+
+          final Thread waiter = new Thread("external process waiter") {
+            @Override
+            public void run() {
+              try {
+                resultRef.set(process.waitFor() == 0);
+              }
+              catch (InterruptedException ignore) {
+              }
+              finally {
+                semaphore.release();
+              }
+            }
+          };
+          waiter.start();
+
+          try {
+            while (true) {
+              indicator.checkCanceled();
+              if (semaphore.tryAcquire(200, TimeUnit.MILLISECONDS)) break;
+            }
+          }
+          catch (InterruptedException ignore) {
+          }
+          finally {
+            waiter.interrupt();
+          }
+        }
+      });
+
+      success = resultRef.get() == Boolean.TRUE;
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Modal(project, "Launching external tool", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
+          TimeoutUtil.sleep(1000);
+        }
+      });
+
+      success = Messages.showYesNoDialog(project,
+                                         "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
+                                         "Merge In External Tool", "Mark as Resolved", "Revert", null) == Messages.YES;
     }
 
-    outputFile.finish();
-    request.applyResult(MergeResult.RESOLVED);
+    if (success) {
+      outputFile.finish();
+      request.applyResult(MergeResult.RESOLVED);
+    }
+    else {
+      request.applyResult(MergeResult.CANCEL);
+    }
   }
 
   //
