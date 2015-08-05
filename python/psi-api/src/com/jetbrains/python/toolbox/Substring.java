@@ -186,7 +186,11 @@ public class Substring implements CharSequence {
 
   public int indexOf(@NotNull String s) {
     int n = myString.indexOf(s, myStartOffset);
-    return n < myEndOffset ? n - myStartOffset : -1;
+    return n >= 0 && n < myEndOffset ? n - myStartOffset : -1;
+  }
+
+  public boolean contains(@NotNull String s) {
+    return indexOf(s) >= 0;
   }
 
   @NotNull
