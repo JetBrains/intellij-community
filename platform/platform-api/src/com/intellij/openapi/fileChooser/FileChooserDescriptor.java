@@ -133,11 +133,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myDescription;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
     withDescription(description);
   }
 
-  public FileChooserDescriptor withDescription(String description) {
+  public FileChooserDescriptor withDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
     myDescription = description;
     return this;
   }

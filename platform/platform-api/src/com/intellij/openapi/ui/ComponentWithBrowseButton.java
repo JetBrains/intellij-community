@@ -37,6 +37,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.LazyUiDisposable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,13 +123,17 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project,
+  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                                      @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor, true);
   }
 
-  public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project,
+  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                                      @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor, boolean autoRemoveOnHide) {
     addBrowseFolderListener(project, new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor), autoRemoveOnHide);
@@ -202,8 +207,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     private Project myProject;
     protected final FileChooserDescriptor myFileChooserDescriptor;
 
-    public BrowseFolderActionListener(@Nullable String title,
-                                      @Nullable String description,
+    public BrowseFolderActionListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,

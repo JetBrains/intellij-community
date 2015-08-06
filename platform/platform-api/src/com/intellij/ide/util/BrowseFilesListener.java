@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,10 @@ public class BrowseFilesListener implements ActionListener {
   private final String myDescription;
   protected final FileChooserDescriptor myChooserDescriptor;
 
-  public BrowseFilesListener(JTextField textField, final String title, final String description, final FileChooserDescriptor chooserDescriptor) {
+  public BrowseFilesListener(JTextField textField,
+                             @Nls(capitalization = Nls.Capitalization.Title) String title,
+                             @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                             FileChooserDescriptor chooserDescriptor) {
     myTextField = textField;
     myTitle = title;
     myDescription = description;
