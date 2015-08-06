@@ -22,10 +22,10 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,7 +221,7 @@ public class DirectoryStorageData extends StorageDataBase {
     fileToState.put(fileName, state);
   }
 
-  void processComponent(@NotNull String componentName, @NotNull TObjectObjectProcedure<String, Object> consumer) {
+  void processComponent(@NotNull String componentName, @NotNull PairConsumer<String, Object> consumer) {
     StateMap map = myStates.get(componentName);
     if (map != null) {
       map.forEachEntry(consumer);

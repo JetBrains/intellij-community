@@ -25,9 +25,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,11 +180,11 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       final Element storeElement = new Element(StorageDataBase.COMPONENT);
 
       for (final String componentName : copiedStorageData.getComponentNames()) {
-        copiedStorageData.processComponent(componentName, new TObjectObjectProcedure<String, Object>() {
+        copiedStorageData.processComponent(componentName, new PairConsumer<String, Object>() {
           @Override
-          public boolean execute(String fileName, Object state) {
+          public void consume(String fileName, Object state) {
             if (!dirtyFileNames.contains(fileName)) {
-              return true;
+              return;
             }
 
             Element element = null;
@@ -210,7 +210,6 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
                 element.detach();
               }
             }
-            return true;
           }
         });
       }

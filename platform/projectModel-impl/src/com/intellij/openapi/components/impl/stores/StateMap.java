@@ -21,9 +21,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SystemProperties;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
+import com.intellij.util.containers.ContainerUtil;
 import org.iq80.snappy.SnappyInputStream;
 import org.iq80.snappy.SnappyOutputStream;
 import org.jdom.Element;
@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public final class StateMap {
@@ -50,14 +51,15 @@ public final class StateMap {
     setOmitEncoding(true).
     setOmitDeclaration(true);
 
-  private final THashMap<String, Object> states;
+  private final ConcurrentMap<String, Object> states;
 
   public StateMap() {
-    states = new THashMap<String, Object>();
+    states = ContainerUtil.newConcurrentMap();
   }
 
   public StateMap(StateMap stateMap) {
-    states = new THashMap<String, Object>((Map<String, Object>)stateMap.states);
+    states = ContainerUtil.newConcurrentMap(stateMap.states.size());
+    states.putAll(stateMap.states);
   }
 
   @NotNull
@@ -194,8 +196,12 @@ public final class StateMap {
       return null;
     }
 
-    states.put(key, archiveState((Element)state));
-    return (Element)state;
+    if (states.replace(key, state, archiveState((Element)state))) {
+      return (Element)state;
+    }
+    else {
+      return getStateAndArchive(key);
+    }
   }
 
   @NotNull
@@ -230,7 +236,9 @@ public final class StateMap {
     return states.size();
   }
 
-  public void forEachEntry(@NotNull TObjectObjectProcedure<String, Object> consumer) {
-    states.forEachEntry(consumer);
+  public void forEachEntry(@NotNull PairConsumer<String, Object> consumer) {
+    for (Map.Entry<String, Object> entry : states.entrySet()) {
+      consumer.consume(entry.getKey(), entry.getValue());
+    }
   }
 }
