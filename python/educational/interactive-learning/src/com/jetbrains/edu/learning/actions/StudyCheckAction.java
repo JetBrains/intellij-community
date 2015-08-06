@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -121,6 +122,10 @@ public class StudyCheckAction extends DumbAwareAction {
 
 
   public void check(@NotNull final Project project) {
+    if (DumbService.isDumb(project)) {
+      DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing in in progress");
+      return;
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -131,7 +136,7 @@ public class StudyCheckAction extends DumbAwareAction {
             if (selectedEditor == null) return;
             final StudyState studyState = new StudyState(selectedEditor);
             if (!studyState.isValid()) {
-              LOG.error("StudyCheckAction was invokes outside study editor");
+              LOG.error("StudyCheckAction was invoked outside study editor");
               return;
             }
             final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
