@@ -413,7 +413,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
         @Override
         public void focusLost(final Editor eventEditor) {
-          writeEditorPropertyValue(null, editor, propertiesFile);
+          if (propertiesFile.getContainingFile().isValid()) {
+            writeEditorPropertyValue(null, editor, propertiesFile);
+          }
         }
       });
       gc.gridx = 0;

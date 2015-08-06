@@ -247,7 +247,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
-    MultiMap<Key<?>, DataNode<?>> result = MultiMap.createLinked();
+    MultiMap<Key<?>, DataNode<?>> result = new KeyDataNodeMultiMap();
     Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
@@ -872,5 +872,13 @@ public class ExternalSystemApiUtil {
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
     getSettings(project, systemId).subscribe(listener);
+  }
+
+  public static class KeyDataNodeMultiMap extends LinkedMultiMap<Key<?>, DataNode<?>> {
+    @NotNull
+    @Override
+    protected Map<Key<?>, Collection<DataNode<?>>> createMap() {
+      return new TreeMap<Key<?>, Collection<DataNode<?>>>();
+    }
   }
 }

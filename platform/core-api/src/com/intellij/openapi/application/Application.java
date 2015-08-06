@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -191,8 +192,11 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread. This will happen after all
-   * pending AWT events have been processed.
+   * AWT event dispatching thread, with {@link ModalityState#defaultModalityState()} modality state. This will happen after all
+   * pending AWT events have been processed.<p/>
+   *
+   * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
+   * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
    */
@@ -201,7 +205,10 @@ public interface Application extends ComponentManager {
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread - unless the expiration condition is fulfilled.
-   * This will happen after all pending AWT events have been processed.
+   * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state.<p/>
+   *
+   * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
+   * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
    * @param expired  condition to check before execution.
@@ -212,6 +219,9 @@ public interface Application extends ComponentManager {
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
    * state.
+   *
+   * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
+   * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
    * @param state the state in which the runnable will be executed.
@@ -224,6 +234,9 @@ public interface Application extends ComponentManager {
    * state - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed.
    *
+   * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
+   * for the reasons described in {@link ModalityState} documentation.
+   *
    * @param runnable the runnable to execute.
    * @param state the state in which the runnable will be executed.
    * @param expired  condition to check before execution.
@@ -232,22 +245,27 @@ public interface Application extends ComponentManager {
 
   /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
-   * AWT event dispatching thread, when IDEA is in the specified modality
+   * AWT event dispatching thread, when the IDE is in the specified modality
    * state. This call blocks until all pending AWT events have been processed and (then)
    * {@code runnable.run()} returns.</p>
    *
    * <p>If current thread is an event dispatch thread then {@code runnable.run()}
-   * is executed immediately.</p>
+   * is executed immediately regardless of the modality state.</p>
+   *
+   * Please use this method instead of {@link javax.swing.SwingUtilities#invokeAndWait(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
+   * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.
+   * @throws ProcessCanceledException when the current thread is interrupted
    */
-  void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
+  void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) throws ProcessCanceledException;
 
   /**
-   * Returns the current modality state for the Swing dispatch thread.
+   * Returns current modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
    *
    * @return the current modality state.
+   * @see ModalityState#current()
    */
   @NotNull
   ModalityState getCurrentModalityState();
@@ -257,15 +275,17 @@ public interface Application extends ComponentManager {
    *
    * @param c the component for which the modality state is requested.
    * @return the modality state.
+   * @see ModalityState#stateForComponent(Component)
    */
   @NotNull
   ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
-   * Returns the current modality state for the current thread (which may be different
-   * from the Swing dispatch thread).
+   * When invoked on AWT thread, returns {@link #getCurrentModalityState()} ()}. When invoked in the thread of some modal progress, returns modality state
+   * corresponding to that progress' dialog. Otherwise, returns {@link #getNoneModalityState()}.
    *
    * @return the modality state for the current thread.
+   * @see ModalityState#defaultModalityState()
    */
   @NotNull
   ModalityState getDefaultModalityState();
@@ -275,13 +295,16 @@ public interface Application extends ComponentManager {
    * are active.
    *
    * @return the modality state for no modal dialogs.
+   * @see ModalityState#NON_MODAL
    */
   @NotNull
   ModalityState getNoneModalityState();
 
   /**
-   * Returns modality state which is active anytime
+   * Returns modality state which is active anytime. Please don't use it unless absolutely needed for the reasons described in
+   * {@link ModalityState} documentation.
    * @return modality state
+   * @see ModalityState#any()
    */
   @NotNull
   ModalityState getAnyModalityState();

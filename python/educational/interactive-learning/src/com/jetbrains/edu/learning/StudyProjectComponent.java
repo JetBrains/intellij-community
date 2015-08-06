@@ -292,7 +292,9 @@ public class StudyProjectComponent implements ProjectComponent {
                 final TaskFile taskFile = new TaskFile();
                 taskFile.initTaskFile(task, false);
                 taskFile.setUserCreated(true);
-                task.getTaskFiles().put(createdFile.getName(), taskFile);
+                final String name = createdFile.getName();
+                taskFile.name = name;
+                task.getTaskFiles().put(name, taskFile);
               }
             }
           }

@@ -135,6 +135,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
           final TaskFile taskFile = new TaskFile();
           final OldTaskFile oldTaskFile = entry.getValue();
           taskFile.setIndex(oldTaskFile.myIndex);
+          taskFile.name = entry.getKey();
 
           final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
           for (OldTaskWindow window : oldTaskFile.taskWindows) {
