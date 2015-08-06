@@ -107,7 +107,7 @@ public class StorageData extends StorageDataBase {
   }
 
   @Nullable
-  protected Element save(@NotNull Map<String, Element> newLiveStates) throws IOException {
+  public Element save(@NotNull Map<String, Element> newLiveStates) throws IOException {
     if (myStates.isEmpty()) {
       return null;
     }
@@ -154,7 +154,7 @@ public class StorageData extends StorageDataBase {
   }
 
   @Nullable
-  static StorageData setStateAndCloneIfNeed(@NotNull String componentName, @Nullable Element newState, @NotNull StorageData storageData, @NotNull Map<String, Element> newLiveStates) {
+  public static StorageData setStateAndCloneIfNeed(@NotNull String componentName, @Nullable Element newState, @NotNull StorageData storageData, @NotNull Map<String, Element> newLiveStates) {
     Object oldState = storageData.myStates.get(componentName);
     if (newState == null || JDOMUtil.isEmpty(newState)) {
       if (oldState == null) {
@@ -189,7 +189,7 @@ public class StorageData extends StorageDataBase {
   }
 
   @Nullable
-  final Object setState(@NotNull String componentName, @Nullable Element newState, @NotNull Map<String, Element> newLiveStates) {
+  public final Object setState(@NotNull String componentName, @Nullable Element newState, @NotNull Map<String, Element> newLiveStates) {
     if (newState == null || JDOMUtil.isEmpty(newState)) {
       return myStates.remove(componentName);
     }
