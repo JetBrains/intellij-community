@@ -52,7 +52,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
   private volatile boolean myDisposed;
 
   @NotNull
-  public static VcsRepositoryManager getInstance(Project project) {
+  public static VcsRepositoryManager getInstance(@NotNull Project project) {
     //noinspection ConstantConditions
     return project.getComponent(VcsRepositoryManager.class);
   }
