@@ -46,7 +46,7 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
     List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(6682, 6686));
 
     PlatformTestUtil
-      .startPerformanceTest("Testing smart reformat on big file", 90, getReformatRunnable(file, ranges))
+      .startPerformanceTest("Testing smart reformat on big file", 110, getReformatRunnable(file, ranges))
       .setup(getSetupRunnable(initial, document))
       .cpuBound()
       .assertTiming();
