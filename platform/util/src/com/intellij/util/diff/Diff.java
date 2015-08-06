@@ -129,8 +129,7 @@ public class Diff {
       }
       catch (FilesTooBigForDiffException e) {
         PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
-        patienceIntLCS.failOnSmallSizeReduction();
-        patienceIntLCS.execute();
+        patienceIntLCS.execute(true);
         changes = patienceIntLCS.getChanges();
         LOG.info("Successful fallback to patience diff");
       }
