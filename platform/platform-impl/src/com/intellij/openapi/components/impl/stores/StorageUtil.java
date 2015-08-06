@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
@@ -296,6 +297,18 @@ public class StorageUtil {
     finally {
       token.finish();
     }
+  }
+
+  @NotNull
+  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) throws IOException {
+    //noinspection ResultOfMethodCallIgnored
+    ioDir.mkdirs();
+    String parentFile = ioDir.getParent();
+    VirtualFile parentVirtualFile = parentFile == null ? null : VfsUtil.createDirectoryIfMissing(parentFile);
+    if (parentVirtualFile == null) {
+      throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
+    }
+    return getFile(ioDir.getName(), parentVirtualFile, requestor);
   }
 
   /**
