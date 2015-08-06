@@ -378,6 +378,10 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     return new TextRevisionNumber(hash.asString(), hash.toShortString());
   }
 
+  public void showDetails(boolean state) {
+    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
+  }
+
   private class CommitSelectionListener implements ListSelectionListener {
     private final ChangesBrowser myChangesBrowser;
     private ProgressIndicator myLastRequest;

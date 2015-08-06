@@ -49,6 +49,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final Project myProject;
+  @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogUiProperties myUiProperties;
@@ -66,6 +67,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                       @NotNull VcsLogFilterer filterer) {
     myLogDataHolder = logDataHolder;
     myProject = project;
+    mySettings = settings;
     myColorManager = manager;
     myUiProperties = uiProperties;
     Disposer.register(logDataHolder, this);
@@ -135,9 +137,15 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                       "Collapsing " + (getBekType() == PermanentGraph.SortType.LinearBek ? "merges..." : "linear branches..."));
   }
 
+  @Override
   public void setLongEdgeVisibility(boolean visibility) {
     myVisiblePack.getVisibleGraph().getActionController().setLongEdgesHidden(!visibility);
     myUiProperties.setLongEdgesVisibility(visibility);
+  }
+
+  @Override
+  public boolean areLongEdgesVisible() {
+    return myUiProperties.areLongEdgesVisible();
   }
 
   @Override
@@ -175,6 +183,17 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public boolean areGraphActionsEnabled() {
     return myMainFrame.areGraphActionsEnabled();
+  }
+
+  @Override
+  public boolean isShowDetails() {
+    return myUiProperties.isShowDetails();
+  }
+
+  @Override
+  public void setShowDetails(boolean showDetails) {
+    myMainFrame.showDetails(showDetails);
+    myUiProperties.setShowDetails(showDetails);
   }
 
   @NotNull
@@ -300,6 +319,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public void setBranchesPanelVisible(boolean visible) {
     myMainFrame.setBranchesPanelVisible(visible);
+    mySettings.setShowBranchesPanel(visible);
+  }
+
+  @Override
+  public boolean isBranchesPanelVisible() {
+    return mySettings.isShowBranchesPanel();
   }
 
   public Component getToolbar() {
