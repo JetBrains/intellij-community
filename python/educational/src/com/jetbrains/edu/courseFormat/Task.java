@@ -102,6 +102,7 @@ public class Task implements Named, StudyOrderable {
     TaskFile taskFile = new TaskFile();
     taskFile.setIndex(index);
     taskFile.setTask(this);
+    taskFile.name = name;
     taskFiles.put(name, taskFile);
   }
 

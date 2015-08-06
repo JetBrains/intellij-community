@@ -137,6 +137,7 @@ public class TaskFile implements StudyOrderable {
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
       answerPlaceholdersCopy.add(answerPlaceholderCopy);
     }
+    target.name = source.name;
     target.setAnswerPlaceholders(answerPlaceholdersCopy);
   }
 
@@ -181,7 +182,6 @@ public class TaskFile implements StudyOrderable {
 
     if (getIndex() != that.getIndex()) return false;
     if (name != that.name) return false;
-    if (text != that.text) return false;
 
     final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
     final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();
@@ -198,7 +198,6 @@ public class TaskFile implements StudyOrderable {
   public int hashCode() {
     int result = getIndex();
     result = 31 * result + name.hashCode();
-    result = 31 * result + text.hashCode();
     for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
       result = 31 * result + placeholder.hashCode();
     }

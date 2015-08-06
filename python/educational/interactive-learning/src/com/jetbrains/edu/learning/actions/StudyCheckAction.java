@@ -337,6 +337,7 @@ public class StudyCheckAction extends DumbAwareAction {
                                    @NotNull final TaskFile taskFile,
                                    @NotNull final Project project) {
     final TaskFile answerTaskFile = new TaskFile();
+    answerTaskFile.name = taskFileName;
     final VirtualFile virtualFile = taskDir.findChild(taskFileName);
     if (virtualFile == null) {
       return;
