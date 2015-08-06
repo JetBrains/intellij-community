@@ -15,14 +15,20 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Processor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author vlan
@@ -63,10 +69,14 @@ public class PyiTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public PyType getCallableType(@NotNull PyCallable callable, @NotNull final TypeEvalContext context) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(callable);
-    if (pythonStub instanceof PyCallable) {
-      return context.getType((PyCallable)pythonStub);
+    if (pythonStub instanceof PyFunction) {
+      final PyFunction functionStub = (PyFunction)pythonStub;
+      if (isOverload(functionStub, context)) {
+        return getOverloadType(functionStub, context);
+      }
+      return context.getType(functionStub);
     }
     return null;
   }
@@ -83,5 +93,45 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyType getOverloadType(@NotNull PyFunction function, @NotNull final TypeEvalContext context) {
+    final PyClass cls = function.getContainingClass();
+    if (cls != null) {
+      final String name = function.getName();
+      if (name != null) {
+        final List<PyFunction> overloads = new ArrayList<PyFunction>();
+        cls.visitMethods(new Processor<PyFunction>() {
+          @Override
+          public boolean process(PyFunction f) {
+            if (name.equals(f.getName()) && isOverload(f, context)) {
+              overloads.add(f);
+            }
+            return true;
+          }
+        }, false);
+        if (!overloads.isEmpty()) {
+          final List<PyType> overloadTypes = new ArrayList<PyType>();
+          for (PyFunction overload : overloads) {
+            overloadTypes.add(context.getType(overload));
+          }
+          return PyUnionType.union(overloadTypes);
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isOverload(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    if (callable instanceof PyDecoratable) {
+      final PyDecoratable decorated = (PyDecoratable)callable;
+      final ImmutableSet<PyKnownDecoratorUtil.KnownDecorator> decorators =
+        ImmutableSet.copyOf(PyKnownDecoratorUtil.getKnownDecorators(decorated, context));
+      if (decorators.contains(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

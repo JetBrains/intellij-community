@@ -18,6 +18,7 @@ package com.jetbrains.python.pyi;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyTypeCheckerInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,5 +42,9 @@ public class PyiInspectionsTest extends PyTestCase {
 
   public void testUnresolvedClassAttributes() {
     doTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testOverloads() {
+    doTest(PyTypeCheckerInspection.class);
   }
 }
