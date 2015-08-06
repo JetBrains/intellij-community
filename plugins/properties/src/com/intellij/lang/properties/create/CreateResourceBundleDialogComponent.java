@@ -20,6 +20,7 @@ import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -148,13 +150,18 @@ public class CreateResourceBundleDialogComponent {
 
   private List<PsiFile> createPropertiesFiles() {
     final Set<String> fileNames = getFileNamesToCreate();
-    final List<PsiFile> createdFiles = ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
+    final List<PsiFile> createdFiles = WriteCommandAction.runWriteCommandAction(myProject, new Computable<List<PsiFile>>() {
       @Override
       public List<PsiFile> compute() {
-        return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
+        return ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
           @Override
-          public PsiFile fun(String n) {
-            return myDirectory.createFile(n);
+          public List<PsiFile> compute() {
+            return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
+              @Override
+              public PsiFile fun(String n) {
+                return myDirectory.createFile(n);
+              }
+            });
           }
         });
       }
