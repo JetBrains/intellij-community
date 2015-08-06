@@ -90,7 +90,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   public MultipleFileMergeDialog(@Nullable Project project, @NotNull final List<VirtualFile> files, @NotNull final MergeProvider provider,
                                  @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    super(project, false);
+    super(project);
 
     myProject = project;
     myProjectManager = ProjectManagerEx.getInstanceEx();
