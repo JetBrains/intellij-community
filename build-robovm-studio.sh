@@ -6,7 +6,7 @@ set -e
 ## Build the RoboVM IDEA plugin
 cd robovm/robovm-idea
 awk '!/idea-version/' src/main/resources/META-INF/plugin.xml > plugin.xml.tmp && mv plugin.xml.tmp src/main/resources/META-INF/plugin.xml
-mvn -Didea.home="$IDEA_HOME" clean package -Pdeployment
+mvn -Didea.home="$IDEA_HOME" clean package -U -Pdeployment
 git checkout -- src/main/resources/META-INF/plugin.xml
 cd ../..
 
