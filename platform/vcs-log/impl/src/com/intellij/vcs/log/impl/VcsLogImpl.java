@@ -22,23 +22,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 
 public class VcsLogImpl implements VcsLog {
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogDataManager myDataManager;
   @NotNull private final VcsLogUiImpl myUi;
 
-  public VcsLogImpl(@NotNull VcsLogDataHolder holder, @NotNull VcsLogUiImpl ui) {
-    myDataHolder = holder;
+  public VcsLogImpl(@NotNull VcsLogDataManager manager, @NotNull VcsLogUiImpl ui) {
+    myDataManager = manager;
     myUi = ui;
   }
 
@@ -68,7 +67,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public VcsFullCommitDetails get(int index) {
-        return myDataHolder.getCommitDetailsGetter().getCommitData(rows[index], (GraphTableModel)myUi.getTable().getModel());
+        return myDataManager.getCommitDetailsGetter().getCommitData(rows[index], (GraphTableModel)myUi.getTable().getModel());
       }
 
       @Override
@@ -81,13 +80,13 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
-    myDataHolder.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
+    myDataManager.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
   }
 
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    return myDataHolder.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
+    return myDataManager.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
   }
 
   @NotNull
@@ -117,7 +116,7 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public Collection<VcsLogProvider> getLogProviders() {
-    return myDataHolder.getLogProviders();
+    return myDataManager.getLogProviders();
   }
 
 }

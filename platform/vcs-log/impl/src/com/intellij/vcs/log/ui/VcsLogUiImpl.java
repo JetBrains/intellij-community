@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -50,7 +50,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @NotNull private VisiblePack myVisiblePack;
 
-  public VcsLogUiImpl(@NotNull VcsLogDataHolder logDataHolder,
+  public VcsLogUiImpl(@NotNull VcsLogDataManager logDataManager,
                       @NotNull Project project,
                       @NotNull VcsLogSettings settings,
                       @NotNull VcsLogColorManager manager,
@@ -60,15 +60,15 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     mySettings = settings;
     myColorManager = manager;
     myUiProperties = uiProperties;
-    Disposer.register(logDataHolder, this);
+    Disposer.register(logDataManager, this);
 
     myFilterer = filterer;
-    myLog = new VcsLogImpl(logDataHolder, this);
+    myLog = new VcsLogImpl(logDataManager, this);
     myVisiblePack = VisiblePack.EMPTY;
-    myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logDataManager, this, project, settings, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
-      getTable().addHighlighter(factory.createHighlighter(logDataHolder, this));
+      getTable().addHighlighter(factory.createHighlighter(logDataManager, this));
     }
   }
 

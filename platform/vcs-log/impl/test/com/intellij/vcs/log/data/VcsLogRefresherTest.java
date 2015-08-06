@@ -49,7 +49,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     }
   };
   private TestVcsLogProvider myLogProvider;
-  private VcsLogDataHolder myDataHolder;
+  private VcsLogDataManager myDataManager;
   private Map<Integer, VcsCommitMetadata> myTopDetailsCache;
   private Map<VirtualFile, VcsLogProvider> myLogProviders;
 
@@ -202,10 +202,10 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myDataHolder = new VcsLogDataHolder(myProject, myProject, myLogProviders,
-                                                       ServiceManager.getService(myProject, VcsLogSettings.class),
-                                                       ServiceManager.getService(myProject, VcsLogUiProperties.class), Consumer.EMPTY_CONSUMER);
-    return new VcsLogRefresherImpl(myProject, myDataHolder.getHashMap(), myLogProviders, myDataHolder.getUserRegistry(), myTopDetailsCache,
+    myDataManager = new VcsLogDataManager(myProject, myProject, myLogProviders,
+                                         ServiceManager.getService(myProject, VcsLogSettings.class),
+                                         ServiceManager.getService(myProject, VcsLogUiProperties.class), Consumer.EMPTY_CONSUMER);
+    return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(), myTopDetailsCache,
                                    dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
@@ -236,7 +236,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
           @NotNull
           @Override
           public Hash fun(Integer integer) {
-            return myDataHolder.getCommitId(integer).getHash();
+            return myDataManager.getCommitId(integer).getHash();
           }
         };
         return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),

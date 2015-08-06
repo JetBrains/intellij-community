@@ -14,7 +14,7 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -38,18 +38,16 @@ public class GraphTableModel extends AbstractTableModel {
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
   @NotNull protected final VcsLogUiImpl myUi;
-  @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final VcsLogDataManager myLogDataManager;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl ui) {
-    myLogDataHolder = dataHolder;
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogDataManager dataManager, @NotNull VcsLogUiImpl ui) {
+    myLogDataManager = dataManager;
     myUi = ui;
     myDataPack = dataPack;
-    myDataHolder = dataHolder;
   }
 
   @Override
@@ -62,7 +60,7 @@ public class GraphTableModel extends AbstractTableModel {
     int head = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getOneOfHeads();
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
     if (refs.isEmpty()) {
-      LOG.error("No references pointing to head " + myDataHolder.getCommitId(head) + " identified for commit at row " + rowIndex,
+      LOG.error("No references pointing to head " + myLogDataManager.getCommitId(head) + " identified for commit at row " + rowIndex,
                 new Attachment("details.txt", getErrorDetails()));
       // take the first root: it is the right choice in one-repo case, though it will likely fail in multi-repo case
       return myDataPack.getLogProviders().keySet().iterator().next();
@@ -77,7 +75,7 @@ public class GraphTableModel extends AbstractTableModel {
     List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
     for (int i = 0; i < 100 && i < commits.size(); i++) {
       GraphCommit<Integer> commit = commits.get(i);
-      sb.append(String.format("%s -> %s\n", myDataHolder.getCommitId(commit.getId()).getHash().toShortString(), getParents(commit)));
+      sb.append(String.format("%s -> %s\n", myLogDataManager.getCommitId(commit.getId()).getHash().toShortString(), getParents(commit)));
     }
     sb.append("\nALL REFS:\n");
     printRefs(sb, myDataPack.getRefsModel().getAllRefsByRoot());
@@ -89,7 +87,7 @@ public class GraphTableModel extends AbstractTableModel {
     return StringUtil.join(commit.getParents(), new Function<Integer, String>() {
       @Override
       public String fun(Integer integer) {
-        return myDataHolder.getCommitId(integer).getHash().toShortString();
+        return myLogDataManager.getCommitId(integer).getHash().toShortString();
       }
     }, ", ");
   }
@@ -124,11 +122,11 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public CommitId getCommitIdAtRow(int row) {
-    return myDataHolder.getCommitId(getIdAtRow(row));
+    return myLogDataManager.getCommitId(getIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
-    final int commitIndex = myDataHolder.getCommitIndex(hash, root);
+    final int commitIndex = myLogDataManager.getCommitIndex(hash, root);
     return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getVisibleGraph()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
@@ -139,7 +137,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
     final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
-    CommitId commitId = myDataHolder.getHashMap().findCommitId(new Condition<CommitId>() {
+    CommitId commitId = myLogDataManager.getHashMap().findCommitId(new Condition<CommitId>() {
       @Override
       public boolean value(CommitId commitId) {
         return hashByString.value(commitId) && getRowOfCommit(commitId.getHash(), commitId.getRoot()) != -1;
@@ -171,7 +169,7 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
+    VcsShortCommitDetails data = myLogDataManager.getMiniDetailsGetter().getCommitData(rowIndex, this);
     switch (columnIndex) {
       case ROOT_COLUMN:
         return getRoot(rowIndex);

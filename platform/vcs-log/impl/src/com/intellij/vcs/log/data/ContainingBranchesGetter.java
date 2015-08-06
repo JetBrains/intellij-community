@@ -43,7 +43,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
   @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogDataManager myDataManager;
 
   // other fields accessed only from EDT
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
@@ -53,12 +53,12 @@ public class ContainingBranchesGetter implements VcsLogListener {
   @Nullable private VcsLogRefs myRefs;
   @Nullable private PermanentGraph<Integer> myGraph;
 
-  ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
-    myDataHolder = dataHolder;
+  ContainingBranchesGetter(@NotNull VcsLogDataManager dataManager, @NotNull Disposable parentDisposable) {
+    myDataManager = dataManager;
     myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
       @Override
       public void consume(final Task task) throws Throwable {
-        final List<String> branches = task.getContainingBranches(myDataHolder);
+        final List<String> branches = task.getContainingBranches(myDataManager);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -152,7 +152,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
       condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(
-        Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
+        Collections.singleton(myDataManager.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
       myConditions.put(root, condition);
     }
     return condition;
@@ -183,11 +183,11 @@ public class ContainingBranchesGetter implements VcsLogListener {
     }
 
     @NotNull
-    public List<String> getContainingBranches(VcsLogDataHolder dataHolder) {
+    public List<String> getContainingBranches(VcsLogDataManager dataManager) {
       try {
-        VcsLogProvider provider = dataHolder.getLogProvider(root);
+        VcsLogProvider provider = dataManager.getLogProvider(root);
         if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
-          Set<Integer> branchesIndexes = graph.getContainingBranches(dataHolder.getCommitIndex(hash, root));
+          Set<Integer> branchesIndexes = graph.getContainingBranches(dataManager.getCommitIndex(hash, root));
 
           Collection<VcsRef> branchesRefs = new HashSet<VcsRef>();
           for (Integer index : branchesIndexes) {
@@ -234,7 +234,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
     @Override
     public boolean value(CommitId commitId) {
       if (isDisposed) return false;
-      return myCondition.value(myDataHolder.getCommitIndex(commitId.getHash(), commitId.getRoot()));
+      return myCondition.value(myDataManager.getCommitIndex(commitId.getHash(), commitId.getRoot()));
     }
 
     public void dispose() {

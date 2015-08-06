@@ -40,7 +40,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
@@ -90,24 +90,25 @@ public class VcsLogManager implements Disposable {
           });
       }
     };
-    final VcsLogDataHolder logDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings, myUiProperties, visiblePackConsumer);
-    myUi = new VcsLogUiImpl(logDataHolder, myProject, mySettings,
-                            new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, logDataHolder.getFilterer());
-    myUi.addLogListener(logDataHolder.getContainingBranchesGetter()); // TODO: remove this after VcsLogDataHolder vs VcsLoUi dependency cycle is solved
+    final VcsLogDataManager
+      logDataManager = new VcsLogDataManager(myProject, this, logProviders, mySettings, myUiProperties, visiblePackConsumer);
+    myUi = new VcsLogUiImpl(logDataManager, myProject, mySettings,
+                            new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, logDataManager.getFilterer());
+    myUi.addLogListener(logDataManager.getContainingBranchesGetter()); // TODO: remove this after VcslogDataManager vs VcsLoUi dependency cycle is solved
     VcsLogRefresher logRefresher;
     if (contentTabName != null) {
-      logRefresher = new PostponableLogRefresher(myProject, logDataHolder, contentTabName);
+      logRefresher = new PostponableLogRefresher(myProject, logDataManager, contentTabName);
     }
     else {
       logRefresher = new VcsLogRefresher() {
         @Override
         public void refresh(@NotNull VirtualFile root) {
-          logDataHolder.refresh(Collections.singletonList(root));
+          logDataManager.refresh(Collections.singletonList(root));
         }
       };
     }
     refreshLogOnVcsEvents(logProviders, logRefresher);
-    logDataHolder.initialize();
+    logDataManager.initialize();
 
     // todo fix selection
     final VcsLogGraphTable graphTable = myUi.getTable();
@@ -172,7 +173,7 @@ public class VcsLogManager implements Disposable {
 
     private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
 
-    @NotNull private final VcsLogDataHolder myDataHolder;
+    @NotNull private final VcsLogDataManager myDataManager;
     @NotNull private final ToolWindowManagerImpl myToolWindowManager;
     @NotNull private final ToolWindowImpl myToolWindow;
     @NotNull private final String myTabName;
@@ -180,13 +181,13 @@ public class VcsLogManager implements Disposable {
 
     @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newConcurrentSet();
 
-    public PostponableLogRefresher(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder, @NotNull String contentTabName) {
-      myDataHolder = dataHolder;
+    public PostponableLogRefresher(@NotNull Project project, @NotNull VcsLogDataManager dataManager, @NotNull String contentTabName) {
+      myDataManager = dataManager;
       myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
       myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
       myTabName = contentTabName;
 
-      Disposer.register(dataHolder, this);
+      Disposer.register(dataManager, this);
 
       myPostponedEventsListener = new MyRefreshPostponedEventsListener();
       myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
@@ -196,7 +197,7 @@ public class VcsLogManager implements Disposable {
     @Override
     public void refresh(@NotNull VirtualFile root) {
       if (isOurContentPaneShowing()) {
-        myDataHolder.refresh(Collections.singleton(root));
+        myDataManager.refresh(Collections.singleton(root));
       }
       else {
         myRootsToRefresh.add(root);
@@ -220,7 +221,7 @@ public class VcsLogManager implements Disposable {
     private void refreshPostponedRoots() {
       Set<VirtualFile> toRefresh = new HashSet<VirtualFile>(myRootsToRefresh);
       myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
-      myDataHolder.refresh(toRefresh);
+      myDataManager.refresh(toRefresh);
     }
 
     private class MyRefreshPostponedEventsListener extends ContentManagerAdapter implements ToolWindowManagerListener {

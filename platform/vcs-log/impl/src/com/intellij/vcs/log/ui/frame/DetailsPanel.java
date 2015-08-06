@@ -41,7 +41,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
@@ -78,7 +78,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static final String STANDARD_LAYER = "Standard";
   private static final String MESSAGE_LAYER = "Message";
 
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final ReferencesPanel myReferencesPanel;
@@ -93,17 +93,17 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private VisiblePack myDataPack;
   @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
 
-  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder,
+  DetailsPanel(@NotNull VcsLogDataManager logDataManager,
                @NotNull VcsLogGraphTable graphTable,
                @NotNull VcsLogColorManager colorManager,
                @NotNull VisiblePack initialDataPack) {
-    myLogDataHolder = logDataHolder;
+    myLogDataManager = logDataManager;
     myGraphTable = graphTable;
     myColorManager = colorManager;
     myDataPack = initialDataPack;
 
     myReferencesPanel = new ReferencesPanel(myColorManager);
-    myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot(), logDataHolder);
+    myCommitDetailsPanel = new DataPanel(logDataManager.getProject(), logDataManager.isMultiRoot(), logDataManager);
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(8);
@@ -127,7 +127,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myMainContentPanel.add(myReferencesPanel, "");
     myMainContentPanel.add(myCommitDetailsPanel, "");
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataManager, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Color getBackground() {
         return getDetailsBackground();
@@ -179,7 +179,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
       GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
-      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
+      VcsFullCommitDetails commitData = myLogDataManager.getCommitDetailsGetter().getCommitData(row, tableModel);
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
         myCommitDetailsPanel.setData(null);
@@ -196,7 +196,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
+        branches = myLogDataManager.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
       myCommitDetailsPanel.setBranches(branches);
 
@@ -236,7 +236,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash, root);
-    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+    return ContainerUtil.sorted(refs, myLogDataManager.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
   }
 
   private static class DataPanel extends JEditorPane {

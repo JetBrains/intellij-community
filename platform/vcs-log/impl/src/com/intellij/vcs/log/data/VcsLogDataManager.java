@@ -40,9 +40,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
+public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
 
-  private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
+  private static final Logger LOG = Logger.getInstance(VcsLogDataManager.class);
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -74,12 +74,12 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogRefresher myRefresher;
   private final VcsLogFiltererImpl myFilterer;
 
-  public VcsLogDataHolder(@NotNull Project project,
-                          @NotNull Disposable parentDisposable,
-                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                          @NotNull VcsLogSettings settings,
-                          @NotNull VcsLogUiProperties uiProperties,
-                          @NotNull Consumer<VisiblePack> visiblePackConsumer) {
+  public VcsLogDataManager(@NotNull Project project,
+                           @NotNull Disposable parentDisposable,
+                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                           @NotNull VcsLogSettings settings,
+                           @NotNull VcsLogUiProperties uiProperties,
+                           @NotNull Consumer<VisiblePack> visiblePackConsumer) {
     Disposer.register(parentDisposable, this);
     myProject = project;
     myLogProviders = logProviders;
