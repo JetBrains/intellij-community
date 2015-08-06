@@ -32,6 +32,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,13 +76,15 @@ public class ConfigurationUtil {
       });
     }
 
-    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.Test", true);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.runner.RunWith", false);
+    Set<PsiClass> processed = ContainerUtil.newHashSet();
+    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.Test", true);
+    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.runner.RunWith", false);
     return hasJunit4;
   }
 
   private static boolean addAnnotatedMethodsAnSubclasses(final PsiManager manager, final GlobalSearchScope scope, final TestClassFilter testClassFilter,
                                                          final Set<PsiClass> found,
+                                                         final Set<PsiClass> processed,
                                                          final String annotation,
                                                          final boolean isMethod) {
     final Ref<Boolean> isJUnit4 = new Ref<Boolean>(Boolean.FALSE);
@@ -106,6 +109,9 @@ public class ConfigurationUtil {
             if (containingClass == null || annotated instanceof PsiMethod != isMethod) {
               return true;
             }
+            if (!processed.add(containingClass)) { // don't process the same class twice regardless of it being in the scope
+              return true;
+            }
             final VirtualFile file = PsiUtilCore.getVirtualFile(containingClass);
             if (file != null && scope.contains(file) && testClassFilter.isAccepted(containingClass)) {
               if (!found.add(containingClass)) {
@@ -123,6 +129,7 @@ public class ConfigurationUtil {
             public boolean processInReadAction(PsiClass aClass) {
               if (testClassFilter.isAccepted(aClass)) {
                 found.add(aClass);
+                processed.add(aClass);
                 isJUnit4.set(Boolean.TRUE);
               }
               return true;
