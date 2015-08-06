@@ -81,7 +81,6 @@ public class StudyNavigator {
     if (!answerPlaceholder.isValid(editor.getDocument())) {
       return;
     }
-    taskFile.setSelectedAnswerPlaceholder(answerPlaceholder);
     LogicalPosition placeholderStart = new LogicalPosition(answerPlaceholder.getLine(), answerPlaceholder.getStart());
     editor.getCaretModel().moveToLogicalPosition(placeholderStart);
   }
