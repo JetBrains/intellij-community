@@ -179,13 +179,13 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                              "It is possible to configure custom JAR\nin e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
                                              "\nIntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license.\nWould you like to do it now?",
                                     title, Messages.getErrorIcon()) == Messages.OK) {
-      final String path = OrderEntryFix.locateAnnotationsJar(modulesWithoutAnnotations.iterator().next());
-      if (path != null) {
+      final List<String> paths = OrderEntryFix.locateAnnotationsJars(modulesWithoutAnnotations.iterator().next());
+      if (!paths.isEmpty()) {
         new WriteCommandAction(project) {
           @Override
           protected void run(@NotNull final Result result) throws Throwable {
             for (Module module : modulesWithoutAnnotations) {
-              OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
+              OrderEntryFix.addJarsToRoots(paths, null, module, null);
             }
           }
         }.execute();

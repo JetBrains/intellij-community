@@ -18,32 +18,61 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
-  private static final ExternalLibraryDescriptor ANNOTATIONS = new ExternalLibraryDescriptor("com.intellij", "annotations", null) {
-    @NotNull
-    @Override
-    public List<String> locateLibraryClassesRoots(@NotNull Module contextModule) {
-      return ContainerUtil.createMaybeSingletonList(OrderEntryFix.locateAnnotationsJar(contextModule));
-    }
-  };
+  private static final ExternalLibraryDescriptor JAVA5 = new JetBrainsAnnotationsLibraryDescriptor(false);
+  private static final ExternalLibraryDescriptor JAVA8 = new JetBrainsAnnotationsLibraryDescriptor(true);
 
   @Nullable
   @Override
-  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation) {
+  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
     if (AnnotationUtil.isJetbrainsAnnotation(shortClassName)) {
-      return new ExternalClassResolveResult("org.jetbrains.annotations." + shortClassName, ANNOTATIONS);
+      ExternalLibraryDescriptor libraryDescriptor = getAnnotationsLibraryDescriptor(contextModule);
+      return new ExternalClassResolveResult("org.jetbrains.annotations." + shortClassName, libraryDescriptor);
     }
     return null;
+  }
+
+  @NotNull
+  public static ExternalLibraryDescriptor getAnnotationsLibraryDescriptor(@NotNull Module contextModule) {
+    boolean java8 = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(contextModule).isAtLeast(LanguageLevel.JDK_1_8);
+    return java8 ? JAVA8 : JAVA5;
+  }
+
+  private static class JetBrainsAnnotationsLibraryDescriptor extends ExternalLibraryDescriptor {
+    private boolean myJava8;
+
+    public JetBrainsAnnotationsLibraryDescriptor(boolean java8) {
+      super("com.intellij", "annotations", null);
+      myJava8 = java8;
+    }
+
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      List<String> paths;
+      if (myJava8) {
+        paths = Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getHomePath(), "redist/annotations-java8.jar").getAbsolutePath()));
+      }
+      else {
+        paths = Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getLibPath(), "annotations.jar").getAbsolutePath()));
+      }
+      return paths;
+    }
   }
 }

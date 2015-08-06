@@ -40,14 +40,14 @@ public class TestNGExternalLibraryResolver extends ExternalLibraryResolver {
   private static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng", null) {
     @NotNull
     @Override
-    public List<String> locateLibraryClassesRoots(@NotNull Module contextModule) {
+    public List<String> getLibraryClassesRoots() {
       return Collections.singletonList(PathUtil.getJarPathForClass(Test.class));
     }
   };
 
   @Nullable
   @Override
-  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation) {
+  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
     if (TEST_NG_ANNOTATIONS.contains(shortClassName)) {
       return new ExternalClassResolveResult("org.testng.annotations." + shortClassName, TESTNG_DESCRIPTOR);
     }
