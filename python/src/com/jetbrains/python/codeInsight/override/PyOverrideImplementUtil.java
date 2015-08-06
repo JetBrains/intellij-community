@@ -234,7 +234,7 @@ public class PyOverrideImplementUtil {
       if (!PyNames.INIT.equals(baseFunction.getName()) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE || overridingNew) {
         statementBody.append("return ");
       }
-      if (baseClass.isNewStyleClass()) {
+      if (baseClass.isNewStyleClass(null)) {
         statementBody.append(PyNames.SUPER);
         statementBody.append("(");
         final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();

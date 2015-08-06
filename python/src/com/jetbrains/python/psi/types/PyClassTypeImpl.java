@@ -160,7 +160,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (resolveContext.allowProperties()) {
-      final Ref<ResolveResultList> resultRef = findProperty(name, direction, true);
+      final Ref<ResolveResultList> resultRef = findProperty(name, direction, true, resolveContext.getTypeEvalContext());
       if (resultRef != null) {
         return resultRef.get();
       }
@@ -221,7 +221,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (isDefinition() && myClass.isNewStyleClass()) {
+    if (isDefinition() && myClass.isNewStyleClass(null)) {
       final PyClassLikeType typeType = getMetaClassType(context, inherited);
       if (typeType != null) {
         List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
@@ -233,7 +233,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     if (inherited) {
       classMember =
-        resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
+        resolveByMembersProviders(this, name, location, context);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -244,7 +244,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location);
+          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext.getTypeEvalContext());
 
           if (superMember != null) {
             return ResolveResultList.to(superMember);
@@ -256,9 +256,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return Collections.emptyList();
   }
 
-  private Ref<ResolveResultList> findProperty(String name, AccessDirection direction, boolean inherited) {
+  private Ref<ResolveResultList> findProperty(String name, AccessDirection direction, boolean inherited, @Nullable TypeEvalContext context) {
     Ref<ResolveResultList> resultRef = null;
-    Property property = myClass.findProperty(name, inherited);
+    Property property = myClass.findProperty(name, inherited, context);
     if (property != null) {
       Maybe<PyCallable> accessor = property.getByDirection(direction);
       if (accessor.isDefined()) {
@@ -353,9 +353,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
+  private static PsiElement resolveByMembersProviders(PyClassType aClass,
+                                                      String name,
+                                                      @Nullable PsiElement location,
+                                                      TypeEvalContext context) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
+      final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
       if (resolveResult != null) return resolveResult;
     }
 
@@ -366,7 +369,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
+        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, null);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -378,7 +381,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingAncestorsClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(type, name, location);
+        final PsiElement resolveResult = provider.resolveMember(type, name, location, null);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -439,7 +442,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (!myClass.isNewStyleClass()) {
+    if (!myClass.isNewStyleClass(null)) {
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
       final PyClassType classobjType = cache.getOldstyleClassobjType();
       if (classobjType != null) {
@@ -447,7 +450,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (isDefinition() && myClass.isNewStyleClass()) {
+    if (isDefinition() && myClass.isNewStyleClass(null)) {
       final PyClassLikeType typeType = getMetaClassType(typeEvalContext, true);
       if (typeType != null) {
         Collections.addAll(ret, typeType.getCompletionVariants(prefix, location, context));
@@ -472,7 +475,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     myClass.processClassLevelDeclarations(processor);
 
-    List<String> slots = myClass.isNewStyleClass() ? myClass.getSlots() : null;
+    List<String> slots = myClass.isNewStyleClass(null) ? myClass.getSlots(TypeEvalContext.codeCompletion(expressionHook.getProject(), expressionHook.getContainingFile())) : null;
     if (slots != null) {
       processor.setAllowedNames(slots);
     }

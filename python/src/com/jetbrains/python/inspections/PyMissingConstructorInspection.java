@@ -69,7 +69,7 @@ public class PyMissingConstructorInspection extends PyInspection {
         if (isExceptionClass(node, myTypeEvalContext) || hasConstructorCall(node, initMethod)) {
           return;
         }
-        if (superClasses.length == 1 || node.isNewStyleClass())
+        if (superClasses.length == 1 || node.isNewStyleClass(null))
           registerProblem(initMethod.getNameIdentifier(), PyBundle.message("INSP.missing.super.constructor.message"),
                           new AddCallSuperQuickFix());
         else

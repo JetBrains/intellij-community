@@ -33,7 +33,7 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
   private static PyFunction getBaseMethod(List<PsiElement> superMethods,
                                          PyClass containingClass) {
 
-    for (PyClass ancestor : containingClass.getAncestorClasses()) {
+    for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
       for (PsiElement method : superMethods) {
         if (ancestor.equals(((PyFunction)method).getContainingClass()))
           return (PyFunction)method;

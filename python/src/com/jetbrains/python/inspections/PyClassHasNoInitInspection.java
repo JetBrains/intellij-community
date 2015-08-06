@@ -73,7 +73,7 @@ public class PyClassHasNoInitInspection extends PyInspection {
         if (!(type instanceof PyClassType)) return;
       }
 
-      final PyFunction init = node.findInitOrNew(true);
+      final PyFunction init = node.findInitOrNew(true, null);
       if (init == null) {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),
                         new AddMethodQuickFix("__init__", node.getName(), false));

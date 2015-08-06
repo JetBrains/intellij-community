@@ -76,7 +76,7 @@ public class PyCallExpressionHelper {
         PsiElement redefining_func = refex.getReference().resolve();
         if (redefining_func != null) {
           PsiElement true_func = PyBuiltinCache.getInstance(us).getByName(refname);
-          if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findInitOrNew(true);
+          if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findInitOrNew(true, null);
           if (true_func == redefining_func) {
             // yes, really a case of "foo = classmethod(foo)"
             PyArgumentList arglist = redefiningCall.getArgumentList();
@@ -141,7 +141,7 @@ public class PyCallExpressionHelper {
       resolved = callee;
     }
     if (resolved instanceof PyClass) {
-      resolved = ((PyClass)resolved).findInitOrNew(true); // class to constructor call
+      resolved = ((PyClass)resolved).findInitOrNew(true, null); // class to constructor call
     }
     else if (resolved instanceof PyCallExpression) {
       PyCallExpression redefiningCall = (PyCallExpression)resolved;
@@ -184,7 +184,7 @@ public class PyCallExpressionHelper {
     }
     // analyze
     if (resolved instanceof PyClass) {
-      resolved = ((PyClass)resolved).findInitOrNew(true); // class to constructor call
+      resolved = ((PyClass)resolved).findInitOrNew(true, resolveContext.getTypeEvalContext()); // class to constructor call
       isConstructorCall = true;
     }
     else if (resolved instanceof PyCallExpression) {
@@ -484,7 +484,7 @@ public class PyCallExpressionHelper {
     PyFunction init = null;
     if (target instanceof PyClass) {
       cls = (PyClass)target;
-      init = cls.findInitOrNew(true);
+      init = cls.findInitOrNew(true, context);
     }
     else if (target instanceof PyFunction) {
       final PyFunction f = (PyFunction)target;
@@ -560,7 +560,7 @@ public class PyCallExpressionHelper {
                   }
                 }
                 PsiElement possible_class = firstArgRef.getReference().resolve();
-                if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
+                if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass(null)) {
                   final PyClass first_class = (PyClass)possible_class;
                   return new Maybe<PyType>(getSuperCallTypeForArguments(context, first_class, args[1]));
                 }

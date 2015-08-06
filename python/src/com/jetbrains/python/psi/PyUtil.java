@@ -355,7 +355,7 @@ public class PyUtil {
   @NotNull
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<PyClass>();
-    for (PyClass ancestor : pyClass.getAncestorClasses()) {
+    for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
       if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
         superClasses.add(ancestor);
       }
@@ -1288,7 +1288,7 @@ public class PyUtil {
         PyFunction.Modifier modifier = node.getModifier();
         boolean isMetaclassMethod = false;
         PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
-        for (PyClass ancestor_cls : cls.getAncestorClasses()) {
+        for (PyClass ancestor_cls : cls.getAncestorClasses(null)) {
           if (ancestor_cls == type_cls) {
             isMetaclassMethod = true;
             break;
@@ -1325,7 +1325,7 @@ public class PyUtil {
           if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.__CLASS__)) {
             return true;
           }
-          for (PyClass s : klass.getAncestorClasses()) {
+          for (PyClass s : klass.getAncestorClasses(null)) {
             if (firstArg.equals(s.getName())) {
               return true;
             }
