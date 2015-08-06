@@ -555,5 +555,6 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension("xxx");
     assertEquals("IDL", extensions.getName());
+    myFileTypeManager.removeAssociatedExtension(idl, "xxx");
   }
 }
