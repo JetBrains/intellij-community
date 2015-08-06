@@ -409,6 +409,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         @Override
         public void focusGained(final Editor editor) {
           mySelectedEditor = editor;
+          final EditorEx editorEx = (EditorEx)editor;
+          editorEx.setViewer(ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles());
         }
 
         @Override
