@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +107,7 @@ public class EduUtils {
     }
     if (taskDir != null) {
       final String name = file.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
+      deleteWindowsFile(taskDir, name);
       PrintWriter printWriter = null;
       try {
         fileWindows = taskDir.createChildData(taskFile, name);
@@ -231,5 +233,34 @@ public class EduUtils {
         });
       }
     }, "Replace Answer Placeholders", "Replace Answer Placeholders");
+  }
+
+  public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
+    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+      String name = entry.getKey();
+      VirtualFile virtualFile = taskDir.findChild(name);
+      if (virtualFile == null) {
+        continue;
+      }
+      String windowsFileName = virtualFile.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
+      deleteWindowsFile(taskDir, windowsFileName);
+    }
+  }
+
+  private static void deleteWindowsFile(@NotNull final VirtualFile taskDir, @NotNull final String name) {
+    final VirtualFile fileWindows = taskDir.findChild(name);
+    if (fileWindows != null && fileWindows.exists()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            fileWindows.delete(taskDir);
+          }
+          catch (IOException e) {
+            LOG.warn("Tried to delete non existed _windows file");
+          }
+        }
+      });
+    }
   }
 }

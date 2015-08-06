@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.edu.EduDocumentListener;
-import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Task;
@@ -82,26 +81,6 @@ public class StudyCheckAction extends DumbAwareAction {
         continue;
       }
       EduUtils.flushWindows(taskFile, virtualFile, true);
-    }
-  }
-
-  private static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-      String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
-      if (virtualFile == null) {
-        continue;
-      }
-      String windowsFileName = virtualFile.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
-      final VirtualFile windowsFile = taskDir.findChild(windowsFileName);
-      if (windowsFile != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            StudyUtils.deleteFile(windowsFile);
-          }
-        });
-      }
     }
   }
 
@@ -219,14 +198,14 @@ public class StudyCheckAction extends DumbAwareAction {
         StudyUtils.updateStudyToolWindow(project);
         drawAllPlaceholders(project, task, taskDir);
         ProjectView.getInstance(project).refresh();
-        deleteWindowDescriptions(task, taskDir);
+        EduUtils.deleteWindowDescriptions(task, taskDir);
         checkInProgress = false;
       }
 
       @Override
       public void onCancel() {
         taskManager.setStatus(task, statusBeforeCheck);
-        deleteWindowDescriptions(task, taskDir);
+        EduUtils.deleteWindowDescriptions(task, taskDir);
         checkInProgress = false;
       }
 
