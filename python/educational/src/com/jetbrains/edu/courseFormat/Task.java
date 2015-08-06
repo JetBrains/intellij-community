@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.EduNames;
@@ -81,7 +82,7 @@ public class Task implements Named, StudyOrderable {
     return testsText;
   }
 
-  public void setTestsTexts(String name, String text) {
+  public void addTestsTexts(String name, String text) {
     testsText.put(name, text);
   }
 
@@ -137,6 +138,7 @@ public class Task implements Named, StudyOrderable {
 
   @Nullable
   public String getTaskText(@NotNull final Project project) {
+    if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
       final VirtualFile file = taskDir.findChild(EduNames.TASK_HTML);

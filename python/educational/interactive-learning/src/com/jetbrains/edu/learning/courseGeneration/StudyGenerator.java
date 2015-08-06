@@ -84,6 +84,7 @@ public class StudyGenerator {
    */
   public static void createLesson(@NotNull final Lesson lesson, @NotNull final VirtualFile courseDir, @NotNull final File resourceRoot,
                                   @NotNull final Project project) throws IOException {
+    if (EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName())) return;
     String lessonDirName = EduNames.LESSON + Integer.toString(lesson.getIndex());
     VirtualFile lessonDir = courseDir.createChildDirectory(project, lessonDirName);
     final List<Task> taskList = lesson.getTaskList();
@@ -114,7 +115,7 @@ public class StudyGenerator {
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {
-                    return !name.contains(EduNames.LESSON) && !name.equals("course.json") && !name.equals("hints");
+                    return !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS);
                   }
                 });
                 for (File file : files) {

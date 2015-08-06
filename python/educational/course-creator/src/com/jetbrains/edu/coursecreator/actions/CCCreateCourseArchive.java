@@ -137,7 +137,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final Course course = service.getCourse();
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
-    final File courseJson = new File(project.getBasePath(), "course.json");
+    final File courseJson = new File(project.getBasePath(), EduNames.COURSE_META_FILE);
     OutputStreamWriter outputStreamWriter = null;
     try {
       outputStreamWriter = new OutputStreamWriter(new FileOutputStream(courseJson), "UTF-8");
