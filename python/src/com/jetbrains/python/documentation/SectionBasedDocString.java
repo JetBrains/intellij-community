@@ -28,10 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Common base class for docstring styles supported by Napoleon Sphinx extension.
@@ -66,9 +63,10 @@ public abstract class SectionBasedDocString implements StructuredDocString {
                 .put("warnings", "warnings")
                 .build();
 
-  private static ImmutableSet<String> SECTIONS_WITH_NAME_AND_TYPE = ImmutableSet.of("attributes", "methods",
-                                                                                    "parameters", "keyword arguments", "other parameters");
-  private static ImmutableSet<String> SECTIONS_WITH_TYPE = ImmutableSet.of("returns", "raises", "yields");
+  public static Set<String> SECTION_NAMES = SECTION_ALIASES.keySet();
+  private static final ImmutableSet<String> SECTIONS_WITH_NAME_AND_TYPE = 
+    ImmutableSet.of("attributes", "methods", "parameters", "keyword arguments", "other parameters");
+  private static final ImmutableSet<String> SECTIONS_WITH_TYPE = ImmutableSet.of("returns", "raises", "yields");
 
   protected final List<Substring> myLines;
 

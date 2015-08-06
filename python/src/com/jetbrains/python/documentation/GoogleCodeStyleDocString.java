@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Mikhail Golubev
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
-  private static final Pattern SECTION_HEADER_RE = Pattern.compile("^\\s*(\\w[\\s\\w]*):\\s*$");
+  public static final Pattern SECTION_HEADER_RE = Pattern.compile("^\\s*(\\w[\\s\\w]*):\\s*$");
   private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.+?)\\s*\\)\\s*");
   private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)"); 
 

@@ -57,6 +57,10 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   public boolean isNumpyFormat(PsiFile file) {
     return isFormat(file, DocStringFormat.NUMPY);
   }
+  
+  public boolean isGoogleFormat(PsiFile file) {
+    return isFormat(file, DocStringFormat.GOOGLE);
+  }
 
   public boolean isPlain(PsiFile file) {
     return isFormat(file, DocStringFormat.PLAIN);
@@ -82,7 +86,7 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
 
   public void setFormat(String format) {
     myDocStringFormat = format;
-  }
+  }                                                                                                                                                                                                                                                                                                               
 
   @Transient
   public String getFormat() {

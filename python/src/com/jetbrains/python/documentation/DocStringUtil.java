@@ -22,8 +22,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Matcher;
 
 /**
  * User: catherine
@@ -55,7 +58,16 @@ public class DocStringUtil {
   public static boolean isEpydocDocString(@NotNull String text) {
     return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
   }
-
+  
+  public static boolean isGoogleDocString(@NotNull String text) {
+    final Matcher matcher = GoogleCodeStyleDocString.SECTION_HEADER_RE.matcher(text);
+    if (!matcher.find()) {
+      return false;
+    }
+    @NonNls final String foundName = matcher.group(1).trim();
+    return SectionBasedDocString.SECTION_NAMES.contains(foundName.toLowerCase());
+  }
+  
   /**
    * Looks for a doc string under given parent.
    * @param parent where to look. For classes and functions, this would be PyStatementList, for modules, PyFile.

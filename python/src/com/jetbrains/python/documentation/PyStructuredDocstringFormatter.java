@@ -67,27 +67,31 @@ public class PyStructuredDocstringFormatter {
     final String preparedDocstring = StringUtil.join(lines, "\n");
 
     final String formatter;
-    final TagBasedDocString structuredDocString;
-    if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
-        DocStringUtil.isEpydocDocString(preparedDocstring)) {
+    final StructuredDocString structuredDocString;
+    if (documentationSettings.isEpydocFormat(element.getContainingFile()) || DocStringUtil.isEpydocDocString(preparedDocstring)) {
       formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
       structuredDocString = new EpydocString(preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
-    else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
-             DocStringUtil.isSphinxDocString(preparedDocstring)) {
+    else if (documentationSettings.isReSTFormat(element.getContainingFile()) || DocStringUtil.isSphinxDocString(preparedDocstring)) {
       formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
       structuredDocString = new SphinxDocString(preparedDocstring);
+    }
+    else if (documentationSettings.isGoogleFormat(element.getContainingFile()) || DocStringUtil.isGoogleDocString(preparedDocstring)) {
+      formatter = PythonHelpersLocator.getHelperPath("google_formatter.py");
+      structuredDocString = new GoogleCodeStyleDocString(preparedDocstring);
     }
     else {
       return null;
     }
 
     final String output = runExternalTool(module, formatter, docstring);
-    if (output != null)
+    if (output != null) {
       result.add(0, output);
-    else
+    }
+    else {
       result.add(0, structuredDocString.getDescription());
+    }
 
     return result;
   }
