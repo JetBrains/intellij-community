@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -62,6 +63,31 @@ public class ProgressIndicatorUtils {
 
   public static void scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
     scheduleWithWriteActionPriority(progressIndicator, PooledThreadExecutor.INSTANCE, readTask);
+  }
+
+  /**
+   * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending, 
+   * executing or future write actions. 
+   * It returns <code>true</code> if action was executed successfully. It returns <code>false</code> if the action was not
+   * executed successfully, i.e. if:
+   * <ul>
+   * <li>write action was in progress when the method was called</li>
+   * <li>write action was pending when the method was called</li>
+   * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated 
+   * write action</li>
+   * </ul>
+   * If caller needs to retry the invocation of this method in a loop, it should consider pausing between attempts, to avoid potential
+   * 100% CPU usage.
+   */
+  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    runWithWriteActionPriority(new Runnable() {
+      @Override
+      public void run() {
+        result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action));
+      }
+    });
+    return result.get();
   }
 
   public static boolean runWithWriteActionPriority(@NotNull final Runnable action) {
