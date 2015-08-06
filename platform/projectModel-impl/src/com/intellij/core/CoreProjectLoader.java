@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class CoreProjectLoader {
 
   @NotNull
   public static StorageData loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    StorageData storageData = new StorageData("project");
+    StorageData storageData = new StorageData();
     storageData.load(JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
     return storageData;
   }

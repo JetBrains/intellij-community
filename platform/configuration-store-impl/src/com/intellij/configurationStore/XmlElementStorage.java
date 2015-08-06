@@ -13,213 +13,190 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.configurationStore;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.*;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
+import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.util.LineSeparator
+import com.intellij.util.containers.ContainerUtil
+import gnu.trove.THashMap
+import org.jdom.Element
+import org.jdom.JDOMException
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException
 
-public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
-  @NotNull protected final String myRootElementName;
-  protected final StreamProvider myStreamProvider;
-  protected final String myFileSpec;
+abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
+                                                       protected val rootElementName: String,
+                                                       protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor?,
+                                                       roamingType: RoamingType?,
+                                                       provider: StreamProvider?) : StateStorageBase<StorageData>() {
+  protected val roamingType: RoamingType = roamingType ?: RoamingType.PER_USER
+  private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED || !provider.isApplicable(fileSpec, this.roamingType)) null else provider
 
-  protected final RoamingType myRoamingType;
+  protected abstract fun loadLocalData(): Element?
 
-  protected XmlElementStorage(@NotNull String fileSpec,
-                              @Nullable RoamingType roamingType,
-                              @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
-                              @NotNull String rootElementName,
-                              @Nullable StreamProvider streamProvider) {
-    super(pathMacroSubstitutor);
+  override fun getStateAndArchive(storageData: StorageData, component: Any, componentName: String) = storageData.getStateAndArchive(componentName)
 
-    myFileSpec = fileSpec;
-    myRoamingType = roamingType == null ? RoamingType.PER_USER : roamingType;
-    myRootElementName = rootElementName;
-    myStreamProvider = myRoamingType == RoamingType.DISABLED ? null : streamProvider;
-  }
-
-  @Nullable
-  protected abstract Element loadLocalData();
-
-  @Nullable
-  @Override
-  protected Element getStateAndArchive(@NotNull StorageData storageData, Object component, @NotNull String componentName) {
-    return storageData.getStateAndArchive(componentName);
-  }
-
-  @Override
-  @NotNull
-  protected StorageData loadData() {
-    StorageData result = createStorageData();
-    Element element;
+  override fun loadData(): StorageData {
+    val storageData = createStorageData()
+    val element: Element?
     // we don't use local data if has stream provider
-    if (myStreamProvider != null && myStreamProvider.getEnabled()) {
+    if (provider != null && provider.enabled) {
       try {
-        element = loadDataFromStreamProvider();
+        element = loadDataFromProvider()
         if (element != null) {
-          loadState(result, element);
+          storageData.loadState(element)
         }
       }
-      catch (Exception e) {
-        LOG.error(e);
-        element = null;
+      catch (e: Exception) {
+        LOG.error(e)
+        element = null
       }
     }
     else {
-      element = loadLocalData();
+      element = loadLocalData()
     }
 
     if (element != null) {
-      loadState(result, element);
+      storageData.loadState(element)
     }
-    return result;
+    return storageData
   }
 
-  @Nullable
-  protected final Element loadDataFromStreamProvider() throws IOException, JDOMException {
-    assert myStreamProvider != null;
-    return JDOMUtil.load(myStreamProvider.loadContent(myFileSpec, myRoamingType));
+  throws(IOException::class, JDOMException::class)
+  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
+
+  private fun StorageData.loadState(element: Element) {
+    load(element, pathMacroSubstitutor, true)
   }
 
-  protected final void loadState(@NotNull StorageData result, @NotNull Element element) {
-    result.load(element, myPathMacroSubstitutor, true);
+  protected open fun createStorageData(): StorageData = StorageData()
+
+  fun setDefaultState(element: Element) {
+    element.setName(rootElementName)
+    val storageData = createStorageData()
+    storageData.loadState(element)
+    storageDataRef.set(storageData)
   }
 
-  @NotNull
-  protected StorageData createStorageData() {
-    return new StorageData(myRootElementName);
-  }
+  override fun startExternalization() = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
 
-  public void setDefaultState(@NotNull Element element) {
-    myStorageData = createStorageData();
-    loadState(myStorageData, element);
-  }
+  protected abstract fun createSaveSession(storageData: StorageData): StateStorage.ExternalizationSession
 
-  @Override
-  @Nullable
-  public final XmlElementStorageSaveSession startExternalization() {
-    return checkIsSavingDisabled() ? null : createSaveSession(getStorageData());
-  }
-
-  @NotNull
-  protected abstract XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData);
-
-  @Nullable
-  protected final Element getElement(@NotNull StorageData data, @NotNull Map<String, Element> newLiveStates) throws IOException {
-    Element element = data.save(newLiveStates);
-    if (element == null || JDOMUtil.isEmpty(element)) {
-      return null;
-    }
-
-    if (myPathMacroSubstitutor != null) {
-      try {
-        myPathMacroSubstitutor.collapsePaths(element);
-      }
-      finally {
-        myPathMacroSubstitutor.reset();
-      }
-    }
-
-    return element;
-  }
-
-  @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
-    StorageData oldData = myStorageData;
-    StorageData newData = getStorageData(true);
+  override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
+    val oldData = storageDataRef.get()
+    val newData = getStorageData(true)
     if (oldData == null) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("analyzeExternalChangesAndUpdateIfNeed: old data null, load new for " + toString());
+        LOG.debug("analyzeExternalChangesAndUpdateIfNeed: old data null, load new for ${toString()}")
       }
-      componentNames.addAll(newData.getComponentNames());
+      componentNames.addAll(newData.getComponentNames())
     }
     else {
-      Set<String> changedComponentNames = oldData.getChangedComponentNames(newData, myPathMacroSubstitutor);
+      val changedComponentNames = oldData.getChangedComponentNames(newData, pathMacroSubstitutor)
       if (LOG.isDebugEnabled()) {
-        LOG.debug("analyzeExternalChangesAndUpdateIfNeed: changedComponentNames + " + changedComponentNames + " for " + toString());
+        LOG.debug("analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}")
       }
       if (!ContainerUtil.isEmpty(changedComponentNames)) {
-        componentNames.addAll(changedComponentNames);
+        componentNames.addAll(changedComponentNames)
       }
     }
   }
 
-  public abstract class XmlElementStorageSaveSession extends SaveSessionBase {
-    private final StorageData myOriginalStorageData;
-    @Nullable
-    private StorageData myCopiedStorageData;
-
-    private final Map<String, Element> myNewLiveStates = new THashMap<String, Element>();
-
-    public XmlElementStorageSaveSession(@NotNull StorageData storageData) {
-      myOriginalStorageData = storageData;
+  private fun setStorageData(oldStorageData: StorageData, newStorageData: StorageData?) {
+    if (oldStorageData !== newStorageData && storageDataRef.getAndSet(newStorageData) !== oldStorageData) {
+      LOG.warn("Old storage data is not equal to current, new storage data was set anyway")
     }
+  }
 
-    @Nullable
-    @Override
-    public final SaveSession createSaveSession() {
-      return checkIsSavingDisabled() || (myCopiedStorageData == null && !myOriginalStorageData.isDirty()) ? null : this;
-    }
+  abstract class XmlElementStorageSaveSession<T : XmlElementStorage>(private val originalStorageData: StorageData, protected val storage: T) : SaveSessionBase() {
+    private var copiedStorageData: StorageData? = null
 
-    @Override
-    protected void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element) {
-      if (myCopiedStorageData == null) {
-        myCopiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, myOriginalStorageData, myNewLiveStates);
+    private val newLiveStates = THashMap<String, Element>()
+
+    override fun createSaveSession() = if (storage.checkIsSavingDisabled() || (copiedStorageData == null && !originalStorageData.isDirty())) null else this
+
+    override fun setSerializedState(component: Any, componentName: String, element: Element?) {
+      if (copiedStorageData == null) {
+        copiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, originalStorageData, newLiveStates)
       }
       else {
-        myCopiedStorageData.setState(componentName, element, myNewLiveStates);
+        copiedStorageData!!.setState(componentName, element, newLiveStates)
       }
     }
 
-    @Override
-    public void save() throws IOException {
-      StorageData storageData = myCopiedStorageData;
+    override fun save() {
+      var storageData = copiedStorageData
       if (storageData == null) {
-        storageData = myOriginalStorageData;
+        storageData = originalStorageData
         if (!storageData.isDirty()) {
-          LOG.warn("Copied storage data must be not null because original storage data is not dirty");
+          LOG.warn("Copied storage data must be not null because original storage data is not dirty")
         }
       }
 
-      doSave(getElement(storageData, myNewLiveStates));
-      myStorageData = storageData;
-    }
-
-    protected abstract void doSave(@Nullable Element element) throws IOException;
-
-    protected final void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
-      if (!myStreamProvider.isApplicable(myFileSpec, myRoamingType)) {
-        return;
+      var element = storageData.save(newLiveStates, storage.rootElementName)
+      if (element == null || JDOMUtil.isEmpty(element)) {
+        element = null
+      }
+      else if (storage.pathMacroSubstitutor != null) {
+        try {
+          storage.pathMacroSubstitutor.collapsePaths(element)
+        }
+        finally {
+          storage.pathMacroSubstitutor.reset()
+        }
       }
 
-      if (element == null) {
-        myStreamProvider.delete(myFileSpec, myRoamingType);
+      val provider = storage.provider
+      if (provider != null && provider.enabled) {
+        if (element == null) {
+          provider.delete(storage.fileSpec, storage.roamingType)
+        }
+        else {
+          // we should use standard line-separator (\n) - stream provider can share file content on any OS
+          val content = StorageUtil.writeToBytes(element, "\n")
+          provider.saveContent(storage.fileSpec, content.getInternalBuffer(), content.size(), storage.roamingType)
+        }
       }
       else {
-        doSaveForProvider(element, myRoamingType, content);
+        saveLocally(element)
       }
+      storage.setStorageData(originalStorageData, storageData)
     }
 
-    private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @Nullable BufferExposingByteArrayOutputStream content) throws IOException {
-      if (content == null) {
-        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType);
+    throws(IOException::class)
+    protected abstract fun saveLocally(element: Element?)
+  }
+
+  public fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
+    if (roamingType == RoamingType.DISABLED) {
+      // storage roaming was changed to DISABLED, but settings repository has old state
+      return
+    }
+
+    try {
+      val newElement = if (deleted) null else loadDataFromProvider()
+      val storageData = storageDataRef.get()
+      if (newElement == null) {
+        // if data was loaded, mark as changed all loaded components
+        if (storageData != null) {
+          changedComponentNames.addAll(storageData.getComponentNames())
+          setStorageData(storageData, null)
+        }
       }
-      else {
-        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType);
+      else if (storageData != null) {
+        val newStorageData = createStorageData()
+        newStorageData.loadState(newElement)
+        changedComponentNames.addAll(storageData.getChangedComponentNames(newStorageData, pathMacroSubstitutor))
+        setStorageData(storageData, newStorageData)
       }
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 }

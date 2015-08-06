@@ -20,7 +20,6 @@ import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.StringInterner;
@@ -36,28 +35,18 @@ import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfD
 
 public class StorageData extends StorageDataBase {
   private static final Logger LOG = Logger.getInstance(StorageData.class);
-  public static final String COMPONENT = "component";
-  public static final String NAME = "name";
 
   private final StateMap myStates;
-
-  protected final String myRootElementName;
-
-  public StorageData() {
-    this(COMPONENT);
-  }
 
   public boolean isDirty() {
     return false;
   }
 
-  public StorageData(@NotNull String rootElementName) {
+  public StorageData() {
     myStates = new StateMap();
-    myRootElementName = rootElementName;
   }
 
   protected StorageData(@NotNull StorageData storageData) {
-    myRootElementName = storageData.myRootElementName;
     myStates = new StateMap(storageData.myStates);
   }
 
@@ -97,22 +86,12 @@ public class StorageData extends StorageDataBase {
   }
 
   @Nullable
-  static String getComponentNameIfValid(@NotNull Element element) {
-    String name = element.getAttributeValue(NAME);
-    if (StringUtil.isEmpty(name)) {
-      LOG.warn("No name attribute for component in " + JDOMUtil.writeElement(element));
-      return null;
-    }
-    return name;
-  }
-
-  @Nullable
-  public Element save(@NotNull Map<String, Element> newLiveStates) throws IOException {
+  public Element save(@NotNull Map<String, Element> newLiveStates, @NotNull String rootElementName) throws IOException {
     if (myStates.isEmpty()) {
       return null;
     }
 
-    Element rootElement = new Element(myRootElementName);
+    Element rootElement = new Element(rootElementName);
     String[] componentNames = ArrayUtil.toStringArray(myStates.keys());
     Arrays.sort(componentNames);
     for (String componentName : componentNames) {

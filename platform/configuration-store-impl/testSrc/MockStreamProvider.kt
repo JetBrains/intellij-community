@@ -9,8 +9,6 @@ import java.io.FileInputStream
 import java.io.InputStream
 
 class MockStreamProvider(private val myBaseDir: File) : StreamProvider {
-  override fun isApplicable(fileSpec: String, roamingType: RoamingType) = roamingType === RoamingType.PER_USER
-
   override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
     FileUtil.writeToFile(File(myBaseDir, fileSpec), content, 0, size)
   }

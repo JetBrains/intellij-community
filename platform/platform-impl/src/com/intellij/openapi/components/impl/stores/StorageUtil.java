@@ -349,15 +349,6 @@ public class StorageUtil {
     }
   }
 
-  /**
-   * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
-   */
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type) throws IOException {
-    // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
-    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type);
-  }
-
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
     return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals(StoragePathMacros.MODULE_FILE);
   }

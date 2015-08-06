@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,33 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public abstract class StorageDataBase {
+  protected static final Logger LOG = Logger.getInstance(StorageDataBase.class);
+
+  public static final String COMPONENT = "component";
+  public static final String NAME = "name";
+
   @NotNull
   public abstract Set<String> getComponentNames();
 
   public abstract boolean hasState(@NotNull String componentName);
+
+  @Nullable
+  static String getComponentNameIfValid(@NotNull Element element) {
+    String name = element.getAttributeValue(NAME);
+    if (StringUtil.isEmpty(name)) {
+      LOG.warn("No name attribute for component in " + JDOMUtil.writeElement(element));
+      return null;
+    }
+    return name;
+  }
 }

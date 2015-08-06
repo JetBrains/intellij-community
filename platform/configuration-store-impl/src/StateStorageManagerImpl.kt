@@ -46,7 +46,7 @@ import kotlin.reflect.jvm.java
 /**
  * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
  */
-open class StateStorageManagerImpl(protected val rootTagName: String,
+open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                    val componentManager: ComponentManager? = null,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = StateStorageManagerImpl.createDefaultVirtualTracker(componentManager) ) : StateStorageManager {
@@ -214,15 +214,16 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
   private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: File, splitter: StateSplitter) : DirectoryBasedStorage(storageManager.pathMacroSubstitutor, file, splitter), StorageVirtualFileTracker.TrackedStorage
 
   private class MyFileStorage(override val storageManager: StateStorageManagerImpl,
-                  file: File,
-                  fileSpec: String,
-                  rootElementName: String,
-                  roamingType: RoamingType? = null,
-                  pathMacroManager: TrackingPathMacroSubstitutor? = null,
-                  streamProvider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider), StorageVirtualFileTracker.TrackedStorage {
-    override fun createStorageData() = storageManager.createStorageData(myFileSpec)
+                              file: File,
+                              fileSpec: String,
+                              rootElementName: String,
+                              roamingType: RoamingType? = null,
+                              pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                              streamProvider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, streamProvider), StorageVirtualFileTracker.TrackedStorage {
+    override val isUseXmlProlog: Boolean
+      get() = storageManager.isUseXmlProlog
 
-    override fun isUseXmlProlog() = storageManager.isUseXmlProlog
+    override fun createStorageData() = storageManager.createStorageData(fileSpec)
   }
 
   private fun String.normalizePath(): String {
@@ -272,7 +273,7 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
 
   protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = pathMacroSubstitutor
 
-  protected open fun createStorageData(fileSpec: String): StorageData = StorageData(rootTagName)
+  protected open fun createStorageData(fileSpec: String): StorageData = StorageData()
 
   override final fun expandMacros(path: String): String {
     // replacement can contains $ (php tests), so, this check must be performed before expand
