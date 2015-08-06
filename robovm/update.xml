@@ -6,7 +6,7 @@
     <code>RS</code>
 
     <channel id="RS" name="RoboVM Studio" status="release"
-             url="https://robovm.com"
+             url="http://robovm.com/?p=2414"
              feedback="http://robovm.com"
              majorVersion="1">
       <build number="RS-1.6.0" version="1.6.0" releaseDate="20150806">
