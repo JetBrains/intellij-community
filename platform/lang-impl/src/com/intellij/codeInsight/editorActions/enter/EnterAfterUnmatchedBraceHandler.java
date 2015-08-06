@@ -46,7 +46,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler");
 
   @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
@@ -114,7 +114,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
       closingBraceIndentAdjusted = stamp != document.getModificationStamp();
       document.deleteString(caretOffset, caretOffset + 1);
     }
-    
+
     // There is a possible case that formatter was unable to adjust line indent for the closing brace (that is the case for plain text
     // document for example). Hence, we're trying to do the manually.
     if (!closingBraceIndentAdjusted) {
@@ -135,7 +135,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
         document.insertString(offset + 1, buffer);
       }
     }
-    
+
     return Result.DefaultForceIndent;
   }
 
@@ -206,7 +206,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    *                  negative value if it's not possible to perform the calculation or if there are no unmatched left braces before
    *                  the given offset
    */
-  private static int getUnmatchedLBracesNumberBefore(Editor editor, int offset, FileType fileType) {
+  protected static int getUnmatchedLBracesNumberBefore(Editor editor, int offset, FileType fileType) {
     if (offset == 0) {
       return -1;
     }
