@@ -223,18 +223,18 @@ public class StudyCheckAction extends DumbAwareAction {
           });
           return;
         }
-        final String failedMessage = testRunner.getTestsOutput(output);
+        final StudyTestRunner.TestsOutput testsOutput = testRunner.getTestsOutput(output);
         final StudySettings studySettings = StudySettings.getInstance();
 
         final String login = studySettings.getLogin();
         final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getPassword();
-        if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
+        if (testsOutput.isSuccess()) {
           taskManager.setStatus(task, StudyStatus.Solved);
           EduStepicConnector.postAttempt(task, true, login, password);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
+              showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), project);
             }
           });
         }
@@ -264,7 +264,7 @@ public class StudyCheckAction extends DumbAwareAction {
                   }
                 });
               }
-              showTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
+              showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
               navigateToFailedPlaceholder(studyState, task, taskDir, project);
             }
           });

@@ -137,6 +137,11 @@ def test_answer_placeholders_text_deleted(error_text="Don't just delete task tex
     passed()
 
 
+def set_congratulation_message(message):
+    """ Overrides default 'Congratulations!' message """
+    print("#educational_plugin CONGRATS_MESSAGE " + message)
+
+
 def failed(message="Please, reload the task and try again.", name=None):
     """ Reports failure """
     if not name:
