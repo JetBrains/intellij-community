@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -26,9 +27,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class FileIndentOptionsProvider { 
+public abstract class FileIndentOptionsProvider {
 
   public final static ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
+
+  private final static String SHOW_NOTIFICATION_KEY = "show.indent.detected.notification";
   /**
    * Retrieves indent options for PSI file.
    * @param settings Code style settings for which indent options are calculated.
@@ -75,4 +78,12 @@ public abstract class FileIndentOptionsProvider {
    *             and set a global acceptance flag so that no notification will be shown anymore.
    */
   public void setAccepted(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {}
+
+  public static boolean isShowNotification() {
+    return PropertiesComponent.getInstance().getBoolean(SHOW_NOTIFICATION_KEY, true);
+  }
+
+  public static void setShowNotification(boolean value) {
+    PropertiesComponent.getInstance().setValue(SHOW_NOTIFICATION_KEY, Boolean.toString(value), Boolean.toString(true));
+  }
 }
