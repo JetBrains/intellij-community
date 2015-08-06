@@ -270,7 +270,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static <K, V> MultiMap<K, V> groupBy(@NotNull Collection<V> nodes, @NotNull NullableFunction<V, K> grouper) {
-    MultiMap<K, V> result = new KeyOrderedMultiMap<K, V>();
+    MultiMap<K, V> result = MultiMap.createLinked();
     for (V data : nodes) {
       K key = grouper.fun(data);
       if (key == null) {
@@ -285,6 +285,9 @@ public class ExternalSystemApiUtil {
       result.putValue(key, data);
     }
 
+    if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
+      return new KeyOrderedMultiMap<K, V>(result);
+    }
     return result;
   }
 
@@ -858,6 +861,13 @@ public class ExternalSystemApiUtil {
   }
 
   public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
+
+    public KeyOrderedMultiMap() {
+    }
+
+    public KeyOrderedMultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
+      super(toCopy);
+    }
 
     @NotNull
     @Override
