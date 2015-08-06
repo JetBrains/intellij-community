@@ -39,10 +39,22 @@ public interface StructuredDocString {
 
   List<String> getParameters();
   List<Substring> getParameterSubstrings();
+  
+  /**
+   * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
+   */
   @Nullable
   String getParamType(@Nullable String paramName);
+
+  /**
+   * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
+   */
   @Nullable
   Substring getParamTypeSubstring(@Nullable String paramName);
+  
+  /**
+   * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
+   */
   @Nullable
   String getParamDescription(@Nullable String paramName);
 

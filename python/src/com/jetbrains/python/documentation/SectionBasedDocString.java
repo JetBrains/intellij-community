@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -37,13 +38,21 @@ import java.util.*;
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
 public abstract class SectionBasedDocString implements StructuredDocString {
+  /**
+   * Frequently used section types
+   */
+  @NonNls private static final String NORMALIZED_RETURN_SECTION_NAME = "returns";
+  @NonNls private static final String NORMALIZED_EXCEPTIONS_SECTION_NAME = "raises";
+  @NonNls private static final String NORMALIZED_KEYWORD_ARGUMENTS_SECTION = "keyword arguments";
+  @NonNls private static final String NORMALIZED_PARAMETERS_SECTION = "parameters";
+  
   private static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
-                .put("arguments", "parameters")
-                .put("args", "parameters")
-                .put("parameters", "parameters")
-                .put("keyword args", "keyword arguments")
-                .put("keyword arguments", "keyword arguments")
+                .put("arguments", NORMALIZED_PARAMETERS_SECTION)
+                .put("args", NORMALIZED_PARAMETERS_SECTION)
+                .put("parameters", NORMALIZED_PARAMETERS_SECTION)
+                .put("keyword args", NORMALIZED_KEYWORD_ARGUMENTS_SECTION)
+                .put("keyword arguments", NORMALIZED_KEYWORD_ARGUMENTS_SECTION)
                 .put("other parameters", "other parameters")
                 .put("attributes", "attributes")
                 .put("methods", "methods")
@@ -51,11 +60,11 @@ public abstract class SectionBasedDocString implements StructuredDocString {
                 .put("notes", "notes")
                 .put("example", "examples")
                 .put("examples", "examples")
-                .put("return", "returns")
-                .put("returns", "returns")
+                .put("return", NORMALIZED_RETURN_SECTION_NAME)
+                .put("returns", NORMALIZED_RETURN_SECTION_NAME)
                 .put("yield", "yields")
                 .put("yields", "yields")
-                .put("raises", "raises")
+                .put("raises", NORMALIZED_EXCEPTIONS_SECTION_NAME)
                 .put("references", "references")
                 .put("see also", "see also")
                 .put("warning", "warnings")
@@ -64,7 +73,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
                 .build();
 
   public static Set<String> SECTION_NAMES = SECTION_ALIASES.keySet();
-  private static final ImmutableSet<String> SECTIONS_WITH_NAME_AND_TYPE = 
+  private static final ImmutableSet<String> SECTIONS_WITH_NAME_AND_TYPE =
     ImmutableSet.of("attributes", "methods", "parameters", "keyword arguments", "other parameters");
   private static final ImmutableSet<String> SECTIONS_WITH_TYPE = ImmutableSet.of("returns", "raises", "yields");
 
@@ -215,8 +224,8 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   @Nullable
   public static Substring mergeSubstrings(@NotNull Substring s1, @NotNull Substring s2) {
     if (s1.getSuperString().equals(s2.getSuperString())) {
-      return new Substring(s1.getSuperString(), 
-                           Math.min(s1.getStartOffset(), s2.getStartOffset()), 
+      return new Substring(s1.getSuperString(),
+                           Math.min(s1.getStartOffset(), s2.getStartOffset()),
                            Math.max(s1.getEndOffset(), s2.getEndOffset()));
     }
     return null;
@@ -297,66 +306,190 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   @Nullable
   @Override
   public String getParamType(@Nullable String paramName) {
+    if (paramName != null) {
+      final SectionField field = getFirstFieldForParameter(paramName);
+      if (field != null) {
+        return field.getType();
+      }
+    }
     return null;
   }
 
   @Nullable
   @Override
   public Substring getParamTypeSubstring(@Nullable String paramName) {
+    if (paramName != null) {
+      final SectionField field = getFirstFieldForParameter(paramName);
+      if (field != null) {
+        return field.getTypeAsSubstring();
+      }
+    }
     return null;
   }
 
   @Nullable
   @Override
   public String getParamDescription(@Nullable String paramName) {
+    if (paramName != null) {
+      final SectionField field = getFirstFieldForParameter(paramName);
+      if (field != null) {
+        return field.getDescription();
+      }
+    }
     return null;
+  }
+
+  @Nullable
+  private SectionField getFirstFieldForParameter(@NotNull final String name) {
+    return ContainerUtil.find(getParameterFields(), new Condition<SectionField>() {
+      @Override
+      public boolean value(SectionField field) {
+        return name.equals(field.getName());
+      }
+    });
+  }
+
+  @NotNull
+  private List<SectionField> getParameterFields() {
+    final List<SectionField> result = new ArrayList<SectionField>();
+    for (Section section : mySections) {
+      if (section.getTitle().equals(NORMALIZED_PARAMETERS_SECTION)) {
+        for (SectionField field : section.getFields()) {
+          result.add(field);
+        }
+      }
+    }
+    return result;
   }
 
   @Override
   public List<String> getKeywordArguments() {
-    return null;
+    return ContainerUtil.mapNotNull(getKeywordArgumentFields(), new Function<SectionField, String>() {
+      @Override
+      public String fun(SectionField field) {
+        return field.getName();
+      }
+    });
   }
 
   @Override
   public List<Substring> getKeywordArgumentSubstrings() {
-    return null;
+    return ContainerUtil.mapNotNull(getKeywordArgumentFields(), new Function<SectionField, Substring>() {
+      @Override
+      public Substring fun(SectionField field) {
+        return field.getNameAsSubstring();
+      }
+    });
   }
 
   @Nullable
   @Override
   public String getKeywordArgumentDescription(@Nullable String paramName) {
+    if (paramName != null) {
+      final SectionField argument = getFirstFieldForKeywordArgument(paramName);
+      if (argument != null) {
+        return argument.getDescription();
+      }
+    }
     return null;
+  }
+
+  @NotNull
+  private List<SectionField> getKeywordArgumentFields() {
+    final List<SectionField> result = new ArrayList<SectionField>();
+    for (Section section : mySections) {
+      if (section.getTitle().equals(NORMALIZED_KEYWORD_ARGUMENTS_SECTION)) {
+        for (SectionField field : section.getFields()) {
+          result.add(field);
+        }
+      }
+    }
+    return result;
+  }
+
+  private SectionField getFirstFieldForKeywordArgument(@NotNull final String name) {
+    return ContainerUtil.find(getKeywordArgumentFields(), new Condition<SectionField>() {
+      @Override
+      public boolean value(SectionField field) {
+        return name.equals(field.getName());
+      }
+    });
   }
 
   @Nullable
   @Override
   public String getReturnType() {
-    return null;
+    final SectionField field = getFirstReturnField();
+    return field != null ? field.getType() : null;
   }
-
+  
   @Nullable
   @Override
   public Substring getReturnTypeSubstring() {
-    return null;
+    final SectionField field = getFirstReturnField();
+    return field != null ? field.getTypeAsSubstring() : null;
   }
 
   @Nullable
   @Override
   public String getReturnDescription() {
+    final SectionField field = getFirstReturnField();
+    return field != null ? field.getDescription() : null;
+  }
+
+  @Nullable
+  private SectionField getFirstReturnField() {
+    for (Section section : mySections) {
+      if (section.getTitle().equals(NORMALIZED_RETURN_SECTION_NAME) && !section.getFields().isEmpty()) {
+        return section.getFields().get(0);
+      }
+    }
     return null;
   }
 
   @Override
   public List<String> getRaisedExceptions() {
-    return null;
+    return ContainerUtil.mapNotNull(getExceptionFields(), new Function<SectionField, String>() {
+      @Override
+      public String fun(SectionField field) {
+        return field.getType();
+      }
+    });
   }
-
+  
   @Nullable
   @Override
   public String getRaisedExceptionDescription(@Nullable String exceptionName) {
+    if (exceptionName != null) {
+      final SectionField exception = getFirstFieldForException(exceptionName);
+      if (exception != null) {
+        return exception.getDescription();
+      }
+    }
     return null;
   }
 
+  @NotNull
+  private List<SectionField> getExceptionFields() {
+    final List<SectionField> result = new ArrayList<SectionField>();
+    for (Section section : mySections) {
+      if (section.getTitle().equals(NORMALIZED_EXCEPTIONS_SECTION_NAME)) {
+        result.addAll(section.getFields());
+      }
+    }
+    return result; 
+  }
+
+  @Nullable
+  private SectionField getFirstFieldForException(@NotNull final String exceptionType) {
+    return ContainerUtil.find(getExceptionFields(), new Condition<SectionField>() {
+      @Override
+      public boolean value(SectionField field) {
+        return exceptionType.equals(field.getType());
+      }
+    });
+  }
+  
   @Nullable
   @Override
   public String getAttributeDescription() {
@@ -435,7 +568,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       return myType == null ? "" : myType.toString();
     }
 
-    @Nullable 
+    @Nullable
     public Substring getTypeAsSubstring() {
       return myType;
     }

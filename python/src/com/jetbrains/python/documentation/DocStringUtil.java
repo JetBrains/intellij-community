@@ -48,6 +48,9 @@ public class DocStringUtil {
     if (isSphinxDocString(text)) {
       return new SphinxDocString(text);
     }
+    if (isGoogleDocString(text)) {
+      return new GoogleCodeStyleDocString(text);
+    }
     return new EpydocString(text);
   }
 
