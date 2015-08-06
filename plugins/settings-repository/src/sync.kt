@@ -16,10 +16,12 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.FileBasedStorage
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.impl.stores.FileStorage
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -183,10 +185,10 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
   })!!
 }
 
-private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages: Collection<FileBasedStorage>, deleted: Boolean) {
+private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages: Collection<FileStorage>, deleted: Boolean) {
   for (stateStorage in stateStorages) {
     try {
-      stateStorage.updatedFromStreamProvider(changedComponentNames, deleted)
+      (stateStorage as FileBasedStorage).updatedFromStreamProvider(changedComponentNames, deleted)
     }
     catch (e: Throwable) {
       LOG.error(e)

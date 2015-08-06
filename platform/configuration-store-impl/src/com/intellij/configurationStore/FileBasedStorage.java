@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Set;
 
-public class FileBasedStorage extends XmlElementStorage {
+public class FileBasedStorage extends XmlElementStorage implements FileStorage {
   private File myFile;
   private volatile VirtualFile myCachedVirtualFile;
   private LineSeparator myLineSeparator;
@@ -62,6 +63,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   // we never set io file to null
+  @Override
   public void setFile(@Nullable VirtualFile file, @Nullable File ioFileIfChanged) {
     myCachedVirtualFile = file;
     if (ioFileIfChanged != null) {
@@ -114,6 +116,7 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
+  @Override
   @Nullable
   public VirtualFile getVirtualFile() {
     VirtualFile virtualFile = myCachedVirtualFile;
@@ -123,6 +126,7 @@ public class FileBasedStorage extends XmlElementStorage {
     return virtualFile;
   }
 
+  @Override
   @NotNull
   public File getFile() {
     return myFile;

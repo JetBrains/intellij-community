@@ -38,7 +38,7 @@ public interface StateStorageManager {
   StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 
   @NotNull
-  Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted);
+  Couple<Collection<FileStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted);
 
   /**
    * Rename file

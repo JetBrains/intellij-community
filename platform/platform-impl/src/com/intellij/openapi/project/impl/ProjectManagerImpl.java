@@ -695,8 +695,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
     StateStorageManager storageManager = ComponentsPackage.getStateStore(project).getStateStorageManager();
     String fileSpec = storageManager.collapseMacros(file.getPath());
-    Couple<Collection<FileBasedStorage>> storages = storageManager.getCachedFileStateStorages(Collections.singletonList(fileSpec), Collections.<String>emptyList());
-    FileBasedStorage storage = ContainerUtil.getFirstItem(storages.first);
+    Couple<Collection<FileStorage>> storages = storageManager.getCachedFileStateStorages(Collections.singletonList(fileSpec), Collections.<String>emptyList());
+    FileStorage storage = ContainerUtil.getFirstItem(storages.first);
     // if empty, so, storage is not yet loaded, so, we don't have to reload
     if (storage != null) {
       registerProjectToReload(project, storage);

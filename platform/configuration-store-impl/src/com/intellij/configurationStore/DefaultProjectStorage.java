@@ -2,7 +2,6 @@ package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;

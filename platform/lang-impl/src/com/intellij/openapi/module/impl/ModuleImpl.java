@@ -22,7 +22,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.FileBasedStorage;
+import com.intellij.openapi.components.impl.stores.FileStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -83,8 +83,8 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @NotNull
-  private static FileBasedStorage getMainStorage(@NotNull Module module) {
-    return (FileBasedStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
+  private static FileStorage getMainStorage(@NotNull Module module) {
+    return (FileStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
   }
 
   @Override
