@@ -44,6 +44,7 @@ public class FileBasedStorage extends XmlElementStorage {
   private File myFile;
   private volatile VirtualFile myCachedVirtualFile;
   private LineSeparator myLineSeparator;
+  private boolean myBlockSavingTheContent;
 
   public FileBasedStorage(@NotNull File file,
                           @NotNull String fileSpec,
@@ -81,6 +82,13 @@ public class FileBasedStorage extends XmlElementStorage {
   protected class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);
+    }
+
+    @Override
+    public void save() throws IOException {
+      if (!myBlockSavingTheContent) {
+        super.save();
+      }
     }
 
     @Override
@@ -157,9 +165,8 @@ public class FileBasedStorage extends XmlElementStorage {
         LOG.info(e);
       }
       new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Load Settings",
-                       "Cannot load settings from file '" +
-                       myFile + "': " +
-                       (e == null ? "content truncated" : e.getMessage()) + "\n" +
+                       "Cannot load settings from file '" + myFile + "': " +
+                       (contentTruncated ? "content truncated" : e.getMessage()) + "\n" +
                        (myBlockSavingTheContent ? "Please correct the file content" : "File content will be recreated"),
                        NotificationType.WARNING).notify(null);
     }

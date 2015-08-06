@@ -34,7 +34,6 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   @NotNull protected final String myRootElementName;
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
-  protected boolean myBlockSavingTheContent = false;
 
   protected final RoamingType myRoamingType;
 
@@ -185,11 +184,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     }
 
     @Override
-    public final void save() throws IOException {
-      if (myBlockSavingTheContent) {
-        return;
-      }
-
+    public void save() throws IOException {
       StorageData storageData = myCopiedStorageData;
       if (storageData == null) {
         storageData = myOriginalStorageData;
