@@ -378,6 +378,12 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
       super.collapse(type);
     }
 
+    @Override
+    public void error(String message) {
+      myOriginalPositionMarker.drop();
+      super.error(message);
+    }
+
     @NotNull
     private Marker getDelegateOrThis(@NotNull Marker marker) {
       if (marker instanceof DelegateMarker) {
