@@ -112,7 +112,10 @@ public class EditorHost(val reactiveModel: ReactiveModel,
       }
     }
 
-    init += {it.putIn(path / "writable", PrimitiveModel(editor.getDocument().isWritable()))}
+    init += {
+      it.putIn(path / "writable", PrimitiveModel(editor.getDocument().isWritable()))
+      .putIn(path / "extension", PrimitiveModel(file.getExtension()))
+    }
 
     val documentHost = reactiveModel.host(path / "document") { path, lifetime, init ->
       DocumentHost(reactiveModel, path, lifetime, editor.getDocument(), editor.getProject(), caretGuard, init)
