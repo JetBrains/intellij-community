@@ -4,6 +4,7 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,6 +22,7 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,7 +59,7 @@ import java.util.Set;
  * @author Denis Zhdanov, Vladislav Soroka
  * @since 3/21/12 4:04 PM
  */
-public class ExternalSystemNotificationManager {
+public class ExternalSystemNotificationManager implements Disposable {
   @NotNull private static final Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
 
   @NotNull private final SequentialTaskExecutor myUpdater = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
@@ -69,6 +71,7 @@ public class ExternalSystemNotificationManager {
 
   public ExternalSystemNotificationManager(@NotNull final Project project) {
     myProject = project;
+    Disposer.register(project, this);
     myNotifications = ContainerUtil.newArrayList();
     initializedExternalSystem = ContainerUtil.newHashSet();
     myMessageCounter = new MessageCounter();
@@ -125,7 +128,7 @@ public class ExternalSystemNotificationManager {
   }
 
   public void showNotification(@NotNull final ProjectSystemId externalSystemId, @NotNull final NotificationData notificationData) {
-    myUpdater.execute(new Runnable() {
+    myUpdater.submit(new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
@@ -150,10 +153,12 @@ public class ExternalSystemNotificationManager {
             app.invokeAndWait(action, ModalityState.defaultModalityState());
           }
         }
+        if (myProject.isDisposed()) return;
 
         NotificationGroup group;
         if (notificationData.getBalloonGroup() == null) {
-          ExternalProjectsView externalProjectsView = ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
+          ExternalProjectsView externalProjectsView =
+            ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
           group = externalProjectsView instanceof ExternalProjectsViewImpl ?
                   ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
         }
@@ -197,9 +202,10 @@ public class ExternalSystemNotificationManager {
                                  @NotNull final NotificationSource notificationSource,
                                  @NotNull final ProjectSystemId externalSystemId) {
     myMessageCounter.remove(groupName, notificationSource, externalSystemId);
-    myUpdater.execute(new Runnable() {
+    myUpdater.submit(new Runnable() {
       @Override
       public void run() {
+        if (myProject.isDisposed()) return;
         for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {
           Notification notification = iterator.next();
           if (groupName == null || groupName.equals(notification.getGroupId())) {
@@ -216,6 +222,7 @@ public class ExternalSystemNotificationManager {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
+            if (myProject.isDisposed()) return;
             for (Content content : messageView.getContentManager().getContents()) {
               if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
                 if (groupName == null) {
@@ -379,5 +386,16 @@ public class ExternalSystemNotificationManager {
         throw new AssertionError("unsupported notification source found: " + notificationSource);
     }
     return contentDisplayName;
+  }
+
+  @Override
+  public void dispose() {
+    myNotifications.clear();
+    try {
+      // wait until all submitted tasks are executed
+      myUpdater.submit(EmptyRunnable.getInstance()).get();
+    }
+    catch (Exception ignored) {
+    }
   }
 }
