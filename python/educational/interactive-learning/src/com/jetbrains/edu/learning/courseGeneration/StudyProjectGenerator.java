@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -289,6 +290,9 @@ public class StudyProjectGenerator {
       myCourses = EduStepicConnector.getCourses();
       flushCache(myCourses);
     }
+    if (myCourses.isEmpty()) {
+      myCourses = getBundledIntro();
+    }
     return myCourses;
   }
 
@@ -304,6 +308,16 @@ public class StudyProjectGenerator {
     for (SettingsListener listener : myListeners) {
       listener.stateChanged(result);
     }
+  }
+
+  public static List<CourseInfo> getBundledIntro() {
+    final File introCourse = new File(ourCoursesDir, "Introduction to Python");
+    if (introCourse.exists()) {
+      final CourseInfo courseInfo = getCourseInfo(introCourse);
+
+      return Collections.singletonList(courseInfo);
+    }
+    return Collections.emptyList();
   }
 
   public static List<CourseInfo> getCoursesFromCache() {
@@ -404,6 +418,19 @@ public class StudyProjectGenerator {
    */
   @Nullable
   private static CourseInfo getCourseInfo(File courseFile) {
+    if (courseFile.isDirectory()) {
+      File[] courseFiles = courseFile.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.equals(COURSE_META_FILE);
+        }
+      });
+      if (courseFiles.length != 1) {
+        LOG.info("More than one or without course files");
+        return null;
+      }
+      courseFile = courseFiles[0];
+    }
     CourseInfo courseInfo = null;
     BufferedReader reader = null;
     try {
