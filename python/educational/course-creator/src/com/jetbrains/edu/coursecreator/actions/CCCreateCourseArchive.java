@@ -115,7 +115,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           public boolean accept(File pathname) {
             String name = pathname.getName();
             String nameWithoutExtension = FileUtil.getNameWithoutExtension(pathname);
-            if (nameWithoutExtension.endsWith(".answer") || name.contains("_windows") || name.contains(".idea")
+            if (nameWithoutExtension.endsWith(".answer") || name.contains(EduNames.WINDOWS_POSTFIX) || name.contains(".idea")
               || FileUtil.filesEqual(pathname, zipFile)) {
               return false;
             }

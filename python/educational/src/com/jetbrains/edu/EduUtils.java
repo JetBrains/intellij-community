@@ -105,7 +105,7 @@ public class EduUtils {
       return null;
     }
     if (taskDir != null) {
-      final String name = file.getNameWithoutExtension() + "_windows";
+      final String name = file.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
       PrintWriter printWriter = null;
       try {
         fileWindows = taskDir.createChildData(taskFile, name);

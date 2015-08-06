@@ -26,6 +26,7 @@ public class EduNames {
   public static final String USER_TEST_INPUT = "input";
   public static final String USER_TEST_OUTPUT = "output";
   public static final String WINDOW_POSTFIX = "_window.";
+  public static final String WINDOWS_POSTFIX = "_windows";
   public static final String TASK = "task";
   public static final String USER_TESTS = "userTests";
   public static final String TESTS_FILE = "tests.py";

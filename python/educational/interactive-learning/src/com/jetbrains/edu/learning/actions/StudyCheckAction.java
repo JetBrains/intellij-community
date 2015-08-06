@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.edu.EduDocumentListener;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Task;
@@ -91,7 +92,7 @@ public class StudyCheckAction extends DumbAwareAction {
       if (virtualFile == null) {
         continue;
       }
-      String windowsFileName = virtualFile.getNameWithoutExtension() + "_windows";
+      String windowsFileName = virtualFile.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
       final VirtualFile windowsFile = taskDir.findChild(windowsFileName);
       if (windowsFile != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
