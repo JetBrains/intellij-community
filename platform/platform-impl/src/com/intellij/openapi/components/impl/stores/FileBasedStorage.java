@@ -23,12 +23,12 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -120,11 +120,6 @@ public class FileBasedStorage extends XmlElementStorage {
     return myFile;
   }
 
-  @NotNull
-  public String getFilePath() {
-    return PathUtil.toSystemIndependentName(myFile.getPath());
-  }
-
   @Override
   @Nullable
   protected Element loadLocalData() {
@@ -207,6 +202,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Override
   public String toString() {
-    return getFilePath();
+    return FileUtilRt.toSystemIndependentName(myFile.getPath());
   }
 }

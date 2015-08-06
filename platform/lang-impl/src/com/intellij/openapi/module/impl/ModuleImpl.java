@@ -150,7 +150,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @NotNull
   public String getModuleFilePath() {
-    return getMainStorage(this).getFilePath();
+    return ComponentsPackage.getStateStore(this).getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
   }
 
   @Override
