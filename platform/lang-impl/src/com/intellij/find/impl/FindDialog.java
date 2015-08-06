@@ -371,14 +371,13 @@ public class FindDialog extends DialogWrapper {
     component.getActionMap().put(newActionKey, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (previousAction != null && component.isPopupVisible()) {
-          previousAction.actionPerformed(e);
-          return;
-        }
-
         if(myResultsPreviewTable != null &&
           myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
           newAction.run();
+        }
+
+        if (previousAction != null) {
+          previousAction.actionPerformed(e);
         }
       }
     });
