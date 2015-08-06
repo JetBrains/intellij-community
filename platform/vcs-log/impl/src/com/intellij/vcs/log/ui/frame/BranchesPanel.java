@@ -171,7 +171,7 @@ public class BranchesPanel extends JPanel {
     private class MyMouseAdapter extends MouseAdapter {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (!myUI.getMainFrame().areGraphActionsEnabled()) {
+        if (!myUI.areGraphActionsEnabled()) {
           return;
         }
 
