@@ -17,13 +17,13 @@
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -229,12 +229,18 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     });
   }
 
+  private static boolean isAnnotationsJarInPath(Module module) {
+    if (module == null) return false;
+    return JavaPsiFacade.getInstance(module.getProject())
+             .findClass(AnnotationUtil.LANGUAGE, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null;
+  }
+
   public static boolean doAddLanguageAnnotation(Project project,
                                                 @Nullable final PsiModifierListOwner modifierListOwner,
                                                 @NotNull final PsiLanguageInjectionHost host,
                                                 final String languageId,
                                                 Processor<PsiLanguageInjectionHost> annotationFixer) {
-    final boolean addAnnotation = OrderEntryFix.isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
+    final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
       && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
       && modifierListOwner.getModifierList() != null;
     final PsiStatement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class);

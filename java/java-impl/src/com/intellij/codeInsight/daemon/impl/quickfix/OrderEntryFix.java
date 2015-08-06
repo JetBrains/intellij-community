@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
@@ -316,11 +315,5 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     List<String> defaultPaths = JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(module).getLibraryClassesRoots();
     final LocateLibraryDialog dialog = new LocateLibraryDialog(module, defaultPaths, "JetBrains Annotations");
     return dialog.showAndGetResult();
-  }
-
-  public static boolean isAnnotationsJarInPath(Module module) {
-    if (module == null) return false;
-    return JavaPsiFacade.getInstance(module.getProject())
-             .findClass(AnnotationUtil.LANGUAGE, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null;
   }
 }
