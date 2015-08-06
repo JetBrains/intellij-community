@@ -35,8 +35,20 @@ import java.util.List;
  * @author nik
  */
 public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
-  private static final ExternalLibraryDescriptor JAVA5 = new JetBrainsAnnotationsLibraryDescriptor(false);
-  private static final ExternalLibraryDescriptor JAVA8 = new JetBrainsAnnotationsLibraryDescriptor(true);
+  private static final ExternalLibraryDescriptor JAVA5 = new JetBrainsAnnotationsLibraryDescriptor() {
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getLibPath(), "annotations.jar").getAbsolutePath()));
+    }
+  };
+  private static final ExternalLibraryDescriptor JAVA8 = new JetBrainsAnnotationsLibraryDescriptor() {
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getHomePath(), "redist/annotations-java8.jar").getAbsolutePath()));
+    }
+  };
 
   @Nullable
   @Override
@@ -54,25 +66,9 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
     return java8 ? JAVA8 : JAVA5;
   }
 
-  private static class JetBrainsAnnotationsLibraryDescriptor extends ExternalLibraryDescriptor {
-    private boolean myJava8;
-
-    public JetBrainsAnnotationsLibraryDescriptor(boolean java8) {
+  private static abstract class JetBrainsAnnotationsLibraryDescriptor extends ExternalLibraryDescriptor {
+    public JetBrainsAnnotationsLibraryDescriptor() {
       super("com.intellij", "annotations", null);
-      myJava8 = java8;
-    }
-
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      List<String> paths;
-      if (myJava8) {
-        paths = Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getHomePath(), "redist/annotations-java8.jar").getAbsolutePath()));
-      }
-      else {
-        paths = Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getLibPath(), "annotations.jar").getAbsolutePath()));
-      }
-      return paths;
     }
   }
 }
