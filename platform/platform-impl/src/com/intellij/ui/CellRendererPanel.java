@@ -99,6 +99,10 @@ public class CellRendererPanel extends JPanel {
   public void invalidate() {
   }
 
+  public void forceInvalidate() {
+    super.invalidate();
+  }
+
   private void invalidateLayout() {
     LayoutManager layout = getLayout();
     if (layout instanceof LayoutManager2) {
