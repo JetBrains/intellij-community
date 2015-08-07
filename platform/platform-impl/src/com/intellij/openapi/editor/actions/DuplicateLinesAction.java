@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.Couple;
+import com.intellij.util.DocumentUtil;
 
 /**
  * @author yole
@@ -36,10 +38,13 @@ public class DuplicateLinesAction extends EditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       if (editor.getSelectionModel().hasSelection()) {
         int selStart = editor.getSelectionModel().getSelectionStart();
         int selEnd = editor.getSelectionModel().getSelectionEnd();
+        if (selEnd > selStart && DocumentUtil.isAtLineStart(selEnd, editor.getDocument())) {
+          selEnd--;
+        }
         VisualPosition rangeStart = editor.offsetToVisualPosition(Math.min(selStart, selEnd));
         VisualPosition rangeEnd = editor.offsetToVisualPosition(Math.max(selStart, selEnd));
         final Couple<Integer> copiedRange =
