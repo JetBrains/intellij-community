@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.documentation.GoogleCodeStyleDocString;
+import com.jetbrains.python.documentation.NumpyDocString;
 import com.jetbrains.python.documentation.SectionBasedDocString.Section;
 import com.jetbrains.python.documentation.SectionBasedDocString.SectionField;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -31,10 +32,10 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
+public class PySectionBasedDocStringTest extends PyTestCase {
   
   public void testSimpleFunctionDocString() {
-    final GoogleCodeStyleDocString docString = findAndParseDocString();
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertEquals("Summary", docString.getSummary());
     final List<Section> sections = docString.getSections();
     assertSize(3, sections);
@@ -71,12 +72,22 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
   }
 
   @NotNull
-  private GoogleCodeStyleDocString findAndParseDocString() {
+  private String findAndParseDocString() {
     myFixture.configureByFile(getTestName(true) + ".py");
     final String docStringText = findFirstDocString();
 
     assertNotNull(docStringText);
-    return new GoogleCodeStyleDocString(docStringText);
+    return docStringText;
+  }
+
+  @NotNull
+  private GoogleCodeStyleDocString findAndParseGoogleStyleDocString() {
+    return new GoogleCodeStyleDocString(findAndParseDocString());
+  }
+
+  @NotNull
+  private NumpyDocString findAndParseNumpyStyleDocString() {
+    return new NumpyDocString(findAndParseDocString());
   }
 
   @Nullable
@@ -100,7 +111,7 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
   }
 
   public void testSectionStartAfterQuotes() {
-    final GoogleCodeStyleDocString docString = findAndParseDocString();
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertEmpty(docString.getSummary());
     
     assertSize(2, docString.getSections());
@@ -125,7 +136,7 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
   }
 
   public void testTypeReferences() {
-    final GoogleCodeStyleDocString docString = findAndParseDocString();
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertEmpty(docString.getSummary());
     assertSize(2, docString.getSections());
 
@@ -145,7 +156,7 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
   }
 
   public void testNestedIndentation() {
-    final GoogleCodeStyleDocString docString = findAndParseDocString();
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertSize(1, docString.getSections());
     final Section section1 = docString.getSections().get(0);
     assertEquals("parameters", section1.getTitle());
@@ -160,6 +171,13 @@ public class PyGoogleCodeStyleDocStringTest extends PyTestCase {
                  "Example::\n" +
                  "\n" +
                  "    assert func(42) is None", param1.getDescription());
+  }
+
+  public void testMultilineSummary() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("First line\n" +
+                 "Second line\n" +
+                 "Third line", docString.getSummary());
   }
 
   @Override

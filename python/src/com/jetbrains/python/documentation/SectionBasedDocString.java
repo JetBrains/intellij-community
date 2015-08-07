@@ -38,6 +38,7 @@ import java.util.*;
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
 public abstract class SectionBasedDocString implements StructuredDocString {
+  
   /**
    * Frequently used section types
    */
@@ -79,31 +80,53 @@ public abstract class SectionBasedDocString implements StructuredDocString {
 
   protected final List<Substring> myLines;
 
-  private final List<Substring> myOtherContent = new ArrayList<Substring>();
+  private final Substring mySummary;
   private final List<Section> mySections = new ArrayList<Section>();
-  private final String mySummary;
+  private final List<Substring> myOtherContent = new ArrayList<Substring>();
 
   protected SectionBasedDocString(@NotNull String text) {
     myLines = new Substring(text).splitLines();
-    String summary = "";
-    int lineNum = 0;
+    List<Substring> summary = Collections.emptyList();
+    final int startLine = parseHeader(0);
+    int lineNum = skipEmptyLines(startLine);
     while (lineNum < myLines.size()) {
-      Pair<Section, Integer> result = parseSection(lineNum);
-      if (result.getFirst() != null) {
-        mySections.add(result.getFirst());
-        lineNum = result.getSecond();
+      final Pair<Section, Integer> parsedSection = parseSection(lineNum);
+      if (parsedSection.getFirst() != null) {
+        mySections.add(parsedSection.getFirst());
+        lineNum = parsedSection.getSecond();
+      }
+      else if (lineNum == startLine) {
+        final Pair<List<Substring>, Integer> parsedSummary = parseSummary(lineNum);
+        summary = parsedSummary.getFirst();
+        lineNum = parsedSummary.getSecond();
       }
       else {
-        if (lineNum == 0 && isEmptyOrDoesNotExist(lineNum + 1)) {
-          summary = getLine(0).trim().toString();
-        }
-        else {
-          myOtherContent.add(getLine(lineNum));
-        }
+        myOtherContent.add(getLine(lineNum));
         lineNum++;
       }
+      lineNum = skipEmptyLines(lineNum);
     }
-    mySummary = summary;
+    //noinspection ConstantConditions
+    mySummary = summary.isEmpty() ? null : mergeSubstrings(summary.get(0), summary.get(summary.size() - 1)).trim();
+  }
+
+  @NotNull
+  private Pair<List<Substring>, Integer> parseSummary(int lineNum) {
+    final List<Substring> result = new ArrayList<Substring>();
+    while (!isEmptyOrDoesNotExist(lineNum)) {
+      result.add(getLine(lineNum));
+      lineNum++;
+    }
+    return Pair.create(result, lineNum);
+  }
+
+  /**
+   * Used to parse e.g. optional function signature at the beginning of NumPy-style docstring
+   *
+   * @return first line from which to star parsing remaining sections
+   */
+  protected int parseHeader(int startLine) {
+    return startLine;
   }
 
   @NotNull
@@ -172,7 +195,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   }
 
   private boolean isEmptyOrDoesNotExist(int lineNum) {
-    return lineNum >= myLines.size() - 1 || isEmpty(lineNum);
+    return lineNum < 0 || lineNum >= myLines.size() || isEmpty(lineNum);
   }
 
   private boolean isEmpty(int lineNum) {
@@ -268,8 +291,13 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   }
 
   @NotNull
-  protected Substring getLine(int indent) {
-    return myLines.get(indent);
+  protected Substring getLine(int lineNum) {
+    return myLines.get(lineNum);
+  }
+
+  @Nullable
+  protected Substring getLineOrNull(int lineNum) {
+    return lineNum >= 0 && lineNum < myLines.size() ? myLines.get(lineNum) : null;
   }
 
   @VisibleForTesting
@@ -285,7 +313,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
 
   @Override
   public String getSummary() {
-    return mySummary.toString();
+    return mySummary != null ? mySummary.concatTrimmedLines("\n") : "";
   }
 
   @Override
@@ -407,6 +435,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     return result;
   }
 
+  @Nullable
   private SectionField getFirstFieldForKeywordArgument(@NotNull final String name) {
     return ContainerUtil.find(getKeywordArgumentFields(), new Condition<SectionField>() {
       @Override
