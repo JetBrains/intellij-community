@@ -19,16 +19,17 @@ import com.beust.jcommander.JCommander;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.theoryinpractice.testng.TestNGFramework;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
+
 import java.util.List;
 import java.util.Set;
 
@@ -44,7 +45,7 @@ public class TestNGExternalLibraryResolver extends ExternalLibraryResolver {
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
-      return Arrays.asList(PathUtil.getJarPathForClass(Test.class), PathUtil.getJarPathForClass(JCommander.class));
+      return PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("TestNG"));
     }
   };
 

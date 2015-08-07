@@ -47,10 +47,6 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiBundle;
-import com.intellij.ui.PlaceHolder;
-import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -139,7 +135,8 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
           RuntimeModuleId.module("openapi"),
           RuntimeModuleId.module("java-impl"),
           RuntimeModuleId.module("lang-api"),
-          RuntimeModuleId.module("lang-impl")
+          RuntimeModuleId.module("lang-impl"),
+          RuntimeModuleId.module("java-psi-api")
         };
         for (RuntimeModuleId module : modules) {
           params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(module));
