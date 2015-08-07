@@ -25,16 +25,13 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class GutterIntentionsTest extends LightPlatformCodeInsightFixtureTestCase {
-
   public void testEmptyIntentions() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
                                                      "  <caret>   private String test() {\n" +
                                                      "        return null;\n" +
                                                      "     }");
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
-    assertEquals(1, intentions.size());
-    IntentionAction action = intentions.get(0);
-    assertEquals("", action.getText());
+    assertEmpty(intentions);
   }
 
   @Override
