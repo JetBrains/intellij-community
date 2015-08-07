@@ -222,10 +222,10 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.
-   * @param context
+   * @param context (will be used default if null)
    */
   @Nullable
-  List<String> getSlots(TypeEvalContext context);
+  List<String> getSlots(@Nullable TypeEvalContext context);
 
   /**
    * Returns the list of names in the class' __slots__ attribute, or null if the class
