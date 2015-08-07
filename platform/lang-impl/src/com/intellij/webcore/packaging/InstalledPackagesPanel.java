@@ -518,7 +518,10 @@ public class InstalledPackagesPanel extends JPanel {
     return false;
   }
 
-  private boolean isUpdateAvailable(@NotNull String currentVersion, @NotNull String availableVersion) {
+  private boolean isUpdateAvailable(@NotNull String currentVersion, @Nullable String availableVersion) {
+    if (availableVersion == null) {
+      return false;
+    }
     PackageManagementService service = myPackageManagementService;
     if (service != null) {
       return service.compareVersions(currentVersion, availableVersion) < 0;
