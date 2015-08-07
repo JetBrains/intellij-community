@@ -107,6 +107,10 @@ public class Task implements Named, StudyOrderable {
     taskFiles.put(name, taskFile);
   }
 
+  public void addTaskFile(@NotNull final TaskFile taskFile) {
+    taskFiles.put(taskFile.name, taskFile);
+  }
+
   @Nullable
   public TaskFile getFile(@NotNull final String fileName) {
     return taskFiles.get(fileName);
