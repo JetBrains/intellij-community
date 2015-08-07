@@ -135,18 +135,20 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     return PropertiesUtil.getLocale(this);
   }
 
+  @NotNull
   @Override
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
-    return null;
+    return addProperty(property.getKey(), property.getValue()).getPsiElement();
+  }
+
+  @NotNull
+  @Override
+  public PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException {
+    return addPropertyAfter(property.getKey(), property.getValue(), anchor).getPsiElement();
   }
 
   @Override
-  public PsiElement addPropertyAfter(@NotNull Property property, @Nullable Property anchor) throws IncorrectOperationException {
-    return null;
-  }
-
-  @Override
-  public IProperty addPropertyAfter(String key, String value, Property anchor) {
+  public IProperty addPropertyAfter(String key, String value, IProperty anchor) {
     return addPropertyAfterAndCheckAlphaSorting(key, value, anchor, true, true);
   }
 

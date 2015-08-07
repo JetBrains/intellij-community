@@ -133,7 +133,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
-    myPropertiesInsertDeleteManager = ResourceBundlePropertiesUpdateManagerImpl.create(resourceBundle);
+    myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
 
     myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
     myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
