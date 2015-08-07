@@ -475,7 +475,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     myClass.processClassLevelDeclarations(processor);
 
-    List<String> slots = myClass.isNewStyleClass(null) ? myClass.getSlots(TypeEvalContext.codeCompletion(expressionHook.getProject(), expressionHook.getContainingFile())) : null;
+    // We are here because of completion (see call stack), so we use code complete here
+    final TypeEvalContext context = (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) :null);
+    List<String> slots = myClass.isNewStyleClass(null) ? myClass.getSlots(
+      context) : null;
     if (slots != null) {
       processor.setAllowedNames(slots);
     }
