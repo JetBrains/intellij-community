@@ -72,14 +72,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
-  private List<PyTargetExpression> myInstanceAttributes;
+  /**
+   * Ancestors cache is lazy because provider ({@link com.jetbrains.python.psi.impl.PyClassImpl.CachedAncestorsProvider}) needs
+   * {@link #getProject()} which is notavailable during consructor time.
+   */
+  private TypeEvalContextBasedCache<List<PyClassLikeType>> myAncestorsCache;
 
-  private volatile Map<String, Property> myPropertyCache;
+  /**
+   * Lock to create {@link #myAncestorsCache} in lazy way.
+   */
+  @NotNull
+  private final Object myAncestorsCacheLock = new Object();
 
-  private class CachedAncestorsProvider implements ParameterizedCachedValueProvider<List<PyClassLikeType>, TypeEvalContext> {
+  /**
+   * Engine to create list of ancestors based on context
+   */
+  private class CachedAncestorsProvider implements Function<TypeEvalContext, List<PyClassLikeType>> {
     @Nullable
     @Override
-    public CachedValueProvider.Result<List<PyClassLikeType>> compute(@NotNull TypeEvalContext context) {
+    public List<PyClassLikeType> fun(@NotNull TypeEvalContext context) {
       List<PyClassLikeType> ancestorTypes;
       if (isNewStyleClass(context)) {
         try {
@@ -102,9 +113,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       else {
         ancestorTypes = getOldStyleAncestorTypes(context);
       }
-      return CachedValueProvider.Result.create(ancestorTypes, PsiModificationTracker.MODIFICATION_COUNT);
+      return ancestorTypes;
     }
   }
+
+  private List<PyTargetExpression> myInstanceAttributes;
+
+  private volatile Map<String, Property> myPropertyCache;
 
   private final Key<ParameterizedCachedValue<List<PyClassLikeType>, TypeEvalContext>> myCachedValueKey = Key.create("cached ancestors");
   private final CachedAncestorsProvider myCachedAncestorsProvider = new CachedAncestorsProvider();
@@ -133,6 +148,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   public PyClassImpl(@NotNull final PyClassStub stub, @NotNull IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  /**
+   * @return ancestors cache. It is created lazyly if needed.
+   */
+  @NotNull
+  private TypeEvalContextBasedCache<List<PyClassLikeType>> getAncestorsCache() {
+    if (myAncestorsCache != null) {
+      return myAncestorsCache;
+    }
+    synchronized (myAncestorsCacheLock) {
+      if (myAncestorsCache == null) {
+        myAncestorsCache = new TypeEvalContextBasedCache<List<PyClassLikeType>>(
+          CachedValuesManager.getManager(getProject()),
+          new CachedAncestorsProvider()
+        );
+      }
+      return myAncestorsCache;
+    }
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -1274,9 +1308,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
-    // TODO: Return different cached copies depending on the type eval context parameters
-    final CachedValuesManager manager = CachedValuesManager.getManager(getProject());
-    return manager.getParameterizedCachedValue(this, myCachedValueKey, myCachedAncestorsProvider, false, context);
+    return getAncestorsCache().getValue(context);
   }
 
   @Nullable
