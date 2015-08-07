@@ -931,25 +931,13 @@ public class DiffUtil {
     return false;
   }
 
-  public static <T> T getUserData(@Nullable DiffRequest request, @Nullable DiffContext context, @NotNull Key<T> key) {
-    if (request != null) {
-      T data = request.getUserData(key);
+  public static <T> T getUserData(@Nullable UserDataHolder first, @Nullable UserDataHolder second, @NotNull Key<T> key) {
+    if (first != null) {
+      T data = first.getUserData(key);
       if (data != null) return data;
     }
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    return null;
-  }
-
-  public static <T> T getUserData(@Nullable DiffContext context, @Nullable DiffRequest request, @NotNull Key<T> key) {
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    if (request != null) {
-      T data = request.getUserData(key);
+    if (second != null) {
+      T data = second.getUserData(key);
       if (data != null) return data;
     }
     return null;
