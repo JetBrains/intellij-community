@@ -126,10 +126,10 @@ public class CreateResourceBundleDialogComponent {
     protected ValidationInfo doValidate() {
       for (String fileName : myComponent.getFileNamesToCreate()) {
         if (!PathUtil.isValidFileName(fileName)) {
-          return new ValidationInfo(String.format("file name for properties file '%s' is invalid", fileName));
+          return new ValidationInfo(String.format("File name for properties file '%s' is invalid", fileName));
         } else {
           if (myDirectory.findFile(fileName) != null) {
-            return new ValidationInfo(String.format("file with name '%s' already exist", fileName));
+            return new ValidationInfo(String.format("File with name '%s' already exist", fileName));
           }
         }
       }
