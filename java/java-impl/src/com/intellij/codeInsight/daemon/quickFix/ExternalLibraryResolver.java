@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

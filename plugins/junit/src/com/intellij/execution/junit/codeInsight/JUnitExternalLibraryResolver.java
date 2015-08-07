@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.junit.codeInsight;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.execution.junit.JUnit3Framework;
 import com.intellij.execution.junit.JUnit4Framework;

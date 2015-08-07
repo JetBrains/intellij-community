@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;

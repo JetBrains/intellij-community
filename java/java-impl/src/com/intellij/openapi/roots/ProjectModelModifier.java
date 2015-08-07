@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;

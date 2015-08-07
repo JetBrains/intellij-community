@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;

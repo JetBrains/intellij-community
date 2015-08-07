@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver.ExternalClassResolveResult;
 import com.intellij.codeInsight.daemon.quickFix.MissingDependencyFixProvider;
