@@ -22,6 +22,9 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
 
 public abstract class JavaTestFramework implements TestFramework {
   public boolean isLibraryAttached(@NotNull Module module) {
@@ -41,10 +43,18 @@ public abstract class JavaTestFramework implements TestFramework {
     return c != null;
   }
 
-  @NotNull
-  public List<String> getLibraryPaths() {
-    //todo[nik] pull up to the interface and removed 'getLibraryPath()' method
-    return Collections.singletonList(getLibraryPath());
+  @Nullable
+  @Override
+  public String getLibraryPath() {
+    ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
+    if (descriptor != null) {
+      return descriptor.getLibraryClassesRoots().get(0);
+    }
+    return null;
+  }
+
+  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+    return null;
   }
 
   protected abstract String getMarkerClassFQName();
@@ -131,8 +141,16 @@ public abstract class JavaTestFramework implements TestFramework {
   }
   
   public void setupLibrary(Module module) {
-    List<String> paths = getLibraryPaths();
-    OrderEntryFix.addJarsToRoots(paths, paths.size() == 1 ? null : getName(), module, null);
+    ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
+    if (descriptor != null) {
+      ProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
+    }
+    else {
+      String path = getLibraryPath();
+      if (path != null) {
+        OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
+      }
+    }
   }
 
   public boolean isSingleConfig() {
