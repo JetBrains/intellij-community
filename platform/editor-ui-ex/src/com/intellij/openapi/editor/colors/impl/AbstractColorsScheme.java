@@ -391,36 +391,39 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   private void readSettings(Element childNode, boolean isDefault) {
     String name = childNode.getAttributeValue(NAME_ATTR);
-    String value = myValueReader.read(String.class, childNode);
     if (LINE_SPACING.equals(name)) {
-      myLineSpacing = Float.parseFloat(value);
+      Float value = myValueReader.read(Float.class, childNode);
+      if (value != null) myLineSpacing = value;
     }
     else if (EDITOR_FONT_SIZE.equals(name)) {
-      setEditorFontSize(parseFontSize(value, isDefault));
+      int value = readFontSize(childNode, isDefault);
+      if (value > 0) setEditorFontSize(value);
     }
     else if (EDITOR_FONT_NAME.equals(name)) {
-      setEditorFontName(value);
+      String value = myValueReader.read(String.class, childNode);
+      if (value != null) setEditorFontName(value);
     }
     else if (CONSOLE_LINE_SPACING.equals(name)) {
-      setConsoleLineSpacing(Float.parseFloat(value));
+      Float value = myValueReader.read(Float.class, childNode);
+      if (value != null) setConsoleLineSpacing(value);
     }
     else if (CONSOLE_FONT_SIZE.equals(name)) {
-      setConsoleFontSize(parseFontSize(value, isDefault));
+      int value = readFontSize(childNode, isDefault);
+      if (value > 0) setConsoleFontSize(value);
     }
     else if (CONSOLE_FONT_NAME.equals(name)) {
-      setConsoleFontName(value);
+      String value = myValueReader.read(String.class, childNode);
+      if (value != null) setConsoleFontName(value);
     }
     else if (EDITOR_QUICK_JAVADOC_FONT_SIZE.equals(name)) {
-      myQuickDocFontSize = FontSize.valueOf(value);
+      FontSize value = myValueReader.read(FontSize.class, childNode);
+      if (value != null) myQuickDocFontSize = value;
     }
   }
 
-  private static int parseFontSize(String value, boolean isDefault) {
-    int size = Integer.parseInt(value);
-    if (isDefault) {
-      size = JBUI.scaleFontSize(size);
-    }
-    return size;
+  private int readFontSize(Element element, boolean isDefault) {
+    Integer size = myValueReader.read(Integer.class, element);
+    return size == null ? -1 : !isDefault ? size : JBUI.scaleFontSize(size);
   }
 
   private void readFontSettings(@NotNull Element element, @NotNull FontPreferences preferences, boolean isDefaultScheme) {
@@ -433,13 +436,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         fontFamily = myValueReader.read(String.class, e);
       }
       else if (EDITOR_FONT_SIZE.equals(e.getAttributeValue(NAME_ATTR))) {
-        Integer value = myValueReader.read(Integer.class, e);
-        if (value != null) {
-          size = value;
-          if (isDefaultScheme) {
-            size = JBUI.scale(size);
-          }
-        }
+        size = readFontSize(e, isDefaultScheme);
       }
     }
     if (fontFamily != null && size > 1) {

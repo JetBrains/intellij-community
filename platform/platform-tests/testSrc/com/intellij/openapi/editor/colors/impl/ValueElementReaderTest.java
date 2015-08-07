@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.options.FontSize;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.awt.Color;
+import java.util.Locale;
 
 /**
  * @author Sergey.Malenkov
@@ -86,6 +88,17 @@ public final class ValueElementReaderTest extends LightPlatformTestCase {
     assertEquals(TestEnum.VALUE, read(TestEnum.class, "0"));
     assertEquals(TestEnum.VALUE, read(TestEnum.class, "value"));
     assertEquals(TestEnum.VALUE, read(TestEnum.class, "VALUE"));
+  }
+
+  public void testFontSize() throws Exception {
+    assertNull(read(FontSize.class));
+    assertNull(read(FontSize.class, null));
+    assertNull(read(FontSize.class, ""));
+    for (FontSize size : FontSize.values()) {
+      assertEquals(size, read(FontSize.class, size.name()));
+      assertEquals(size, read(FontSize.class, size.name().toLowerCase(Locale.ENGLISH)));
+      assertEquals(size, read(FontSize.class, String.valueOf(size.ordinal())));
+    }
   }
 
   public void testPriority() throws Exception {
