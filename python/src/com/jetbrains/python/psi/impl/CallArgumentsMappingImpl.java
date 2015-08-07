@@ -58,7 +58,6 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
    * <br/>
    * <i>NOTE:</i> <tt>*arg</tt> of unknown length is considered to be long just enough to fill appropriate
    * positional paramaters, but at least one item long.
-   * @param arguments what to map, get if from call site
    * @param resolved_callee what to map parameters of
    * @param context optional shared type evaluator / cache.
    */
@@ -110,12 +109,10 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     // map positional args to positional params.
     // we assume that implicitly skipped parameters are never nested tuples. no idea when they could ever be.
     int cnt = implicitOffset;
-    int positional_bound = arguments.length; // to the right of this pos args are verboten
     ListIterator<PyExpression> unmatched_arg_iter = unmatched_args.listIterator();
     while (unmatched_arg_iter.hasNext()) {
       PyExpression arg = unmatched_arg_iter.next();
       if (arg instanceof PyStarArgument || arg instanceof PyKeywordArgument) {
-        positional_bound = cnt;
         break;
       }
       if (cnt < parameters.size() && cnt < positional_index) {
