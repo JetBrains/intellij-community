@@ -42,7 +42,7 @@ public class JUnitExternalLibraryResolver extends ExternalLibraryResolver {
     return new ExternalLibraryDescriptor("junit", "junit", version) {
       @NotNull
       @Override
-      public List<String> locateLibraryClassesRoots(@NotNull Module contextModule) {
+      public List<String> getLibraryClassesRoots() {
         return TestFramework.EXTENSION_NAME.findExtension(frameworkClass).getLibraryPaths();
       }
 
@@ -58,7 +58,7 @@ public class JUnitExternalLibraryResolver extends ExternalLibraryResolver {
   );
   @Nullable
   @Override
-  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation) {
+  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
     if ("TestCase".equals(shortClassName)) {
       return new ExternalClassResolveResult("junit.framework.TestCase", JUNIT3);
     }

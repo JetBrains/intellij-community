@@ -153,7 +153,7 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
     }
   }
 
-  override final fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>) = storageLock.withLock { Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
+  override final fun getCachedFileStateStorages(changed: MutableCollection<String>, deleted: MutableCollection<String>) = storageLock.withLock { Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
 
   fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileBasedStorage> {
     if (fileSpecs.isEmpty()) {

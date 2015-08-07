@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
@@ -26,9 +25,7 @@ import com.intellij.codeInsight.daemon.quickFix.MissingDependencyFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -39,7 +36,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -116,7 +112,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     String fullReferenceText = reference.getCanonicalText();
     for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensions()) {
-      final ExternalClassResolveResult resolveResult = resolver.resolveClass(shortReferenceName, isReferenceToAnnotation(psiElement));
+      final ExternalClassResolveResult resolveResult = resolver.resolveClass(shortReferenceName, isReferenceToAnnotation(psiElement), currentModule);
       OrderEntryFix fix = null;
       if (resolveResult != null && psiFacade.findClass(resolveResult.getQualifiedClassName(), currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
         fix = new AddExternalLibraryToDependenciesQuickFix(currentModule, resolveResult.getLibrary(), reference, resolveResult.getQualifiedClassName());
@@ -314,25 +310,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return VfsUtil.getUrlForLibraryRoot(libraryRoot);
   }
 
-  @Nullable
-  public static String locateAnnotationsJar(@NotNull Module module) {
-    String jarName;
-    String libPath;
-    if (EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module).isAtLeast(LanguageLevel.JDK_1_8)) {
-      jarName = "annotations-java8.jar";
-      libPath = new File(PathManager.getHomePath(), "redist").getAbsolutePath();
-    }
-    else {
-      jarName = "annotations.jar";
-      libPath = PathManager.getLibPath();
-    }
-    final LocateLibraryDialog dialog = new LocateLibraryDialog(module, libPath, jarName, QuickFixBundle.message("add.library.annotations.description"));
-    return dialog.showAndGet() ? dialog.getResultingLibraryPath() : null;
-  }
-
-  public static boolean isAnnotationsJarInPath(Module module) {
-    if (module == null) return false;
-    return JavaPsiFacade.getInstance(module.getProject())
-             .findClass(AnnotationUtil.LANGUAGE, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null;
+  @NotNull
+  public static List<String> locateAnnotationsJars(@NotNull Module module) {
+    List<String> defaultPaths = JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(module).getLibraryClassesRoots();
+    final LocateLibraryDialog dialog = new LocateLibraryDialog(module, defaultPaths, "JetBrains Annotations");
+    return dialog.showAndGetResult();
   }
 }

@@ -8,9 +8,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
@@ -242,7 +245,7 @@ public class EduStepicConnector {
     task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
     task.setText(step.text);
     for (TestFileWrapper wrapper : step.options.test) {
-      task.setTestsTexts(wrapper.name, wrapper.text);
+      task.addTestsTexts(wrapper.name, wrapper.text);
     }
 
     task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
@@ -344,16 +347,51 @@ public class EduStepicConnector {
       }
       final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
 
-      final int sectionId = postModule(postedCourse);
+      final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
       int position = 1;
       for (Lesson lesson : course.getLessons()) {
         final int lessonId = postLesson(project, lesson);
         postUnit(lessonId, position, sectionId);
         position += 1;
       }
+      postAdditionalFiles(project, postedCourse.id);
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
+    }
+  }
+
+  private static void postAdditionalFiles(@NotNull final Project project, int id) {
+    final VirtualFile baseDir = project.getBaseDir();
+    final List<VirtualFile> files = VfsUtil.getChildren(baseDir, new VirtualFileFilter() {
+      @Override
+      public boolean accept(VirtualFile file) {
+        final String name = file.getName();
+        return !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS) &&
+          !"pyc".equals(file.getExtension()) && !file.isDirectory();
+      }
+    });
+
+    if (!files.isEmpty()) {
+      final int sectionId = postModule(id, 2, EduNames.PYCHARM_ADDITIONAL);
+      final Lesson lesson = new Lesson();
+      lesson.setName(EduNames.PYCHARM_ADDITIONAL);
+      final Task task = new Task();
+      task.setLesson(lesson);
+      task.setName(EduNames.PYCHARM_ADDITIONAL);
+      task.setIndex(1);
+      task.setText(EduNames.PYCHARM_ADDITIONAL);
+      final FileDocumentManager documentManager = FileDocumentManager.getInstance();
+      for (VirtualFile file : files) {
+        final Document document = documentManager.getDocument(file);
+        if (document != null) {
+          task.addTestsTexts(file.getName(), document.getText());
+        }
+      }
+      lesson.addTask(task);
+      lesson.setIndex(1);
+      final int lessonId = postLesson(project, lesson);
+      postUnit(lessonId, 1, sectionId);
     }
   }
 
@@ -382,13 +420,13 @@ public class EduStepicConnector {
     }
   }
 
-  private static int postModule(CourseInfo courseInfo) {
+  private static int postModule(int courseId, int position, @NotNull final String title) {
     final HttpPost request = new HttpPost(stepicApiUrl + "sections");
     setHeaders(request, "application/json");
     final Section section = new Section();
-    section.course = courseInfo.id;
-    section.title = String.valueOf(courseInfo.getName());
-    section.position = 1;
+    section.course = courseId;
+    section.title = title;
+    section.position = position;
     final SectionWrapper sectionContainer = new SectionWrapper();
     sectionContainer.section = section;
     String requestBody = new Gson().toJson(sectionContainer);
@@ -491,9 +529,7 @@ public class EduStepicConnector {
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
-
-      final String text = task.getTestsText(project);
-      source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, text));
+      setTests(task, source, project);
       source.files = new ArrayList<TaskFile>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
@@ -515,6 +551,19 @@ public class EduStepicConnector {
         source.files.add(taskFile);
       }
       return source;
+    }
+
+    private static void setTests(@NotNull final Task task, @NotNull final StepOptions source, @NotNull final Project project) {
+      final Map<String, String> testsText = task.getTestsText();
+      if (testsText.isEmpty()) {
+        source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, task.getTestsText(project)));
+      }
+      else {
+        source.test = new ArrayList<TestFileWrapper>();
+        for (Map.Entry<String, String> entry : testsText.entrySet()) {
+          source.test.add(new TestFileWrapper(entry.getKey(), entry.getValue()));
+        }
+      }
     }
   }
 

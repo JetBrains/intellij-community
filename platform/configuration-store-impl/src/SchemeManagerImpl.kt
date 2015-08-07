@@ -23,7 +23,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.service
@@ -102,7 +101,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
       }
 
-      service<VirtualFileTracker>()?.addTracker("${LocalFileSystem.PROTOCOL_PREFIX}${ioDirectory.getAbsolutePath().replace(File.separatorChar, '/')}", object : VirtualFileAdapter() {
+      service<VirtualFileTracker>().addTracker("${LocalFileSystem.PROTOCOL_PREFIX}${ioDirectory.getAbsolutePath().replace(File.separatorChar, '/')}", object : VirtualFileAdapter() {
         override fun contentsChanged(event: VirtualFileEvent) {
           if (event.getRequestor() != null || !isMy(event)) {
             return
@@ -435,8 +434,11 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     for (scheme in schemesToSave) {
-      errors.catch {
+      try {
         saveScheme(scheme, nameGenerator)
+      }
+      catch (e: Throwable) {
+        errors.add(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
       }
     }
 
@@ -547,7 +549,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         var file: VirtualFile? = null
         var dir = getDirectory()
         if (dir == null || !dir.isValid()) {
-          dir = DirectoryBasedStorage.createDir(ioDirectory, this)
+          dir = StorageUtil.createDir(ioDirectory, this)
           directory = dir
         }
 

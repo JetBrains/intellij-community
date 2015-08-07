@@ -67,7 +67,9 @@ class AddExternalLibraryToDependenciesQuickFix extends OrderEntryFix {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    List<String> classesRoots = myLibraryDescriptor.locateLibraryClassesRoots(myCurrentModule);
+    List<String> defaultRoots = myLibraryDescriptor.getLibraryClassesRoots();
+    LocateLibraryDialog dialog = new LocateLibraryDialog(myCurrentModule, defaultRoots, myLibraryDescriptor.getPresentableName());
+    List<String> classesRoots = dialog.showAndGetResult();
     if (!classesRoots.isEmpty()) {
       String libraryName = classesRoots.size() > 1 ? myLibraryDescriptor.getPresentableName() : null;
       addJarsToRootsAndImportClass(classesRoots, libraryName, myCurrentModule, editor, myReference,

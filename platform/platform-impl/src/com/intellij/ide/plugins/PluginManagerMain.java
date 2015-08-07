@@ -67,6 +67,7 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
@@ -130,7 +131,10 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected void init() {
     GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
-    myDescriptionTextArea.setEditorKit(new HTMLEditorKit());
+    HTMLEditorKit kit = new HTMLEditorKit();
+    StyleSheet sheet = kit.getStyleSheet();
+    sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
+    myDescriptionTextArea.setEditorKit(kit);
     myDescriptionTextArea.setEditable(false);
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,5 +54,5 @@ public abstract class ExternalLibraryDescriptor {
   }
 
   @NotNull
-  public abstract List<String> locateLibraryClassesRoots(@NotNull Module contextModule);
+  public abstract List<String> getLibraryClassesRoots();
 }

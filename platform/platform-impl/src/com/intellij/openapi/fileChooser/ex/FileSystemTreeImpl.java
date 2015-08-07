@@ -33,6 +33,8 @@ import com.intellij.openapi.fileChooser.impl.FileComparator;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -465,13 +467,18 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
 
           AbstractTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
-          boolean async = treeStructure != null && treeStructure.isToBuildChildrenInBackground(virtualFile);
-          if (virtualFile instanceof NewVirtualFile) {
-            RefreshQueue.getInstance().refresh(async, false, null, ModalityState.stateForComponent(myTree), virtualFile);
-          }
-          else {
-            virtualFile.refresh(async, false);
-          }
+          final boolean async = treeStructure != null && treeStructure.isToBuildChildrenInBackground(virtualFile);
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+            @Override
+            public void run() {
+              if (virtualFile instanceof NewVirtualFile) {
+                RefreshQueue.getInstance().refresh(async, false, null, ModalityState.stateForComponent(myTree), virtualFile);
+              }
+              else {
+                virtualFile.refresh(async, false);
+              }
+            }
+          });
         }
       }
     }
