@@ -105,6 +105,8 @@
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
+
+    <internalFileTemplate name="Xml Properties File.xml"/>
   </extensions>
 
   <project-components>
