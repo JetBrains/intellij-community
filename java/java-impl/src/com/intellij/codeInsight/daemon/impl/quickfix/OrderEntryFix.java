@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver.ExternalClassResolveResult;
 import com.intellij.codeInsight.daemon.quickFix.MissingDependencyFixProvider;
@@ -250,13 +250,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return ThreeState.NO;
   }
 
-  public static void addJarsToRootsAndImportClass(@NotNull List<String> jarPaths,
-                                                  final String libraryName,
-                                                  @NotNull final Module currentModule, @Nullable final Editor editor,
-                                                  @Nullable final PsiReference reference,
-                                                  @Nullable @NonNls final String className) {
-    addJarsToRoots(jarPaths, libraryName, currentModule, reference != null ? reference.getElement() : null);
-
+  public static void importClass(@NotNull final Module currentModule,
+                                 @Nullable final Editor editor,
+                                 @Nullable final PsiReference reference,
+                                 @Nullable @NonNls final String className) {
     final Project project = currentModule.getProject();
     if (editor != null && reference != null && className != null) {
       DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
@@ -286,21 +283,31 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     });
     if (Boolean.TRUE.equals(isAdded)) return;
 
-    List<String> urls = ContainerUtil.map(jarPaths, new Function<String, String>() {
-      @Override
-      public String fun(String path) {
-        return refreshAndConvertToUrl(path);
-      }
-    });
-    boolean inTests = false;
+    List<String> urls = refreshAndConvertToUrls(jarPaths);
+    DependencyScope scope = suggestScopeByLocation(module, location);
+    ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.<String>emptyList(),
+                                                scope);
+  }
+
+  @NotNull
+  public static List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
+    return ContainerUtil.map(jarPaths, new Function<String, String>() {
+        @Override
+        public String fun(String path) {
+          return refreshAndConvertToUrl(path);
+        }
+      });
+  }
+
+  @NotNull
+  public static DependencyScope suggestScopeByLocation(@NotNull Module module, @Nullable PsiElement location) {
     if (location != null) {
       final VirtualFile vFile = location.getContainingFile().getVirtualFile();
       if (vFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(vFile)) {
-        inTests = true;
+        return DependencyScope.TEST;
       }
     }
-    ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.<String>emptyList(),
-                                                inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
+    return DependencyScope.COMPILE;
   }
 
   @NotNull

@@ -33,12 +33,12 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongIterator;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +49,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final DfaValueFactory myFactory;
 
   private final List<EqClass> myEqClasses;
+  // dfa value id -> indices in myEqClasses list of the classes which contain the id (or negated or wrapped)
+  private final TIntObjectHashMap<int[]> myIdToEqClassesIndices;
   private final Stack<DfaValue> myStack;
   private final TLongHashSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfaVariableState> myVariableStates;
@@ -64,6 +66,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myVariableStates = ContainerUtil.newLinkedHashMap();
     myDistinctClasses = new TLongHashSet();
     myStack = new Stack<DfaValue>();
+    myIdToEqClassesIndices = new MyIdMap(20);
   }
 
   protected DfaMemoryStateImpl(DfaMemoryStateImpl toCopy) {
@@ -76,6 +79,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
+    myIdToEqClassesIndices = new MyIdMap(toCopy.myIdToEqClassesIndices.size());
+    toCopy.myIdToEqClassesIndices.forEachEntry(new TIntObjectProcedure<int[]>() {
+      @Override
+      public boolean execute(int id, int[] set) {
+        myIdToEqClassesIndices.put(id, set);
+        return true;
+      }
+    });
     myVariableStates = ContainerUtil.newLinkedHashMap(toCopy.myVariableStates);
     
     myCachedDistinctClassPairs = toCopy.myCachedDistinctClassPairs;
@@ -280,18 +291,54 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         !canBeReused(dfaValue) && !(((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue)) {
       return null;
     }
+    int freeIndex = myEqClasses.indexOf(null);
+    int resultIndex = freeIndex >= 0 ? freeIndex : myEqClasses.size();
     EqClass aClass = new EqClass(myFactory);
     aClass.add(dfaValue.getID());
 
-    int freeIndex = myEqClasses.indexOf(null);
     if (freeIndex >= 0) {
       myEqClasses.set(freeIndex, aClass);
-      return freeIndex;
     }
+    else {
+      myEqClasses.add(aClass);
+    }
+    addToMap(dfaValue.getID(), resultIndex);
 
-    myEqClasses.add(aClass);
-    return myEqClasses.size() - 1;
+    return resultIndex;
   }
+
+  private void addToMap(int id, int index) {
+    id = unwrap(myFactory.getValue(id)).getID();
+    int[] classes = myIdToEqClassesIndices.get(id);
+    if (classes == null) {
+      classes = new int[]{index};
+      myIdToEqClassesIndices.put(id, classes);
+    }
+    else {
+      classes = ArrayUtil.append(classes, index);
+      myIdToEqClassesIndices.put(id, classes);
+    }
+  }
+
+  private void removeFromMap(int id, int index) {
+    if (id < 0) return;
+    id = unwrap(myFactory.getValue(id)).getID();
+    int[] classes = myIdToEqClassesIndices.get(id);
+    if (classes != null) {
+      int i = ArrayUtil.indexOf(classes, index);
+      if (i != -1) {
+        classes = ArrayUtil.remove(classes, i);
+        myIdToEqClassesIndices.put(id, classes);
+      }
+    }
+  }
+
+  private void removeAllFromMap(int id) {
+    if (id < 0) return;
+    id = unwrap(myFactory.getValue(id)).getID();
+    myIdToEqClassesIndices.remove(id);
+  }
+
 
   private static boolean canBeInRelation(DfaValue dfaValue) {
     DfaValue unwrapped = unwrap(dfaValue);
@@ -329,15 +376,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  private int getEqClassIndex(@NotNull DfaValue dfaValue) {
-    for (int i = 0; i < myEqClasses.size(); i++) {
-      EqClass aClass = myEqClasses.get(i);
-      if (aClass != null && aClass.contains(dfaValue.getID())) {
-        if (!canBeReused(dfaValue) && aClass.size() > 1) return -1;
-        return i;
+  private int getEqClassIndex(@NotNull final DfaValue dfaValue) {
+    final int id = unwrap(dfaValue).getID();
+    int[] classes = myIdToEqClassesIndices.get(id);
+
+    int result = -1;
+    if (classes != null) {
+      for (int index : classes) {
+        EqClass aClass = myEqClasses.get(index);
+        if (!aClass.contains(dfaValue.getID())) continue;
+        if (!canBeReused(dfaValue) && aClass.size() > 1) break;
+        result = index;
+        break;
       }
     }
-    return -1;
+    return result;
   }
 
   private boolean canBeReused(final DfaValue dfaValue) {
@@ -433,10 +486,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    myEqClasses.set(c1Index, c1 = new EqClass(c1));
+    EqClass newClass = new EqClass(c1);
+    for (int i = 0; i < newClass.size(); i++) {
+      int c = newClass.get(i);
+      removeFromMap(c, c1Index);
+      addToMap(c, c1Index);
+    }
+
+    myEqClasses.set(c1Index, newClass);
     for (int i = 0; i < c2.size(); i++) {
       int c = c2.get(i);
-      c1.add(c);
+      newClass.add(c);
+      removeFromMap(c, c2Index);
+      addToMap(c, c1Index);
     }
 
     for (int i = 0; i < c2Pairs.size(); i++) {
@@ -558,7 +620,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaBoxedValue) {
       return ((DfaBoxedValue)value).getWrappedValue();
     }
-    else if (value instanceof DfaUnboxedValue) {
+    if (value instanceof DfaUnboxedValue) {
       return ((DfaUnboxedValue)value).getVariable();
     }
     return value;
@@ -951,22 +1013,26 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     final int idPlain = varPlain.getID();
     final int idNegated = varNegated == null ? -1 : varNegated.getID();
 
-    int size = myEqClasses.size();
-    int interruptCount = 0;
-    for (int varClassIndex = 0; varClassIndex < size; varClassIndex++) {
-      EqClass varClass = myEqClasses.get(varClassIndex);
-      if (varClass == null) continue;
+    int[] classes = myIdToEqClassesIndices.get(idPlain);
+    int[] negatedClasses = myIdToEqClassesIndices.get(idNegated);
+    int[] result = ArrayUtil.mergeArrays(ObjectUtils.notNull(classes, ArrayUtil.EMPTY_INT_ARRAY), ObjectUtils.notNull(negatedClasses, ArrayUtil.EMPTY_INT_ARRAY));
 
-      for (int i = 0; i < varClass.size(); i++) {
-        if ((++interruptCount & 0xf) == 0) {
-          ProgressManager.checkCanceled();
-        }
-        int cl = varClass.get(i);
-        DfaValue value = myFactory.getValue(cl);
-        if (mine(idPlain, value) || idNegated >= 0 && mine(idNegated, value)) {
-          myEqClasses.set(varClassIndex, varClass = new EqClass(varClass));
-          varClass.remove(i);
-          break;
+    int interruptCount = 0;
+
+    for (int varClassIndex : result) {
+      EqClass varClass = myEqClasses.get(varClassIndex);
+      if ((++interruptCount & 0xf) == 0) {
+        ProgressManager.checkCanceled();
+      }
+
+      varClass = new EqClass(varClass);
+      myEqClasses.set(varClassIndex, varClass);
+      for (int id : varClass.toNativeArray()) {
+        int idUnwrapped;
+        if (id == idPlain || id == idNegated ||
+            (idUnwrapped = unwrap(myFactory.getValue(id)).getID()) == idPlain ||
+            idUnwrapped == idNegated) {
+          varClass.removeValue(id);
         }
       }
 
@@ -991,6 +1057,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
+    removeAllFromMap(idPlain);
+    removeAllFromMap(idNegated);
     myVariableStates.remove(varPlain);
     if (varNegated != null) {
       myVariableStates.remove(varNegated);
@@ -1003,7 +1071,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
 
-  private static boolean mine(int id, DfaValue value) {
-    return value != null && id == unwrap(value).getID();
+  private class MyIdMap extends TIntObjectHashMap<int[]> {
+    private MyIdMap(int initialCapacity) {
+      super(initialCapacity);
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder s = new StringBuilder("{");
+      forEachEntry(new TIntObjectProcedure<int[]>() {
+        @Override
+        public boolean execute(int id, int[] set) {
+          DfaValue value = myFactory.getValue(id);
+          s.append(value + " -> " + Arrays.toString(set) + ", ");
+          return true;
+        }
+      });
+      s.append("}");
+      return s.toString();
+    }
   }
 }

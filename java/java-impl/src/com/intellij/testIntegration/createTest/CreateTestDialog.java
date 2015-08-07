@@ -141,9 +141,8 @@ public class CreateTestDialog extends DialogWrapper {
       myFixLibraryPanel.setVisible(true);
       String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
       myFixLibraryLabel.setText(text);
-
-      myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework ? !((JavaTestFramework)descriptor).getLibraryPaths().isEmpty()
-                                                                            : descriptor.getLibraryPath() != null);
+      myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework && ((JavaTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
+                                    || descriptor.getLibraryPath() != null);
     }
 
     String superClass = descriptor.getDefaultSuperClass();

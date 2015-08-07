@@ -15,7 +15,7 @@
  */
 package com.theoryinpractice.testng.intention;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.PathUtil;
@@ -37,7 +37,7 @@ public class TestNGExternalLibraryResolver extends ExternalLibraryResolver {
     "Test", "BeforeClass", "BeforeGroups", "BeforeMethod", "BeforeSuite", "BeforeTest", "AfterClass", "AfterGroups", "AfterMethod",
     "AfterSuite", "AfterTest", "Configuration"
   );
-  private static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng", null) {
+  public static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng", null) {
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {

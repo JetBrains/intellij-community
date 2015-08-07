@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBRadioButton;
@@ -90,6 +92,10 @@ public class LocateLibraryDialog extends DialogWrapper {
 
   @NotNull
   public List<String> showAndGetResult() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      Disposer.dispose(myDisposable);
+      return myDefaultLibraryPaths;
+    }
     return showAndGet() ? getResultingLibraryPaths() : Collections.<String>emptyList();
   }
 
