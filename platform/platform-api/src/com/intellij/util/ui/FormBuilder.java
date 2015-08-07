@@ -212,10 +212,9 @@ public class FormBuilder {
   }
 
   protected int getFill(JComponent component) {
-    if (component instanceof JComboBox || component instanceof JSpinner) {
-      return NONE;
-    }
-    else if (component instanceof JTextField && ((JTextField)component).getColumns() != 0) {
+    if (component instanceof JComboBox ||
+        component instanceof JSpinner ||
+        component instanceof JTextField && ((JTextField)component).getColumns() != 0) {
       return NONE;
     }
     return HORIZONTAL;
