@@ -119,9 +119,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public Rectangle getVisibleArea() {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) {
-      return new Rectangle(0, 0, 0, 0);
-    }
     return myEditor.getScrollPane().getViewport().getViewRect();
   }
 
@@ -146,7 +143,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return;
 
     AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
     Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
@@ -259,8 +255,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Nullable
   public JScrollBar getHorizontalScrollBar() {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return null;
-
     return myEditor.getScrollPane().getHorizontalScrollBar();
   }
 
@@ -289,7 +283,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private void _scrollVertically(int scrollOffset) {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return;
 
     myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
@@ -304,7 +297,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private void _scrollHorizontally(int scrollOffset) {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return;
 
     myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getHorizontalScrollBar();
