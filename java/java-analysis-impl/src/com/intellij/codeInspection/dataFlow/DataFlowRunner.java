@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,10 @@ public class DataFlowRunner {
                                           boolean ignoreAssertions,
                                           @NotNull Collection<DfaMemoryState> initialStates) {
     try {
-      final ControlFlow flow = createControlFlowAnalyzer().buildControlFlow(psiBlock, ignoreAssertions);
+      ControlFlowAnalyzer analyzer = createControlFlowAnalyzer();
+      final ControlFlow flow = analyzer.buildControlFlow(psiBlock, ignoreAssertions);
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
+      boolean[] inLoop = analyzer.calcInLoop(flow);
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
@@ -168,7 +170,9 @@ public class DataFlowRunner {
               LOG.debug("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX; // Too complex :(
             }
-            processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
+            if (inLoop[branching.getIndex()]) {
+              processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
+            }
           }
 
           DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
@@ -183,7 +187,9 @@ public class DataFlowRunner {
                   incomingStates.get(branching).contains(state.getMemoryState())) {
                 continue;
               }
-              incomingStates.putValue(branching, state.getMemoryState().createCopy());
+              if (inLoop[branching.getIndex()]) {
+                incomingStates.putValue(branching, state.getMemoryState().createCopy());
+              }
             }
             queue.offer(state);
           }
