@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
@@ -30,7 +29,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -178,47 +176,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                 !ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile))) {
             continue;
           }
-          final OrderEntryFix platformFix = new OrderEntryFix() {
-            @Override
-            @NotNull
-            public String getText() {
-              return QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", libraryEntry.getPresentableName());
-            }
-
-            @Override
-            @NotNull
-            public String getFamilyName() {
-              return QuickFixBundle.message("orderEntry.fix.family.add.library.to.classpath");
-            }
-
-            @Override
-            public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-              return !project.isDisposed() && !currentModule.isDisposed() && libraryEntry.isValid();
-            }
-
-            @Override
-            public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
-              OrderEntryUtil.addLibraryToRoots(libraryEntry, currentModule);
-              if (editor != null) {
-                DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-                  @Override
-                  public void run() {
-                    new AddImportAction(project, reference, editor, aClass).execute();
-                  }
-                });
-              }
-            }
-          };
-
-          final OrderEntryFix providedFix = provideFix(new Function<MissingDependencyFixProvider, OrderEntryFix>() {
-            @Override
-            public OrderEntryFix fun(MissingDependencyFixProvider provider) {
-              return provider.getAddLibraryToClasspathFix(reference, platformFix, currentModule, libraryEntry, aClass);
-            }
-          });
-          final OrderEntryFix fix = ObjectUtils.notNull(providedFix, platformFix);
-          registrar.register(fix);
-          result.add(fix);
+          final OrderEntryFix platformFix = new AddLibraryToDependenciesFix(currentModule, library, reference, aClass.getQualifiedName());
+          registrar.register(platformFix);
+          result.add(platformFix);
         }
       }
     }

@@ -84,4 +84,10 @@ public class IdeaProjectModelModifier extends ProjectModelModifier {
     }
     return true;
   }
+
+  @Override
+  public boolean addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
+    OrderEntryUtil.addLibraryToRoots(from, library);
+    return true;
+  }
 }

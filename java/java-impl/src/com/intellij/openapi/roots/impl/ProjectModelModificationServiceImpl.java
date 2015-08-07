@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectModelModifier;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -48,6 +49,15 @@ public class ProjectModelModificationServiceImpl extends ProjectModelModificatio
   public void addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
     for (ProjectModelModifier modifier : getModelModifiers()) {
       if (modifier.addExternalLibraryDependency(from, libraryDescriptor, scope)) {
+        return;
+      }
+    }
+  }
+
+  @Override
+  public void addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
+    for (ProjectModelModifier modifier : getModelModifiers()) {
+      if (modifier.addLibraryDependency(from, library, scope)) {
         return;
       }
     }

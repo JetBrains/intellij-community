@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -32,4 +33,6 @@ public abstract class ProjectModelModifier {
   public abstract boolean addExternalLibraryDependency(@NotNull Collection<Module> modules,
                                                        @NotNull ExternalLibraryDescriptor descriptor,
                                                        @NotNull DependencyScope scope);
+
+  public abstract boolean addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope);
 }

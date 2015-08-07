@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -47,4 +48,6 @@ public abstract class ProjectModelModificationService {
 
   public abstract void addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor,
                                      @NotNull DependencyScope scope);
+
+  public abstract void addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope);
 }
