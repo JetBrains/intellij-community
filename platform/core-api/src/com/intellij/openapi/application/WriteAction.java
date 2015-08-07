@@ -19,9 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
-
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
 
@@ -37,44 +34,31 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       return result;
     }
 
-    try {
-      boolean dispatchThread = application.isDispatchThread();
-      if (!dispatchThread && application.isReadAccessAllowed()) {
-        LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-      }
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
+    boolean dispatchThread = application.isDispatchThread();
+    if (!dispatchThread && application.isReadAccessAllowed()) {
+      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
+    }
+
+    application.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        application.runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
               result.run();
             }
-          });
-        }
-      };
-      if (dispatchThread) {
-        runnable.run();
+            catch (RuntimeException e) {
+              result.setThrowable(e);
+            }
+          }
+        });
       }
-      else if (application.isReadAccessAllowed()) {
-        LOG.error("Calling write action from read-action leads to deadlock.");
-      }
-      else {
-        SwingUtilities.invokeAndWait(runnable);
-      }
-    }
-    catch (Exception e) {
-      if (e instanceof InvocationTargetException) {
-        Throwable cause = e.getCause();
-        e = cause instanceof Exception ? (Exception)cause : new RuntimeException(e);
-      }
-      if (isSilentExecution()) {
-        result.setThrowable(e);
-      }
-      else {
-        if (e instanceof RuntimeException) throw (RuntimeException)e;
-        throw new Error(e);
-      }
+    }, ModalityState.defaultModalityState());
+
+    final Throwable throwable = result.getThrowable();
+    if (throwable != null && !isSilentExecution()) {
+      throw (RuntimeException)throwable;
     }
 
     return result;
