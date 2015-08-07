@@ -18,7 +18,6 @@ package com.intellij.openapi.components.impl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
@@ -289,7 +288,6 @@ public class ServiceManagerImpl implements BaseComponent {
   }
 
   public static boolean isUseReadActionToInitService() {
-    Application app = ApplicationManager.getApplication();
-    return Registry.is("use.read.action.to.init.service", !(app.isUnitTestMode() || app.isInternal()));
+    return Registry.is("use.read.action.to.init.service", false);
   }
 }
