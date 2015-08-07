@@ -20,6 +20,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author nik
  */
@@ -34,6 +37,14 @@ public abstract class ProjectModelModificationService {
 
   public abstract void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope);
 
-  public abstract void addDependency(@NotNull Module from, @NotNull ExternalLibraryDescriptor libraryDescriptor,
+  public void addDependency(@NotNull Module from, @NotNull ExternalLibraryDescriptor libraryDescriptor) {
+    addDependency(from, libraryDescriptor, DependencyScope.COMPILE);
+  }
+
+  public void addDependency(Module from, ExternalLibraryDescriptor descriptor, DependencyScope scope) {
+    addDependency(Collections.singletonList(from), descriptor, scope);
+  }
+
+  public abstract void addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor,
                                      @NotNull DependencyScope scope);
 }

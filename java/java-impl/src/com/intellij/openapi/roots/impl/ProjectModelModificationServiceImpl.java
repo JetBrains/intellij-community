@@ -15,17 +15,26 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectModelModifier;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author nik
  */
 public class ProjectModelModificationServiceImpl extends ProjectModelModificationService {
+  private final Project myProject;
+
+  public ProjectModelModificationServiceImpl(Project project) {
+    myProject = project;
+  }
+
   @Override
   public void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
     for (ProjectModelModifier modifier : getModelModifiers()) {
@@ -36,7 +45,7 @@ public class ProjectModelModificationServiceImpl extends ProjectModelModificatio
   }
 
   @Override
-  public void addDependency(@NotNull Module from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
+  public void addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
     for (ProjectModelModifier modifier : getModelModifiers()) {
       if (modifier.addExternalLibraryDependency(from, libraryDescriptor, scope)) {
         return;
@@ -45,7 +54,7 @@ public class ProjectModelModificationServiceImpl extends ProjectModelModificatio
   }
 
   @NotNull
-  private static ProjectModelModifier[] getModelModifiers() {
-    return ProjectModelModifier.EP_NAME.getExtensions();
+  private ProjectModelModifier[] getModelModifiers() {
+    return ProjectModelModifier.EP_NAME.getExtensions(myProject);
   }
 }

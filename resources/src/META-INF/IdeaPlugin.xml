@@ -239,7 +239,8 @@
     <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
 
     <extensionPoint name="library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
-    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.ProjectModelModifier"/>
+    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.ProjectModelModifier"
+                    area="IDEA_PROJECT"/>
 
     <extensionPoint name="refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>

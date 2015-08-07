@@ -17,13 +17,19 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectModelModifier;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +37,13 @@ import java.util.List;
  * @author nik
  */
 public class IdeaProjectModelModifier extends ProjectModelModifier {
+  private static final Logger LOG = Logger.getInstance(IdeaProjectModelModifier.class);
+  private final Project myProject;
+
+  public IdeaProjectModelModifier(Project project) {
+    myProject = project;
+  }
+
   @Override
   public boolean addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
     ModuleRootModificationUtil.addDependency(from, to, scope, false);
@@ -38,16 +51,36 @@ public class IdeaProjectModelModifier extends ProjectModelModifier {
   }
 
   @Override
-  public boolean addExternalLibraryDependency(@NotNull Module module,
-                                              @NotNull ExternalLibraryDescriptor descriptor,
-                                              @NotNull DependencyScope scope) {
+  public boolean addExternalLibraryDependency(@NotNull final Collection<Module> modules,
+                                              @NotNull final ExternalLibraryDescriptor descriptor,
+                                              @NotNull final DependencyScope scope) {
     List<String> defaultRoots = descriptor.getLibraryClassesRoots();
-    LocateLibraryDialog dialog = new LocateLibraryDialog(module, defaultRoots, descriptor.getPresentableName());
+    Module firstModule = ContainerUtil.getFirstItem(modules);
+    LOG.assertTrue(firstModule != null);
+    LocateLibraryDialog dialog = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName());
     List<String> classesRoots = dialog.showAndGetResult();
     if (!classesRoots.isEmpty()) {
       String libraryName = classesRoots.size() > 1 ? descriptor.getPresentableName() : null;
-      List<String> urls = OrderEntryFix.refreshAndConvertToUrls(classesRoots);
-      ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.<String>emptyList(), scope);
+      final List<String> urls = OrderEntryFix.refreshAndConvertToUrls(classesRoots);
+      if (modules.size() == 1) {
+        ModuleRootModificationUtil.addModuleLibrary(firstModule, libraryName, urls, Collections.<String>emptyList(), scope);
+      }
+      else {
+        new WriteAction() {
+          protected void run(@NotNull Result result) {
+            Library library =
+              LibraryUtil.createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable(myProject), descriptor.getPresentableName());
+            Library.ModifiableModel model = library.getModifiableModel();
+            for (String url : urls) {
+              model.addRoot(url, OrderRootType.CLASSES);
+            }
+            model.commit();
+            for (Module module : modules) {
+              ModuleRootModificationUtil.addDependency(module, library, scope, false);
+            }
+          }
+        }.execute();
+      }
     }
     return true;
   }

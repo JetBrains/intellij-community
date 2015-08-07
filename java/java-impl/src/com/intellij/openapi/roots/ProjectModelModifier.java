@@ -19,6 +19,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author nik
  */
@@ -27,7 +29,7 @@ public abstract class ProjectModelModifier {
 
   public abstract boolean addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope);
 
-  public abstract boolean addExternalLibraryDependency(@NotNull Module module,
+  public abstract boolean addExternalLibraryDependency(@NotNull Collection<Module> modules,
                                                        @NotNull ExternalLibraryDescriptor descriptor,
                                                        @NotNull DependencyScope scope);
 }
