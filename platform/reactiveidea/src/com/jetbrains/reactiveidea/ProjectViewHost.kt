@@ -71,7 +71,7 @@ public class ProjectViewHost(val project: Project,
       val descriptor = treeStructure.createDescriptor(root, null) as AbstractTreeNode<*>
       val current = path / paneId
       val rootNode = createNode(descriptor, lifetime, current, 0)
-      current.putIn(it, MapModel(hashMapOf("0" to rootNode)))
+      current.putIn(it, MapModel(hashMapOf("0" to rootNode, tagsField to tagsModel("tree"))))
     }
 
     val psiTreeChangeListener = object : PsiTreeChangeAdapter() {
@@ -127,7 +127,7 @@ public class ProjectViewHost(val project: Project,
   class LeafHost(val psi: SmartPsiElementPointer<PsiElement>) : Host
   class NodeHost(val descriptor: AbstractTreeNode<*>, val index: Int) : Host
 
-  private fun createNode(descriptor: AbstractTreeNode<*>, parentLifetime: Lifetime, path: Path, index: Int): Model {
+  private fun createNode(descriptor: AbstractTreeNode<*>, parentLifetime: Lifetime, path: Path, index: Int): MapModel {
     descriptor.update();
     val map = HashMap<String, Model>()
     val value = descriptor.getValue()

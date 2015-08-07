@@ -63,7 +63,7 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
     init += { m ->
       reaction(false, "tree reaction", usageView.usagesSignal) { usages ->
         reactiveModel.transaction { model ->
-          model.putIn(path / tree, convertTree(usageView.root))
+          model.putIn(path / tree, MapModel(hashMapOf("0" to convertTree(usageView.root), tagsField to tagsModel("tree"))))
         }
       }
       m.putIn(path / presentation, convertPresentation(usageView.getPresentation()))
@@ -75,20 +75,20 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
     }
   }
 
-  private fun convertTree(node: DefaultMutableTreeNode): Model {
+  private fun convertTree(node: DefaultMutableTreeNode): MapModel {
     val value = run {
       val text = node.text(usageView)
       if (text.isNotEmpty()) text else " "
     }
     val meta = if (node.getUserObject() is Navigatable) createMeta("host", UsageHost(node)) else emptyMeta()
     val children = (node.children() as Enumeration<*>).asSequence()
-        .map { child ->
-          convertTree(child as DefaultMutableTreeNode)
-        }.toArrayList()
+        .mapIndexed { i, child ->
+          i.toString() to convertTree(child as DefaultMutableTreeNode)
+        }.toMap({ it.first }, { it.second })
 
     val res = hashMapOf(
         "text" to PrimitiveModel(value),
-        "children" to ListModel(children))
+        "children" to MapModel(children))
     if (node is UsageNode) {
       res[tagsField] = tagsModel("usage")
       val usage = node.getUsage()
