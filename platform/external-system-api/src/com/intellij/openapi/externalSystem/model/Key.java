@@ -95,6 +95,7 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
 
   @Override
   public int compareTo(@NotNull Key<?> that) {
+    if(myProcessingWeight == that.myProcessingWeight) return myDataClass.compareTo(that.myDataClass);
     return myProcessingWeight - that.myProcessingWeight;
   }
 
