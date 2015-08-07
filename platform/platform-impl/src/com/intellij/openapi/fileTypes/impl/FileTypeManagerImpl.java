@@ -638,8 +638,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
               text = null;
             }
 
+            FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
+            if (toLog()) {
+              log("F: processFirstBytes. byteSequence.length="+byteSequence.getLength()+"; isText="+isText+"; text='"+(text==null?null:StringUtil.first(text, 100, true))+"', detectors="+Arrays.toString(detectors));
+            }
             FileType detected = null;
-            for (FileTypeDetector detector : Extensions.getExtensions(FileTypeDetector.EP_NAME)) {
+            for (FileTypeDetector detector : detectors) {
               try {
                 detected = detector.detect(file, byteSequence, text);
               }
