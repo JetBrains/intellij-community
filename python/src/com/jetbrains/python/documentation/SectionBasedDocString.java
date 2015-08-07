@@ -42,30 +42,32 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   /**
    * Frequently used section types
    */
-  @NonNls private static final String NORMALIZED_RETURN_SECTION_NAME = "returns";
-  @NonNls private static final String NORMALIZED_EXCEPTIONS_SECTION_NAME = "raises";
-  @NonNls private static final String NORMALIZED_KEYWORD_ARGUMENTS_SECTION = "keyword arguments";
-  @NonNls private static final String NORMALIZED_PARAMETERS_SECTION = "parameters";
+  @NonNls protected static final String RETURN_SECTION = "returns";
+  @NonNls protected static final String EXCEPTIONS_SECTION = "raises";
+  @NonNls protected static final String KEYWORD_ARGUMENTS_SECTION = "keyword arguments";
+  @NonNls protected static final String PARAMETERS_SECTION = "parameters";
+  @NonNls protected static final String ATTRIBUTES_SECTION = "attributes";
+  @NonNls protected static final String METHODS_SECTION = "methods";
   
-  private static final Map<String, String> SECTION_ALIASES =
+  protected static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
-                .put("arguments", NORMALIZED_PARAMETERS_SECTION)
-                .put("args", NORMALIZED_PARAMETERS_SECTION)
-                .put("parameters", NORMALIZED_PARAMETERS_SECTION)
-                .put("keyword args", NORMALIZED_KEYWORD_ARGUMENTS_SECTION)
-                .put("keyword arguments", NORMALIZED_KEYWORD_ARGUMENTS_SECTION)
+                .put("arguments", PARAMETERS_SECTION)
+                .put("args", PARAMETERS_SECTION)
+                .put("parameters", PARAMETERS_SECTION)
+                .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
+                .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
                 .put("other parameters", "other parameters")
-                .put("attributes", "attributes")
-                .put("methods", "methods")
+                .put("attributes", ATTRIBUTES_SECTION)
+                .put("methods", METHODS_SECTION)
                 .put("note", "notes")
                 .put("notes", "notes")
                 .put("example", "examples")
                 .put("examples", "examples")
-                .put("return", NORMALIZED_RETURN_SECTION_NAME)
-                .put("returns", NORMALIZED_RETURN_SECTION_NAME)
+                .put("return", RETURN_SECTION)
+                .put("returns", RETURN_SECTION)
                 .put("yield", "yields")
                 .put("yields", "yields")
-                .put("raises", NORMALIZED_EXCEPTIONS_SECTION_NAME)
+                .put("raises", EXCEPTIONS_SECTION)
                 .put("references", "references")
                 .put("see also", "see also")
                 .put("warning", "warnings")
@@ -151,11 +153,11 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   }
 
   @NotNull
-  protected Pair<SectionField, Integer> parseField(int lineNum, @NotNull String sectionTitle, int sectionIndent) {
-    if (SECTIONS_WITH_NAME_AND_TYPE.contains(sectionTitle)) {
+  protected Pair<SectionField, Integer> parseField(int lineNum, @NotNull String normalizedSectionTitle, int sectionIndent) {
+    if (SECTIONS_WITH_NAME_AND_TYPE.contains(normalizedSectionTitle)) {
       return parseFieldWithNameAndOptionalType(lineNum, sectionIndent);
     }
-    if (SECTIONS_WITH_TYPE.contains(sectionTitle)) {
+    if (SECTIONS_WITH_TYPE.contains(normalizedSectionTitle)) {
       return parseFieldWithType(lineNum, sectionIndent);
     }
     return parseGeneralField(lineNum, sectionIndent);
@@ -182,7 +184,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   @NotNull
   protected abstract Pair<String, Integer> parseSectionHeader(int lineNum);
 
-  private int skipEmptyLines(int lineNum) {
+  protected int skipEmptyLines(int lineNum) {
     while (lineNum < myLines.size() && isEmpty(lineNum)) {
       lineNum++;
     }
@@ -381,7 +383,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   private List<SectionField> getParameterFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
     for (Section section : mySections) {
-      if (section.getTitle().equals(NORMALIZED_PARAMETERS_SECTION)) {
+      if (section.getTitle().equals(PARAMETERS_SECTION)) {
         for (SectionField field : section.getFields()) {
           result.add(field);
         }
@@ -426,7 +428,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   private List<SectionField> getKeywordArgumentFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
     for (Section section : mySections) {
-      if (section.getTitle().equals(NORMALIZED_KEYWORD_ARGUMENTS_SECTION)) {
+      if (section.getTitle().equals(KEYWORD_ARGUMENTS_SECTION)) {
         for (SectionField field : section.getFields()) {
           result.add(field);
         }
@@ -469,7 +471,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   @Nullable
   private SectionField getFirstReturnField() {
     for (Section section : mySections) {
-      if (section.getTitle().equals(NORMALIZED_RETURN_SECTION_NAME) && !section.getFields().isEmpty()) {
+      if (section.getTitle().equals(RETURN_SECTION) && !section.getFields().isEmpty()) {
         return section.getFields().get(0);
       }
     }
@@ -502,7 +504,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   private List<SectionField> getExceptionFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
     for (Section section : mySections) {
-      if (section.getTitle().equals(NORMALIZED_EXCEPTIONS_SECTION_NAME)) {
+      if (section.getTitle().equals(EXCEPTIONS_SECTION)) {
         result.addAll(section.getFields());
       }
     }

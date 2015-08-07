@@ -16,14 +16,41 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
  */
 public class NumpyDocString extends SectionBasedDocString {
+  private static final Pattern SIGNATURE = Pattern.compile("^([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)$");
+  private static final Pattern SECTION_HEADER = Pattern.compile("^[-=]+");
+
+  private Substring mySignature = null;
   public NumpyDocString(@NotNull String text) {
     super(text);
+  }
+
+  @Override
+  protected int parseHeader(int startLine) {
+    final int nextNonEmptyLineNum = skipEmptyLines(startLine);
+    final Substring line = getLineOrNull(nextNonEmptyLineNum);
+    if (line != null && SIGNATURE.matcher(line).matches()) {
+      mySignature = line.trim();
+    }
+    return super.parseHeader(startLine);
+  }
+
+  @NotNull
+  @Override
+  protected Pair<String, Integer> parseSectionHeader(int lineNum) {
+    final Substring nextLine = getLineOrNull(lineNum + 1);
+    if (nextLine != null && SECTION_HEADER.matcher(nextLine).matches()) {
+      return Pair.create(getLine(lineNum).trim().toString(), lineNum + 2);
+    }
+    return Pair.create(null, lineNum);
   }
 
   @NotNull
@@ -39,8 +66,7 @@ public class NumpyDocString extends SectionBasedDocString {
   }
 
   @NotNull
-  @Override
-  protected Pair<String, Integer> parseSectionHeader(int lineNum) {
-    return null;
+  public String getSignature() {
+    return mySignature != null ? mySignature.toString() : "";
   }
 }
