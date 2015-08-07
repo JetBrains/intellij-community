@@ -64,15 +64,15 @@ public class ExternalSystemNotificationManager implements Disposable {
   @NotNull private final SequentialTaskExecutor myUpdater = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
 
   @NotNull private final Project myProject;
-  @NotNull private final List<Notification> myNotifications;
+  @NotNull private final Set<Notification> myNotifications;
   @NotNull private final Set<ProjectSystemId> initializedExternalSystem;
   @NotNull private final MessageCounter myMessageCounter;
 
   public ExternalSystemNotificationManager(@NotNull final Project project) {
     myProject = project;
     Disposer.register(project, this);
-    myNotifications = ContainerUtil.newArrayList();
-    initializedExternalSystem = ContainerUtil.newHashSet();
+    myNotifications = ContainerUtil.newConcurrentSet();
+    initializedExternalSystem = ContainerUtil.newConcurrentSet();
     myMessageCounter = new MessageCounter();
   }
 
@@ -384,5 +384,6 @@ public class ExternalSystemNotificationManager implements Disposable {
   @Override
   public void dispose() {
     myNotifications.clear();
+    initializedExternalSystem.clear();
   }
 }
