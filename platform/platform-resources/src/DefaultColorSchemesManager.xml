@@ -171,6 +171,7 @@
         <value>
           <option name="FOREGROUND" value="008000" deuteranopia="1948a6" protanopia="1948a6"/>
           <option name="BACKGROUND" value="ffcccc" deuteranopia="ffdcbf" protanopia="ffdcbf"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="DEFAULT_VALID_STRING_ESCAPE">
@@ -265,6 +266,8 @@
           <option name="FOREGROUND" value="ff0000" deuteranopia="d95716" protanopia="d95716"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" deuteranopia="f2b09d" protanopia="f2b09d"/>
+          <option name="EFFECT_TYPE" deuteranopia="4" protanopia="4"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
 
@@ -274,6 +277,7 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000" deuteranopia="e56000" protanopia="e56000"/>
           <option name="EFFECT_TYPE" value="2"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
         </value>
       </option>
@@ -558,6 +562,8 @@
           <option name="FOREGROUND" deuteranopia="55ff" protanopia="55ff"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
+          <option name="EFFECT_TYPE" deuteranopia="1" protanopia="1"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
 
@@ -873,6 +879,7 @@
       <option name="CONSOLE_ERROR_OUTPUT">
         <value>
           <option name="FOREGROUND" value="7f0000" deuteranopia="d95716" protanopia="d95716"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="LOG_WARNING_OUTPUT">
@@ -883,6 +890,7 @@
       <option name="LOG_ERROR_OUTPUT">
         <value>
           <option name="FOREGROUND" value="ff0000" deuteranopia="d95716" protanopia="d95716"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="LOG_EXPIRED_ENTRY">
@@ -1324,6 +1332,7 @@
       <option name="CONSOLE_ERROR_OUTPUT">
         <value>
           <option name="FOREGROUND" value="ff6b68" deuteranopia="bd693c" protanopia="bd693c"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="CONSOLE_GRAY_OUTPUT">
@@ -1619,6 +1628,7 @@
       <option name="DEFAULT_METADATA">
         <value>
           <option name="FOREGROUND" value="bbb529" deuteranopia="66a6ff" protanopia="66a6ff"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="DEFAULT_NUMBER">
@@ -1652,6 +1662,7 @@
       <option name="DEFAULT_STRING">
         <value>
           <option name="FOREGROUND" value="6a8759" deuteranopia="807d6e" protanopia="807d6e"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="DEFAULT_VALID_STRING_ESCAPE">
@@ -2093,6 +2104,7 @@
       <option name="LOG_ERROR_OUTPUT">
         <value>
           <option name="FOREGROUND" value="ff6b68" deuteranopia="bd693c" protanopia="bd693c"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="MATCHED_BRACE_ATTRIBUTES">
@@ -2625,6 +2637,8 @@
         <value>
           <option name="FOREGROUND" value="bc3f3c" deuteranopia="bd693c" protanopia="bd693c"/>
           <option name="EFFECT_COLOR" deuteranopia="80472d" protanopia="80472d"/>
+          <option name="EFFECT_TYPE" deuteranopia="4" protanopia="4"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
       <option name="XML_ATTRIBUTE_NAME">

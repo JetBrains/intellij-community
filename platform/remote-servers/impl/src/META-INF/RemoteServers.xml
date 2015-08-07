@@ -30,17 +30,14 @@
     <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
     <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.log.ConsoleTerminalProvider"/>
+    <toolWindow id="Application Servers" anchor="bottom" icon="RemoteServersIcons.ServersToolWindow"
+                factoryClass="com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowFactory"/>
   </extensions>
   <application-components>
     <component>
       <implementation-class>com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar</implementation-class>
     </component>
   </application-components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowOpener</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
     <group id="RemoteServersViewToolbar">

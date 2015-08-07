@@ -133,7 +133,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
-    myPropertiesInsertDeleteManager = ResourceBundlePropertiesUpdateManagerImpl.create(resourceBundle);
+    myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
 
     myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
     myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
@@ -409,11 +409,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         @Override
         public void focusGained(final Editor editor) {
           mySelectedEditor = editor;
+          final EditorEx editorEx = (EditorEx)editor;
+          editorEx.setViewer(ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles());
         }
 
         @Override
         public void focusLost(final Editor eventEditor) {
-          writeEditorPropertyValue(null, editor, propertiesFile);
+          if (propertiesFile.getContainingFile().isValid()) {
+            writeEditorPropertyValue(null, editor, propertiesFile);
+          }
         }
       });
       gc.gridx = 0;

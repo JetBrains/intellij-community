@@ -19,8 +19,6 @@ package org.intellij.plugins.relaxNG;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.intellij.plugins.testUtil.CopyFile;
 
 /**
@@ -38,7 +36,6 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
   @Override
   protected void init() {
     super.init();
-    FileTypeManager.getInstance().registerFileType(StdFileTypes.XML, "fo");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

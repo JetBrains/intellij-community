@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -83,26 +84,6 @@ public class StudyCheckAction extends DumbAwareAction {
     }
   }
 
-  private static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-      String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
-      if (virtualFile == null) {
-        continue;
-      }
-      String windowsFileName = virtualFile.getNameWithoutExtension() + "_windows";
-      final VirtualFile windowsFile = taskDir.findChild(windowsFileName);
-      if (windowsFile != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            StudyUtils.deleteFile(windowsFile);
-          }
-        });
-      }
-    }
-  }
-
   private static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
@@ -121,6 +102,10 @@ public class StudyCheckAction extends DumbAwareAction {
 
 
   public void check(@NotNull final Project project) {
+    if (DumbService.isDumb(project)) {
+      DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing in in progress");
+      return;
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -131,7 +116,7 @@ public class StudyCheckAction extends DumbAwareAction {
             if (selectedEditor == null) return;
             final StudyState studyState = new StudyState(selectedEditor);
             if (!studyState.isValid()) {
-              LOG.error("StudyCheckAction was invokes outside study editor");
+              LOG.error("StudyCheckAction was invoked outside study editor");
               return;
             }
             final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
@@ -213,14 +198,14 @@ public class StudyCheckAction extends DumbAwareAction {
         StudyUtils.updateStudyToolWindow(project);
         drawAllPlaceholders(project, task, taskDir);
         ProjectView.getInstance(project).refresh();
-        deleteWindowDescriptions(task, taskDir);
+        EduUtils.deleteWindowDescriptions(task, taskDir);
         checkInProgress = false;
       }
 
       @Override
       public void onCancel() {
         taskManager.setStatus(task, statusBeforeCheck);
-        deleteWindowDescriptions(task, taskDir);
+        EduUtils.deleteWindowDescriptions(task, taskDir);
         checkInProgress = false;
       }
 
@@ -238,18 +223,18 @@ public class StudyCheckAction extends DumbAwareAction {
           });
           return;
         }
-        final String failedMessage = testRunner.getTestsOutput(output);
+        final StudyTestRunner.TestsOutput testsOutput = testRunner.getTestsOutput(output);
         final StudySettings studySettings = StudySettings.getInstance();
 
         final String login = studySettings.getLogin();
         final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getPassword();
-        if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
+        if (testsOutput.isSuccess()) {
           taskManager.setStatus(task, StudyStatus.Solved);
           EduStepicConnector.postAttempt(task, true, login, password);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
+              showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), project);
             }
           });
         }
@@ -279,7 +264,7 @@ public class StudyCheckAction extends DumbAwareAction {
                   }
                 });
               }
-              showTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
+              showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
               navigateToFailedPlaceholder(studyState, task, taskDir, project);
             }
           });
@@ -337,6 +322,7 @@ public class StudyCheckAction extends DumbAwareAction {
                                    @NotNull final TaskFile taskFile,
                                    @NotNull final Project project) {
     final TaskFile answerTaskFile = new TaskFile();
+    answerTaskFile.name = taskFileName;
     final VirtualFile virtualFile = taskDir.findChild(taskFileName);
     if (virtualFile == null) {
       return;

@@ -797,7 +797,7 @@
                      level="WARNING" implementationClass="com.intellij.codeInspection.TodoCommentInspection"/>
     <localInspection shortName="LongLine" bundle="messages.InspectionsBundle" key="long.line.display.name"
                      groupName="General" enabledByDefault="false"
-                     level="ERROR" implementationClass="com.intellij.codeInspection.LongLineInspection"/>
+                     level="WARNING" implementationClass="com.intellij.codeInspection.LongLineInspection"/>
 
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
 

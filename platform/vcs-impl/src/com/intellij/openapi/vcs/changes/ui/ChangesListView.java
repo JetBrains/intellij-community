@@ -86,6 +86,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     setShowsRootHandles(true);
     setRootVisible(false);
+    setDragEnabled(true);
 
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * @auhor Bas Leijdekkers
+ */
 public class ReplaceArmWithTryFinallyIntention extends Intention {
 
   @NotNull
@@ -39,7 +42,7 @@ public class ReplaceArmWithTryFinallyIntention extends Intention {
     if (tryStatement == null) {
       return;
     }
-    final boolean replaceAll = tryStatement.getCatchBlocks().length == 0;
+    final boolean replaceAll = tryStatement.getCatchBlocks().length == 0 && tryStatement.getFinallyBlock() == null;
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList == null) {
       return;

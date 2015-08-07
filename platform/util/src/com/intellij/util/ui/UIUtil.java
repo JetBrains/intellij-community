@@ -2278,6 +2278,11 @@ public class UIUtil {
     return result.toString();
   }
 
+  /**
+   * Unless you know very well what you're doing, please use Application.invokeLater() with a modality state.<p/>
+   *
+   * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
+   */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
     if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
@@ -2288,6 +2293,8 @@ public class UIUtil {
   }
 
   /**
+   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
@@ -2311,6 +2318,8 @@ public class UIUtil {
   }
 
   /**
+   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
@@ -2331,6 +2340,8 @@ public class UIUtil {
   }
 
   /**
+   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.

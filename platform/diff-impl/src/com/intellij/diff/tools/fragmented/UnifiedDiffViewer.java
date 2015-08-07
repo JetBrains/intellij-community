@@ -17,7 +17,6 @@ package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
-import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.actions.impl.SetEditorSettingsAction;
@@ -31,7 +30,6 @@ import com.intellij.diff.tools.util.base.*;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -238,16 +236,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      final DocumentData documentData = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
+      final CharSequence[] texts = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
         @Override
-        public DocumentData compute() {
-          return new DocumentData(document1.getImmutableCharSequence(), document2.getImmutableCharSequence(),
-                                  document1.getModificationStamp(), document2.getModificationStamp());
+        public CharSequence[] compute() {
+          return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
         }
       });
 
       final boolean innerFragments = getDiffConfig().innerFragments;
-      final List<LineFragment> fragments = DiffUtil.compareWithCache(myRequest, documentData, getDiffConfig(), indicator);
+      final List<LineFragment> fragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
 
       final DocumentContent content1 = getContent1();
       final DocumentContent content2 = getContent2();
@@ -263,7 +260,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
           indicator.checkCanceled();
 
           EditorHighlighter highlighter = buildHighlighter(myProject, content1, content2,
-                                                           documentData.getText1(), documentData.getText2(), builder.getRanges(),
+                                                           texts[0], texts[1], builder.getRanges(),
                                                            builder.getText().length());
 
           UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2,

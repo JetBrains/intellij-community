@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,6 @@ public class StudyProjectGenerator {
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
-  private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
   public static final String AUTHOR_ATTRIBUTE = "authors";
@@ -86,7 +86,7 @@ public class StudyProjectGenerator {
   private Course getCourse() {
     Reader reader = null;
     try {
-      final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), COURSE_META_FILE);
+      final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
       if (courseFile.exists()) {
         reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
         Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
@@ -151,9 +151,32 @@ public class StudyProjectGenerator {
 
     int lessonIndex = 1;
     for (Lesson lesson : course.getLessons()) {
-      final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
-      flushLesson(lessonDirectory, lesson);
-      lessonIndex += 1;
+      if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) {
+        flushAdditionalFiles(courseDirectory, lesson);
+      }
+      else {
+        final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
+        flushLesson(lessonDirectory, lesson);
+        lessonIndex += 1;
+      }
+    }
+  }
+
+  private static void flushAdditionalFiles(File courseDirectory, Lesson lesson) {
+    final List<Task> taskList = lesson.getTaskList();
+    if (taskList.size() != 1) return;
+    final Task task = taskList.get(0);
+    for (Map.Entry<String, String> entry : task.getTestsText().entrySet()) {
+      final String name = entry.getKey();
+      final String text = entry.getValue();
+      final File file = new File(courseDirectory, name);
+      FileUtil.createIfDoesntExist(file);
+      try {
+        FileUtil.writeToFile(file, text);
+      }
+      catch (IOException e) {
+        LOG.error("ERROR copying file " + name);
+      }
     }
   }
 
@@ -206,7 +229,7 @@ public class StudyProjectGenerator {
   private static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     final String json = gson.toJson(course);
-    final File courseJson = new File(courseDirectory, "course.json");
+    final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);
     final FileOutputStream fileOutputStream;
     try {
       fileOutputStream = new FileOutputStream(courseJson);
@@ -289,6 +312,9 @@ public class StudyProjectGenerator {
       myCourses = EduStepicConnector.getCourses();
       flushCache(myCourses);
     }
+    if (myCourses.isEmpty()) {
+      myCourses = getBundledIntro();
+    }
     return myCourses;
   }
 
@@ -304,6 +330,16 @@ public class StudyProjectGenerator {
     for (SettingsListener listener : myListeners) {
       listener.stateChanged(result);
     }
+  }
+
+  public static List<CourseInfo> getBundledIntro() {
+    final File introCourse = new File(ourCoursesDir, "Introduction to Python");
+    if (introCourse.exists()) {
+      final CourseInfo courseInfo = getCourseInfo(introCourse);
+
+      return Collections.singletonList(courseInfo);
+    }
+    return Collections.emptyList();
   }
 
   public static List<CourseInfo> getCoursesFromCache() {
@@ -381,7 +417,7 @@ public class StudyProjectGenerator {
       File[] courseFiles = courseDir.listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
-          return name.equals(COURSE_META_FILE);
+          return name.equals(EduNames.COURSE_META_FILE);
         }
       });
       if (courseFiles.length != 1) {
@@ -404,10 +440,23 @@ public class StudyProjectGenerator {
    */
   @Nullable
   private static CourseInfo getCourseInfo(File courseFile) {
+    if (courseFile.isDirectory()) {
+      File[] courseFiles = courseFile.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.equals(EduNames.COURSE_META_FILE);
+        }
+      });
+      if (courseFiles.length != 1) {
+        LOG.info("More than one or without course files");
+        return null;
+      }
+      courseFile = courseFiles[0];
+    }
     CourseInfo courseInfo = null;
     BufferedReader reader = null;
     try {
-      if (courseFile.getName().equals(COURSE_META_FILE)) {
+      if (courseFile.getName().equals(EduNames.COURSE_META_FILE)) {
         reader = new BufferedReader(new InputStreamReader(new FileInputStream(courseFile), "UTF-8"));
         JsonReader r = new JsonReader(reader);
         JsonParser parser = new JsonParser();

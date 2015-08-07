@@ -159,7 +159,7 @@ public class IdeaLogger extends Logger {
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    if (application != null && application.isComponentsCreated()) {
+    if (application != null && application.isComponentsCreated() && !application.isDisposed()) {
       final String lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
         myLogger.error("Last Action: " + lastPreformedActionId);

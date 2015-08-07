@@ -20,7 +20,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -98,18 +97,6 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     return checkIsSavingDisabled() ? null : new MySaveSession(this, getStorageData());
   }
 
-  @NotNull
-  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) throws IOException {
-    //noinspection ResultOfMethodCallIgnored
-    ioDir.mkdirs();
-    String parentFile = ioDir.getParent();
-    VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.replace(File.separatorChar, '/'));
-    if (parentVirtualFile == null) {
-      throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
-    }
-    return StorageUtil.getFile(ioDir.getName(), parentVirtualFile, requestor);
-  }
-
   private static class MySaveSession extends SaveSessionBase {
     private final DirectoryBasedStorage storage;
     private final DirectoryStorageData originalStorageData;
@@ -173,7 +160,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
 
       if (dir == null || !dir.isValid()) {
-        dir = createDir(storage.myDir, this);
+        dir = StorageUtil.createDir(storage.myDir, this);
       }
 
       if (!dirtyFileNames.isEmpty()) {

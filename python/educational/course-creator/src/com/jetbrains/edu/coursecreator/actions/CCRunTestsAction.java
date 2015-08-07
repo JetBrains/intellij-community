@@ -201,7 +201,7 @@ public abstract class CCRunTestsAction extends AnAction {
       }
       VirtualFile[] taskDirChildren = taskDir.getChildren();
       for (VirtualFile file : taskDirChildren) {
-        if (file.getName().contains("_windows")) {
+        if (file.getName().contains(EduNames.WINDOWS_POSTFIX)) {
           file.delete(project);
         }
         if (CCProjectService.getInstance(project).isTaskFile(file)) {

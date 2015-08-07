@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
@@ -81,7 +82,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
         }
         catch (Exception ignored) {
         }
-        DirectoryUtil.createSubdirectories("hints", projectDir, "\\/");
+        DirectoryUtil.createSubdirectories(EduNames.HINTS, projectDir, "\\/");
         final PsiDirectory lessonDir = CCCreateLesson.createLessonDir(project, 1, null, null);
         CCCreateTask.createTask(null, project, lessonDir, false);
       }

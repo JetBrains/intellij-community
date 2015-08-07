@@ -56,6 +56,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -98,6 +99,7 @@ import com.intellij.util.GCUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -320,12 +322,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
+    boolean reusedProject = true;
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
+      reusedProject = false;
     }
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
     projectManagerEx.openTestProject(ourProject);
+    if (reusedProject) {
+      DumbService.getInstance(ourProject).queueTask(new UnindexedFilesUpdater(ourProject, false));
+    }
 
     MessageBusConnection connection = ourProject.getMessageBus().connect(parentDisposable);
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {

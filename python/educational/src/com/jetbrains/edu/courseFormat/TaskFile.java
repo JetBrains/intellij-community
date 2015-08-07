@@ -28,8 +28,6 @@ public class TaskFile implements StudyOrderable {
   @Expose
   public String text;
   @Transient private Task myTask;
-  @Transient
-  private AnswerPlaceholder mySelectedAnswerPlaceholder = null;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
   private boolean myHighlightErrors = false;
@@ -43,21 +41,6 @@ public class TaskFile implements StudyOrderable {
     Collections.sort(answerPlaceholders, new AnswerPlaceholderComparator());
     for (int i = 0; i < answerPlaceholders.size(); i++) {
       answerPlaceholders.get(i).setIndex(i);
-    }
-  }
-
-  @Nullable
-  @Transient
-  public AnswerPlaceholder getSelectedAnswerPlaceholder() {
-    return mySelectedAnswerPlaceholder;
-  }
-
-  public void setSelectedAnswerPlaceholder(@NotNull final AnswerPlaceholder selectedAnswerPlaceholder) {
-    if (selectedAnswerPlaceholder.getTaskFile() == this) {
-      mySelectedAnswerPlaceholder = selectedAnswerPlaceholder;
-    }
-    else {
-      throw new IllegalArgumentException("Window may be set as selected only in task file which it belongs to");
     }
   }
 
@@ -137,6 +120,7 @@ public class TaskFile implements StudyOrderable {
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
       answerPlaceholdersCopy.add(answerPlaceholderCopy);
     }
+    target.name = source.name;
     target.setAnswerPlaceholders(answerPlaceholdersCopy);
   }
 
@@ -181,7 +165,6 @@ public class TaskFile implements StudyOrderable {
 
     if (getIndex() != that.getIndex()) return false;
     if (name != that.name) return false;
-    if (text != that.text) return false;
 
     final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
     final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();
@@ -198,7 +181,6 @@ public class TaskFile implements StudyOrderable {
   public int hashCode() {
     int result = getIndex();
     result = 31 * result + name.hashCode();
-    result = 31 * result + text.hashCode();
     for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
       result = 31 * result + placeholder.hashCode();
     }

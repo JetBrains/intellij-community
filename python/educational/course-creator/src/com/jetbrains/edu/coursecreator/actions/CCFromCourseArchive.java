@@ -67,7 +67,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
     Reader reader;
     try {
       ZipUtil.unzip(null, new File(basePath), new File(virtualFile.getPath()), null, null, true);
-      reader = new InputStreamReader(new FileInputStream(new File(basePath, "course.json")));
+      reader = new InputStreamReader(new FileInputStream(new File(basePath, EduNames.COURSE_META_FILE)));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       OldCourse oldCourse = gson.fromJson(reader, OldCourse.class);
       Course course = transformOldCourse(oldCourse);
@@ -135,6 +135,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
           final TaskFile taskFile = new TaskFile();
           final OldTaskFile oldTaskFile = entry.getValue();
           taskFile.setIndex(oldTaskFile.myIndex);
+          taskFile.name = entry.getKey();
 
           final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
           for (OldTaskWindow window : oldTaskFile.taskWindows) {
@@ -242,7 +243,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
           public void run() {
             final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getLength()));
             answerPlaceholder.setTaskText(text);
-            final VirtualFile hints = project.getBaseDir().findChild("hints");
+            final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
             if (hints != null) {
               final String hintFile = answerPlaceholder.getHint();
               final VirtualFile virtualFile = hints.findChild(hintFile);

@@ -88,7 +88,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @NotNull
-  protected PySourcePosition convertToPython(String filePath, int line) {
+  protected PySourcePosition convertToPython(@NotNull String filePath, int line) {
     return new PyLocalSourcePosition(filePath, line);
   }
 

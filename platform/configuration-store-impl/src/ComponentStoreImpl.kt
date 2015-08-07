@@ -327,7 +327,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   protected open fun optimizeTestLoading(): Boolean = false
 
-  override fun isReloadPossible(componentNames: Set<String>): Boolean {
+  override fun isReloadPossible(componentNames: MutableSet<String>): Boolean {
     for (componentName in componentNames) {
       val component = myComponents.get(componentName)
       if (component != null && (component !is PersistentStateComponent<*> || !StoreUtil.getStateSpec(component).reloadable)) {
@@ -338,7 +338,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
-  override fun getNotReloadableComponents(componentNames: Collection<String>): Collection<String> {
+  override fun getNotReloadableComponents(componentNames: MutableCollection<String>): Collection<String> {
     var notReloadableComponents: MutableSet<String>? = null
     for (componentName in componentNames) {
       val component = myComponents.get(componentName)
@@ -352,11 +352,11 @@ public abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet<String>()
   }
 
-  override fun reinitComponents(componentNames: Set<String>, reloadData: Boolean) {
-    reinitComponents(componentNames, emptySet<String>(), emptySet<StateStorage>())
+  override fun reinitComponents(componentNames: MutableSet<String>, reloadData: Boolean) {
+    reinitComponents(componentNames, emptySet<String>(), Collections.emptySet<StateStorage>())
   }
 
-  override fun reinitComponent(componentName: String, changedStorages: Set<StateStorage>): Boolean {
+  override fun reinitComponent(componentName: String, changedStorages: MutableSet<StateStorage>): Boolean {
     val component = myComponents.get(componentName) as PersistentStateComponent<*>?
     if (component == null) {
       return false
@@ -370,7 +370,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   protected abstract fun getMessageBus(): MessageBus
 
-  override fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
+  override fun reload(changedStorages: MutableSet<StateStorage>): Collection<String>? {
     if (changedStorages.isEmpty()) {
       return emptySet()
     }
@@ -397,7 +397,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
   }
 
   // used in settings repository plugin
-  public fun reinitComponents(componentNames: Set<String>, notReloadableComponents: Collection<String>, changedStorages: Set<StateStorage>) {
+  public fun reinitComponents(componentNames: Set<String>, notReloadableComponents: Collection<String>, changedStorages: MutableSet<StateStorage>) {
     val messageBus = getMessageBus()
     messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted()
     try {

@@ -16,10 +16,16 @@
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -44,9 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 
 /**
@@ -77,6 +81,7 @@ public class CreateResourceBundleDialogComponent {
   private JPanel myProjectExistLocalesPanel;
   private JButton myAddAllButton;
   private JPanel myResourceBundleNamePanel;
+  private JCheckBox myUseXMLBasedPropertiesCheckBox;
   private CollectionListModel<Locale> myLocalesModel;
 
   public CreateResourceBundleDialogComponent(Project project, PsiDirectory directory, ResourceBundle resourceBundle) {
@@ -85,6 +90,16 @@ public class CreateResourceBundleDialogComponent {
     myResourceBundle = resourceBundle;
     if (resourceBundle != null) {
       myResourceBundleNamePanel.setVisible(false);
+      myUseXMLBasedPropertiesCheckBox.setVisible(false);
+    } else {
+      final String checkBoxSelectedStateKey = getClass() + ".useXmlPropertiesFiles";
+      myUseXMLBasedPropertiesCheckBox.setSelected(PropertiesComponent.getInstance().getBoolean(checkBoxSelectedStateKey, false));
+      myUseXMLBasedPropertiesCheckBox.addContainerListener(new ContainerAdapter() {
+        @Override
+        public void componentRemoved(ContainerEvent e) {
+          PropertiesComponent.getInstance().setValue(checkBoxSelectedStateKey, myUseXMLBasedPropertiesCheckBox.isSelected(), false);
+        }
+      });
     }
   }
 
@@ -124,10 +139,10 @@ public class CreateResourceBundleDialogComponent {
     protected ValidationInfo doValidate() {
       for (String fileName : myComponent.getFileNamesToCreate()) {
         if (!PathUtil.isValidFileName(fileName)) {
-          return new ValidationInfo(String.format("file name for properties file '%s' is invalid", fileName));
+          return new ValidationInfo(String.format("File name for properties file '%s' is invalid", fileName));
         } else {
           if (myDirectory.findFile(fileName) != null) {
-            return new ValidationInfo(String.format("file with name '%s' already exist", fileName));
+            return new ValidationInfo(String.format("File with name '%s' already exist", fileName));
           }
         }
       }
@@ -148,13 +163,32 @@ public class CreateResourceBundleDialogComponent {
 
   private List<PsiFile> createPropertiesFiles() {
     final Set<String> fileNames = getFileNamesToCreate();
-    final List<PsiFile> createdFiles = ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
+    final List<PsiFile> createdFiles = WriteCommandAction.runWriteCommandAction(myProject, new Computable<List<PsiFile>>() {
       @Override
       public List<PsiFile> compute() {
-        return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
+        return ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
           @Override
-          public PsiFile fun(String n) {
-            return myDirectory.createFile(n);
+          public List<PsiFile> compute() {
+            return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
+              @Override
+              public PsiFile fun(String n) {
+                final boolean isXml = myResourceBundle == null
+                        ? myUseXMLBasedPropertiesCheckBox.isSelected()
+                        : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
+                if (isXml) {
+                  FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
+                  LOG.assertTrue(template != null);
+                  try {
+                    return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
+                  }
+                  catch (Exception e) {
+                    throw new RuntimeException(e);
+                  }
+                } else {
+                  return myDirectory.createFile(n);
+                }
+              }
+            });
           }
         });
       }
@@ -166,10 +200,11 @@ public class CreateResourceBundleDialogComponent {
   @NotNull
   private Set<String> getFileNamesToCreate() {
     final String name = getBaseName();
+    final String suffix = getPropertiesFileSuffix();
     return ContainerUtil.map2Set(myLocalesModel.getItems(), new Function<Locale, String>() {
       @Override
       public String fun(Locale locale) {
-        return locale == PropertiesUtil.DEFAULT_LOCALE ? (name + ".properties") : (name + "_" + locale.toString() + ".properties");
+        return name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + locale.toString())) + suffix;
       }
     });
   }
@@ -180,7 +215,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public PropertiesFile fun(PsiFile dom) {
         final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
-        LOG.assertTrue(file != null);
+        LOG.assertTrue(file != null, dom.getName());
         return file;
       }
     });
@@ -225,13 +260,8 @@ public class CreateResourceBundleDialogComponent {
     if (name.isEmpty()) {
       return "Base name is empty";
     }
-    final Set<String> suffixes = ContainerUtil.map2Set(myLocalesModel.getItems(), new Function<Locale, String>() {
-      @Override
-      public String fun(Locale locale) {
-        return name + "_" + locale.toString() + ".properties";
-      }
-    });
-    if (suffixes.isEmpty()) {
+    final Set<String> files = getFileNamesToCreate();
+    if (files.isEmpty()) {
       return "No locales added";
     }
     for (PsiElement element : myDirectory.getChildren()) {
@@ -239,13 +269,20 @@ public class CreateResourceBundleDialogComponent {
         if (element instanceof PropertiesFile) {
           PropertiesFile propertiesFile = (PropertiesFile)element;
           final String propertiesFileName = propertiesFile.getName();
-          if (suffixes.contains(propertiesFileName)) {
+          if (files.contains(propertiesFileName)) {
             return "Some of files already exist";
           }
         }
       }
     }
     return null;
+  }
+
+  private String getPropertiesFileSuffix() {
+    if (myResourceBundle == null) {
+      return myUseXMLBasedPropertiesCheckBox.isSelected() ? ".xml" : ".properties";
+    }
+    return "." + myResourceBundle.getDefaultPropertiesFile().getContainingFile().getFileType().getDefaultExtension();
   }
 
   public JPanel getPanel() {

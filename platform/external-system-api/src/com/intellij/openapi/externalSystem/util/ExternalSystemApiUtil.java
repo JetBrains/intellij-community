@@ -119,14 +119,6 @@ public class ExternalSystemApiUtil {
     }
   };
 
-  @NotNull private static final Comparator<Object> COMPARABLE_GLUE = new Comparator<Object>() {
-    @SuppressWarnings("unchecked")
-    @Override
-    public int compare(Object o1, Object o2) {
-      return ((Comparable)o1).compareTo(o2);
-    }
-  };
-
   @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
     new TransferToEDTQueue<Runnable>("External System queue", new Processor<Runnable>() {
       @Override
@@ -247,7 +239,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
-    MultiMap<Key<?>, DataNode<?>> result = MultiMap.createLinked();
+    MultiMap<Key<?>, DataNode<?>> result = new KeyOrderedMultiMap<Key<?>, DataNode<?>>();
     Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
@@ -294,13 +286,7 @@ public class ExternalSystemApiUtil {
     }
 
     if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
-      List<K> ordered = ContainerUtilRt.newArrayList(result.keySet());
-      Collections.sort(ordered, COMPARABLE_GLUE);
-      MultiMap<K, V> orderedResult = MultiMap.createLinked();
-      for (K k : ordered) {
-        orderedResult.put(k, result.get(k));
-      }
-      return orderedResult;
+      return new KeyOrderedMultiMap<K, V>(result);
     }
     return result;
   }
@@ -872,5 +858,27 @@ public class ExternalSystemApiUtil {
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
     getSettings(project, systemId).subscribe(listener);
+  }
+
+  public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
+
+    public KeyOrderedMultiMap() {
+    }
+
+    public KeyOrderedMultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
+      super(toCopy);
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap() {
+      return new TreeMap<K, Collection<V>>();
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+      return new TreeMap<K, Collection<V>>();
+    }
   }
 }

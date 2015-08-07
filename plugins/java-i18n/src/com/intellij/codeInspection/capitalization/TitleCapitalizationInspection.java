@@ -84,15 +84,18 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitCallExpression(PsiCallExpression expression) {
         PsiMethod psiMethod = expression.resolveMethod();
         if (psiMethod != null) {
-          PsiExpression[] args = expression.getArgumentList().getExpressions();
-          PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
-            PsiParameter parameter = parameters[i];
-            Nls.Capitalization capitalization = getCapitalizationFromAnno(parameter);
-            checkCapitalization(args[i], holder, capitalization);
+          PsiExpressionList argumentList = expression.getArgumentList();
+          if (argumentList != null) {
+            PsiExpression[] args = argumentList.getExpressions();
+            PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
+              PsiParameter parameter = parameters[i];
+              Nls.Capitalization capitalization = getCapitalizationFromAnno(parameter);
+              checkCapitalization(args[i], holder, capitalization);
+            }
           }
         }
       }

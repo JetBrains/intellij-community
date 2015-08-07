@@ -57,7 +57,7 @@ class StorageManagerTest {
   public Test fun `add system-dependent macro`() {
     val key = "\$INVALID$"
     val expansion = "\\temp"
-    thrown.expectMessage("Macro $key set to system-dependent expansion $expansion");
+    thrown.expectMessage("Macro $key set to system-dependent expansion $expansion")
     storageManager.addMacro(key, expansion)
   }
 

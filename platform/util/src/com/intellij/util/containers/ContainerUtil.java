@@ -1880,6 +1880,18 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
+  public static <K, V> void putIfNotNull(final K key, @Nullable Collection<? extends V> value, @NotNull final MultiMap<K, V> result) {
+    if (value != null) {
+      result.putValues(key, value);
+    }
+  }
+
+  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final MultiMap<K, V> result) {
+    if (value != null) {
+      result.putValue(key, value);
+    }
+  }
+
   public static <T> void add(final T element, @NotNull final Collection<T> result, @NotNull final Disposable parentDisposable) {
     if (result.add(element)) {
       Disposer.register(parentDisposable, new Disposable() {

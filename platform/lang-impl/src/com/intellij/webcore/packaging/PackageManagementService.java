@@ -40,6 +40,15 @@ public abstract class PackageManagementService {
   }
 
   /**
+   * @return a negative integer, if the first version is older than the second,
+   *         zero, if the versions are equals,
+   *         a positive integer, if the first version is newer than the second.
+   */
+  public int compareVersions(@NotNull String version1, @NotNull String version2) {
+    return PackageVersionComparator.VERSION_COMPARATOR.compare(version1, version2);
+  }
+
+  /**
    * Returns the list of all packages in all configured repositories. Called in a background thread
    * and may initiate network connections. May return cached data.
    *

@@ -62,8 +62,7 @@ public class ResourceBundleImpl extends ResourceBundle {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (propertiesFile != null) {
           result.add(propertiesFile);
-          if (propertiesFile != myDefaultPropertiesFile && FileUtil.getNameWithoutExtension(propertiesFile.getName()).compareTo(defaultNameWithoutExtension) == 0) {
-            //means 2 default properties files
+          if (!propertiesFile.equals(myDefaultPropertiesFile) && FileUtil.getNameWithoutExtension(propertiesFile.getName()).compareTo(defaultNameWithoutExtension) == 0) {
             return Collections.singletonList(myDefaultPropertiesFile);
           }
         }

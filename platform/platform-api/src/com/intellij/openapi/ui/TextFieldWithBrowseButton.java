@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,9 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     this(new JBTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener, parent);
   }
 
-  public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
+  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                                      @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     installPathCompletion(fileChooserDescriptor);
   }
