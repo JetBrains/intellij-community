@@ -283,20 +283,25 @@ public class FileSystemTreeImpl implements FileSystemTree {
     CommandProcessor.getInstance().executeCommand(
         myProject, new Runnable() {
           public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+              @Override
               public void run() {
-                try {
-                  VirtualFile parent = parentDirectory;
-                  for (String name : StringUtil.tokenize(newFolderName, "\\/")) {
-                    VirtualFile folder = parent.createChildDirectory(this, name);
-                    updateTree();
-                    select(folder, null);
-                    parent = folder;
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  public void run() {
+                    try {
+                      VirtualFile parent = parentDirectory;
+                      for (String name : StringUtil.tokenize(newFolderName, "\\/")) {
+                        VirtualFile folder = parent.createChildDirectory(this, name);
+                        updateTree();
+                        select(folder, null);
+                        parent = folder;
+                      }
+                    }
+                    catch (IOException e) {
+                      failReason[0] = e;
+                    }
                   }
-                }
-                catch (IOException e) {
-                  failReason[0] = e;
-                }
+                });
               }
             });
           }
