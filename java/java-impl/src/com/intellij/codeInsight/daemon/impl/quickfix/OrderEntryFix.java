@@ -316,11 +316,4 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryRoot);
     return VfsUtil.getUrlForLibraryRoot(libraryRoot);
   }
-
-  @NotNull
-  public static List<String> locateAnnotationsJars(@NotNull Module module) {
-    List<String> defaultPaths = JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(module).getLibraryClassesRoots();
-    final LocateLibraryDialog dialog = new LocateLibraryDialog(module, defaultPaths, "JetBrains Annotations");
-    return dialog.showAndGetResult();
-  }
 }
