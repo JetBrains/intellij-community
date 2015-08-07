@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -133,53 +132,47 @@ public class ExternalSystemNotificationManager implements Disposable {
       public void run() {
         if (myProject.isDisposed()) return;
 
-        if (!initializedExternalSystem.contains(externalSystemId)) {
-          final Application app = ApplicationManager.getApplication();
+        final Application app = ApplicationManager.getApplication();
           Runnable action = new Runnable() {
             public void run() {
-              app.runWriteAction(new Runnable() {
-                public void run() {
-                  if (myProject.isDisposed()) return;
-                  ExternalSystemUtil.ensureToolWindowContentInitialized(myProject, externalSystemId);
-                  initializedExternalSystem.add(externalSystemId);
-                }
-              });
+              if (!initializedExternalSystem.contains(externalSystemId)) {
+                app.runWriteAction(new Runnable() {
+                  public void run() {
+                    if (myProject.isDisposed()) return;
+                    ExternalSystemUtil.ensureToolWindowContentInitialized(myProject, externalSystemId);
+                    initializedExternalSystem.add(externalSystemId);
+                  }
+                });
+              }
+              if (myProject.isDisposed()) return;
+              NotificationGroup group;
+              if (notificationData.getBalloonGroup() == null) {
+                ExternalProjectsView externalProjectsView =
+                  ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
+                group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+                        ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
+              }
+              else {
+                final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+                group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+              }
+              if (group == null) return;
+
+              final Notification notification = group.createNotification(
+                notificationData.getTitle(), notificationData.getMessage(),
+                notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+
+              myNotifications.add(notification);
+
+              if (notificationData.isBalloonNotification()) {
+                applyNotification(notification);
+              }
+              else {
+                addMessage(notification, externalSystemId, notificationData);
+              }
             }
           };
-          if (app.isDispatchThread()) {
-            action.run();
-          }
-          else {
-            app.invokeAndWait(action, ModalityState.defaultModalityState());
-          }
-        }
-        if (myProject.isDisposed()) return;
-
-        NotificationGroup group;
-        if (notificationData.getBalloonGroup() == null) {
-          ExternalProjectsView externalProjectsView =
-            ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
-          group = externalProjectsView instanceof ExternalProjectsViewImpl ?
-                  ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
-        }
-        else {
-          final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-          group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
-        }
-        if (group == null) return;
-
-        final Notification notification = group.createNotification(
-          notificationData.getTitle(), notificationData.getMessage(),
-          notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
-
-        myNotifications.add(notification);
-
-        if (notificationData.isBalloonNotification()) {
-          applyNotification(notification);
-        }
-        else {
-          addMessage(notification, externalSystemId, notificationData);
-        }
+        app.invokeLater(action, ModalityState.defaultModalityState(), myProject.getDisposed());
       }
     });
   }
@@ -391,11 +384,5 @@ public class ExternalSystemNotificationManager implements Disposable {
   @Override
   public void dispose() {
     myNotifications.clear();
-    try {
-      // wait until all submitted tasks are executed
-      myUpdater.submit(EmptyRunnable.getInstance()).get();
-    }
-    catch (Exception ignored) {
-    }
   }
 }
