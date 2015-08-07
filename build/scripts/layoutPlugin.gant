@@ -79,7 +79,7 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
 
       def ideModules = modulesWithScopes.findAll { it.second.contains("IDE") }.collect { it.first }
       ideModules.each { String moduleName ->
-        jar("${moduleName}.jar") {
+        jar([name: "${moduleName}.jar", filesetmanifest: "merge"]) {
           noResources(moduleName)
         }
       }
