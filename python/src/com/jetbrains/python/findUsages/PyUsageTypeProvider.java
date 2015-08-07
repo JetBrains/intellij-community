@@ -17,14 +17,13 @@ package com.jetbrains.python.findUsages;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProviderEx;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +57,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
           if (type == null) {
             final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
             if (call != null && element == call.getCallee()) {
-              return checkMatchingSignatureGroup(call, targets, context);
+              return checkMatchingSignatureGroup(call, context);
             }
             return UNTYPED;
           }
@@ -89,18 +88,14 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Nullable
-  private static UsageType checkMatchingSignatureGroup(PyCallExpression call, UsageTarget[] targets, @NotNull TypeEvalContext context) {
-    if (targets.length == 1 && targets[0] instanceof PsiElementUsageTarget) {
-      final PsiElement element = ((PsiElementUsageTarget)targets[0]).getElement();
-      if (element instanceof PyFunction) {
-        PyFunction function = (PyFunction)element;
-        final PyFunction.Modifier modifier = function.getModifier();
-        PyCallExpression.PyMarkedCallee callee = new PyCallExpression.PyMarkedCallee(function, modifier, 1, true);
-        CallArgumentsMappingImpl mapping = new CallArgumentsMappingImpl(call.getArgumentList());
-        mapping.mapArguments(callee, context);
-        if (mapping.hasProblems()) {
-          return SIGNATURE_MISMATCH;
-        }
+  private static UsageType checkMatchingSignatureGroup(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyArgumentList argumentList = call.getArgumentList();
+    final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(resolveContext);
+    if (callee != null && argumentList != null) {
+      final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
+      if (mapping.hasProblems()) {
+        return SIGNATURE_MISMATCH;
       }
     }
     return null;
