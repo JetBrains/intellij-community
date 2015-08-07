@@ -23,6 +23,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,16 +90,17 @@ public class CreateResourceBundleDialogComponent {
     myResourceBundle = resourceBundle;
     if (resourceBundle != null) {
       myResourceBundleNamePanel.setVisible(false);
+      myUseXMLBasedPropertiesCheckBox.setVisible(false);
+    } else {
+      final String checkBoxSelectedStateKey = getClass() + ".useXmlPropertiesFiles";
+      myUseXMLBasedPropertiesCheckBox.setSelected(PropertiesComponent.getInstance().getBoolean(checkBoxSelectedStateKey, false));
+      myUseXMLBasedPropertiesCheckBox.addContainerListener(new ContainerAdapter() {
+        @Override
+        public void componentRemoved(ContainerEvent e) {
+          PropertiesComponent.getInstance().setValue(checkBoxSelectedStateKey, myUseXMLBasedPropertiesCheckBox.isSelected(), false);
+        }
+      });
     }
-
-    final String checkBoxSelectedStateKey = getClass() + ".useXmlPropertiesFiles";
-    myUseXMLBasedPropertiesCheckBox.setSelected(PropertiesComponent.getInstance().getBoolean(checkBoxSelectedStateKey, false));
-    myUseXMLBasedPropertiesCheckBox.addContainerListener(new ContainerAdapter() {
-      @Override
-      public void componentRemoved(ContainerEvent e) {
-        PropertiesComponent.getInstance().setValue(checkBoxSelectedStateKey, myUseXMLBasedPropertiesCheckBox.isSelected(), false);
-      }
-    });
   }
 
   public static class Dialog extends DialogWrapper {
@@ -170,7 +172,10 @@ public class CreateResourceBundleDialogComponent {
             return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
               @Override
               public PsiFile fun(String n) {
-                if (myUseXMLBasedPropertiesCheckBox.isSelected()) {
+                final boolean isXml = myResourceBundle == null
+                        ? myUseXMLBasedPropertiesCheckBox.isSelected()
+                        : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
+                if (isXml) {
                   FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
                   LOG.assertTrue(template != null);
                   try {
@@ -195,10 +200,11 @@ public class CreateResourceBundleDialogComponent {
   @NotNull
   private Set<String> getFileNamesToCreate() {
     final String name = getBaseName();
+    final String suffix = getPropertiesFileSuffix();
     return ContainerUtil.map2Set(myLocalesModel.getItems(), new Function<Locale, String>() {
       @Override
       public String fun(Locale locale) {
-        return name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + locale.toString())) + getPropertiesFileSuffix();
+        return name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + locale.toString())) + suffix;
       }
     });
   }
@@ -209,7 +215,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public PropertiesFile fun(PsiFile dom) {
         final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
-        LOG.assertTrue(file != null);
+        LOG.assertTrue(file != null, dom.getName());
         return file;
       }
     });
@@ -273,7 +279,10 @@ public class CreateResourceBundleDialogComponent {
   }
 
   private String getPropertiesFileSuffix() {
-    return myUseXMLBasedPropertiesCheckBox.isSelected() ? ".xml" : ".properties";
+    if (myResourceBundle == null) {
+      return myUseXMLBasedPropertiesCheckBox.isSelected() ? ".xml" : ".properties";
+    }
+    return "." + myResourceBundle.getDefaultPropertiesFile().getContainingFile().getFileType().getDefaultExtension();
   }
 
   public JPanel getPanel() {
