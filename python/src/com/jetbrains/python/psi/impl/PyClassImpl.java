@@ -73,13 +73,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   private List<PyTargetExpression> myInstanceAttributes;
-  private final NotNullLazyValue<ParameterizedCachedValue<Boolean, TypeEvalContext>> myNewStyle = new NotNullLazyValue<ParameterizedCachedValue<Boolean,TypeEvalContext>>() {
-    @NotNull
-    @Override
-    protected ParameterizedCachedValue<Boolean, TypeEvalContext> compute() {
-      return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(new NewStyleCachedValueProvider(), false);
-    }
-  };
 
   private volatile Map<String, Property> myPropertyCache;
 
