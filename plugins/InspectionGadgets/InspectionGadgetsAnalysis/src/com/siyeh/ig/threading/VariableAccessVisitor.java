@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Stack;
 
 class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
@@ -44,6 +45,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   private final Set<PsiMethod> usedMethods = new HashSet<PsiMethod>();
   private boolean m_inInitializer;
   private int m_inSynchronizedContextCount;
+  private final Stack<Integer> contextStack = new Stack<Integer>();
   private boolean privateMethodUsagesCalculated;
   private final boolean countGettersAndSetters;
 
@@ -56,14 +58,16 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitClass(PsiClass classToVisit) {
     calculatePrivateMethodUsagesIfNecessary();
     if (!classToVisit.equals(aClass)) {
-      m_inSynchronizedContextCount -= 1000;
+      contextStack.push(m_inSynchronizedContextCount);
+      m_inSynchronizedContextCount = 0;
     }
     super.visitClass(classToVisit);
   }
 
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
-    m_inSynchronizedContextCount -= 1000;
+    contextStack.push(m_inSynchronizedContextCount);
+    m_inSynchronizedContextCount = 0;
     super.visitLambdaExpression(expression);
   }
 
@@ -127,7 +131,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitCodeBlock(PsiCodeBlock block) {
     if (block.getParent() instanceof PsiSynchronizedStatement) {
-      m_inSynchronizedContextCount ++;
+      m_inSynchronizedContextCount++;
     }
     super.visitCodeBlock(block);
   }
@@ -137,7 +141,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitAssertStatement(PsiAssertStatement statement) {
     final PsiExpression condition = statement.getAssertCondition();
     if (SynchronizationUtil.isCallToHoldsLock(condition)) {
-      m_inSynchronizedContextCount ++;
+      m_inSynchronizedContextCount++;
       PsiElement codeBlock = statement.getParent();
       if (codeBlock != null) {
         codeBlock.putUserData(CODE_BLOCK_CONTAINS_HOLDS_LOCK_CALL, true);
@@ -349,11 +353,11 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
       m_inInitializer = false;
     }
     if (element instanceof PsiClass && !element.equals(aClass) || element instanceof PsiLambdaExpression) {
-      m_inSynchronizedContextCount += 1000;
+      m_inSynchronizedContextCount = contextStack.pop();
     }
     if (element instanceof PsiCodeBlock && element.getParent() instanceof PsiSynchronizedStatement
         || element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-      m_inSynchronizedContextCount --;
+      m_inSynchronizedContextCount--;
     }
     if (element.getUserData(CODE_BLOCK_CONTAINS_HOLDS_LOCK_CALL) != null) {
       m_inSynchronizedContextCount --;
