@@ -26,10 +26,6 @@ public interface VcsLogUi {
   @NotNull
   VcsLogDataPack getDataPack();
 
-  void addHighlighter(@NotNull VcsLogHighlighter highlighter);
-
-  void removeHighlighter(@NotNull VcsLogHighlighter highlighter);
-
   void addLogListener(@NotNull VcsLogListener listener);
 
   void removeLogListener(@NotNull VcsLogListener listener);

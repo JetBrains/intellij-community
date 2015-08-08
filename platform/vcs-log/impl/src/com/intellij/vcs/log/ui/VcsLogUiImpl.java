@@ -323,18 +323,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @Override
-  public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
-    getTable().addHighlighter(highlighter);
-    repaintUI();
-  }
-
-  @Override
-  public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
-    getTable().removeHighlighter(highlighter);
-    repaintUI();
-  }
-
-  @Override
   public void addLogListener(@NotNull VcsLogListener listener) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myLogListeners.add(listener);
