@@ -1,4 +1,8 @@
 // "Generate overloaded method with default parameter value" "true"
 interface Test {
-  void foo(int i<caret>i);
+    default void foo() {
+      foo();
+  }
+
+    void foo(int ii);
 }
