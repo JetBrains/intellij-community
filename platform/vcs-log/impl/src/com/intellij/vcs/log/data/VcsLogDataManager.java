@@ -214,6 +214,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
     return mySettings;
   }
 
+  @NotNull
   public ContainingBranchesGetter getContainingBranchesGetter() {
     return myContainingBranchesGetter;
   }
