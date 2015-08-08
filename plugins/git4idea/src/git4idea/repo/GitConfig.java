@@ -51,7 +51,7 @@ public class GitConfig {
 
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
-  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote(?: \"(.*)\")?");
+  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"");
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"");
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"");
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch");
@@ -246,13 +246,11 @@ public class GitConfig {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
 
-      if (sectionName.startsWith("remote") || sectionName.startsWith("svn-remote")) {
-        Remote remote = parseRemoteSection(sectionName, section, classLoader);
-        if (remote != null) {
-          remotes.add(remote);
-        }
+      Remote remote = parseRemoteSection(sectionName, section, classLoader);
+      if (remote != null) {
+        remotes.add(remote);
       }
-      else if (sectionName.startsWith("url")) {
+      else {
         Url url = parseUrlSection(sectionName, section, classLoader);
         if (url != null) {
           urls.add(url);
@@ -372,27 +370,19 @@ public class GitConfig {
   private static Remote parseRemoteSection(@NotNull String sectionName,
                                            @NotNull Profile.Section section,
                                            @NotNull ClassLoader classLoader) {
-    RemoteBean remoteBean = section.as(RemoteBean.class, classLoader);
     Matcher matcher = REMOTE_SECTION.matcher(sectionName);
-    if (matcher.matches()) {
-      String remoteName = matcher.group(1);
-      if (remoteName == null) { // e.g. remote.pushdefault generic setting not specific to any remote
-        return null;
-      }
-      return new Remote(remoteName, remoteBean);
+    if (matcher.matches() && matcher.groupCount() == 1) {
+      return new Remote(matcher.group(1), section.as(RemoteBean.class, classLoader));
     }
-    LOG.error(String.format("Invalid remote section format in .git/config. sectionName: %s section: %s", sectionName, section));
     return null;
   }
 
   @Nullable
   private static Url parseUrlSection(@NotNull String sectionName, @NotNull Profile.Section section, @NotNull ClassLoader classLoader) {
-    UrlBean urlBean = section.as(UrlBean.class, classLoader);
     Matcher matcher = URL_SECTION.matcher(sectionName);
-    if (matcher.matches()) {
-      return new Url(matcher.group(1), urlBean);
+    if (matcher.matches() && matcher.groupCount() == 1) {
+      return new Url(matcher.group(1), section.as(UrlBean.class, classLoader));
     }
-    LOG.error(String.format("Invalid url section format in .git/config. sectionName: %s section: %s", sectionName, section));
     return null;
   }
 
