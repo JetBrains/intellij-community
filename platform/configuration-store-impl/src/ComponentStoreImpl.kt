@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -196,20 +197,22 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return null
     }
 
-    try {
-      getDefaultState(component, componentName, javaClass<Element>())?.let { component.readExternal(it) }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
+    runReadAction {
+      try {
+        getDefaultState(component, componentName, javaClass<Element>())?.let { component.readExternal(it) }
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
 
-    val element = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null) ?: return null
-    try {
-      component.readExternal(element)
-    }
-    catch (e: InvalidDataException) {
-      LOG.error(e)
-      return null
+      val element = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null) ?: return null
+      try {
+        component.readExternal(element)
+      }
+      catch (e: InvalidDataException) {
+        LOG.error(e)
+        return null
+      }
     }
     return componentName
   }
@@ -240,31 +243,33 @@ public abstract class ComponentStoreImpl : IComponentStore {
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
     val stateStorageChooser = component as? StateStorageChooserEx
-    for (storageSpec in storageSpecs) {
-      val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
-      if (resolution === Resolution.SKIP) {
-        continue
-      }
-
-      val storage = getStateStorageManager().getStateStorage(storageSpec)
-      var state = storage.getState(component, name, stateClass, defaultState)
-      if (state == null) {
-        if (changedStorages != null && changedStorages.contains(storage)) {
-          // state will be null if file deleted
-          // we must create empty (initial) state to reinit component
-          state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
-        }
-        else {
+    runReadAction {
+      for (storageSpec in storageSpecs) {
+        val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
+        if (resolution === Resolution.SKIP) {
           continue
         }
+
+        val storage = getStateStorageManager().getStateStorage(storageSpec)
+        var state = storage.getState(component, name, stateClass, defaultState)
+        if (state == null) {
+          if (changedStorages != null && changedStorages.contains(storage)) {
+            // state will be null if file deleted
+            // we must create empty (initial) state to reinit component
+            state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
+          }
+          else {
+            continue
+          }
+        }
+
+        component.loadState(state)
+        return name
       }
 
-      component.loadState(state)
-      return name
-    }
-
-    if (defaultState != null) {
-      component.loadState(defaultState)
+      if (defaultState != null) {
+        component.loadState(defaultState)
+      }
     }
     return name
   }

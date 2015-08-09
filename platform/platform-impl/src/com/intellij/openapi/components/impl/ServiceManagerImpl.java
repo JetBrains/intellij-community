@@ -288,6 +288,6 @@ public class ServiceManagerImpl implements BaseComponent {
   }
 
   public static boolean isUseReadActionToInitService() {
-    return Registry.is("use.read.action.to.init.service", false);
+    return Registry.is("use.read.action.to.init.service", true);
   }
 }
