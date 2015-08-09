@@ -26,7 +26,7 @@ import java.io.IOException;
 public class ProjectStoreImplIdeaDirTest extends ProjectStoreBaseTestCase {
   @Override
   protected File getIprFile() throws IOException {
-    final File projectDir = FileUtil.createTempDirectory(getTestName(true), "project");
+    File projectDir = FileUtil.createTempDirectory(getTestName(true), "project");
     File ideaDir = new File(projectDir, Project.DIRECTORY_STORE_FOLDER);
     assertTrue(ideaDir.mkdir() || ideaDir.isDirectory());
     File iprFile = new File(ideaDir, "misc.xml");
@@ -39,8 +39,8 @@ public class ProjectStoreImplIdeaDirTest extends ProjectStoreBaseTestCase {
   public void testLoadFromDirectoryStorage() throws Exception {
     ((ProjectEx)myProject).setOptimiseTestLoadSpeed(false);
 
-    final TestIprComponent testIprComponent = new TestIprComponent();
-    ComponentsPackage.getStateStore(myProject).initComponent(testIprComponent, false);
-    assertNotNull(testIprComponent.myState);
+    TestComponent testComponent = new TestComponent();
+    ComponentsPackage.getStateStore(myProject).initComponent(testComponent, false);
+    assertNotNull(testComponent.myState);
   }
 }

@@ -34,8 +34,8 @@ public class ProjectStoreImplIprFileTest extends ProjectStoreBaseTestCase {
 
     ((ProjectEx)myProject).setOptimiseTestLoadSpeed(false);
 
-    final TestIprComponent testIprComponent = new TestIprComponent();
-    ComponentsPackage.getStateStore(myProject).initComponent(testIprComponent, false);
-    assertNotNull(testIprComponent.myState);
+    final TestComponent testComponent = new TestComponent();
+    ComponentsPackage.getStateStore(myProject).initComponent(testComponent, false);
+    assertNotNull(testComponent.myState);
   }
 }

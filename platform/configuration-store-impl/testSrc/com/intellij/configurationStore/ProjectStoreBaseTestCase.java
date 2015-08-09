@@ -20,8 +20,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.JDOMBuilder;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestCase;
 
@@ -35,23 +33,16 @@ public abstract class ProjectStoreBaseTestCase extends PlatformTestCase {
   }
 
   protected byte[] getIprFileContent() throws UnsupportedEncodingException {
-    final String iprContent = JDOMUtil.writeDocument(
-      JDOMBuilder.document(JDOMBuilder.tag("project",
-                   JDOMBuilder.attr("version", "4"),
-                   JDOMBuilder.tag("component", JDOMBuilder.attr("name", "TestIprComponent"),
-                       JDOMBuilder.tag("option", JDOMBuilder.attr("name", "VALUE"), JDOMBuilder.attr("value", "true")))
-      )),
-      "\n");
-    return iprContent.getBytes(CharsetToolkit.UTF8);
+    return ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<project version=\"4\">" +
+            "  <component name=\"TestComponent\">" +
+            "    <option name=\"VALUE\" value=\"true\"/>" +
+            "  </component>" +
+            "</project>").getBytes(CharsetToolkit.UTF8);
   }
 
-  @State(
-    name = "TestIprComponent",
-    storages = {
-      @Storage(file = "$PROJECT_FILE$")
-    }
-  )
-  public static class TestIprComponent implements PersistentStateComponent<DataBean> {
+  @State(name = "TestComponent", storages = @Storage(file = "$PROJECT_FILE$"))
+  public static class TestComponent implements PersistentStateComponent<DataBean> {
     ProjectStoreBaseTestCase.DataBean myState;
 
     @Override
