@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.stepic;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("MethodMayBeStatic")
 @State(
-  name = "GithubSettings",
+  name = "StudySettings",
   storages = {@Storage(
     file = StoragePathMacros.APP_CONFIG + "/stepic_settings.xml")})
 public class StudySettings implements PersistentStateComponent<StudySettings.State> {

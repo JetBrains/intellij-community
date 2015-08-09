@@ -47,7 +47,7 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.learning.stepic.StudySettings;
+import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.EduStepicConnector;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;

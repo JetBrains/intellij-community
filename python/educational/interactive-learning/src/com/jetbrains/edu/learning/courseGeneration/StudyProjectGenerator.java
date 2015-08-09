@@ -467,12 +467,12 @@ public class StudyProjectGenerator {
         courseInfo = new CourseInfo();
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
-        final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
+        final ArrayList<CourseInfo.Author> authors = new ArrayList<CourseInfo.Author>();
         for (JsonElement author : courseAuthors) {
-          final String authorAsString = author.getAsString();
-          instructors.add(new CourseInfo.Instructor(authorAsString));
+          final JsonObject authorAsJsonObject = author.getAsJsonObject();
+          authors.add(new CourseInfo.Author(authorAsJsonObject.get("first_name").getAsString(), authorAsJsonObject.get("last_name").getAsString()));
         }
-        courseInfo.setInstructors(instructors);
+        courseInfo.setAuthors(authors);
       }
     }
     catch (Exception e) {

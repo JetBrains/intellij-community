@@ -16,7 +16,7 @@ import com.intellij.util.Consumer;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.StudySettings;
+import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
 import icons.InteractiveLearningIcons;
@@ -58,10 +58,11 @@ public class StudyNewProjectPanel{
       for (CourseInfo courseInfo : myAvailableCourses) {
         myCoursesComboBox.addItem(courseInfo);
       }
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(StudyUtils.getFirst(myAvailableCourses).getInstructors()));
-      myDescriptionLabel.setText(StudyUtils.getFirst(myAvailableCourses).getDescription());
+      final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getAuthors()));
+      myDescriptionLabel.setText(selectedCourse.getDescription());
       //setting the first course in list as selected
-      myGenerator.setSelectedCourse(StudyUtils.getFirst(myAvailableCourses));
+      myGenerator.setSelectedCourse(selectedCourse);
       setOK();
     }
     initListeners();
@@ -208,7 +209,7 @@ public class StudyNewProjectPanel{
         myDescriptionLabel.setText("");
         return;
       }
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getInstructors()));
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getAuthors()));
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);
