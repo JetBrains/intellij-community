@@ -195,7 +195,7 @@ public class StudyCheckAction extends DumbAwareAction {
     return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
       @Override
       public void onSuccess() {
-        StudyUtils.updateStudyToolWindow(project);
+        StudyUtils.updateToolWindows(project);
         drawAllPlaceholders(project, task, taskDir);
         ProjectView.getInstance(project).refresh();
         EduUtils.deleteWindowDescriptions(task, taskDir);

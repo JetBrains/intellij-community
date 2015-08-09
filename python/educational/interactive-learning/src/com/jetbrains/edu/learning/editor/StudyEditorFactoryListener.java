@@ -82,7 +82,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
                   if (studyToolWindow != null) {
-                    StudyUtils.updateStudyToolWindow(project);
+                    StudyUtils.updateToolWindows(project);
                     studyToolWindow.show(null);
                   }
 

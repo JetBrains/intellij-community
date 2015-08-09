@@ -32,6 +32,7 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
+import com.jetbrains.edu.learning.ui.ProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,11 +86,15 @@ public class StudyProjectComponent implements ProjectComponent {
   public void registerStudyToolwindow(@Nullable final Course course) {
     if (course != null && "PyCharm".equals(course.getCourseType())) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      registerToolWindow(toolWindowManager);
+      registerToolWindows(toolWindowManager);
       final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+      final ToolWindow progressToolWindow = toolWindowManager.getToolWindow(ProgressToolWindowFactory.ID);
       if (studyToolWindow != null) {
-        StudyUtils.updateStudyToolWindow(myProject);
         studyToolWindow.show(null);
+      }
+      if (progressToolWindow != null) {
+        StudyUtils.updateToolWindows(myProject);
+        progressToolWindow.show(null);
       }
     }
   }
@@ -130,10 +135,14 @@ public class StudyProjectComponent implements ProjectComponent {
     addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID, false);
   }
 
-  private void registerToolWindow(@NotNull final ToolWindowManager toolWindowManager) {
+  private void registerToolWindows(@NotNull final ToolWindowManager toolWindowManager) {
     final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
     if (toolWindow == null) {
       toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
+    }
+    ToolWindow progressToolWindow = toolWindowManager.getToolWindow(ProgressToolWindowFactory.ID);
+    if (progressToolWindow == null) {
+      toolWindowManager.registerToolWindow(ProgressToolWindowFactory.ID, true, ToolWindowAnchor.LEFT, myProject, true, true);
     }
   }
 
@@ -210,6 +219,10 @@ public class StudyProjectComponent implements ProjectComponent {
       final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
       if (toolWindow != null) {
         toolWindow.getContentManager().removeAllContents(false);
+      }
+      final ToolWindow progressToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ProgressToolWindowFactory.ID);
+      if (progressToolWindow != null) {
+        progressToolWindow.getContentManager().removeAllContents(false);
       }
       if (!myDeletedShortcuts.isEmpty()) {
         for (Map.Entry<String, String> shortcut : myDeletedShortcuts.entrySet()) {
