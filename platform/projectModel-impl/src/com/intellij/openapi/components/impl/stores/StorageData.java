@@ -15,21 +15,21 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.containers.StringInterner;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
 
@@ -57,32 +57,7 @@ public class StorageData extends StorageDataBase {
   }
 
   public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
-    if (pathMacroSubstitutor != null) {
-      pathMacroSubstitutor.expandPaths(rootElement);
-    }
-
-    StringInterner interner = intern ? new StringInterner() : null;
-    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
-      Element element = iterator.next();
-      String name = getComponentNameIfValid(element);
-      if (name == null || !(element.getAttributes().size() > 1 || !element.getChildren().isEmpty())) {
-        continue;
-      }
-
-      iterator.remove();
-      if (interner != null) {
-        JDOMUtil.internElement(element, interner);
-      }
-
-      myStates.put(name, element);
-
-      if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
-        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
-      }
-
-      // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
-      element.removeAttribute(NAME);
-    }
+    load(myStates, rootElement, pathMacroSubstitutor, intern);
   }
 
   @Nullable

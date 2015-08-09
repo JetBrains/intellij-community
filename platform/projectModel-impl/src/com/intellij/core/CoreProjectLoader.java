@@ -20,7 +20,8 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
-import com.intellij.openapi.components.impl.stores.StorageData;
+import com.intellij.openapi.components.impl.stores.StateMap;
+import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -63,7 +64,7 @@ public class CoreProjectLoader {
     if (modulesXml == null)
       throw new FileNotFoundException("Missing 'modules.xml' in " + dotIdea.getPath());
 
-    StorageData storageData = loadStorageFile(project, modulesXml);
+    StateMap storageData = loadStorageFile(project, modulesXml);
     final Element moduleManagerState = storageData.getState("ProjectModuleManager");
     if (moduleManagerState == null) {
       throw new JDOMException("cannot find ProjectModuleManager state in modules.xml");
@@ -94,9 +95,9 @@ public class CoreProjectLoader {
   }
 
   @NotNull
-  public static StorageData loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    StorageData storageData = new StorageData();
-    storageData.load(JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
-    return storageData;
+  public static StateMap loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
+    StateMap states = new StateMap();
+    StorageDataBase.load(states, JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
+    return states;
   }
 }

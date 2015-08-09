@@ -20,6 +20,7 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
+import com.intellij.openapi.components.impl.stores.StorageData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
@@ -36,7 +37,7 @@ class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, 
   private class MyStateStorageManagerExternalizationSession(storageManager: StateStorageManagerImpl) : StateStorageManagerImpl.StateStorageManagerExternalizationSession(storageManager) {
     override fun createSaveSessions(): List<StateStorage.SaveSession> {
       val storage = ContainerUtil.getFirstItem(storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)))
-      if (storage != null && storage.getStorageData().isDirty()) {
+      if (storage != null && (storage.getStorageData() as StorageData).isDirty()) {
         // force XmlElementStorageSaveSession creation
         getExternalizationSession(storage)
       }

@@ -30,7 +30,7 @@ public interface FileStorage extends StateStorage {
   File getFile();
 
   // todo remove
-  StorageData getStorageData();
+  StorageDataBase getStorageData();
 
   // todo remove
   void setFile(@Nullable VirtualFile file, @Nullable File ioFileIfChanged);
