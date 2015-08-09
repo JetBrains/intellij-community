@@ -16,14 +16,15 @@ import com.intellij.util.Consumer;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import com.jetbrains.edu.stepic.StudySettings;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ public class StudyNewProjectPanel{
   public StudyNewProjectPanel(StudyProjectGenerator generator) {
     myGenerator = generator;
     myAvailableCourses = myGenerator.getCourses(false);
+    myBrowseButton.setPreferredSize(new Dimension(28, 28));
+    myRefreshButton.setPreferredSize(new Dimension(28, 28));
     if (myAvailableCourses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
