@@ -185,13 +185,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     val file = File(filePath)
 
     if (isUseVfsListener == ThreeState.UNSURE) {
-      if (streamProvider != null && streamProvider!!.enabled) {
-        isUseVfsListener = ThreeState.NO
-      }
-      else {
-        isUseVfsListener = ThreeState.YES
-//        addVfsChangesListener(componentManager!!)
-      }
+      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.enabled)
     }
 
     //noinspection deprecation
@@ -207,7 +201,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
     val storage = MyFileStorage(this, file, fileSpec, rootTagName, effectiveRoamingType, getMacroSubstitutor(fileSpec), streamProvider)
-    virtualFileTracker?.put(filePath.normalizePath(), storage)
+    if (isUseVfsListener == ThreeState.YES) {
+      virtualFileTracker?.put(filePath.normalizePath(), storage)
+    }
     return storage
   }
 
@@ -217,9 +213,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                               file: File,
                               fileSpec: String,
                               rootElementName: String,
-                              roamingType: RoamingType? = null,
+                              roamingType: RoamingType,
                               pathMacroManager: TrackingPathMacroSubstitutor? = null,
-                              streamProvider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, streamProvider), StorageVirtualFileTracker.TrackedStorage {
+                              provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = storageManager.isUseXmlProlog
 
