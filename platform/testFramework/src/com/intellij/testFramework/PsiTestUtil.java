@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -299,10 +299,10 @@ public class PsiTestUtil {
                                            final String libName,
                                            final List<VirtualFile> classesRoots,
                                            final List<VirtualFile> sourceRoots) {
+    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
     RunResult<Library> result = new WriteAction<Library>() {
       @Override
       protected void run(@NotNull Result<Library> result) throws Throwable {
-        LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
         Library library = libraryTable.createLibrary(libName);
         Library.ModifiableModel libraryModel = library.getModifiableModel();
         try {
