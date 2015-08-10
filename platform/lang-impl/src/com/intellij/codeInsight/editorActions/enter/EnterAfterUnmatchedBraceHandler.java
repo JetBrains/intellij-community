@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,27 +49,106 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler");
 
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
-    Document document = editor.getDocument();
-    CharSequence text = document.getCharsSequence();
-    Project project = file.getProject();
-    int caretOffset = caretOffsetRef.get().intValue();
-    int unmatchedLBracesNumber = getUnmatchedLBracesNumberBefore(editor, caretOffset, file.getFileType());
-    if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER || unmatchedLBracesNumber <= 0) {
-      return Result.Continue;
+  public Result preprocessEnter(@NotNull final PsiFile file,
+                                @NotNull final Editor editor,
+                                @NotNull final Ref<Integer> caretOffsetRef,
+                                @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext,
+                                final EditorActionHandler originalHandler) {
+
+    int caretOffset = caretOffsetRef.get();
+    int maxRBraceCount = getMaxRBraceCount(file, editor, caretOffset);
+    if (maxRBraceCount > 0 && insertRBraces(file, editor, caretOffset,
+                                            getRBraceOffset(file, editor, caretOffset),
+                                            adjustRBraceCountForPosition(editor, caretOffset, maxRBraceCount))) {
+      return Result.DefaultForceIndent;
     }
-    
-    int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-    if (offset < document.getTextLength()) {
-      char c = text.charAt(offset);
-      if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%' && c != '<' && c != '?') {
-        offset = calculateOffsetToInsertClosingBrace(file, text, offset);
-        //offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
+    return Result.Continue;
+  }
+
+  /**
+   * Calculates the maximum number of '}' that can be inserted by handler.
+   * Can return <code>0</code> or less in custom implementation to skip '}' insertion in the <code>preprocessEnter</code> call
+   * and switch to default implementation.
+   *
+   * @param file        target PSI file
+   * @param editor      target editor
+   * @param caretOffset target caret offset
+   * @return maximum number of '}' that can be inserted by handler, <code>0</code> or less to switch to default implementation
+   */
+  protected int getMaxRBraceCount(@NotNull final PsiFile file, @NotNull final Editor editor, int caretOffset) {
+    if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER) {
+      return 0;
+    }
+    return Math.max(0, getUnmatchedLBracesNumberBefore(editor, caretOffset, file.getFileType()));
+  }
+
+  /**
+   * Calculates the precise number of '}' that have be inserted by handler.
+   *
+   * @param editor      target editor
+   * @param caretOffset target caret offset
+   * @param maxRBraceCount the maximum number of '}' for insert at position, it always positive
+   * @return number of '}' that has to be inserted by handler, it has to positive
+   */
+  protected int adjustRBraceCountForPosition(@NotNull final Editor editor, int caretOffset, int maxRBraceCount) {
+    assert maxRBraceCount > 0;
+
+    CharSequence text = editor.getDocument().getCharsSequence();
+    int bracesToInsert = 0;
+    outer:
+    for (int i = caretOffset - 1; i >= 0 && bracesToInsert < maxRBraceCount; --i) {
+      switch (text.charAt(i)) {
+        case ' ':
+        case '\n':
+        case '\t':
+          continue;
+        case '{':
+          bracesToInsert++;
+          break;
+        default:
+          break outer;
       }
     }
-    offset = Math.min(offset, document.getTextLength());
+    return Math.max(bracesToInsert, 1);
+  }
 
+  /**
+   * Calculates the position for insertion of one or more '}'.
+   *
+   * @param file        target PSI file
+   * @param editor      target editor
+   * @param caretOffset target caret offset
+   * @return the position between <code>caretOffset</code> and the end of file
+   */
+  protected int getRBraceOffset(@NotNull final PsiFile file, @NotNull final Editor editor, int caretOffset) {
+    CharSequence text = editor.getDocument().getCharsSequence();
+    int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
+    final int fileLength = text.length();
+    if (offset < fileLength && ")];,%<?".indexOf(text.charAt(offset)) < 0) {
+      offset = calculateOffsetToInsertClosingBrace(file, text, offset);
+      //offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
+    }
+    return Math.min(offset, fileLength);
+  }
+
+  /**
+   * Inserts the <code>rBracesCount</code> of '}' at the <code>rBracesInsertOffset</code> position and formats the code block.
+   *
+   * @param file                target PSI file
+   * @param editor              target editor
+   * @param caretOffset         target caret offset
+   * @param rBracesInsertOffset target position to insert
+   * @param rBracesCount        count of '}' to insert
+   * @return true for success
+   */
+  protected boolean insertRBraces(@NotNull PsiFile file,
+                                  @NotNull Editor editor,
+                                  int caretOffset,
+                                  int rBracesInsertOffset,
+                                  int rBracesCount) {
+    final Document document = editor.getDocument();
+    document.insertString(rBracesInsertOffset, "\n" + StringUtil.repeatSymbol('}', rBracesCount));
     // We need to adjust indents of the text that will be moved, hence, need to insert preliminary line feed.
     // Example:
     //     if (test1()) {
@@ -85,27 +164,14 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     // That is formatted incorrectly because line feed between 'else' and 'if' is not inserted yet (whole 'if' block is indent anchor
     // to 'if' code block('{}')). So, we insert temporary line feed between 'if' and 'else', correct indent and remove that temporary
     // line feed.
-    int bracesToInsert = 0;
-    outer:
-    for (int i = caretOffset - 1; unmatchedLBracesNumber > 0 && i >= 0 && bracesToInsert < unmatchedLBracesNumber; i--) {
-      char c = text.charAt(i);
-      switch (c) {
-        case ' ':
-        case '\n':
-        case '\t':
-          continue;
-        case '{': bracesToInsert++; break;
-        default: break outer;
-      }
-    }
-    bracesToInsert = Math.max(bracesToInsert, 1);
-    document.insertString(offset, "\n" + StringUtil.repeatSymbol('}', bracesToInsert));
     document.insertString(caretOffset, "\n");
-    PsiDocumentManager.getInstance(project).commitDocument(document);
+
+    Project project = file.getProject();
     long stamp = document.getModificationStamp();
     boolean closingBraceIndentAdjusted;
     try {
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(caretOffset, offset + 2));
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(caretOffset, rBracesInsertOffset + 2));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -118,10 +184,11 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     // There is a possible case that formatter was unable to adjust line indent for the closing brace (that is the case for plain text
     // document for example). Hence, we're trying to do the manually.
     if (!closingBraceIndentAdjusted) {
-      int line = document.getLineNumber(offset);
+      int line = document.getLineNumber(rBracesInsertOffset);
       StringBuilder buffer = new StringBuilder();
       int start = document.getLineStartOffset(line);
       int end = document.getLineEndOffset(line);
+      final CharSequence text = document.getCharsSequence();
       for (int i = start; i < end; i++) {
         char c = text.charAt(i);
         if (c != ' ' && c != '\t') {
@@ -132,18 +199,17 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
         }
       }
       if (buffer.length() > 0) {
-        document.insertString(offset + 1, buffer);
+        document.insertString(rBracesInsertOffset + 1, buffer);
       }
     }
-
-    return Result.DefaultForceIndent;
+    return true;
   }
 
   /**
    * Current handler inserts closing curly brace (right brace) if necessary. There is a possible case that it should be located
    * more than one line forward.
    * <p/>
-   * <b>Example</b> 
+   * <b>Example</b>
    * <pre>
    *     if (test1()) {
    *     } else {<caret> if (test2()) {
@@ -165,11 +231,11 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * <p/>
    * In essence it inspects PSI structure and finds PSE elements with the max length that starts at caret offset. End offset
    * of that element is used as an insertion point.
-   * 
-   * @param file    target PSI file
-   * @param text    text from the given file
-   * @param offset  target offset where line feed will be inserted
-   * @return        offset to use for inserting closing brace
+   *
+   * @param file   target PSI file
+   * @param text   text from the given file
+   * @param offset target offset where line feed will be inserted
+   * @return offset to use for inserting closing brace
    */
   protected int calculateOffsetToInsertClosingBrace(PsiFile file, CharSequence text, final int offset) {
     PsiElement element = PsiUtilCore.getElementAtOffset(file, offset);
@@ -187,24 +253,22 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     if (element.getTextOffset() != offset) {
       return CharArrayUtil.shiftForwardUntil(text, offset, "\n");
     }
-    else {
-      return element.getTextRange().getEndOffset();
-    }
+    return element.getTextRange().getEndOffset();
   }
-  
+
   public static boolean isAfterUnmatchedLBrace(Editor editor, int offset, FileType fileType) {
     return getUnmatchedLBracesNumberBefore(editor, offset, fileType) > 0;
   }
 
   /**
    * Calculates number of unmatched left braces before the given offset.
-   * 
-   * @param editor    target editor
-   * @param offset    target offset
-   * @param fileType  target file type
-   * @return          number of unmatched braces before the given offset;
-   *                  negative value if it's not possible to perform the calculation or if there are no unmatched left braces before
-   *                  the given offset
+   *
+   * @param editor   target editor
+   * @param offset   target offset
+   * @param fileType target file type
+   * @return number of unmatched braces before the given offset;
+   * negative value if it's not possible to perform the calculation or if there are no unmatched left braces before
+   * the given offset
    */
   protected static int getUnmatchedLBracesNumberBefore(Editor editor, int offset, FileType fileType) {
     if (offset == 0) {
@@ -237,7 +301,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
       }
 
       boolean beforeOffset = iterator.getStart() < offset;
-      
+
       if (braceMatcher.isLBraceToken(iterator, chars, fileType)) {
         if (beforeOffset) {
           lBracesBeforeOffset++;
@@ -255,7 +319,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
         }
       }
     }
-    
+
     return lBracesBeforeOffset - rBracesBeforeOffset - (rBracesAfterOffset - lBracesAfterOffset);
   }
 }
