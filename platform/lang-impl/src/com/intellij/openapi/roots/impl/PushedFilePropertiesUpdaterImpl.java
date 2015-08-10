@@ -29,10 +29,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
@@ -114,7 +111,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
                   // avoid dumb mode for just one file
                   doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
                 }
-                else {
+                else if (!ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
                   ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(file, pushers));
                 }
               } else if (event instanceof VFileMoveEvent) {
