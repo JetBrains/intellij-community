@@ -376,6 +376,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       public String getTooltipText() {
         return tooltipText;
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
   }
 
