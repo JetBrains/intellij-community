@@ -36,7 +36,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
   protected abstract fun loadLocalData(): Element?
 
-  override fun getStateAndArchive(storageData: StorageData, component: Any, componentName: String) = storageData.getStateAndArchive(componentName)
+  override fun getStateAndArchive(storageData: StorageData, component: Any, componentName: String) = storageData.states.getStateAndArchive(componentName)
 
   override fun loadData(): StorageData {
     val storageData = createStorageData()
@@ -91,7 +91,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       if (LOG.isDebugEnabled()) {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: old data null, load new for ${toString()}")
       }
-      componentNames.addAll(newData.getComponentNames())
+      componentNames.addAll(newData.states.keys())
     }
     else {
       val changedComponentNames = oldData.getChangedComponentNames(newData, pathMacroSubstitutor)
@@ -187,7 +187,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       if (newElement == null) {
         // if data was loaded, mark as changed all loaded components
         if (storageData != null) {
-          changedComponentNames.addAll(storageData.getComponentNames())
+          changedComponentNames.addAll(storageData.states.keys())
           setStorageData(storageData, null)
         }
       }

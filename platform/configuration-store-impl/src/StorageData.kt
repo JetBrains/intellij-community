@@ -31,7 +31,7 @@ import java.util.Arrays
 import com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers
 
 open class StorageData : StorageDataBase {
-  private val states: StateMap
+  val states: StateMap
 
   public open fun isDirty(): Boolean = false
 
@@ -42,8 +42,6 @@ open class StorageData : StorageDataBase {
   protected constructor(storageData: StorageData) {
     states = StateMap(storageData.states)
   }
-
-  override fun getComponentNames() = states.keys()
 
   public open fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
     StorageDataBase.load(states, rootElement, pathMacroSubstitutor, intern)
@@ -84,8 +82,6 @@ open class StorageData : StorageDataBase {
     }
     return rootElement
   }
-
-  public fun getStateAndArchive(name: String): Element? = states.getStateAndArchive(name)
 
   public fun setState(componentName: String, newState: Element?, newLiveStates: MutableMap<String, Element>): Any? {
     if (newState == null || JDOMUtil.isEmpty(newState)) {
