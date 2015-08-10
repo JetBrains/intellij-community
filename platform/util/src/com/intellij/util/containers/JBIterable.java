@@ -151,8 +151,8 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns a {@code JBIterable} containing {@code elements} in the specified order.
    */
   @NotNull
-  public static <E> JBIterable<E> of(E... elements) {
-    return from(ContainerUtil.newArrayList(elements));
+  public static <E> JBIterable<E> of(@Nullable E... elements) {
+    return elements == null ? JBIterable.<E>empty() : from(ContainerUtil.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new JBIterable() {
