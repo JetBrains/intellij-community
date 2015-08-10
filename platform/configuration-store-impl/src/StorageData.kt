@@ -30,36 +30,36 @@ import java.util.Arrays
 
 import com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers
 
-public open class StorageData : StorageDataBase {
-  private val myStates: StateMap
+open class StorageData : StorageDataBase {
+  private val states: StateMap
 
   public open fun isDirty(): Boolean = false
 
   public constructor() {
-    myStates = StateMap()
+    states = StateMap()
   }
 
   protected constructor(storageData: StorageData) {
-    myStates = StateMap(storageData.myStates)
+    states = StateMap(storageData.states)
   }
 
-  override fun getComponentNames() = myStates.keys()
+  override fun getComponentNames() = states.keys()
 
   public open fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
-    StorageDataBase.load(myStates, rootElement, pathMacroSubstitutor, intern)
+    StorageDataBase.load(states, rootElement, pathMacroSubstitutor, intern)
   }
 
   public open fun save(newLiveStates: Map<String, Element>, rootElementName: String): Element? {
-    if (myStates.isEmpty()) {
+    if (states.isEmpty()) {
       return null
     }
 
     val rootElement = Element(rootElementName)
-    val componentNames = ArrayUtil.toStringArray(myStates.keys())
+    val componentNames = ArrayUtil.toStringArray(states.keys())
     Arrays.sort(componentNames)
     for (componentName in componentNames) {
       assert(componentName != null)
-      val element = myStates.getElement(componentName, newLiveStates)
+      val element = states.getElement(componentName, newLiveStates)
       // name attribute should be first
       val elementAttributes = element.getAttributes()
       if (elementAttributes.isEmpty()) {
@@ -85,20 +85,18 @@ public open class StorageData : StorageDataBase {
     return rootElement
   }
 
-  public fun getState(name: String): Element? = myStates.getState(name)
-
-  public fun getStateAndArchive(name: String): Element? = myStates.getStateAndArchive(name)
+  public fun getStateAndArchive(name: String): Element? = states.getStateAndArchive(name)
 
   public fun setState(componentName: String, newState: Element?, newLiveStates: MutableMap<String, Element>): Any? {
     if (newState == null || JDOMUtil.isEmpty(newState)) {
-      return myStates.remove(componentName)
+      return states.remove(componentName)
     }
 
     prepareElement(newState)
 
     newLiveStates.put(componentName, newState)
 
-    val oldState = myStates.get(componentName)
+    val oldState = states.get(componentName)
 
     var newBytes: ByteArray? = null
     if (oldState is Element) {
@@ -113,7 +111,7 @@ public open class StorageData : StorageDataBase {
       }
     }
 
-    myStates.put(componentName, if (newBytes == null) newState else newBytes)
+    states.put(componentName, if (newBytes == null) newState else newBytes)
     return newState
   }
 
@@ -121,32 +119,32 @@ public open class StorageData : StorageDataBase {
 
   // newStorageData - myStates contains only live (unarchived) states
   public open fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String> {
-    val bothStates = SmartHashSet(myStates.keys())
-    bothStates.retainAll(newStorageData.myStates.keys())
+    val bothStates = SmartHashSet(states.keys())
+    bothStates.retainAll(newStorageData.states.keys())
 
     val diffs = SmartHashSet<String>()
-    diffs.addAll(newStorageData.myStates.keys())
-    diffs.addAll(myStates.keys())
+    diffs.addAll(newStorageData.states.keys())
+    diffs.addAll(states.keys())
     diffs.removeAll(bothStates)
 
     for (componentName in bothStates) {
-      myStates.compare(componentName, newStorageData.myStates, diffs)
+      states.compare(componentName, newStorageData.states, diffs)
     }
     return diffs
   }
 
-  override fun hasState(componentName: String) = myStates.hasState(componentName)
+  override fun hasState(componentName: String) = states.hasState(componentName)
 
   companion object {
     public fun setStateAndCloneIfNeed(componentName: String, newState: Element?, storageData: StorageData, newLiveStates: MutableMap<String, Element>): StorageData? {
-      val oldState = storageData.myStates.get(componentName)
+      val oldState = storageData.states.get(componentName)
       if (newState == null || JDOMUtil.isEmpty(newState)) {
         if (oldState == null) {
           return null
         }
 
         val newStorageData = storageData.clone()
-        newStorageData.myStates.remove(componentName)
+        newStorageData.states.remove(componentName)
         return newStorageData
       }
 
@@ -168,7 +166,7 @@ public open class StorageData : StorageDataBase {
       }
 
       val newStorageData = storageData.clone()
-      newStorageData.myStates.put(componentName, if (newBytes == null) newState else newBytes)
+      newStorageData.states.put(componentName, if (newBytes == null) newState else newBytes)
       return newStorageData
     }
 
