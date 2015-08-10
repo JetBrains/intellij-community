@@ -18,7 +18,10 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.SaveSessionBase
+import com.intellij.openapi.components.impl.stores.StateStorageBase
+import com.intellij.openapi.components.impl.stores.StorageUtil
+import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
@@ -122,7 +125,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         copiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, originalStorageData, newLiveStates)
       }
       else {
-        copiedStorageData!!.setState(componentName, element, newLiveStates)
+        copiedStorageData!!.states.setState(componentName, element, newLiveStates)
       }
     }
 
