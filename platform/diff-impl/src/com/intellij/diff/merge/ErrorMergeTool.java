@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 public class ErrorMergeTool implements MergeTool {
   public static final ErrorMergeTool INSTANCE = new ErrorMergeTool();
@@ -73,20 +74,18 @@ public class ErrorMergeTool implements MergeTool {
       return new ToolbarComponents();
     }
 
-    @NotNull
+    @Nullable
     @Override
-    public BottomActions getBottomActions() {
-      return MergeUtil.createBottomAction(new MergeUtil.AcceptActionProcessor() {
-        @Override
-        public boolean isVisible(@NotNull MergeResult result) {
-          return result == MergeResult.CANCEL;
-        }
+    public Action getResolveAction(@NotNull final MergeResult result) {
+      if (result != MergeResult.CANCEL) return null;
 
+      String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
+      return new AbstractAction(caption) {
         @Override
-        public void perform(@NotNull MergeResult result) {
+        public void actionPerformed(ActionEvent e) {
           myMergeContext.finishMerge(result);
         }
-      });
+      };
     }
 
     @Override

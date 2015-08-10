@@ -24,48 +24,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class MergeUtil {
   @NotNull
-  public static MergeTool.BottomActions createBottomAction(@NotNull AcceptActionProcessor processor) {
-    MergeTool.BottomActions actions = new MergeTool.BottomActions();
-    actions.leftAction1 = SimpleAcceptAction.create(MergeResult.LEFT, processor);
-    actions.leftAction2 = SimpleAcceptAction.create(MergeResult.RIGHT, processor);
-    actions.resolveAction = SimpleAcceptAction.create(MergeResult.RESOLVED, processor);
-    actions.cancelAction = SimpleAcceptAction.create(MergeResult.CANCEL, processor);
-    return actions;
-  }
-
-  private static class SimpleAcceptAction extends AbstractAction {
-    @NotNull private final MergeResult myResult;
-    @NotNull private final AcceptActionProcessor myProcessor;
-
-    public SimpleAcceptAction(@NotNull MergeResult result, @NotNull AcceptActionProcessor processor) {
-      super(getAcceptActionTitle(result));
-      myResult = result;
-      myProcessor = processor;
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return myProcessor.isEnabled(myResult);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      myProcessor.perform(myResult);
-    }
-
-    public static SimpleAcceptAction create(@NotNull MergeResult result, @NotNull AcceptActionProcessor acceptActionProcessor) {
-      return acceptActionProcessor.isVisible(result) ? new SimpleAcceptAction(result, acceptActionProcessor) : null;
-    }
-  }
-
-  @NotNull
-  public static String getAcceptActionTitle(@NotNull MergeResult result) {
+  public static String getResolveActionTitle(@NotNull MergeResult result, @NotNull MergeRequest request, @NotNull MergeContext context) {
     switch (result) {
       case CANCEL:
         return "Abort";
@@ -126,15 +89,5 @@ public class MergeUtil {
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       myMergeContext.putUserData(key, value);
     }
-  }
-
-  public static abstract class AcceptActionProcessor {
-    public boolean isEnabled(@NotNull MergeResult result) {
-      return true;
-    }
-
-    public abstract boolean isVisible(@NotNull MergeResult result);
-
-    public abstract void perform(@NotNull MergeResult result);
   }
 }

@@ -75,6 +75,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -170,10 +171,10 @@ public class TextMergeTool implements MergeTool {
       return components;
     }
 
-    @NotNull
+    @Nullable
     @Override
-    public BottomActions getBottomActions() {
-      return MergeUtil.createBottomAction(myViewer.createActionProcessor());
+    public Action getResolveAction(@NotNull MergeResult result) {
+      return myViewer.getResolveAction(result);
     }
 
     @Override
@@ -282,16 +283,12 @@ public class TextMergeTool implements MergeTool {
         return group;
       }
 
-      @NotNull
-      private MergeUtil.AcceptActionProcessor createActionProcessor() {
-        return new MergeUtil.AcceptActionProcessor() {
+      @Nullable
+      public Action getResolveAction(@NotNull final MergeResult result) {
+        String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
+        return new AbstractAction(caption) {
           @Override
-          public boolean isVisible(@NotNull MergeResult result) {
-            return true;
-          }
-
-          @Override
-          public void perform(@NotNull MergeResult result) {
+          public void actionPerformed(ActionEvent e) {
             if (result == MergeResult.RESOLVED) {
               if ((getChangesCount() != 0 || getConflictsCount() != 0) &&
                   Messages.showYesNoDialog(myPanel.getRootPane(),

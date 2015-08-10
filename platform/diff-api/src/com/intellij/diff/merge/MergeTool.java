@@ -47,8 +47,8 @@ public interface MergeTool {
     @Nullable
     JComponent getPreferredFocusedComponent();
 
-    @NotNull
-    BottomActions getBottomActions();
+    @Nullable
+    Action getResolveAction(@NotNull MergeResult result);
 
     @CalledInAwt
     ToolbarComponents init();
@@ -62,17 +62,5 @@ public interface MergeTool {
     @Nullable public List<AnAction> toolbarActions;
     @Nullable public JComponent statusPanel;
     @Nullable public BooleanGetter closeHandler; // return false if there are unsaved changes
-  }
-
-  class BottomActions {
-    @Nullable public Action leftAction1; // apply left
-    @Nullable public Action leftAction2; // apply right
-    @Nullable public Action leftAction3;
-    @Nullable public Action leftAction4;
-
-    @Nullable public Action rightAction4;
-    @Nullable public Action rightAction3;
-    @Nullable public Action resolveAction;
-    @Nullable public Action cancelAction;
   }
 }

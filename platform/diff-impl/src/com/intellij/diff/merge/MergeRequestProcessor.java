@@ -130,8 +130,13 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   @NotNull
-  public MergeTool.BottomActions getBottomActions() {
-    return myViewer.getBottomActions();
+  public BottomActions getBottomActions() {
+    BottomActions actions = new BottomActions();
+    actions.applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
+    actions.applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
+    actions.resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
+    actions.cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
+    return actions;
   }
 
   @NotNull
@@ -431,5 +436,12 @@ public abstract class MergeRequestProcessor implements Disposable {
       applyRequestResult(result);
       MergeRequestProcessor.this.closeDialog();
     }
+  }
+
+  public static class BottomActions {
+    @Nullable public Action applyLeft;
+    @Nullable public Action applyRight;
+    @Nullable public Action resolveAction;
+    @Nullable public Action cancelAction;
   }
 }

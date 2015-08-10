@@ -67,7 +67,7 @@ public class MergeWindow {
   // TODO: use WindowWrapper
   private static class MyDialog extends DialogWrapper {
     @NotNull private final MergeRequestProcessor myProcessor;
-    @NotNull private final MergeTool.BottomActions myBottomActions;
+    @NotNull private final MergeRequestProcessor.BottomActions myBottomActions;
 
     public MyDialog(@NotNull MergeRequestProcessor processor) {
       super(processor.getProject(), true);
@@ -108,8 +108,7 @@ public class MergeWindow {
     @NotNull
     @Override
     protected Action[] createActions() {
-      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.rightAction4, myBottomActions.rightAction3,
-                                                                        myBottomActions.resolveAction, myBottomActions.cancelAction));
+      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.resolveAction, myBottomActions.cancelAction));
       if (myBottomActions.resolveAction != null) {
         myBottomActions.resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
       }
@@ -119,8 +118,7 @@ public class MergeWindow {
     @NotNull
     @Override
     protected Action[] createLeftSideActions() {
-      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.leftAction1, myBottomActions.leftAction2,
-                                                                        myBottomActions.leftAction3, myBottomActions.leftAction4));
+      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.applyLeft, myBottomActions.applyRight));
       return actions.toArray(new Action[actions.size()]);
     }
 
