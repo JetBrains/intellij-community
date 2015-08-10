@@ -73,15 +73,6 @@ class ModuleFileData : StorageData, OptionManager {
 
   override fun clone() = ModuleFileData(this)
 
-  override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
-    val data = newStorageData as ModuleFileData
-    if (options != data.options) {
-      return null
-    }
-
-    return super<StorageData>.getChangedComponentNames(newStorageData, substitutor)
-  }
-
   override fun setOption(key: String, value: String) {
     if (value != options!!.put(key, value)) {
       dirty = true
