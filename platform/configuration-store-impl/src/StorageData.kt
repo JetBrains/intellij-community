@@ -81,59 +81,41 @@ open class StorageData : StorageDataBase {
 
   open fun clone(): StorageData = StorageData(this)
 
-  // newStorageData - myStates contains only live (unarchived) states
-  public open fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String> {
-    val bothStates = SmartHashSet(states.keys())
-    bothStates.retainAll(newStorageData.states.keys())
-
-    val diffs = SmartHashSet<String>()
-    diffs.addAll(newStorageData.states.keys())
-    diffs.addAll(states.keys())
-    diffs.removeAll(bothStates)
-
-    for (componentName in bothStates) {
-      states.compare(componentName, newStorageData.states, diffs)
-    }
-    return diffs
-  }
-
   override fun hasState(componentName: String) = states.hasState(componentName)
+}
 
-  companion object {
-    public fun setStateAndCloneIfNeed(componentName: String, newState: Element?, storageData: StorageData, newLiveStates: MutableMap<String, Element>): StorageData? {
-      val oldState = storageData.states.get(componentName)
-      if (newState == null || JDOMUtil.isEmpty(newState)) {
-        if (oldState == null) {
-          return null
-        }
+fun setStateAndCloneIfNeed(componentName: String, newState: Element?, storageData: StorageData, newLiveStates: MutableMap<String, Element>): StorageData? {
+  val oldState = storageData.states.get(componentName)
+  if (newState == null || JDOMUtil.isEmpty(newState)) {
+    if (oldState == null) {
+      return null
+    }
 
-        val newStorageData = storageData.clone()
-        newStorageData.states.remove(componentName)
-        return newStorageData
-      }
+    val newStorageData = storageData.clone()
+    newStorageData.states.remove(componentName)
+    return newStorageData
+  }
 
-      prepareElement(newState)
+  prepareElement(newState)
 
-      newLiveStates.put(componentName, newState)
+  newLiveStates.put(componentName, newState)
 
-      var newBytes: ByteArray? = null
-      if (oldState is Element) {
-        if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
-          return null
-        }
-      }
-      else if (oldState != null) {
-        newBytes = getNewByteIfDiffers(componentName, newState, oldState as ByteArray)
-        if (newBytes == null) {
-          return null
-        }
-      }
-
-      val newStorageData = storageData.clone()
-      newStorageData.states.put(componentName, if (newBytes == null) newState else newBytes)
-      return newStorageData
+  var newBytes: ByteArray? = null
+  if (oldState is Element) {
+    if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
+      return null
     }
   }
+  else if (oldState != null) {
+    newBytes = getNewByteIfDiffers(componentName, newState, oldState as ByteArray)
+    if (newBytes == null) {
+      return null
+    }
+  }
+
+  val newStorageData = storageData.clone()
+  newStorageData.states.put(componentName, if (newBytes == null) newState else newBytes)
+  return newStorageData
 }
 
 fun prepareElement(state: Element) {
@@ -170,4 +152,20 @@ fun StateMap.setState(componentName: String, newState: Element?, newLiveStates: 
 
   put(componentName, if (newBytes == null) newState else newBytes)
   return newState
+}
+
+// newStorageData - myStates contains only live (unarchived) states
+fun StateMap.getChangedComponentNames(newStorageData: StorageData): Set<String> {
+  val bothStates = SmartHashSet(keys())
+  bothStates.retainAll(newStorageData.states.keys())
+
+  val diffs = SmartHashSet<String>()
+  diffs.addAll(newStorageData.states.keys())
+  diffs.addAll(keys())
+  diffs.removeAll(bothStates)
+
+  for (componentName in bothStates) {
+    compare(componentName, newStorageData.states, diffs)
+  }
+  return diffs
 }

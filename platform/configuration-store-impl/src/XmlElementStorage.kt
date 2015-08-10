@@ -97,7 +97,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       componentNames.addAll(newData.states.keys())
     }
     else {
-      val changedComponentNames = oldData.getChangedComponentNames(newData, pathMacroSubstitutor)
+      val changedComponentNames = oldData.states.getChangedComponentNames(newData)
       if (LOG.isDebugEnabled()) {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}")
       }
@@ -122,7 +122,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     override fun setSerializedState(component: Any, componentName: String, element: Element?) {
       if (copiedStorageData == null) {
-        copiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, originalStorageData, newLiveStates)
+        copiedStorageData = setStateAndCloneIfNeed(componentName, element, originalStorageData, newLiveStates)
       }
       else {
         copiedStorageData!!.states.setState(componentName, element, newLiveStates)
@@ -197,7 +197,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       else if (storageData != null) {
         val newStorageData = createStorageData()
         newStorageData.loadState(newElement)
-        changedComponentNames.addAll(storageData.getChangedComponentNames(newStorageData, pathMacroSubstitutor))
+        changedComponentNames.addAll(storageData.states.getChangedComponentNames(newStorageData))
         setStorageData(storageData, newStorageData)
       }
     }
