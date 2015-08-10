@@ -144,6 +144,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
     loadAdditionalTextAttributes();
 
+    upgradeSchemesFromPreviousVersion();
+
     String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
     EditorColorsScheme scheme = null;
     if (wizardEditorScheme != null) {
@@ -151,6 +153,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
     }
     setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
+  }
+
+  private void upgradeSchemesFromPreviousVersion() {
+    for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
+      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+        ((AbstractColorsScheme)scheme).upgradeSchemeFromPreviousVersion();
+      }
+    }
   }
 
   public static void schemeChangedOrSwitched() {

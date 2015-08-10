@@ -70,6 +70,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
+  /**
+   * The version from the original file.
+   */
+  private int myOriginalVersion = CURR_VERSION;
 
   protected Map<ColorKey, Color>                   myColorsMap     = ContainerUtilRt.newHashMap();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = ContainerUtilRt.newHashMap();
@@ -294,6 +298,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
 
     myVersion = readVersion;
+    myOriginalVersion = readVersion;
     String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
     boolean isDefault = isDefaultScheme != null && Boolean.parseBoolean(isDefaultScheme);
     if (!isDefault) {
@@ -354,6 +359,33 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     Couple<Color> m = DEFAULT_STRIPE_COLORS.get(name.getExternalName());
     if (m != null && Comparing.equal(m.first, attr.getErrorStripeColor())) {
       attr.setErrorStripeColor(m.second);
+    }
+  }
+
+  /**
+   * The method is called for the scheme when it is fully loaded including additional text attributes from providers.
+   */
+  public void upgradeSchemeFromPreviousVersion() {
+    setUndefinedAttributesAsInheritedForVersion142();
+  }
+
+
+  /**
+   * Defines empty attributes with fallback (inheritance) enabled for all the attributes explicitly defined in the parent scheme since
+   * previously undefined attributes were treated as inherited, not taken from the parent scheme.
+   */
+  private void setUndefinedAttributesAsInheritedForVersion142() {
+    if (myOriginalVersion >= 142 || myParentScheme == null) return;
+    if (myParentScheme instanceof AbstractColorsScheme) {
+      for (TextAttributesKey key : ((AbstractColorsScheme)myParentScheme).myAttributesMap.keySet()) {
+        TextAttributes parentAttributes = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
+        if (key.getFallbackAttributeKey() != null &&
+            parentAttributes != null &&
+            !parentAttributes.isFallbackEnabled() &&
+            !myAttributesMap.containsKey(key)) {
+          myAttributesMap.put(key, new TextAttributes());
+        }
+      }
     }
   }
 
