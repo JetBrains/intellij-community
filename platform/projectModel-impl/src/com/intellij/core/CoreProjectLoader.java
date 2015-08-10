@@ -80,7 +80,7 @@ public class CoreProjectLoader {
     if (projectRootManagerState == null) {
       throw new JDOMException("cannot find ProjectRootManager state in misc.xml");
     }
-    ((ProjectRootManagerImpl) ProjectRootManager.getInstance(project)).readExternal(projectRootManagerState);
+    ((ProjectRootManagerImpl) ProjectRootManager.getInstance(project)).loadState(projectRootManagerState);
 
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
