@@ -28,8 +28,8 @@ import java.util.regex.Pattern;
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/example_numpy.html#example-numpy">Napoleon: Example NumPy Style Python Docstrings</a>
  */
 public class NumpyDocString extends SectionBasedDocString {
-  private static final Pattern SIGNATURE = Pattern.compile("^\\s*([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)\\s*$");
-  private static final Pattern SECTION_HEADER = Pattern.compile("^\\s*[-=]{2,}\\s*$");
+  private static final Pattern SIGNATURE = Pattern.compile("^\\s*([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)\\s*$", Pattern.MULTILINE);
+  public static final Pattern SECTION_HEADER = Pattern.compile("^\\s*[-=]{2,}\\s*$", Pattern.MULTILINE);
 
   private Substring mySignature;
   public NumpyDocString(@NotNull String text) {

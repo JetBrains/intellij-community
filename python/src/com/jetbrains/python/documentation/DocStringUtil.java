@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -51,6 +52,9 @@ public class DocStringUtil {
     if (isGoogleDocString(text)) {
       return new GoogleCodeStyleDocString(text);
     }
+    if (isNumpyDocstring(text)) {
+      return new NumpyDocString(text);
+    }
     return new EpydocString(text);
   }
 
@@ -61,7 +65,7 @@ public class DocStringUtil {
   public static boolean isEpydocDocString(@NotNull String text) {
     return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
   }
-  
+
   public static boolean isGoogleDocString(@NotNull String text) {
     final Matcher matcher = GoogleCodeStyleDocString.SECTION_HEADER_RE.matcher(text);
     if (!matcher.find()) {
@@ -70,7 +74,21 @@ public class DocStringUtil {
     @NonNls final String foundName = matcher.group(1).trim();
     return SectionBasedDocString.SECTION_NAMES.contains(foundName.toLowerCase());
   }
-  
+
+  public static boolean isNumpyDocstring(@NotNull String text) {
+    final String[] lines = StringUtil.splitByLines(text, false);
+    for (int i = 0; i < lines.length; i++) {
+      final String line = lines[i];
+      if (NumpyDocString.SECTION_HEADER.matcher(line).matches() && i > 0) {
+        @NonNls final String lineBefore = lines[i - 1];
+        if (SectionBasedDocString.SECTION_NAMES.contains(lineBefore.trim().toLowerCase())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /**
    * Looks for a doc string under given parent.
    * @param parent where to look. For classes and functions, this would be PyStatementList, for modules, PyFile.
