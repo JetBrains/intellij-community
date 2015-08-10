@@ -37,7 +37,4 @@ public abstract class ThreesideMergeRequest extends MergeRequest {
    */
   @NotNull
   public abstract List<String> getContentTitles();
-
-  @CalledInAwt
-  public abstract void applyResult(@NotNull MergeResult result);
 }

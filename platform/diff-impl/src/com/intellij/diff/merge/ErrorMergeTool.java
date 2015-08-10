@@ -79,18 +79,12 @@ public class ErrorMergeTool implements MergeTool {
       return MergeUtil.createBottomAction(new MergeUtil.AcceptActionProcessor() {
         @Override
         public boolean isVisible(@NotNull MergeResult result) {
-          if (myMergeRequest instanceof ThreesideMergeRequest) {
-            return result != MergeResult.RESOLVED;
-          }
-          else {
-            return result == MergeResult.CANCEL;
-          }
+          return result == MergeResult.CANCEL;
         }
 
         @Override
         public void perform(@NotNull MergeResult result) {
-          if (myMergeRequest instanceof ThreesideMergeRequest) ((ThreesideMergeRequest)myMergeRequest).applyResult(result);
-          myMergeContext.closeDialog();
+          myMergeContext.finishMerge(result);
         }
       });
     }

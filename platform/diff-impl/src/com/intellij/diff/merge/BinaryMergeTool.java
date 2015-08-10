@@ -62,8 +62,6 @@ public class BinaryMergeTool implements MergeTool {
 
     @NotNull private final MyThreesideViewer myViewer;
 
-    private boolean myConflictResolved;
-
     public BinaryMergeViewer(@NotNull MergeContext context, @NotNull ThreesideMergeRequest request) {
       myMergeContext = context;
       myMergeRequest = request;
@@ -125,9 +123,7 @@ public class BinaryMergeTool implements MergeTool {
 
         @Override
         public void perform(@NotNull MergeResult result) {
-          markConflictResolved();
-          myMergeRequest.applyResult(result);
-          myMergeContext.closeDialog();
+          myMergeContext.finishMerge(result);
         }
       });
     }
@@ -143,23 +139,14 @@ public class BinaryMergeTool implements MergeTool {
 
     @NotNull
     public MyThreesideViewer getViewer() {
-      if (!isConflictResolved()) myMergeRequest.applyResult(MergeResult.CANCEL);
       return myViewer;
-    }
-
-    public boolean isConflictResolved() {
-      return myConflictResolved;
-    }
-
-    public void markConflictResolved() {
-      myConflictResolved = true;
     }
 
     //
     // Viewer
     //
 
-    private class MyThreesideViewer extends ThreesideBinaryDiffViewer {
+    private static class MyThreesideViewer extends ThreesideBinaryDiffViewer {
       public MyThreesideViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
         super(context, request);
       }

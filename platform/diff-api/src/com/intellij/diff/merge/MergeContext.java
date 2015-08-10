@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,8 @@ public abstract class MergeContext implements UserDataHolder {
 
   public abstract void requestFocus();
 
-  public abstract void closeDialog();
+  @CalledInAwt
+  public abstract void finishMerge(@NotNull MergeResult result);
 
   @Nullable
   @Override

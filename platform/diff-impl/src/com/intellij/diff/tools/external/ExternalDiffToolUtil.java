@@ -210,109 +210,108 @@ public class ExternalDiffToolUtil {
                                   @NotNull ExternalDiffSettings settings,
                                   @NotNull ThreesideMergeRequest request)
     throws IOException, ExecutionException {
-    DiffContent outputContent = request.getOutputContent();
-    List<? extends DiffContent> contents = request.getContents();
-    List<String> titles = request.getContentTitles();
-    String windowTitle = request.getTitle();
+    boolean success = false;
+    try {
+      DiffContent outputContent = request.getOutputContent();
+      List<? extends DiffContent> contents = request.getContents();
+      List<String> titles = request.getContentTitles();
+      String windowTitle = request.getTitle();
 
-    assert contents.size() == 3;
-    assert titles.size() == contents.size();
+      assert contents.size() == 3;
+      assert titles.size() == contents.size();
 
-    List<String> files = new ArrayList<String>();
-    for (int i = 0; i < contents.size(); i++) {
-      files.add(createFile(contents.get(i), titles.get(i), windowTitle));
-    }
-
-    OutputFile outputFile = createOutputFile(outputContent, windowTitle);
-
-    CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getMergeParameters(), true);
-
-    List<String> args = new ArrayList<String>();
-    while (parameterTokenizer.hasMoreTokens()) {
-      String arg = parameterTokenizer.nextToken();
-      if ("%1".equals(arg)) {
-        args.add(files.get(0));
+      List<String> files = new ArrayList<String>();
+      for (int i = 0; i < contents.size(); i++) {
+        files.add(createFile(contents.get(i), titles.get(i), windowTitle));
       }
-      else if ("%2".equals(arg)) {
-        args.add(files.get(2));
+
+      OutputFile outputFile = createOutputFile(outputContent, windowTitle);
+
+      CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getMergeParameters(), true);
+
+      List<String> args = new ArrayList<String>();
+      while (parameterTokenizer.hasMoreTokens()) {
+        String arg = parameterTokenizer.nextToken();
+        if ("%1".equals(arg)) {
+          args.add(files.get(0));
+        }
+        else if ("%2".equals(arg)) {
+          args.add(files.get(2));
+        }
+        else if ("%3".equals(arg)) {
+          args.add(files.get(1));
+        }
+        else if ("%4".equals(arg)) {
+          args.add(outputFile.getPath());
+        }
+        else {
+          args.add(arg);
+        }
       }
-      else if ("%3".equals(arg)) {
-        args.add(files.get(1));
-      }
-      else if ("%4".equals(arg)) {
-        args.add(outputFile.getPath());
+
+      GeneralCommandLine commandLine = new GeneralCommandLine();
+      commandLine.setExePath(settings.getMergeExePath());
+
+      commandLine.addParameters(args);
+      final Process process = commandLine.createProcess();
+
+      if (settings.isMergeTrustExitCode()) {
+        final Ref<Boolean> resultRef = new Ref<Boolean>();
+
+        ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for external tool", true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            final Semaphore semaphore = new Semaphore(0);
+
+            final Thread waiter = new Thread("external process waiter") {
+              @Override
+              public void run() {
+                try {
+                  resultRef.set(process.waitFor() == 0);
+                }
+                catch (InterruptedException ignore) {
+                }
+                finally {
+                  semaphore.release();
+                }
+              }
+            };
+            waiter.start();
+
+            try {
+              while (true) {
+                indicator.checkCanceled();
+                if (semaphore.tryAcquire(200, TimeUnit.MILLISECONDS)) break;
+              }
+            }
+            catch (InterruptedException ignore) {
+            }
+            finally {
+              waiter.interrupt();
+            }
+          }
+        });
+
+        success = resultRef.get() == Boolean.TRUE;
       }
       else {
-        args.add(arg);
+        ProgressManager.getInstance().run(new Task.Modal(project, "Launching external tool", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setIndeterminate(true);
+            TimeoutUtil.sleep(1000);
+          }
+        });
+
+        success = Messages.showYesNoDialog(project,
+                                           "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
+                                           "Merge In External Tool", "Mark as Resolved", "Revert", null) == Messages.YES;
       }
+
+      if (success) outputFile.finish();
     }
-
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(settings.getMergeExePath());
-
-    commandLine.addParameters(args);
-    final Process process = commandLine.createProcess();
-
-    boolean success;
-    if (settings.isMergeTrustExitCode()) {
-      final Ref<Boolean> resultRef = new Ref<Boolean>();
-
-      ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for external tool", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final Semaphore semaphore = new Semaphore(0);
-
-          final Thread waiter = new Thread("external process waiter") {
-            @Override
-            public void run() {
-              try {
-                resultRef.set(process.waitFor() == 0);
-              }
-              catch (InterruptedException ignore) {
-              }
-              finally {
-                semaphore.release();
-              }
-            }
-          };
-          waiter.start();
-
-          try {
-            while (true) {
-              indicator.checkCanceled();
-              if (semaphore.tryAcquire(200, TimeUnit.MILLISECONDS)) break;
-            }
-          }
-          catch (InterruptedException ignore) {
-          }
-          finally {
-            waiter.interrupt();
-          }
-        }
-      });
-
-      success = resultRef.get() == Boolean.TRUE;
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Modal(project, "Launching external tool", false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          TimeoutUtil.sleep(1000);
-        }
-      });
-
-      success = Messages.showYesNoDialog(project,
-                                         "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
-                                         "Merge In External Tool", "Mark as Resolved", "Revert", null) == Messages.YES;
-    }
-
-    if (success) {
-      outputFile.finish();
-      request.applyResult(MergeResult.RESOLVED);
-    }
-    else {
-      request.applyResult(MergeResult.CANCEL);
+    finally {
+      request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
     }
   }
 

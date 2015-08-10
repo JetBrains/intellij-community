@@ -35,6 +35,11 @@ public interface MergeTool {
 
   boolean canShow(@NotNull MergeContext context, @NotNull MergeRequest request);
 
+  /*
+   * Merge viewer should call MergeContext.finishMerge(MergeResult) when processing is over.
+   *
+   * MergeRequest.applyResult() will be performed by the caller, so it shouldn't be called by MergeViewer directly.
+   */
   interface MergeViewer extends Disposable {
     @NotNull
     JComponent getComponent();

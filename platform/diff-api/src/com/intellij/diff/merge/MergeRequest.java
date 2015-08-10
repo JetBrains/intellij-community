@@ -18,6 +18,7 @@ package com.intellij.diff.merge;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,12 @@ public abstract class MergeRequest implements UserDataHolder {
 
   @Nullable
   public abstract String getTitle();
+
+  /*
+   * Called on conflict resolve end.
+   */
+  @CalledInAwt
+  public abstract void applyResult(@NotNull MergeResult result);
 
   @Nullable
   @Override

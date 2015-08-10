@@ -71,6 +71,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   @NotNull private final MergeTool.MergeViewer myViewer;
 
   @Nullable private BooleanGetter myCloseHandler;
+  private boolean myConflictResolved = false;
 
   public MergeRequestProcessor(@Nullable Project project, @NotNull MergeRequest request) {
     myProject = project;
@@ -204,12 +205,25 @@ public abstract class MergeRequestProcessor implements Disposable {
     });
   }
 
+  @CalledInAwt
+  private void applyRequestResult(@NotNull MergeResult result) {
+    if (myConflictResolved) return;
+    myConflictResolved = true;
+    try {
+      myRequest.applyResult(result);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
   //
   // Abstract
   //
 
   @CalledInAwt
   protected void onDispose() {
+    applyRequestResult(MergeResult.CANCEL);
   }
 
   protected void setWindowTitle(@NotNull String title) {
@@ -252,7 +266,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   public boolean checkCloseAction() {
-    if (myCloseHandler != null && !myCloseHandler.get()) {
+    if (!myConflictResolved && myCloseHandler != null && !myCloseHandler.get()) {
       return Messages.showYesNoDialog(myPanel.getRootPane(),
                                       DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
                                       DiffBundle.message("cancel.visual.merge.dialog.title"),
@@ -413,7 +427,8 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     @Override
-    public void closeDialog() {
+    public void finishMerge(@NotNull MergeResult result) {
+      applyRequestResult(result);
       MergeRequestProcessor.this.closeDialog();
     }
   }

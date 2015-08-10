@@ -105,8 +105,6 @@ public class TextMergeTool implements MergeTool {
 
     @NotNull private final MyThreesideViewer myViewer;
 
-    private boolean myConflictResolved;
-
     public TextMergeViewer(@NotNull MergeContext context, @NotNull TextMergeRequest request) {
       myMergeContext = context;
       myMergeRequest = request;
@@ -165,10 +163,9 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return isConflictResolved();
+          return myViewer.isContentModified();
         }
       };
-
 
       return components;
     }
@@ -182,7 +179,6 @@ public class TextMergeTool implements MergeTool {
     @Override
     public void dispose() {
       Disposer.dispose(myViewer);
-      if (!isConflictResolved()) myMergeRequest.applyResult(MergeResult.CANCEL);
     }
 
     //
@@ -194,14 +190,6 @@ public class TextMergeTool implements MergeTool {
       return myViewer;
     }
 
-    public boolean isConflictResolved() {
-      return myConflictResolved;
-    }
-
-    public void markConflictResolved() {
-      myConflictResolved = true;
-    }
-
     //
     // Viewer
     //
@@ -211,9 +199,12 @@ public class TextMergeTool implements MergeTool {
 
       // all changes - both applied and unapplied ones
       @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
-      private boolean myInitialRediffDone;
-      @Nullable private MergeCommandAction myCurrentMergeCommand;
 
+      private boolean myInitialRediffStarted;
+      private boolean myInitialRediffFinished;
+      private boolean myContentModified;
+
+      @Nullable private MergeCommandAction myCurrentMergeCommand;
       private int myBulkChangeUpdateDepth;
 
       private final Set<TextMergeChange> myChangesToUpdate = new HashSet<TextMergeChange>();
@@ -317,10 +308,8 @@ public class TextMergeTool implements MergeTool {
                 return;
               }
             }
-            markConflictResolved();
             destroyChangedBlocks();
-            myMergeRequest.applyResult(result);
-            myMergeContext.closeDialog();
+            myMergeContext.finishMerge(result);
           }
         };
       }
@@ -349,10 +338,16 @@ public class TextMergeTool implements MergeTool {
       @Override
       @CalledInAwt
       public void rediff(boolean trySync) {
-        if (myInitialRediffDone) return;
-        myInitialRediffDone = true;
+        if (myInitialRediffStarted) return;
+        myInitialRediffStarted = true;
         assert myAllMergeChanges.isEmpty();
         doRediff();
+      }
+
+      @NotNull
+      @Override
+      protected Runnable performRediff(@NotNull ProgressIndicator indicator) {
+        throw new UnsupportedOperationException();
       }
 
       @CalledInAwt
@@ -385,14 +380,12 @@ public class TextMergeTool implements MergeTool {
 
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
-                myCallback = performRediff(sequences, outputModificationStamp, indicator);
+                myCallback = doPerformRediff(sequences, outputModificationStamp, indicator);
               }
 
               @Override
               public void onCancel() {
-                markConflictResolved();
-                myMergeRequest.applyResult(MergeResult.CANCEL);
-                myMergeContext.closeDialog();
+                myMergeContext.finishMerge(MergeResult.CANCEL);
               }
 
               @Override
@@ -405,15 +398,9 @@ public class TextMergeTool implements MergeTool {
       }
 
       @NotNull
-      @Override
-      protected Runnable performRediff(@NotNull ProgressIndicator indicator) {
-        throw new UnsupportedOperationException();
-      }
-
-      @NotNull
-      protected Runnable performRediff(@NotNull List<CharSequence> sequences,
-                                       long outputModificationStamp,
-                                       @NotNull ProgressIndicator indicator) {
+      protected Runnable doPerformRediff(@NotNull List<CharSequence> sequences,
+                                         long outputModificationStamp,
+                                         @NotNull ProgressIndicator indicator) {
         try {
           indicator.checkCanceled();
 
@@ -464,6 +451,8 @@ public class TextMergeTool implements MergeTool {
             myStatusPanel.update();
 
             getEditor(ThreeSide.BASE).setViewer(false);
+
+            myInitialRediffFinished = true;
           }
         };
       }
@@ -499,6 +488,8 @@ public class TextMergeTool implements MergeTool {
           LOG.error("Non-base side was changed"); // unsupported operation
           return;
         }
+
+        if (myInitialRediffFinished) myContentModified = true;
 
         int line1 = e.getDocument().getLineNumber(e.getOffset());
         int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
@@ -589,10 +580,8 @@ public class TextMergeTool implements MergeTool {
               HyperlinkListener listener = new HyperlinkAdapter() {
                 @Override
                 protected void hyperlinkActivated(HyperlinkEvent e) {
-                  markConflictResolved();
                   destroyChangedBlocks();
-                  myMergeRequest.applyResult(MergeResult.RESOLVED);
-                  myMergeContext.closeDialog();
+                  myMergeContext.finishMerge(MergeResult.RESOLVED);
                 }
               };
 
@@ -613,6 +602,10 @@ public class TextMergeTool implements MergeTool {
       //
       // Getters
       //
+
+      public boolean isContentModified() {
+        return myContentModified;
+      }
 
       @NotNull
       public List<TextMergeChange> getAllChanges() {
@@ -685,6 +678,7 @@ public class TextMergeTool implements MergeTool {
         @CalledWithWriteLock
         protected final void execute() {
           LOG.assertTrue(myCurrentMergeCommand == null);
+          myContentModified = true;
 
           // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
           // Undo actions are performed in backward order, while redo actions are performed in forward order.
