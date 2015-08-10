@@ -42,12 +42,14 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -161,7 +163,18 @@ public class AddImportAction implements QuestionAction {
     ListPopupImpl popup = new ListPopupImpl(step) {
       @Override
       protected ListCellRenderer getListElementRenderer() {
-        return new DefaultPsiElementCellRenderer();
+        final PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();
+        final DefaultPsiElementCellRenderer psiRenderer = new DefaultPsiElementCellRenderer();
+        return new ListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JPanel panel = new JPanel(new BorderLayout());
+            baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
+            panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
+            return panel;
+          }
+        };
       }
     };
     popup.showInBestPositionFor(myEditor);
