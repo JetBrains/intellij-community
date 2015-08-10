@@ -200,6 +200,10 @@ public class EduUtils {
     taskFile.sortAnswerPlaceholders();
     for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
+      if (answerPlaceholder.getRealStartOffset(document) > document.getTextLength() || answerPlaceholder.getRealStartOffset(document) + answerPlaceholder.getPossibleAnswerLength() > document.getTextLength()) {
+        LOG.error("Wrong startOffset: " + answerPlaceholder.getRealStartOffset(document) + "; document: " + file.getPath());
+        return;
+      }
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {

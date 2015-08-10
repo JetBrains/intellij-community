@@ -207,15 +207,13 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         final Runnable run = new Runnable() {
           @Override
           public void run() {
-            LocalHistoryAction action = LocalHistoryAction.NULL;
+            String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
+            String actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
+            LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
             try {
-              String actionName;
-              String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
-              actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
-              action = LocalHistory.getInstance().startAction(actionName);
-
               if (createFile) {
-                myCreatedElement = myDirectory.createFile(subDirName);
+                CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(subDirName, myDirectory);
+                myCreatedElement = mkdirs.directory.createFile(mkdirs.newName);
               } else {
                 createDirectories(subDirName);
               }

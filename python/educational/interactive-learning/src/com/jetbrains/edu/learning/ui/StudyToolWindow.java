@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -40,8 +41,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
+import java.awt.*;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
+
+  private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
 
   public StudyToolWindow(final Project project) {
     super(true, true);
@@ -49,25 +55,43 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     setToolbar(toolbarPanel);
 
     final StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
-    if (studyEditor == null) return;
-    Task task = studyEditor.getTaskFile().getTask();
+    final JTextPane taskTextPane = createTaskTextPane();
+
+    if (studyEditor == null) {
+      taskTextPane.setText(EMPTY_TASK_TEXT);
+      setContent(taskTextPane);
+      return;
+    }
+    final Task task = studyEditor.getTaskFile().getTask();
 
     if (task != null) {
       final String taskText = task.getText();
-
-      final JTextPane taskTextPane = new JTextPane();
       JBScrollPane scrollPane = new JBScrollPane(taskTextPane);
-      taskTextPane.setContentType("text/html");
-      taskTextPane.setEditable(false);
       taskTextPane.setText(taskText);
       taskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-      taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
-      taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+
       setContent(scrollPane);
 
       final FileEditorManagerListener listener = new StudyFileEditorManagerListener(project, taskTextPane);
       project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     }
+  }
+
+  @NotNull
+  private JTextPane createTaskTextPane() {
+    final JTextPane taskTextPane = new JTextPane();
+    taskTextPane.setContentType(new HTMLEditorKit().getContentType());
+    final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int fontSize = editorColorsScheme.getEditorFontSize();
+    final String fontName = editorColorsScheme.getEditorFontName();
+    final Font font = new Font(fontName, Font.PLAIN, fontSize);
+    String bodyRule = "body { font-family: " + font.getFamily() + "; " +
+                      "font-size: " + font.getSize() + "pt; }";
+    ((HTMLDocument)taskTextPane.getDocument()).getStyleSheet().addRule(bodyRule);
+    taskTextPane.setEditable(false);
+    taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+    return taskTextPane;
   }
 
   public void dispose() {
@@ -92,22 +116,24 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     private Project myProject;
     private JTextPane myTaskTextPane;
 
-    StudyFileEditorManagerListener(@NotNull final Project project, JTextPane taskTextPane){
+    StudyFileEditorManagerListener(@NotNull final Project project, JTextPane taskTextPane) {
       myProject = project;
       myTaskTextPane = taskTextPane;
     }
-      @Override
-      public void fileOpened (@NotNull FileEditorManager source, @NotNull VirtualFile file){
+
+    @Override
+    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       Task task = getTask(file);
       setTaskText(task);
     }
 
-      @Override
-      public void fileClosed (@NotNull FileEditorManager source, @NotNull VirtualFile file){
+    @Override
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+      myTaskTextPane.setText(EMPTY_TASK_TEXT);
     }
 
-      @Override
-      public void selectionChanged (@NotNull FileEditorManagerEvent event){
+    @Override
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       VirtualFile file = event.getNewFile();
       if (file != null) {
         Task task = getTask(file);
@@ -115,8 +141,8 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
       }
     }
 
-      @Nullable
-      private Task getTask (@NotNull VirtualFile file){
+    @Nullable
+    private Task getTask(@NotNull VirtualFile file) {
       TaskFile taskFile = StudyUtils.getTaskFile(myProject, file);
       if (taskFile != null) {
         return taskFile.getTask();
@@ -128,6 +154,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
 
     private void setTaskText(@Nullable final Task task) {
       if (task == null) {
+        myTaskTextPane.setText(EMPTY_TASK_TEXT);
         return;
       }
       String text = task.getText();

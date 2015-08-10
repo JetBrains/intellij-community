@@ -106,15 +106,11 @@ public class StudyUtils {
   public static void updateAction(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
-    presentation.setVisible(false);
     final Project project = e.getProject();
     if (project != null) {
-      final FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
-      for (FileEditor editor : editors) {
-        if (editor instanceof StudyEditor) {
-          presentation.setEnabled(true);
-          presentation.setVisible(true);
-        }
+      final StudyEditor studyEditor = getSelectedStudyEditor(project);
+      if (studyEditor != null) {
+        presentation.setEnabled(true);
       }
     }
   }

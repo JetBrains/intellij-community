@@ -93,7 +93,7 @@
             <properties>
               <horizontalTextPosition value="0"/>
               <text value=""/>
-              <toolTipText value="Select local course"/>
+              <toolTipText value="Refresh course list"/>
             </properties>
           </component>
         </children>
