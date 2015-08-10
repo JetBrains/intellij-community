@@ -20,8 +20,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +30,6 @@ import java.util.regex.Pattern;
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*(\\w+):\\s*", Pattern.MULTILINE);
   private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.+?)\\s*\\)\\s*");
-  private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)");
 
   public GoogleCodeStyleDocString(@NotNull String text) {
     super(text);
@@ -73,12 +70,13 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
    * </ol>
    */
   @Override
-  protected Pair<SectionField, Integer> parseField(int lineNum,
-                                                   int sectionIndent,
-                                                   boolean mayHaveType,
-                                                   boolean preferType) {
+  protected Pair<SectionField, Integer> parseSectionField(int lineNum,
+                                                          int sectionIndent,
+                                                          boolean mayHaveType,
+                                                          boolean preferType) {
+    final Substring line = getLine(lineNum);
     Substring name, type = null, description;
-    final List<Substring> colonSeparatedParts = splitFieldStartLineByColon(getLine(lineNum));
+    final List<Substring> colonSeparatedParts = splitByFirstColon(line);
     assert colonSeparatedParts.size() <= 2;
     if (colonSeparatedParts.size() < 2) {
       return Pair.create(null, lineNum);
@@ -98,39 +96,15 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
       name = null;
     }
     description = colonSeparatedParts.get(1);
-    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getIndent(getLine(lineNum)), sectionIndent);
+    // parse line with indentation at least one space greater than indentation of the field
+    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getIndent(line), sectionIndent);
     final List<Substring> nestedBlock = pair.getFirst();
     if (!nestedBlock.isEmpty()) {
       //noinspection ConstantConditions
       description = mergeSubstrings(description, ContainerUtil.getLastItem(nestedBlock));
     }
-    assert description != null;
     description = description.trim();
     return Pair.create(new SectionField(name, type, description), pair.getSecond());
-  }
-
-  /**
-   * Partitions line by colon if it contains type references, e.g.
-   * <p/>
-   * <pre><code>
-   *   runtime (:class:`Runtime`): Use it to access the environment.
-   * </code></pre>
-   */
-  @NotNull
-  private static List<Substring> splitFieldStartLineByColon(@NotNull Substring line) {
-    final List<Substring> parts = line.split(SPHINX_REFERENCE_RE);
-    if (parts.size() > 1) {
-      for (Substring part : parts) {
-        final int i = part.indexOf(":");
-        if (i >= 0) {
-          final Substring beforeColon = new Substring(line.getSuperString(), line.getStartOffset(), part.getStartOffset() + i);
-          final Substring afterColon = new Substring(line.getSuperString(), part.getStartOffset() + i + 1, line.getEndOffset());
-          return Arrays.asList(beforeColon, afterColon);
-        }
-      }
-      return Collections.singletonList(line);
-    }
-    return line.split(":", 1);
   }
 
 

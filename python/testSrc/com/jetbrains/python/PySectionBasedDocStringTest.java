@@ -20,6 +20,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.documentation.GoogleCodeStyleDocString;
 import com.jetbrains.python.documentation.NumpyDocString;
+import com.jetbrains.python.documentation.SectionBasedDocString;
 import com.jetbrains.python.documentation.SectionBasedDocString.Section;
 import com.jetbrains.python.documentation.SectionBasedDocString.SectionField;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -33,13 +34,20 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class PySectionBasedDocStringTest extends PyTestCase {
-  
-  public void testSimpleFunctionDocString() {
-    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+
+  public void testSimpleGoogleDocString() {
+    checkSimpleDocstringStructure(findAndParseGoogleStyleDocString());
+  }
+
+  public void testSimpleNumpyDocstring() {
+    checkSimpleDocstringStructure(findAndParseNumpyStyleDocString());
+  }
+
+  private static void checkSimpleDocstringStructure(@NotNull SectionBasedDocString docString) {
     assertEquals("Summary", docString.getSummary());
     final List<Section> sections = docString.getSections();
     assertSize(3, sections);
-    
+
     assertEquals("parameters", sections.get(0).getTitle());
     final List<SectionField> paramFields = sections.get(0).getFields();
     assertSize(2, paramFields);
@@ -113,9 +121,9 @@ public class PySectionBasedDocStringTest extends PyTestCase {
   public void testSectionStartAfterQuotes() {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertEmpty(docString.getSummary());
-    
+
     assertSize(2, docString.getSections());
-    
+
     final Section examplesSection = docString.getSections().get(0);
     assertEquals("examples", examplesSection.getTitle());
     assertSize(1, examplesSection.getFields());
@@ -124,7 +132,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEmpty(example1.getType());
     assertEquals("Useless call\n" +
                  "func() == func()", example1.getDescription());
-    
+
     final Section notesSection = docString.getSections().get(1);
     assertEquals("notes", notesSection.getTitle());
     assertSize(1, notesSection.getFields());
@@ -192,7 +200,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals("status_code", return1.getName());
     assertEquals("int", return1.getType());
     assertEquals("HTTP status code", return1.getDescription());
-    
+
     final SectionField return2 = returnSection.getFields().get(1);
     assertEquals("template", return2.getName());
     assertEquals("str", return2.getType());
@@ -205,6 +213,12 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals("float", yield1.getType());
     assertEquals("floating point value in range [0, 1) indicating progress\n" +
                  "of the task", yield1.getDescription());
+  }
+
+  public void testNumpySignature() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    assertEquals("a.diagonal(offset=0, axis1=0, axis2=1)", docString.getSignature());
+    assertEquals("Return specified diagonals.", docString.getSummary());
   }
 
   @Override

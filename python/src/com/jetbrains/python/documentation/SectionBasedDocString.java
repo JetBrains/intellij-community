@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Common base class for docstring styles supported by Napoleon Sphinx extension.
@@ -38,7 +39,7 @@ import java.util.*;
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
 public abstract class SectionBasedDocString implements StructuredDocString {
-  
+
   /**
    * Frequently used section types
    */
@@ -50,7 +51,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   @NonNls protected static final String METHODS_SECTION = "methods";
   @NonNls protected static final String OTHER_PARAMETERS_SECTION = "other parameters";
   @NonNls protected static final String YIELDS_SECTION = "yields";
-  
+
   protected static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
                 .put("arguments", PARAMETERS_SECTION)
@@ -76,11 +77,12 @@ public abstract class SectionBasedDocString implements StructuredDocString {
                 .put("warns", "warnings")
                 .put("warnings", "warnings")
                 .build();
+  private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)");
 
   public static Set<String> SECTION_NAMES = SECTION_ALIASES.keySet();
-  private static final ImmutableSet<String> SECTIONS_WITH_NAME_AND_OPTIONAL_TYPE = ImmutableSet.of(ATTRIBUTES_SECTION, 
-                                                                                                   PARAMETERS_SECTION, 
-                                                                                                   KEYWORD_ARGUMENTS_SECTION, 
+  private static final ImmutableSet<String> SECTIONS_WITH_NAME_AND_OPTIONAL_TYPE = ImmutableSet.of(ATTRIBUTES_SECTION,
+                                                                                                   PARAMETERS_SECTION,
+                                                                                                   KEYWORD_ARGUMENTS_SECTION,
                                                                                                    OTHER_PARAMETERS_SECTION);
   private static final ImmutableSet<String> SECTIONS_WITH_TYPE_AND_OPTIONAL_NAME = ImmutableSet.of(RETURNS_SECTION, YIELDS_SECTION);
   private static final ImmutableSet<String> SECTIONS_WITH_TYPE = ImmutableSet.of(RAISES_SECTION);
@@ -95,8 +97,8 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   protected SectionBasedDocString(@NotNull String text) {
     myLines = new Substring(text).splitLines();
     List<Substring> summary = Collections.emptyList();
-    final int startLine = parseHeader(0);
-    int lineNum = skipEmptyLines(startLine);
+    int startLine = skipEmptyLines(parseHeader(0));
+    int lineNum = startLine;
     while (lineNum < myLines.size()) {
       final Pair<Section, Integer> parsedSection = parseSection(lineNum);
       if (parsedSection.getFirst() != null) {
@@ -148,7 +150,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     final List<SectionField> fields = new ArrayList<SectionField>();
     final int sectionIndent = getIndent(getLine(sectionStartLine));
     while (!isSectionBreak(lineNum, sectionIndent)) {
-      final Pair<SectionField, Integer> result = parseField(lineNum, title, sectionIndent);
+      final Pair<SectionField, Integer> result = parseSectionField(lineNum, title, sectionIndent);
       if (result.getFirst() == null) {
         break;
       }
@@ -159,26 +161,26 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   }
 
   @NotNull
-  protected Pair<SectionField, Integer> parseField(int lineNum, @NotNull String normalizedSectionTitle, int sectionIndent) {
+  protected Pair<SectionField, Integer> parseSectionField(int lineNum, @NotNull String normalizedSectionTitle, int sectionIndent) {
     if (SECTIONS_WITH_NAME_AND_OPTIONAL_TYPE.contains(normalizedSectionTitle)) {
-      return parseField(lineNum, sectionIndent, true, false);
+      return parseSectionField(lineNum, sectionIndent, true, false);
     }
     if (SECTIONS_WITH_TYPE_AND_OPTIONAL_NAME.contains(normalizedSectionTitle)) {
-      return parseField(lineNum, sectionIndent, true, true);
+      return parseSectionField(lineNum, sectionIndent, true, true);
     }
     if (SECTIONS_WITH_NAME.contains(normalizedSectionTitle)) {
-      return parseField(lineNum, sectionIndent, false, false);
+      return parseSectionField(lineNum, sectionIndent, false, false);
     }
     if (SECTIONS_WITH_TYPE.contains(normalizedSectionTitle)) {
-      return parseField(lineNum, sectionIndent, false, true);
+      return parseSectionField(lineNum, sectionIndent, false, true);
     }
     return parseGenericField(lineNum, sectionIndent);
   }
 
-  protected abstract Pair<SectionField, Integer> parseField(int lineNum,
-                                                   int sectionIndent,
-                                                   boolean mayHaveType,
-                                                   boolean preferType);
+  protected abstract Pair<SectionField, Integer> parseSectionField(int lineNum,
+                                                                   int sectionIndent,
+                                                                   boolean mayHaveType,
+                                                                   boolean preferType);
 
   @NotNull
   protected Pair<SectionField, Integer> parseGenericField(int lineNum, int sectionIndent) {
@@ -186,7 +188,6 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
     if (firstLine != null && lastLine != null) {
-      //noinspection ConstantConditions
       return Pair.create(new SectionField(null, null, mergeSubstrings(firstLine, lastLine).trim()), pair.getSecond());
     }
     return Pair.create(null, pair.getSecond());
@@ -229,6 +230,8 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   /**
    * Consumes all lines that are indented more than {@code blockIndent} and don't contain start of a new section.
    * Trailing empty lines (e.g. due to indentation of closing triple quotes) are omitted in result.
+   *
+   * @param blockIndent indentation threshold, block ends with a line that has greater indentation
    */
   @NotNull
   protected Pair<List<Substring>, Integer> parseIndentedBlock(int lineNum, int blockIndent, int sectionIndent) {
@@ -238,7 +241,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       if (getIndent(getLine(lineNum)) > blockIndent) {
         // copy all lines after the last non empty including the current one
         for (int i = lastNonEmpty + 1; i <= lineNum; i++) {
-          result.add(getLine(lineNum));
+          result.add(getLine(i));
         }
         lastNonEmpty = lineNum;
       }
@@ -251,20 +254,45 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   }
 
   /**
+   * Properly partitions line by first colon taking into account possible Sphinx references inside
+   * <p/>
+   * <h3>Example</h3>
+   * <pre><code>
+   *   runtime (:class:`Runtime`): Use it to access the environment.
+   * </code></pre>
+   */
+  @NotNull
+  protected static List<Substring> splitByFirstColon(@NotNull Substring line) {
+    final List<Substring> parts = line.split(SPHINX_REFERENCE_RE);
+    if (parts.size() > 1) {
+      for (Substring part : parts) {
+        final int i = part.indexOf(":");
+        if (i >= 0) {
+          final Substring beforeColon = new Substring(line.getSuperString(), line.getStartOffset(), part.getStartOffset() + i);
+          final Substring afterColon = new Substring(line.getSuperString(), part.getStartOffset() + i + 1, line.getEndOffset());
+          return Arrays.asList(beforeColon, afterColon);
+        }
+      }
+      return Collections.singletonList(line);
+    }
+    return line.split(":", 1);
+  }
+
+  /**
    * If both substrings share the same origin, returns new substring that includes both of them. Otherwise return {@code null}.
    *
    * @param s1
    * @param s2 substring to concat with
    * @return new substring as described
    */
-  @Nullable
+  @NotNull
   public static Substring mergeSubstrings(@NotNull Substring s1, @NotNull Substring s2) {
-    if (s1.getSuperString().equals(s2.getSuperString())) {
-      return new Substring(s1.getSuperString(),
-                           Math.min(s1.getStartOffset(), s2.getStartOffset()),
-                           Math.max(s1.getEndOffset(), s2.getEndOffset()));
+    if (!s1.getSuperString().equals(s2.getSuperString())) {
+      throw new IllegalArgumentException(String.format("Substrings '%s' and '%s' must belong to the same origin", s1, s2));
     }
-    return null;
+    return new Substring(s1.getSuperString(),
+                       Math.min(s1.getStartOffset(), s2.getStartOffset()),
+                       Math.max(s1.getEndOffset(), s2.getEndOffset()));
   }
 
   // like Python's textwrap.dedent()
@@ -464,7 +492,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     final SectionField field = getFirstReturnField();
     return field != null ? field.getType() : null;
   }
-  
+
   @Nullable
   @Override
   public Substring getReturnTypeSubstring() {
@@ -498,7 +526,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       }
     });
   }
-  
+
   @Nullable
   @Override
   public String getRaisedExceptionDescription(@Nullable String exceptionName) {
@@ -519,7 +547,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
         result.addAll(section.getFields());
       }
     }
-    return result; 
+    return result;
   }
 
   @Nullable
@@ -531,7 +559,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       }
     });
   }
-  
+
   @Nullable
   @Override
   public String getAttributeDescription() {

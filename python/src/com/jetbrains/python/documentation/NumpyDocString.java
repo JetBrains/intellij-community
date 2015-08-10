@@ -19,16 +19,17 @@ import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
  */
 public class NumpyDocString extends SectionBasedDocString {
-  private static final Pattern SIGNATURE = Pattern.compile("^([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)$");
-  private static final Pattern SECTION_HEADER = Pattern.compile("^[-=]+");
+  private static final Pattern SIGNATURE = Pattern.compile("^\\s*([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)\\s*$");
+  private static final Pattern SECTION_HEADER = Pattern.compile("^\\s*[-=]{2,}\\s*$");
 
-  private Substring mySignature = null;
+  private Substring mySignature;
   public NumpyDocString(@NotNull String text) {
     super(text);
   }
@@ -39,8 +40,9 @@ public class NumpyDocString extends SectionBasedDocString {
     final Substring line = getLineOrNull(nextNonEmptyLineNum);
     if (line != null && SIGNATURE.matcher(line).matches()) {
       mySignature = line.trim();
+      return nextNonEmptyLineNum + 1;
     }
-    return super.parseHeader(startLine);
+    return nextNonEmptyLineNum;
   }
 
   @NotNull
@@ -54,11 +56,32 @@ public class NumpyDocString extends SectionBasedDocString {
   }
 
   @Override
-  protected Pair<SectionField, Integer> parseField(int lineNum,
-                                                   int sectionIndent,
-                                                   boolean mayHaveType,
-                                                   boolean preferType) {
-    return null;
+  protected Pair<SectionField, Integer> parseSectionField(int lineNum,
+                                                          int sectionIndent,
+                                                          boolean mayHaveType,
+                                                          boolean preferType) {
+    final Substring line = getLine(lineNum);
+    Substring name, type = null, description = null;
+    if (mayHaveType) {
+      final List<Substring> colonSeparatedParts = splitByFirstColon(line);
+      name = colonSeparatedParts.get(0).trim();
+      if (colonSeparatedParts.size() == 2) {
+        type = colonSeparatedParts.get(1).trim();
+      }
+    }
+    else {
+      name = line.trim();
+    }
+    if (preferType && type == null) {
+      type = name;
+      name = null;
+    }
+    final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getIndent(line), sectionIndent);
+    final List<Substring> descriptionLines = parsedDescription.getFirst();
+    if (!descriptionLines.isEmpty()) {
+      description = mergeSubstrings(descriptionLines.get(0), descriptionLines.get(descriptionLines.size() - 1));
+    }
+    return Pair.create(new SectionField(name, type, description != null ? description.trim() : null), parsedDescription.getSecond());
   }
 
   @NotNull
