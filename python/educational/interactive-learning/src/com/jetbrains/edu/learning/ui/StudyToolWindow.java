@@ -43,13 +43,23 @@ import javax.swing.border.EmptyBorder;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
 
+  private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+
   public StudyToolWindow(final Project project) {
     super(true, true);
     JPanel toolbarPanel = createToolbarPanel();
     setToolbar(toolbarPanel);
 
     final StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
-    if (studyEditor == null) return;
+    if (studyEditor == null) {
+      final JTextPane taskTextPane = new JTextPane();
+      taskTextPane.setEditable(false);
+      taskTextPane.setText(EMPTY_TASK_TEXT);
+      taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+      setContent(taskTextPane);
+      return;
+    }
     Task task = studyEditor.getTaskFile().getTask();
 
     if (task != null) {
@@ -92,22 +102,24 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     private Project myProject;
     private JTextPane myTaskTextPane;
 
-    StudyFileEditorManagerListener(@NotNull final Project project, JTextPane taskTextPane){
+    StudyFileEditorManagerListener(@NotNull final Project project, JTextPane taskTextPane) {
       myProject = project;
       myTaskTextPane = taskTextPane;
     }
-      @Override
-      public void fileOpened (@NotNull FileEditorManager source, @NotNull VirtualFile file){
+
+    @Override
+    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       Task task = getTask(file);
       setTaskText(task);
     }
 
-      @Override
-      public void fileClosed (@NotNull FileEditorManager source, @NotNull VirtualFile file){
+    @Override
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+      myTaskTextPane.setText(EMPTY_TASK_TEXT);
     }
 
-      @Override
-      public void selectionChanged (@NotNull FileEditorManagerEvent event){
+    @Override
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       VirtualFile file = event.getNewFile();
       if (file != null) {
         Task task = getTask(file);
@@ -115,8 +127,8 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
       }
     }
 
-      @Nullable
-      private Task getTask (@NotNull VirtualFile file){
+    @Nullable
+    private Task getTask(@NotNull VirtualFile file) {
       TaskFile taskFile = StudyUtils.getTaskFile(myProject, file);
       if (taskFile != null) {
         return taskFile.getTask();
@@ -128,6 +140,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
 
     private void setTaskText(@Nullable final Task task) {
       if (task == null) {
+        myTaskTextPane.setText(EMPTY_TASK_TEXT);
         return;
       }
       String text = task.getText();
