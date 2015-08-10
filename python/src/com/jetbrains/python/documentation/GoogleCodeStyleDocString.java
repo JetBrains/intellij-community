@@ -32,59 +32,72 @@ import java.util.regex.Pattern;
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*(\\w+):\\s*", Pattern.MULTILINE);
   private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.+?)\\s*\\)\\s*");
-  private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)"); 
+  private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)");
 
   public GoogleCodeStyleDocString(@NotNull String text) {
     super(text);
   }
 
-  @NotNull
-  @Override
-  protected Pair<SectionField, Integer> parseFieldWithType(int lineNum, int sectionIndent) {
-    return parseField(lineNum, sectionIndent, true);
-  }
-
-  @NotNull
-  @Override
-  protected Pair<SectionField, Integer> parseFieldWithNameAndOptionalType(int lineNum, int sectionIndent) {
-    return parseField(lineNum, sectionIndent, false);
-  }
-
   /**
-   * <h3>Example</h3>
+   * <h3>Examples</h3>
+   * <ol>
+   * <li>
+   * mayHaveType=true, preferType=false
    * <pre><code>
    * Attributes:
-   *  arg1 (int): field with name and optional type before description
-   *  
+   *     arg1 (int): description; `(int)` is optional
+   * </code></pre>
+   * </li>
+   * <li>
+   * mayHaveType=true, preferType=true
+   * <pre><code>
+   * Returns:
+   *     code (int): description; `(int)` is optional
+   * </code></pre>
+   * </li>
+   * <li>
+   * mayHaveType=false, preferType=false
+   * <pre><code>
+   * Methods:
+   *     my_method() : description
+   * </code></pre>
+   * </li>
+   * <li>
+   * mayHaveType=false, preferType=true
+   * <pre><code>
    * Raises:
-   *  RuntimeException: field with only type before description
-   * </code></pre>                       
-   * 
-   * @param typeBeforeColon according to Google Code Style there can be either type or name and type in parenthesis before colon
+   *     Exception : description
+   * </code></pre>
+   * </li>
+   * </li>
+   * </ol>
    */
-  @NotNull
-  private Pair<SectionField, Integer> parseField(int lineNum, int sectionIndent, boolean typeBeforeColon) {
-    Substring name = null, type = null, description;
-    final List<Substring> parts = splitFieldStartLineByColon(getLine(lineNum));
-    assert parts.size() <= 2;
-    if (parts.size() < 2) {
+  @Override
+  protected Pair<SectionField, Integer> parseField(int lineNum,
+                                                   int sectionIndent,
+                                                   boolean mayHaveType,
+                                                   boolean preferType) {
+    Substring name, type = null, description;
+    final List<Substring> colonSeparatedParts = splitFieldStartLineByColon(getLine(lineNum));
+    assert colonSeparatedParts.size() <= 2;
+    if (colonSeparatedParts.size() < 2) {
       return Pair.create(null, lineNum);
     }
-    final Substring textBeforeColon = parts.get(0);
-    if (typeBeforeColon) {
-      type = textBeforeColon.trim();
-    }
-    else {
+    final Substring textBeforeColon = colonSeparatedParts.get(0);
+    name = textBeforeColon.trim();
+    if (mayHaveType) {
       final Matcher matcher = FIELD_NAME_AND_TYPE_RE.matcher(textBeforeColon);
       if (matcher.matches()) {
         name = Substring.fromMatcherGroup(textBeforeColon, matcher, 1).trim();
         type = Substring.fromMatcherGroup(textBeforeColon, matcher, 2).trim();
       }
-      else {
-        name = textBeforeColon.trim();
-      }
     }
-    description = parts.get(1);
+
+    if (preferType && type == null) {
+      type = name;
+      name = null;
+    }
+    description = colonSeparatedParts.get(1);
     final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getIndent(getLine(lineNum)), sectionIndent);
     final List<Substring> nestedBlock = pair.getFirst();
     if (!nestedBlock.isEmpty()) {
@@ -98,7 +111,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
 
   /**
    * Partitions line by colon if it contains type references, e.g.
-   * 
+   * <p/>
    * <pre><code>
    *   runtime (:class:`Runtime`): Use it to access the environment.
    * </code></pre>
@@ -109,7 +122,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     if (parts.size() > 1) {
       for (Substring part : parts) {
         final int i = part.indexOf(":");
-        if (i >= 0){
+        if (i >= 0) {
           final Substring beforeColon = new Substring(line.getSuperString(), line.getStartOffset(), part.getStartOffset() + i);
           final Substring afterColon = new Substring(line.getSuperString(), part.getStartOffset() + i + 1, line.getEndOffset());
           return Arrays.asList(beforeColon, afterColon);
@@ -126,7 +139,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
   protected Pair<String, Integer> parseSectionHeader(int lineNum) {
     final Matcher matcher = SECTION_HEADER_RE.matcher(getLine(lineNum));
     if (matcher.matches()) {
-      return Pair.create(matcher.group(1).trim(), lineNum + 1); 
+      return Pair.create(matcher.group(1).trim(), lineNum + 1);
     }
     return Pair.create(null, lineNum);
   }

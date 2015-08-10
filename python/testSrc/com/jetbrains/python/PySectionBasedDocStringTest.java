@@ -180,6 +180,33 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                  "Third line", docString.getSummary());
   }
 
+  public void testNamedReturnsAndYields() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEmpty(docString.getSummary());
+    assertSize(2, docString.getSections());
+
+    final Section returnSection = docString.getSections().get(0);
+    assertSize(2, returnSection.getFields());
+
+    final SectionField return1 = returnSection.getFields().get(0);
+    assertEquals("status_code", return1.getName());
+    assertEquals("int", return1.getType());
+    assertEquals("HTTP status code", return1.getDescription());
+    
+    final SectionField return2 = returnSection.getFields().get(1);
+    assertEquals("template", return2.getName());
+    assertEquals("str", return2.getType());
+    assertEquals("path to template in template roots", return2.getDescription());
+
+    final Section yieldSection = docString.getSections().get(1);
+    assertSize(1, yieldSection.getFields());
+    final SectionField yield1 = yieldSection.getFields().get(0);
+    assertEquals("progress", yield1.getName());
+    assertEquals("float", yield1.getType());
+    assertEquals("floating point value in range [0, 1) indicating progress\n" +
+                 "of the task", yield1.getDescription());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

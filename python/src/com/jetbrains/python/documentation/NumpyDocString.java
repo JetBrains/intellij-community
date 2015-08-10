@@ -53,15 +53,11 @@ public class NumpyDocString extends SectionBasedDocString {
     return Pair.create(null, lineNum);
   }
 
-  @NotNull
   @Override
-  protected Pair<SectionField, Integer> parseFieldWithType(int lineNum, int sectionIndent) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  protected Pair<SectionField, Integer> parseFieldWithNameAndOptionalType(int lineNum, int sectionIndent) {
+  protected Pair<SectionField, Integer> parseField(int lineNum,
+                                                   int sectionIndent,
+                                                   boolean mayHaveType,
+                                                   boolean preferType) {
     return null;
   }
 
