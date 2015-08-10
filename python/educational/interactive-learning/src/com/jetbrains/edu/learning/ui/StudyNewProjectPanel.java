@@ -62,7 +62,8 @@ public class StudyNewProjectPanel{
         myCoursesComboBox.addItem(courseInfo);
       }
       final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getAuthors()));
+      final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
+      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
       myDescriptionLabel.setText(selectedCourse.getDescription());
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(selectedCourse);
@@ -212,7 +213,8 @@ public class StudyNewProjectPanel{
         myDescriptionLabel.setText("");
         return;
       }
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getAuthors()));
+      final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
+      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ?"Author: " + authorsString : "");
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);
