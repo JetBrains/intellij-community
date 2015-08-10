@@ -68,6 +68,16 @@ public class TreeTraverserTest extends TestCase {
     }
   };
 
+  private static final Function<Integer, Integer> FIBONACCI2 = new JBIterable.StatefulTransform<Integer, Integer>() {
+    int k0;
+    @Override
+    public Integer fun(Integer k) {
+      int t = k0;
+      k0 = k;
+      return t + k;
+    }
+  };
+
   @NotNull
   private static Condition<Integer> LESS_THAN(final int max) {
     return new Condition<Integer>() {
@@ -89,6 +99,13 @@ public class TreeTraverserTest extends TestCase {
   }
 
   // JBIterable ----------------------------------------------
+
+  public void testAppend() {
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3).append(JBIterable.of(4, 5, 6)).append(7);
+    assertEquals(7, it.size());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7), it.toList());
+    assertTrue(it.contains(5));
+  }
 
   public void testGenerateRepeat() {
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(3).repeat(3);
@@ -135,6 +152,26 @@ public class TreeTraverserTest extends TestCase {
     }
     catch (UnsupportedOperationException ignored) {
     }
+  }
+
+  public void testStatefulFilter() {
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(5).filter(new JBIterable.StatefulFilter<Integer>() {
+      int prev;
+      @Override
+      public boolean value(Integer integer) {
+        boolean b = integer > prev;
+        if (b) prev = integer;
+        return b;
+      }
+    });
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), it.toList());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), it.toList());
+  }
+
+  public void testStatefulGenerator() {
+    JBIterable<Integer> it = JBIterable.generate(1, FIBONACCI2).take(8);
+    assertEquals(Arrays.asList(1, 1, 2, 3, 5, 8, 13, 21), it.toList());
+    assertEquals(Arrays.asList(1, 1, 2, 3, 5, 8, 13, 21), it.toList());
   }
 
   // TreeTraversal ----------------------------------------------
