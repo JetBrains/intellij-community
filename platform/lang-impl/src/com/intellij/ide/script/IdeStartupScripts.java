@@ -170,9 +170,10 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
     }
 
     scripts = ContainerUtil.filter(scripts, new Condition<VirtualFile>() {
+      private final ExtensionsRootType myExtensionsRootType = ExtensionsRootType.getInstance();
       @Override
       public boolean value(VirtualFile file) {
-        return !file.isDirectory() && !README_FILE_NAME.equals(file.getName());
+        return !file.isDirectory() && !myExtensionsRootType.isBackupFile(file) && !README_FILE_NAME.equals(file.getName());
       }
     });
 
