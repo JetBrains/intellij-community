@@ -79,12 +79,14 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
         value.calculateEvaluationExpression().done(new Consumer<XExpression>() {
           @Override
           public void consume(final XExpression expression) {
-            AppUIUtil.invokeOnEdt(new Runnable() {
-              @Override
-              public void run() {
-                showDialog(session, file, editorsProvider, stackFrame, evaluator, expression);
-              }
-            });
+            if (expression != null) {
+              AppUIUtil.invokeOnEdt(new Runnable() {
+                @Override
+                public void run() {
+                  showDialog(session, file, editorsProvider, stackFrame, evaluator, expression);
+                }
+              });
+            }
           }
         });
         return;
@@ -100,7 +102,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
                                  XDebuggerEditorsProvider editorsProvider,
                                  XStackFrame stackFrame,
                                  XDebuggerEvaluator evaluator,
-                                 XExpression expression) {
+                                 @NotNull XExpression expression) {
     if (expression.getLanguage() == null) {
       Language language = null;
       if (stackFrame != null) {
