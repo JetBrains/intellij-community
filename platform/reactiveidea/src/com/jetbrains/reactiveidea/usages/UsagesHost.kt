@@ -24,7 +24,10 @@ import com.intellij.usageView.UsageTreeColorsScheme
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.*
+import com.jetbrains.reactiveidea.mapping.UsageViewPresentationBean
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.mapping.KDM
+import com.jetbrains.reactivemodel.mapping.model.ModelBean
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -66,7 +69,7 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
           model.putIn(path / tree, MapModel(hashMapOf("0" to convertTree(usageView.root), tagsField to tagsModel("tree"))))
         }
       }
-      m.putIn(path / presentation, convertPresentation(usageView.getPresentation()))
+      m.putIn(path / presentation, KDM.map<ModelBean>(usageView.getPresentation()).toModel())
           .putIn(path / name, PrimitiveModel(usageView.getPresentation().getTabName()))
     }
 
@@ -91,81 +94,21 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
         "children" to MapModel(children))
     if (node is UsageNode) {
       res[tagsField] = tagsModel("usage")
-      val usage = node.getUsage()
-      val chunks = usage.getPresentation().getText()
-      res["chunks"] = ListModel(
-          chunks.map { chunk: TextChunk ->
-            MapModel(hashMapOf(
-                "text" to PrimitiveModel(chunk.getText()),
-                "attr" to convertTextAttributes(chunk.getAttributes())
-            ))
-          }
-      )
+      val chunks = node.getUsage().getPresentation().getText()
+      res["chunks"] = KDM.toModel(arrayListOf(*chunks))
+
     } else if (node is GroupNode) {
       res[tagsField] = tagsModel("usage-group")
       res["count"] = PrimitiveModel(node.getRecursiveUsageCount())
       if (node.isRoot()) {
-        res["attr"] = convertTextAttributes(UsageViewTreeCellRenderer
-            .patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES).toTextAttributes())
+        val textAttr = UsageViewTreeCellRenderer.patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES).toTextAttributes()
+        res["attr"] = KDM.toModel(textAttr)
       }
-      res["usage-num-attr"] = run {
-        val attrs = UsageViewTreeCellRenderer.patchAttrs(node, ourNumberOfUsagesAttribute)
-        convertTextAttributes(attrs.toTextAttributes())
-      }
+      val usNumAttr = UsageViewTreeCellRenderer.patchAttrs(node, ourNumberOfUsagesAttribute).toTextAttributes()
+      res["usage-num-attr"] = KDM.toModel(usNumAttr)
     } else if (node is UsageTargetNode) {
       res[tagsField] = tagsModel("usage-target")
     }
     return MapModel(res, meta)
-  }
-
-  private fun convertTextAttributes(attributes: TextAttributes): Model {
-    val map = HashMap<String, Model>()
-    if (attributes.getForegroundColor() != null) {
-      map["color"] = PrimitiveModel(colorToHex(attributes.getForegroundColor()))
-    }
-    if (attributes.getBackgroundColor() != null) {
-      map["background-color"] = PrimitiveModel(colorToHex(attributes.getBackgroundColor()))
-    }
-    if ((attributes.getFontType() and Font.BOLD) != 0) {
-      map["fontWeight"] = PrimitiveModel("bold")
-    }
-    if ((attributes.getFontType() and Font.ITALIC) != 0) {
-      map["fontStyle"] = PrimitiveModel("italic")
-    }
-    return MapModel(map)
-  }
-
-  private fun colorToHex(color: Color) = "#" + Integer.toHexString(color.getRGB()).substring(2)
-
-  private fun convertPresentation(presentation: UsageViewPresentation): MapModel {
-    return toModel(hashMapOf(
-        "tabText" to presentation.getTabText(),
-        "scopeText" to presentation.getScopeText(),
-        "contextText" to presentation.getContextText(),
-        "usagesString" to presentation.getUsagesString(),
-        "targetNodeText" to presentation.getTargetsNodeText(),
-        "nonCodeUsagesString" to presentation.getNonCodeUsagesString(),
-        "codeUsagesString" to presentation.getCodeUsagesString(),
-        "usagesInGeneratedCodeString" to presentation.getUsagesInGeneratedCodeString(),
-        "showReadOnlyStatusAsRed" to presentation.isShowReadOnlyStatusAsRed(),
-        "showCancelButton" to presentation.isShowCancelButton(),
-        "openInNewTab" to presentation.isOpenInNewTab(),
-        "codeUsages" to presentation.isCodeUsages(),
-        "usageTypeFilteringAvailable" to presentation.isUsageTypeFilteringAvailable(),
-        "usagesWord" to presentation.getUsagesWord(),
-        "tabName" to presentation.getTabName(),
-        "toolwindowTitle" to presentation.getToolwindowTitle(),
-        "dynamicCodeUsagesString" to presentation.getDynamicCodeUsagesString(),
-        "mergeDupLinesAvailable" to presentation.isMergeDupLinesAvailable()
-    ))
-  }
-
-  private fun toModel(hmap: HashMap<String, Any>): MapModel {
-    val map = HashMap<String, Model>()
-    hmap.filter { it.value != null }
-        .mapValuesTo(map) { e ->
-          PrimitiveModel(e.value)
-        }
-    return MapModel(map)
   }
 }
