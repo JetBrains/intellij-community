@@ -57,7 +57,7 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
  *         author: lesya
  */
 public class LineStatusTracker {
-  public enum Mode {DEFAULT, SMART}
+  public enum Mode {DEFAULT, SMART, SILENT}
 
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private static final Key<CanNotCalculateDiffPanel> PANEL_KEY =
@@ -187,11 +187,13 @@ public class LineStatusTracker {
     }
   }
 
-  @NotNull
+  @Nullable
   private RangeHighlighter createHighlighter(@NotNull Range range) {
     myApplication.assertIsDispatchThread();
 
     LOG.assertTrue(!myReleased, "Already released");
+
+    if (myMode == Mode.SILENT) return null;
 
     int first =
       range.getLine1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine1());
@@ -271,6 +273,15 @@ public class LineStatusTracker {
   @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
+  }
+
+  @NotNull
+  public Mode getMode() {
+    return myMode;
+  }
+
+  public boolean isSilentMode() {
+    return myMode == Mode.SILENT;
   }
 
   @NotNull

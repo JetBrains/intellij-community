@@ -19,7 +19,10 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -61,6 +64,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private int myComponentConfigCount;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myInstantiatedComponentCount = -1;
+  private boolean myComponentsCreated;
 
   private final List<BaseComponent> myBaseComponents = new ArrayList<BaseComponent>();
 
@@ -101,6 +105,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       indicator.setIndeterminate(false);
     }
     createComponents(indicator);
+    myComponentsCreated = true;
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
@@ -135,7 +140,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public final boolean isComponentsCreated() {
-    return myComponentConfigCount != -1;
+    return myComponentsCreated;
   }
 
   protected synchronized final void disposeComponents() {
@@ -526,9 +531,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         }
       }
       catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (StateStorageException e) {
         throw e;
       }
       catch (Throwable t) {

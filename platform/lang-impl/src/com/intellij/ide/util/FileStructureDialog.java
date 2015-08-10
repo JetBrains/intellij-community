@@ -266,7 +266,7 @@ public class FileStructureDialog extends DialogWrapper {
       @Override
       public void stateChanged(ChangeEvent e) {
         myShouldNarrowDown = checkBox.isSelected();
-        PropertiesComponent.getInstance().setValue(ourPropertyKey, Boolean.toString(myShouldNarrowDown));
+        PropertiesComponent.getInstance().setValue(ourPropertyKey, myShouldNarrowDown);
 
         ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
         if (builder == null) {

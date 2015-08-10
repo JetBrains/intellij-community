@@ -16,16 +16,24 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-class NestingDepthVisitor extends JavaRecursiveElementVisitor {
-  private int m_maximumDepth = 0;
-  private int m_currentDepth = 0;
+import java.util.Set;
+
+class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
+  private final int myLimit;
+  private int m_maximumDepth;
+  private int m_currentDepth;
+
+  public NestingDepthVisitor(int limit) {
+    myLimit = limit;
+  }
 
 
   @Override
   public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-    // to call to super, to keep this from drilling down
+    // no call to super, to keep this from drilling down
   }
 
   @Override
@@ -37,86 +45,84 @@ class NestingDepthVisitor extends JavaRecursiveElementVisitor {
                                      parent instanceof PsiIfStatement ||
                                      parent instanceof PsiSynchronizedStatement;
     if (!isAlreadyCounted) {
-      enterScope();
+      enterScope(statement);
     }
     super.visitBlockStatement(statement);
-    if (!isAlreadyCounted) {
-      exitScope();
-    }
   }
 
   @Override
   public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
-    enterScope();
+    enterScope(statement);
     super.visitDoWhileStatement(statement);
-    exitScope();
   }
 
   @Override
   public void visitForStatement(@NotNull PsiForStatement statement) {
-    enterScope();
+    enterScope(statement);
     super.visitForStatement(statement);
-    exitScope();
   }
 
   @Override
   public void visitIfStatement(@NotNull PsiIfStatement statement) {
     boolean isAlreadyCounted = false;
-    if (statement.getParent() instanceof PsiIfStatement) {
-      final PsiIfStatement parent = (PsiIfStatement)statement.getParent();
-      assert parent != null;
-      final PsiStatement elseBranch = parent.getElseBranch();
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiIfStatement) {
+      final PsiStatement elseBranch = ((PsiIfStatement)parent).getElseBranch();
       if (statement.equals(elseBranch)) {
         isAlreadyCounted = true;
       }
     }
     if (!isAlreadyCounted) {
-      enterScope();
+      enterScope(statement);
     }
     super.visitIfStatement(statement);
-    if (!isAlreadyCounted) {
-      exitScope();
-    }
   }
 
   @Override
   public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-    enterScope();
+    enterScope(statement);
     super.visitSynchronizedStatement(statement);
-    exitScope();
   }
 
   @Override
   public void visitTryStatement(@NotNull PsiTryStatement statement) {
-    enterScope();
+    enterScope(statement);
     super.visitTryStatement(statement);
-    exitScope();
   }
 
   @Override
   public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-    enterScope();
+    enterScope(statement);
     super.visitSwitchStatement(statement);
-    exitScope();
   }
 
   @Override
   public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-    enterScope();
+    enterScope(statement);
     super.visitWhileStatement(statement);
-    exitScope();
   }
 
-  private void enterScope() {
+  @Override
+  protected void elementFinished(@NotNull PsiElement element) {
+    exitScope(element);
+  }
+
+  private final Set<PsiElement> scopeEntered = new THashSet<PsiElement>();
+  private void enterScope(PsiElement element) {
+    scopeEntered.add(element);
     m_currentDepth++;
-    m_maximumDepth = Math.max(m_maximumDepth, m_currentDepth);
+    if ((m_maximumDepth = Math.max(m_maximumDepth, m_currentDepth)) > myLimit) {
+      stopWalking();
+    }
   }
 
-  private void exitScope() {
-    m_currentDepth--;
+  private void exitScope(PsiElement element) {
+    if (scopeEntered.remove(element)) {
+      m_currentDepth--;
+    }
   }
 
-  public int getMaximumDepth() {
+  int getMaximumDepth() {
     return m_maximumDepth;
   }
 }

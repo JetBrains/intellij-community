@@ -158,6 +158,10 @@ public class UpdateRequestsQueue {
           return;
         }
 
+        if (!myRequestRunning) {
+          myExecutor.get().schedule(new MyRunnable(), 0, TimeUnit.MILLISECONDS);
+        }
+
         semaphore.down();
         myWaitingUpdateCompletionSemaphores.add(semaphore);
       }
@@ -236,6 +240,8 @@ public class UpdateRequestsQueue {
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
       try {
         synchronized (myLock) {
+          if (!myRequestSubmitted) return;
+          
           LOG.assertTrue(!myRequestRunning);
           myRequestRunning = true;
           if (myStopped) {

@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementVisitor {
+class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private static final HashSet<String> COLLECTIONS_QUERIES =
     ContainerUtil.newHashSet("binarySearch", "disjoint", "frequency", "indexOfSubList", "lastIndexOfSubList", "max", "min", "nCopies",
@@ -46,7 +46,7 @@ class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementVisitor {
   @NonNls private final Set<String> myQueryUpdateNames;
   private final boolean myCheckForQuery;
 
-  private boolean myQueriedUpdated = false;
+  private boolean myQueriedUpdated;
   private final PsiVariable variable;
 
   CollectionQueryUpdateCalledVisitor(@Nullable PsiVariable variable, Set<String> queryUpdateNames, boolean checkForQuery) {
@@ -245,7 +245,7 @@ class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementVisitor {
     }
   }
 
-  public boolean isQueriedUpdated() {
+  boolean isQueriedUpdated() {
     return myQueriedUpdated;
   }
 }

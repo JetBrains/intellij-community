@@ -30,14 +30,13 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
@@ -60,20 +59,18 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class StorageUtil {
+  public static final String DEFAULT_EXT = ".xml";
+
   static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   @TestOnly
-  public static String DEBUG_LOG = "";
+  public static String DEBUG_LOG = null;
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
   private static final Pair<byte[], String> NON_EXISTENT_FILE_DATA = Pair.create(null, SystemProperties.getLineSeparator());
 
   private StorageUtil() { }
-
-  public static boolean isChangedByStorageOrSaveSession(@NotNull VirtualFileEvent event) {
-    return event.getRequestor() instanceof StateStorage.SaveSession || event.getRequestor() instanceof StateStorage;
-  }
 
   public static void checkUnknownMacros(@NotNull final ComponentManager componentManager, @NotNull final Project project) {
     Application application = ApplicationManager.getApplication();
@@ -155,13 +152,7 @@ public class StorageUtil {
     if (LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
       BufferExposingByteArrayOutputStream content = writeToBytes(element, lineSeparator.getSeparatorString());
       if (isEqualContent(result, lineSeparator, content)) {
-        if (result.getName().equals("project.default.xml")) {
-          LOG.warn("todo fix project.default.xml");
-          return result;
-        }
-        else {
-          throw new IllegalStateException("Content equals, but it must be handled not on this level: " + result.getName());
-        }
+        throw new IllegalStateException("Content equals, but it must be handled not on this level: " + result.getName());
       }
       else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
         DEBUG_LOG = result.getPath() + ":\n" + content + "\nOld Content:\n" + LoadTextUtil.loadText(result) + "\n---------";
@@ -298,12 +289,26 @@ public class StorageUtil {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       return parentVirtualFile.createChildData(requestor, file.getName());
     }
-    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        return parentVirtualFile.createChildData(requestor, file.getName());
-      }
-    });
+
+    AccessToken token = WriteAction.start();
+    try {
+      return parentVirtualFile.createChildData(requestor, file.getName());
+    }
+    finally {
+      token.finish();
+    }
+  }
+
+  @NotNull
+  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) throws IOException {
+    //noinspection ResultOfMethodCallIgnored
+    ioDir.mkdirs();
+    String parentFile = ioDir.getParent();
+    VirtualFile parentVirtualFile = parentFile == null ? null : VfsUtil.createDirectoryIfMissing(parentFile);
+    if (parentVirtualFile == null) {
+      throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
+    }
+    return getFile(ioDir.getName(), parentVirtualFile, requestor);
   }
 
   /**
@@ -342,15 +347,6 @@ public class StorageUtil {
     if (provider.isApplicable(fileSpec, type)) {
       provider.delete(fileSpec, type);
     }
-  }
-
-  /**
-   * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
-   */
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type) throws IOException {
-    // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
-    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type);
   }
 
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {

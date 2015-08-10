@@ -112,7 +112,7 @@ public class IncProjectBuilder {
   private final boolean myIsTestMode;
 
   private volatile float myTargetsProcessed = 0.0f;
-  private final float myTotalTargetsWork;
+  private volatile float myTotalTargetsWork;
   private final int myTotalModuleLevelBuilderCount;
   private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<Future>());
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = ContainerUtil.newConcurrentMap();
@@ -352,6 +352,7 @@ public class IncProjectBuilder {
       public void filesDeleted(Collection<String> paths) {
       }
     });
+
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
       builder.buildStarted(context);
     }
@@ -651,15 +652,24 @@ public class IncProjectBuilder {
 
   private void buildChunks(final CompileContextImpl context) throws ProjectBuildException {
     try {
+      final CompileScope scope = context.getScope();
+      final ProjectDescriptor pd = context.getProjectDescriptor();
+      final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
+
+      // for better progress dynamics consider only actually affected chunks
+      int totalAffected = 0;
+      for (BuildTargetChunk chunk : targetIndex.getSortedTargetChunks(context)) {
+        if (isAffected(context.getScope(), chunk)) {
+          totalAffected += chunk.getTargets().size();
+        }
+      }
+      myTotalTargetsWork = totalAffected;
+
       if (BuildRunner.PARALLEL_BUILD_ENABLED && MAX_BUILDER_THREADS > 1) {
         new BuildParallelizer(context).buildInParallel();
       }
       else {
         // non-parallel build
-        final CompileScope scope = context.getScope();
-        final ProjectDescriptor pd = context.getProjectDescriptor();
-        final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
-
         for (BuildTargetChunk chunk : targetIndex.getSortedTargetChunks(context)) {
           try {
             buildChunkIfAffected(context, scope, chunk);
@@ -839,9 +849,6 @@ public class IncProjectBuilder {
     if (isAffected(scope, chunk)) {
       buildTargetsChunk(context, chunk);
     }
-    else {
-      updateDoneFraction(context, chunk.getTargets().size());
-    }
   }
 
   private static boolean isAffected(CompileScope scope, BuildTargetChunk chunk) {
@@ -883,9 +890,10 @@ public class IncProjectBuilder {
     cleanOldOutputs(context, target);
     
     final List<TargetBuilder<?, ?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
+    final float builderProgressDelta = 1.0f / builders.size();
     for (TargetBuilder<?, ?> builder : builders) {
       buildTarget(target, context, builder);
-      updateDoneFraction(context, 1.0f / builders.size());
+      updateDoneFraction(context, builderProgressDelta);
     }
     return true;
   }

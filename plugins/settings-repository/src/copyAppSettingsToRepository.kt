@@ -4,6 +4,7 @@ import com.intellij.ide.actions.ExportSettingsAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import java.io.File
 
 fun copyLocalConfig() {
@@ -12,11 +13,11 @@ fun copyLocalConfig() {
 
   val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true, false)
   for (file in fileToComponents.keySet()) {
-    val absolutePath = file.getAbsolutePath()
+    val absolutePath = FileUtilRt.toSystemIndependentName(file.getAbsolutePath())
     var fileSpec = stateStorageManager.collapseMacros(absolutePath)
     if (fileSpec.equals(absolutePath)) {
       // we have not experienced such problem yet, but we are just aware
-      val canonicalPath = file.getCanonicalPath()
+      val canonicalPath = FileUtilRt.toSystemIndependentName(file.getCanonicalPath())
       if (!canonicalPath.equals(absolutePath)) {
         fileSpec = stateStorageManager.collapseMacros(canonicalPath)
       }

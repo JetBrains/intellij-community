@@ -17,19 +17,19 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StorageData
 import org.jdom.Element
+import org.jetbrains.annotations.NotNull
 import kotlin.properties.Delegates
 
 abstract class BaseFileConfigurableStoreImpl(protected val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   val storageManager by Delegates.lazy { createStorageManager() }
 
-  override fun getStateStorageManager() = storageManager
+  override final fun getStateStorageManager() = storageManager
 
-  override fun getPathMacroManagerForDefaults() = pathMacroManager
+  override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  protected abstract fun createStorageManager(): StateStorageManager
+  protected abstract fun createStorageManager(): StateStorageManagerImpl
 }
 
 open class ProjectStorageData : StorageData {
@@ -40,7 +40,7 @@ open class ProjectStorageData : StorageData {
 
   private var version = CURRENT_FORMAT_VERSION
 
-  constructor(rootElementName: String) : super(rootElementName) {
+  constructor() : super() {
   }
 
   protected constructor(storageData: ProjectStorageData) : super(storageData) {
@@ -52,25 +52,15 @@ open class ProjectStorageData : StorageData {
     version = rootElement.getAttributeValue(VERSION_OPTION)?.toInt() ?: CURRENT_FORMAT_VERSION
   }
 
-  override fun save(newLiveStates: Map<String, Element>): Element {
-    var root = super.save(newLiveStates)
-    if (root == null) {
-      root = Element(myRootElementName)
-    }
-    writeOptions(root, Integer.toString(version))
+  override fun save(newLiveStates: Map<String, Element>, rootElementName: String): Element {
+    val root = super.save(newLiveStates, rootElementName) ?: Element(rootElementName)
+    writeOptions(root)
     return root
   }
 
   override fun clone() = ProjectStorageData(this)
 
-  protected open fun writeOptions(root: Element, versionString: String) {
+  protected open fun writeOptions(root: Element) {
     root.setAttribute(VERSION_OPTION, "4")
-  }
-
-  override fun getChangedComponentNames(newStorageData: StorageData, substitutor: PathMacroSubstitutor?): Set<String>? {
-    if (version != (newStorageData as ProjectStorageData).version) {
-      return null
-    }
-    return super.getChangedComponentNames(newStorageData, substitutor)
   }
 }

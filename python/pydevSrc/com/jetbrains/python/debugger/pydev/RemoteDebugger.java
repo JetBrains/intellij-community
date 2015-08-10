@@ -591,6 +591,13 @@ public class RemoteDebugger implements ProcessDebugger {
             thread.updateState(PyThreadInfo.State.KILLED, null);
             myThreads.remove(id);
           }
+          for (PyThreadInfo threadInfo: myThreads.values()) {
+            // notify UI of suspended threads left in debugger if one thread finished its work
+            if ((threadInfo != null) && (threadInfo.getState() == PyThreadInfo.State.SUSPENDED)) {
+              myDebugProcess.threadResumed(threadInfo);
+              myDebugProcess.threadSuspended(threadInfo);
+            }
+          }
           break;
         }
         case AbstractCommand.SHOW_CONSOLE: {

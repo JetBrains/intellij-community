@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBSplitter;
 import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -93,8 +93,7 @@ public class AntSetPanel {
   }
 
   private static class Form implements AntUIUtil.PropertiesEditor<AntInstallation> {
-    private final Splitter mySplitter = new Splitter(false);
-    private final StorageAccessors myAccessors = StorageAccessors.createGlobal("antConfigurations");
+    private final Splitter mySplitter = new JBSplitter("antConfigurations.splitter", 03f);
     private final RightPanel myRightPanel;
     private final AnActionListEditor<AntInstallation> myAnts = new AnActionListEditor<AntInstallation>();
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
@@ -110,7 +109,6 @@ public class AntSetPanel {
     };
 
     public Form(final GlobalAntConfiguration antInstallation) {
-      mySplitter.setProportion(myAccessors.getFloat("splitter", 0.3f));
       mySplitter.setShowDividerControls(true);
       mySplitter.setFirstComponent(myAnts);
       myGlobalWorkingProperties = new EditPropertyContainer(antInstallation.getProperties());

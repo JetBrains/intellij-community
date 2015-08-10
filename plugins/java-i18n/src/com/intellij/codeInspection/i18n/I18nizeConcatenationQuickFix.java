@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   }
 
   @Nullable
-  public static PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
+  static PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
     PsiPolyadicExpression element = PsiTreeUtil.getParentOfType(psiElement, PsiPolyadicExpression.class, false, PsiMember.class);
     if (element == null) return null;
 
@@ -136,6 +136,9 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
       if (element.getOperationTokenType() != JavaTokenType.PLUS) return concatenation;
       for (PsiExpression operand : element.getOperands()) {
         stringLiteralOccured |= operand instanceof PsiLiteralExpression && ((PsiLiteralExpression)operand).getValue() instanceof String;
+        if (stringLiteralOccured) {
+          break;
+        }
       }
 
       if (stringLiteralOccured) {

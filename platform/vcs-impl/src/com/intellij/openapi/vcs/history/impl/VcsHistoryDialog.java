@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.vcs.history.impl;
 
-import com.intellij.diff.Block;
-import com.intellij.diff.FindBlock;
+import com.intellij.diff.*;
+import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffPanel;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.help.HelpManager;
@@ -69,7 +69,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
   private final AbstractVcs myActiveVcs;
 
-  private final DiffPanel myDiffPanel;
+  private final DiffRequestPanel myDiffPanel;
   private final Project myProject;
 
   private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
@@ -143,8 +143,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject,getDisposable(), null);
-    myDiffPanel.setRequestFocus(false);
+    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, getDisposable(), getWindow());
 
     myRevisions.addAll(session.getRevisionList());
     final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
@@ -339,22 +338,29 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
 
     if (myIsDisposed) return;
+
+    DiffRequest diffRequest = createDiffRequest(firstRev, secondRev);
+    myDiffPanel.setRequest(diffRequest);
+  }
+
+  @NotNull
+  private DiffRequest createDiffRequest(@NotNull VcsFileRevision firstRev, @NotNull VcsFileRevision secondRev) {
     try {
-      myDiffPanel.setContents(new SimpleContent(getContentToShow(firstRev), myContentFileType),
-                              new SimpleContent(getContentToShow(secondRev), myContentFileType));
-    }
-    catch (FilesTooBigForDiffException e) {
-      myDiffPanel.setTooBigFileErrorContents();
+      DiffContent content1 = DiffContentFactory.getInstance().create(getContentToShow(firstRev), myContentFileType);
+      DiffContent content2 = DiffContentFactory.getInstance().create(getContentToShow(secondRev), myContentFileType);
+
+      String title1 = VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber());
+      String title2 = VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber());
+
+      return new SimpleDiffRequest(null, content1, content2, title1, title2);
     }
     catch (VcsException e) {
-      final String text = canNoLoadMessage(e);
-      myDiffPanel.setContents(new SimpleContent(text, myContentFileType),
-                              new SimpleContent(text, myContentFileType));
       canNotLoadRevisionMessage(e);
+      return new MessageDiffRequest(canNoLoadMessage(e));
     }
-    myDiffPanel.setTitle1(VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber()));
-    myDiffPanel.setTitle2(VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber()));
-
+    catch (FilesTooBigForDiffException e) {
+      return new MessageDiffRequest(DiffTooBigException.MESSAGE);
+    }
   }
 
   public synchronized void dispose() {

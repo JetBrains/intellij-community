@@ -49,7 +49,7 @@ import java.util.List;
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
-  public boolean m_ignoreJavadoc = false; // left here to prevent changes to project files.
+  public boolean m_ignoreJavadoc; // left here to prevent changes to project files.
 
   @Override
   @NotNull
@@ -124,7 +124,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
                                                         elementCount));
     }
 
-    private static class QualificationRemover extends JavaRecursiveElementVisitor {
+    private static class QualificationRemover extends JavaRecursiveElementWalkingVisitor {
       private final String fullyQualifiedText;
       private final List<PsiElement> shortenedElements = new ArrayList<PsiElement>();
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.Consumer;
@@ -170,6 +171,9 @@ public class ProjectDataManager {
                                 @NotNull PlatformFacade platformFacade,
                                 boolean synchronous) {
     if (project.isDisposed()) return;
+    if(project instanceof ProjectImpl) {
+      assert ((ProjectImpl)project).isComponentsCreated();
+    }
 
     final List<DataNode<T>> toImport = ContainerUtil.newSmartList();
     final List<DataNode<T>> toIgnore = ContainerUtil.newSmartList();

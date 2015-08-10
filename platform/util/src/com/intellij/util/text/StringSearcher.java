@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,5 +197,29 @@ public class StringSearcher {
   @Override
   public String toString() {
     return "pattern " + myPattern;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    StringSearcher searcher = (StringSearcher)o;
+
+    if (myCaseSensitive != searcher.myCaseSensitive) return false;
+    if (myForwardDirection != searcher.myForwardDirection) return false;
+    if (myJavaIdentifier != searcher.myJavaIdentifier) return false;
+    if (myHandleEscapeSequences != searcher.myHandleEscapeSequences) return false;
+    return myPattern.equals(searcher.myPattern);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPattern.hashCode();
+    result = 31 * result + (myCaseSensitive ? 1 : 0);
+    result = 31 * result + (myForwardDirection ? 1 : 0);
+    result = 31 * result + (myJavaIdentifier ? 1 : 0);
+    result = 31 * result + (myHandleEscapeSequences ? 1 : 0);
+    return result;
   }
 }

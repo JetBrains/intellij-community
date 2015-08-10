@@ -21,6 +21,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -38,9 +39,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,13 +74,14 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    if (getModule() == null){
+    final Module module = getModule();
+    if (module == null) {
       throw new ExecutionException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final Sdk jdk = rootManager.getSdk();
     if (jdk == null) {
-      throw CantRunException.noJdkForModule(getModule());
+      throw CantRunException.noJdkForModule(module);
     }
 
     final Sdk ideaJdk = IdeaJdk.findIdeaJdk(jdk);
@@ -136,6 +140,14 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
         vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
         vm.defineProperty("idea.plugins.path", canonicalSandbox + File.separator + "plugins");
+        vm.defineProperty("idea.classpath.index.enabled", "false");
+
+        if (!vm.hasProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) && PluginModuleType.isOfType(module)) {
+          final String id = DescriptorUtil.getPluginId(module);
+          if (id != null) {
+            vm.defineProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, id);
+          }
+        }
 
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");

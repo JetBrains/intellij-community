@@ -64,6 +64,7 @@ import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -354,7 +355,7 @@ public class PyUtil {
   @NotNull
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<PyClass>();
-    for (PyClass ancestor : pyClass.getAncestorClasses()) {
+    for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
       if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
         superClasses.add(ancestor);
       }
@@ -1085,8 +1086,23 @@ public class PyUtil {
     return PyNames.isIdentifier(name);
   }
 
-  public static LookupElement createNamedParameterLookup(String name) {
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").withIcon(PlatformIcons.PARAMETER_ICON);
+  /**
+   * Constructs new lookup element for completion of keyword argument with equals sign appended.
+   *
+   * @param name    name of the parameter
+   * @param project project instance to check code style settings and surround equals sign with spaces if necessary
+   * @return lookup element
+   */
+  @NotNull
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @Nullable Project project) {
+    final String suffix;
+    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
+      suffix = " = ";
+    }
+    else {
+      suffix = "=";
+    }
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(PlatformIcons.PARAMETER_ICON);
     lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
@@ -1272,7 +1288,7 @@ public class PyUtil {
         PyFunction.Modifier modifier = node.getModifier();
         boolean isMetaclassMethod = false;
         PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
-        for (PyClass ancestor_cls : cls.getAncestorClasses()) {
+        for (PyClass ancestor_cls : cls.getAncestorClasses(null)) {
           if (ancestor_cls == type_cls) {
             isMetaclassMethod = true;
             break;
@@ -1309,7 +1325,7 @@ public class PyUtil {
           if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.__CLASS__)) {
             return true;
           }
-          for (PyClass s : klass.getAncestorClasses()) {
+          for (PyClass s : klass.getAncestorClasses(null)) {
             if (firstArg.equals(s.getName())) {
               return true;
             }

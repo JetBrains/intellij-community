@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyOverridingAncestorsClassMembersProvider;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
 
   @Nullable
   @Override
-  public PsiElement resolveMember(@NotNull PyClassType classType, @NotNull String name, PsiElement location) {
+  public PsiElement resolveMember(@NotNull PyClassType classType, @NotNull String name, PsiElement location, TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
     final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeleton(cls);
     if (skeleton != null) {

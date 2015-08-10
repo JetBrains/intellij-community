@@ -35,7 +35,7 @@ public class CreateResourceBundleAction extends CreateElementActionBase {
   @NotNull
   @Override
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
-    final CreateResourceBundleDialogComponent.Dialog dialog = new CreateResourceBundleDialogComponent.Dialog(project, directory);
+    final CreateResourceBundleDialogComponent.Dialog dialog = new CreateResourceBundleDialogComponent.Dialog(project, directory, null);
     if (dialog.showAndGet()) {
       return dialog.getCreatedFiles();
     } else {

@@ -17,15 +17,12 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -44,7 +41,6 @@ import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,15 +69,17 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       if (xmlElement == null) {
         if (required.value()) {
           final String xmlElementName = element.getXmlElementName();
+          String namespace = element.getXmlElementNamespace();
           if (element instanceof GenericAttributeValue) {
-            return Arrays.asList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", xmlElementName)));
+            return Collections.singletonList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", xmlElementName),
+                                                              new DefineAttributeQuickFix(xmlElementName, namespace)));
           }
-          return Arrays.asList(
+          return Collections.singletonList(
             holder.createProblem(
               element,
               HighlightSeverity.ERROR,
               IdeBundle.message("child.tag.0.should.be.defined", xmlElementName),
-              new AddRequiredSubtagFix(xmlElementName, element.getXmlElementNamespace(), element.getParent().getXmlTag())
+              new AddRequiredSubtagFix(xmlElementName, namespace)
             )
           );
         }
@@ -130,6 +128,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           }
         }
         final boolean isResolvingConverter = converter instanceof ResolvingConverter;
+        //noinspection unchecked
         if (!hasBadResolve &&
             (domReference != null || isResolvingConverter &&
                                      hasBadResolve(domReference = new GenericDomValueReference(element)))) {
@@ -137,7 +136,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           final String errorMessage = converter
             .getErrorMessage(element.getStringValue(), ConvertContextFactory.createConvertContext(
               DomManagerImpl.getDomInvocationHandler(element)));
-          if (errorMessage != null && XmlHighlightVisitor.getErrorDescription(domReference) != null) {
+          if (errorMessage != null) {
             list.add(holder.createResolveProblem(element, domReference));
           }
         }
@@ -169,10 +168,11 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         final String typeName = ElementPresentationManager.getTypeNameForObject(element);
         final GenericDomValue genericDomValue = domElement.getGenericInfo().getNameDomElement(element);
         if (genericDomValue != null) {
-          return Arrays.asList(holder.createProblem(genericDomValue, DomUtil.getFile(domElement).equals(DomUtil.getFile(element))
-                                                                     ? IdeBundle.message("model.highlighting.identity", typeName)
-                                                                     : IdeBundle.message("model.highlighting.identity.in.other.file", typeName,
-                                                                                         domElement.getXmlTag().getContainingFile().getName())));
+          return Collections.singletonList(holder.createProblem(genericDomValue, DomUtil.getFile(domElement).equals(DomUtil.getFile(element))
+                                                                 ? IdeBundle.message("model.highlighting.identity", typeName)
+                                                                 : IdeBundle.message("model.highlighting.identity.in.other.file", typeName,
+                                                                                     domElement.getXmlTag().getContainingFile()
+                                                                                       .getName())));
         }
       }
     }
@@ -236,15 +236,13 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
 
-  private static class AddRequiredSubtagFix implements LocalQuickFix, IntentionAction {
+  private static class AddRequiredSubtagFix implements LocalQuickFix {
     private final String tagName;
     private final String tagNamespace;
-    private final XmlTag parentTag;
 
-    public AddRequiredSubtagFix(@NotNull String _tagName, @NotNull String _tagNamespace, @NotNull XmlTag _parentTag) {
+    public AddRequiredSubtagFix(@NotNull String _tagName, @NotNull String _tagNamespace) {
       tagName = _tagName;
       tagNamespace = _tagNamespace;
-      parentTag = _parentTag;
     }
 
     @Override
@@ -255,37 +253,19 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
     @Override
     @NotNull
-    public String getText() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
       return getName();
     }
 
     @Override
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-      doFix();
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
-
-    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      doFix();
+      XmlTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class, false);
+      if (tag != null) {
+        doFix(tag);
+      }
     }
 
-    private void doFix() {
+    private void doFix(XmlTag parentTag) {
       if (!FileModificationService.getInstance().prepareFileForWrite(parentTag.getContainingFile())) return;
 
       try {

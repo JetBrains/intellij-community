@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +36,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +161,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     queueCommit(project, document, reason);
   }
 
-  public void queueCommit(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
+  void queueCommit(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
     assert !isDisposed : "already disposed";
 
     if (!project.isInitialized()) return;
@@ -228,7 +228,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   // cancels all pending commits
   @TestOnly
-  public void cancelAll() {
+  private void cancelAll() {
     synchronized (documentsToCommit) {
       cancel("cancel all in tests");
       markRemovedFromDocsToCommit(null);
@@ -358,7 +358,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
       if (success) {
         assert !myApplication.isDispatchThread();
-        UIUtil.invokeLaterIfNeeded(finishRunnable);
+        myApplication.invokeLater(finishRunnable, ModalityState.NON_MODAL);
         log("Invoked later finishRunnable", task, false, finishRunnable, indicator);
       }
     }

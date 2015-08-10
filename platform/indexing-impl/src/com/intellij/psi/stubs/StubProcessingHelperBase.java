@@ -70,13 +70,14 @@ public abstract class StubProcessingHelperBase {
         psiFile = (PsiFileWithStubSupport)stubBindingRoot;
         stubTree = psiFile.getStubTree();
         if (stubTree == null && psiFile instanceof PsiFileImpl) {
-          IElementType contentElementType = ((PsiFileImpl)psiFile).getContentElementType();
-          if (contentElementType instanceof IStubFileElementType) {
+          IStubFileElementType elementType = ((PsiFileImpl)psiFile).getElementTypeForStubBuilder();
+          if (elementType != null) {
             stubTree = ((PsiFileImpl)psiFile).calcStubTree();
           }
           else {
             customStubs = true;
-            assert BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) != null : "unable to get stub builder for " + psiFile.getFileType();
+            LOG.assertTrue(BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) != null,
+                           "unable to get stub builder for " + psiFile.getFileType());
           }
         }
       }

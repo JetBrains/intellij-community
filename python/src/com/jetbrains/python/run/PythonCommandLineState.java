@@ -56,6 +56,7 @@ import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
+import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -184,11 +185,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
     final ProcessHandler processHandler;
     if (PySdkUtil.isRemote(sdk)) {
-      processHandler =
-        createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), myConfig.getMappingSettings());
+      PyRemotePathMapper pathMapper = createRemotePathMapper();
+      processHandler = createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), pathMapper);
     }
     else {
-      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, myConfig.getProject());
+      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
       processHandler = doCreateProcess(commandLine);
       ProcessTerminatedListener.attach(processHandler);
     }
@@ -197,6 +198,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
     PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
 
     return processHandler;
+  }
+
+  @Nullable
+  private PyRemotePathMapper createRemotePathMapper() {
+    if (myConfig.getMappingSettings() == null) {
+      return null;
+    } else {
+      return PyRemotePathMapper.fromSettings(myConfig.getMappingSettings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
+    }
   }
 
   protected PyRemoteProcessStarter createRemoteProcessStarter() {

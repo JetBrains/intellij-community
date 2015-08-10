@@ -19,18 +19,18 @@ import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +39,6 @@ import java.util.Set;
 import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
 
 public class DirectoryStorageData extends StorageDataBase {
-  private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
-
   public static final String DEFAULT_EXT = ".xml";
 
   private final Map<String, StateMap> myStates;
@@ -86,12 +84,12 @@ public class DirectoryStorageData extends StorageDataBase {
         }
 
         Element element = JDOMUtil.load(file.getInputStream());
-        String name = StorageData.getComponentNameIfValid(element);
+        String name = getComponentNameIfValid(element);
         if (name == null) {
           continue;
         }
 
-        if (!element.getName().equals(StorageData.COMPONENT)) {
+        if (!element.getName().equals(COMPONENT)) {
           LOG.error("Incorrect root tag name (" + element.getName() + ") in " + file.getPresentableUrl());
           continue;
         }
@@ -223,7 +221,7 @@ public class DirectoryStorageData extends StorageDataBase {
     fileToState.put(fileName, state);
   }
 
-  void processComponent(@NotNull String componentName, @NotNull TObjectObjectProcedure<String, Object> consumer) {
+  void processComponent(@NotNull String componentName, @NotNull PairConsumer<String, Object> consumer) {
     StateMap map = myStates.get(componentName);
     if (map != null) {
       map.forEachEntry(consumer);
@@ -248,7 +246,7 @@ public class DirectoryStorageData extends StorageDataBase {
   @Nullable
   public Element getCompositeStateAndArchive(@NotNull String componentName, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
     StateMap fileToState = myStates.get(componentName);
-    Element state = new Element(StorageData.COMPONENT);
+    Element state = new Element(COMPONENT);
     if (fileToState == null || fileToState.isEmpty()) {
       return state;
     }
@@ -280,7 +278,7 @@ public class DirectoryStorageData extends StorageDataBase {
   }
 
   @NotNull
-  public Element stateToElement(@NotNull String key, @Nullable Object state) {
+  public Element stateToElement(@NotNull String key, @Nullable Object state) throws IOException {
     return StateMap.stateToElement(key, state, Collections.<String, Element>emptyMap());
   }
 

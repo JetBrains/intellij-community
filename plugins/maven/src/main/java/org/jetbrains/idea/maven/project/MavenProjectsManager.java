@@ -46,7 +46,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -1101,15 +1100,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void updateProjectTargetFolders() {
-    updateProjectFolders(true);
-  }
-
-  private void updateProjectFolders(final boolean targetFoldersOnly) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
 
-        MavenFoldersImporter.updateProjectFolders(myProject, targetFoldersOnly);
+        MavenFoldersImporter.updateProjectFolders(myProject, true);
         VirtualFileManager.getInstance().asyncRefresh(null);
       }
     });

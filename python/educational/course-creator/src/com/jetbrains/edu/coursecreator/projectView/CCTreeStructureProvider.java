@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware
             continue;
           }
           if (CCProjectService.getInstance(project).isTaskFile(virtualFile)
-              || virtualFile.getName().contains("_windows")) {
+              || virtualFile.getName().contains(EduNames.WINDOWS_POSTFIX)) {
             continue;
           }
         }

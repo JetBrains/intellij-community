@@ -79,7 +79,7 @@ public class PushController implements Disposable {
                         @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
     myPushSettings = ServiceManager.getService(project, PushSettings.class);
-    myGlobalRepositoryManager = ServiceManager.getService(project, VcsRepositoryManager.class);
+    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
     myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
@@ -503,12 +503,21 @@ public class PushController implements Disposable {
     if (mySingleRepoProject) {
       return myView2Model.values();
     }
-    return ContainerUtil.filter(myView2Model.values(), new Condition<MyRepoModel<?, ?, ?>>() {
-      @Override
-      public boolean value(MyRepoModel<?, ?, ?> model) {
-        return model.isSelected();
-      }
-    });
+    //return not only selected but all loading with something to push;
+    // otherwise push/forcepush button may be enabled but no selected node exists
+    return ContainerUtil.mapNotNull(myView2Model.entrySet(),
+                                    new Function<Map.Entry<RepositoryNode, MyRepoModel<?, ?, ?>>, MyRepoModel<?, ?, ?>>() {
+                                      @Override
+                                      public MyRepoModel fun(Map.Entry<RepositoryNode, MyRepoModel<?, ?, ?>> entry) {
+                                        MyRepoModel<?, ?, ?> model = entry.getValue();
+                                        return model.isSelected() ||
+                                               (entry.getKey().isLoading() &&
+                                                model.getTarget() != null &&
+                                                notExcludedByUser(model.getRepository()) &&
+                                                model.getTarget().hasSomethingToPush()) ? model :
+                                               null;
+                                      }
+                                    });
   }
 
   @Override
@@ -574,7 +583,8 @@ public class PushController implements Disposable {
 
   public boolean ensureForcePushIsNeeded() {
     Collection<MyRepoModel<?, ?, ?>> selectedNodes = getSelectedRepoNode();
-    MyRepoModel<?, ?, ?> selectedModel = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(selectedNodes));
+    MyRepoModel<?, ?, ?> selectedModel = ContainerUtil.getFirstItem(selectedNodes);
+    if (selectedModel == null) return false;
     final PushSupport activePushSupport = selectedModel.getSupport();
     final PushTarget commonTarget = getCommonTarget(selectedNodes);
     if (commonTarget != null && activePushSupport.isSilentForcePushAllowed(commonTarget)) return true;

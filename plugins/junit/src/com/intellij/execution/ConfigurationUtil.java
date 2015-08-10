@@ -18,7 +18,10 @@ package com.intellij.execution;
 
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -29,6 +32,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,13 +76,15 @@ public class ConfigurationUtil {
       });
     }
 
-    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.Test", true);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.runner.RunWith", false);
+    Set<PsiClass> processed = ContainerUtil.newHashSet();
+    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.Test", true);
+    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.runner.RunWith", false);
     return hasJunit4;
   }
 
   private static boolean addAnnotatedMethodsAnSubclasses(final PsiManager manager, final GlobalSearchScope scope, final TestClassFilter testClassFilter,
                                                          final Set<PsiClass> found,
+                                                         final Set<PsiClass> processed,
                                                          final String annotation,
                                                          final boolean isMethod) {
     final Ref<Boolean> isJUnit4 = new Ref<Boolean>(Boolean.FALSE);
@@ -95,36 +101,40 @@ public class ConfigurationUtil {
       //allScope is used to find all abstract test cases which probably have inheritors in the current 'scope'
       AnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiMember>() {
         public boolean process(final PsiMember annotated) {
-          final PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : ApplicationManager.getApplication()
-            .runReadAction(new Computable<PsiClass>() {
-                @Override
-                public PsiClass compute() {
-                  return annotated.getContainingClass();
-                }
-              });
-          if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
-            if (ApplicationManager.getApplication().runReadAction(
-              new Computable<Boolean>() {
-                @Override
-                public Boolean compute() {
-                  final VirtualFile file = PsiUtilCore.getVirtualFile(containingClass);
-                  return file != null && scope.contains(file) && testClassFilter.isAccepted(containingClass);
-                }
-              })) {
-              found.add(containingClass);
+          final PsiClass containingClass;
+
+          AccessToken token = ReadAction.start();
+          try {
+            containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
+            if (containingClass == null || annotated instanceof PsiMethod != isMethod) {
+              return true;
+            }
+            if (!processed.add(containingClass)) { // don't process the same class twice regardless of it being in the scope
+              return true;
+            }
+            final VirtualFile file = PsiUtilCore.getVirtualFile(containingClass);
+            if (file != null && scope.contains(file) && testClassFilter.isAccepted(containingClass)) {
+              if (!found.add(containingClass)) {
+                return true;
+              }
               isJUnit4.set(Boolean.TRUE);
             }
-            ClassInheritorsSearch.search(containingClass, scope, true, true, false)
-              .forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-                public boolean execute(@NotNull final PsiClass aClass) {
-                  if (testClassFilter.isAccepted(aClass)) {
-                    found.add(aClass);
-                    isJUnit4.set(Boolean.TRUE);
-                  }
-                  return true;
-                }
-              }));
           }
+          finally {
+            token.finish();
+          }
+
+          ClassInheritorsSearch.search(containingClass, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+            @Override
+            public boolean processInReadAction(PsiClass aClass) {
+              if (testClassFilter.isAccepted(aClass)) {
+                found.add(aClass);
+                processed.add(aClass);
+                isJUnit4.set(Boolean.TRUE);
+              }
+              return true;
+            }
+          });
           return true;
         }
       });

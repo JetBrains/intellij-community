@@ -68,7 +68,6 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
       final FileEditorManagerListener listener = new StudyFileEditorManagerListener(project, taskTextPane);
       project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     }
-
   }
 
   public void dispose() {

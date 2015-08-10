@@ -28,8 +28,6 @@ import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 
-import java.util.Set;
-
 /**
  * User: lex
  * Date: Sep 26, 2003
@@ -52,9 +50,9 @@ public class ResumeThreadAction extends DebuggerAction{
         debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() throws Exception {
-            Set<SuspendContextImpl> contexts = SuspendManagerUtil.getSuspendingContexts(debugProcess.getSuspendManager(), thread);
-            if (!contexts.isEmpty()) {
-              debugProcess.createResumeThreadCommand(contexts.iterator().next(), thread).run();
+            SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(debugProcess.getSuspendManager(), thread);
+            if (suspendingContext != null) {
+              debugProcess.createResumeThreadCommand(suspendingContext, thread).run();
             }
             debuggerTreeNode.calcValue();
           }

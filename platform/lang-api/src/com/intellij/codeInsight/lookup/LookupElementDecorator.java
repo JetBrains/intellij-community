@@ -24,6 +24,8 @@ import java.util.Set;
 
 /**
  * @author peter
+ *
+ * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
 public abstract class LookupElementDecorator<T extends LookupElement> extends LookupElement {
   private final T myDelegate;

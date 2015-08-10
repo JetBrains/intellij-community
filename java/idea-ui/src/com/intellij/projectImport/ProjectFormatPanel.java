@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 
 public class ProjectFormatPanel {
-
   private static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";
   public static final String DIR_BASED = Project.DIRECTORY_STORE_FOLDER + " (directory based)";
   private static final String FILE_BASED = ".ipr (file based)";
@@ -39,7 +38,7 @@ public class ProjectFormatPanel {
   public ProjectFormatPanel() {
     myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
     myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
-    myStorageFormatCombo.setSelectedItem(PropertiesComponent.getInstance().getOrInit(STORAGE_FORMAT_PROPERTY, DIR_BASED));
+    myStorageFormatCombo.setSelectedItem(PropertiesComponent.getInstance().getValue(STORAGE_FORMAT_PROPERTY, DIR_BASED));
   }
 
   public JPanel getPanel() {
@@ -57,8 +56,8 @@ public class ProjectFormatPanel {
     setDefaultFormat(isDefault());
   }
 
-  public static void setDefaultFormat(boolean aDefault) {
-    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, aDefault ? FILE_BASED : DIR_BASED);
+  public static void setDefaultFormat(boolean value) {
+    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, value ? FILE_BASED : DIR_BASED, DIR_BASED);
   }
 
   public void setVisible(boolean visible) {

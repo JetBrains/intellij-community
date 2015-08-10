@@ -16,16 +16,14 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
-
+class VariableUsedInInnerClassVisitor extends JavaRecursiveElementWalkingVisitor {
   @NotNull private final PsiVariable variable;
-  private boolean usedInInnerClass = false;
-  private boolean inInnerClass = false;
+  private boolean usedInInnerClass;
+  private int inInnerClassCount;
 
-  public VariableUsedInInnerClassVisitor(@NotNull PsiVariable variable) {
+  VariableUsedInInnerClassVisitor(@NotNull PsiVariable variable) {
     this.variable = variable;
   }
 
@@ -37,31 +35,19 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClass(@NotNull PsiClass aClass) {
-    if (usedInInnerClass) {
-      return;
-    }
-    final boolean wasInInnerClass = inInnerClass;
-    if (!inInnerClass) {
-      inInnerClass = true;
-      if (aClass instanceof PsiAnonymousClass) {
-        final PsiExpressionList argumentList = ((PsiAnonymousClass)aClass).getArgumentList();
-        if (argumentList != null) {
-          for (PsiClass localAndAnonymousClasses : PsiTreeUtil.findChildrenOfType(argumentList, PsiClass.class)) {
-            localAndAnonymousClasses.accept(this);
-          }
-        }
+  public void visitJavaToken(PsiJavaToken token) {
+    super.visitJavaToken(token);
+    PsiElement parent = token.getParent();
+    if (parent instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)parent;
+      // have to be that complex because anonymous class argument list should not be treated as insideInner
+      if (token.getTokenType() == JavaTokenType.LBRACE && aClass.getLBrace() == token) {
+        inInnerClassCount++;
       }
-      PsiElement child = aClass.getLBrace();
-      while (child != null) {
-        child.accept(this);
-        child = child.getNextSibling();
+      if (token.getTokenType() == JavaTokenType.RBRACE && aClass.getRBrace() == token) {
+        inInnerClassCount--;
       }
-    } else {
-      inInnerClass = true;
-      super.visitClass(aClass);
     }
-    inInnerClass = wasInInnerClass;
   }
 
   @Override
@@ -70,16 +56,15 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
       return;
     }
     super.visitReferenceExpression(referenceExpression);
-    if (!inInnerClass) {
-      return;
-    }
-    final PsiElement target = referenceExpression.resolve();
-    if (variable.equals(target)) {
-      usedInInnerClass = true;
+    if (inInnerClassCount > 0) {
+      final PsiElement target = referenceExpression.resolve();
+      if (variable.equals(target)) {
+        usedInInnerClass = true;
+      }
     }
   }
 
-  public boolean isUsedInInnerClass() {
+  boolean isUsedInInnerClass() {
     return usedInInnerClass;
   }
 }

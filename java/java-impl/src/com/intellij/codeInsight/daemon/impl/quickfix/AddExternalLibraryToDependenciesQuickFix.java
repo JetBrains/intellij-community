@@ -15,18 +15,18 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author nik
@@ -67,11 +67,8 @@ class AddExternalLibraryToDependenciesQuickFix extends OrderEntryFix {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    List<String> classesRoots = myLibraryDescriptor.locateLibraryClassesRoots(myCurrentModule);
-    if (!classesRoots.isEmpty()) {
-      String libraryName = classesRoots.size() > 1 ? myLibraryDescriptor.getPresentableName() : null;
-      addJarsToRootsAndImportClass(classesRoots, libraryName, myCurrentModule, editor, myReference,
-                                   myQualifiedClassName);
-    }
+    DependencyScope scope = suggestScopeByLocation(myCurrentModule, myReference.getElement());
+    ProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibraryDescriptor, scope);
+    importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
   }
 }

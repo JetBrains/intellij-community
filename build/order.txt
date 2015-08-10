@@ -11710,7 +11710,6 @@ org/jetbrains/idea/maven/tasks/MavenCompilerTask.class:/plugins/maven/lib/maven.
 org/jetbrains/idea/maven/project/MavenGeneralSettings$Listener.class:/plugins/maven/lib/maven.jar
 com/intellij/ide/actions/ShowModulePropertiesAction.class:/lib/idea.jar
 org/jetbrains/idea/maven/execution/MavenRunnerSettings$1.class:/plugins/maven/lib/maven.jar
-com/intellij/openapi/components/StorageId.class:/lib/openapi.jar
 com/intellij/openapi/module/impl/ModuleManagerImpl$ModuleSaveItem.class:/lib/idea.jar
 com/intellij/openapi/module/impl/ModuleManagerImpl$SaveItem.class:/lib/idea.jar
 com/intellij/openapi/module/impl/ModuleManagerImpl$ModulePathSaveItem.class:/lib/idea.jar

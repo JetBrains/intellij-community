@@ -88,6 +88,11 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   }
 
   @Override
+  public boolean useTasksNode() {
+    return delegate.useTasksNode();
+  }
+
+  @Override
   public ProjectSystemId getSystemId() {
     return delegate.getSystemId();
   }

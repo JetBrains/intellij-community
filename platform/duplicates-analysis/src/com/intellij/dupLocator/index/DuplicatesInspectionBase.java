@@ -35,7 +35,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class DuplicatesInspectionBase extends LocalInspectionTool {
-  private static final int MIN_FRAGMENT_SIZE = 3;
+  private static final int MIN_FRAGMENT_SIZE = 3; // todo 3 statements constant
 
   @Nullable
   @Override
@@ -57,7 +57,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
         DuplicatedCodeProcessor<LighterASTNode> myProcessor;
         @Override
-        public void process(@NotNull final LighterAST ast, @NotNull final LighterASTNode node, int hash) {
+        public void process(int hash, @NotNull final LighterAST ast, @NotNull final LighterASTNode... nodes) {
           class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
 
             LightDuplicatedCodeProcessor(VirtualFile file, Project project) {
@@ -93,7 +93,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
             myProcessor = new LightDuplicatedCodeProcessor(virtualFile, psiFile.getProject());
             myProcessorRef.set(myProcessor);
           }
-          myProcessor.process(hash, node);
+          myProcessor.process(hash, nodes[0]);
         }
       });
     } else {
@@ -165,7 +165,6 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     if (processor != null) {
       for(Map.Entry<Integer, TextRange> entry:processor.reportedRanges.entrySet()) {
         final Integer offset = entry.getKey();
-        // todo 3 statements constant
         if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
         final VirtualFile file = processor.reportedFiles.get(offset);
         String message = "Found duplicated code in " + file.getPath();

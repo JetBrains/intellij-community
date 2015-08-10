@@ -71,7 +71,7 @@ import com.intellij.remote.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PathMappingSettings;
+import com.intellij.util.PathMapper;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
@@ -87,6 +87,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSdkCredentials;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
@@ -156,17 +157,16 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myStatementsToExecute = statementsToExecute;
   }
 
-  public static PathMappingSettings getMappings(Project project, Sdk sdk) {
-    PathMappingSettings mappingSettings = null;
+  @Nullable
+  public static PathMapper getPathMapper(Project project, Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
         //noinspection ConstantConditions
-        mappingSettings =
-          instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
+        return instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
       }
     }
-    return mappingSettings;
+    return null;
   }
 
   @NotNull
@@ -251,12 +251,28 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
    * @param project current project
    */
   public static void setCorrectStdOutEncoding(@NotNull final Map<String, String> envs, @NotNull final Project project) {
-    final Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-
+    final Charset defaultCharset = getProjectDefaultCharset(project);
     final String encoding = defaultCharset.name();
     setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
   }
 
+  /**
+   * Set command line charset as current project charset.
+   * Add required ENV var to Python task to set its stdout charset to current project charset to allow it print correctly.
+   *
+   * @param commandLine command line
+   * @param project     current project
+   */
+  public static void setCorrectStdOutEncoding(@NotNull GeneralCommandLine commandLine, @NotNull final Project project) {
+    final Charset defaultCharset = getProjectDefaultCharset(project);
+    commandLine.setCharset(defaultCharset);
+    setPythonIOEncoding(commandLine.getEnvironment(), defaultCharset.name());
+  }
+
+  @NotNull
+  private static Charset getProjectDefaultCharset(@NotNull Project project) {
+    return EncodingProjectManager.getInstance(project).getDefaultCharset();
+  }
 
   @Override
   protected List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
@@ -467,10 +483,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     try {
       myRemoteCredentials = data.getRemoteSdkCredentials(true);
-      PathMappingSettings mappings = manager.setupMappings(getProject(), data, null);
+      PyRemotePathMapper pathMapper = manager.setupMappings(getProject(), data, null);
 
       RemoteSshProcess remoteProcess =
-        manager.createRemoteProcess(getProject(), myRemoteCredentials, mappings, commandLine, true);
+        manager.createRemoteProcess(getProject(), myRemoteCredentials, pathMapper, commandLine, true);
 
 
       Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);

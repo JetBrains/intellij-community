@@ -21,7 +21,9 @@ import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonBaseProjectGenerator;
@@ -59,7 +61,8 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
     List<DirectoryProjectGenerator> pluginSpecificGenerators = Lists.newArrayList();
     for (DirectoryProjectGenerator generator : generators) {
       if (generator instanceof PythonProjectGenerator) {
-        ProjectSpecificAction group = new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, callback));
+        ProjectSpecificAction group =
+          new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, new PythonGenerateProjectCallback()));
         addAll(group.getChildren(null));
       }
       else
@@ -69,6 +72,30 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
     if (!pluginSpecificGenerators.isEmpty()) {
       PluginSpecificProjectsStep step = new PluginSpecificProjectsStep(callback, pluginSpecificGenerators);
       addAll(step.getChildren(null));
+    }
+  }
+
+  private static class PythonGenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
+    @Override
+    public void consume(@Nullable ProjectSettingsStepBase base) {
+      if (base == null) return;
+      final DirectoryProjectGenerator generator = base.getProjectGenerator();
+      final NullableConsumer<ProjectSettingsStepBase> callback = new GenerateProjectCallback();
+      if (generator instanceof PythonProjectGenerator) {
+        final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).beforeProjectGenerated();
+        if (beforeProjectGenerated != null) {
+          final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
+          if (result) {
+            callback.consume(base);
+          }
+          else {
+            Messages.showWarningDialog("Project can not be generated", "Error in Project Generation");
+          }
+        }
+        else {
+          callback.consume(base);
+        }
+      }
     }
   }
 }

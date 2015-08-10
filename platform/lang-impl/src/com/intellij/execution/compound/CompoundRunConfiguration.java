@@ -61,7 +61,7 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
     RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
     for (Pair<String, String> pair : myPairs) {
       RunnerAndConfigurationSettings settings = manager.findConfigurationByTypeAndName(pair.first, pair.second);
-      if (settings != null) {
+      if (settings != null && settings.getConfiguration() != this) {
         mySetToRun.add(settings.getConfiguration());
       }
     }
@@ -77,9 +77,6 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (getSetToRun().isEmpty()) throw new RuntimeConfigurationException("There is nothing to run");
-    for (RunConfiguration configuration : getSetToRun()) {
-      configuration.checkConfiguration();
-    }
   }
 
   @Nullable

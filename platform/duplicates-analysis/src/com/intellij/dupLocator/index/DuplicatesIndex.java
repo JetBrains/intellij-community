@@ -24,8 +24,6 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,17 +51,12 @@ import java.util.Map;
  */
 public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex {
   static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.duplicates.online.calculation",
-                                                                  isEnabledByDefault());
+                                                                  true);
   static final boolean ourEnabledLightProfiles = true;
   private static boolean ourEnabledOldProfiles = false;
 
-  private static boolean isEnabledByDefault() {
-    Application application = ApplicationManager.getApplication();
-    return application.isInternal() && !application.isUnitTestMode();
-  }
-
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 16;
+  private static final int myBaseVersion = 21;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
@@ -128,12 +121,12 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
             @Override
-            public void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash) {
+            public void process(int hash, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes) {
               TIntArrayList list = result.get(hash);
               if (list == null) {
                 result.put(hash, list = new TIntArrayList(1));
               }
-              list.add(node.getStartOffset());
+              list.add(nodes[0].getStartOffset());
             }
           });
           return result;

@@ -1,0 +1,3 @@
+class Super2 {
+  char s = 's';
+}

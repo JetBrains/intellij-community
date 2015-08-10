@@ -145,6 +145,16 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     init();
   }
 
+  public boolean hasMultipleDataToSelect() {
+    if(myModulesCount == 1) {
+      Object root = myTree.getModel().getRoot();
+      if(root instanceof CheckedTreeNode && ((CheckedTreeNode)root).getChildCount() == 1) {
+        return ((CheckedTreeNode)root).getChildAt(0).getChildCount() > 0;
+      }
+    }
+    return myModulesCount > 1;
+  }
+
   private void updateSelectionState() {
     myModificationTracker.incModificationCount();
     mySelectionStatusLbl.setText(selectionState.getValue().message);
@@ -216,17 +226,16 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
           @Override
           public void execute() {
-            DumbService.getInstance(myProject).allowStartingDumbModeInside(
-              DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-                public void run() {
-                  ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
-                    @Override
-                    public void run() {
-                      ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, true);
-                    }
-                  });
-                }
-              });
+            DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+              public void run() {
+                ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
+                  @Override
+                  public void run() {
+                    ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, true);
+                  }
+                });
+              }
+            });
           }
         });
       }

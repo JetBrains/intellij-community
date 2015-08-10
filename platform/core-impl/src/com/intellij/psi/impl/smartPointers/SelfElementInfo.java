@@ -18,7 +18,6 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
@@ -38,7 +37,7 @@ import java.util.Set;
 /**
 * User: cdr
 */
-public class SelfElementInfo implements SmartPointerElementInfo {
+public class SelfElementInfo extends SmartPointerElementInfo {
   private final VirtualFile myVirtualFile;
   private final Class myType;
   private final Project myProject;
@@ -67,22 +66,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
-
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null) {
-      for (SmartPsiElementPointerImpl pointer : ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).getAlivePointers(file)) {
-        SmartPointerElementInfo info = pointer.getElementInfo();
-        if (info instanceof SelfElementInfo) {
-          ManualRangeMarker existing = ((SelfElementInfo)info).myRangeMarker;
-          if (existing != null && range.equals(existing.getRange())) {
-            myRangeMarker = existing;
-            return;
-          }
-        }
-      }
-    }
-
-    myRangeMarker = new ManualRangeMarker(getDocumentManager().getLastCommittedDocument(document), ProperTextRange.create(range), false, false, true);
+    myRangeMarker = ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).obtainMarker(document, ProperTextRange.create(range));
   }
 
   private PsiDocumentManagerBase getDocumentManager() {
@@ -96,7 +80,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   // before change
   @Override
-  public void fastenBelt(int offset, @Nullable RangeMarker[] cachedRangeMarkers) {
+  public void fastenBelt() {
     if (myRangeMarker != null) return; // already tracks changes
     if (myPsiRange == null) return; // invalid
 
@@ -109,11 +93,6 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     }
 
     setRange(myPsiRange, document);
-  }
-
-  // after change
-  @Override
-  public void unfastenBelt(int offset) {
   }
 
   @Override
@@ -297,5 +276,10 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Nullable
+  ManualRangeMarker getRangeMarker() {
+    return myRangeMarker;
   }
 }

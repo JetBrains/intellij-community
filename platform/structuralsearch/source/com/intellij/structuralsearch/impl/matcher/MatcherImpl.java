@@ -549,15 +549,7 @@ public class MatcherImpl {
           });
         }
       };
-
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        action.run();
-      } else {
-        ApplicationManager.getApplication().invokeAndWait(
-          action,
-          ModalityState.defaultModalityState()
-        );
-      }
+      ApplicationManager.getApplication().invokeAndWait(action, ModalityState.defaultModalityState());
 
       if (project.isDisposed()) return;
 

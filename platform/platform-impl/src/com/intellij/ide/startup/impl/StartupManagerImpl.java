@@ -20,10 +20,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -364,14 +361,20 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         if (!myProject.isDisposed()) {
           action.run();
         }
       }
-    });
+    };
+    if (application.isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL) {
+      runnable.run();
+    }
+    else {
+      application.invokeLater(runnable, ModalityState.NON_MODAL);
+    }
   }
 
   @TestOnly

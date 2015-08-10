@@ -42,7 +42,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -365,7 +364,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
       }
     }
 
-    ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myManager.getProject())).fastenBelts(vFile, 0, null);
+    ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myManager.getProject())).fastenBelts(vFile);
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
         @Override
@@ -417,9 +416,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
                   myManager.childReplaced(treeEvent);
                 }
                 else {
-                  if (oldPsiFile instanceof PsiFileImpl) {
-                    ((PsiFileImpl)oldPsiFile).clearCaches();
-                  }
+                  FileManagerImpl.clearPsiCaches(oldFileViewProvider);
+
                   treeEvent.setElement(oldPsiFile);
                   treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_FILE_NAME);
                   treeEvent.setOldValue(event.getOldValue());

@@ -35,6 +35,7 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -337,7 +338,7 @@ public class SwingHelper {
 
   public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
                                                           @NotNull TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton,
-                                                          @NotNull String browseDialogTitle,
+                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
                                                           @NotNull FileChooserDescriptor fileChooserDescriptor) {
     doInstall(project,
               textFieldWithHistoryWithBrowseButton,
@@ -349,7 +350,7 @@ public class SwingHelper {
 
   public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
                                                           @NotNull TextFieldWithBrowseButton textFieldWithBrowseButton,
-                                                          @NotNull String browseDialogTitle,
+                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
                                                           @NotNull FileChooserDescriptor fileChooserDescriptor) {
     doInstall(project,
               textFieldWithBrowseButton,
@@ -362,7 +363,7 @@ public class SwingHelper {
   public static <T extends JComponent> void doInstall(@Nullable Project project,
                                                        @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
                                                        @NotNull JTextField textField,
-                                                       @NotNull String browseDialogTitle,
+                                                       @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
                                                        @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                        @NotNull TextComponentAccessor<T> textComponentAccessor) {
     fileChooserDescriptor = fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix);

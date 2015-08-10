@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SystemProperties;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
+import com.intellij.util.containers.ContainerUtil;
 import org.iq80.snappy.SnappyInputStream;
 import org.iq80.snappy.SnappyOutputStream;
 import org.jdom.Element;
@@ -41,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public final class StateMap {
@@ -51,14 +51,15 @@ public final class StateMap {
     setOmitEncoding(true).
     setOmitDeclaration(true);
 
-  private final THashMap<String, Object> states;
+  private final ConcurrentMap<String, Object> states;
 
   public StateMap() {
-    states = new THashMap<String, Object>();
+    states = ContainerUtil.newConcurrentMap();
   }
 
   public StateMap(StateMap stateMap) {
-    states = new THashMap<String, Object>((Map<String, Object>)stateMap.states);
+    states = ContainerUtil.newConcurrentMap(stateMap.states.size());
+    states.putAll(stateMap.states);
   }
 
   @NotNull
@@ -77,13 +78,13 @@ public final class StateMap {
   }
 
   @NotNull
-  public Element getElement(@NotNull String key, @NotNull Map<String, Element> newLiveStates) {
+  public Element getElement(@NotNull String key, @NotNull Map<String, Element> newLiveStates) throws IOException {
     Object state = states.get(key);
     return stateToElement(key, state, newLiveStates);
   }
 
   @NotNull
-  static Element stateToElement(@NotNull String key, @Nullable Object state, @NotNull Map<String, Element> newLiveStates) {
+  static Element stateToElement(@NotNull String key, @Nullable Object state, @NotNull Map<String, Element> newLiveStates) throws IOException {
     if (state instanceof Element) {
       return ((Element)state).clone();
     }
@@ -91,7 +92,12 @@ public final class StateMap {
       Element element = newLiveStates.get(key);
       if (element == null) {
         assert state != null;
-        element = unarchiveState((byte[])state);
+        try {
+          element = unarchiveState((byte[])state);
+        }
+        catch (JDOMException e) {
+          throw new IOException(e);
+        }
       }
       return element;
     }
@@ -190,21 +196,17 @@ public final class StateMap {
       return null;
     }
 
-    states.put(key, archiveState((Element)state));
-    return (Element)state;
+    if (states.replace(key, state, archiveState((Element)state))) {
+      return (Element)state;
+    }
+    else {
+      return getStateAndArchive(key);
+    }
   }
 
   @NotNull
-  public static Element unarchiveState(@NotNull byte[] state) {
-    try {
-      return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
-    }
-    catch (JDOMException e) {
-      throw new StateStorageException(e);
-    }
+  public static Element unarchiveState(@NotNull byte[] state) throws IOException, JDOMException {
+    return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
   }
 
   @NotNull
@@ -234,7 +236,9 @@ public final class StateMap {
     return states.size();
   }
 
-  public void forEachEntry(@NotNull TObjectObjectProcedure<String, Object> consumer) {
-    states.forEachEntry(consumer);
+  public void forEachEntry(@NotNull PairConsumer<String, Object> consumer) {
+    for (Map.Entry<String, Object> entry : states.entrySet()) {
+      consumer.consume(entry.getKey(), entry.getValue());
+    }
   }
 }

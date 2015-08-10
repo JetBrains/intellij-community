@@ -15,18 +15,17 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-class VariableUsedVisitor extends JavaRecursiveElementVisitor {
-
-  private boolean used = false;
+class VariableUsedVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean used;
   @NotNull private final PsiVariable variable;
 
-  public VariableUsedVisitor(@NotNull PsiVariable variable) {
+  private VariableUsedVisitor(@NotNull PsiVariable variable) {
     this.variable = variable;
   }
 
@@ -51,10 +50,17 @@ class VariableUsedVisitor extends JavaRecursiveElementVisitor {
     }
     if (target.equals(variable)) {
       used = true;
+      //stopWalking();
     }
   }
 
   public boolean isUsed() {
     return used;
+  }
+
+  static boolean isVariableUsedIn(@NotNull PsiVariable variable, @NotNull PsiElement code) {
+    VariableUsedVisitor visitor = new VariableUsedVisitor(variable);
+    code.accept(visitor);
+    return visitor.isUsed();
   }
 }

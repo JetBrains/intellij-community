@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.AddAnnotationIntention;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
@@ -58,7 +59,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
       
       boolean hasInferred = false;
       boolean hasExternal = false;
-      for (PsiAnnotation annotation : findSignatureNonCodeAnnotations(owner)) {
+      for (PsiAnnotation annotation : findSignatureNonCodeAnnotations(owner, true)) {
         hasExternal |= AnnotationUtil.isExternalAnnotation(annotation);
         hasInferred |= AnnotationUtil.isInferredAnnotation(annotation);
       }
@@ -79,7 +80,8 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     PsiModifierListOwner owner = getAnnotationOwner(element);
-    if (owner == null || findSignatureNonCodeAnnotations(owner).isEmpty()) {
+    boolean includeSourceInferred = CodeInsightSettings.getInstance().SHOW_SOURCE_INFERRED_ANNOTATIONS;
+    if (owner == null || findSignatureNonCodeAnnotations(owner, includeSourceInferred).isEmpty()) {
       return null;
     }
 
@@ -104,19 +106,19 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
     return (PsiModifierListOwner)owner;
   }
 
-  private static List<PsiAnnotation> findSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
-    List<PsiAnnotation> result = ContainerUtil.newArrayList(findOwnNonCodeAnnotations(owner));
+  static List<PsiAnnotation> findSignatureNonCodeAnnotations(PsiModifierListOwner owner, boolean includeSourceInferred) {
+    List<PsiAnnotation> result = ContainerUtil.newArrayList(findOwnNonCodeAnnotations(owner, includeSourceInferred));
 
     if (owner instanceof PsiMethod) {
       for (PsiParameter parameter : ((PsiMethod)owner).getParameterList().getParameters()) {
-        result.addAll(findOwnNonCodeAnnotations(parameter));
+        result.addAll(findOwnNonCodeAnnotations(parameter, includeSourceInferred));
       }
     }
 
     return result;
   }
 
-  private static List<PsiAnnotation> findOwnNonCodeAnnotations(@NotNull PsiModifierListOwner element) {
+  private static List<PsiAnnotation> findOwnNonCodeAnnotations(@NotNull PsiModifierListOwner element, boolean includeSourceInferred) {
     List<PsiAnnotation> result = ContainerUtil.newArrayList();
     Project project = element.getProject();
     PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element);
@@ -127,12 +129,18 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
         }
       }
     }
-    for (PsiAnnotation annotation : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)) {
-      if (isVisibleAnnotation(annotation)) {
-        result.add(annotation);
+    if (includeSourceInferred || !isSourceCode(element)) {
+      for (PsiAnnotation annotation : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)) {
+        if (isVisibleAnnotation(annotation)) {
+          result.add(annotation);
+        }
       }
     }
     return result;
+  }
+
+  static boolean isSourceCode(PsiModifierListOwner element) {
+    return !(BaseExternalAnnotationsManager.preferCompiledElement(element) instanceof PsiCompiledElement);
   }
 
   private static boolean isVisibleAnnotation(@NotNull PsiAnnotation annotation) {
@@ -195,7 +203,9 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
       return action instanceof AddAnnotationIntention ||
              action instanceof DeannotateIntentionAction ||
              action instanceof EditContractIntention ||
-             action instanceof MakeInferredAnnotationExplicit;
+             action instanceof ToggleSourceInferredAnnotations ||
+             action instanceof MakeInferredAnnotationExplicit ||
+             action instanceof IntentionActionWrapper && shouldShowInGutterPopup(((IntentionActionWrapper)action).getDelegate());
     }
   }
 }

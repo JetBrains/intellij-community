@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
       myExplorer.select(schema.getVirtualFile(), null);
     }
 
-    int index = PropertiesComponent.getInstance().getOrInitInt(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, 0);
+    int index = PropertiesComponent.getInstance().getInt(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, 0);
     myTabs.setSelectedIndex(index);
     myTabs.getModel().addChangeListener(new ChangeListener() {
       @Override

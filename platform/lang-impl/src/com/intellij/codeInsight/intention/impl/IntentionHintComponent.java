@@ -359,13 +359,8 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
     Icon smartTagIcon = showRefactoringsBulb ? AllIcons.Actions.RefactoringBulb : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
 
-    myHighlightedIcon = new RowIcon(2);
-    myHighlightedIcon.setIcon(smartTagIcon, 0);
-    myHighlightedIcon.setIcon(AllIcons.General.ArrowDown, 1);
-
-    myInactiveIcon = new RowIcon(2);
-    myInactiveIcon.setIcon(smartTagIcon, 0);
-    myInactiveIcon.setIcon(ourInactiveArrowIcon, 1);
+    myHighlightedIcon = new RowIcon(smartTagIcon, AllIcons.General.ArrowDown);
+    myInactiveIcon = new RowIcon(smartTagIcon, ourInactiveArrowIcon);
 
     myIconLabel = new JLabel(myInactiveIcon);
     myIconLabel.setOpaque(false);

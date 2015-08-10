@@ -28,6 +28,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.testFramework.LightIdeaTestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -265,6 +266,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                         "</profile>";
     assertEquals(mergedText, serialize(profile));
 
+    Element toImportElement = new Element("profile");
+    profile.writeExternal(toImportElement);
+    final InspectionProfileImpl importedProfile =
+      InspectionToolsConfigurable.importInspectionProfile(toImportElement, InspectionProfileManager.getInstance(), getProject(), null);
+
     //check merged
     Element mergedElement = JDOMUtil.loadDocument(mergedText).getRootElement();
     profile = createProfile(new InspectionProfileImpl("foo"));
@@ -274,6 +280,10 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     Element copyMerged = new Element("profile");
     profile.writeExternal(copyMerged);
     assertElementsEqual(mergedElement, copyMerged);
+
+    Element imported = new Element("profile");
+    importedProfile.writeExternal(imported);
+    assertElementsEqual(mergedElement, imported);
   }
 
   public void testDisabledUnusedDeclarationWithoutChanges() throws Exception {

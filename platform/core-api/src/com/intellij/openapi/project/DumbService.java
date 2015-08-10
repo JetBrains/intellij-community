@@ -277,8 +277,9 @@ public abstract class DumbService {
    * If this exception occurs inside invokeLater call which happens to run when a modal dialog is shown, the correct fix is supplying an explicit modality state
    * in {@link com.intellij.openapi.application.Application#invokeLater(Runnable, ModalityState)}.
    */
-  public abstract void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable);
-
+  public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
+    ServiceManager.getService(DumbPermissionService.class).allowStartingDumbModeInside(permission, runnable);
+  }
 
   /**
    * @see #DUMB_MODE
@@ -295,22 +296,6 @@ public abstract class DumbService {
      */
     void exitDumbMode();
 
-  }
-
-  /**
-   * Executes {@link #allowStartingDumbModeInside(DumbModePermission, Runnable)} for all given projects.
-   */
-  public static void allowStartingDumbModeInside(@NotNull final DumbModePermission permission, @NotNull Project[] projects, @NotNull Runnable runnable) {
-    for (final Project project : projects) {
-      final Runnable prevRunnable = runnable;
-      runnable = new Runnable() {
-        @Override
-        public void run() {
-          getInstance(project).allowStartingDumbModeInside(permission, prevRunnable);
-        }
-      };
-    }
-    runnable.run();
   }
 
 }

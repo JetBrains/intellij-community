@@ -17,10 +17,15 @@ package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.project.Named;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
@@ -28,10 +33,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TaskNode extends ExternalSystemNode<TaskData> {
   private TaskData myTaskData;
+  private String moduleOwnerName;
 
   public TaskNode(@NotNull ExternalProjectsView externalProjectsView, @NotNull DataNode<TaskData> dataNode) {
     super(externalProjectsView, null, dataNode);
     myTaskData = dataNode.getData();
+
+    DataNode parent = ExternalSystemApiUtil.findParent(dataNode, MODULE);
+    if (parent == null) {
+      parent = ExternalSystemApiUtil.findParent(dataNode, PROJECT);
+    }
+    if(parent != null && parent.getData() instanceof Named) {
+      moduleOwnerName = ((Named)parent.getData()).getInternalName();
+    }
   }
 
   @Override
@@ -66,6 +80,10 @@ public class TaskNode extends ExternalSystemNode<TaskData> {
   @Override
   public String getName() {
     return myTaskData.getName();
+  }
+
+  public String getModuleOwnerName() {
+    return moduleOwnerName;
   }
 
   @Nullable

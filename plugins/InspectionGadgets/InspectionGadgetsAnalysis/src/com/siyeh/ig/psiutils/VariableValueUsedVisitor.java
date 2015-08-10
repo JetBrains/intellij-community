@@ -19,12 +19,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
+class VariableValueUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @NotNull
   private final PsiVariable variable;
-  private boolean read = false;
-  private boolean written = false;
+  private boolean read;
+  private boolean written;
 
   VariableValueUsedVisitor(@NotNull PsiVariable variable) {
     this.variable = variable;
@@ -59,10 +59,7 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
     if (rhs == null) {
       return;
     }
-    final VariableUsedVisitor visitor =
-      new VariableUsedVisitor(variable);
-    rhs.accept(visitor);
-    read = visitor.isUsed();
+    read = VariableUsedVisitor.isVariableUsedIn(variable, rhs);
   }
 
   @Override
@@ -125,10 +122,7 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
     if (initalizer == null) {
       return;
     }
-    final VariableUsedVisitor visitor =
-      new VariableUsedVisitor(variable);
-    initalizer.accept(visitor);
-    read = visitor.isUsed();
+    read = VariableUsedVisitor.isVariableUsedIn(variable, initalizer);
   }
 
   @Override
@@ -142,11 +136,8 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
       call.getMethodExpression();
     final PsiExpression qualifier =
       methodExpression.getQualifierExpression();
-    final VariableUsedVisitor visitor =
-      new VariableUsedVisitor(variable);
     if (qualifier != null) {
-      qualifier.accept(visitor);
-      if (visitor.isUsed()) {
+      if (VariableUsedVisitor.isVariableUsedIn(variable, qualifier)) {
         read = true;
         return;
       }
@@ -154,8 +145,7 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     for (final PsiExpression argument : arguments) {
-      argument.accept(visitor);
-      if (visitor.isUsed()) {
+      if (VariableUsedVisitor.isVariableUsedIn(variable, argument)) {
         read = true;
         return;
       }
@@ -176,10 +166,7 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
     }
     final PsiExpression[] arguments = argumentList.getExpressions();
     for (final PsiExpression argument : arguments) {
-      final VariableUsedVisitor visitor =
-        new VariableUsedVisitor(variable);
-      argument.accept(visitor);
-      if (visitor.isUsed()) {
+      if (VariableUsedVisitor.isVariableUsedIn(variable, argument)) {
         read = true;
         return;
       }
@@ -195,10 +182,7 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
     super.visitArrayInitializerExpression(expression);
     final PsiExpression[] arguments = expression.getInitializers();
     for (final PsiExpression argument : arguments) {
-      final VariableUsedVisitor visitor =
-        new VariableUsedVisitor(variable);
-      argument.accept(visitor);
-      if (visitor.isUsed()) {
+      if (VariableUsedVisitor.isVariableUsedIn(variable, argument)) {
         read = true;
         return;
       }
@@ -216,10 +200,7 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
     if (returnValue == null) {
       return;
     }
-    final VariableUsedVisitor visitor =
-      new VariableUsedVisitor(variable);
-    returnValue.accept(visitor);
-    read = visitor.isUsed();
+    read = VariableUsedVisitor.isVariableUsedIn(variable, returnValue);
   }
 
   /**
@@ -231,13 +212,10 @@ class VariableValueUsedVisitor extends JavaRecursiveElementVisitor {
       return;
     }
     super.visitClass(aClass);
-    final VariableUsedVisitor visitor =
-      new VariableUsedVisitor(variable);
-    aClass.accept(visitor);
-    read = visitor.isUsed();
+    read = VariableUsedVisitor.isVariableUsedIn(variable, aClass);
   }
 
-  public boolean isVariableValueUsed() {
+  boolean isVariableValueUsed() {
     return read;
   }
 }

@@ -41,6 +41,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.preview.PreviewManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -88,6 +89,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final Logger LOG = Logger.getInstance("#" + DocumentationManager.class.getName());
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
+  
+  private static final long DOC_GENERATION_TIMEOUT_MILLISECONDS = 60000;
+  private static final long DOC_GENERATION_PAUSE_MILLISECONDS = 100;
 
   private Editor myEditor;
   private final Alarm myUpdateDocAlarm;
@@ -1148,16 +1152,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
       }
-      return ApplicationManager.getApplication().runReadAction(
-          new Computable<String>() {
-            @Override
-            @Nullable
-            public String compute() {
-              final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
-              return provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
-            }
+
+      final Ref<String> result = new Ref<String>();
+      long deadline = System.currentTimeMillis() + DOC_GENERATION_TIMEOUT_MILLISECONDS;
+      while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(new Runnable() {
+          @Override
+          public void run() {
+            final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
+            String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
+            result.set(doc);
           }
-      );
+        }) && System.currentTimeMillis() < deadline) {
+        //noinspection BusyWait
+        Thread.sleep(DOC_GENERATION_PAUSE_MILLISECONDS);
+      }
+      return result.get();
     }
 
     @Override

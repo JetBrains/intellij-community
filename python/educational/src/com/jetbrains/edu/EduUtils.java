@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,27 +35,38 @@ public class EduUtils {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
+  public static void commitAndSaveModel(final ModifiableRootModel model) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+        model.getProject().save();
+      }
+    });
+  }
 
-  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
+  @Nullable
+  public static ModifiableRootModel getModel(@NotNull VirtualFile dir, @NotNull Project project) {
     final Module module = ModuleUtilCore.findModuleForFile(dir, project);
     if (module == null) {
       LOG.info("Module for " + dir.getPath() + " was not found");
+      return null;
+    }
+    return ModuleRootManager.getInstance(module).getModifiableModel();
+  }
+
+  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
+    final ModifiableRootModel model = getModel(dir, project);
+    if (model == null) {
       return;
     }
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
     if (entry == null) {
       LOG.info("Content entry for " + dir.getPath() + " was not found");
       return;
     }
     entry.addSourceFolder(dir, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-        module.getProject().save();
-      }
-    });
+    commitAndSaveModel(model);
   }
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
@@ -94,7 +106,8 @@ public class EduUtils {
       return null;
     }
     if (taskDir != null) {
-      final String name = file.getNameWithoutExtension() + "_windows";
+      final String name = file.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
+      deleteWindowsFile(taskDir, name);
       PrintWriter printWriter = null;
       try {
         fileWindows = taskDir.createChildData(taskFile, name);
@@ -220,5 +233,34 @@ public class EduUtils {
         });
       }
     }, "Replace Answer Placeholders", "Replace Answer Placeholders");
+  }
+
+  public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
+    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+      String name = entry.getKey();
+      VirtualFile virtualFile = taskDir.findChild(name);
+      if (virtualFile == null) {
+        continue;
+      }
+      String windowsFileName = virtualFile.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
+      deleteWindowsFile(taskDir, windowsFileName);
+    }
+  }
+
+  private static void deleteWindowsFile(@NotNull final VirtualFile taskDir, @NotNull final String name) {
+    final VirtualFile fileWindows = taskDir.findChild(name);
+    if (fileWindows != null && fileWindows.exists()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            fileWindows.delete(taskDir);
+          }
+          catch (IOException e) {
+            LOG.warn("Tried to delete non existed _windows file");
+          }
+        }
+      });
+    }
   }
 }

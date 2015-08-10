@@ -95,9 +95,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   private final EventDispatcher<RunManagerListener> myDispatcher = EventDispatcher.create(RunManagerListener.class);
 
-  public RunManagerImpl(final Project project,
-                        PropertiesComponent propertiesComponent) {
-    myConfig = new RunManagerConfig(propertiesComponent, this);
+  public RunManagerImpl(@NotNull Project project, @NotNull PropertiesComponent propertiesComponent) {
+    myConfig = new RunManagerConfig(propertiesComponent);
     myProject = project;
 
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions());

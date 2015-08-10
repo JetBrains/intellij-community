@@ -18,18 +18,23 @@ package com.intellij.util.ui.update;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -40,7 +45,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
-  private final Map<Update, Update> myScheduledUpdates = new TreeMap<Update, Update>();
+  private final TreeMap<Integer, Map<Update, Update>> myScheduledUpdates = ContainerUtil.newTreeMap();
 
   private final Alarm myWaiterForMerge;
 
@@ -101,7 +106,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myMergingTimeSpan = mergingTimeSpan;
     myModalityStateComponent = modalityStateComponent;
     myName = name;
-    myPassThrough = ApplicationManager.getApplication().isUnitTestMode();
+    Application app = ApplicationManager.getApplication();
+    myPassThrough = app == null || app.isUnitTestMode();
     myExecuteInDispatchThread = thread == Alarm.ThreadToUse.SWING_THREAD;
     myWaiterForMerge = createAlarm(thread, myExecuteInDispatchThread ? null : this);
 
@@ -131,8 +137,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public void cancelAllUpdates() {
     synchronized (myScheduledUpdates) {
-      Update[] updates = myScheduledUpdates.keySet().toArray(new Update[myScheduledUpdates.size()]);
-      for (Update each : updates) {
+      for (Update each : getAllScheduledUpdates()) {
         try {
           each.setRejected();
         }
@@ -142,6 +147,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       myScheduledUpdates.clear();
       finishActivity();
     }
+  }
+
+  @NotNull
+  private List<Update> getAllScheduledUpdates() {
+    return ContainerUtil.concat(myScheduledUpdates.values(), new Function<Map<Update, Update>, Collection<? extends Update>>() {
+      @Override
+      public Collection<? extends Update> fun(Map<Update, Update> map) {
+        return map.keySet();
+      }
+    });
   }
 
   public final boolean isPassThrough() {
@@ -241,10 +256,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       @Override
       public void run() {
         try {
-          final Update[] all;
+          final List<Update> all;
 
           synchronized (myScheduledUpdates) {
-            all = myScheduledUpdates.keySet().toArray(new Update[myScheduledUpdates.size()]);
+            all = getAllScheduledUpdates();
             myScheduledUpdates.clear();
           }
 
@@ -252,7 +267,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
             each.setProcessed();
           }
 
-          execute(all);
+          execute(all.toArray(new Update[all.size()]));
         }
         finally {
           myFlushing = false;
@@ -360,17 +375,17 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private boolean eatThisOrOthers(@NotNull Update update) {
-    if (myScheduledUpdates.containsKey(update)) {
+    Map<Update, Update> updates = myScheduledUpdates.get(update.getPriority());
+    if (updates != null && updates.containsKey(update)) {
       return false;
     }
 
-    final Update[] updates = myScheduledUpdates.keySet().toArray(new Update[myScheduledUpdates.size()]);
-    for (Update eachInQueue : updates) {
+    for (Update eachInQueue : getAllScheduledUpdates()) {
       if (eachInQueue.canEat(update)) {
         return true;
       }
       if (update.canEat(eachInQueue)) {
-        myScheduledUpdates.remove(eachInQueue);
+        myScheduledUpdates.get(eachInQueue.getPriority()).remove(eachInQueue);
         eachInQueue.setRejected();
       }
     }
@@ -382,12 +397,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(@NotNull Update update) {
-    final Update existing = myScheduledUpdates.remove(update);
+    Map<Update, Update> updates = myScheduledUpdates.get(update.getPriority());
+    if (updates == null) {
+      myScheduledUpdates.put(update.getPriority(), updates = ContainerUtil.newLinkedHashMap());
+    }
+    final Update existing = updates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();
       existing.setRejected();
     }
-    myScheduledUpdates.put(update, update);
+    updates.put(update, update);
   }
 
   public boolean isActive() {
@@ -409,7 +428,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     synchronized (myScheduledUpdates) {
-      return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates.size();
+      return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();
     }
   }
 

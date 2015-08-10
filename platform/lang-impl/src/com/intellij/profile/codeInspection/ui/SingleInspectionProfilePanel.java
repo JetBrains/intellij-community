@@ -41,7 +41,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -65,7 +64,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.Queue;
@@ -105,13 +103,13 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
   private static final String UNDER_CONSTRUCTION = InspectionsBundle.message("inspection.tool.description.under.construction.text");
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
-  @NonNls private static final String VERTICAL_DIVIDER_PROPORTION = "VERTICAL_DIVIDER_PROPORTION";
-  @NonNls private static final String HORIZONTAL_DIVIDER_PROPORTION = "HORIZONTAL_DIVIDER_PROPORTION";
+
+  private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
+
   private final List<ToolDescriptors> myInitialToolDescriptors = new ArrayList<ToolDescriptors>();
   private final InspectionConfigTreeNode myRoot =
     new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
-  private final StorageAccessors myProperties = StorageAccessors.createGlobal("SingleInspectionProfilePanel");
   private final InspectionProjectProfileManager myProjectProfileManager;
   @NotNull private Profile myOriginal;
   private InspectionProfileImpl mySelectedProfile;
@@ -132,8 +130,8 @@ public class SingleInspectionProfilePanel extends JPanel {
   private String myCurrentProfileName;
   private boolean myIsInRestore = false;
   private boolean myShareProfile;
-  private Splitter myRightSplitter;
-  private Splitter myMainSplitter;
+  private JBSplitter myRightSplitter;
+  private JBSplitter myMainSplitter;
 
   private String[] myInitialScopesOrder;
   private Disposable myDisposable = new Disposable() {
@@ -1056,8 +1054,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myInspectionProfilePanel == null) {
       return;
     }
-    myProperties.setFloat(VERTICAL_DIVIDER_PROPORTION, myMainSplitter.getProportion());
-    myProperties.setFloat(HORIZONTAL_DIVIDER_PROPORTION, myRightSplitter.getProportion());
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
     if (mySelectedProfile != null) {
@@ -1085,9 +1081,8 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                                    new Insets(2, 0, 0, 0)));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
-    myRightSplitter = new Splitter(true);
+    myRightSplitter = new JBSplitter(true, "SingleInspectionProfilePanel.HORIZONTAL_DIVIDER_PROPORTION", DIVIDER_PROPORTION_DEFAULT);
     myRightSplitter.setFirstComponent(descriptionPanel);
-    myRightSplitter.setProportion(myProperties.getFloat(HORIZONTAL_DIVIDER_PROPORTION, 0.5f));
 
     myOptionsPanel = new JPanel(new GridBagLayout());
     initOptionsAndDescriptionPanel();
@@ -1102,7 +1097,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     northPanel.add(myProfileFilter, new GridBagConstraints(0, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     northPanel.add(createTreeToolbarPanel().getComponent(), new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-    myMainSplitter = new Splitter(false, myProperties.getFloat(VERTICAL_DIVIDER_PROPORTION, 0.5f), 0.01f, 0.99f);
+    myMainSplitter = new JBSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.01f, 0.99f);
+    myMainSplitter.setSplitterProportionKey("SingleInspectionProfilePanel.VERTICAL_DIVIDER_PROPORTION");
     myMainSplitter.setFirstComponent(tree);
     myMainSplitter.setSecondComponent(myRightSplitter);
     myMainSplitter.setHonorComponentsMinimumSize(false);

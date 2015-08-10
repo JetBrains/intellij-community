@@ -28,7 +28,6 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -193,17 +192,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      DocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
+      CharSequence[] texts = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
         @Override
-        public DocumentData compute() {
-          return new DocumentData(document1.getImmutableCharSequence(), document2.getImmutableCharSequence(),
-                                  document1.getModificationStamp(), document2.getModificationStamp());
+        public CharSequence[] compute() {
+          return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
         }
       });
 
       List<LineFragment> lineFragments = null;
       if (getHighlightPolicy().isShouldCompare()) {
-        lineFragments = DiffUtil.compareWithCache(myRequest, data, getDiffConfig(), indicator);
+        lineFragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
       }
 
       boolean isEqualContents = (lineFragments == null || lineFragments.isEmpty()) &&

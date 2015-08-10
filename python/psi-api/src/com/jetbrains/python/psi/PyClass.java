@@ -59,19 +59,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements.
-   *
+   * @param context type eval context (pass null to use loose, but better provide one)
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
    */
   @NotNull
-  List<PyClass> getAncestorClasses(@NotNull TypeEvalContext context);
-
-  /**
-   * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements, using the default type evaluation context.
-   *
-   * @see #getAncestorClasses(TypeEvalContext) if a more detailed TypeEvalContext is available.
-   */
-  @NotNull
-  List<PyClass> getAncestorClasses();
+  List<PyClass> getAncestorClasses(@Nullable TypeEvalContext context);
 
   /**
    * Returns types of expressions in the super classes list.
@@ -143,10 +135,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * are searched for and called by Python when a constructor call is made.
    * Since __new__ only makes sense for new-style classes, an old-style class never finds it with this method.
    * @param inherited true: search in superclasses, too.
+   * @param context TODO: DOC
    * @return a method that would be called first when an instance of this class is instantiated.
    */
   @Nullable
-  PyFunction findInitOrNew(boolean inherited);
+  PyFunction findInitOrNew(boolean inherited, @Nullable TypeEvalContext context);
 
   /**
    * Finds a property with the specified name in the class or one of its ancestors.
@@ -154,10 +147,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    *
    * @param name of the property
    * @param inherited
+   * @param context type eval (null to use loose context, but you better provide one)
    * @return descriptor of property accessors, or null if such property does not exist.
    */
   @Nullable
-  Property findProperty(@NotNull String name, boolean inherited);
+  Property findProperty(@NotNull String name, boolean inherited, @Nullable TypeEvalContext context);
 
   /**
    * Apply a processor to every method, looking at superclasses in method resolution order as needed.
@@ -196,8 +190,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * @return true if the class is new-style and descends from 'object'.
+   * @param context
    */
-  boolean isNewStyleClass();
+  boolean isNewStyleClass(TypeEvalContext context);
 
   /**
    * Scan properties in order of definition, until processor returns true for one of them.
@@ -227,9 +222,10 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.
+   * @param context (will be used default if null)
    */
   @Nullable
-  List<String> getSlots();
+  List<String> getSlots(@Nullable TypeEvalContext context);
 
   /**
    * Returns the list of names in the class' __slots__ attribute, or null if the class

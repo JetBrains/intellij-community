@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -49,9 +50,9 @@ import java.util.regex.Pattern;
 public class OutputChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.OutputChecker");
   private static final String JDK_HOME_STR = "!JDK_HOME!";
-  private static final String TEST_JDK_HOME_STR = "!TEST_JDK!";
 
   protected final String myAppPath;
+  private final String myOutputPath;
 
   public static final Key[] OUTPUT_ORDER = new Key[] {
     ProcessOutputTypes.SYSTEM, ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR
@@ -67,8 +68,9 @@ public class OutputChecker {
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_2 =
     Pattern.compile("JDWP\\s+exit\\s+error\\s+AGENT_ERROR_NO_JNI_ENV.*\\]\n");
 
-  public OutputChecker(String appPath) {
+  public OutputChecker(String appPath, String outputPath) {
     myAppPath = appPath;
+    myOutputPath = outputPath;
   }
 
   public void init(String testName) {
@@ -191,18 +193,17 @@ public class OutputChecker {
         result = StringUtil.replace(result, "\r\n", "\n");
         result = StringUtil.replace(result, "\r", "\n");
         result = replaceAdditionalInOutput(result);
-        final String testJdkHome = testJdk.getHomePath();
-        result = StringUtil.replace(result, testJdkHome.replace('/', File.separatorChar), TEST_JDK_HOME_STR, shouldIgnoreCase);
-        result = StringUtil.replace(result, testJdkHome, TEST_JDK_HOME_STR, shouldIgnoreCase);
         result = StringUtil.replace(result, myAppPath, "!APP_PATH!", shouldIgnoreCase);
-        result = StringUtil.replace(result, myAppPath.replace(File.separatorChar, '/'), "!APP_PATH!", shouldIgnoreCase);
+        result = StringUtil.replace(result, myOutputPath, "!OUTPUT_PATH!", shouldIgnoreCase);
+        result = StringUtil.replace(result, FileUtil.toSystemIndependentName(myOutputPath), "!OUTPUT_PATH!", shouldIgnoreCase);
+        result = StringUtil.replace(result, FileUtil.toSystemIndependentName(myAppPath), "!APP_PATH!", shouldIgnoreCase);
         result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!", shouldIgnoreCase);
         result = StringUtil.replace(result, JavaSdkUtil.getJunit4JarPath(), "!JUNIT4_JAR!", shouldIgnoreCase);
         result = StringUtil.replace(result, InetAddress.getLocalHost().getCanonicalHostName(), "!HOST_NAME!", shouldIgnoreCase);
         result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", shouldIgnoreCase);
         result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", shouldIgnoreCase);
         result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath().replace('/', File.separatorChar), "!RT_JAR!", shouldIgnoreCase);
-        result = StringUtil.replace(result, internalJdkHome.replace('/', File.separatorChar), JDK_HOME_STR, shouldIgnoreCase);
+        result = StringUtil.replace(result, FileUtil.toSystemDependentName(internalJdkHome), JDK_HOME_STR, shouldIgnoreCase);
         result = StringUtil.replace(result, internalJdkHome, JDK_HOME_STR, shouldIgnoreCase);
         result = StringUtil.replace(result, PathManager.getHomePath(), "!IDEA_HOME!", shouldIgnoreCase);
         result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
@@ -214,7 +215,6 @@ public class OutputChecker {
         result = result.replaceAll("\"?file:.*AppletPage.*\\.html\"?", "file:!APPLET_HTML!");
         result = result.replaceAll("\"(!JDK_HOME!.*?)\"", "$1");
         result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
-        result = result.replaceAll("\"(" + TEST_JDK_HOME_STR + ".*?)\"", "$1");
 
         // unquote extra params
         result = result.replaceAll("\"(-D.*?)\"", "$1");
@@ -223,7 +223,6 @@ public class OutputChecker {
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
         result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
 
-        result = fixSlashes(result, TEST_JDK_HOME_STR);
         result = fixSlashes(result, JDK_HOME_STR);
 
         result = stripQuotesAroundClasspath(result);

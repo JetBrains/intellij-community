@@ -285,8 +285,14 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @Nullable
   @Override
   protected OpenFileDescriptor getOpenFileDescriptor() {
-    int offset = getCurrentEditor().getCaretModel().getOffset();
-    return getCurrentContent().getOpenFileDescriptor(offset);
+    Side side = getCurrentSide();
+    int offset = getEditor(side).getCaretModel().getOffset();
+    OpenFileDescriptor descriptor = getContent(side).getOpenFileDescriptor(offset);
+    if (descriptor != null) return descriptor;
+
+    LogicalPosition otherPosition = transferPosition(side, getEditor(side).getCaretModel().getLogicalPosition());
+    int otherOffset = getEditor(side.other()).logicalPositionToOffset(otherPosition);
+    return getContent(side.other()).getOpenFileDescriptor(otherOffset);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {

@@ -175,8 +175,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   @Override
   public boolean isAcceptedWithoutWarning(@Nullable Project project, @NotNull VirtualFile file) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    return !settings.SHOW_DETECTED_INDENT_NOTIFICATION || myAcceptedFiles.contains(file);
+    return !FileIndentOptionsProvider.isShowNotification() || myAcceptedFiles.contains(file);
   }
 
   private static class NotificationLabels {

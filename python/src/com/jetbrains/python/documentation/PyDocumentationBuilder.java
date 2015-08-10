@@ -95,7 +95,7 @@ class PyDocumentationBuilder {
             PyType type = context.getType(qual);
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
-              Property property = cls.findProperty(elementName, true);
+              Property property = cls.findProperty(elementName, true, null);
               if (property != null) {
                 is_property = true;
                 final AccessDirection dir = AccessDirection.of((PyElement)outer);
@@ -293,7 +293,7 @@ class PyDocumentationBuilder {
     if (cls != null && meth_name != null) {
       final boolean is_constructor = PyNames.INIT.equals(meth_name);
       // look for inherited and its doc
-      Iterable<PyClass> classes = cls.getAncestorClasses();
+      Iterable<PyClass> classes = cls.getAncestorClasses(null);
       if (is_constructor) {
         // look at our own class again and maybe inherit class's doc
         classes = new ChainIterable<PyClass>(cls).add(classes);

@@ -125,6 +125,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myComponent.doReset(configuration);
   }
 
+  void updateWarning() {
+    myValidationResultValid = false;
+    if (myComponent != null) {
+      myComponent.updateWarning();
+    }
+  }
+
   @Override
   public final JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);

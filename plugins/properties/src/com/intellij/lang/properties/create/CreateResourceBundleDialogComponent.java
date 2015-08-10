@@ -16,30 +16,41 @@
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.event.*;
 import java.util.*;
 
 /**
@@ -62,32 +73,53 @@ public class CreateResourceBundleDialogComponent {
   };
   private final Project myProject;
   private final PsiDirectory myDirectory;
+  private final ResourceBundle myResourceBundle;
   private JPanel myPanel;
   private JTextField myResourceBundleBaseNameTextField;
   private JButton myAddLocaleFromExistButton;
   private JPanel myNewBundleLocalesPanel;
   private JPanel myProjectExistLocalesPanel;
   private JButton myAddAllButton;
-  private MyLocalesToAddModel myLocalesModel;
+  private JPanel myResourceBundleNamePanel;
+  private JCheckBox myUseXMLBasedPropertiesCheckBox;
+  private CollectionListModel<Locale> myLocalesModel;
 
-  public CreateResourceBundleDialogComponent(Project project, PsiDirectory directory) {
+  public CreateResourceBundleDialogComponent(Project project, PsiDirectory directory, ResourceBundle resourceBundle) {
     myProject = project;
     myDirectory = directory;
+    myResourceBundle = resourceBundle;
+    if (resourceBundle != null) {
+      myResourceBundleNamePanel.setVisible(false);
+      myUseXMLBasedPropertiesCheckBox.setVisible(false);
+    } else {
+      final String checkBoxSelectedStateKey = getClass() + ".useXmlPropertiesFiles";
+      myUseXMLBasedPropertiesCheckBox.setSelected(PropertiesComponent.getInstance().getBoolean(checkBoxSelectedStateKey, false));
+      myUseXMLBasedPropertiesCheckBox.addContainerListener(new ContainerAdapter() {
+        @Override
+        public void componentRemoved(ContainerEvent e) {
+          PropertiesComponent.getInstance().setValue(checkBoxSelectedStateKey, myUseXMLBasedPropertiesCheckBox.isSelected(), false);
+        }
+      });
+    }
   }
 
   public static class Dialog extends DialogWrapper {
     @Nullable private final Project myProject;
-    private final PsiDirectory myDirectory;
+    @NotNull private final PsiDirectory myDirectory;
     private CreateResourceBundleDialogComponent myComponent;
     private PsiElement[] myCreatedFiles;
 
-    protected Dialog(@Nullable Project project, PsiDirectory directory) {
+    protected Dialog(@Nullable Project project, @Nullable PsiDirectory directory, @Nullable ResourceBundle resourceBundle) {
       super(project);
+      if (directory == null) {
+        LOG.assertTrue(resourceBundle != null && getResourceBundlePlacementDirectory(resourceBundle) != null);
+      }
       myProject = project;
-      myDirectory = directory;
-      myComponent = new CreateResourceBundleDialogComponent(myProject, myDirectory);
+      myDirectory = directory == null ? resourceBundle.getDefaultPropertiesFile().getContainingFile().getContainingDirectory() : directory;
+      myComponent = new CreateResourceBundleDialogComponent(myProject, myDirectory, resourceBundle);
       init();
       initValidation();
+      setTitle(resourceBundle == null ? "Create resource bundle" : String.format("Add locales to resource bundle \'%s\'", resourceBundle.getBaseName()));
     }
 
     @Override
@@ -104,6 +136,22 @@ public class CreateResourceBundleDialogComponent {
 
     @Nullable
     @Override
+    protected ValidationInfo doValidate() {
+      for (String fileName : myComponent.getFileNamesToCreate()) {
+        if (!PathUtil.isValidFileName(fileName)) {
+          return new ValidationInfo(String.format("File name for properties file '%s' is invalid", fileName));
+        } else {
+          if (myDirectory.findFile(fileName) != null) {
+            return new ValidationInfo(String.format("File with name '%s' already exist", fileName));
+          }
+        }
+      }
+
+      return null;
+    }
+
+    @Nullable
+    @Override
     protected JComponent createCenterPanel() {
       return myComponent.getPanel();
     }
@@ -114,28 +162,97 @@ public class CreateResourceBundleDialogComponent {
   }
 
   private List<PsiFile> createPropertiesFiles() {
-    final String name = getBaseName();
-    final Set<String> fileNames = ContainerUtil.map2Set(myLocalesModel.getLocales(), new Function<Locale, String>() {
-      @Override
-      public String fun(Locale locale) {
-        return locale == PropertiesUtil.DEFAULT_LOCALE ? (name + ".properties") : (name + "_" + locale.toString() + ".properties");
-      }
-    });
-    return ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
+    final Set<String> fileNames = getFileNamesToCreate();
+    final List<PsiFile> createdFiles = WriteCommandAction.runWriteCommandAction(myProject, new Computable<List<PsiFile>>() {
       @Override
       public List<PsiFile> compute() {
-        return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
+        return ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
           @Override
-          public PsiFile fun(String n) {
-            return myDirectory.createFile(n);
+          public List<PsiFile> compute() {
+            return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
+              @Override
+              public PsiFile fun(String n) {
+                final boolean isXml = myResourceBundle == null
+                        ? myUseXMLBasedPropertiesCheckBox.isSelected()
+                        : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
+                if (isXml) {
+                  FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
+                  LOG.assertTrue(template != null);
+                  try {
+                    return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
+                  }
+                  catch (Exception e) {
+                    throw new RuntimeException(e);
+                  }
+                } else {
+                  return myDirectory.createFile(n);
+                }
+              }
+            });
           }
         });
       }
     });
+    combineToResourceBundleIfNeed(createdFiles);
+    return createdFiles;
+  }
+
+  @NotNull
+  private Set<String> getFileNamesToCreate() {
+    final String name = getBaseName();
+    final String suffix = getPropertiesFileSuffix();
+    return ContainerUtil.map2Set(myLocalesModel.getItems(), new Function<Locale, String>() {
+      @Override
+      public String fun(Locale locale) {
+        return name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + locale.toString())) + suffix;
+      }
+    });
+  }
+
+  private void combineToResourceBundleIfNeed(Collection<PsiFile> files) {
+    Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, new NotNullFunction<PsiFile, PropertiesFile>() {
+      @NotNull
+      @Override
+      public PropertiesFile fun(PsiFile dom) {
+        final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
+        LOG.assertTrue(file != null, dom.getName());
+        return file;
+      }
+    });
+
+    ResourceBundle mainBundle = myResourceBundle;
+    final Set<ResourceBundle> allBundles = new HashSet<ResourceBundle>();
+    if (mainBundle != null) {
+      allBundles.add(mainBundle);
+    }
+    boolean needCombining = false;
+    for (PropertiesFile file : createdFiles) {
+      final ResourceBundle rb = file.getResourceBundle();
+      if (mainBundle == null) {
+        mainBundle = rb;
+      }
+      else if (!mainBundle.equals(rb)) {
+        needCombining = true;
+      }
+      allBundles.add(rb);
+    }
+
+    if (needCombining) {
+      final List<PropertiesFile> toCombine = new ArrayList<PropertiesFile>(createdFiles);
+      final String baseName = getBaseName();
+      if (myResourceBundle != null) {
+        toCombine.addAll(myResourceBundle.getPropertiesFiles());
+      }
+      ResourceBundleManager manager = ResourceBundleManager.getInstance(mainBundle.getProject());
+      for (ResourceBundle bundle : allBundles) {
+        manager.dissociateResourceBundle(bundle);
+      }
+      manager.combineToResourceBundle(toCombine, baseName);
+    }
   }
 
   private String getBaseName() {
-    return myResourceBundleBaseNameTextField.getText();
+    return myResourceBundle == null ? myResourceBundleBaseNameTextField.getText() : myResourceBundle.getBaseName();
   }
 
   private String canCreateAllFilesForAllLocales() {
@@ -143,30 +260,29 @@ public class CreateResourceBundleDialogComponent {
     if (name.isEmpty()) {
       return "Base name is empty";
     }
-    final Set<String> suffixes = ContainerUtil.map2Set(myLocalesModel.getLocales(), new Function<Locale, String>() {
-      @Override
-      public String fun(Locale locale) {
-        return locale.toString() + ".properties";
-      }
-    });
-    if (suffixes.isEmpty()) {
+    final Set<String> files = getFileNamesToCreate();
+    if (files.isEmpty()) {
       return "No locales added";
     }
     for (PsiElement element : myDirectory.getChildren()) {
       if (element instanceof PsiFile) {
         if (element instanceof PropertiesFile) {
-          PropertiesFile propertiesFile = (PropertiesFile) element;
+          PropertiesFile propertiesFile = (PropertiesFile)element;
           final String propertiesFileName = propertiesFile.getName();
-          if (propertiesFileName.startsWith(name)) {
-            final String fileNameSuffix = propertiesFileName.substring(name.length());
-            if (suffixes.contains(fileNameSuffix)) {
-              return "Some of files already exist";
-            }
+          if (files.contains(propertiesFileName)) {
+            return "Some of files already exist";
           }
         }
       }
     }
     return null;
+  }
+
+  private String getPropertiesFileSuffix() {
+    if (myResourceBundle == null) {
+      return myUseXMLBasedPropertiesCheckBox.isSelected() ? ".xml" : ".properties";
+    }
+    return "." + myResourceBundle.getDefaultPropertiesFile().getContainingFile().getFileType().getDefaultExtension();
   }
 
   public JPanel getPanel() {
@@ -206,9 +322,49 @@ public class CreateResourceBundleDialogComponent {
     myProjectExistLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Project locales", false));
 
     final JBList localesToAddList = new JBList();
-    myLocalesModel = new MyLocalesToAddModel();
+
+    final List<Locale> locales;
+    final List<Locale> restrictedLocales;
+    if (myResourceBundle == null) {
+      locales = Collections.singletonList(PropertiesUtil.DEFAULT_LOCALE);
+      restrictedLocales = Collections.emptyList();
+    } else {
+      locales = Collections.emptyList();
+      restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), new Function<PropertiesFile, Locale>() {
+        @Override
+        public Locale fun(PropertiesFile propertiesFile) {
+          return propertiesFile.getLocale();
+        }
+      });
+    }
+    myLocalesModel = new CollectionListModel<Locale>(locales) {
+      @Override
+      public void add(@NotNull List<? extends Locale> elements) {
+        final List<Locale> currentItems = getItems();
+        elements = ContainerUtil.filter(elements, new Condition<Locale>() {
+          @Override
+          public boolean value(Locale locale) {
+            return !restrictedLocales.contains(locale) && !currentItems.contains(locale);
+          }
+        });
+        super.add(elements);
+      }
+    };
     localesToAddList.setModel(myLocalesModel);
     localesToAddList.setCellRenderer(getLocaleRenderer());
+    localesToAddList.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        projectExistLocalesList.clearSelection();
+      }
+    });
+    projectExistLocalesList.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        localesToAddList.clearSelection();
+      }
+    });
+
     myNewBundleLocalesPanel = ToolbarDecorator.createDecorator(localesToAddList).setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
@@ -235,15 +391,11 @@ public class CreateResourceBundleDialogComponent {
         if (rawAddedLocales != null) {
           final List<Locale> locales = extractLocalesFromString(rawAddedLocales);
           LOG.assertTrue(locales != null);
-          myLocalesModel.addRows(locales);
+          myLocalesModel.add(locales);
         }
       }
-    }).setRemoveAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        myLocalesModel.removeRow(localesToAddList.getSelectedIndices());
-      }
-    }).disableUpDownActions().createPanel();
+    }).setAddActionName("Add locales by suffix")
+      .disableUpDownActions().createPanel();
     myNewBundleLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Locales to add", false));
 
     myAddLocaleFromExistButton = new JButton(AllIcons.Actions.Forward);
@@ -251,7 +403,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (clickCount == 1) {
-          myLocalesModel.addRows(ContainerUtil.map(projectExistLocalesList.getSelectedValues(), new Function<Object, Locale>() {
+          myLocalesModel.add(ContainerUtil.map(projectExistLocalesList.getSelectedValues(), new Function<Object, Locale>() {
             @Override
             public Locale fun(Object o) {
               return (Locale)o;
@@ -263,12 +415,28 @@ public class CreateResourceBundleDialogComponent {
       }
     }.installOn(myAddLocaleFromExistButton);
 
+    projectExistLocalesList.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        final List<Locale> currentItems = myLocalesModel.getItems();
+        for (Object o : projectExistLocalesList.getSelectedValues()) {
+          Locale l = (Locale) o;
+          if (!restrictedLocales.contains(l) && !currentItems.contains(l)) {
+            myAddLocaleFromExistButton.setEnabled(true);
+            return;
+          }
+        }
+        myAddLocaleFromExistButton.setEnabled(false);
+      }
+    });
+    myAddLocaleFromExistButton.setEnabled(false);
+
     myAddAllButton = new JButton("Add All");
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (clickCount == 1) {
-          myLocalesModel.addRows(existLocalesListModel.getLocales());
+          myLocalesModel.add(existLocalesListModel.getLocales());
         }
         return false;
       }
@@ -290,62 +458,13 @@ public class CreateResourceBundleDialogComponent {
     };
   }
 
-  private static class MyLocalesToAddModel extends AbstractListModel {
-    private final List<Locale> myLocales;
-
-    private MyLocalesToAddModel() {
-      myLocales = new ArrayList<Locale>();
-      myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
-    }
-
-    public List<Locale> getLocales() {
-      return myLocales;
-    }
-
-    @Override
-    public int getSize() {
-      return myLocales.size();
-    }
-
-    @Override
-    public Locale getElementAt(int index) {
-      return myLocales.get(index);
-    }
-
-    public void addRows(final List<Locale> toAdd) {
-      boolean added = false;
-      for (Locale locale : toAdd) {
-        if (!myLocales.contains(locale)) {
-          myLocales.add(locale);
-          if (!added) {
-            added = true;
-          }
-        }
-      }
-      if (added) {
-        Collections.sort(myLocales, LOCALE_COMPARATOR);
-        fireIntervalAdded(this, 0, myLocales.size());
-      }
-    }
-
-    public void removeRow(int[] indices) {
-      indices = Arrays.copyOf(indices, indices.length);
-      Arrays.sort(indices);
-      for (int i = indices.length - 1; i >= 0 ; i--) {
-        myLocales.remove(indices[i]);
-      }
-      fireIntervalRemoved(this, indices[0], indices[indices.length - 1]);
-    }
-  }
-
   private class MyExistLocalesListModel extends AbstractListModel {
     private final List<Locale> myLocales;
 
     private MyExistLocalesListModel() {
       myLocales = new ArrayList<Locale>();
       myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
-
-      PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScopesCore.projectProductionScope(myProject), new PropertiesFileProcessor() {
+      PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject), new PropertiesFileProcessor() {
         @Override
         public boolean process(String baseName, PropertiesFile propertiesFile) {
           final Locale locale = propertiesFile.getLocale();
@@ -371,5 +490,19 @@ public class CreateResourceBundleDialogComponent {
     public List<Locale> getLocales() {
       return myLocales;
     }
+  }
+
+  @Nullable
+  static PsiDirectory getResourceBundlePlacementDirectory(ResourceBundle resourceBundle) {
+    PsiDirectory containingDirectory = null;
+    for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
+      if (containingDirectory == null) {
+        containingDirectory = propertiesFile.getContainingFile().getContainingDirectory();
+      } else if (!containingDirectory.isEquivalentTo(propertiesFile.getContainingFile().getContainingDirectory())) {
+        return null;
+      }
+    }
+    LOG.assertTrue(containingDirectory != null);
+    return containingDirectory;
   }
 }

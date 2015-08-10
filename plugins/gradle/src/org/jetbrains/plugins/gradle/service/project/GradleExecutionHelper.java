@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.execution.configurations.CommandLineTokenizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -530,11 +531,17 @@ public class GradleExecutionHelper {
 
   @NotNull
   private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
+    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, new Function<Class, String>() {
+      @Override
+      public String fun(Class aClass) {
+        String path = PathManager.getJarPathForClass(aClass);
+        return path == null ? null : PathUtil.getCanonicalPath(path);
+      }
+    });
     StringBuilder buf = new StringBuilder();
     buf.append('[');
-    for (Iterator<Class> it = toolingExtensionClasses.iterator(); it.hasNext(); ) {
-      Class<?> aClass = it.next();
-      String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(aClass));
+    for (Iterator<String> it = jarPaths.iterator(); it.hasNext(); ) {
+      String jarPath = it.next();
       buf.append('\"').append(jarPath).append('\"');
       if (it.hasNext()) {
         buf.append(',');

@@ -42,11 +42,11 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     UPDATE_EXCLUDES.add("java.util.Collections");
   }
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet queryNames =
     new ExternalizableStringSet("copyInto", "drainTo", "parallelStream", "propertyNames", "save", "store", "stream", "write", "forEach",
                                 "replaceAll");
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet updateNames =
     new ExternalizableStringSet("add", "clear", "drainTo", "insert", "load", "offer", "poll", "push", "put", "remove", "replace",
                                 "retain", "set", "take", "compute");
@@ -121,12 +121,11 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     return new MismatchedCollectionQueryUpdateVisitor();
   }
 
-  private static class CollectionQueriedByAssignmentVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean mayBeQueried = false;
+  private static class CollectionQueriedByAssignmentVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean mayBeQueried;
     @NotNull private final PsiVariable variable;
 
-    CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable) {
+    private CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable) {
       this.variable = variable;
     }
 
@@ -181,7 +180,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       mayBeQueried = true;
     }
 
-    public boolean mayBeQueried() {
+    private boolean mayBeQueried() {
       return mayBeQueried;
     }
   }

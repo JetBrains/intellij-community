@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class RestoreUpdateTree implements ProjectComponent, PersistentStateCompo
         myUpdateInfo.writeExternal(element);
       }
       catch (WriteExternalException e) {
-        throw new StateStorageException(e);
+        throw new RuntimeException(e);
       }
     }
     return element;
@@ -105,7 +105,7 @@ public class RestoreUpdateTree implements ProjectComponent, PersistentStateCompo
       updateInfo.readExternal(state);
     }
     catch (InvalidDataException e) {
-      throw new StateStorageException(e);
+      throw new RuntimeException(e);
     }
     myUpdateInfo = updateInfo.isEmpty() ? null : updateInfo;
   }

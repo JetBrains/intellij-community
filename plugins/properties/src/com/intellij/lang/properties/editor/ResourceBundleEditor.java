@@ -59,6 +59,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -131,7 +133,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
-    myPropertiesInsertDeleteManager = ResourceBundlePropertiesUpdateManagerImpl.create(resourceBundle);
+    myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
 
     myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
     myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
@@ -407,11 +409,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         @Override
         public void focusGained(final Editor editor) {
           mySelectedEditor = editor;
+          final EditorEx editorEx = (EditorEx)editor;
+          editorEx.setViewer(ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles());
         }
 
         @Override
         public void focusLost(final Editor eventEditor) {
-          writeEditorPropertyValue(null, editor, propertiesFile);
+          if (propertiesFile.getContainingFile().isValid()) {
+            writeEditorPropertyValue(null, editor, propertiesFile);
+          }
         }
       });
       gc.gridx = 0;
@@ -596,6 +602,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       @Override
       public void run() {
         updateEditorsFromProperties();
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar != null) {
+          statusBar.setInfo("Selected property: " + getSelectedPropertyName());
+        }
       }
     });
   }
@@ -807,7 +817,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   @Override
   public void deselectNotify() {
-
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar != null) {
+      statusBar.setInfo("");
+    }
   }
 
   @Override

@@ -21,7 +21,7 @@ import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
@@ -35,7 +35,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.Messages;
@@ -179,18 +181,10 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                              "It is possible to configure custom JAR\nin e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
                                              "\nIntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license.\nWould you like to do it now?",
                                     title, Messages.getErrorIcon()) == Messages.OK) {
-      final String path = OrderEntryFix.locateAnnotationsJar(modulesWithoutAnnotations.iterator().next());
-      if (path != null) {
-        new WriteCommandAction(project) {
-          @Override
-          protected void run(@NotNull final Result result) throws Throwable {
-            for (Module module : modulesWithoutAnnotations) {
-              OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
-            }
-          }
-        }.execute();
-        return true;
-      }
+      Module firstModule = modulesWithoutAnnotations.iterator().next();
+      ProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
+                                                                         DependencyScope.COMPILE);
+      return true;
     }
     return false;
   }

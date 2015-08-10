@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
     "org.mockito.InOrder,verify," +
     "org.junit.rules.ExpectedException,expect.*," +
     "org.hamcrest.MatcherAssert,assertThat";
-  @SuppressWarnings({"PublicField"})
-  public boolean assertKeywordIsAssertion = false;
-  private Map<String, Pattern> patternCache = null;
+  @SuppressWarnings("PublicField")
+  public boolean assertKeywordIsAssertion;
+  private Map<String, Pattern> patternCache;
 
   public TestMethodWithoutAssertionInspectionBase() {
     parseString(assertionMethods, classNames, methodNamePatterns);
@@ -196,9 +196,8 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
     }
   }
 
-  private class ContainsAssertionVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean containsAssertion = false;
+  private class ContainsAssertionVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean containsAssertion;
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
@@ -249,7 +248,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       containsAssertion = true;
     }
 
-    public boolean containsAssertion() {
+    boolean containsAssertion() {
       return containsAssertion;
     }
   }

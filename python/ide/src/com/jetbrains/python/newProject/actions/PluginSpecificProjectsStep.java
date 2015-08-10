@@ -20,6 +20,7 @@ import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.platform.CustomStepProjectGenerator;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,11 @@ public class PluginSpecificProjectsStep extends DefaultActionGroup implements Du
     super("Plugin-specific", true);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PluginLogo);
     for (DirectoryProjectGenerator generator : projectGenerators) {
-      ProjectSpecificAction action = new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, callback));
+      ProjectSettingsStepBase step = generator instanceof CustomStepProjectGenerator ?
+                                     ((ProjectSettingsStepBase)((CustomStepProjectGenerator)generator).createStep(generator, callback)) :
+                                     new ProjectSpecificSettingsStep(generator, callback);
+
+      ProjectSpecificAction action = new ProjectSpecificAction(generator, step);
       addAll(action.getChildren(null));
     }
   }

@@ -881,7 +881,7 @@ public class GeneratedParserUtilBase {
       }
     }
 
-    boolean typeExtends(IElementType child, IElementType parent) {
+    public boolean typeExtends(IElementType child, IElementType parent) {
       if (child == parent) return true;
       if (extendsSets != null) {
         for (TokenSet set : extendsSets) {

@@ -33,13 +33,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.impl.stores.StoreUtil.ReloadComponentStoreStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
@@ -50,18 +51,18 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.JDOMException;
@@ -80,7 +81,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  private static final Key<MultiMap<StateStorage, VirtualFile>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
+  private static final Key<Set<StateStorage>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
@@ -90,7 +91,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final SingleAlarm myChangedFilesAlarm;
-  private final MultiMap<StateStorage, VirtualFile> myChangedApplicationFiles = MultiMap.createLinkedSet();
+  private final Set<StateStorage> myChangedApplicationFiles = new LinkedHashSet<StateStorage>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
 
   private final ProgressManager myProgressManager;
@@ -117,10 +118,29 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     Application app = ApplicationManager.getApplication();
     MessageBus messageBus = app.getMessageBus();
 
-    messageBus.connect(app).subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+    messageBus.connect().subscribe(StateStorageManager.STORAGE_TOPIC, new StorageManagerListener() {
       @Override
-      public void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage) {
-        projectStorageFileChanged(event, storage, null);
+      public void storageFileChanged(@NotNull VFileEvent event, @NotNull StateStorage storage, @NotNull ComponentManager componentManager) {
+        if (event instanceof VFilePropertyChangeEvent) {
+          // ignore because doesn't affect content
+          return;
+        }
+
+        if (event.getRequestor() instanceof StateStorage.SaveSession ||
+            event.getRequestor() instanceof StateStorage ||
+            event.getRequestor() instanceof ProjectManagerImpl) {
+          return;
+        }
+
+        Project project;
+        if (componentManager instanceof Project) {
+          project = (Project)componentManager;
+        }
+        else {
+          project = componentManager instanceof Module ? ((Module)componentManager).getProject() : null;
+        }
+
+        registerProjectToReload(project, storage);
       }
     });
 
@@ -129,13 +149,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       new ProjectManagerListener() {
         @Override
         public void projectOpened(final Project project) {
-          project.getMessageBus().connect(project).subscribe(StateStorage.PROJECT_STORAGE_TOPIC, new StateStorage.Listener() {
-            @Override
-            public void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage) {
-              projectStorageFileChanged(event, storage, project);
-            }
-          });
-
           busPublisher.projectOpened(project);
           for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectOpened(project);
@@ -182,13 +195,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     });
     myChangedFilesAlarm = new SingleAlarm(restartApplicationOrReloadProjectTask, 300);
-  }
-
-  private void projectStorageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage, @Nullable Project project) {
-    VirtualFile file = event.getFile();
-    if (!StorageUtil.isChangedByStorageOrSaveSession(event) && !(event.getRequestor() instanceof ProjectManagerImpl)) {
-      registerProjectToReload(project, file, storage);
-    }
   }
 
   @Override
@@ -252,7 +258,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
     try {
-      initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
+      initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -283,7 +289,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return message;
   }
 
-  private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
+  private void initProject(@NotNull ProjectImpl project, @Nullable Project template) {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
@@ -556,10 +562,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       project = loadProjectWithProgress(filePath);
       if (project == null) return null;
     }
-    catch (IOException e) {
-      LOG.info(e);
-      throw e;
-    }
     catch (Throwable t) {
       LOG.info(t);
       throw new IOException(t);
@@ -583,20 +585,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    * @return the project, or null if the user has cancelled opening the project.
    */
   @Nullable
-  private Project loadProjectWithProgress(@NotNull final String filePath) throws IOException {
+  private Project loadProjectWithProgress(@NotNull final String filePath) {
     final ProjectImpl project = createProject(null, toCanonicalName(filePath), false, false);
     try {
-      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
+      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Object, RuntimeException>() {
         @Override
         @Nullable
-        public Project compute() throws IOException {
+        public Project compute() {
           initProject(project, null);
           return project;
         }
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-    }
-    catch (StateStorageException e) {
-      throw new IOException(e);
     }
     catch (ProcessCanceledException ignore) {
       return null;
@@ -617,7 +616,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         continue;
       }
 
-      MultiMap<StateStorage, VirtualFile> changes = CHANGED_FILES_KEY.get(project);
+      Set<StateStorage> changes = CHANGED_FILES_KEY.get(project);
       if (changes == null) {
         continue;
       }
@@ -641,8 +640,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return true;
     }
 
-    MultiMap<StateStorage, VirtualFile> changes = MultiMap.createLinkedSet();
-    changes.putAllValues(myChangedApplicationFiles);
+    Set<StateStorage> changes = new LinkedHashSet<StateStorage>(myChangedApplicationFiles);
     myChangedApplicationFiles.clear();
 
     ReloadComponentStoreStatus status = StoreUtil.reloadStore(changes, ComponentsPackage.getStateStore(ApplicationManager.getApplication()));
@@ -697,34 +695,34 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
     StateStorageManager storageManager = ComponentsPackage.getStateStore(project).getStateStorageManager();
     String fileSpec = storageManager.collapseMacros(file.getPath());
-    Couple<Collection<FileBasedStorage>> storages = storageManager.getCachedFileStateStorages(Collections.singletonList(fileSpec), Collections.<String>emptyList());
-    FileBasedStorage storage = ContainerUtil.getFirstItem(storages.first);
+    Couple<Collection<FileStorage>> storages = storageManager.getCachedFileStateStorages(Collections.singletonList(fileSpec), Collections.<String>emptyList());
+    FileStorage storage = ContainerUtil.getFirstItem(storages.first);
     // if empty, so, storage is not yet loaded, so, we don't have to reload
     if (storage != null) {
-      registerProjectToReload(project, file, storage);
+      registerProjectToReload(project, storage);
     }
   }
 
-  private void registerProjectToReload(@Nullable Project project, @NotNull VirtualFile file, @NotNull StateStorage storage) {
+  private void registerProjectToReload(@Nullable Project project, @NotNull StateStorage storage) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("[RELOAD] Registering project to reload: " + file, new Exception());
+      LOG.debug("[RELOAD] Registering project to reload: " + storage, new Exception());
     }
 
-    MultiMap<StateStorage, VirtualFile> changes;
+    Set<StateStorage> changes;
     if (project == null) {
       changes = myChangedApplicationFiles;
     }
     else {
       changes = CHANGED_FILES_KEY.get(project);
       if (changes == null) {
-        changes = MultiMap.createLinkedSet();
+        changes = new LinkedHashSet<StateStorage>();
         CHANGED_FILES_KEY.set(project, changes);
       }
     }
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (changes) {
-      changes.putValue(storage, file);
+      changes.add(storage);
     }
 
     if (storage instanceof StateStorageBase) {
@@ -791,13 +789,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
       if (save) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-            project.save();
-          }
-        });
+        FileDocumentManager.getInstance().saveAllDocuments();
+        project.save();
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {

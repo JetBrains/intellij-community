@@ -47,6 +47,9 @@ class ScopedClassHierarchy {
 
     @Override
     public boolean equals(PsiClass o1, PsiClass o2) {
+      final String qname1 = o1.getQualifiedName();
+      if (qname1 != null) return qname1.equals(o2.getQualifiedName());
+
       return o1.getManager().areElementsEquivalent(o1, o2);
     }
   };

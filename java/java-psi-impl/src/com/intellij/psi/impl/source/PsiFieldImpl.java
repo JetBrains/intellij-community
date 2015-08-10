@@ -333,6 +333,9 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public PsiDocComment getDocComment(){
+    final PsiFieldStub stub = getStub();
+    if (stub != null && !stub.hasDocComment()) return null;
+
     CompositeElement treeElement = getNode();
     if (getTypeElement() != null) {
       PsiElement element = treeElement.findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);

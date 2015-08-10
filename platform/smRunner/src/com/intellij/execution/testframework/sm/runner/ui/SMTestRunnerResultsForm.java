@@ -41,7 +41,6 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -67,8 +66,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -789,7 +787,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     private final TestConsoleProperties myConsoleProperties;
     private SMTestProxy.SMRootTestProxy myRoot;
     private RunConfiguration myConfiguration;
-    private String myOutput;
+    private File myOutputFile;
 
     public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
       super(consoleProperties.getProject(), "Save Test Results", true);
@@ -806,14 +804,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
-        StringWriter w = new StringWriter();
-        handler.setResult(new StreamResult(w));
+        final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
+                                                     new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
+
+        myOutputFile = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
+        handler.setResult(new StreamResult(new FileWriter(myOutputFile)));
         final SMTestProxy.SMRootTestProxy root = myRoot;
         final RunConfiguration configuration = myConfiguration;
         if (root != null && configuration != null) {
           TestResultsXmlFormatter.execute(root, configuration, myConsoleProperties, handler);
         }
-        myOutput = w.toString();
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -825,27 +825,18 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     @Override
     public void onSuccess() {
-      if (myOutput != null) {
-        try {
-          AbstractImportTestsAction.adjustHistory(myProject);
-          final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
-                                                       new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
-          final File file = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
-          FileUtil.writeToFile(file, myOutput);
-          TestHistoryConfiguration.getInstance(myProject).registerHistoryItem(file.getName(), 
-                                                                              myConfiguration.getName(),
-                                                                              myConfiguration.getType().getId());
-        }
-        catch (IOException e) {
-          LOG.info("Fail to write test history", e);
-        }
+      if (myOutputFile != null && myOutputFile.exists()) {
+        AbstractImportTestsAction.adjustHistory(myProject);
+        TestHistoryConfiguration.getInstance(myProject).registerHistoryItem(myOutputFile.getName(),
+                                                                            myConfiguration.getName(),
+                                                                            myConfiguration.getType().getId());
       }
     }
     
     public void dispose() {
       myConfiguration = null;
       myRoot = null;
-      myOutput = null;
+      myOutputFile = null;
     }
   }
 }

@@ -25,9 +25,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.script.IdeScriptBindings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -59,14 +58,11 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author gregsh
  */
 public class RunIdeConsoleAction extends DumbAwareAction {
-
-  private static final String IDE = "IDE";
   private static final String DEFAULT_FILE_NAME = "ide-scripting";
 
   private static final Key<WeakReference<RunContentDescriptor>> DESCRIPTOR_KEY = Key.create("DESCRIPTOR_KEY");
@@ -184,7 +180,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       descriptor = createConsoleView(project, engine, psiFile);
       psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     }
-    ensureIdeBound(project, engine);
+    IdeScriptBindings.ensureIdeIsBound(project, engine);
 
     return descriptor;
   }
@@ -214,13 +210,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     new ScriptEngineOutputHandler(descriptor).installOn(engine);
 
     return descriptor;
-  }
-
-  private static void ensureIdeBound(@NotNull Project project, @NotNull IdeScriptEngine engine) {
-    Object oldIdeBinding = engine.getBinding(IDE);
-    if (oldIdeBinding == null) {
-      engine.setBinding(IDE, new IDE(project, engine));
-    }
   }
 
   private static class MyRunAction extends DumbAwareAction {
@@ -295,44 +284,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
       @Override
       public void close() throws IOException {
-      }
-    }
-  }
-
-  public static class IDE {
-    public final Application application = ApplicationManager.getApplication();
-    public final Project project;
-
-    private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
-    private final IdeScriptEngine myEngine;
-
-    IDE(Project project, IdeScriptEngine engine) {
-      this.project = project;
-      myEngine = engine;
-    }
-
-    public void print(Object o) {
-      print(myEngine.getStdOut(), o);
-    }
-
-    public void error(Object o) {
-      print(myEngine.getStdErr(), o);
-    }
-
-    public Object put(Object key, Object value) {
-      return value == null ? bindings.remove(key) : bindings.put(key, value);
-    }
-
-    public Object get(Object key) {
-      return bindings.get(key);
-    }
-
-    private static void print(Writer writer, Object o) {
-      try {
-        writer.append(String.valueOf(o));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
       }
     }
   }

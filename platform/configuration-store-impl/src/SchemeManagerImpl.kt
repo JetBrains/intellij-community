@@ -19,10 +19,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
-import com.intellij.openapi.components.impl.stores.DirectoryStorageData
+import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.service
@@ -83,12 +83,25 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       updateExtension = processor.isUpgradeNeeded()
     }
     else {
-      schemeExtension = DirectoryStorageData.DEFAULT_EXT
+      schemeExtension = StorageUtil.DEFAULT_EXT
       updateExtension = false
     }
 
     if (useVfs && (provider == null || !provider.enabled)) {
-      service<VirtualFileTracker>()?.addTracker("${LocalFileSystem.PROTOCOL_PREFIX}${ioDirectory.getAbsolutePath().replace(File.separatorChar, '/')}", object : VirtualFileAdapter() {
+      if (!ServiceManagerImpl.isUseReadActionToInitService()) {
+        // store refreshes root directory, so, we don't need to use refreshAndFindFile
+        directory = LocalFileSystem.getInstance().findFileByIoFile(ioDirectory)
+        if (directory != null) {
+          try {
+            invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, false, true, directory) }
+          }
+          catch  (e: Throwable) {
+            LOG.error(e)
+          }
+        }
+      }
+
+      service<VirtualFileTracker>().addTracker("${LocalFileSystem.PROTOCOL_PREFIX}${ioDirectory.getAbsolutePath().replace(File.separatorChar, '/')}", object : VirtualFileAdapter() {
         override fun contentsChanged(event: VirtualFileEvent) {
           if (event.getRequestor() != null || !isMy(event)) {
             return
@@ -212,8 +225,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     return if (StringUtilRt.endsWithIgnoreCase(fileName, schemeExtension)) {
       schemeExtension
     }
-    else if (StringUtilRt.endsWithIgnoreCase(fileName, DirectoryStorageData.DEFAULT_EXT)) {
-      DirectoryStorageData.DEFAULT_EXT
+    else if (StringUtilRt.endsWithIgnoreCase(fileName, StorageUtil.DEFAULT_EXT)) {
+      StorageUtil.DEFAULT_EXT
     }
     else if (allowAny) {
       PathUtil.getFileExtension(fileName.toString())!!
@@ -378,7 +391,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   private val ExternalizableScheme.fileName: String?
     get() = schemeToInfo.get(this)?.fileNameWithoutExtension
 
-  private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, DirectoryStorageData.DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
+  private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, StorageUtil.DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
 
   private fun readSchemeFromFile(file: VirtualFile, duringLoad: Boolean): E? {
     val fileName = file.getNameSequence()
@@ -421,8 +434,11 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     for (scheme in schemesToSave) {
-      errors.catch {
+      try {
         saveScheme(scheme, nameGenerator)
+      }
+      catch (e: Throwable) {
+        errors.add(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
       }
     }
 
@@ -533,12 +549,12 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         var file: VirtualFile? = null
         var dir = getDirectory()
         if (dir == null || !dir.isValid()) {
-          dir = DirectoryBasedStorage.createDir(ioDirectory, this)
-          directory = dir!!
+          dir = StorageUtil.createDir(ioDirectory, this)
+          directory = dir
         }
 
         if (renamed) {
-          file = dir.findChild(externalInfo!!.fileName)
+          file = dir!!.findChild(externalInfo!!.fileName)
           if (file != null) {
             runWriteAction {
               file!!.rename(this, fileName)
@@ -547,7 +563,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
 
         if (file == null) {
-          file = StorageUtil.getFile(fileName, dir, this)
+          file = StorageUtil.getFile(fileName, dir!!, this)
         }
 
         runWriteAction {

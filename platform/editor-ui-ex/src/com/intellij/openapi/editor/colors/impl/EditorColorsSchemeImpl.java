@@ -52,7 +52,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   public TextAttributes getAttributes(TextAttributesKey key) {
     if (key != null) {
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      TextAttributes attributes = myAttributesMap.get(key);
+      TextAttributes attributes = getDirectlyDefinedAttributes(key);
       if (fallbackKey == null) {
         if (attributes != null) return attributes;
       }
@@ -63,10 +63,6 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       }
     }
     return myParentScheme.getAttributes(key);
-  }
-
-  public boolean containsKey(TextAttributesKey key) {
-    return myAttributesMap.containsKey(key);
   }
 
   @Nullable

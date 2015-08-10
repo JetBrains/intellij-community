@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -199,11 +200,16 @@ public class SafeDeleteDialog extends DialogWrapper {
       return;
     }
 
-    if (myCallback != null && isSafeDelete()) {
-      myCallback.run(this);
-    } else {
-      super.doOKAction();
-    }
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        if (myCallback != null && isSafeDelete()) {
+          myCallback.run(SafeDeleteDialog.this);
+        } else {
+          SafeDeleteDialog.super.doOKAction();
+        }
+      }
+    });
 
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     if (myCbSafeDelete != null) {

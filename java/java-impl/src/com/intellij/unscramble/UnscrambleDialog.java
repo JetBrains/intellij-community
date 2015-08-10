@@ -180,6 +180,7 @@ public class UnscrambleDialog extends DialogWrapper {
     return selectedUnscrambler;
   }
 
+  @NotNull
   public static List<String> getSavedLogFileUrls() {
     final List<String> res = new ArrayList<String>();
     final String savedUrl = PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_HISTORY_URLS);
@@ -254,21 +255,16 @@ public class UnscrambleDialog extends DialogWrapper {
   public void dispose() {
     if (isOK()){
       final List<String> list = myLogFile.getHistory();
-      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_HISTORY_URLS, StringUtil.join(list, ":::"));
+      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_HISTORY_URLS, list.isEmpty() ? null : StringUtil.join(list, ":::"), null);
       UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
-      saveProperty(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName());
-
-      saveProperty(PROPERTY_LOG_FILE_LAST_URL, myLogFile.getText());
+      PropertiesComponent.getInstance().setValue(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName(), null);
+      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_LAST_URL, StringUtil.nullize(myLogFile.getText()), null);
     }
     super.dispose();
   }
 
-  private void saveProperty(String name, String value) {
-    PropertiesComponent.getInstance().setValue(name, value);
-    PropertiesComponent.getInstance(myProject).setValue(name, value);
-  }
-
-  private String getPropertyValue(String name) {
+  @Nullable
+  private String getPropertyValue(@NotNull String name) {
     String projectValue = PropertiesComponent.getInstance(myProject).getValue(name);
     if (projectValue != null) {
       return projectValue;
@@ -294,7 +290,6 @@ public class UnscrambleDialog extends DialogWrapper {
       String text = myStacktraceEditorPanel.getText();
       myStacktraceEditorPanel.setText(normalizeText(text));
     }
-
   }
 
   public static String normalizeText(@NonNls String text) {

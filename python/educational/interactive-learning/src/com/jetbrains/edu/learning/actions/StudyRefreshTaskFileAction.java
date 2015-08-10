@@ -101,7 +101,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     }
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
-    StudyUtils.updateStudyToolWindow(project);
+    StudyUtils.updateToolWindows(project);
     return true;
   }
 

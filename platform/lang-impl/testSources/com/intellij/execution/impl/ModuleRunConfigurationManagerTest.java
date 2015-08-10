@@ -131,7 +131,7 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
 
   private final class MyRunManagerImpl extends RunManagerImpl {
     public MyRunManagerImpl() {
-      super(LightPlatformTestCase.getProject(), PropertiesComponent.getInstance());
+      super(LightPlatformTestCase.getProject(), PropertiesComponent.getInstance(LightPlatformTestCase.getProject()));
     }
 
     @NotNull

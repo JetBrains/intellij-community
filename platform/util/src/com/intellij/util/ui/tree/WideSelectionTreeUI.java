@@ -102,7 +102,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
               Rectangle bounds = getPathBounds(tree, path);
               if (bounds != null && bounds.y <= y && y <= (bounds.y + bounds.height)) {
                 x = Math.max(bounds.x, Math.min(x, bounds.x + bounds.width - 1));
-                event = convert(event, tree, x, y);
+                if (x != event.getX()) {
+                  event = convert(event, tree, x, y);
+                }
               }
             }
           }
@@ -127,14 +129,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     super.uninstallUI(c);
 
     UIManager.put("Tree.repaintWholeRow", myOldRepaintAllRowValue);
-  }
-
-  @Override
-  public void installUI(JComponent c) {
-    super.installUI(c);
-    if (!GraphicsEnvironment.isHeadless()) {
-      tree.setDragEnabled(true);
-    }
   }
 
   @Override

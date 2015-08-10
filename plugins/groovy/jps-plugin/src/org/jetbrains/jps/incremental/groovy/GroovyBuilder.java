@@ -452,6 +452,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           final File srcFile = new File(sourcePath);
           try {
             final byte[] bytes = FileUtil.loadFileBytes(outputFile);
+            if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
+              LOG.info("registerCompiledClass " + outputFile + " from " + srcFile);
+            }
             outputConsumer.registerCompiledClass(
               target,
               new CompiledClass(outputFile, srcFile, readClassName(bytes), new BinaryContent(bytes))

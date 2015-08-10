@@ -25,6 +25,10 @@ public class AbstractMethodWithMissingImplementationsInspectionTest extends Ligh
     doTest();
   }
 
+  public void testDuplicateClass() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

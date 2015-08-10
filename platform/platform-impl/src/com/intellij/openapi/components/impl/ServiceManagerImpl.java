@@ -19,16 +19,18 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
@@ -194,61 +196,73 @@ public class ServiceManagerImpl implements BaseComponent {
 
     @Override
     public Class getComponentImplementation() {
-      return loadClass(myDescriptor.getInterface());
-    }
-
-    private Class loadClass(final String className) {
-      try {
-        final ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-
-        return Class.forName(className, true, classLoader);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+      return getDelegate().getComponentImplementation();
     }
 
     @Override
-    public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+    public Object getComponentInstance(@NotNull PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
       Object instance = myInitializedComponentInstance;
-      if (instance != null) return instance;
+      if (instance != null) {
+        return instance;
+      }
 
-      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
-        @Override
-        public Object compute() {
+      // we must take read action before adapter lock - if service requested from EDT (2) and pooled (1), will be a deadlock, because EDT waits adapter lock and Pooled waits read lock
+      boolean useReadActionToInitService = isUseReadActionToInitService();
+      AccessToken readToken = useReadActionToInitService ? ReadAction.start() : null;
+      try {
+        synchronized (this) {
+          instance = myInitializedComponentInstance;
+          if (instance != null) {
+            // DCL is fine, field is volatile
+            return instance;
+          }
+
+          ComponentAdapter delegate = getDelegate();
+
+          // useReadActionToInitService is enabled currently only in internal or test mode or explicitly (registry) - we have enough feedback to fix, so, don't disturb all users
+          if (!useReadActionToInitService && ApplicationManager.getApplication().isWriteAccessAllowed() && PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
+            LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " + myDescriptor.getImplementation()));
+          }
+
           // prevent storages from flushing and blocking FS
           AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
           try {
-            synchronized (MyComponentAdapter.this) {
-              Object instance = myInitializedComponentInstance;
-              if (instance != null) return instance; // DCL is fine, field is volatile
-              myInitializedComponentInstance = instance = initializeInstance(container);
-              return instance;
+            instance = delegate.getComponentInstance(container);
+            if (instance instanceof Disposable) {
+              Disposer.register(myComponentManager, (Disposable)instance);
             }
+
+            myComponentManager.initializeComponent(instance, true);
+
+            myInitializedComponentInstance = instance;
+            return instance;
           }
           finally {
             token.finish();
           }
         }
-      });
-    }
-
-    protected Object initializeInstance(final PicoContainer container) {
-      final Object serviceInstance = getDelegate().getComponentInstance(container);
-      if (serviceInstance instanceof Disposable) {
-        Disposer.register(myComponentManager, (Disposable)serviceInstance);
       }
-
-      myComponentManager.initializeComponent(serviceInstance, true);
-
-      return serviceInstance;
+      finally {
+        if (readToken != null) {
+          readToken.finish();
+        }
+      }
     }
 
+    @NotNull
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.getImplementation()), null, true);
-      }
+        Class<?> implClass;
+        try {
+          ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+          implClass = Class.forName(myDescriptor.getImplementation(), true, classLoader);
+        }
+        catch (ClassNotFoundException e) {
+          throw new RuntimeException(e);
+        }
 
+        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);
+      }
       return myDelegate;
     }
 
@@ -271,5 +285,9 @@ public class ServiceManagerImpl implements BaseComponent {
     public String toString() {
       return "ServiceComponentAdapter[" + myDescriptor.getInterface() + "]: implementation=" + myDescriptor.getImplementation() + ", plugin=" + myPluginDescriptor;
     }
+  }
+
+  public static boolean isUseReadActionToInitService() {
+    return Registry.is("use.read.action.to.init.service", true);
   }
 }

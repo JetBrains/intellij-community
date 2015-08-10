@@ -314,6 +314,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return null;
   }
 
+  public int setRightCustomEdgeTokenBinderForNode(int lastIndex,
+                                                  @NotNull LighterASTNode node,
+                                                  @NotNull WhitespacesAndCommentsBinder binder) {
+    int i = lastIndex;
+    DoneMarker d = ((StartMarker)node).myDoneMarker;
+    d.myEdgeTokenBinder = binder;
+    for (int len = myProduction.size(); i < len; i ++) {
+      ProductionMarker m = myProduction.get(i);
+      if (m.myLexemeIndex < d.myLexemeIndex) continue;
+      if (m.myLexemeIndex > d.myLexemeIndex || m == d) break;
+      m.myEdgeTokenBinder = binder;
+    }
+    return i;
+  }
+
   private abstract static class Node implements LighterASTNode {
     public abstract int hc();
   }

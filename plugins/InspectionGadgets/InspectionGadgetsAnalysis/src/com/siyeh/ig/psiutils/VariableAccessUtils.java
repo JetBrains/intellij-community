@@ -190,7 +190,7 @@ public class VariableAccessUtils {
     return mayEvaluateToVariable(expression, variable, false);
   }
 
-  public static boolean mayEvaluateToVariable(@Nullable PsiExpression expression, @NotNull PsiVariable variable, boolean builderPattern) {
+  static boolean mayEvaluateToVariable(@Nullable PsiExpression expression, @NotNull PsiVariable variable, boolean builderPattern) {
     if (expression == null) {
       return false;
     }
@@ -268,13 +268,7 @@ public class VariableAccessUtils {
 
   public static boolean variableIsUsed(@NotNull PsiVariable variable,
                                        @Nullable PsiElement context) {
-    if (context == null) {
-      return false;
-    }
-    final VariableUsedVisitor visitor =
-      new VariableUsedVisitor(variable);
-    context.accept(visitor);
-    return visitor.isUsed();
+    return context != null && VariableUsedVisitor.isVariableUsedIn(variable, context);
   }
 
   public static boolean variableIsDecremented(@NotNull PsiVariable variable, @Nullable PsiStatement statement) {
@@ -303,7 +297,7 @@ public class VariableAccessUtils {
       final PsiExpression operand = prefixExpression.getOperand();
       return evaluatesToVariable(operand, variable);
     }
-    else if (expression instanceof PsiPostfixExpression) {
+    if (expression instanceof PsiPostfixExpression) {
       final PsiPostfixExpression postfixExpression =
         (PsiPostfixExpression)expression;
       final IElementType tokenType = postfixExpression.getOperationTokenType();
@@ -313,7 +307,7 @@ public class VariableAccessUtils {
       final PsiExpression operand = postfixExpression.getOperand();
       return evaluatesToVariable(operand, variable);
     }
-    else if (expression instanceof PsiAssignmentExpression) {
+    if (expression instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression =
         (PsiAssignmentExpression)expression;
       final IElementType tokenType =
@@ -357,7 +351,7 @@ public class VariableAccessUtils {
     return false;
   }
 
-  public static boolean variableIsAssignedBeforeReference(
+  static boolean variableIsAssignedBeforeReference(
     @NotNull PsiReferenceExpression referenceExpression,
     @Nullable PsiElement context) {
     if (context == null) {
@@ -432,9 +426,9 @@ public class VariableAccessUtils {
     return visitor.isAssigned();
   }
 
-  private static class VariableCollectingVisitor extends JavaRecursiveElementVisitor {
+  private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final Set<PsiVariable> usedVariables = new HashSet();
+    private final Set<PsiVariable> usedVariables = new HashSet<PsiVariable>();
 
     @Override
     public void visitReferenceExpression(

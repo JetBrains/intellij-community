@@ -48,6 +48,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private static final int DEPRECATED = 0x08;
   private static final int DEPRECATED_ANNOTATION = 0x10;
   private static final int PARSED_VIA_GENERIC_SIGNATURE = 0x20;
+  private static final int HAS_DOC_COMMENT = 0x40;
 
   public PsiMethodStubImpl(StubElement parent,
                            StringRef name,
@@ -133,6 +134,11 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   }
 
   @Override
+  public boolean hasDocComment() {
+    return (myFlags & HAS_DOC_COMMENT) != 0;
+  }
+
+  @Override
   public PsiParameterStub findParameter(final int idx) {
     PsiParameterListStub list = null;
     for (StubElement child : getChildrenStubs()) {
@@ -167,13 +173,15 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
                                boolean isAnnotationMethod,
                                boolean isVarargs,
                                boolean isDeprecated,
-                               boolean hasDeprecatedAnnotation) {
+                               boolean hasDeprecatedAnnotation,
+                               boolean hasDocComment) {
     byte flags = 0;
     if (isConstructor) flags |= CONSTRUCTOR;
     if (isAnnotationMethod) flags |= ANNOTATION;
     if (isVarargs) flags |= VARARGS;
     if (isDeprecated) flags |= DEPRECATED;
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
+    if (hasDocComment) flags |= HAS_DOC_COMMENT;
     return flags;
   }
 

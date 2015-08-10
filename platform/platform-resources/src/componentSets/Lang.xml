@@ -38,6 +38,11 @@
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
     </component>
 
+    <component>
+      <implementation-class>com.intellij.ide.script.IdeStartupScripts</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+
   </application-components>
 
   <project-components>

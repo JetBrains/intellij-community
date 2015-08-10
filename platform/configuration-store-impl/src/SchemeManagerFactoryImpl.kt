@@ -39,10 +39,24 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
   override final fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
     val storageManager = componentManager.stateStore.getStateStorageManager()
 
-    val manager = SchemeManagerImpl<T, E>(directoryName, processor, roamingType, storageManager.getStreamProvider(), pathToFile(directoryName, storageManager), componentManager)
+    val path = checkPath(directoryName)
+    val manager = SchemeManagerImpl<T, E>(path, processor, roamingType, storageManager.getStreamProvider(), pathToFile(path, storageManager), componentManager)
     @suppress("CAST_NEVER_SUCCEEDS")
     managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager
+  }
+
+  open fun checkPath(originalPath: String): String {
+    fun error(message: String) {
+      // as error because it is not a new requirement
+      if (ApplicationManager.getApplication().isUnitTestMode()) throw AssertionError(message) else LOG.error(message)
+    }
+
+    when {
+      originalPath.contains('\\') -> error("Path must be system-independent, use forward slash instead of backslash")
+      originalPath.isEmpty() -> error("Path must not be empty")
+    }
+    return originalPath
   }
 
   abstract fun pathToFile(path: String, storageManager: StateStorageManager): File
@@ -76,6 +90,16 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
 private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
   override val componentManager: ComponentManager
     get() = ApplicationManager.getApplication()
+
+  override fun checkPath(originalPath: String): String {
+    var path = super.checkPath(originalPath)
+    if (path.startsWith(ROOT_CONFIG)) {
+      path = path.substring(ROOT_CONFIG.length() + 1)
+      val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
+      if (ApplicationManager.getApplication().isUnitTestMode()) throw AssertionError(message) else LOG.warn(message)
+    }
+    return path
+  }
 
   override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros("$ROOT_CONFIG/$path"))
 }

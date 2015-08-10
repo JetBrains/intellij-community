@@ -32,10 +32,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
-import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
-import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -741,7 +738,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
 
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
-    @NotNull private final TextAttributes myAttributesToApply;
+    @NotNull private final TextAttributes myInitialAttributes;
     @NotNull private final TextAttributesKey key;
     private TextAttributes myFallbackAttributes;
     private Pair<ColorSettingsPage,AttributesDescriptor> myBaseAttributeDescriptor;
@@ -753,7 +750,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
             getInitialAttributes(scheme, key).clone(),
             key, scheme, icon, toolTip);
       this.key = key;
-      myAttributesToApply = getInitialAttributes(scheme, key);
+      myInitialAttributes = getInitialAttributes(scheme, key);
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null) {
         myFallbackAttributes = scheme.getAttributes(fallbackKey);
@@ -763,9 +760,22 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
             new Pair<ColorSettingsPage, AttributesDescriptor>(null, new AttributesDescriptor(fallbackKey.getExternalName(), fallbackKey));
         }
       }
-      myIsInheritedInitial = isInherited(scheme);
+      myIsInheritedInitial = scheme.isInherited(key);
       setInherited(myIsInheritedInitial);
+      if (myIsInheritedInitial) {
+        setInheritedAttributes(getTextAttributes());
+      }
       initCheckedStatus();
+    }
+
+
+    private void setInheritedAttributes(@NotNull TextAttributes attributes) {
+      attributes.setFontType(myFallbackAttributes.getFontType());
+      attributes.setForegroundColor(myFallbackAttributes.getForegroundColor());
+      attributes.setBackgroundColor(myFallbackAttributes.getBackgroundColor());
+      attributes.setErrorStripeColor(myFallbackAttributes.getErrorStripeColor());
+      attributes.setEffectColor(myFallbackAttributes.getEffectColor());
+      attributes.setEffectType(myFallbackAttributes.getEffectType());
     }
 
 
@@ -773,18 +783,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private static TextAttributes getInitialAttributes(@NotNull MyColorScheme scheme, @NotNull TextAttributesKey key) {
       TextAttributes attributes = scheme.getAttributes(key);
       return attributes != null ? attributes : new TextAttributes();
-    }
-
-    private boolean isInherited(@NotNull MyColorScheme scheme) {
-      TextAttributes attributes = scheme.getAttributes(key);
-      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      if (fallbackKey != null && !scheme.containsKey(key)) {
-        TextAttributes fallbackAttributes = scheme.getAttributes(fallbackKey);
-        if (attributes != null && attributes == fallbackAttributes) {
-          return true;
-        }
-      }
-      return false;
     }
 
     @Override
@@ -795,7 +793,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Override
     public boolean isModified() {
-      return !Comparing.equal(myAttributesToApply, getTextAttributes()) || myIsInheritedInitial != isInherited();
+      if (isInherited()) {
+        return !myIsInheritedInitial;
+      }
+      return !Comparing.equal(myInitialAttributes, getTextAttributes()) || myIsInheritedInitial;
     }
 
     @Override
@@ -1056,7 +1057,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public void apply() {
-      apply(myParentScheme);
+      if (!(myParentScheme instanceof ReadOnlyColorsScheme)) {
+        apply(myParentScheme);
+      }
     }
 
     public void apply(@NotNull EditorColorsScheme scheme) {
@@ -1093,6 +1096,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @Override
     public String toString() {
       return "temporary scheme for " + myName;
+    }
+
+    public boolean isInherited(TextAttributesKey key) {
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey != null) {
+        if (myParentScheme instanceof AbstractColorsScheme) {
+          TextAttributes ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
+          if (ownAttrs != null) {
+            return ownAttrs.isFallbackEnabled();
+          }
+        }
+        TextAttributes attributes = getAttributes(key);
+        if (attributes != null) {
+          TextAttributes fallbackAttributes = getAttributes(fallbackKey);
+          return attributes == fallbackAttributes;
+        }
+      }
+      return false;
     }
   }
 

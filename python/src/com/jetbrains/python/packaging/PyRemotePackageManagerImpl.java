@@ -29,7 +29,7 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathMappingSettings;
+import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -114,9 +114,9 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         }
         ProcessOutput processOutput;
         do {
-          PathMappingSettings mappings = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
+          PyRemotePathMapper pathMapper = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
           processOutput =
-            manager.runRemoteProcess(null, remoteSdkCredentials, mappings, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
+            manager.runRemoteProcess(null, remoteSdkCredentials, pathMapper, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
           if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
             continue;
           }

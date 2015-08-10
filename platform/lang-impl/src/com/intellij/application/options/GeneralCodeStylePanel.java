@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -173,7 +174,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
     if (myShowDetectedIndentNotification.isEnabled()) {
-      settings.SHOW_DETECTED_INDENT_NOTIFICATION = myShowDetectedIndentNotification.isSelected();
+      FileIndentOptionsProvider.setShowNotification(myShowDetectedIndentNotification.isSelected());
     }
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
@@ -247,7 +248,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected()) return true;
 
     if (myShowDetectedIndentNotification.isEnabled()
-        && settings.SHOW_DETECTED_INDENT_NOTIFICATION != myShowDetectedIndentNotification.isSelected())
+        && FileIndentOptionsProvider.isShowNotification() != myShowDetectedIndentNotification.isSelected())
     {
       return true;
     }
@@ -290,7 +291,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
     myShowDetectedIndentNotification.setEnabled(myAutodetectIndentsBox.isSelected());
-    myShowDetectedIndentNotification.setSelected(settings.SHOW_DETECTED_INDENT_NOTIFICATION);
+    myShowDetectedIndentNotification.setSelected(FileIndentOptionsProvider.isShowNotification());
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);

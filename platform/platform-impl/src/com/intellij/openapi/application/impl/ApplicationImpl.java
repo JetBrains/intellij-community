@@ -31,12 +31,9 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentsPackage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,6 +54,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
@@ -129,15 +127,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   private volatile boolean myActive;
-  private volatile boolean myActiveDelayed;
-  public volatile boolean myCancelDeactivation;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
-
-  public boolean isActiveDelayed() {
-    return myActiveDelayed;
-  }
 
   private static class Status {
     // higher three bits are for IS_* flags
@@ -457,7 +449,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(@Nullable final String configPath) throws IOException {
+  public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       long t = System.currentTimeMillis();
@@ -472,28 +464,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           // create ServiceManagerImpl at first to force extension classes registration
           getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
-          StateStorageManager storageManager = ComponentsPackage.getStateStore(ApplicationImpl.this).getStateStorageManager();
-
-          String effectiveConfigPath = configPath == null ? PathManager.getConfigPath() : configPath;
-          //noinspection deprecation
-          storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, effectiveConfigPath);
-          storageManager.addMacro(StoragePathMacros.APP_CONFIG, effectiveConfigPath + "/options");
-
+          String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
           for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
             try {
-              listener.beforeApplicationLoaded(ApplicationImpl.this);
+              listener.beforeApplicationLoaded(ApplicationImpl.this, effectiveConfigPath);
             }
             catch (Throwable e) {
               LOG.error(e);
             }
           }
+
+          // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+          ComponentsPackage.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
         }
       });
       t = System.currentTimeMillis() - t;
       LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
-    }
-    catch (StateStorageException e) {
-      throw new IOException(e);
     }
     finally {
       token.finish();
@@ -1193,10 +1179,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
-  public boolean isDeactivationCanceled() {
-    return myCancelDeactivation;
-  }
-
   /**
    * !!!!! CAUTION !!!!!
    * !!!!! CAUTION !!!!!
@@ -1212,58 +1194,31 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *
    * There are no legitimate usages of the method outside of IdeEventQueue.processAppActivationEvents()
    */
-  public boolean tryToApplyActivationState(Window window, boolean activation, boolean immediate) {
-    return activation ? applyActivation(window) :
-           immediate ? applyDeactivation(window)
-                     : applyDelayedDeactivation(window);
-  }
-
-  private boolean applyActivation(Window window) {
-    if (!isActive()) {
+  public void tryToApplyActivationState(Window window, boolean activation) {
+    if (activation && !isActive()) {
       myActive = true;
-      myActiveDelayed = true;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
         getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
       }
     }
-    return false;
-  }
-
-  private boolean applyDeactivation(Window window) {
-    if (isActive()) {
+    else if (!activation && isActive()) {
       myActive = false;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
         getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
-        return true;
       }
     }
-    return false;
   }
 
-  private boolean applyDelayedDeactivation(Window window) {
-    if (isActiveDelayed()) {
-      myActiveDelayed = false;
-      IdeFrame ideFrame = getIdeFrameFromWindow(window);
-      if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  IdeFrame getIdeFrameFromWindow (Window window) {
-    final Component frame = UIUtil.findUltimateParent(window);
-    return (frame instanceof IdeFrame) ? (IdeFrame)frame : null;
+  private static IdeFrame getIdeFrameFromWindow(Window window) {
+    Component frame = UIUtil.findUltimateParent(window);
+    return frame instanceof IdeFrame ? (IdeFrame)frame : null;
   }
 
   @Override
   public boolean isActive() {
-   if (isUnitTestMode()) return true;
-
-   return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null || myActive;
+    return isUnitTestMode() || myActive;
   }
 
   @NotNull

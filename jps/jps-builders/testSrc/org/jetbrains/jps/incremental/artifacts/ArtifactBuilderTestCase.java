@@ -26,12 +26,15 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +45,26 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
  * @author nik
  */
 public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
+  protected static void createFileInArtifactOutput(JpsArtifact a, final String relativePath) {
+    createFileInOutputDir(a.getOutputPath(), relativePath);
+  }
+
+  protected static void createFileInModuleOutput(JpsModule m, final String relativePath) {
+    File outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(m, false);
+    assertNotNull(outputDirectory);
+    createFileInOutputDir(outputDirectory.getAbsolutePath(), relativePath);
+  }
+
+  private static void createFileInOutputDir(final String outputPath, final String relativePath) {
+    try {
+      boolean created = new File(outputPath, relativePath).createNewFile();
+      assertTrue(created);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   protected void tearDown() throws Exception {
     for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {

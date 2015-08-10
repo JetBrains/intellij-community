@@ -28,10 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -78,6 +75,8 @@ import java.util.Map;
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
   @NonNls public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
   public static final String RECENT_FILES_KEY = "file.chooser.recent.files";
+  public static final String DRAG_N_DROP_HINT =
+    "<html><center><small><font color=gray>Drag and drop a file into the space above to quickly locate it in the tree</font></small></center></html>";
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
   private Project myProject;
@@ -133,15 +132,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       selectInTree(toSelect, true);
     }
 
-    // file chooser calls VFS refresh which might lead to rootsChanged in any open project and dumb mode that the clients don't expect.
-    // so if reindexing has to happen, let it happen under a modal progress and be finished before the file chooser returns.
-    // this hack should be gone if file chooser doesn't use VFS (https://youtrack.jetbrains.com/issue/IDEA-101218)
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, ProjectManager.getInstance().getOpenProjects(), new Runnable() {
-      @Override
-      public void run() {
-        show();
-      }
-    });
+    show();
 
     return myChosenFiles;
   }
@@ -360,9 +351,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.setPreferredSize(JBUI.size(400));
 
 
-    panel.add(new JLabel(
-      "<html><center><small><font color=gray>Drag and drop a file into the space above to quickly locate it in the tree.</font></small></center></html>",
-      SwingConstants.CENTER), BorderLayout.SOUTH);
+    panel.add(new JLabel(DRAG_N_DROP_HINT, SwingConstants.CENTER), BorderLayout.SOUTH);
 
 
     ApplicationManager.getApplication().getMessageBus().connect(getDisposable())

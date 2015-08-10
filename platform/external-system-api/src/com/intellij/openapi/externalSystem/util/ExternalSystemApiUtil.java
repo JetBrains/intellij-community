@@ -19,6 +19,7 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +44,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -114,14 +116,6 @@ public class ExternalSystemApiUtil {
     @Override
     public Key<?> fun(DataNode<?> node) {
       return node.getKey();
-    }
-  };
-
-  @NotNull private static final Comparator<Object> COMPARABLE_GLUE = new Comparator<Object>() {
-    @SuppressWarnings("unchecked")
-    @Override
-    public int compare(Object o1, Object o2) {
-      return ((Comparable)o1).compareTo(o2);
     }
   };
 
@@ -245,7 +239,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
-    MultiMap<Key<?>, DataNode<?>> result = MultiMap.createLinked();
+    MultiMap<Key<?>, DataNode<?>> result = new KeyOrderedMultiMap<Key<?>, DataNode<?>>();
     Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
@@ -292,13 +286,7 @@ public class ExternalSystemApiUtil {
     }
 
     if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
-      List<K> ordered = ContainerUtilRt.newArrayList(result.keySet());
-      Collections.sort(ordered, COMPARABLE_GLUE);
-      MultiMap<K, V> orderedResult = MultiMap.createLinked();
-      for (K k : ordered) {
-        orderedResult.put(k, result.get(k));
-      }
-      return orderedResult;
+      return new KeyOrderedMultiMap<K, V>(result);
     }
     return result;
   }
@@ -476,26 +464,34 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      task.run();
+      return;
+    }
+    
     if (synchronous) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        task.run();
-      }
-      else {
-        UIUtil.invokeAndWaitIfNeeded(task);
-      }
+      app.invokeAndWait(task, ModalityState.defaultModalityState());
     }
     else {
-      UIUtil.invokeLaterIfNeeded(task);
+      app.invokeLater(task, ModalityState.defaultModalityState());
     }
   }
 
-  public static <T> T executeOnEdt(@NotNull Computable<T> task) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+  public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       return task.compute();
     }
-    else {
-      return UIUtil.invokeAndWaitIfNeeded(task);
-    }
+
+    final Ref<T> result = Ref.create();
+    app.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        result.set(task.compute());
+      }
+    }, ModalityState.defaultModalityState());
+    return result.get();
   }
 
   public static <T> T executeOnEdtUnderWriteAction(@NotNull final Computable<T> task) {
@@ -862,5 +858,27 @@ public class ExternalSystemApiUtil {
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
     getSettings(project, systemId).subscribe(listener);
+  }
+
+  public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
+
+    public KeyOrderedMultiMap() {
+    }
+
+    public KeyOrderedMultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
+      super(toCopy);
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap() {
+      return new TreeMap<K, Collection<V>>();
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+      return new TreeMap<K, Collection<V>>();
+    }
   }
 }

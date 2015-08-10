@@ -183,9 +183,14 @@ public class ConfigurableExtensionPointUtil {
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
-      LOG.warn("use other group instead of unexpected one: " + groupId);
-      groupId = "other";
-      id = "configurable.group." + groupId;
+      if ("root".equals(groupId)) {
+        LOG.error("OptionsBundle does not contain root group");
+      }
+      else {
+        LOG.warn("use other group instead of unexpected one: " + groupId);
+        groupId = "other";
+        id = "configurable.group." + groupId;
+      }
       bundle = OptionsBundle.getBundle();
     }
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);

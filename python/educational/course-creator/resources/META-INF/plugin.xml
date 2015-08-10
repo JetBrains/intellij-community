@@ -67,7 +67,8 @@
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
     <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
-        <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+      <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
     <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
       <add-to-group group-id="MainToolBar" anchor="last" />
@@ -88,6 +89,11 @@
       <add-to-group group-id="MainToolBar" anchor="last" />
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+    </action>
+
+    <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="DeleteTaskWindow"/>
     </action>
   </actions>
 

@@ -5,15 +5,23 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.HideableDecorator;
 import com.intellij.util.Consumer;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -26,7 +34,6 @@ import java.util.List;
  * data: 7/31/14.
  */
 public class StudyNewProjectPanel{
-  private final HideableDecorator myDecorator;
   private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
   private JButton myBrowseButton;
   private JComboBox myCoursesComboBox;
@@ -35,11 +42,6 @@ public class StudyNewProjectPanel{
   private JLabel myAuthorLabel;
   private JLabel myLabel;
   private JPanel myInfoPanel;
-  private JPanel myHideablePanel;
-  private JPanel myLoginPanel;
-  private JPasswordField myPasswordField;
-  private JTextField myLoginField;
-  private JButton myLogInButton;
   private JTextPane myDescriptionLabel;
   private final StudyProjectGenerator myGenerator;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
@@ -56,10 +58,11 @@ public class StudyNewProjectPanel{
       for (CourseInfo courseInfo : myAvailableCourses) {
         myCoursesComboBox.addItem(courseInfo);
       }
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(StudyUtils.getFirst(myAvailableCourses).getInstructors()));
-      myDescriptionLabel.setText(StudyUtils.getFirst(myAvailableCourses).getDescription());
+      final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getAuthors()));
+      myDescriptionLabel.setText(selectedCourse.getDescription());
       //setting the first course in list as selected
-      myGenerator.setSelectedCourse(StudyUtils.getFirst(myAvailableCourses));
+      myGenerator.setSelectedCourse(selectedCourse);
       setOK();
     }
     initListeners();
@@ -67,13 +70,11 @@ public class StudyNewProjectPanel{
     myRefreshButton.setIcon(AllIcons.Actions.Refresh);
 
     myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
-    myDecorator = new HideableDecorator(myHideablePanel, "Credentials", false);
-    myDecorator.setOn(false);
-    myDecorator.setContentComponent(myLoginPanel);
 
   }
 
-  private void initListeners() {
+  private void setupBrowseButton() {
+    myBrowseButton.setIcon(InteractiveLearningIcons.InterpreterGear);
     final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
@@ -86,49 +87,57 @@ public class StudyNewProjectPanel{
       }
     };
     myBrowseButton.addActionListener(new ActionListener() {
-      @Override
       public void actionPerformed(ActionEvent e) {
-        FileChooser.chooseFile(fileChooser, null, null,
-                               new Consumer<VirtualFile>() {
-                                 @Override
-                                 public void consume(VirtualFile file) {
-                                   String fileName = file.getPath();
-                                   int oldSize = myAvailableCourses.size();
-                                   CourseInfo courseInfo = myGenerator.addLocalCourse(fileName);
-                                   if (courseInfo != null) {
-                                     if (oldSize != myAvailableCourses.size()) {
-                                       myCoursesComboBox.addItem(courseInfo);
-                                     }
-                                     myCoursesComboBox.setSelectedItem(courseInfo);
-                                     setOK();
-                                   }
-                                   else {
-                                     setError(INVALID_COURSE);
-                                     myCoursesComboBox.removeAllItems();
-                                     myCoursesComboBox.addItem(CourseInfo.INVALID_COURSE);
-                                     for (CourseInfo course : myAvailableCourses) {
-                                       myCoursesComboBox.addItem(course);
-                                     }
-                                     myCoursesComboBox.setSelectedItem(CourseInfo.INVALID_COURSE);
-                                   }
-                                 }
-                               });
+        final BaseListPopupStep<String> popupStep = new BaseListPopupStep<String>("", "Add local course", "Load private courses") {
+          @Override
+          public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
+            return doFinalStep(new Runnable() {
+              public void run() {
+                if ("Add local course".equals(selectedValue)) {
+                  FileChooser.chooseFile(fileChooser, null, null,
+                                         new Consumer<VirtualFile>() {
+                                           @Override
+                                           public void consume(VirtualFile file) {
+                                             String fileName = file.getPath();
+                                             int oldSize = myAvailableCourses.size();
+                                             CourseInfo courseInfo = myGenerator.addLocalCourse(fileName);
+                                             if (courseInfo != null) {
+                                               if (oldSize != myAvailableCourses.size()) {
+                                                 myCoursesComboBox.addItem(courseInfo);
+                                               }
+                                               myCoursesComboBox.setSelectedItem(courseInfo);
+                                               setOK();
+                                             }
+                                             else {
+                                               setError(INVALID_COURSE);
+                                               myCoursesComboBox.removeAllItems();
+                                               myCoursesComboBox.addItem(CourseInfo.INVALID_COURSE);
+                                               for (CourseInfo course : myAvailableCourses) {
+                                                 myCoursesComboBox.addItem(course);
+                                               }
+                                               myCoursesComboBox.setSelectedItem(CourseInfo.INVALID_COURSE);
+                                             }
+                                           }
+                                         });
+                }
+                else if ("Load private courses".equals(selectedValue)) {
+                  final AddRemoteDialog dialog = new AddRemoteDialog();
+                  dialog.show();
+                }
+              }
+            });
+          }
+        };
+        final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
+        popup.showInScreenCoordinates(myBrowseButton, myBrowseButton.getLocationOnScreen());
       }
     });
+  }
 
+  private void initListeners() {
     myRefreshButton.addActionListener(new RefreshActionListener());
     myCoursesComboBox.addActionListener(new CourseSelectedListener());
-    myLogInButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final boolean isSuccess = EduStepicConnector.login(myLoginField.getText(), String.valueOf(myPasswordField.getPassword()));
-        if (!isSuccess) {
-          setError("Failed to log in");
-          return;
-        }
-        refreshCoursesList();
-      }
-    });
+    setupBrowseButton();
   }
 
   private void setError(@NotNull final String errorMessage) {
@@ -181,7 +190,7 @@ public class StudyNewProjectPanel{
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
-    myGenerator.flushCache();
+    StudyProjectGenerator.flushCache(myAvailableCourses);
   }
 
 
@@ -200,7 +209,7 @@ public class StudyNewProjectPanel{
         myDescriptionLabel.setText("");
         return;
       }
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getInstructors()));
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getAuthors()));
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);
@@ -215,4 +224,43 @@ public class StudyNewProjectPanel{
   public JPanel getInfoPanel() {
     return myInfoPanel;
   }
+
+  private class AddRemoteDialog extends DialogWrapper {
+
+    private final StudyAddRemoteCourse myRemoteCourse;
+
+    protected AddRemoteDialog() {
+      super(null);
+      myRemoteCourse = new StudyAddRemoteCourse();
+      init();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myRemoteCourse.getContentPanel();
+    }
+
+    @Override
+    protected void doOKAction() {
+      if (StringUtil.isEmptyOrSpaces(myRemoteCourse.getLogin())) {
+        myRemoteCourse.setError("Please, enter your login");
+        return;
+      }
+      if (StringUtil.isEmptyOrSpaces(myRemoteCourse.getPassword())) {
+        myRemoteCourse.setError("Please, enter your password");
+        return;
+      }
+
+      super.doOKAction();
+      final boolean isSuccess = EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
+      if (!isSuccess) {
+        setError("Failed to log in");
+      }
+      StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
+      StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
+      refreshCoursesList();
+    }
+  }
+
 }

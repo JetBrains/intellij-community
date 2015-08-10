@@ -2,7 +2,7 @@
   <!-- default layout for all projects -->
   <layout>
     <!-- left stripe -->
-    <window_info id="Project" active="false" anchor="left" order="0" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" />
+    <window_info id="Project" active="false" anchor="left" order="0" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" content_ui="combo" />
     <window_info id="Structure" active="false" anchor="left" order="1" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" />
     <!-- bottom stripe -->
     <window_info id="Message" active="false" anchor="bottom" order="0" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.33" />

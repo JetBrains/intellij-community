@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.intellij.diagnostic;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -67,7 +67,7 @@ public class DebugLogManager extends ApplicationComponent.Adapter {
   }
 
   public void saveCategories(@NotNull List<String> categories) {
-    PropertiesComponent.getInstance().setValue(LOG_DEBUG_CATEGORIES, toString(categories));
+    PropertiesComponent.getInstance().setValue(LOG_DEBUG_CATEGORIES, categories.isEmpty() ? null : toString(categories), null);
   }
 
   @NotNull

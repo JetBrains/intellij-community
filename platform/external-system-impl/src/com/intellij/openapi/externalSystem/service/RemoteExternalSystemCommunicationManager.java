@@ -56,6 +56,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiBundle;
 import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
@@ -148,6 +149,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(JavaModuleType.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ModuleType.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(EmptyModuleType.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
 
         // External system module jars
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);

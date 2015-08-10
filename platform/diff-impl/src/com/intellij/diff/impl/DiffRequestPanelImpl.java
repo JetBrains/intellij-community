@@ -18,6 +18,7 @@ package com.intellij.diff.impl;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -35,6 +36,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
 
   public DiffRequestPanelImpl(@Nullable Project project, @Nullable Window window) {
     myProcessor = new MyCacheDiffRequestChainProcessor(project, window);
+    myProcessor.putContextUserData(DiffUserDataKeys.DO_NOT_CHANGE_WINDOW_TITLE, true);
 
     myPanel = new JPanel(new BorderLayout()) {
       @Override

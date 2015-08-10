@@ -138,7 +138,7 @@ def _NormPath(filename, normpath):
         inner_path = r[ind:]
         if inner_path.startswith('/') or inner_path.startswith('\\'):
             inner_path = inner_path[1:]
-        r = zip_path + "/" + inner_path
+        r = join(zip_path, inner_path)
     return r
 
 
@@ -171,9 +171,9 @@ def exists(file):
             if inner_path.startswith('/') or inner_path.startswith('\\'):
                 inner_path = inner_path[1:]
 
-            info = zip.getinfo(inner_path)
+            info = zip.getinfo(inner_path.replace('\\', '/'))
 
-            return zip_path + "/" + inner_path
+            return join(zip_path, inner_path)
         except KeyError:
             return None
     return None

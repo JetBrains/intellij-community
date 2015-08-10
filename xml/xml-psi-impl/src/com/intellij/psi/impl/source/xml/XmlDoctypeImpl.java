@@ -242,12 +242,6 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     return new URLReference(XmlDoctypeImpl.this) {
       @Override
       @NotNull
-      public Object[] getVariants() {
-        return findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC) != null ?
-               super.getVariants(): EMPTY_ARRAY;
-      }
-      @Override
-      @NotNull
       public String getCanonicalText() {
         return extractValue(dtdUrlElement);
       }

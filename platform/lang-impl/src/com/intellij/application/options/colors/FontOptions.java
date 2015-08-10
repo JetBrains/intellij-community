@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         Object selectedFont = myPrimaryCombo.getSelectedItem();
         if (selectedFont instanceof String) {
           FontPreferences fontPreferences = getFontPreferences();
-          fontPreferences.register((String)selectedFont, JBUI.scale(getFontSizeFromField()));
+          fontPreferences.register((String)selectedFont, getFontSizeFromField());
         }
         updateDescription(true);
       }

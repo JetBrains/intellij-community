@@ -33,5 +33,5 @@ public interface PyClassMembersProvider {
   Collection<PyCustomMember> getMembers(final PyClassType clazz, PsiElement location);
 
   @Nullable
-  PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location);
+  PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, @Nullable TypeEvalContext context);
 }

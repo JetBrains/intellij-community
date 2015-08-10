@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -148,6 +149,8 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
         return documentationComponent.getText();
       }
       finally {
+        JBPopup hint = documentationComponent.getHint();
+        if (hint != null) Disposer.dispose(hint);
         Disposer.dispose(documentationComponent);
       }
     }

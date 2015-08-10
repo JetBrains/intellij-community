@@ -23,6 +23,8 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -95,13 +97,18 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
         }
       }
 
-      new WriteAction() {
-        protected void run(@NotNull final Result result) {
-          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          myAddSupportPanel.addSupport(myModule, model);
-          model.commit();
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+        @Override
+        public void run() {
+          new WriteAction() {
+            protected void run(@NotNull final Result result) {
+              ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+              myAddSupportPanel.addSupport(myModule, model);
+              model.commit();
+            }
+          }.execute();
         }
-      }.execute();
+      });
     }
     super.doOKAction();
   }

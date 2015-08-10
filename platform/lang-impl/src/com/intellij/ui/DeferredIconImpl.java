@@ -21,11 +21,9 @@ package com.intellij.ui;
 
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
@@ -108,35 +106,27 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
         final long startTime = System.currentTimeMillis();
         if (myNeedReadAction) {
-          final Ref<Boolean> cancelled = new Ref<Boolean>();
-          boolean result = ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
+          boolean result = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(new Runnable() {
             @Override
             public void run() {
-              if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+              IconDeferrerImpl.evaluateDeferred(new Runnable() {
                 @Override
                 public void run() {
-                  IconDeferrerImpl.evaluateDeferred(new Runnable() {
-                    @Override
-                    public void run() {
-                      try {
-                        evaluated[0] = nonNull(myEvaluator.fun(myParam));
-                      }
-                      catch (IndexNotReadyException e) {
-                        evaluated[0] = EMPTY_ICON;
-                      }
-                    }
-                  });
-                  if (myAutoUpdatable) {
-                    myLastCalcTime = System.currentTimeMillis();
-                    myLastTimeSpent = myLastCalcTime - startTime;
+                  try {
+                    evaluated[0] = nonNull(myEvaluator.fun(myParam));
+                  }
+                  catch (IndexNotReadyException e) {
+                    evaluated[0] = EMPTY_ICON;
                   }
                 }
-              })) {
-                cancelled.set(Boolean.TRUE);
+              });
+              if (myAutoUpdatable) {
+                myLastCalcTime = System.currentTimeMillis();
+                myLastTimeSpent = myLastCalcTime - startTime;
               }
             }
           });
-          if (cancelled.get() == Boolean.TRUE || !result) {
+          if (!result) {
             myIsScheduled = false;
             return;
           }

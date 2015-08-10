@@ -62,7 +62,11 @@ public class RowsDnDSupport {
         @Override
         public boolean update(DnDEvent event) {
           final Object o = event.getAttachedObject();
-          event.setDropPossible(o instanceof RowDragInfo && ((RowDragInfo)o).component == component);
+          if (! (o instanceof RowDragInfo) || ((RowDragInfo)o).component != component) {
+            event.setDropPossible(false, "");
+            return true;
+          }
+          event.setDropPossible(true);
           int oldIndex = ((RowDragInfo)o).row;
           int newIndex = getRow(component, event.getPoint());
 

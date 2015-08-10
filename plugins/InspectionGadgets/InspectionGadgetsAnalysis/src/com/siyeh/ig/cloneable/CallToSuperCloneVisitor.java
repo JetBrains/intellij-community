@@ -19,9 +19,8 @@ import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperCloneVisitor extends JavaRecursiveElementVisitor {
-
-  private boolean callToSuperCloneFound = false;
+class CallToSuperCloneVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean callToSuperCloneFound;
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
@@ -51,7 +50,7 @@ class CallToSuperCloneVisitor extends JavaRecursiveElementVisitor {
     callToSuperCloneFound = true;
   }
 
-  public boolean isCallToSuperCloneFound() {
+  boolean isCallToSuperCloneFound() {
     return callToSuperCloneFound;
   }
 }

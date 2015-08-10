@@ -136,10 +136,14 @@ public class OrderEntryUtil {
   public static void addLibraryToRoots(final LibraryOrderEntry libraryOrderEntry, final Module module) {
     Library library = libraryOrderEntry.getLibrary();
     if (library == null) return;
+    addLibraryToRoots(module, library);
+  }
+
+  public static void addLibraryToRoots(@NotNull Module module, @NotNull Library library) {
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = manager.getModifiableModel();
 
-    if (libraryOrderEntry.isModuleLevel()) {
+    if (library.getTable() == null) {
       final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
       final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
       for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {

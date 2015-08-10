@@ -158,7 +158,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
           public void run() {
             final PyClass cls = builtins.findTopLevelClass("int");
             assertNotNull(cls);
-            final Property prop = cls.findProperty("real", true);
+            final Property prop = cls.findProperty("real", true, null);
             assertNotNull(prop);
             assertIsNotNull(prop.getGetter());
             assertIsNotNull(prop.getSetter());

@@ -15,80 +15,69 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class LocateLibraryDialog extends DialogWrapper {
-  private JPanel contentPane;
-  private JTextPane myDescription;
-  private JLabel myFileLabel;
-  private TextFieldWithBrowseButton myLibraryFile;
-  private JRadioButton myAddThisFileRadioButton;
-  private JRadioButton myCopyToRadioButton;
+  private final List<String> myDefaultLibraryPaths;
+  private JPanel myContentPane;
   private TextFieldWithBrowseButton myCopyToDir;
+  private JBRadioButton myUseBundledRadioButton;
+  private JBRadioButton myCopyLibraryFilesRadioButton;
 
   private final Project myProject;
-  private String myResultingLibraryPath;
+  private List<String> myResultingLibraryPaths;
 
-  public String getResultingLibraryPath() {
-    return myResultingLibraryPath;
-  }
-
-  public LocateLibraryDialog(Module module, String libraryPath, @NonNls final String libraryName, final String libraryDescription ) {
+  public LocateLibraryDialog(@NotNull Module module,
+                             @NotNull List<String> defaultLibraryPaths,
+                             @NotNull @NonNls final String presentableName) {
     super (module.getProject(), true);
-    setTitle ( QuickFixBundle.message("add.library.title.dialog"));
+    myDefaultLibraryPaths = defaultLibraryPaths;
+    setTitle(QuickFixBundle.message("add.library.title.dialog", presentableName));
 
     myProject = module.getProject();
-
-    // copied from Messages.MessageDialog
-    JLabel label = new JLabel();
-    myDescription.setFont(label.getFont());
-    myDescription.setBackground(UIUtil.getOptionPaneBackground());
-    myDescription.setForeground(label.getForeground());
-    myDescription.setText(libraryDescription);
-    // end of copy
-    
-    myFileLabel.setLabelFor(myLibraryFile.getTextField());
-
-    myLibraryFile.setText(new File ( libraryPath, libraryName).getPath() );
-    myLibraryFile.addBrowseFolderListener(QuickFixBundle.message("add.library.title.locate.library"),
-                                          QuickFixBundle.message("add.library.description.locate.library"), myProject,
-                                          new FileChooserDescriptor(false,false,true,false,false,false));
-
-    myCopyToDir.setText(new File (module.getModuleFilePath()).getParent());
+    myUseBundledRadioButton.setText(QuickFixBundle.message("add.library.use.bundled.library.radio.button", presentableName,
+                                                           ApplicationNamesInfo.getInstance().getFullProductName()));
+    myCopyLibraryFilesRadioButton.setText(QuickFixBundle.message("add.library.copy.files.to.radio.button", presentableName));
+    myCopyToDir.setText(new File(new File(module.getModuleFilePath()).getParent(), "lib").getAbsolutePath());
     myCopyToDir.addBrowseFolderListener(QuickFixBundle.message("add.library.title.choose.folder"),
                                         QuickFixBundle.message("add.library.description.choose.folder"), myProject,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    final ActionListener listener = new ActionListener() {
+    final ItemListener listener = new ItemListener() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
+      public void itemStateChanged(ItemEvent e) {
         updateButtons();
       }
     };
 
-    myAddThisFileRadioButton.addActionListener(listener);
-    myCopyToRadioButton.addActionListener(listener);
-
-    myAddThisFileRadioButton.setSelected(true);
+    myUseBundledRadioButton.addItemListener(listener);
+    myCopyLibraryFilesRadioButton.addItemListener(listener);
 
     myCopyToDir.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -98,69 +87,86 @@ public class LocateLibraryDialog extends DialogWrapper {
     });
 
     updateButtons();
+    init();
+  }
 
-    init ();
+  @NotNull
+  public List<String> showAndGetResult() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      Disposer.dispose(myDisposable);
+      return myDefaultLibraryPaths;
+    }
+    return showAndGet() ? getResultingLibraryPaths() : Collections.<String>emptyList();
+  }
+
+  public List<String> getResultingLibraryPaths() {
+    return myResultingLibraryPaths;
   }
 
   private void updateButtons() {
-    final boolean copyEnabled = myCopyToRadioButton.isSelected();
-    myCopyToDir.setEnabled(copyEnabled);
-    if ( copyEnabled ) {
-      myCopyToDir.getTextField().requestFocusInWindow();
-    }
-    setOKActionEnabled(! copyEnabled || !myCopyToDir.getText().isEmpty());
+    final boolean copyFiles = myCopyLibraryFilesRadioButton.isSelected();
+    myCopyToDir.setEnabled(copyFiles);
+    setOKActionEnabled(!copyFiles || !myCopyToDir.getText().isEmpty());
   }
 
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
-    return "#org.jetbrains.codeInsight.daemon.impl.quickfix.LocateLibraryDialog";
+    return "#com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog";
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myUseBundledRadioButton;
   }
 
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    return contentPane;
+    return myContentPane;
   }
 
   @Override
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
-      myResultingLibraryPath = getResultingPath();
-      if ( myResultingLibraryPath != null ) {
+      myResultingLibraryPaths = computeResultingPaths();
+      if (!myResultingLibraryPaths.isEmpty()) {
         close(OK_EXIT_CODE);
       }
     }
   }
 
-  @Nullable
-  private String getResultingPath() {
-    final File srcFile = new File(myLibraryFile.getText());
-    if (!srcFile.exists()) {
-      Messages.showErrorDialog(myProject, QuickFixBundle.message("add.library.error.not.found", srcFile.getPath()),
-                               QuickFixBundle.message("add.library.title.error"));
-      return null;
-    }
-
-    if (!myCopyToRadioButton.isSelected()) {
-      return srcFile.getPath();
+  private List<String> computeResultingPaths() {
+    if (myUseBundledRadioButton.isSelected()) {
+      return myDefaultLibraryPaths;
     }
 
     final String dstDir = myCopyToDir.getText();
     if (dstDir.isEmpty()) {
-      return null;
+      return Collections.emptyList();
     }
-    
-    File dstFile = new File(dstDir, srcFile.getName());
-    try {
-      FileUtil.copy(srcFile, dstFile);
-      return dstFile.getPath();
+
+    List<String> result = new ArrayList<String>();
+    for (String path : myDefaultLibraryPaths) {
+      final File srcFile = new File(path);
+      if (!srcFile.exists()) {
+        Messages.showErrorDialog(myProject, QuickFixBundle.message("add.library.error.not.found", srcFile.getPath()),
+                                 CommonBundle.getErrorTitle());
+        return Collections.emptyList();
+      }
+      File dstFile = new File(dstDir, srcFile.getName());
+      try {
+        FileUtil.copy(srcFile, dstFile);
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog(myProject,
+                                 QuickFixBundle.message("add.library.error.cannot.copy", srcFile.getPath(), dstFile.getPath(), e.getMessage()),
+                                 CommonBundle.getErrorTitle());
+        return Collections.emptyList();
+      }
+      result.add(FileUtil.toSystemIndependentName(dstFile.getAbsolutePath()));
     }
-    catch (IOException e) {
-      Messages.showErrorDialog(myProject,
-                               QuickFixBundle.message("add.library.error.cannot.copy", srcFile.getPath(), dstFile.getPath(), e.getMessage()),
-                               QuickFixBundle.message("add.library.title.error"));
-      return null;
-    }
+    return result;
   }
 }
