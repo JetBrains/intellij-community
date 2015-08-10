@@ -136,7 +136,6 @@
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
-    <stacktrace.fold substring="at com.intellij.testFramework."/>
     <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
     <stacktrace.fold substring="com.intellij.openapi.command.WriteCommandAction"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
