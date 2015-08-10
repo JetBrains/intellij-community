@@ -1,14 +1,3 @@
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.jps.devkit.model.JpsRuntimeResourcesService
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.util.JpsPathUtil
 /*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
@@ -24,6 +13,19 @@ import org.jetbrains.jps.util.JpsPathUtil
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourcesService
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.util.JpsPathUtil
+
 binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
   def mainModule = findModule(mainModuleName)
   if (mainModule == null) {
