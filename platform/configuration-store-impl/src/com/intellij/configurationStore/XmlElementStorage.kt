@@ -20,13 +20,10 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
-
 import java.io.IOException
 
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
@@ -142,13 +139,8 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       if (element == null || JDOMUtil.isEmpty(element)) {
         element = null
       }
-      else if (storage.pathMacroSubstitutor != null) {
-        try {
-          storage.pathMacroSubstitutor.collapsePaths(element)
-        }
-        finally {
-          storage.pathMacroSubstitutor.reset()
-        }
+      else {
+        storage.beforeElementSaved(element)
       }
 
       val provider = storage.provider
@@ -170,6 +162,17 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     throws(IOException::class)
     protected abstract fun saveLocally(element: Element?)
+  }
+
+  protected open fun beforeElementSaved(element: Element) {
+    if (pathMacroSubstitutor != null) {
+      try {
+        pathMacroSubstitutor.collapsePaths(element)
+      }
+      finally {
+        pathMacroSubstitutor.reset()
+      }
+    }
   }
 
   public fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {

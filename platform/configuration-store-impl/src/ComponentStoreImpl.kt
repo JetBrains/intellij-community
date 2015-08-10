@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -61,6 +60,10 @@ public abstract class ComponentStoreImpl : IComponentStore {
   protected open val project: Project?
     get() = null
 
+  abstract val storageManager: StateStorageManager
+
+  override final fun getStateStorageManager() = storageManager
+
   // return null if not applicable
   protected open fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation): Array<Storage>? = null
 
@@ -95,7 +98,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
       val project = this.project
       val app = ApplicationManager.getApplication()
       if (project != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && project.isInitialized()) {
-        val substitutor = getStateStorageManager().getMacroSubstitutor()
+        val substitutor = storageManager.getMacroSubstitutor()
         if (substitutor != null) {
           StorageUtil.notifyUnknownMacros(substitutor, project, componentNameIfStateExists)
         }
@@ -104,7 +107,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun save(readonlyFiles: MutableList<util.Pair<StateStorage.SaveSession, VirtualFile>>) {
-    val externalizationSession = if (myComponents.isEmpty()) null else getStateStorageManager().startExternalization()
+    val externalizationSession = if (myComponents.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
       val names = ArrayUtilRt.toStringArray(myComponents.keySet())
       Arrays.sort(names)
@@ -131,7 +134,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override TestOnly fun saveApplicationComponent(component: Any) {
-    val externalizationSession = getStateStorageManager().startExternalization() ?: return
+    val externalizationSession = storageManager.startExternalization() ?: return
 
     commitComponent(externalizationSession, component, null)
     val sessions = externalizationSession.createSaveSessions()
@@ -142,7 +145,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     val file: File
     val state = StoreUtil.getStateSpec(component.javaClass)
     if (state != null) {
-      file = File(getStateStorageManager().expandMacros(findNonDeprecated(state.storages).file))
+      file = File(storageManager.expandMacros(findNonDeprecated(state.storages).file))
     }
     else if (component is ExportableApplicationComponent && component is NamedJDOMExternalizable) {
       file = PathManager.getOptionsFile(component)
@@ -197,22 +200,20 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return null
     }
 
-    runReadAction {
-      try {
-        getDefaultState(component, componentName, javaClass<Element>())?.let { component.readExternal(it) }
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+    try {
+      getDefaultState(component, componentName, javaClass<Element>())?.let { component.readExternal(it) }
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
 
-      val element = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null) ?: return null
-      try {
-        component.readExternal(element)
-      }
-      catch (e: InvalidDataException) {
-        LOG.error(e)
-        return null
-      }
+    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null) ?: return null
+    try {
+      component.readExternal(element)
+    }
+    catch (e: InvalidDataException) {
+      LOG.error(e)
+      return null
     }
     return componentName
   }
@@ -243,33 +244,31 @@ public abstract class ComponentStoreImpl : IComponentStore {
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
     val stateStorageChooser = component as? StateStorageChooserEx
-    runReadAction {
-      for (storageSpec in storageSpecs) {
-        val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
-        if (resolution === Resolution.SKIP) {
+    for (storageSpec in storageSpecs) {
+      val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
+      if (resolution === Resolution.SKIP) {
+        continue
+      }
+
+      val storage = storageManager.getStateStorage(storageSpec)
+      var state = storage.getState(component, name, stateClass, defaultState)
+      if (state == null) {
+        if (changedStorages != null && changedStorages.contains(storage)) {
+          // state will be null if file deleted
+          // we must create empty (initial) state to reinit component
+          state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
+        }
+        else {
           continue
         }
-
-        val storage = getStateStorageManager().getStateStorage(storageSpec)
-        var state = storage.getState(component, name, stateClass, defaultState)
-        if (state == null) {
-          if (changedStorages != null && changedStorages.contains(storage)) {
-            // state will be null if file deleted
-            // we must create empty (initial) state to reinit component
-            state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
-          }
-          else {
-            continue
-          }
-        }
-
-        component.loadState(state)
-        return name
       }
 
-      if (defaultState != null) {
-        component.loadState(defaultState)
-      }
+      component.loadState(state)
+      return name
+    }
+
+    if (defaultState != null) {
+      component.loadState(defaultState)
     }
     return name
   }

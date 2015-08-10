@@ -59,7 +59,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     }
   }
 
-  private val storageManager = object : StateStorageManager {
+  override val storageManager = object : StateStorageManager {
     override fun rename(path: String, newName: String) {
     }
 
@@ -91,8 +91,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
   fun getStateCopy() = storage.loadLocalData()
 
   override fun getMessageBus() = project.getMessageBus()
-
-  override final fun getStateStorageManager() = storageManager
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 

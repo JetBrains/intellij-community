@@ -224,12 +224,20 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       get() = storageManager.isUseXmlProlog
 
     override fun createStorageData() = storageManager.createStorageData(fileSpec)
+
+    override fun beforeElementSaved(element: Element) {
+      storageManager.beforeElementSaved(element)
+      super<FileBasedStorage>.beforeElementSaved(element)
+    }
   }
 
   private fun String.normalizePath(): String {
     val path = FileUtilRt.toSystemIndependentName(this)
     // fileSpec for directory based storage could be erroneously specified as "name/"
     return if (path.endsWith('/')) path.substring(0, path.length() - 1) else path
+  }
+
+  protected open fun beforeElementSaved(element: Element) {
   }
 
   override final fun rename(path: String, newName: String) {

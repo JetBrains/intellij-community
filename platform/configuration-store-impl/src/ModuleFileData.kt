@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jdom.Element
 import java.util.TreeMap
 
-class ModuleFileData : ProjectStorageData, OptionManager {
+class ModuleFileData : StorageData, OptionManager {
   private var options: TreeMap<String, String>? = null
 
   private var dirty = true
@@ -38,12 +38,18 @@ class ModuleFileData : ProjectStorageData, OptionManager {
     options = TreeMap(storageData.options)
   }
 
+  override fun save(newLiveStates: Map<String, Element>, rootElementName: String): Element {
+    val root = super<StorageData>.save(newLiveStates, rootElementName) ?: Element(rootElementName)
+    writeOptions(root)
+    return root
+  }
+
   override fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
-    super<ProjectStorageData>.load(rootElement, pathMacroSubstitutor, intern)
+    super<StorageData>.load(rootElement, pathMacroSubstitutor, intern)
 
     for (attribute in rootElement.getAttributes()) {
       val name = attribute.getName()
-      if (name != ProjectStorageData.VERSION_OPTION && !StringUtil.isEmpty(name)) {
+      if (name != ProjectStateStorageManager.VERSION_OPTION && !StringUtil.isEmpty(name)) {
         options!!.put(name, attribute.getValue())
       }
     }
@@ -51,7 +57,7 @@ class ModuleFileData : ProjectStorageData, OptionManager {
     dirty = false
   }
 
-  override fun writeOptions(root: Element) {
+  private fun writeOptions(root: Element) {
     if (!options!!.isEmpty()) {
       for (key in options!!.keySet()) {
         val value = options!!.get(key)
@@ -61,7 +67,7 @@ class ModuleFileData : ProjectStorageData, OptionManager {
       }
     }
     // need be last for compat reasons
-    super<ProjectStorageData>.writeOptions(root)
+    root.setAttribute(ProjectStateStorageManager.VERSION_OPTION, "4")
 
     dirty = false
   }
@@ -74,7 +80,7 @@ class ModuleFileData : ProjectStorageData, OptionManager {
       return null
     }
 
-    return super<ProjectStorageData>.getChangedComponentNames(newStorageData, substitutor)
+    return super<StorageData>.getChangedComponentNames(newStorageData, substitutor)
   }
 
   override fun setOption(key: String, value: String) {

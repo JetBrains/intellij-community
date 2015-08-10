@@ -18,6 +18,7 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -28,8 +29,10 @@ import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
+import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsNull.notNullValue
+import org.hamcrest.io.FileMatchers.anExistingFile
+import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -69,40 +72,51 @@ class ProjectStoreTest {
 
   public Rule fun getChain(): RuleChain = ruleChain
 
-  private fun getIprFileContent() =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-      "<project version=\"4\">" +
-      "  <component name=\"TestComponent\">" +
-      "    <option name=\"VALUE\" value=\"true\"/>" +
-      "  </component>" +
+  Language("XML")
+  private val iprFileContent =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project version=\"4\">\n" +
+      "  <component name=\"TestComponent\">\n" +
+      "    <option name=\"value\" value=\"customValue\" />\n" +
+      "  </component>\n" +
       "</project>"
 
   State(name = "TestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
-  private class TestComponent : PersistentStateComponent<DataBean> {
-    private var _state: DataBean? = null
+  private class TestComponent : PersistentStateComponent<TestState> {
+    private var state: TestState? = null
 
-    override fun getState() = _state
+    override fun getState() = state
 
-    override fun loadState(state: DataBean) {
-      _state = state
+    override fun loadState(state: TestState) {
+      this.state = state
     }
   }
 
-  data class DataBean(var value: Boolean = false)
+  data class TestState(var value: String = "default")
 
-  public Test fun testLoadFromDirectoryStorage() {
-    loadProject(tempDirManager, true, { FileUtil.writeToFile(File(File(it, Project.DIRECTORY_STORE_FOLDER), "misc.xml"), getIprFileContent()) }) {
-      val testComponent = TestComponent()
-      it.stateStore.initComponent(testComponent, true)
-      assertThat(testComponent.getState(), notNullValue())
+  public Test fun directoryBasedStorage() {
+    loadProject(tempDirManager, true, { FileUtil.writeToFile(File(File(it, Project.DIRECTORY_STORE_FOLDER), "misc.xml"), iprFileContent) }) {project ->
+      test(project)
     }
   }
 
-  public Test fun testLoadFromOldStorage() {
-    loadProject(tempDirManager, false, { FileUtil.writeToFile(it, getIprFileContent()) }) {
-      val testComponent = TestComponent()
-      it.stateStore.initComponent(testComponent, true)
-      assertThat(testComponent.getState(), notNullValue())
+  public Test fun fileBasedStorage() {
+    loadProject(tempDirManager, false, { FileUtil.writeToFile(it, iprFileContent) }) {project ->
+      test(project)
     }
+  }
+
+  private fun test(project: Project) {
+    val testComponent = TestComponent()
+    project.stateStore.initComponent(testComponent, true)
+    assertThat(testComponent.getState(), equalTo(TestState("customValue")))
+
+    testComponent.getState()!!.value = "foo"
+    StoreUtil.save(project.stateStore, project)
+
+    val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+    assertThat(file, anExistingFile())
+    // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
+    assertThat(file.readText(), equalTo(iprFileContent.replace("customValue", "foo")))
   }
 }

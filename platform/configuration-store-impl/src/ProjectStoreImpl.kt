@@ -44,7 +44,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.ArrayList
 
-open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager), IProjectStore {
+open class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -58,6 +58,10 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
   override fun getSubstitutors() = listOf(storageManager.getMacroSubstitutor())
 
   override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
+
+  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+
+  override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
 
   override fun setPath(filePath: String) {
     val storageManager = storageManager
@@ -191,13 +195,11 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
     }
   }
 
-  override fun createStorageManager() = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
-
   override fun doSave(saveSessions: List<SaveSession>?, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
     var errors = prevErrors
     beforeSave(readonlyFiles)
 
-    super<BaseFileConfigurableStoreImpl>.doSave(saveSessions, readonlyFiles, errors)
+    super<ComponentStoreImpl>.doSave(saveSessions, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), project)
     if (readonlyFiles.isEmpty()) {
@@ -250,7 +252,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
-    val result = super<BaseFileConfigurableStoreImpl>.getStorageSpecs(component, stateSpec, operation)
+    val result = super<ComponentStoreImpl>.getStorageSpecs(component, stateSpec, operation)
     // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
     for (storage in result) {
       if (storage.file == StoragePathMacros.PROJECT_FILE) {
