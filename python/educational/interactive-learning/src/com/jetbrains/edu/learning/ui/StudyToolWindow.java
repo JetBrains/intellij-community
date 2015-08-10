@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -40,6 +41,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
+import java.awt.*;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
 
@@ -51,33 +55,43 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     setToolbar(toolbarPanel);
 
     final StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
+    final JTextPane taskTextPane = createTaskTextPane();
+
     if (studyEditor == null) {
-      final JTextPane taskTextPane = new JTextPane();
-      taskTextPane.setEditable(false);
       taskTextPane.setText(EMPTY_TASK_TEXT);
-      taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
-      taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
       setContent(taskTextPane);
       return;
     }
-    Task task = studyEditor.getTaskFile().getTask();
+    final Task task = studyEditor.getTaskFile().getTask();
 
     if (task != null) {
       final String taskText = task.getText();
-
-      final JTextPane taskTextPane = new JTextPane();
       JBScrollPane scrollPane = new JBScrollPane(taskTextPane);
-      taskTextPane.setContentType("text/html");
-      taskTextPane.setEditable(false);
       taskTextPane.setText(taskText);
       taskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-      taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
-      taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+
       setContent(scrollPane);
 
       final FileEditorManagerListener listener = new StudyFileEditorManagerListener(project, taskTextPane);
       project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     }
+  }
+
+  @NotNull
+  private JTextPane createTaskTextPane() {
+    final JTextPane taskTextPane = new JTextPane();
+    taskTextPane.setContentType(new HTMLEditorKit().getContentType());
+    final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int fontSize = editorColorsScheme.getEditorFontSize();
+    final String fontName = editorColorsScheme.getEditorFontName();
+    final Font font = new Font(fontName, Font.PLAIN, fontSize);
+    String bodyRule = "body { font-family: " + font.getFamily() + "; " +
+                      "font-size: " + font.getSize() + "pt; }";
+    ((HTMLDocument)taskTextPane.getDocument()).getStyleSheet().addRule(bodyRule);
+    taskTextPane.setEditable(false);
+    taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+    return taskTextPane;
   }
 
   public void dispose() {
