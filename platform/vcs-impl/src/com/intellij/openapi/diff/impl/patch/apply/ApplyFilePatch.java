@@ -56,7 +56,7 @@ public interface ApplyFilePatch {
 
     public abstract ApplyPatchForBaseRevisionTexts getMergeData();
 
-    public ApplyPatchStatus getStatus() throws IOException {
+    public ApplyPatchStatus getStatus() {
       return myStatus;
     }
 
