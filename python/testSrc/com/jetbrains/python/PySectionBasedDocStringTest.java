@@ -221,6 +221,21 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals("Return specified diagonals.", docString.getSummary());
   }
 
+  public void testNumpySectionBlockBreaksOnDoubleEmptyLine() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section paramSection = docString.getSections().get(0);
+    assertEquals("parameters", paramSection.getTitle());
+    assertSize(1, paramSection.getFields());
+    final SectionField param1 = paramSection.getFields().get(0);
+    assertEquals("x", param1.getName());
+    assertEmpty(param1.getType());
+    assertEquals("First line\n" +
+                 "Second line\n" +
+                 "\n" +
+                 "Line after single break", param1.getDescription());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

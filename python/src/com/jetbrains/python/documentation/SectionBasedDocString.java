@@ -150,12 +150,15 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     final List<SectionField> fields = new ArrayList<SectionField>();
     final int sectionIndent = getIndent(getLine(sectionStartLine));
     while (!isSectionBreak(lineNum, sectionIndent)) {
-      final Pair<SectionField, Integer> result = parseSectionField(lineNum, title, sectionIndent);
-      if (result.getFirst() == null) {
-        break;
+      if (!isEmpty(lineNum)) {
+        final Pair<SectionField, Integer> result = parseSectionField(lineNum, title, sectionIndent);
+        if (result.getFirst() != null) {
+          fields.add(result.getFirst());
+          lineNum = result.getSecond();
+          continue;
+        }
       }
-      fields.add(result.getFirst());
-      lineNum = skipEmptyLines(result.getSecond());
+      lineNum++;
     }
     return Pair.create(new Section(title, fields), lineNum);
   }
@@ -208,20 +211,20 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     return title == null ? null : SECTION_ALIASES.get(title.toLowerCase());
   }
 
-  private boolean isEmptyOrDoesNotExist(int lineNum) {
+  protected boolean isEmptyOrDoesNotExist(int lineNum) {
     return lineNum < 0 || lineNum >= myLines.size() || isEmpty(lineNum);
   }
 
-  private boolean isEmpty(int lineNum) {
+  protected boolean isEmpty(int lineNum) {
     return StringUtil.isEmptyOrSpaces(getLine(lineNum));
   }
 
-  private boolean isSectionStart(int lineNum) {
+  protected boolean isSectionStart(int lineNum) {
     final Pair<String, Integer> pair = parseSectionHeader(lineNum);
     return pair.getFirst() != null;
   }
 
-  private boolean isSectionBreak(int lineNum, int curSectionIndent) {
+  protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
     return lineNum >= myLines.size() ||
            isSectionStart(lineNum) ||
            (!isEmpty(lineNum) && getIndent(getLine(lineNum)) <= curSectionIndent);
@@ -281,7 +284,6 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   /**
    * If both substrings share the same origin, returns new substring that includes both of them. Otherwise return {@code null}.
    *
-   * @param s1
    * @param s2 substring to concat with
    * @return new substring as described
    */

@@ -90,4 +90,9 @@ public class NumpyDocString extends SectionBasedDocString {
   public String getSignature() {
     return mySignature != null ? mySignature.toString() : "";
   }
+
+  @Override
+  protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
+    return super.isSectionBreak(lineNum, curSectionIndent) || (isEmpty(lineNum) && isEmptyOrDoesNotExist(lineNum + 1));
+  }
 }
