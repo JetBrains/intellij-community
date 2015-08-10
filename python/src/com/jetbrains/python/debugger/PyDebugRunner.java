@@ -36,7 +36,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -235,7 +235,7 @@ public class PyDebugRunner extends GenericProgramRunner {
                                           int serverLocalPort,
                                           @NotNull PythonCommandLineState pyState,
                                           @NotNull GeneralCommandLine cmd) {
-    PythonHelpersLocator.DEBUGGER.addToGroup(debugParams, cmd);
+    PythonHelper.DEBUGGER.addToGroup(debugParams, cmd);
 
     if (pyState.isMultiprocessDebug()) {
       //noinspection SpellCheckingInspection

@@ -17,7 +17,7 @@ package com.jetbrains.python.testing.attest;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.util.ArrayList;
@@ -36,8 +36,8 @@ public class PythonAtTestCommandLineState extends PythonTestCommandLineStateBase
   }
 
   @Override
-  protected PythonHelpersLocator getRunner() {
-    return PythonHelpersLocator.ATTEST;
+  protected PythonHelper getRunner() {
+    return PythonHelper.ATTEST;
   }
 
   protected List<String> getTestSpecs() {

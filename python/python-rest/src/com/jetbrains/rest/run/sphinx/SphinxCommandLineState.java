@@ -18,8 +18,8 @@ package com.jetbrains.rest.run.sphinx;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.rest.run.RestCommandLineState;
 
 import java.util.Collections;
@@ -47,8 +47,8 @@ public class SphinxCommandLineState extends RestCommandLineState {
   }
 
   @Override
-  protected PythonHelper getRunner() {
-    return PythonHelpersLocator.SPHINX_RUNNER;
+  protected HelperPackage getRunner() {
+    return PythonHelper.SPHINX_RUNNER;
   }
 
   @Override

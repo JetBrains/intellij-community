@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.HttpRequests;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -284,7 +284,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add(hostPort.getSecond());
     }
 
-    final GeneralCommandLine commandLine = PythonHelpersLocator.LOAD_ENTRY_POINT
+    final GeneralCommandLine commandLine = PythonHelper.LOAD_ENTRY_POINT
       .newCommandLine(sdk.getHomePath(), parameters)
       .withWorkDirectory(myProject.getBasePath()).
         withEnvironment(env);

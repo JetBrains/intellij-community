@@ -15,14 +15,13 @@
  */
 package com.jetbrains.python.testing.unittest;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
@@ -43,11 +42,11 @@ public class PythonUnitTestCommandLineState extends
   }
 
   @Override
-  protected PythonHelpersLocator getRunner() {
+  protected PythonHelper getRunner() {
     if (myConfig.getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT &&
       myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY))
-      return PythonHelpersLocator.SETUPPY;
-    return PythonHelpersLocator.UT;
+      return PythonHelper.SETUPPY;
+    return PythonHelper.UT;
   }
 
   protected List<String> getTestSpecs() {

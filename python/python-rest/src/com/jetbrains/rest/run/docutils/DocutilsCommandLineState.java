@@ -19,8 +19,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.rest.run.RestCommandLineState;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,8 +53,8 @@ public class DocutilsCommandLineState extends RestCommandLineState {
   }
 
   @Override
-  protected PythonHelper getRunner() {
-    return PythonHelpersLocator.REST_RUNNER;
+  protected HelperPackage getRunner() {
+    return PythonHelper.REST_RUNNER;
   }
 
   @Override

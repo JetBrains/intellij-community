@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
@@ -292,7 +293,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     assert scriptParams != null;
     if (scriptParams.getParameters().size() > 0) {
       String normalScript = scriptParams.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
-      PythonHelper engulfer = PythonHelpersLocator.BUILDOUT_ENGULFER;
+      HelperPackage engulfer = PythonHelper.BUILDOUT_ENGULFER;
       env.put("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
       scriptParams.getParametersList().replaceOrPrepend(normalScript, engulfer.asParamString());
     }

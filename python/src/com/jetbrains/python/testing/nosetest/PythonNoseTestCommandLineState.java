@@ -20,7 +20,7 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.util.ArrayList;
@@ -38,8 +38,8 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
   }
 
   @Override
-  protected PythonHelpersLocator getRunner() {
-    return PythonHelpersLocator.NOSE;
+  protected PythonHelper getRunner() {
+    return PythonHelper.NOSE;
   }
 
   protected List<String> getTestSpecs() {

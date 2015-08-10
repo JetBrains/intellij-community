@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PyConsoleType;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -128,7 +128,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     protected GeneralCommandLine createCommandLine(@NotNull Sdk sdk,
                                                    @NotNull Map<String, String> environmentVariables,
                                                    int[] ports) {
-      GeneralCommandLine consoleCmdLine = doCreateConsoleCmdLine(ports, PythonHelpersLocator.RUN_IN_CONSOLE);
+      GeneralCommandLine consoleCmdLine = doCreateConsoleCmdLine(ports, PythonHelper.RUN_IN_CONSOLE);
 
       final GeneralCommandLine cmd = generateCommandLine(myPatchers);
 

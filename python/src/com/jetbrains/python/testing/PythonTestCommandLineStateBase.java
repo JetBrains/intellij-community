@@ -36,7 +36,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -45,7 +45,6 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -173,6 +172,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.getHelperPath("pycharm"));
   }
 
-  protected abstract PythonHelper getRunner();
+  protected abstract HelperPackage getRunner();
   protected abstract List<String> getTestSpecs();
 }

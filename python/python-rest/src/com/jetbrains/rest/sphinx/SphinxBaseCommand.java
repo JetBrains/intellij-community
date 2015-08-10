@@ -31,7 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -148,7 +148,7 @@ public class SphinxBaseCommand {
 
     String sdkHomePath = sdk.getHomePath();
 
-    final GeneralCommandLine cmd = PythonHelpersLocator.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, Lists.<String>newArrayList());
+    final GeneralCommandLine cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, Lists.<String>newArrayList());
 
     cmd.setWorkDirectory(service.getWorkdir().isEmpty()? module.getProject().getBaseDir().getPath(): service.getWorkdir());
     PythonCommandLineState.createStandardGroups(cmd);

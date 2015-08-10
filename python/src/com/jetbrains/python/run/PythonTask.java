@@ -33,8 +33,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -61,7 +61,7 @@ public class PythonTask {
   private final Sdk mySdk;
   private String myWorkingDirectory;
   private String myRunnerScript;
-  private PythonHelper myHelper = null;
+  private HelperPackage myHelper = null;
 
   private List<String> myParameters = new ArrayList<String>();
   private final String myRunTabTitle;
@@ -93,7 +93,7 @@ public class PythonTask {
     myRunnerScript = script;
   }
 
-  public void setHelper(PythonHelper helper) {
+  public void setHelper(HelperPackage helper) {
     myHelper = helper;
   }
 

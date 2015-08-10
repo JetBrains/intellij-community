@@ -50,11 +50,10 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
@@ -193,7 +192,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    GeneralCommandLine cmd = PythonHelpersLocator.PEP8.newCommandLine(collectedInfo.interpreterPath, options);
+    GeneralCommandLine cmd = PythonHelper.PEP8.newCommandLine(collectedInfo.interpreterPath, options);
 
     ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
                                                       ImmutableMap.of("PYTHONBUFFERED", "1"),

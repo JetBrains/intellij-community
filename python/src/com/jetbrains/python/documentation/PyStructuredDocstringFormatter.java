@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -26,8 +25,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -68,17 +67,17 @@ public class PyStructuredDocstringFormatter {
     final String[] lines = PyDocumentationBuilder.removeCommonIndentation(docstring);
     final String preparedDocstring = StringUtil.join(lines, "\n");
 
-    final PythonHelper formatter;
+    final HelperPackage formatter;
     final StructuredDocStringBase structuredDocString;
     if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
         DocStringUtil.isEpydocDocString(preparedDocstring)) {
-      formatter = PythonHelpersLocator.EPYDOC_FORMATTER;
+      formatter = PythonHelper.EPYDOC_FORMATTER;
       structuredDocString = new EpydocString(preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
     else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
              DocStringUtil.isSphinxDocString(preparedDocstring)) {
-      formatter = PythonHelpersLocator.REST_FORMATTER;
+      formatter = PythonHelper.REST_FORMATTER;
       structuredDocString = new SphinxDocString(preparedDocstring);
     }
     else {
@@ -96,7 +95,7 @@ public class PyStructuredDocstringFormatter {
 
   @Nullable
   private static String runExternalTool(@NotNull final Module module,
-                                        @NotNull final PythonHelper formatter,
+                                        @NotNull final HelperPackage formatter,
                                         @NotNull final String docstring) {
     final Sdk sdk = PythonSdkType.findPython2Sdk(module);
     if (sdk == null) return null;

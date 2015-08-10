@@ -79,7 +79,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -379,18 +379,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   protected GeneralCommandLine createCommandLine(@NotNull final Sdk sdk,
                                                  @NotNull final Map<String, String> environmentVariables,
                                                  int[] ports) {
-    return doCreateConsoleCmdLine(ports, PythonHelpersLocator.CONSOLE);
+    return doCreateConsoleCmdLine(ports, PythonHelper.CONSOLE);
   }
 
   @NotNull
-  protected GeneralCommandLine doCreateConsoleCmdLine(int[] ports, PythonHelpersLocator helpersLocator) {
+  protected GeneralCommandLine doCreateConsoleCmdLine(int[] ports, PythonHelper helper) {
     PyConsoleOptions.PyConsoleSettings settings = PyConsoleOptions.getInstance(getProject()).getPythonConsoleSettings();
 
     GeneralCommandLine cmd = PythonCommandLineState.createPythonCommandLine(getProject(), settings);
     cmd.withWorkDirectory(getWorkingDir());
 
     ParamsGroup group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-    helpersLocator.addToGroup(group, cmd);
+    helper.addToGroup(group, cmd);
 
     for (int port : ports) {
       group.addParameter(String.valueOf(port));

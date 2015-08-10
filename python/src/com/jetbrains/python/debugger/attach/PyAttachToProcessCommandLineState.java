@@ -11,7 +11,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.debugger.PyRemoteDebugProcess;
 import com.jetbrains.python.debugger.PyRemoteDebugProcessAware;
 import com.jetbrains.python.run.PythonConfigurationType;
@@ -36,7 +36,7 @@ public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineSt
     throws ExecutionException {
     PythonRunConfiguration conf =
       (PythonRunConfiguration)PythonConfigurationType.getInstance().getFactory().createTemplateConfiguration(project);
-    conf.setScriptName(PythonHelpersLocator.ATTACH_DEBUGGER.asParamString());
+    conf.setScriptName(PythonHelper.ATTACH_DEBUGGER.asParamString());
     conf.setSdkHome(sdkPath);
     conf.setScriptParameters("--port " + port + " --pid " + pid);
 

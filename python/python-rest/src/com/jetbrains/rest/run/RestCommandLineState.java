@@ -26,8 +26,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +104,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     return null;
   }
 
-  protected abstract PythonHelper getRunner();
+  protected abstract HelperPackage getRunner();
 
   protected abstract String getTask();
 

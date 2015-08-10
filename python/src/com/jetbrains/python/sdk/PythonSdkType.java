@@ -65,7 +65,7 @@ import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -769,7 +769,7 @@ public class PythonSdkType extends SdkType {
   public static List<String> getSysPathsFromScript(@NotNull String binaryPath) throws InvalidSdkException {
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
-    GeneralCommandLine cmd = PythonHelpersLocator.SYSPATH.newCommandLine(binaryPath, Lists.<String>newArrayList());
+    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.<String>newArrayList());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                 getVirtualEnvExtraEnv(binaryPath), MINUTE);
     if (!runResult.checkSuccess(LOG)) {

@@ -16,7 +16,7 @@
 package com.jetbrains.python.testing.doctest;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.util.ArrayList;
@@ -35,8 +35,8 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
   }
 
   @Override
-  protected PythonHelpersLocator getRunner() {
-    return PythonHelpersLocator.DOCSTRING;
+  protected PythonHelper getRunner() {
+    return PythonHelper.DOCSTRING;
   }
 
   protected List<String> getTestSpecs() {

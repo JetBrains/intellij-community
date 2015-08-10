@@ -30,8 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +100,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    protected PythonHelper getRunner() {
+    protected HelperPackage getRunner() {
       return myState.getRunner();
     }
 

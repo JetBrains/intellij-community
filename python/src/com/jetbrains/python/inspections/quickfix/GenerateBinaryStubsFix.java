@@ -39,7 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -173,7 +173,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     indicator.setIndeterminate(false);
     final String homePath = mySdk.getHomePath();
     if (homePath == null) return false;
-    GeneralCommandLine cmd = PythonHelpersLocator.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
+    GeneralCommandLine cmd = PythonHelper.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd,
                                                                new File(homePath).getParent(),
                                                                PythonSdkType.getVirtualEnvExtraEnv(homePath), 5000
