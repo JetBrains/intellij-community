@@ -1,19 +1,14 @@
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourcesService
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JDomSerializationUtil
-import org.jetbrains.jps.model.serialization.JpsMacroExpander
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
-
 /*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
@@ -197,15 +192,6 @@ private File findPluginXml(JpsModule module) {
   return null
 }
 
-//this is temporary solution until JpsRuntimeResourcesService is included in bootstrap jps library
 private List<Pair<String, File>> getRuntimeResources(JpsModule module) {
-  File imlFile = new File(JpsModelSerializationDataService.getBaseDirectory(module), "${module.getName()}.iml")
-  def root = JDOMUtil.load(imlFile)
-  def component = JDomSerializationUtil.findComponent(root, "RuntimeResources")
-  if (component == null) return Collections.emptyList()
-  JpsMacroExpander expander = new JpsMacroExpander(JpsModelSerializationDataService.computeAllPathVariables(global))
-  expander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, JpsModelSerializationDataService.getBaseDirectory(module.getProject()))
-  expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, JpsModelSerializationDataService.getBaseDirectory(module))
-  expander.substitute(component, SystemInfo.isFileSystemCaseSensitive)
-  return component.getChildren().collect {Pair.create(it.getAttributeValue("name"),JpsPathUtil.urlToFile(it.getAttributeValue("url")))}
+  return JpsRuntimeResourcesService.instance.getRoots(module)?.getRoots()?.collect {Pair.create(it.name, JpsPathUtil.urlToFile(it.url))} ?: []
 }
