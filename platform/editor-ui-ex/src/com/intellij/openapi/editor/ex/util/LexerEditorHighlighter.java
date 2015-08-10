@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -37,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.ImmutableText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -349,6 +351,44 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       myAttributesMap.put(tokenType, attrs);
     }
     return attrs;
+  }
+
+  // Called to determine visual attributes of inserted character prior to starting a write action.
+  // TODO Should be removed when we implement typing without starting write actions.
+  public TextAttributes getAttributes(DocumentImpl document, int offset, char c) {
+    final int segmentIndex;
+    try {
+      segmentIndex = mySegments.findSegmentIndex(offset) - 2;
+    }
+    catch (IndexOutOfBoundsException ex) {
+      throw new IndexOutOfBoundsException(ex.getMessage() + " Lexer: " + myLexer);
+    }
+    int startIndex = Math.max(0, segmentIndex);
+
+    int data;
+    do {
+      data = mySegments.getSegmentData(startIndex);
+      if (isInitialState(data)|| startIndex == 0) break;
+      startIndex--;
+    }
+    while (true);
+
+    int startOffset = mySegments.getSegmentStart(startIndex);
+
+    ImmutableText newText = document.getImmutableText().insert(offset, Character.toString(c));
+
+    myLexer.start(newText, startOffset, newText.length(), myInitialState);
+
+    IElementType tokenType = null;
+    while (myLexer.getTokenType() != null) {
+      if (myLexer.getTokenEnd() >= offset + 1) {
+        tokenType = myLexer.getTokenType();
+        break;
+      }
+      myLexer.advance();
+    }
+
+    return getAttributes(tokenType);
   }
 
   protected TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {

@@ -44,8 +44,10 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -317,6 +319,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   
   private boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
+
+  // Characters that excluded from zero-latency painting after key typing
+  private static final Set<Character> KEY_CHARS_TO_SKIP = new HashSet<Character>(Arrays.asList('\n', '\t', '(', ')', '[', ']', '{', '}', '"', '\''));
+
+  // Characters that excluded from zero-latency painting after document update
+  private static final Set<Character> DOCUMENT_CHARS_TO_SKIP = new HashSet<Character>(Arrays.asList(')', ']', '}', '"', '\''));
+
+  private Rectangle myOldArea;
+  private Rectangle myOldTailArea;
+  private boolean myEventPaintedAsChar;
 
   static {
     ourCaretBlinkingCommand.start();
@@ -1135,6 +1147,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     DataContext dataContext = getDataContext();
+
+    if (isZeroLatencyTypingEnabled() && myDocument.isWritable() && !isViewer() && canPaintImmediately(c)) {
+      paintImmediately(myCaretModel.getOffset(), c);
+      myEventPaintedAsChar = true;
+    }
+
     actionManager.fireBeforeEditorTyping(c, dataContext);
     MacUIUtil.hideCursor();
     EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
@@ -1881,11 +1899,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!mySoftWrapModel.isSoftWrappingEnabled() && !myUseNewRendering) {
       mySizeContainer.beforeChange(e);
     }
+
+    if (isZeroLatencyTypingEnabled() && !myEventPaintedAsChar && canPaintImmediately(e)) {
+      int offset = e.getOffset();
+      int length = e.getOldLength();
+
+      myOldArea = lineRectangleBetween(offset, offset + length);
+
+      myOldTailArea = lineRectangleBetween(offset + length, myDocument.getLineEndOffset(myDocument.getLineNumber(offset)));
+      if (myOldTailArea.isEmpty()) {
+        myOldTailArea.width += EditorUtil.getSpaceWidth(Font.PLAIN, this); // include possible caret
+      }
+    }
   }
 
   private void changedUpdate(DocumentEvent e) {
     myDocumentChangeInProgress = false;
     if (myDocument.isInBulkUpdate()) return;
+
+    if (isZeroLatencyTypingEnabled()) {
+      if (!myEventPaintedAsChar && canPaintImmediately(e)) {
+        paintImmediately(e);
+      }
+      myEventPaintedAsChar = false;
+    }
 
     if (myErrorStripeNeedsRepaint) {
       myMarkupModel.repaint(e.getOffset(), e.getOffset() + e.getNewLength());
@@ -2098,6 +2135,135 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.paintComponent(graphics);
     graphics.dispose();
     putUserData(BUFFER, image);
+  }
+
+  private static boolean isZeroLatencyTypingEnabled() {
+    return Registry.is("editor.zero.latency.typing");
+  }
+
+  private boolean canPaintImmediately(char c) {
+    return myDocument instanceof DocumentImpl &&
+           myHighlighter instanceof LexerEditorHighlighter &&
+           myDocument.getTextLength() > 0 &&
+           myCaretModel.getCaretCount() == 1 &&
+           !mySelectionModel.hasSelection() &&
+           !KEY_CHARS_TO_SKIP.contains(c);
+  }
+
+  // Called to display a single character insertion before starting a write action.
+  // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
+  // TODO Should be replaced with the generic paintImmediately(event) call when we implement typing without starting write actions.
+  private void paintImmediately(int offset, char c) {
+    Graphics g = myEditorComponent.getGraphics();
+
+    TextAttributes attributes = ((LexerEditorHighlighter)myHighlighter).getAttributes((DocumentImpl)myDocument, offset, c);
+
+    int fontType = attributes.getFontType();
+    Font font = fontFor(fontType);
+
+    int charWidth = g.getFontMetrics(font).charWidth(c);
+
+    Rectangle tailArea = lineRectangleBetween(offset, myDocument.getLineEndOffset(offsetToLogicalLine(offset)));
+    if (tailArea.isEmpty()) {
+      tailArea.width += EditorUtil.getSpaceWidth(fontType, this); // include caret
+    }
+
+    Color lineColor = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
+
+    Rectangle newArea = lineRectangleBetween(offset, offset);
+    newArea.width += charWidth;
+
+    String newText = Character.toString(c);
+    Point point = newArea.getLocation();
+    int ascent = getAscent();
+    Color color = attributes.getForegroundColor();
+
+    EditorUIUtil.setupAntialiasing(g);
+
+    // pre-compute all the arguments beforehand to minimize delays between the calls (as there's no double-buffering)
+    shift(g, tailArea, charWidth);
+    fill(g, newArea, lineColor);
+    print(g, newText, point, ascent, font, color);
+  }
+
+  private static boolean canPaintImmediately(DocumentEvent e) {
+    return !contains(e.getOldFragment(), '\n') &&
+           !contains(e.getNewFragment(), '\n') &&
+           !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
+  }
+
+  private static boolean contains(CharSequence chars, char c) {
+    for (int i = 0; i < chars.length(); i++) {
+      if (chars.charAt(i) == c) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Called to display insertion / deletion / replacement within a single line before the general paint routine.
+  // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
+  private void paintImmediately(DocumentEvent e) {
+    int offset = e.getOffset();
+    String newText = e.getNewFragment().toString();
+    Rectangle newArea = lineRectangleBetween(offset, offset + newText.length());
+    int delta = newArea.width - myOldArea.width;
+    Color lineColor = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
+
+    Graphics g = myEditorComponent.getGraphics();
+
+    if (delta != 0) {
+      shift(g, myOldTailArea, delta);
+
+      if (delta < 0) {
+        Rectangle remainingArea = new Rectangle(myOldTailArea.x + myOldTailArea.width + delta,
+                                                myOldTailArea.y, -delta, myOldTailArea.height);
+        fill(g, remainingArea, lineColor);
+      }
+    }
+
+    if (!newArea.isEmpty()) {
+      TextAttributes attributes = myHighlighter.createIterator(offset).getTextAttributes();
+
+      Point point = newArea.getLocation();
+      int ascent = getAscent();
+      Font font = fontFor(attributes.getFontType());
+      Color color = attributes.getForegroundColor();
+
+      EditorUIUtil.setupAntialiasing(g);
+
+      // pre-compute all the arguments beforehand to minimize delay between the calls (as there's no double-buffering)
+      fill(g, newArea, lineColor);
+      print(g, newText, point, ascent, font, color);
+    }
+  }
+
+  @NotNull
+  private Rectangle lineRectangleBetween(int begin, int end) {
+    Point p1 = offsetToXY(begin, false);
+    Point p2 = offsetToXY(end, false);
+    LOG.assertTrue(p1.y == p2.y);
+    return new Rectangle(p1.x, p1.y, p2.x - p1.x, getLineHeight());
+  }
+
+  @NotNull
+  private Font fontFor(int fontType) {
+    return myScheme.getFont(EditorFontType.values()[fontType]);
+  }
+
+  private static void shift(Graphics g, Rectangle r, int delta) {
+    g.copyArea(r.x, r.y, r.width, r.height, delta, 0);
+  }
+
+  private static void fill(Graphics g, Rectangle r, Color color) {
+    g.setColor(color);
+    g.fillRect(r.x, r.y, r.width, r.height);
+  }
+
+  private static void print(Graphics g, String text, Point point, int ascent, Font font, Color color) {
+    g.setFont(font);
+    g.setColor(color);
+    g.drawString(text, point.x, point.y + ascent);
   }
 
   void paint(@NotNull Graphics2D g) {
