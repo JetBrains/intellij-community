@@ -31,6 +31,6 @@ public class FilteredTraverser<T> extends FilteredTraverserBase<T, FilteredTrave
   @NotNull
   @Override
   protected FilteredTraverser<T> newInstance(Meta<T> meta) {
-    return new FilteredTraverser<T>(meta, treeStructure);
+    return new FilteredTraverser<T>(meta, tree);
   }
 }

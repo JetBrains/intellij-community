@@ -18,7 +18,7 @@ import java.util.LinkedList;
 /**
  * @author gregsh
  */
-public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser<T>> implements Iterable<T>, UserDataHolder {
+public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser<T>> implements UserDataHolder {
 
   @NotNull
   public static ApiEx<PsiElement> psiApi() {

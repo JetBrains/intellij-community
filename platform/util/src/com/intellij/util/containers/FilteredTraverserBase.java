@@ -25,12 +25,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBase<T, Self>> extends TreeTraverser<T> implements Iterable<T> {
+public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBase<T, Self>> implements Iterable<T> {
 
   protected final Meta<T> meta;
+  protected final Function<T, ? extends Iterable<? extends T>> tree;
 
-  protected FilteredTraverserBase(@Nullable Meta<T> meta, Function<T, ? extends Iterable<? extends T>> provider) {
-    super(provider);
+  protected FilteredTraverserBase(@Nullable Meta<T> meta, Function<T, ? extends Iterable<? extends T>> tree) {
+    this.tree = tree;
     this.meta = meta == null ? Meta.<T>empty() : meta;
   }
 
@@ -46,50 +47,56 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @Override
   public Iterator<T> iterator() {
-    return rawIterable().iterator();
+    return traverse().iterator();
   }
 
   @NotNull
   protected abstract Self newInstance(Meta<T> meta);
 
   @NotNull
-  public JBIterable<T> rawIterable() {
+  public JBIterable<T> traverse(TreeTraversal traversal) {
+    Function<T, Iterable<? extends T>> adjusted = new Function<T, Iterable<? extends T>>() {
+      @Override
+      public Iterable<? extends T> fun(T t) {
+        return children(t);
+      }
+    };
+    return traversal.traversal(getRoots(), adjusted).filter(meta.resultFilter);
+  }
+
+  @NotNull
+  public JBIterable<T> traverse() {
     return meta.skipExpanded ? leavesOnlyDfsTraversal() : preOrderDfsTraversal();
   }
 
   @NotNull
   public final JBIterable<T> preOrderDfsTraversal() {
-    return adjust(preOrderDfsTraversal(getRoots()));
+    return traverse(TreeTraversal.PRE_ORDER_DFS);
   }
 
   @NotNull
   public final JBIterable<T> postOrderDfsTraversal() {
-    return adjust(postOrderDfsTraversal(getRoots()));
+    return traverse(TreeTraversal.POST_ORDER_DFS);
   }
 
   @NotNull
   public final JBIterable<T> leavesOnlyDfsTraversal() {
-    return adjust(leavesOnlyDfsTraversal(getRoots()));
+    return traverse(TreeTraversal.LEAVES_ONLY_DFS);
   }
 
   @NotNull
   public final JBIterable<T> bfsTraversal() {
-    return adjust(bfsTraversal(getRoots()));
+    return traverse(TreeTraversal.PLAIN_BFS);
   }
 
   @NotNull
   public final JBIterable<T> tracingBfsTraversal() {
-    return adjust(tracingBfsTraversal(getRoots()));
+    return traverse(TreeTraversal.TRACING_BFS);
   }
 
   @NotNull
   public final JBIterable<T> leavesOnlyBfsTraversal() {
-    return adjust(leavesOnlyBfsTraversal(getRoots()));
-  }
-
-  @NotNull
-  private JBIterable<T> adjust(JBIterable<T> traversal) {
-    return traversal.filter(meta.resultFilter);
+    return traverse(TreeTraversal.LEAVES_ONLY_BFS);
   }
 
   @NotNull
@@ -139,7 +146,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @NotNull
   public <C> JBIterable<C> filter(@NotNull Class<C> type) {
-    return rawIterable().filter(type);
+    return traverse().filter(type);
   }
 
   @NotNull
@@ -148,13 +155,12 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  @Override
   public JBIterable<T> children(@NotNull T node) {
     if (isAlwaysLeaf(node)) return JBIterable.empty();
-    Iterable<? extends T> children = super.children(node);
-    if (meta.childFilter == Conditions.TRUE) return JBIterable.from(children).filter(Conditions.not(meta.excludeFilter));
+    JBIterable<T> children = JBIterable.from(tree.fun(node));
+    if (meta.childFilter == Conditions.TRUE) return children.filter(Conditions.not(meta.excludeFilter));
     // traverse subtree to select accepted children
-    return newInstance(meta.forChildren(children)).rawIterable();
+    return newInstance(meta.forChildren(children)).traverse();
   }
 
   protected boolean isAlwaysLeaf(@NotNull T node) {
@@ -163,12 +169,12 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @NotNull
   public List<T> toList() {
-    return rawIterable().toList();
+    return traverse().toList();
   }
 
   @Override
   public String toString() {
-    return rawIterable().toString();
+    return traverse().toString();
   }
 
 

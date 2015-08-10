@@ -137,26 +137,23 @@ public class TreeTraverserTest extends TestCase {
     }
   }
 
-  // TreeTraverser ----------------------------------------------
+  // TreeTraversal ----------------------------------------------
 
   @NotNull
-  private static TreeTraverser<Integer> traverser() {
-    return new TreeTraverser<Integer>(Functions.fromMap(numbers()));
+  private static Function<Integer, JBIterable<Integer>> traverser(TreeTraversal t) {
+    return t.traversal(Functions.fromMap(numbers()));
   }
 
   public void testSimplePreOrderDfs() {
-    TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), t.preOrderDfsTraversal(1).toList());
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), traverser(TreeTraversal.PRE_ORDER_DFS).fun(1).toList());
   }
 
   public void testSimplePostOrderDfs() {
-    TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(5, 6, 7, 2, 8, 9, 10, 3, 11, 12, 13, 4, 1), t.postOrderDfsTraversal(1).toList());
+    assertEquals(Arrays.asList(5, 6, 7, 2, 8, 9, 10, 3, 11, 12, 13, 4, 1), traverser(TreeTraversal.POST_ORDER_DFS).fun(1).toList());
   }
 
   public void testSimpleBfs() {
-    TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), t.bfsTraversal(1).toList());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), traverser(TreeTraversal.PLAIN_BFS).fun(1).toList());
   }
 
   // FilteredTraverser ----------------------------------------------
@@ -219,8 +216,8 @@ public class TreeTraverserTest extends TestCase {
         return JBIterable.generate(1, k, FIBONACCI).skip(2).take(3);
       }
     });
-    TreeTraverser.TracingIt<Integer> it = t.withRoot(1).preOrderDfsTraversal().skip(20).typedIterator();
-    TreeTraverser.TracingIt<Integer> cursor = JBIterator.cursor(it).first();
+    TreeTraversal.TracingIt<Integer> it = t.withRoot(1).preOrderDfsTraversal().skip(20).typedIterator();
+    TreeTraversal.TracingIt<Integer> cursor = JBIterator.cursor(it).first();
     assertNotNull(cursor);
     assertSame(cursor, it);
     assertEquals(Arrays.asList(20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1), cursor.backtrace().toList());
