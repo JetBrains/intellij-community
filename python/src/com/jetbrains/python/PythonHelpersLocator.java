@@ -22,9 +22,11 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-public class PythonHelpersLocator  {
+public class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
   private static final String COMMUNITY_SUFFIX = "-community";
+
+  private PythonHelpersLocator() {}
 
   /**
    * @return the base directory under which various scripts, etc are stored.
@@ -74,5 +76,4 @@ public class PythonHelpersLocator  {
     }
     return new File(PathManager.getHomePath(), "python").getPath();
   }
-
-  }
+}
