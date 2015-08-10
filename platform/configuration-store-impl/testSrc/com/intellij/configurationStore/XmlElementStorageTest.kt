@@ -15,9 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.impl.stores.StorageData
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMBuilder.attr
 import com.intellij.openapi.util.JDOMBuilder.tag
 import com.intellij.testFramework.LightPlatformTestCase

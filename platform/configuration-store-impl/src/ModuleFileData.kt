@@ -16,7 +16,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.StorageData
 import com.intellij.openapi.module.OptionManager
 import com.intellij.openapi.util.text.StringUtil
 import org.jdom.Element

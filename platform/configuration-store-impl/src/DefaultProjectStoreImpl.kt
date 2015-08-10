@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.FileStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StorageData
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
