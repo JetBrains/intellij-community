@@ -63,8 +63,7 @@ import java.util.Set;
  * @since Aug 4, 2003
  */
 public class ITNProxy {
-  private static final String NEW_THREAD_VIEW_URL_SECURE = "https://ea.jetbrains.com/browser/ea_reports/";
-  private static final String NEW_THREAD_VIEW_URL = "http://ea.jetbrains.com/browser/ea_reports/";
+  private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
   private static final String NEW_THREAD_POST_URL_SECURE = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
   private static final String NEW_THREAD_POST_URL = "http://ea-report.jetbrains.com/trackerRpc/idea/createScr";
   private static final String ENCODING = "UTF8";
@@ -101,7 +100,7 @@ public class ITNProxy {
   }
 
   public static String getBrowseUrl(int threadId) {
-    return (UpdateSettings.getInstance().canUseSecureConnection() ? NEW_THREAD_VIEW_URL_SECURE : NEW_THREAD_VIEW_URL) + threadId;
+    return NEW_THREAD_VIEW_URL + threadId;
   }
 
   private static SSLContext ourSslContext;
@@ -112,7 +111,7 @@ public class ITNProxy {
     }
 
     Map<String, String> params = createParameters(login, password, error);
-    String newThreadPostUrl = UpdateSettings.getInstance().canUseSecureConnection() ? NEW_THREAD_POST_URL_SECURE : NEW_THREAD_POST_URL;
+    String newThreadPostUrl = NetUtils.isSniEnabled() ? NEW_THREAD_POST_URL_SECURE : NEW_THREAD_POST_URL;
     HttpURLConnection connection = post(new URL(newThreadPostUrl), join(params));
     int responseCode = connection.getResponseCode();
     if (responseCode != HttpURLConnection.HTTP_OK) {
