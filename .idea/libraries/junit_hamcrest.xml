@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="junit-hamcrest">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-junit-2.0.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/java-hamcrest-2.0.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/junit-4.12.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-junit-2.0.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/java-hamcrest-2.0.0.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-junit-2.0.0.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/java-hamcrest-2.0.0.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/junit-4.12-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
