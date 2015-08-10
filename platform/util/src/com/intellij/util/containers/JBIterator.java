@@ -38,7 +38,7 @@ import java.util.NoSuchElementException;
  *
  * @see JBIterable#transform(Function)
  * @see JBIterable#filter(Condition)
- * @see TreeTraverser.TracingIt
+ * @see TreeTraversal.TracingIt
  *
  * @author gregsh
  *
