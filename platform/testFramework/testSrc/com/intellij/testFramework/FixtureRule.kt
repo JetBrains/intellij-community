@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework
 
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -26,6 +25,8 @@ import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.lang.reflect.InvocationTargetException
+import javax.swing.SwingUtilities
 import kotlin.properties.Delegates
 
 public open class FixtureRule() : ExternalResource() {
@@ -49,11 +50,11 @@ public open class FixtureRule() : ExternalResource() {
     }
 
     UsefulTestCase.replaceIdeEventQueueSafely()
-    invokeAndWaitIfNeed { projectFixture.setUp() }
+    runInEdtAndWait { projectFixture.setUp() }
   }
 
   override final fun after() {
-    invokeAndWaitIfNeed { projectFixture.tearDown() }
+    runInEdtAndWait { projectFixture.tearDown() }
   }
 }
 
@@ -93,5 +94,22 @@ public class RuleChain(vararg val rules: TestRule) : TestRule {
 
     CompoundRuntimeException.doThrow(errors)
     return statement
+  }
+}
+
+// Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
+// The problem is - Application logs errors, but not throws. But in tests must be thrown.
+// In any case name "runInEdtAndWait" is better than "invokeAndWait".
+public fun runInEdtAndWait(runnable: () -> Unit) {
+  if (SwingUtilities.isEventDispatchThread()) {
+    runnable()
+  }
+  else {
+    try {
+      SwingUtilities.invokeAndWait(runnable)
+    }
+    catch (e: InvocationTargetException) {
+      throw e.getCause() ?: e
+    }
   }
 }

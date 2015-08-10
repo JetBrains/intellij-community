@@ -17,7 +17,6 @@ package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
@@ -27,12 +26,13 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.exists
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.io.FileMatchers.anExistingFile
 import org.intellij.lang.annotations.Language
 import org.junit.Before
 import org.junit.Rule
@@ -61,7 +61,7 @@ class ApplicationStoreTest {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
-    componentStore.getStateStorageManager().setStreamProvider(streamProvider)
+    componentStore.storageManager.setStreamProvider(streamProvider)
 
     componentStore.initComponent(component, false)
     component.foo = "newValue"
@@ -78,7 +78,7 @@ class ApplicationStoreTest {
     map.put(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml", "<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
     streamProvider.data.put(RoamingType.PER_USER, map)
 
-    componentStore.getStateStorageManager().setStreamProvider(streamProvider)
+    componentStore.storageManager.setStreamProvider(streamProvider)
     componentStore.initComponent(component, false)
     assertThat(component.foo, equalTo("newValue"))
   }
@@ -99,9 +99,9 @@ class ApplicationStoreTest {
     assertThat(component.foo, equalTo("new"))
 
     component.foo = "new2"
-    invokeAndWaitIfNeed { StoreUtil.save(componentStore, null) }
+    runInEdtAndWait { StoreUtil.save(componentStore, null) }
 
-    assertThat(oldFile, not(exists()))
+    assertThat(oldFile, not(anExistingFile()))
   }
 
   private fun saveConfig(fileName: String, Language("XML") data: String): File {
@@ -137,7 +137,7 @@ class ApplicationStoreTest {
   }
 
   class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
-    private val storageManager = object : StateStorageManagerImpl("application") {
+    override val storageManager = object : StateStorageManagerImpl("application") {
       override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
         if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
           return null
@@ -153,8 +153,6 @@ class ApplicationStoreTest {
     override fun setPath(path: String) {
       storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
     }
-
-    override fun getStateStorageManager() = storageManager
 
     override fun getMessageBus() = ApplicationManager.getApplication().getMessageBus()
   }

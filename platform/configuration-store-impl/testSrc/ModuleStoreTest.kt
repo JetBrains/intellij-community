@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
@@ -19,14 +18,15 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder
-import com.intellij.testFramework.exists
 import com.intellij.testFramework.fixtures.ModuleFixture
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Function
 import com.intellij.util.SmartList
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.collection.IsEmptyCollection.empty
+import org.hamcrest.io.FileMatchers.anExistingFile
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
@@ -74,7 +74,7 @@ class ModuleStoreTest {
   public Rule fun getChain(): RuleChain = ruleChain
 
   fun Module.change(task: ModifiableModuleModel.() -> Unit) {
-    invokeAndWaitIfNeed {
+    runInEdtAndWait {
       val model = ModuleManager.getInstance(fixtureManager.projectFixture.getProject()).getModifiableModel()
       runWriteAction {
         model.task()
@@ -85,10 +85,10 @@ class ModuleStoreTest {
 
   // project structure
   public Test fun `rename module using model`() {
-    invokeAndWaitIfNeed { StoreUtil.save(module.stateStore, null) }
+    runInEdtAndWait { StoreUtil.save(module.stateStore, null) }
     val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
     val oldFile = storage.getFile()
-    assertThat(oldFile, exists())
+    assertThat(oldFile, anExistingFile())
 
     val oldName = module.getName()
     val newName = "foo"
@@ -99,14 +99,14 @@ class ModuleStoreTest {
 
   // project view
   public Test fun `rename module using rename virtual file`() {
-    invokeAndWaitIfNeed { StoreUtil.save(module.stateStore, null) }
+    runInEdtAndWait { StoreUtil.save(module.stateStore, null) }
     var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
     val oldFile = storage.getFile()
-    assertThat(oldFile, exists())
+    assertThat(oldFile, anExistingFile())
 
     val oldName = module.getName()
     val newName = "foo"
-    invokeAndWaitIfNeed { runWriteAction { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(oldFile)!!.rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}") } }
+    runInEdtAndWait { runWriteAction { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(oldFile)!!.rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}") } }
     assertRename(newName, oldFile)
     assertThat(oldModuleNames, equalTo(listOf(oldName)))
   }
@@ -117,31 +117,31 @@ class ModuleStoreTest {
     val storageManager = moduleFixture.getModule().stateStore.getStateStorageManager()
     val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage).getFile()
     assertThat(newFile.getName(), equalTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}"))
-    assertThat(oldFile, not(exists()))
+    assertThat(oldFile, not(anExistingFile()))
     assertThat(oldFile, not(equalTo(newFile)))
-    assertThat(newFile, exists())
+    assertThat(newFile, anExistingFile())
 
     // ensure that macro value updated
     assertThat(storageManager.expandMacros(StoragePathMacros.MODULE_FILE), equalTo(newFile.systemIndependentPath))
   }
 
   public Test fun `rename module parent virtual dir`() {
-    invokeAndWaitIfNeed { StoreUtil.save(module.stateStore, null) }
+    runInEdtAndWait { StoreUtil.save(module.stateStore, null) }
     val storageManager = module.stateStore.getStateStorageManager()
     val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
 
     val oldFile = storage.getFile()
     val parentVirtualDir = storage.getVirtualFile()!!.getParent()
-    invokeAndWaitIfNeed { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
+    runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
 
     val newFile = File(parentVirtualDir.getPath(), module.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
     try {
-      assertThat(newFile, exists())
+      assertThat(newFile, anExistingFile())
       assertRename(module.getName(), oldFile)
       assertThat(oldModuleNames, empty())
     }
     finally {
-      invokeAndWaitIfNeed { runWriteAction { parentVirtualDir.delete(this) } }
+      runInEdtAndWait { runWriteAction { parentVirtualDir.delete(this) } }
     }
   }
 }

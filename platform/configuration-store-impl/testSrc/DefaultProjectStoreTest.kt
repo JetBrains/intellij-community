@@ -4,16 +4,11 @@ import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
@@ -56,8 +51,8 @@ class DefaultProjectStoreTest {
       private var externalDependenciesManager: ExternalDependenciesManager? = null
 
       override fun before() {
-        val externalDependenciesManager = ProjectManager.getInstance().getDefaultProject().service<ExternalDependenciesManager>()
-        externalDependenciesManager.setAllDependencies(requiredPlugins)
+        externalDependenciesManager = ProjectManager.getInstance().getDefaultProject().service<ExternalDependenciesManager>()
+        externalDependenciesManager!!.setAllDependencies(requiredPlugins)
       }
 
       override fun after() {
@@ -69,14 +64,8 @@ class DefaultProjectStoreTest {
   public Rule fun getChain(): RuleChain = ruleChain
 
   public Test fun `new project from default`() {
-    invokeAndWaitIfNeed {
-      val project = (ProjectManager.getInstance() as ProjectManagerImpl).newProject("test", tempDirManager.newDirectory().systemIndependentPath, true, false, false)!!
-      try {
-        assertThat(project.service<ExternalDependenciesManager>().getAllDependencies(), equalTo(requiredPlugins))
-      }
-      finally {
-        runWriteAction { Disposer.dispose(project) }
-      }
+    createProject(tempDirManager) {
+      assertThat(it.service<ExternalDependenciesManager>().getAllDependencies(), equalTo(requiredPlugins))
     }
   }
 }
