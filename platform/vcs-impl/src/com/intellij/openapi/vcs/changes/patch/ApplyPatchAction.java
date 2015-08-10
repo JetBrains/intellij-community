@@ -70,6 +70,18 @@ import java.util.List;
 public class ApplyPatchAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
 
+  @Override
+  public void update(AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
+      VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+      e.getPresentation().setVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
+    }
+    else {
+      e.getPresentation().setEnabled(project != null);
+    }
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
@@ -196,11 +208,6 @@ public class ApplyPatchAction extends DumbAwareAction {
     return status;
   }
 
-  private static <T extends FilePatch> void showIOException(Project project, String name, IOException e) {
-    Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", name, e.getMessage()),
-                             VcsBundle.message("patch.apply.dialog.title"));
-  }
-
   @Nullable
   private static CharSequence getBaseContents(final FilePatch patchBase, final CommitContext commitContext, final Project project) {
     final BaseRevisionTextPatchEP baseRevisionTextPatchEP = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
@@ -211,7 +218,80 @@ public class ApplyPatchAction extends DumbAwareAction {
     return null;
   }
 
-  public static ApplyPatchStatus showBadDiffDialog(final Project project, final VirtualFile file, final ApplyPatchForBaseRevisionTexts texts, final boolean readonly)
+  private static ApplyPatchStatus showMergeDialog(Project project,
+                                                  VirtualFile file,
+                                                  CharSequence content,
+                                                  final String patchedContent,
+                                                  final PatchMergeRequestFactory mergeRequestFactory,
+                                                  boolean reverse,
+                                                  @Nullable String leftPanelTitle, @Nullable String rightPanelTitle) {
+    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Document document = fileDocumentManager.getDocument(file);
+    if (document != null) {
+      fileDocumentManager.saveDocument(document);
+    }
+    CharSequence fileContent = LoadTextUtil.loadText(file);
+    if (fileContent == null || content == null) {
+      return ApplyPatchStatus.FAILURE;
+    }
+
+    if (MergeTool.LOG.isDebugEnabled()) {
+      MergeTool.LOG.debug("ApplyPatch: project: " + project + ", document: " + document + ", file.valid: " + file.isValid() +
+                          ", fileType: " + file.getFileType() + (document != null ? ", writable: " + document.isWritable() : ""));
+    }
+
+    final MergeRequest request = mergeRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
+                                                                        project, reverse, leftPanelTitle, rightPanelTitle);
+
+    if (MergeTool.LOG.isDebugEnabled()) {
+      DiffContent baseContent = request.getContents()[1];
+      MergeTool.LOG.debug("ApplyPatch: base content: " + baseContent.getClass() + ", writable: " + baseContent.getDocument().isWritable());
+      MergeTool.LOG.debug("Custom DiffTools: " + DiffManagerImpl.getInstanceEx().getAdditionTools());
+    }
+
+    DiffManager.getInstance().getDiffTool().show(request);
+    if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
+      return ApplyPatchStatus.SUCCESS;
+    }
+    request.restoreOriginalContent();
+    return ApplyPatchStatus.FAILURE;
+  }
+
+  public static class ApplyPatchMergeRequestFactory implements PatchMergeRequestFactory {
+    private final boolean myReadOnly;
+
+    public static final ApplyPatchMergeRequestFactory INSTANCE = new ApplyPatchMergeRequestFactory(false);
+    public static final ApplyPatchMergeRequestFactory INSTANCE_READ_ONLY = new ApplyPatchMergeRequestFactory(true);
+
+    public ApplyPatchMergeRequestFactory(final boolean readOnly) {
+      myReadOnly = readOnly;
+    }
+
+    public MergeRequest createMergeRequest(final String leftText, final String rightText, final String originalContent,
+                                           @NotNull final VirtualFile file, final Project project, boolean reverse,
+                                           @Nullable String leftPanelTitle, @Nullable String rightPanelTitle) {
+      MergeRequest request;
+      if (myReadOnly) {
+        request = DiffRequestFactory.getInstance()
+          .create3WayDiffRequest(leftText, rightText, originalContent, file.getFileType(), project, null, null);
+      } else {
+        request = DiffRequestFactory.getInstance().createMergeRequest(reverse ? rightText : leftText,
+                                                                      reverse ? leftText : rightText, originalContent,
+                                                                      file, project, ActionButtonPresentation.APPLY,
+                                                                      ActionButtonPresentation.CANCEL_WITH_PROMPT);
+      }
+
+      request.setVersionTitles(new String[] {
+        leftPanelTitle == null ? VcsBundle.message("patch.apply.conflict.local.version") : leftPanelTitle,
+        rightPanelTitle == null ? VcsBundle.message("patch.apply.conflict.merged.version") : rightPanelTitle,
+        VcsBundle.message("patch.apply.conflict.patched.version")
+      });
+      request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl()));
+      return request;
+    }
+  }
+
+  private static ApplyPatchStatus showBadDiffDialog(final Project project, final VirtualFile file, final ApplyPatchForBaseRevisionTexts texts, final boolean readonly)
     throws IOException {
     if (texts.getLocal() == null) {
       return ApplyPatchStatus.FAILURE;
@@ -225,9 +305,9 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   public static SimpleDiffRequest createBadDiffRequest(final Project project,
-                                                        final VirtualFile file,
-                                                        ApplyPatchForBaseRevisionTexts texts,
-                                                        boolean readonly) {
+                                                       final VirtualFile file,
+                                                       ApplyPatchForBaseRevisionTexts texts,
+                                                       boolean readonly) {
     final SimpleDiffRequest simpleRequest =
       new SimpleDiffRequest(project, "Result Of Patch Apply To " + file.getName() + " (" +
                                      (file.getParent() == null ? file.getPath() : file.getParent().getPath()) +
@@ -272,88 +352,8 @@ public class ApplyPatchAction extends DumbAwareAction {
     return simpleRequest;
   }
 
-  private static ApplyPatchStatus showMergeDialog(Project project,
-                                                  VirtualFile file,
-                                                  CharSequence content,
-                                                  final String patchedContent,
-                                                  final PatchMergeRequestFactory mergeRequestFactory,
-                                                  boolean reverse,
-                                                  @Nullable String leftPanelTitle, @Nullable String rightPanelTitle) {
-    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    Document document = fileDocumentManager.getDocument(file);
-    if (document != null) {
-      fileDocumentManager.saveDocument(document);
-    }
-    CharSequence fileContent = LoadTextUtil.loadText(file);
-    if (fileContent == null || content == null) {
-      return ApplyPatchStatus.FAILURE;
-    }
-
-    if (MergeTool.LOG.isDebugEnabled()) {
-      MergeTool.LOG.debug("ApplyPatch: project: " + project + ", document: " + document + ", file.valid: " + file.isValid() +
-                          ", fileType: " + file.getFileType() + (document != null ? ", writable: " + document.isWritable() : ""));
-    }
-
-    final MergeRequest request = mergeRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
-                                                                        project, reverse, leftPanelTitle, rightPanelTitle);
-
-    if (MergeTool.LOG.isDebugEnabled()) {
-      DiffContent baseContent = request.getContents()[1];
-      MergeTool.LOG.debug("ApplyPatch: base content: " + baseContent.getClass() + ", writable: " + baseContent.getDocument().isWritable());
-      MergeTool.LOG.debug("Custom DiffTools: " + DiffManagerImpl.getInstanceEx().getAdditionTools());
-    }
-
-    DiffManager.getInstance().getDiffTool().show(request);
-    if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
-      return ApplyPatchStatus.SUCCESS;
-    }
-    request.restoreOriginalContent();
-    return ApplyPatchStatus.FAILURE;
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
-      VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      e.getPresentation().setVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
-    }
-    else {
-      e.getPresentation().setEnabled(project != null);
-    }
-  }
-
-  public static class ApplyPatchMergeRequestFactory implements PatchMergeRequestFactory {
-    private final boolean myReadOnly;
-
-    public static final ApplyPatchMergeRequestFactory INSTANCE = new ApplyPatchMergeRequestFactory(false);
-    public static final ApplyPatchMergeRequestFactory INSTANCE_READ_ONLY = new ApplyPatchMergeRequestFactory(true);
-
-    public ApplyPatchMergeRequestFactory(final boolean readOnly) {
-      myReadOnly = readOnly;
-    }
-
-    public MergeRequest createMergeRequest(final String leftText, final String rightText, final String originalContent,
-                                           @NotNull final VirtualFile file, final Project project, boolean reverse,
-                                           @Nullable String leftPanelTitle, @Nullable String rightPanelTitle) {
-      MergeRequest request;
-      if (myReadOnly) {
-        request = DiffRequestFactory.getInstance()
-          .create3WayDiffRequest(leftText, rightText, originalContent, file.getFileType(), project, null, null);
-      } else {
-        request = DiffRequestFactory.getInstance().createMergeRequest(reverse ? rightText : leftText,
-                                                                      reverse ? leftText : rightText, originalContent,
-                                                                      file, project, ActionButtonPresentation.APPLY,
-                                                                      ActionButtonPresentation.CANCEL_WITH_PROMPT);
-      }
-
-      request.setVersionTitles(new String[] {
-        leftPanelTitle == null ? VcsBundle.message("patch.apply.conflict.local.version") : leftPanelTitle,
-        rightPanelTitle == null ? VcsBundle.message("patch.apply.conflict.merged.version") : rightPanelTitle,
-        VcsBundle.message("patch.apply.conflict.patched.version")
-      });
-      request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl()));
-      return request;
-    }
+  private static <T extends FilePatch> void showIOException(Project project, String name, IOException e) {
+    Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", name, e.getMessage()),
+                             VcsBundle.message("patch.apply.dialog.title"));
   }
 }
