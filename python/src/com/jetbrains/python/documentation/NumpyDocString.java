@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
+ * @see <a href="https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt">A Guide to NumPy/SciPy Documentation</a>
+ * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/example_numpy.html#example-numpy">Napoleon: Example NumPy Style Python Docstrings</a>
  */
 public class NumpyDocString extends SectionBasedDocString {
   private static final Pattern SIGNATURE = Pattern.compile("^\\s*([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)\\s*$");

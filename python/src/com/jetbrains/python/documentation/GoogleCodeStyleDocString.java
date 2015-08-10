@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
+ * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/example_google.html#example-google">Napoleon: Example Google Style Python Docstrings</a>
+ * @see <a href="http://google-styleguide.googlecode.com/svn/trunk/pyguide.html?showone=Comments#Comments">Google Python Style: Docstrings</a>
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*(\\w+):\\s*", Pattern.MULTILINE);
