@@ -22,6 +22,10 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.InvalidDiffRequestException;
+import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeResult;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -41,10 +45,10 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -55,6 +59,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,33 +206,39 @@ public class ApplyPatchAction extends DumbAwareAction {
                                                   @Nullable String leftPanelTitle,
                                                   @Nullable String rightPanelTitle) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      FileDocumentManager.getInstance().saveDocument(document);
-    }
-    CharSequence fileContent = LoadTextUtil.loadText(file);
-    if (content == null) {
+    if (content == null || document == null) {
       return ApplyPatchStatus.FAILURE;
     }
 
-    final String leftText = fileContent.toString();
-    MergeRequest request = DiffRequestFactory.getInstance().createMergeRequest(reverse ? patchedContent : leftText,
-                                                                               reverse ? leftText : patchedContent, content.toString(),
-                                                                               file, project, ActionButtonPresentation.APPLY,
-                                                                               ActionButtonPresentation.CANCEL_WITH_PROMPT);
-
-    request.setVersionTitles(new String[]{
+    List<String> titles = ContainerUtil.list(
       leftPanelTitle == null ? VcsBundle.message("patch.apply.conflict.local.version") : leftPanelTitle,
       rightPanelTitle == null ? VcsBundle.message("patch.apply.conflict.merged.version") : rightPanelTitle,
-      VcsBundle.message("patch.apply.conflict.patched.version")
-    });
-    request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl()));
+      VcsBundle.message("patch.apply.conflict.patched.version"));
+    String windowTitle = VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl());
 
-    DiffManager.getInstance().getDiffTool().show(request);
-    if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
-      return ApplyPatchStatus.SUCCESS;
+    final String leftText = document.getText();
+    List<String> contents = ContainerUtil.list(reverse ? patchedContent : leftText,
+                                               content.toString(),
+                                               reverse ? leftText : patchedContent);
+
+    final Ref<Boolean> successRef = new Ref<Boolean>();
+    final Consumer<MergeResult> callback = new Consumer<MergeResult>() {
+      @Override
+      public void consume(MergeResult result) {
+        successRef.set(result != MergeResult.CANCEL);
+      }
+    };
+
+    try {
+      MergeRequest request = DiffRequestFactory.getInstance()
+        .createMergeRequest(project, file.getFileType(), document, contents, windowTitle, titles, callback);
+
+      com.intellij.diff.DiffManager.getInstance().showMerge(project, request);
+
+      return successRef.get() == Boolean.TRUE ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
     }
-    else {
-      request.restoreOriginalContent();
+    catch (InvalidDiffRequestException e) {
+      LOG.warn(e);
       return ApplyPatchStatus.FAILURE;
     }
   }
