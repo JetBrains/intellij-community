@@ -17,6 +17,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -62,6 +63,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
   private final FileChooserDescriptor myChooserDescriptor;
   private final Project myProject;
+  private ModalityState myModalityState;
   private Consumer<List<VirtualFile>> myCallback;
 
   private static final Callback SHOULD_ENABLE_CALLBACK = new Callback() {
@@ -160,14 +162,14 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
                 }
               });
             }
-          });
+          }, impl.myModalityState);
         } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
             }
-          });
+          }, impl.myModalityState);
         }
       }
       finally {
@@ -324,6 +326,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     ExtensionsInitializer.initialize();
 
     myCallback = callback;
+    myModalityState = ModalityState.current();
 
     final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
     final VirtualFile selectFile = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
