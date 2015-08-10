@@ -18,7 +18,6 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
@@ -110,11 +109,11 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
+  public void fastenBelt() {
     if (getStubId() != -1) {
       switchToTree();
     }
-    super.fastenBelt(offset, cachedRangeMarker);
+    super.fastenBelt();
   }
 
   private void switchToTree() {

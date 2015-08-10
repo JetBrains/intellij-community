@@ -28,8 +28,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Segment;
@@ -670,35 +668,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals(pointer1, pointer2);
     assertEquals(pointer1.getRange(), pointer2.getRange());
     assertNotNull(node);
-  }
-
-  public void testSmartPointersForOpenFilesAreFastened() {
-    PsiJavaFile file = (PsiJavaFile)myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject())).getContainingFile();
-
-    SmartPointerManagerImpl manager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
-    VirtualFile virtualFile = file.getVirtualFile();
-
-    assertFalse(manager.areBeltsFastened(virtualFile));
-    FileEditor[] editors = FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
-    assertTrue(editors.length != 0);
-
-    assertTrue(manager.areBeltsFastened(virtualFile));
-
-    FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-    assertFalse(manager.areBeltsFastened(virtualFile));
-
-    SmartPsiElementPointer<PsiClass> pointer = manager.createSmartPsiElementPointer(file.getClasses()[0]);
-
-    assertFalse(manager.areBeltsFastened(virtualFile));
-    editors = FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
-    assertTrue(editors.length != 0);
-
-    assertTrue(manager.areBeltsFastened(virtualFile));
-
-    FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-    assertFalse(manager.areBeltsFastened(virtualFile));
-
-    assertEquals(file.getClasses()[0], pointer.getElement()); // retain pointer from gc
   }
 
   public void testLargeFileWithManyChanges() {
