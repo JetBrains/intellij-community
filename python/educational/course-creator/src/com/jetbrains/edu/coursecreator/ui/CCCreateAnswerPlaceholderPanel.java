@@ -16,6 +16,8 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
     enableHint(false);
+    myHintText.setLineWrap(true);
+    myHintText.setWrapStyleWord(true);
     myCreateHintCheckBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
