@@ -64,8 +64,7 @@ import java.util.Set;
  */
 public class ITNProxy {
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
-  private static final String NEW_THREAD_POST_URL_SECURE = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
-  private static final String NEW_THREAD_POST_URL = "http://ea-report.jetbrains.com/trackerRpc/idea/createScr";
+  private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
   private static final String ENCODING = "UTF8";
 
   public static void sendError(Project project,
@@ -111,8 +110,7 @@ public class ITNProxy {
     }
 
     Map<String, String> params = createParameters(login, password, error);
-    String newThreadPostUrl = NetUtils.isSniEnabled() ? NEW_THREAD_POST_URL_SECURE : NEW_THREAD_POST_URL;
-    HttpURLConnection connection = post(new URL(newThreadPostUrl), join(params));
+    HttpURLConnection connection = post(new URL(NEW_THREAD_POST_URL), join(params));
     int responseCode = connection.getResponseCode();
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode));
