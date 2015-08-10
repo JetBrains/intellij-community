@@ -90,8 +90,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
 
-    assertEquals("b", left);
-    assertEquals("bc", right);
+    assertContent("b", left);
+    assertContent("bc", right);
   }
 
   public void testDiffContentsAndTitleForCurrentRevision() throws IOException {
@@ -101,7 +101,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
 
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
 
-    assertEquals("bcd", right);
+    assertContent("bcd", right);
     assertTrue(right instanceof DocumentFragmentContent);
   }
 
@@ -114,8 +114,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
 
     initModelOnSecondLineAndSelectRevisions(3, 3);
 
-    assertEquals("b", dm.getLeftDiffContent(new NullRevisionsProgress()));
-    assertEquals("bcd", dm.getRightDiffContent(new NullRevisionsProgress()));
+    assertContent("b", dm.getLeftDiffContent(new NullRevisionsProgress()));
+    assertContent("bcd", dm.getRightDiffContent(new NullRevisionsProgress()));
   }
 
   public void testRevert() throws IOException {

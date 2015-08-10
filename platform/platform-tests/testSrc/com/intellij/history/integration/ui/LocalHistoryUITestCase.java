@@ -23,7 +23,7 @@ import com.intellij.testFramework.SkipInHeadlessEnvironment;
 
 @SkipInHeadlessEnvironment
 public abstract class LocalHistoryUITestCase extends IntegrationTestCase {
-  protected void assertEquals(String expected, DiffContent actual) {
+  protected void assertContent(String expected, DiffContent actual) {
     actual.onAssigned(true);
     try {
       assertEquals(expected, ((DocumentContent)actual).getDocument().getText());
