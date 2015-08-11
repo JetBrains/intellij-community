@@ -243,8 +243,8 @@ public class Switcher extends AnAction implements DumbAware {
       myPinned = pinned;
       mySpeedSearch = pinned ? new SwitcherSpeedSearch() : null;
 
-      setFocusable(true);
-      addKeyListener(this);
+      //setFocusable(true);
+      //addKeyListener(this);
       setBorder(JBUI.Borders.empty());
       setBackground(JBColor.background());
       pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
@@ -541,7 +541,7 @@ public class Switcher extends AnAction implements DumbAware {
       ALT_KEY = isAlt ? VK_CONTROL : VK_ALT;
       CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
 
-      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
         .setResizable(pinned)
         .setModalContext(false)
         .setFocusable(true)
@@ -663,7 +663,7 @@ public class Switcher extends AnAction implements DumbAware {
             goBack();
           }
           else {
-            getSelectedList().processKeyEvent(e);
+            //getSelectedList().processKeyEvent(e);
           }
           break;
         case VK_DOWN:
@@ -671,7 +671,7 @@ public class Switcher extends AnAction implements DumbAware {
             goForward();
           }
           else {
-            getSelectedList().processKeyEvent(e);
+            //getSelectedList().processKeyEvent(e);
           }
           break;
         case VK_ESCAPE:
@@ -820,6 +820,7 @@ public class Switcher extends AnAction implements DumbAware {
           files.setSelectedIndex(index);
           files.ensureIndexIsVisible(index);
           toolWindows.getSelectionModel().clearSelection();
+          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true);
         }
       }
     }
@@ -836,12 +837,14 @@ public class Switcher extends AnAction implements DumbAware {
         if (toolWindows.getModel().getSize() > 0) {
           toolWindows.setSelectedIndex(Math.min(files.getSelectedIndex(), toolWindows.getModel().getSize() - 1));
           files.getSelectionModel().clearSelection();
+          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true);
         }
       }
     }
 
     public void goForward() {
-      JList list = getSelectedList();
+      JBList selected = getSelectedList();
+      JBList list = selected;
       int index = list.getSelectedIndex() + 1;
       if (index >= list.getModel().getSize()) {
         index = 0;
@@ -851,10 +854,14 @@ public class Switcher extends AnAction implements DumbAware {
       }
       list.setSelectedIndex(index);
       list.ensureIndexIsVisible(index);
+      if (selected != list) {
+        IdeFocusManager.findInstanceByComponent(list).requestFocus(list, true);
+      }
     }
 
     public void goBack() {
-      JList list = getSelectedList();
+      JBList selected = getSelectedList();
+      JList list = selected;
       int index = list.getSelectedIndex() - 1;
       if (index < 0) {
         if (isFilesVisible()) {
@@ -864,6 +871,9 @@ public class Switcher extends AnAction implements DumbAware {
       }
       list.setSelectedIndex(index);
       list.ensureIndexIsVisible(index);
+      if (selected != list) {
+        IdeFocusManager.findInstanceByComponent(list).requestFocus(list, true);
+      }
     }
 
     @Nullable
@@ -873,23 +883,24 @@ public class Switcher extends AnAction implements DumbAware {
 
     @Nullable
     MyList getSelectedList(@Nullable MyList preferable) {
-      if (toolWindows.isSelectionEmpty() && files.isSelectionEmpty()) {
-        if (preferable != null && preferable.getModel().getSize() > 0) {
-          preferable.setSelectedIndex(0);
-          return preferable;
-        }
-        else if (files.getModel().getSize() > 0) {
-          files.setSelectedIndex(0);
-          return files;
-        }
-        else {
-          toolWindows.setSelectedIndex(0);
-          return toolWindows;
-        }
-      }
-      else {
-        return toolWindows.isSelectionEmpty() ? files : toolWindows;
-      }
+      return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
+      //if (toolWindows.isSelectionEmpty() && files.isSelectionEmpty()) {
+      //  if (preferable != null && preferable.getModel().getSize() > 0) {
+      //    preferable.setSelectedIndex(0);
+      //    return preferable;
+      //  }
+      //  else if (files.getModel().getSize() > 0) {
+      //    files.setSelectedIndex(0);
+      //    return files;
+      //  }
+      //  else {
+      //    toolWindows.setSelectedIndex(0);
+      //    return toolWindows;
+      //  }
+      //}
+      //else {
+      //  return toolWindows.isSelectionEmpty() ? files : toolWindows;
+      //}
     }
 
     void navigate(final boolean openInNewWindow) {
@@ -1095,10 +1106,12 @@ public class Switcher extends AnAction implements DumbAware {
         if (element instanceof FileInfo) {
           if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
           files.setSelectedValue(element, false);
+          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true);
         }
         else {
           if (!files.isSelectionEmpty()) files.clearSelection();
           toolWindows.setSelectedValue(element, false);
+          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true);
         }
       }
 
