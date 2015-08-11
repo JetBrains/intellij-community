@@ -326,8 +326,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Characters that excluded from zero-latency painting after document update
   private static final Set<Character> DOCUMENT_CHARS_TO_SKIP = new HashSet<Character>(Arrays.asList(')', ']', '}', '"', '\''));
 
-  private Rectangle myOldArea;
-  private Rectangle myOldTailArea;
+  private Rectangle myOldArea = new Rectangle(0, 0, 0, 0);
+  private Rectangle myOldTailArea = new Rectangle(0, 0, 0, 0);
   private boolean myEventPaintedAsChar;
 
   static {
@@ -2150,11 +2150,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            !KEY_CHARS_TO_SKIP.contains(c);
   }
 
-  // Called to display a single character insertion before starting a write action.
+  // Called to display a single character insertion before starting a write action and the general painting routine.
   // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
   // TODO Should be replaced with the generic paintImmediately(event) call when we implement typing without starting write actions.
   private void paintImmediately(int offset, char c) {
     Graphics g = myEditorComponent.getGraphics();
+
+    if (g == null) return; // editor component is currently not displayable
 
     TextAttributes attributes = ((LexerEditorHighlighter)myHighlighter).getAttributes((DocumentImpl)myDocument, offset, c);
 
@@ -2186,13 +2188,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     print(g, newText, point, ascent, font, color);
   }
 
-  private static boolean canPaintImmediately(DocumentEvent e) {
+  private static boolean canPaintImmediately(@NotNull DocumentEvent e) {
     return !contains(e.getOldFragment(), '\n') &&
            !contains(e.getNewFragment(), '\n') &&
            !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
   }
 
-  private static boolean contains(CharSequence chars, char c) {
+  private static boolean contains(@NotNull CharSequence chars, char c) {
     for (int i = 0; i < chars.length(); i++) {
       if (chars.charAt(i) == c) {
         return true;
@@ -2201,16 +2203,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return false;
   }
 
-  // Called to display insertion / deletion / replacement within a single line before the general paint routine.
+  // Called to display insertion / deletion / replacement within a single line before the general painting routine.
   // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
-  private void paintImmediately(DocumentEvent e) {
+  private void paintImmediately(@NotNull DocumentEvent e) {
+    Graphics g = myEditorComponent.getGraphics();
+
+    if (g == null) return; // editor component is currently not displayable
+
     int offset = e.getOffset();
     String newText = e.getNewFragment().toString();
     Rectangle newArea = lineRectangleBetween(offset, offset + newText.length());
     int delta = newArea.width - myOldArea.width;
     Color lineColor = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
-
-    Graphics g = myEditorComponent.getGraphics();
 
     if (delta != 0) {
       shift(g, myOldTailArea, delta);
@@ -2251,16 +2255,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myScheme.getFont(EditorFontType.values()[fontType]);
   }
 
-  private static void shift(Graphics g, Rectangle r, int delta) {
+  private static void shift(@NotNull Graphics g, @NotNull Rectangle r, int delta) {
     g.copyArea(r.x, r.y, r.width, r.height, delta, 0);
   }
 
-  private static void fill(Graphics g, Rectangle r, Color color) {
+  private static void fill(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Color color) {
     g.setColor(color);
     g.fillRect(r.x, r.y, r.width, r.height);
   }
 
-  private static void print(Graphics g, String text, Point point, int ascent, Font font, Color color) {
+  private static void print(@NotNull Graphics g, @NotNull String text, @NotNull Point point,
+                            int ascent, @NotNull Font font, @NotNull Color color) {
     g.setFont(font);
     g.setColor(color);
     g.drawString(text, point.x, point.y + ascent);
