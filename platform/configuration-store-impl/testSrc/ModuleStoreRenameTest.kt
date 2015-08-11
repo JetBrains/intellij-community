@@ -34,7 +34,7 @@ import java.io.File
 import java.util.UUID
 import kotlin.properties.Delegates
 
-class ModuleStoreTest {
+class ModuleStoreRenameTest {
   var moduleFixture: ModuleFixture by Delegates.notNull()
   val module by Delegates.lazy { moduleFixture.getModule() }
 
