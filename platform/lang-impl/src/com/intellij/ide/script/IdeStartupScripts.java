@@ -52,7 +52,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class IdeStartupScripts extends ApplicationComponent.Adapter {
   @SuppressWarnings("FieldCanBeLocal")
   private static String SCRIPT_DIR_NAME = "startup";
-  private static String README_FILE_NAME = "readme.txt";
 
   private static Logger LOG = Logger.getInstance(IdeStartupScripts.class);
 
@@ -178,7 +177,7 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
       private final ExtensionsRootType myExtensionsRootType = ExtensionsRootType.getInstance();
       @Override
       public boolean value(VirtualFile file) {
-        return !file.isDirectory() && !myExtensionsRootType.isBackupFile(file) && !README_FILE_NAME.equals(file.getName());
+        return !file.isDirectory() && !myExtensionsRootType.isBackupFile(file);
       }
     });
 
