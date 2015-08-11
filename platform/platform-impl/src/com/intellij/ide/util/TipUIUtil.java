@@ -20,10 +20,12 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -33,7 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,8 @@ import java.net.URL;
  * @author Konstantin Bulenkov
  */
 public class TipUIUtil {
-  @NonNls private static final String SHORTCUT_ENTITY = "&shortcut:";
+  private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
+  private static final String SHORTCUT_ENTITY = "&shortcut:";
 
   private TipUIUtil() {
   }
@@ -101,6 +103,14 @@ public class TipUIUtil {
       replaced = replaced.replace("&settingsPath;", CommonBundle.settingsActionPath());
       if (UIUtil.isUnderDarcula()) {
         replaced = replaced.replace("css/tips.css", "css/tips_darcula.css");
+      }
+      if (browser.getUI() == null) {
+        browser.updateUI();
+        boolean succeed = browser.getUI() != null;
+        String message = "reinit JEditorPane.ui: " + (succeed ? "OK" : "FAIL") +
+                         ", laf=" + LafManager.getInstance().getCurrentLookAndFeel();
+        if (succeed) LOG.warn(message);
+        else LOG.error(message);
       }
       browser.read(new StringReader(replaced), url);
     }
