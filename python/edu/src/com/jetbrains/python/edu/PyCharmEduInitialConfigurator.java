@@ -72,6 +72,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -227,55 +228,52 @@ public class PyCharmEduInitialConfigurator {
     for (int i = 0; i < mainMenu.getChildCount(); i++) {
       final DefaultMutableTreeNode menuItem = (DefaultMutableTreeNode)mainMenu.getChildAt(i);
       if ("File".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"ExportToHTML", "SaveAll", "Export/Import Actions", "Synchronize", "ChangeFileEncodingAction",
-          "Line Separators", "ToggleReadOnlyAttribute"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
+        final HashSet<String> fileItems = ContainerUtil.newHashSet("TemplateProjectProperties", "ExportToHTML", "SaveAll",
+                                                                   "Export/Import Actions", "Add to Favorites", "Synchronize",
+                                                                   "ChangeFileEncodingAction", "Line Separators", "ToggleReadOnlyAttribute");
+        hideActions(schema, root, menuItem, fileItems);
       }
+
       else if ("Edit".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"CopyAsPlainText", "CopyAsReachText", "CopyReference", "EditorPasteSimple", "Macros", "EditorToggleCase",
-          "TemplateParametersNavigation", "EscapeEntities"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
+        final HashSet<String>
+          editItems = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsReachText", "CopyReference", "EditorPasteSimple", "Macros",
+                                               "EditorToggleCase", "EditorJoinLines", "FillParagraph", "Convert Indents",
+                                               "TemplateParametersNavigation", "EscapeEntities");
+        hideActions(schema, root, menuItem, editItems);
       }
       else if ("View".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo", "ShowErrorDescription",
-          "RecentChanges", "CompareActions", "QuickChangeScheme"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
+        final HashSet<String>
+          viewItems = ContainerUtil.newHashSet("QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo", "ShowErrorDescription",
+                                               "RecentChanges", "CompareActions", "QuickChangeScheme");
+        hideActions(schema, root, menuItem, viewItems);
       }
       else if ("Navigate".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"GotoCustomRegion", "JumpToLastChange", "JumpToNextChange", "SelectIn", "GotoTypeDeclaration",
-        "GotoTest", "GotoRelated", "ShowFilePath", "Hierarchy Actions", "Goto Error/Bookmark Actions", "GoToEditPointGroup",
-          "Change Navigation Actions", "Method Navigation Actions"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
+        final HashSet<String>
+          navigateItems = ContainerUtil.newHashSet("GotoCustomRegion", "JumpToLastChange", "JumpToNextChange", "SelectIn", "GotoTypeDeclaration",
+                                                   "GotoTest", "GotoRelated", "ShowFilePath", "Hierarchy Actions", "Bookmarks",
+                                                   "Goto Error/Bookmark Actions","GoToEditPointGroup","Change Navigation Actions",
+                                                   "Method Navigation Actions");
+        hideActions(schema, root, menuItem, navigateItems);
       }
     }
 
-    final String[] menuItems = {"Tools", "VCS", "Refactor", "Code", "Window", "Run"};
-    for (String item : menuItems) {
-      hideAction(schema, root, mainMenu, item);
-    }
+    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Code", "Window", "Run");
+    hideActions(schema, root, mainMenu, menuItems);
   }
 
-  private static void hideAction(@NotNull final CustomActionsSchema schema, @NotNull final DefaultMutableTreeNode root,
-                                 @NotNull final TreeNode actionGroup, @NotNull final String actionId) {
+  private static void hideActions(@NotNull CustomActionsSchema schema, @NotNull DefaultMutableTreeNode root,
+                                  @NotNull final TreeNode actionGroup, Set<String> items) {
     for(int i = 0; i < actionGroup.getChildCount(); i++){
       final DefaultMutableTreeNode child = (DefaultMutableTreeNode)actionGroup.getChildAt(i);
       final int childCount = child.getChildCount();
-      if (childCount > 0) {
-        hideAction(schema, child, child, actionId);
-      }
       final String childId = getItemId(child);
-      if (childId != null && childId.equals(actionId)){
+      if (childId != null && items.contains(childId)){
         final TreePath treePath = TreeUtil.getPath(root, child);
         final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
         schema.addAction(url);
+      }
+      else if (childCount > 0) {
+        hideActions(schema, child, child, items);
       }
     }
   }
