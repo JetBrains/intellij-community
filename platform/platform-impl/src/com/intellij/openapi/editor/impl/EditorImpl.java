@@ -2170,7 +2170,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       tailArea.width += EditorUtil.getSpaceWidth(fontType, this); // include caret
     }
 
-    Color lineColor = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
+    Color lineColor = getCaretRowBackground();
 
     Rectangle newArea = lineRectangleBetween(offset, offset);
     newArea.width += charWidth;
@@ -2214,7 +2214,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     String newText = e.getNewFragment().toString();
     Rectangle newArea = lineRectangleBetween(offset, offset + newText.length());
     int delta = newArea.width - myOldArea.width;
-    Color lineColor = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
+    Color lineColor = getCaretRowBackground();
 
     if (delta != 0) {
       shift(g, myOldTailArea, delta);
@@ -2248,6 +2248,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point p2 = offsetToXY(end, false);
     LOG.assertTrue(p1.y == p2.y);
     return new Rectangle(p1.x, p1.y, p2.x - p1.x, getLineHeight());
+  }
+
+  @NotNull
+  private Color getCaretRowBackground() {
+    Color color = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
+    return color == null ? myScheme.getDefaultBackground() : color;
   }
 
   @NotNull
