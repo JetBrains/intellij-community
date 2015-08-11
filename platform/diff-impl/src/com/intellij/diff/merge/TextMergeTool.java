@@ -59,7 +59,6 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
@@ -219,7 +218,8 @@ public class TextMergeTool implements MergeTool {
 
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
-        DiffUtil.registerAction(new RevertSelectedChangesAction(true), myPanel);
+        DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.LEFT, true), myPanel);
+        DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.RIGHT, true), myPanel);
       }
 
       @Override
@@ -262,7 +262,8 @@ public class TextMergeTool implements MergeTool {
 
         group.add(new ApplySelectedChangesAction(Side.LEFT, false));
         group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
-        group.add(new RevertSelectedChangesAction(false));
+        group.add(new IgnoreSelectedChangesAction(Side.LEFT, false));
+        group.add(new IgnoreSelectedChangesAction(Side.RIGHT, false));
         group.add(Separator.getInstance());
 
         group.addAll(super.createEditorPopupActions());
@@ -752,7 +753,7 @@ public class TextMergeTool implements MergeTool {
       }
 
       @CalledInAwt
-      public void markResolved(@NotNull TextMergeChange change) {
+      public void markChangeResolved(@NotNull TextMergeChange change) {
         if (change.isResolved()) return;
         change.setResolved(Side.LEFT, true);
         change.setResolved(Side.RIGHT, true);
@@ -762,7 +763,7 @@ public class TextMergeTool implements MergeTool {
       }
 
       @CalledInAwt
-      public void markResolved(@NotNull TextMergeChange change, @NotNull Side side) {
+      public void markChangeResolved(@NotNull TextMergeChange change, @NotNull Side side) {
         if (change.isResolved(side)) return;
         change.setResolved(side, true);
 
@@ -770,12 +771,21 @@ public class TextMergeTool implements MergeTool {
         reinstallHighlighter(change);
       }
 
+      public void ignoreChange(@NotNull TextMergeChange change, @NotNull Side side, boolean modifier) {
+        if (!change.isConflict() || modifier) {
+          markChangeResolved(change);
+        }
+        else {
+          markChangeResolved(change, side);
+        }
+      }
+
       @CalledWithWriteLock
-      public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side) {
+      public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side, boolean modifier) {
         LOG.assertTrue(myCurrentMergeCommand != null);
         if (change.isResolved(side)) return;
         if (!change.isChange(side)) {
-          markResolved(change);
+          markChangeResolved(change);
           return;
         }
 
@@ -791,7 +801,7 @@ public class TextMergeTool implements MergeTool {
         enterBulkChangeUpdateBlock();
         try {
           if (change.isConflict()) {
-            boolean append = change.isResolved(side.other());
+            boolean append = change.isOnesideAppliedConflict();
             int actualOutputStartLine = append ? outputEndLine : outputStartLine;
 
             DiffUtil.applyModification(getContent(outputSide).getDocument(), actualOutputStartLine, outputEndLine,
@@ -802,10 +812,11 @@ public class TextMergeTool implements MergeTool {
               moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
             }
 
-            if (change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
-              markResolved(change);
+            if (modifier || change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
+              markChangeResolved(change);
             } else {
-              markResolved(change, side);
+              change.markOnesideAppliedConflict();
+              markChangeResolved(change, side);
             }
           }
           else {
@@ -817,7 +828,7 @@ public class TextMergeTool implements MergeTool {
               moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
             }
 
-            markResolved(change);
+            markChangeResolved(change);
           }
         }
         finally {
@@ -1016,26 +1027,30 @@ public class TextMergeTool implements MergeTool {
         protected abstract void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes);
       }
 
-      private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
-        public RevertSelectedChangesAction(boolean shortcut) {
+      private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
+        @NotNull private final Side mySide;
+
+        public IgnoreSelectedChangesAction(@NotNull Side side, boolean shortcut) {
           super(shortcut);
-          EmptyAction.setupAction(this, "Diff.IgnoreChange", null);
+          mySide = side;
+          EmptyAction.setupAction(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"), null);
         }
 
         @Override
         protected boolean isVisible(@NotNull ThreeSide side) {
-          return true;
+          if (side == ThreeSide.BASE) return true;
+          return side == mySide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         }
 
         @Override
         protected boolean isEnabled(@NotNull TextMergeChange change) {
-          return !change.isResolved();
+          return !change.isResolved(mySide);
         }
 
         @Override
         protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
           for (TextMergeChange change : changes) {
-            markResolved(change);
+            ignoreChange(change, mySide, false);
           }
         }
       }
@@ -1063,7 +1078,7 @@ public class TextMergeTool implements MergeTool {
         @Override
         protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
           for (int i = changes.size() - 1; i >= 0; i--) {
-            replaceChange(changes.get(i), mySide);
+            replaceChange(changes.get(i), mySide, false);
           }
         }
       }
@@ -1107,7 +1122,7 @@ public class TextMergeTool implements MergeTool {
             if (change.isConflict()) continue;
             if (change.isResolved()) continue;
             Side masterSide = change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
-            replaceChange(change, masterSide);
+            replaceChange(change, masterSide, false);
           }
         }
 
@@ -1134,7 +1149,7 @@ public class TextMergeTool implements MergeTool {
             if (change.isConflict()) continue;
             if (change.isResolved(mySide)) continue;
             if (!change.isChange(mySide)) continue;
-            replaceChange(change, mySide);
+            replaceChange(change, mySide, false);
           }
         }
 

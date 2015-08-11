@@ -46,9 +46,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
-  private int[] myStartLines = new int[3];
-  private int[] myEndLines = new int[3];
+  private final int[] myStartLines = new int[3];
+  private final int[] myEndLines = new int[3];
   private final boolean[] myResolved = new boolean[2];
+  private boolean myOnesideAppliedConflict;
 
   @CalledInAwt
   public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeTool.TextMergeViewer viewer) {
@@ -144,6 +145,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return side.select(myResolved);
   }
 
+  public boolean isOnesideAppliedConflict() {
+    return myOnesideAppliedConflict;
+  }
+
+  public void markOnesideAppliedConflict() {
+    myOnesideAppliedConflict = true;
+  }
+
   public boolean isResolved(@NotNull ThreeSide side) {
     switch (side) {
       case LEFT:
@@ -190,7 +199,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     if (newRange.startLine == newRange.endLine && getDiffType() == TextDiffType.DELETED && !isResolved()) {
       if (oldState == null) oldState = storeState();
-      myViewer.markResolved(this);
+      myViewer.markChangeResolved(this);
     }
 
     setStartLine(ThreeSide.BASE, newRange.startLine);
@@ -204,13 +213,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   private void doInstallActionHighlighters() {
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.BASE));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT));
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.APPLY));
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.IGNORE));
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.APPLY));
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.IGNORE));
   }
 
   @Nullable
-  private MyGutterOperation createOperation(@NotNull ThreeSide side) {
+  private MyGutterOperation createOperation(@NotNull ThreeSide side, @NotNull OperationType type) {
     if (isResolved(side)) return null;
 
     EditorEx editor = myViewer.getEditor(side);
@@ -223,7 +233,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
                                                                                HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                                null,
                                                                                HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter);
+    return new MyGutterOperation(side, highlighter, type);
   }
 
   public void updateGutterActions(boolean force) {
@@ -235,13 +245,15 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private class MyGutterOperation {
     @NotNull private final ThreeSide mySide;
     @NotNull private final RangeHighlighter myHighlighter;
+    @NotNull private final OperationType myType;
 
     private boolean myCtrlPressed;
     private boolean myShiftPressed;
 
-    private MyGutterOperation(@NotNull ThreeSide side, @NotNull RangeHighlighter highlighter) {
+    private MyGutterOperation(@NotNull ThreeSide side, @NotNull RangeHighlighter highlighter, @NotNull OperationType type) {
       mySide = side;
       myHighlighter = highlighter;
+      myType = type;
 
       update(true);
     }
@@ -264,35 +276,37 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     @Nullable
     public GutterIconRenderer createRenderer() {
+      if (mySide == ThreeSide.BASE) return null;
+      Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
+      assert versionSide != null;
+
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
       myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
-      if (mySide == ThreeSide.BASE) {
-        return createRevertRenderer();
-      }
-      else {
-        Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
-        assert versionSide != null;
+      if (!isChange(versionSide)) return null;
 
-        if (!isChange(versionSide)) return null;
-
-        if (myShiftPressed) {
-          return createRevertRenderer();
-        }
-        return createApplyRenderer(versionSide);
+      switch (myType) {
+        case APPLY:
+          return createApplyRenderer(versionSide, myCtrlPressed);
+        case IGNORE:
+          return createIgnoreRenderer(versionSide, myCtrlPressed);
+        default:
+          throw new IllegalArgumentException(myType.name());
       }
     }
   }
 
   @Nullable
-  private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), AllIcons.Diff.Arrow, new Runnable() {
+  private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
+    if (isResolved(side)) return null;
+    Icon icon = isOnesideAppliedConflict() ? AllIcons.Diff.ArrowLeftDown : AllIcons.Diff.Arrow;
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, new Runnable() {
       @Override
       public void run() {
         myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
-            myViewer.replaceChange(TextMergeChange.this, side);
+            myViewer.replaceChange(TextMergeChange.this, side, modifier);
           }
         });
       }
@@ -300,14 +314,15 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @Nullable
-  private GutterIconRenderer createRevertRenderer() {
+  private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
+    if (isResolved(side)) return null;
     return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, new Runnable() {
       @Override
       public void run() {
         myViewer.executeMergeCommand(null, Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
-            myViewer.markResolved(TextMergeChange.this);
+            myViewer.ignoreChange(TextMergeChange.this, side, modifier);
           }
         });
       }
@@ -363,6 +378,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     };
   }
 
+  private enum OperationType {
+    APPLY, IGNORE
+  }
+
   //
   // State
   //
@@ -379,8 +398,9 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myEndLines[2],
 
       myResolved[0],
-      myResolved[1]
-    );
+      myResolved[1],
+
+      myOnesideAppliedConflict);
   }
 
   void restoreState(@NotNull State state) {
@@ -394,6 +414,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     myResolved[0] = state.myResolved1;
     myResolved[1] = state.myResolved2;
+
+    myOnesideAppliedConflict = state.myOnesideAppliedConflict;
   }
 
   public static class State {
@@ -408,6 +430,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     private final boolean myResolved1;
     private final boolean myResolved2;
 
+    private final boolean myOnesideAppliedConflict;
+
     public State(int startLine1,
                  int startLine2,
                  int startLine3,
@@ -415,7 +439,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
                  int endLine2,
                  int endLine3,
                  boolean resolved1,
-                 boolean resolved2) {
+                 boolean resolved2,
+                 boolean onesideAppliedConflict) {
       myStartLine1 = startLine1;
       myStartLine2 = startLine2;
       myStartLine3 = startLine3;
@@ -424,6 +449,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myEndLine3 = endLine3;
       myResolved1 = resolved1;
       myResolved2 = resolved2;
+      myOnesideAppliedConflict = onesideAppliedConflict;
     }
   }
 }
