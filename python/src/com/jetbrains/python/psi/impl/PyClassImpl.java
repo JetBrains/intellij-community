@@ -955,12 +955,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return true;
   }
 
-  public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited) {
+  public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited, @Nullable final TypeEvalContext context) {
     List<PyTargetExpression> methods = getClassAttributes();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
-      for (PyClass ancestor : getAncestorClasses(null)) {
-        if (!ancestor.visitClassAttributes(processor, false)) {
+      for (PyClass ancestor : getAncestorClasses(context)) {
+        // TODO: Why there is FALSE here? We support only one level of inheritance?
+        if (!ancestor.visitClassAttributes(processor, false, context)) {
           return false;
         }
       }
@@ -993,7 +994,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited) {
     final NameFinder<PyTargetExpression> processor = new NameFinder<PyTargetExpression>(name);
-    visitClassAttributes(processor, inherited);
+    visitClassAttributes(processor, inherited, null);
     return processor.getResult();
   }
 

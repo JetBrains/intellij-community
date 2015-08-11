@@ -160,7 +160,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   boolean visitMethods(Processor<PyFunction> processor, boolean inherited);
 
-  boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited);
+  boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited, TypeEvalContext context);
 
   /**
    * Effectively collects assignments inside the class body.
