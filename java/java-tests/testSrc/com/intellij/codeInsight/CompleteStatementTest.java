@@ -67,6 +67,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
     }
   }
 
+  public void testNoBlockReformat() { doTest(); }
+
   public void testCompleteCatchWithExpression() throws Exception { doTest(); }
 
   public void testCompleteCatchBody() throws Exception { doTest(); }
