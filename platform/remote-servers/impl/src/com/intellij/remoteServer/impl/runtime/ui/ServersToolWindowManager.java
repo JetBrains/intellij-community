@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ServersToolWindowManager extends AbstractProjectComponent {
 
-  private static final String WINDOW_ID = "Application Servers";
+  public static final String WINDOW_ID = "Application Servers";
 
   public ServersToolWindowManager(final Project project) {
     super(project);
