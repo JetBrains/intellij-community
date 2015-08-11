@@ -32,36 +32,36 @@ public class ServerDataManagerImpl : DataManagerImpl() {
     fun getInstance(): ServerDataManagerImpl {
       return DataManager.getInstance() as ServerDataManagerImpl
     }
+  }
 
-    private fun getDataWithPath(dataId: String, dataPath: Path, reactiveModel: ReactiveModel): Any? {
-      var path: Path = dataPath
-      while (true) {
-        val model: Model = path.getIn(reactiveModel.root) ?: break
-        val host = model.meta["host"]
-        if (host is DataProvider) {
-          val data = host.getData(dataId)
-          if (data != null) {
-            return data
-          }
+  private fun getDataWithPath(dataId: String, dataPath: Path, reactiveModel: ReactiveModel): Any? {
+    var path: Path = dataPath
+    while (true) {
+      val model: Model = path.getIn(reactiveModel.root) ?: break
+      val host = model.meta["host"]
+      if (host is DataProvider) {
+        val data = getDataFromProvider(host, dataId, null)
+        if (data != null) {
+          return data
         }
-        if (path.components.isEmpty()) {
-          break;
-        }
-        path = path.dropLast(1)
       }
-      return null
+      if (path.components.isEmpty()) {
+        break;
+      }
+      path = path.dropLast(1)
     }
+    return null
   }
 
   override fun getDataFromProvider(provider: DataProvider, dataId: String, alreadyComputedIds: MutableSet<String>?): Any? {
-    val data = provider.getData(dataId)
+    var data = provider.getData(dataId)
     if (data != null) return data
 
     var dataPath = extractPath(provider)
     if (dataPath is Path) {
-      return getDataWithPath(dataId, dataPath, ReactiveModel.current()!!)
+      data = getDataWithPath(dataId, dataPath, ReactiveModel.current()!!)
     }
-    return super.getDataFromProvider(provider, dataId, alreadyComputedIds)
+    return data ?: super.getDataFromProvider(provider, dataId, alreadyComputedIds)
   }
 
   private fun extractPath(provider: DataProvider): Any? {
@@ -74,7 +74,7 @@ public class ServerDataManagerImpl : DataManagerImpl() {
 
   public fun getDataContext(path: Path, model: ReactiveModel): DataContext = ModelDataContext(path, model)
 
-  class ModelDataContext(val path: Path, val model: ReactiveModel) : DataContext {
+  inner class ModelDataContext(val path: Path, val model: ReactiveModel) : DataContext {
     override fun getData(dataId: String?): Any? =
         if (dataId == null) null
         else getDataWithPath(dataId, path, model)

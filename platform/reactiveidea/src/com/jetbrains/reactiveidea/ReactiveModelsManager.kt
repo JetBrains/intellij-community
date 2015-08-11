@@ -67,7 +67,9 @@ public class ReactiveModelsManager() : ApplicationComponent {
           if (anAction != null) {
             val dataContext = ServerDataManagerImpl.getInstance().getDataContext(contextPath, reactiveModel)
             EdtInvocationManager.getInstance().invokeLater {
-              anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
+              val event = AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext)
+              event.setInjectedContext(anAction.isInInjectedContext())
+              anAction.actionPerformed(event)
             }
           } else {
             println("can't find idea action $args")
