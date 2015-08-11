@@ -32,6 +32,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -143,6 +145,8 @@ public class PyCharmEduInitialConfigurator {
       });
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
     }
+    final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    editorColorsScheme.setEditorFontSize(14);
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
 
