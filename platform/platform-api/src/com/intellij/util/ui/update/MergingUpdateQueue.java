@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,14 +109,15 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     Application app = ApplicationManager.getApplication();
     myPassThrough = app == null || app.isUnitTestMode();
     myExecuteInDispatchThread = thread == Alarm.ThreadToUse.SWING_THREAD;
+
+    if (parent != null) {
+      Disposer.register(parent, this);
+    }
+
     myWaiterForMerge = createAlarm(thread, myExecuteInDispatchThread ? null : this);
 
     if (isActive) {
       showNotify();
-    }
-
-    if (parent != null) {
-      Disposer.register(parent, this);
     }
 
     if (activationComponent != null) {
