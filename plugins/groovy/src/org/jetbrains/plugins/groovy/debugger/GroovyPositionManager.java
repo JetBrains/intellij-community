@@ -72,6 +72,7 @@ public class GroovyPositionManager implements PositionManager {
   @Override
   @NotNull
   public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+    checkGroovyFile(position);
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("locationsOfLine: " + type + "; " + position);

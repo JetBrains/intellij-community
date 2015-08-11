@@ -578,8 +578,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       PyResolveUtil.scopeCrawlUp(processor, owner, null, null);
     }
 
+    // This method is probably called for completion, so use appropriate context here
     // in a call, include function's arg names
-    KeywordArgumentCompletionUtil.collectFunctionArgNames(element, ret);
+    KeywordArgumentCompletionUtil.collectFunctionArgNames(element, ret, TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()));
 
     // include builtin names
     final PyFile builtinsFile = PyBuiltinCache.getInstance(element).getBuiltinsFile();

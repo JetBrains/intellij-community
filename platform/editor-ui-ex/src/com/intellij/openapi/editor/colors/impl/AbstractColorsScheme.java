@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
@@ -271,8 +272,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public void readExternal(Element parentNode) {
-    String blindness = Registry.stringValue("color.blindness"); // TODO: get blindness
-    myValueReader.setAttribute(blindness);
+    UISettings settings = UISettings.getInstance();
+    ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
+    myValueReader.setAttribute(blindness == null ? null : blindness.name());
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);
     }

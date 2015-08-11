@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -66,17 +68,21 @@ public class StudyProjectGenerator {
       new Runnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
             @Override
             public void run() {
-              course.initCourse(false);
-              final File courseDirectory = new File(ourCoursesDir, course.getName());
-              StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-              course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
-              VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-              StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
-              openFirstTask(course, project);
-
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  course.initCourse(false);
+                  final File courseDirectory = new File(ourCoursesDir, course.getName());
+                  StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+                  course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
+                  VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+                  StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
+                  openFirstTask(course, project);
+                }
+              });
             }
           });
         }

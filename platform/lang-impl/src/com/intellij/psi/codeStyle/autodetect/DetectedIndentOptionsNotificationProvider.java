@@ -116,12 +116,14 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()
         || ApplicationManager.getApplication().isUnitTestMode() && myShowNotificationInTest)
     {
-      FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(vFile);
+      Project project = file.getProject();
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+      FileEditor fileEditor = fileEditorManager.getSelectedEditor(vFile);
       if (fileEditor != null) {
         Boolean notifiedFlag = fileEditor.getUserData(NOTIFIED_FLAG);
         if (notifiedFlag == null || enforce) {
           fileEditor.putUserData(NOTIFIED_FLAG, Boolean.TRUE);
-          EditorNotifications.getInstance(file.getProject()).updateNotifications(vFile);
+          EditorNotifications.getInstance(project).updateNotifications(vFile);
         }
       }
     }
