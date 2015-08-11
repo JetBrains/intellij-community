@@ -24,7 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -35,6 +35,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.io.FileMatchers.anExistingFile
 import org.intellij.lang.annotations.Language
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -43,8 +44,9 @@ import java.io.InputStream
 import kotlin.properties.Delegates
 
 class ApplicationStoreTest {
-  private val fixtureManager = FixtureRule()
-  public Rule fun getFixtureManager(): FixtureRule = fixtureManager
+  companion object {
+    ClassRule val projectRule = ProjectRule()
+  }
 
   private val tempDirManager = TemporaryDirectory()
   public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
@@ -84,6 +86,7 @@ class ApplicationStoreTest {
   }
 
   public Test fun `remove deprecated storage on write`() {
+    doRemoveDeprecatedStorageOnWrite(SeveralStoragesConfigured())
   }
 
   public Test fun `remove deprecated storage on write 2`() {
@@ -91,9 +94,8 @@ class ApplicationStoreTest {
   }
 
   private fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
-    val oldFile = saveConfig("other.xml", "<application>" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"old\" />\n" + "  </component>\n" + "</application>")
-
-    saveConfig("proxy.settings.xml", "<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"new\" />\n" + "  </component>\n" + "</application>")
+    val oldFile = saveConfig("other.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"old\" /></component></application>")
+    saveConfig("proxy.settings.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"new\" /></component></application>")
 
     componentStore.initComponent(component, false)
     assertThat(component.foo, equalTo("new"))
@@ -172,7 +174,7 @@ class ApplicationStoreTest {
     }
   }
 
-  State(name = "HttpConfigurable", storages = arrayOf(Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true), Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")))
+  State(name = "HttpConfigurable", storages = arrayOf(Storage(file = "${StoragePathMacros.APP_CONFIG}/other.xml", deprecated = true), Storage(file = "${StoragePathMacros.APP_CONFIG}/proxy.settings.xml")))
   class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
     override fun getState() = this
 

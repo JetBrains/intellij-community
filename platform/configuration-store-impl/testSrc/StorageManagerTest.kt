@@ -16,29 +16,29 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.ProjectRule
 import junit.framework.TestCase
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.junit.Assert.assertThat
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 import kotlin.properties.Delegates
 
 class StorageManagerTest {
-  private val fixtureManager = FixtureRule()
-  public Rule fun getFixtureManager(): FixtureRule = fixtureManager
+  companion object {
+    val MACRO = "\$MACRO1$"
+
+    ClassRule val projectRule = ProjectRule()
+  }
 
   private val thrown = ExpectedException.none()
   public Rule fun getThrown(): ExpectedException = thrown
 
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
-
-  companion object {
-    val MACRO = "\$MACRO1$"
-  }
 
   public Before fun setUp() {
     storageManager = StateStorageManagerImpl("foo")

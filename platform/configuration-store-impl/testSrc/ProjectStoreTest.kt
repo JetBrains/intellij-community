@@ -25,7 +25,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
@@ -33,6 +33,7 @@ import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.io.FileMatchers.anExistingFile
 import org.intellij.lang.annotations.Language
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -65,10 +66,13 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
 }
 
 class ProjectStoreTest {
-  val tempDirManager = TemporaryDirectory()
-  val fixtureManager = FixtureRule()
+  companion object {
+    ClassRule val projectRule = ProjectRule()
+  }
 
-  private val ruleChain = RuleChain(tempDirManager, fixtureManager)
+  val tempDirManager = TemporaryDirectory()
+
+  private val ruleChain = RuleChain(tempDirManager)
 
   public Rule fun getChain(): RuleChain = ruleChain
 

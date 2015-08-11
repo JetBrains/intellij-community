@@ -9,25 +9,28 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.io.File
 
 class DefaultProjectStoreTest {
-  private val fixtureManager = FixtureRule()
+  companion object {
+    ClassRule val projectRule = ProjectRule()
+  }
+
   private val tempDirManager = TemporaryDirectory()
 
   private val requiredPlugins: List<ProjectExternalDependency> = listOf(DependencyOnPlugin("fake", "0", "1"))
 
   private val ruleChain = RuleChain(
     tempDirManager,
-    fixtureManager,
     object : ExternalResource() {
       private var isDoNotSave = false
 

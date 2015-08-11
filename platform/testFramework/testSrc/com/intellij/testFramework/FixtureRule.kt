@@ -15,7 +15,17 @@
  */
 package com.intellij.testFramework
 
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TestFixtureBuilder
@@ -25,9 +35,62 @@ import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import javax.swing.SwingUtilities
 import kotlin.properties.Delegates
+
+/**
+ * Project created on request, so, could be used as a bare (only application).
+ */
+public class ProjectRule() : ExternalResource() {
+  companion object {
+    init {
+      Logger.setFactory(javaClass<TestLoggerFactory>())
+    }
+
+    private var sharedProject: ProjectEx? = null
+
+    private fun createLightProject(): ProjectEx {
+      val projectFile = File("${FileUtilRt.generateRandomTemporaryPath().path}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
+
+      val buffer = ByteArrayOutputStream()
+      java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
+
+      val project = PlatformTestCase.createProject(projectFile, "Light project: $buffer") as ProjectEx
+      ProjectManagerEx.getInstanceEx().openTestProject(project)
+      // app will close and dispose all opened project on exit, so, we don't have to dispose it themselves
+      Disposer.register(project, Disposable {
+        FileUtil.delete(projectFile)
+      })
+      return project
+    }
+  }
+
+  override final fun before() {
+    IdeaTestApplication.getInstance()
+    // avoid stale data
+    (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
+    UsefulTestCase.replaceIdeEventQueueSafely()
+  }
+
+  public val project: ProjectEx
+    get() {
+      var result = sharedProject
+      if (result == null) {
+        synchronized(IdeaTestApplication.getInstance()) {
+          result = sharedProject
+          if (result == null) {
+            result = createLightProject()
+            sharedProject = result
+          }
+        }
+      }
+      return result!!
+    }
+}
 
 public open class FixtureRule() : ExternalResource() {
   companion object {

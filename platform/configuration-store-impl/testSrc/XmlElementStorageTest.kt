@@ -17,12 +17,12 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.util.JDOMBuilder.attr
 import com.intellij.openapi.util.JDOMBuilder.tag
-import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
 import org.jdom.Element
+import org.junit.Test
 
-class XmlElementStorageTest : LightPlatformTestCase() {
-  public fun testGetStateSucceeded() {
+class XmlElementStorageTest {
+  public Test fun testGetStateSucceeded() {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
     val state = storage.getState(this, "test", javaClass<Element>(), null)
     TestCase.assertNotNull(state)
@@ -30,13 +30,13 @@ class XmlElementStorageTest : LightPlatformTestCase() {
     TestCase.assertNotNull(state.getChild("foo"))
   }
 
-  public fun testGetStateNotSucceeded() {
+  public Test fun testGetStateNotSucceeded() {
     val storage = MyXmlElementStorage(tag("root"))
     val state = storage.getState(this, "test", javaClass<Element>(), null)
     TestCase.assertNull(state)
   }
 
-  public fun testSetStateOverridesOldState() {
+  public Test fun testSetStateOverridesOldState() {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
     val newState = tag("component", attr("name", "test"), tag("bar"))
     val externalizationSession = storage.startExternalization()!!
@@ -46,7 +46,6 @@ class XmlElementStorageTest : LightPlatformTestCase() {
     TestCase.assertNotNull(storage.mySavedElement!!.getChild("component").getChild("bar"))
     TestCase.assertNull(storage.mySavedElement!!.getChild("component").getChild("foo"))
   }
-
 
   private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root", null, null, null) {
     var mySavedElement: Element? = null

@@ -17,10 +17,10 @@ package com.intellij.openapi.application
 
 import javax.swing.SwingUtilities
 
-public inline fun runWriteAction(runnable: () -> Unit) {
+public inline fun <T> runWriteAction(runnable: () -> T): T {
   val token = WriteAction.start()
   try {
-    runnable()
+    return runnable()
   }
   finally {
     token.finish()
