@@ -77,7 +77,7 @@ public class ErrorMergeTool implements MergeTool {
     @Nullable
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
-      if (result != MergeResult.CANCEL) return null;
+      if (result == MergeResult.RESOLVED) return null;
 
       String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
       return new AbstractAction(caption) {
