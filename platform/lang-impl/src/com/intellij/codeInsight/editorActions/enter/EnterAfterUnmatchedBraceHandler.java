@@ -57,30 +57,16 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
                                 final EditorActionHandler originalHandler) {
 
     int caretOffset = caretOffsetRef.get();
-    int maxRBraceCount = getMaxRBraceCount(file, editor, caretOffset);
-    if (maxRBraceCount > 0 && insertRBraces(file, editor, caretOffset,
-                                            getRBraceOffset(file, editor, caretOffset),
-                                            adjustRBraceCountForPosition(editor, caretOffset, maxRBraceCount))) {
-      return Result.DefaultForceIndent;
-    }
-    return Result.Continue;
-  }
+    if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER) return Result.Continue;
 
-  /**
-   * Calculates the maximum number of '}' that can be inserted by handler.
-   * Can return <code>0</code> or less in custom implementation to skip '}' insertion in the <code>preprocessEnter</code> call
-   * and switch to default implementation.
-   *
-   * @param file        target PSI file
-   * @param editor      target editor
-   * @param caretOffset target caret offset
-   * @return maximum number of '}' that can be inserted by handler, <code>0</code> or less to switch to default implementation
-   */
-  protected int getMaxRBraceCount(@NotNull final PsiFile file, @NotNull final Editor editor, int caretOffset) {
-    if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER) {
-      return 0;
-    }
-    return Math.max(0, getUnmatchedLBracesNumberBefore(editor, caretOffset, file.getFileType()));
+    int maxRBraceCount = getUnmatchedLBracesNumberBefore(editor, caretOffset, file.getFileType());
+    if (maxRBraceCount <= 0) return Result.Continue;
+
+    insertRBraces(file, editor, caretOffset,
+                  getRBraceOffset(file, editor, caretOffset),
+                  adjustRBraceCountForPosition(editor, caretOffset, maxRBraceCount));
+
+    return Result.DefaultForceIndent;
   }
 
   /**
@@ -96,21 +82,26 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
 
     CharSequence text = editor.getDocument().getCharsSequence();
     int bracesToInsert = 0;
-    outer:
     for (int i = caretOffset - 1; i >= 0 && bracesToInsert < maxRBraceCount; --i) {
-      switch (text.charAt(i)) {
-        case ' ':
-        case '\n':
-        case '\t':
-          continue;
-        case '{':
-          bracesToInsert++;
-          break;
-        default:
-          break outer;
+      char c = text.charAt(i);
+      if (c == '{') {
+        bracesToInsert++;
+      }
+      else if (breakOn(c)) {
+        break;
       }
     }
     return Math.max(bracesToInsert, 1);
+  }
+
+  protected boolean breakOn(char ch) {
+    switch (ch) {
+      case ' ':
+      case '\n':
+      case '\t':
+        return false;
+    }
+    return true;
   }
 
   /**
@@ -142,11 +133,11 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param rBracesCount        count of '}' to insert
    * @return true for success
    */
-  protected boolean insertRBraces(@NotNull PsiFile file,
-                                  @NotNull Editor editor,
-                                  int caretOffset,
-                                  int rBracesInsertOffset,
-                                  int rBracesCount) {
+  protected void insertRBraces(@NotNull PsiFile file,
+                               @NotNull Editor editor,
+                               int caretOffset,
+                               int rBracesInsertOffset,
+                               int rBracesCount) {
     final Document document = editor.getDocument();
     document.insertString(rBracesInsertOffset, "\n" + StringUtil.repeatSymbol('}', rBracesCount));
     // We need to adjust indents of the text that will be moved, hence, need to insert preliminary line feed.
@@ -171,7 +162,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     boolean closingBraceIndentAdjusted;
     try {
       PsiDocumentManager.getInstance(project).commitDocument(document);
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(caretOffset, rBracesInsertOffset + 2));
+      doAlignt(file, caretOffset, rBracesInsertOffset, rBracesCount);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -202,7 +193,10 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
         document.insertString(rBracesInsertOffset + 1, buffer);
       }
     }
-    return true;
+  }
+
+  protected void doAlignt(@NotNull PsiFile file, int caretOffset, int rBracesInsertOffset, int rBracesCount) {
+    CodeStyleManager.getInstance(file.getProject()).adjustLineIndent(file, new TextRange(caretOffset, rBracesInsertOffset + 2));
   }
 
   /**
@@ -253,6 +247,10 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     if (element.getTextOffset() != offset) {
       return CharArrayUtil.shiftForwardUntil(text, offset, "\n");
     }
+    return doCalcOffset(element);
+  }
+
+  protected int doCalcOffset(PsiElement element) {
     return element.getTextRange().getEndOffset();
   }
 
