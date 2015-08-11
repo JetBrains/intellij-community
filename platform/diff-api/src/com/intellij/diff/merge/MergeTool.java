@@ -61,6 +61,6 @@ public interface MergeTool {
   class ToolbarComponents {
     @Nullable public List<AnAction> toolbarActions;
     @Nullable public JComponent statusPanel;
-    @Nullable public BooleanGetter closeHandler; // return false if there are unsaved changes
+    @Nullable public BooleanGetter closeHandler; // return false if merge window should be prevented from closing and canceling resolve.
   }
 }

@@ -29,9 +29,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -270,14 +268,9 @@ public abstract class MergeRequestProcessor implements Disposable {
     return myContext;
   }
 
+  @CalledInAwt
   public boolean checkCloseAction() {
-    if (!myConflictResolved && myCloseHandler != null && !myCloseHandler.get()) {
-      return Messages.showYesNoDialog(myPanel.getRootPane(),
-                                      DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                      DiffBundle.message("cancel.visual.merge.dialog.title"),
-                                      Messages.getQuestionIcon()) == Messages.YES;
-    }
-    return true;
+    return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
   }
 
   @Nullable

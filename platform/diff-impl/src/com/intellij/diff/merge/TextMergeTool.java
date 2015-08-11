@@ -164,7 +164,9 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return myViewer.isContentModified();
+          return Messages.showYesNoDialog(getComponent().getRootPane(),
+                                          DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
+                                          DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) == Messages.YES;
         }
       };
 
