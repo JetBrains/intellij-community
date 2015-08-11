@@ -842,15 +842,16 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
-    public void goForward() {
+    public void go(boolean forward) {
       JBList selected = getSelectedList();
-      JBList list = selected;
-      int index = list.getSelectedIndex() + 1;
-      if (index >= list.getModel().getSize()) {
-        index = 0;
+      JList list = selected;
+      int index = list.getSelectedIndex();
+      if (forward) index++; else index--;
+      if ((forward && index >= list.getModel().getSize()) || (!forward && index < 0)) {
         if (isFilesVisible()) {
           list = isFilesSelected() ? toolWindows : files;
         }
+        index = forward ? 0 : list.getModel().getSize() - 1;
       }
       list.setSelectedIndex(index);
       list.ensureIndexIsVisible(index);
@@ -859,21 +860,12 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
+    public void goForward() {
+      go(true);
+    }
+
     public void goBack() {
-      JBList selected = getSelectedList();
-      JList list = selected;
-      int index = list.getSelectedIndex() - 1;
-      if (index < 0) {
-        if (isFilesVisible()) {
-          list = isFilesSelected() ? toolWindows : files;
-        }
-        index = list.getModel().getSize() - 1;
-      }
-      list.setSelectedIndex(index);
-      list.ensureIndexIsVisible(index);
-      if (selected != list) {
-        IdeFocusManager.findInstanceByComponent(list).requestFocus(list, true);
-      }
+      go(false);
     }
 
     @Nullable
@@ -884,23 +876,6 @@ public class Switcher extends AnAction implements DumbAware {
     @Nullable
     MyList getSelectedList(@Nullable MyList preferable) {
       return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
-      //if (toolWindows.isSelectionEmpty() && files.isSelectionEmpty()) {
-      //  if (preferable != null && preferable.getModel().getSize() > 0) {
-      //    preferable.setSelectedIndex(0);
-      //    return preferable;
-      //  }
-      //  else if (files.getModel().getSize() > 0) {
-      //    files.setSelectedIndex(0);
-      //    return files;
-      //  }
-      //  else {
-      //    toolWindows.setSelectedIndex(0);
-      //    return toolWindows;
-      //  }
-      //}
-      //else {
-      //  return toolWindows.isSelectionEmpty() ? files : toolWindows;
-      //}
     }
 
     void navigate(final boolean openInNewWindow) {
