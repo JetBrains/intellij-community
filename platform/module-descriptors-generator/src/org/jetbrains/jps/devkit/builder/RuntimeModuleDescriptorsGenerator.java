@@ -36,7 +36,6 @@ import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.platform.loader.impl.ModuleDescriptorsGenerationRunner;
 import org.jetbrains.platform.loader.impl.repository.RepositoryConstants;
-import org.jetbrains.platform.loader.repository.RuntimeModuleDescriptor;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import javax.xml.stream.XMLStreamException;
@@ -62,27 +61,27 @@ public class RuntimeModuleDescriptorsGenerator {
   public void generateForProductionMode(File distRoot) {
     myMessageHandler.showProgressMessage("Generating runtime module descriptors for packaged distribution at '" + distRoot.getAbsolutePath() + "'");
     final List<IntellijJarInfo> jars = IntellijJarInfo.collectJarsFromDist(distRoot);
-    Map<RuntimeModuleId, RuntimeModuleDescriptor> includedModules = new LinkedHashMap<RuntimeModuleId, RuntimeModuleDescriptor>();
+    Map<RuntimeModuleId, RuntimeModuleDescriptorData> includedModules = new LinkedHashMap<RuntimeModuleId, RuntimeModuleDescriptorData>();
     Map<RuntimeModuleId, String> usedLibraryNames = new LinkedHashMap<RuntimeModuleId, String>();
     for (IntellijJarInfo jar : jars) {
-      for (RuntimeModuleDescriptor descriptor : jar.getIncludedModules()) {
+      for (RuntimeModuleDescriptorData descriptor : jar.getIncludedModules()) {
         includedModules.put(descriptor.getModuleId(), descriptor);
       }
       for (Map.Entry<RuntimeModuleId, RuntimeModuleId> entry : jar.getDependencies().entrySet()) {
         usedLibraryNames.put(entry.getKey(), "module '" + entry.getValue() + "' from JAR " + jar.getJarFile());
       }
     }
-    for (RuntimeModuleDescriptor includedModule : includedModules.values()) {
+    for (RuntimeModuleDescriptorData includedModule : includedModules.values()) {
       usedLibraryNames.remove(includedModule.getModuleId());
     }
 
     myMessageHandler.showProgressMessage(includedModules.size() + " modules found in IDE layout in " + distRoot);
     List<JpsLibrary> allLibraries = new ArrayList<JpsLibrary>(myProject.getLibraryCollection().getLibraries());
-    List<RuntimeModuleDescriptor> descriptorsToAdd = new ArrayList<RuntimeModuleDescriptor>();
+    List<RuntimeModuleDescriptorData> descriptorsToAdd = new ArrayList<RuntimeModuleDescriptorData>();
     List<JpsRuntimeResourceRoot> runtimeResourceRoots = new ArrayList<JpsRuntimeResourceRoot>();
     for (JpsModule module : myProject.getModules()) {
       for (boolean test : BOOLEANS) {
-        RuntimeModuleDescriptor descriptor = includedModules.remove(getRuntimeModuleName(module, test));
+        RuntimeModuleDescriptorData descriptor = includedModules.remove(getRuntimeModuleName(module, test));
         if (descriptor != null) {
           JpsRuntimeResourceRootsCollection roots = JpsRuntimeResourcesService.getInstance().getRoots(module);
           if (roots != null) {
@@ -122,8 +121,8 @@ public class RuntimeModuleDescriptorsGenerator {
     generateDescriptorsZip(new File(distRoot, RepositoryConstants.MODULE_DESCRIPTORS_DIR_NAME), descriptorsToAdd);
   }
 
-  private List<RuntimeModuleDescriptor> detectActualLocations(List<JpsRuntimeResourceRoot> roots, File distRoot) {
-    List<RuntimeModuleDescriptor> result = new ArrayList<RuntimeModuleDescriptor>();
+  private List<RuntimeModuleDescriptorData> detectActualLocations(List<JpsRuntimeResourceRoot> roots, File distRoot) {
+    List<RuntimeModuleDescriptorData> result = new ArrayList<RuntimeModuleDescriptorData>();
     try {
       String[] jarDirs = {"lib", "plugins"};
       Map<Bytes, File> actualLocations = new HashMap<Bytes, File>();
@@ -144,8 +143,9 @@ public class RuntimeModuleDescriptorsGenerator {
             .reportError("Cannot find actual location for " + file.getAbsolutePath() + " from '" + root.getName() + "' runtime resource");
         }
         else {
-          result.add(new LibraryDescriptor(RuntimeModuleId.moduleResource(root.getModule().getName(), root.getName()),
-                                           Collections.singletonList(actualFile)));
+          final RuntimeModuleId moduleId = RuntimeModuleId.moduleResource(root.getModule().getName(), root.getName());
+          final List<File> files = Collections.singletonList(actualFile);
+          result.add(new RuntimeModuleDescriptorData(moduleId, files));
         }
       }
     }
@@ -175,8 +175,8 @@ public class RuntimeModuleDescriptorsGenerator {
     }
   }
 
-  private List<RuntimeModuleDescriptor> detectActualLocations(Set<JpsLibrary> libraries, List<IntellijJarInfo> jars) {
-    List<RuntimeModuleDescriptor> descriptors = new ArrayList<RuntimeModuleDescriptor>();
+  private List<RuntimeModuleDescriptorData> detectActualLocations(Set<JpsLibrary> libraries, List<IntellijJarInfo> jars) {
+    List<RuntimeModuleDescriptorData> descriptors = new ArrayList<RuntimeModuleDescriptorData>();
     Map<Bytes, File> actualLocations = new HashMap<Bytes, File>();
     try {
       MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -208,7 +208,9 @@ public class RuntimeModuleDescriptorsGenerator {
             actualFiles.add(actual);
           }
         }
-        descriptors.add(new LibraryDescriptor(getLibraryId(library), actualFiles));
+        final RuntimeModuleId moduleId = getLibraryId(library);
+        final List<File> files = actualFiles;
+        descriptors.add(new RuntimeModuleDescriptorData(moduleId, files));
       }
     }
     catch (Exception e) {
@@ -353,8 +355,8 @@ public class RuntimeModuleDescriptorsGenerator {
     return JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly();
   }
 
-  private List<RuntimeModuleDescriptor> collectUsedLibrariesAndRuntimeResources() {
-    List<RuntimeModuleDescriptor> descriptors = new ArrayList<RuntimeModuleDescriptor>();
+  private List<RuntimeModuleDescriptorData> collectUsedLibrariesAndRuntimeResources() {
+    List<RuntimeModuleDescriptorData> descriptors = new ArrayList<RuntimeModuleDescriptorData>();
     Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
     for (JpsModule module : myProject.getModules()) {
       libraries.addAll(enumerateRuntimeDependencies(module).getLibraries());
@@ -363,7 +365,9 @@ public class RuntimeModuleDescriptorsGenerator {
       if (rootsCollection != null) {
         for (JpsRuntimeResourceRoot root : rootsCollection.getRoots()) {
           RuntimeModuleId id = RuntimeModuleId.moduleResource(module.getName(), root.getName());
-          descriptors.add(new LibraryDescriptor(id, Collections.singletonList(JpsPathUtil.urlToFile(root.getUrl()))));
+          final RuntimeModuleId moduleId = id;
+          final List<File> files = Collections.singletonList(JpsPathUtil.urlToFile(root.getUrl()));
+          descriptors.add(new RuntimeModuleDescriptorData(moduleId, files));
         }
       }
     }
@@ -375,7 +379,9 @@ public class RuntimeModuleDescriptorsGenerator {
     }
 
     for (JpsLibrary library : libraries) {
-      descriptors.add(new LibraryDescriptor(getLibraryId(library), library.getFiles(JpsOrderRootType.COMPILED)));
+      final RuntimeModuleId moduleId = getLibraryId(library);
+      final List<File> files = library.getFiles(JpsOrderRootType.COMPILED);
+      descriptors.add(new RuntimeModuleDescriptorData(moduleId, files));
     }
     return descriptors;
   }
@@ -418,7 +424,7 @@ public class RuntimeModuleDescriptorsGenerator {
     return RuntimeModuleId.projectLibrary(name);
   }
 
-  private void generateDescriptorsZip(File outputDir, List<RuntimeModuleDescriptor> descriptors) {
+  private void generateDescriptorsZip(File outputDir, List<RuntimeModuleDescriptorData> descriptors) {
     myMessageHandler.showProgressMessage("Generating " + RepositoryConstants.MODULES_ZIP_NAME + "...");
     long start = System.currentTimeMillis();
     File outputFile = new File(outputDir, RepositoryConstants.MODULES_ZIP_NAME);
@@ -426,7 +432,7 @@ public class RuntimeModuleDescriptorsGenerator {
     try {
       ZipOutputStream zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
       try {
-        for (RuntimeModuleDescriptor descriptor : descriptors) {
+        for (RuntimeModuleDescriptorData descriptor : descriptors) {
           String name = descriptor.getModuleId().getStringId();
           ZipEntry dirEntry = new ZipEntry(name + "/");
           dirEntry.setMethod(ZipEntry.STORED);
@@ -513,40 +519,6 @@ public class RuntimeModuleDescriptorsGenerator {
     }
     else {
       generator.generateForProductionMode(ideDist);
-    }
-  }
-
-  private static class LibraryDescriptor implements RuntimeModuleDescriptor {
-    private final List<File> myFiles;
-    private final RuntimeModuleId myModuleId;
-
-    public LibraryDescriptor(RuntimeModuleId moduleId, List<File> files) {
-      myModuleId = moduleId;
-      myFiles = files;
-    }
-
-    @NotNull
-    @Override
-    public RuntimeModuleId getModuleId() {
-      return myModuleId;
-    }
-
-    @NotNull
-    @Override
-    public List<RuntimeModuleId> getDependencies() {
-      return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public List<File> getModuleRoots() {
-      return myFiles;
-    }
-
-    @Nullable
-    @Override
-    public InputStream readFile(@NotNull String relativePath) throws IOException {
-      return null;
     }
   }
 }

@@ -36,7 +36,7 @@ import java.util.jar.JarFile;
  */
 class IntellijJarInfo {
   public static final String PLATFORM_PLUGIN = "platform";
-  private final List<RuntimeModuleDescriptor> myIncludedModules;
+  private final List<RuntimeModuleDescriptorData> myIncludedModules;
   private final Map<RuntimeModuleId, RuntimeModuleId> myDependencies;
   private final File myJarFile;
   private final String myPluginName;
@@ -44,7 +44,7 @@ class IntellijJarInfo {
   public IntellijJarInfo(File jarFile, String pluginName) {
     myJarFile = jarFile;
     myPluginName = pluginName;
-    myIncludedModules = new ArrayList<RuntimeModuleDescriptor>();
+    myIncludedModules = new ArrayList<RuntimeModuleDescriptorData>();
     myDependencies = new LinkedHashMap<RuntimeModuleId, RuntimeModuleId>();
     try {
       JarFile jar = new JarFile(jarFile);
@@ -56,7 +56,8 @@ class IntellijJarInfo {
           String name = entry.getName();
           if (name.startsWith("META-INF/") && name.endsWith("-module.xml")) {
             RuntimeModuleDescriptor descriptor = ModuleXmlParser.parseModuleXml(factory, jar.getInputStream(entry), jarFile);
-            myIncludedModules.add(descriptor);
+            myIncludedModules.add(new RuntimeModuleDescriptorData(descriptor.getModuleId(), descriptor.getModuleRoots(),
+                                                                  descriptor.getDependencies()));
             for (RuntimeModuleId dependency : descriptor.getDependencies()) {
               myDependencies.put(dependency, descriptor.getModuleId());
             }
@@ -104,7 +105,7 @@ class IntellijJarInfo {
     return myPluginName;
   }
 
-  public List<RuntimeModuleDescriptor> getIncludedModules() {
+  public List<RuntimeModuleDescriptorData> getIncludedModules() {
     return myIncludedModules;
   }
 
