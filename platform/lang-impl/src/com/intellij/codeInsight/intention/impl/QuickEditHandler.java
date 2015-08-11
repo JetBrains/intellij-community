@@ -96,7 +96,6 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private EditorWindow mySplittedWindow;
   private boolean myCommittingToOriginal;
 
-  @Nullable
   private final PsiFile myInjectedFile;
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = ContainerUtil.newLinkedList();
 
@@ -199,7 +198,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   }
 
   public boolean isValid() {
-    boolean valid = myNewVirtualFile.isValid() && (myAltFullRange == null && myInjectedFile.isValid() || myAltFullRange.isValid());
+    boolean valid = myNewVirtualFile.isValid() &&
+                    (myAltFullRange == null && myInjectedFile.isValid() ||
+                     myAltFullRange != null && myAltFullRange.isValid());
     if (valid) {
       for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> t : myMarkers) {
         if (!t.first.isValid() || !t.second.isValid() || t.third.getElement() == null) {
