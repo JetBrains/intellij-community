@@ -868,7 +868,6 @@ public class Switcher extends AnAction implements DumbAware {
       go(false);
     }
 
-    @Nullable
     public MyList getSelectedList() {
       return getSelectedList(files);
     }
