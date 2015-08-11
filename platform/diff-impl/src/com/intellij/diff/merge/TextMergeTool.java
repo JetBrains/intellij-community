@@ -794,7 +794,7 @@ public class TextMergeTool implements MergeTool {
 
         enterBulkChangeUpdateBlock();
         try {
-          if (Registry.is("diff.merge.conflict.two.step.resolve") && change.isConflict()) {
+          if (change.isConflict()) {
             boolean append = change.isResolved(side.other());
             int actualOutputStartLine = append ? outputEndLine : outputStartLine;
 
