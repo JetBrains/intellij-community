@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +48,7 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.learning.stepic.StudySettings;
+import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.EduStepicConnector;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -195,7 +196,7 @@ public class StudyCheckAction extends DumbAwareAction {
     return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
       @Override
       public void onSuccess() {
-        StudyUtils.updateStudyToolWindow(project);
+        StudyUtils.updateToolWindows(project);
         drawAllPlaceholders(project, task, taskDir);
         ProjectView.getInstance(project).refresh();
         EduUtils.deleteWindowDescriptions(task, taskDir);
@@ -396,6 +397,10 @@ public class StudyCheckAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(!checkInProgress);
+    final Presentation presentation = e.getPresentation();
+    StudyUtils.updateAction(e);
+    if (presentation.isEnabled()) {
+      presentation.setEnabled(!checkInProgress);
+    }
   }
 }

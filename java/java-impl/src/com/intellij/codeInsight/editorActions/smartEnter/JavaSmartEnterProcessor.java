@@ -189,13 +189,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       return;
     }
     PsiElement parent = atCaret.getParent();
-    if (parent instanceof PsiCodeBlock) {
-      final PsiCodeBlock block = (PsiCodeBlock) parent;
-      if (block.getStatements().length > 0 && block.getStatements()[0] == atCaret) {
-        atCaret = block;
-      }
-    }
-    else if (parent instanceof PsiForStatement) {
+    if (parent instanceof PsiForStatement) {
       atCaret = parent;
     }
 

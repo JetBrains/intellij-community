@@ -17,8 +17,11 @@ package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageDataBase;
@@ -57,8 +60,10 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
+  protected final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+
   public ClasspathStorage(@NotNull final Module module, @NotNull StateStorageManager storageManager) {
-    super(storageManager.getMacroSubstitutor());
+    myPathMacroSubstitutor = storageManager.getMacroSubstitutor();
 
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
     assert provider != null;
@@ -149,6 +154,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
     Element element = new Element("component");
     try {
       ModifiableRootModel model = null;
+      AccessToken token = ReadAction.start();
       try {
         model = ((ModuleRootManagerImpl)component).getModifiableModel();
         // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
@@ -160,8 +166,13 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
         LOG.error(e);
       }
       finally {
-        if (model != null) {
-          model.dispose();
+        try {
+          token.finish();
+        }
+        finally {
+          if (model != null) {
+            model.dispose();
+          }
         }
       }
 
@@ -193,8 +204,9 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
-    if (myStorageData != null) {
-      myStorageData.loaded = false;
+    MyStorageData storageData = storageDataRef.get();
+    if (storageData != null) {
+      storageData.loaded = false;
     }
   }
 

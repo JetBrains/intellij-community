@@ -101,7 +101,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     }
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
-    StudyUtils.updateStudyToolWindow(project);
+    StudyUtils.updateToolWindows(project);
     return true;
   }
 
@@ -175,13 +175,13 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent event) {
-    EduUtils.enableAction(event, false);
+    StudyUtils.updateAction(event);
     final Project project = event.getProject();
     if (project != null) {
       StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
       StudyState studyState = new StudyState(studyEditor);
-      if (studyState.isValid()) {
-        EduUtils.enableAction(event, true);
+      if (!studyState.isValid()) {
+        event.getPresentation().setEnabled(false);
       }
     }
   }

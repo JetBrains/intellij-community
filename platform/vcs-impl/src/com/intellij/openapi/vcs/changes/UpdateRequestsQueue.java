@@ -28,6 +28,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -150,12 +151,17 @@ public class UpdateRequestsQueue {
     LOG.debug("Stop finished for project: " + myProject.getName());
   }
 
+  @TestOnly
   public void waitUntilRefreshed() {
     while (true) {
       final Semaphore semaphore = new Semaphore();
       synchronized (myLock) {
         if (!myRequestSubmitted && !myRequestRunning) {
           return;
+        }
+
+        if (!myRequestRunning) {
+          myExecutor.get().schedule(new MyRunnable(), 0, TimeUnit.MILLISECONDS);
         }
 
         semaphore.down();
@@ -236,6 +242,8 @@ public class UpdateRequestsQueue {
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
       try {
         synchronized (myLock) {
+          if (!myRequestSubmitted) return;
+          
           LOG.assertTrue(!myRequestRunning);
           myRequestRunning = true;
           if (myStopped) {

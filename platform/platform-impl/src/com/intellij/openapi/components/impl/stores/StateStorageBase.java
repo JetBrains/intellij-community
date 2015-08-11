@@ -16,23 +16,19 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public abstract class StateStorageBase<T extends StorageDataBase> implements StateStorage {
   protected static final Logger LOG = Logger.getInstance(StateStorageBase.class);
 
   private boolean mySavingDisabled = false;
-  protected final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
 
-  protected T myStorageData;
-
-  protected StateStorageBase(@Nullable TrackingPathMacroSubstitutor trackingPathMacroSubstitutor) {
-    myPathMacroSubstitutor = trackingPathMacroSubstitutor;
-  }
+  protected final AtomicReference<T> storageDataRef = new AtomicReference<T>();
 
   @Override
   @Nullable
@@ -60,12 +56,18 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
 
   @NotNull
   protected final T getStorageData(boolean reload) {
-    if (myStorageData != null && !reload) {
-      return myStorageData;
+    final T storageData = storageDataRef.get();
+    if (storageData != null && !reload) {
+      return storageData;
     }
 
-    myStorageData = loadData();
-    return myStorageData;
+    T newStorageData = loadData();
+    if (storageDataRef.compareAndSet(storageData, newStorageData)) {
+      return newStorageData;
+    }
+    else {
+      return getStorageData(false);
+    }
   }
 
   protected abstract T loadData();

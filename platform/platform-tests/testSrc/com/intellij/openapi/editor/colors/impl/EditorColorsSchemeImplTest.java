@@ -22,11 +22,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.Element;
+import org.jdom.input.DOMBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
@@ -221,6 +228,45 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
       ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
     assertTrue(directlyDefined != null && directlyDefined.isFallbackEnabled());
     assertSame(fallbackAttrs, result.second);
+  }
+
+
+  /**
+   * Check that the attributes missing in a custom scheme with a version prior to 142 are explicitly added with fallback enabled,
+   * not taken from parent scheme.
+   *
+   * @throws Exception
+   */
+  public void testUpgradeFromVer141() throws Exception {
+    TextAttributesKey constKey = DefaultLanguageHighlighterColors.CONSTANT;
+    TextAttributesKey fallbackKey = constKey.getFallbackAttributeKey();
+    assertNotNull(fallbackKey);
+
+    EditorColorsScheme scheme = loadScheme(
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<scheme name=\"Test\" version=\"141\" parent_scheme=\"Default\">\n" +
+      "</scheme>\n"
+    );
+
+    TextAttributes constAttrs = scheme.getAttributes(constKey);
+    TextAttributes fallbackAttrs = scheme.getAttributes(fallbackKey);
+    assertSame(fallbackAttrs, constAttrs);
+  }
+
+
+  private static EditorColorsScheme loadScheme(@NotNull String docText) throws ParserConfigurationException, IOException, SAXException {
+    DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+    InputSource inputSource = new InputSource(new StringReader(docText));
+    org.w3c.dom.Document doc = docBuilder.parse(inputSource);
+    Element root = new DOMBuilder().build(doc.getDocumentElement());
+
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
+
+    targetScheme.readExternal(root);
+    ((AbstractColorsScheme)targetScheme).upgradeSchemeFromPreviousVersion();
+
+    return targetScheme;
   }
 
   @NotNull

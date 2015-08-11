@@ -60,20 +60,12 @@ public class SmartPointerEditorTracker extends AbstractProjectComponent implemen
 
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
     if (!isBulk && isRelevant && shouldNotifySmartPointers(virtualFile)) {
-      mySmartPointerManager.fastenBelts(virtualFile, event.getOffset(), null);
+      mySmartPointerManager.fastenBelts(virtualFile);
     }
   }
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    final Document document = event.getDocument();
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();
-
-    boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
-    if (!isBulk && isRelevant && shouldNotifySmartPointers(virtualFile)) {
-      mySmartPointerManager.unfastenBelts(virtualFile, event.getOffset());
-    }
   }
 
   @Override
@@ -86,22 +78,12 @@ public class SmartPointerEditorTracker extends AbstractProjectComponent implemen
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     // materialize all range markers and do not let them to be collected to improve responsiveness
     if (virtualFile != null) {
-      mySmartPointerManager.fastenBelts(virtualFile, 0, null);
+      mySmartPointerManager.fastenBelts(virtualFile);
     }
   }
 
   @Override
   public void editorReleased(@NotNull EditorFactoryEvent event) {
-    final Editor editor = event.getEditor();
-    if (editor.getProject() != null && editor.getProject() != myProject || myProject.isDisposed()) return;
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-    if (psiFile == null) return;
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    // allow range markers in smart pointers to be collected
-    // beware there maybe other editors still open for that file
-    if (virtualFile != null && virtualFile.isValid() && shouldNotifySmartPointers(virtualFile)) {
-      mySmartPointerManager.unfastenBelts(virtualFile, 0);
-    }
   }
 
   private boolean shouldNotifySmartPointers(@NotNull VirtualFile virtualFile) {
@@ -116,16 +98,12 @@ public class SmartPointerEditorTracker extends AbstractProjectComponent implemen
   public void updateStarted(@NotNull Document document) {
     final VirtualFile virtualFile = getVirtualFile(document);
     if (virtualFile != null && isRelevant(virtualFile) && shouldNotifySmartPointers(virtualFile)) {
-      mySmartPointerManager.fastenBelts(virtualFile, 0, null);
+      mySmartPointerManager.fastenBelts(virtualFile);
     }
   }
 
   @Override
   public void updateFinished(@NotNull Document document) {
-    final VirtualFile virtualFile = getVirtualFile(document);
-    if (virtualFile != null && isRelevant(virtualFile) && shouldNotifySmartPointers(virtualFile)) {
-      mySmartPointerManager.unfastenBelts(virtualFile, 0);
-    }
   }
 
   private static VirtualFile getVirtualFile(@NotNull Document document) {

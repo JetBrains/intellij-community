@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
-import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -148,7 +147,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
       return baseDir.getName().replace(":", "")
     }
     else {
-      var temp = PathUtilRt.getFileName(getProjectFileStorage().getFilePath())
+      var temp = PathUtilRt.getFileName(getProjectFilePath())
       val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
       if (fileType is ProjectFileType) {
         temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1)
@@ -175,16 +174,13 @@ open class ProjectStoreImpl(override val project: ProjectImpl, pathMacroManager:
 
   override fun getProjectFile() = getProjectFileStorage().getVirtualFile()
 
-  override fun getProjectFilePath() = getProjectFileStorage().getFilePath()
+  override fun getProjectFilePath() = storageManager.expandMacros(StoragePathMacros.PROJECT_FILE)
 
   private fun getProjectFileStorage() = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as FileBasedStorage
 
-  override fun getWorkspaceFile() = workspaceStorage?.getVirtualFile()
+  override fun getWorkspaceFile() = (storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?)?.getVirtualFile()
 
-  override fun getWorkspaceFilePath() = workspaceStorage?.getFilePath()
-
-  private val workspaceStorage: FileBasedStorage?
-    get() = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?
+  override fun getWorkspaceFilePath() = storageManager.expandMacros(StoragePathMacros.WORKSPACE_FILE)
 
   override fun loadProjectFromTemplate(defaultProject: Project) {
     defaultProject.save()

@@ -55,7 +55,7 @@ class CCFileDeletedListener extends VirtualFileAdapter {
       public StudyOrderable fun(VirtualFile file) {
         return course.getLesson(file.getName());
       }
-    }, removedLesson, EduNames.LESSON);
+    }, removedLesson.getIndex(), EduNames.LESSON, -1);
     course.getLessons().remove(removedLesson);
   }
 
@@ -77,7 +77,7 @@ class CCFileDeletedListener extends VirtualFileAdapter {
       public StudyOrderable fun(VirtualFile file) {
         return lesson.getTask(file.getName());
       }
-    }, task, EduNames.TASK);
+    }, task.getIndex(), EduNames.TASK, -1);
     ModifiableRootModel model = EduUtils.getModel(lessonDir, project);
     if (model == null) {
       return;

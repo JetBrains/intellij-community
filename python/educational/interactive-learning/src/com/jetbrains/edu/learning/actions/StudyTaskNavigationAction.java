@@ -115,4 +115,9 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
   protected abstract String getNavigationFinishedMessage();
 
   protected abstract Task getTargetTask(@NotNull final Task sourceTask);
+
+  @Override
+  public void update(AnActionEvent e) {
+    StudyUtils.updateAction(e);
+  }
 }

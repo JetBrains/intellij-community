@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.StorageData
 import org.jdom.Element
+import org.jetbrains.annotations.NotNull
 import kotlin.properties.Delegates
 
 abstract class BaseFileConfigurableStoreImpl(protected val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
@@ -39,7 +40,7 @@ open class ProjectStorageData : StorageData {
 
   private var version = CURRENT_FORMAT_VERSION
 
-  constructor(rootElementName: String) : super(rootElementName) {
+  constructor() : super() {
   }
 
   protected constructor(storageData: ProjectStorageData) : super(storageData) {
@@ -51,11 +52,8 @@ open class ProjectStorageData : StorageData {
     version = rootElement.getAttributeValue(VERSION_OPTION)?.toInt() ?: CURRENT_FORMAT_VERSION
   }
 
-  override fun save(newLiveStates: Map<String, Element>): Element {
-    var root = super.save(newLiveStates)
-    if (root == null) {
-      root = Element(myRootElementName)
-    }
+  override fun save(newLiveStates: Map<String, Element>, rootElementName: String): Element {
+    val root = super.save(newLiveStates, rootElementName) ?: Element(rootElementName)
     writeOptions(root)
     return root
   }

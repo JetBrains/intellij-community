@@ -23,16 +23,11 @@ public interface StreamProvider {
   public open val enabled: Boolean
     get() = true
 
-  /**
-   * fileSpec Only main fileSpec, not version
-   */
   public open fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = true
 
   /**
    * @param fileSpec
-   * *
    * @param content bytes of content, size of array is not actual size of data, you must use `size`
-   * *
    * @param size actual size of data
    */
   public fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType)

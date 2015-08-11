@@ -29,7 +29,7 @@ class ModuleFileData : ProjectStorageData, OptionManager {
 
   override fun isDirty() = dirty
 
-  public constructor(rootElementName: String) : super(rootElementName) {
+  public constructor() : super() {
     options = TreeMap<String, String>()
   }
 

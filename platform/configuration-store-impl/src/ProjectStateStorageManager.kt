@@ -22,7 +22,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.project.impl.ProjectImpl
 
 class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl("project", macroSubstitutor, project) {
-  override fun createStorageData(fileSpec: String) = ProjectStorageData(rootTagName)
+  override fun createStorageData(fileSpec: String) = ProjectStorageData()
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     val workspace = project.isWorkspaceComponent(component.javaClass)

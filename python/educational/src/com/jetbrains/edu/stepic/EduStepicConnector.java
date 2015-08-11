@@ -57,7 +57,6 @@ public class EduStepicConnector {
   private static final String stepicUrl = "https://stepic.org/";
   private static final String stepicApiUrl = stepicUrl + "api/";
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
-  private static final String ourDomain = "stepic.org";
   private static String ourCSRFToken = "";
   private static CloseableHttpClient ourClient;
 
@@ -139,6 +138,7 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
+      final String s = EntityUtils.toString(response.getEntity());
       saveCSRFToken();
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 302) {
@@ -191,6 +191,12 @@ public class EduStepicConnector {
       if (StringUtil.isEmptyOrSpaces(courseType)) continue;
       final List<String> typeLanguage = StringUtil.split(courseType, " ");
       if (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0))) {
+
+        for (Integer instructor : info.instructors) {
+          final CourseInfo.Author author = getFromStepic("users/" + String.valueOf(instructor), AuthorWrapper.class).users.get(0);
+          info.addAuthor(author);
+        }
+
         result.add(info);
       }
     }
@@ -199,7 +205,7 @@ public class EduStepicConnector {
 
   public static Course getCourse(@NotNull final CourseInfo info) {
     final Course course = new Course();
-    course.setAuthors(info.getInstructors());
+    course.setAuthors(info.getAuthors());
     course.setDescription(info.getDescription());
     course.setName(info.getName());
     String courseType = info.getType();
@@ -330,7 +336,17 @@ public class EduStepicConnector {
   public static void postCourse(Project project, @NotNull final Course course) {
     final HttpPost request = new HttpPost(stepicApiUrl + "courses");
     if (ourClient == null) {
-      showLoginDialog();
+      final String login = StudySettings.getInstance().getLogin();
+      if (StringUtil.isEmptyOrSpaces(login)) {
+        showLoginDialog();
+      }
+      else {
+        final boolean success = login(login, StudySettings.getInstance().getPassword());
+        if (!success) {
+          LOG.error("Failed to push course. Failed to login.");   // TODO: show notification
+          return;
+        }
+      }
     }
 
     setHeaders(request, "application/json");
@@ -690,6 +706,10 @@ public class EduStepicConnector {
       this.name = name;
       this.text = text;
     }
+  }
+
+  static class AuthorWrapper {
+    List<CourseInfo.Author> users;
   }
 
   static class SubmissionWrapper {

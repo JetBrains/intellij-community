@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -66,17 +68,21 @@ public class StudyProjectGenerator {
       new Runnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
             @Override
             public void run() {
-              course.initCourse(false);
-              final File courseDirectory = new File(ourCoursesDir, course.getName());
-              StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-              course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
-              VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-              StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
-              openFirstTask(course, project);
-
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  course.initCourse(false);
+                  final File courseDirectory = new File(ourCoursesDir, course.getName());
+                  StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+                  course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
+                  VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+                  StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
+                  openFirstTask(course, project);
+                }
+              });
             }
           });
         }
@@ -467,12 +473,12 @@ public class StudyProjectGenerator {
         courseInfo = new CourseInfo();
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
-        final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
+        final ArrayList<CourseInfo.Author> authors = new ArrayList<CourseInfo.Author>();
         for (JsonElement author : courseAuthors) {
-          final String authorAsString = author.getAsString();
-          instructors.add(new CourseInfo.Instructor(authorAsString));
+          final JsonObject authorAsJsonObject = author.getAsJsonObject();
+          authors.add(new CourseInfo.Author(authorAsJsonObject.get("first_name").getAsString(), authorAsJsonObject.get("last_name").getAsString()));
         }
-        courseInfo.setInstructors(instructors);
+        courseInfo.setAuthors(authors);
       }
     }
     catch (Exception e) {

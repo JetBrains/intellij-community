@@ -16,7 +16,7 @@
 package com.intellij.core;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.impl.stores.StorageData;
+import com.intellij.openapi.components.impl.stores.StateMap;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -53,7 +53,7 @@ public class CoreModuleManager extends ModuleManagerImpl {
     VirtualFile vFile = StandardFileSystems.local().findFileByPath(filePath);
     try {
       assert vFile != null;
-      StorageData storageData = CoreProjectLoader.loadStorageFile(module, vFile);
+      StateMap storageData = CoreProjectLoader.loadStorageFile(module, vFile);
       ModuleRootManagerImpl.ModuleRootManagerState state = new ModuleRootManagerImpl.ModuleRootManagerState();
       state.readExternal(storageData.getState("NewModuleRootManager"));
       ((ModuleRootManagerImpl) ModuleRootManager.getInstance(module)).loadState(state);

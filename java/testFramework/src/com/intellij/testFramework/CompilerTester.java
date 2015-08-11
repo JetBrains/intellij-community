@@ -69,12 +69,12 @@ public class CompilerTester {
     myMainOutput = new TempDirTestFixtureImpl();
     myMainOutput.setUp();
 
+    CompilerTestUtil.enableExternalCompiler();
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
         //noinspection ConstantConditions
         CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-        CompilerTestUtil.enableExternalCompiler();
         for (Module module : myModules) {
           ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
         }

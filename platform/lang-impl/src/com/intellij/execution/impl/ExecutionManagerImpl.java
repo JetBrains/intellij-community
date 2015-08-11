@@ -574,7 +574,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
 
-      SaveAndSyncHandler.getInstance().scheduleRefresh();
+      SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
+      if (saveAndSyncHandler != null) {
+        saveAndSyncHandler.scheduleRefresh();
+      }
     }
 
     @Override

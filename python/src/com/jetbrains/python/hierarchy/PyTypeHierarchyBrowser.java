@@ -19,13 +19,8 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.PopupHandler;
 import com.jetbrains.python.hierarchy.treestructures.PySubTypesHierarchyTreeStructure;
 import com.jetbrains.python.hierarchy.treestructures.PySuperTypesHierarchyTreeStructure;
 import com.jetbrains.python.hierarchy.treestructures.PyTypeHierarchyTreeStructure;
@@ -59,8 +54,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   protected void createTrees(@NotNull Map<String, JTree> trees) {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("PyTypeHierarchyPopupMenu");
-    createTreeAndSetupCommonActions(trees, group);
+    createTreeAndSetupCommonActions(trees, "PyTypeHierarchyPopupMenu");
   }
 
   @Nullable

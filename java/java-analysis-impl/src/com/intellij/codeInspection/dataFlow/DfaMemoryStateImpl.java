@@ -49,7 +49,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final DfaValueFactory myFactory;
 
   private final List<EqClass> myEqClasses;
-  // dfa value id -> indices in myEqClasses list of the classes which contain the id (or negated or wrapped)
+  // dfa value id -> indices in myEqClasses list of the classes which contain the id (or wrapped)
   private final TIntObjectHashMap<int[]> myIdToEqClassesIndices;
   private final Stack<DfaValue> myStack;
   private final TLongHashSet myDistinctClasses;
@@ -321,7 +321,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void removeFromMap(int id, int index) {
-    if (id < 0) return;
     id = unwrap(myFactory.getValue(id)).getID();
     int[] classes = myIdToEqClassesIndices.get(id);
     if (classes != null) {
@@ -487,11 +486,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     EqClass newClass = new EqClass(c1);
-    for (int i = 0; i < newClass.size(); i++) {
-      int c = newClass.get(i);
-      removeFromMap(c, c1Index);
-      addToMap(c, c1Index);
-    }
 
     myEqClasses.set(c1Index, newClass);
     for (int i = 0; i < c2.size(); i++) {

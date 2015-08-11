@@ -25,9 +25,6 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Storage {
   @NonNls String id() default "default";
 
-  @Deprecated
-  boolean isDefault() default true;
-
   @NonNls String file() default "";
 
   StorageScheme scheme() default StorageScheme.DEFAULT;

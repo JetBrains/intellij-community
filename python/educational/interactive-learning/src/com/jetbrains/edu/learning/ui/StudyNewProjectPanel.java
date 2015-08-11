@@ -16,14 +16,15 @@ import com.intellij.util.Consumer;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.StudySettings;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import com.jetbrains.edu.stepic.StudySettings;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ public class StudyNewProjectPanel{
   public StudyNewProjectPanel(StudyProjectGenerator generator) {
     myGenerator = generator;
     myAvailableCourses = myGenerator.getCourses(false);
+    myBrowseButton.setPreferredSize(new Dimension(28, 28));
+    myRefreshButton.setPreferredSize(new Dimension(28, 28));
     if (myAvailableCourses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
@@ -58,10 +61,12 @@ public class StudyNewProjectPanel{
       for (CourseInfo courseInfo : myAvailableCourses) {
         myCoursesComboBox.addItem(courseInfo);
       }
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(StudyUtils.getFirst(myAvailableCourses).getInstructors()));
-      myDescriptionLabel.setText(StudyUtils.getFirst(myAvailableCourses).getDescription());
+      final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
+      final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
+      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
+      myDescriptionLabel.setText(selectedCourse.getDescription());
       //setting the first course in list as selected
-      myGenerator.setSelectedCourse(StudyUtils.getFirst(myAvailableCourses));
+      myGenerator.setSelectedCourse(selectedCourse);
       setOK();
     }
     initListeners();
@@ -208,7 +213,8 @@ public class StudyNewProjectPanel{
         myDescriptionLabel.setText("");
         return;
       }
-      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getInstructors()));
+      final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
+      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ?"Author: " + authorsString : "");
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);

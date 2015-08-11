@@ -25,9 +25,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +43,10 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   @SuppressWarnings("deprecation")
   private final StateSplitter mySplitter;
 
+  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+
   public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor, @NotNull File dir, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
-    super(pathMacroSubstitutor);
+    myPathMacroSubstitutor = pathMacroSubstitutor;
     myDir = dir;
     mySplitter = splitter;
   }
@@ -56,9 +58,9 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   @Override
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // todo reload only changed file, compute diff
-    DirectoryStorageData oldData = myStorageData;
+    DirectoryStorageData oldData = storageDataRef.get();
     DirectoryStorageData newData = loadData();
-    myStorageData = newData;
+    storageDataRef.set(newData);
     if (oldData == null) {
       componentNames.addAll(newData.getComponentNames());
     }
@@ -155,7 +157,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
         if (dir != null && dir.exists()) {
           StorageUtil.deleteFile(this, dir);
         }
-        storage.myStorageData = copiedStorageData;
+        storage.storageDataRef.set(copiedStorageData);
         return;
       }
 
@@ -171,18 +173,18 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
 
       storage.myVirtualFile = dir;
-      storage.myStorageData = copiedStorageData;
+      storage.storageDataRef.set(copiedStorageData);
     }
 
     private void saveStates(@NotNull final VirtualFile dir) {
-      final Element storeElement = new Element(StorageData.COMPONENT);
+      final Element storeElement = new Element(StorageDataBase.COMPONENT);
 
       for (final String componentName : copiedStorageData.getComponentNames()) {
-        copiedStorageData.processComponent(componentName, new TObjectObjectProcedure<String, Object>() {
+        copiedStorageData.processComponent(componentName, new PairConsumer<String, Object>() {
           @Override
-          public boolean execute(String fileName, Object state) {
+          public void consume(String fileName, Object state) {
             if (!dirtyFileNames.contains(fileName)) {
-              return true;
+              return;
             }
 
             Element element = null;
@@ -192,7 +194,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
                 storage.myPathMacroSubstitutor.collapsePaths(element);
               }
 
-              storeElement.setAttribute(StorageData.NAME, componentName);
+              storeElement.setAttribute(StorageDataBase.NAME, componentName);
               storeElement.addContent(element);
 
               VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);
@@ -208,7 +210,6 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
                 element.detach();
               }
             }
-            return true;
           }
         });
       }

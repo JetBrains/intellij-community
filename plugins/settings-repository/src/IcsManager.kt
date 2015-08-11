@@ -184,7 +184,7 @@ class IcsManager(dir: File) {
           return
         }
 
-        registerProjectLevelProviders(project)
+        //registerProjectLevelProviders(project)
         autoSyncManager.registerListeners(project)
       }
 

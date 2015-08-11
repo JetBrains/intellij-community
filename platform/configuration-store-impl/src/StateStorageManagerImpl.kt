@@ -46,7 +46,7 @@ import kotlin.reflect.jvm.java
 /**
  * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
  */
-open class StateStorageManagerImpl(protected val rootTagName: String,
+open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                    val componentManager: ComponentManager? = null,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = StateStorageManagerImpl.createDefaultVirtualTracker(componentManager) ) : StateStorageManager {
@@ -155,7 +155,7 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
 
   override final fun getCachedFileStateStorages(changed: MutableCollection<String>, deleted: MutableCollection<String>) = storageLock.withLock { Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
 
-  fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileBasedStorage> {
+  fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileStorage> {
     if (fileSpecs.isEmpty()) {
       return emptyList()
     }
@@ -185,13 +185,7 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
     val file = File(filePath)
 
     if (isUseVfsListener == ThreeState.UNSURE) {
-      if (streamProvider != null && streamProvider!!.enabled) {
-        isUseVfsListener = ThreeState.NO
-      }
-      else {
-        isUseVfsListener = ThreeState.YES
-//        addVfsChangesListener(componentManager!!)
-      }
+      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.enabled)
     }
 
     //noinspection deprecation
@@ -207,22 +201,25 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
 
     val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
     val storage = MyFileStorage(this, file, fileSpec, rootTagName, effectiveRoamingType, getMacroSubstitutor(fileSpec), streamProvider)
-    virtualFileTracker?.put(filePath.normalizePath(), storage)
+    if (isUseVfsListener == ThreeState.YES) {
+      virtualFileTracker?.put(filePath.normalizePath(), storage)
+    }
     return storage
   }
 
   private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: File, splitter: StateSplitter) : DirectoryBasedStorage(storageManager.pathMacroSubstitutor, file, splitter), StorageVirtualFileTracker.TrackedStorage
 
   private class MyFileStorage(override val storageManager: StateStorageManagerImpl,
-                  file: File,
-                  fileSpec: String,
-                  rootElementName: String,
-                  roamingType: RoamingType? = null,
-                  pathMacroManager: TrackingPathMacroSubstitutor? = null,
-                  streamProvider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider), StorageVirtualFileTracker.TrackedStorage {
-    override fun createStorageData() = storageManager.createStorageData(myFileSpec)
+                              file: File,
+                              fileSpec: String,
+                              rootElementName: String,
+                              roamingType: RoamingType,
+                              pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                              provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
+    override val isUseXmlProlog: Boolean
+      get() = storageManager.isUseXmlProlog
 
-    override fun isUseXmlProlog() = storageManager.isUseXmlProlog
+    override fun createStorageData() = storageManager.createStorageData(fileSpec)
   }
 
   private fun String.normalizePath(): String {
@@ -272,7 +269,7 @@ open class StateStorageManagerImpl(protected val rootTagName: String,
 
   protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = pathMacroSubstitutor
 
-  protected open fun createStorageData(fileSpec: String): StorageData = StorageData(rootTagName)
+  protected open fun createStorageData(fileSpec: String): StorageData = StorageData()
 
   override final fun expandMacros(path: String): String {
     // replacement can contains $ (php tests), so, this check must be performed before expand

@@ -18,6 +18,7 @@ package com.jetbrains.edu.learning.stepic;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import com.jetbrains.edu.stepic.StudySettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +113,9 @@ public class StudySettingsPanel {
       final StudySettings studySettings = StudySettings.getInstance();
       studySettings.setLogin(getLogin());
       studySettings.setPassword(getPassword());
-      EduStepicConnector.login(getLogin(), getPassword());
+      if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
+        EduStepicConnector.login(getLogin(), getPassword());
+      }
     }
     resetCredentialsModification();
   }

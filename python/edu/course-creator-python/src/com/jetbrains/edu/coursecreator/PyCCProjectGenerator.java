@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import javax.swing.*;
 
 
 public class PyCCProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
+  private static final Logger LOG = Logger.getInstance(PyCCProjectGenerator.class);
   private CCNewProjectPanel mySettingsPanel;
 
   @Nls
@@ -83,7 +85,11 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
         catch (Exception ignored) {
         }
         DirectoryUtil.createSubdirectories(EduNames.HINTS, projectDir, "\\/");
-        final PsiDirectory lessonDir = CCCreateLesson.createLessonDir(project, 1, null, null);
+        PsiDirectory lessonDir = CCCreateLesson.createLesson(null, project, baseDir, course);
+        if (lessonDir == null) {
+          LOG.error("Failed to create lesson");
+          return;
+        }
         CCCreateTask.createTask(null, project, lessonDir, false);
       }
     }.execute();

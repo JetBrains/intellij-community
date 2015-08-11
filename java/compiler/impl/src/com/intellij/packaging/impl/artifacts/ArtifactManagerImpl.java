@@ -16,9 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
@@ -193,9 +191,18 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   @Override
   public void loadState(ArtifactManagerState managerState) {
-    final List<ArtifactImpl> artifacts = new ArrayList<ArtifactImpl>();
-    for (ArtifactState state : managerState.getArtifacts()) {
-      artifacts.add(loadArtifact(state));
+    List<ArtifactState> artifactStates = managerState.getArtifacts();
+    final List<ArtifactImpl> artifacts = new ArrayList<ArtifactImpl>(artifactStates.size());
+    if (!artifactStates.isEmpty()) {
+      AccessToken token = ReadAction.start();
+      try {
+        for (ArtifactState state : artifactStates) {
+          artifacts.add(loadArtifact(state));
+        }
+      }
+      finally {
+        token.finish();
+      }
     }
 
     if (myLoaded) {

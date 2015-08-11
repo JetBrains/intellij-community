@@ -56,9 +56,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -1540,15 +1538,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
 
-    new WriteCommandAction.Simple(getProject()) {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
         if (!copy.getFileType().isBinary()) {
+          AccessToken token = WriteAction.start();
           try {
             copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
           }
           catch (IOException e) {
             throw new RuntimeException(e);
+          }
+          finally {
+            token.finish();
           }
         }
         myFile = copy;
@@ -1571,7 +1573,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           setupEditorForInjectedLanguage();
         }
       }
-    }.execute().throwException();
+    }, ModalityState.any());
 
     return getFile();
   }

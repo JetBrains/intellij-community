@@ -17,13 +17,15 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.FileBasedStorage
+import com.intellij.openapi.components.impl.stores.FileStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.impl.stores.StorageData
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
+import org.jdom.Element
 import java.io.File
 import kotlin.properties.Delegates
 
@@ -38,6 +40,25 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   private val storage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
+  private class DefaultProjectStorage(file: File, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
+    override public fun loadLocalData(): Element? {
+      val element = super.loadLocalData() ?: return null
+      try {
+        return element.getChild("component").getChild("defaultProject")
+      }
+      catch (e: NullPointerException) {
+        LOG.warn("Cannot read default project")
+        return null
+      }
+    }
+
+    override fun createSaveSession(storageData: StorageData) = object : FileBasedStorage.FileSaveSession(storageData, this) {
+      override fun saveLocally(element: Element?) {
+        super.saveLocally(Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(element)))
+      }
+    }
+  }
+
   private val storageManager = object : StateStorageManager {
     override fun rename(path: String, newName: String) {
     }
@@ -48,7 +69,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
 
-    override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileBasedStorage>> = Couple(emptyList<FileBasedStorage>(), emptyList<FileBasedStorage>())
+    override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileStorage>> = Couple(emptyList<FileStorage>(), emptyList<FileStorage>())
 
     override fun startExternalization(): StateStorageManager.ExternalizationSession? {
       val externalizationSession = storage.startExternalization()

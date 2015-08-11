@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl;
+package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -34,8 +34,8 @@ public class ProjectStoreImplIprFileTest extends ProjectStoreBaseTestCase {
 
     ((ProjectEx)myProject).setOptimiseTestLoadSpeed(false);
 
-    final TestIprComponent testIprComponent = new TestIprComponent();
-    ComponentsPackage.getStateStore(myProject).initComponent(testIprComponent, false);
-    assertNotNull(testIprComponent.myState);
+    final TestComponent testComponent = new TestComponent();
+    ComponentsPackage.getStateStore(myProject).initComponent(testComponent, false);
+    assertNotNull(testComponent.myState);
   }
 }
