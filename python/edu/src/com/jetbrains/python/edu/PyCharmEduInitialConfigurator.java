@@ -216,14 +216,40 @@ public class PyCharmEduInitialConfigurator {
     actionsTree.setModel(model);
 
     schema.fillActionGroups(root);
-    hideActionFromMainMenu(root, schema);
+    for (int i = 0; i < root.getChildCount(); i++) {
+      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root.getChildAt(i);
+      if ("Main menu".equals(getItemId(treeNode))) {
+        hideActionFromMainMenu(root, schema, treeNode);
+      }
+      if ("Editor Popup Menu".equals(getItemId(treeNode))) {
+        final HashSet<String> items = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsRichText", "CopyReference", "EditorPasteSimple",
+                                                               "Folding", "Generate", "CompareClipboardWithSelection",
+                                                               "ChangeFileEncodingAction");
+        hideActions(schema, root, treeNode, items);
+      }
+      if ("Editor Tab Popup Menu".equals(getItemId(treeNode))) {
+        final HashSet<String> items = ContainerUtil.newHashSet("CloseAllUnmodifiedEditors", "CloseAllUnpinnedEditors",
+                                                               "CloseAllEditorsButActive", "CopyReference", "MoveTabRight", "MoveTabDown",
+                                                               "MoveEditorToOppositeTabGroup", "OpenEditorInOppositeTabGroup",
+                                                               "ChangeSplitOrientation", "PinActiveTab", "Tabs Placement",
+                                                               "TabsAlphabeticalMode", "AddNewTabToTheEndMode", "NextTab", "PreviousTab",
+                                                               "Add to Favorites", "Add All To Favorites", "External Tools", "ValidateXml");
+        hideActions(schema, root, treeNode, items);
+      }
+      if ("Project View Popup Menu".equals(getItemId(treeNode))) {
+        final HashSet<String> items = ContainerUtil.newHashSet("NewHtmlFile", "CopyAsPlainText", "CopyAsRichText", "CopyReference",
+                                                               "CleanPyc", "Add to Favorites", "Images.ShowThumbnails", "CompareTwoFiles",
+                                                               "CompareFileWithEditor", "SynchronizeCurrentFile", "Mark Directory As",
+                                                               "ShowFilePath");
+        hideActions(schema, root, treeNode, items);
+      }
+    }
 
     CustomActionsSchema.getInstance().copyFrom(schema);
   }
 
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
-                                             @NotNull final CustomActionsSchema schema){
-    final TreeNode mainMenu = root.getFirstChild();
+                                             @NotNull final CustomActionsSchema schema, DefaultMutableTreeNode mainMenu){
 
     for (int i = 0; i < mainMenu.getChildCount(); i++) {
       final DefaultMutableTreeNode menuItem = (DefaultMutableTreeNode)mainMenu.getChildAt(i);
@@ -236,7 +262,7 @@ public class PyCharmEduInitialConfigurator {
 
       else if ("Edit".equals(getItemId(menuItem))) {
         final HashSet<String>
-          editItems = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsReachText", "CopyReference", "EditorPasteSimple", "Macros",
+          editItems = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsRichText", "CopyReference", "EditorPasteSimple", "Macros",
                                                "EditorToggleCase", "EditorJoinLines", "FillParagraph", "Convert Indents",
                                                "TemplateParametersNavigation", "EscapeEntities");
         hideActions(schema, root, menuItem, editItems);
