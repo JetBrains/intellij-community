@@ -291,6 +291,12 @@ public class TextMergeTool implements MergeTool {
         return new AbstractAction(caption) {
           @Override
           public void actionPerformed(ActionEvent e) {
+            if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) && myContentModified &&
+                  Messages.showYesNoDialog(myPanel.getRootPane(),
+                                           DiffBundle.message("merge.dialog.resolve.side.with.discard.message", result == MergeResult.LEFT ? 0 : 1),
+                                           DiffBundle.message("merge.dialog.resolve.side.with.discard.title"), Messages.getQuestionIcon()) != Messages.YES) {
+              return;
+            }
             if (result == MergeResult.RESOLVED) {
               if ((getChangesCount() != 0 || getConflictsCount() != 0) &&
                   Messages.showYesNoDialog(myPanel.getRootPane(),
@@ -601,10 +607,6 @@ public class TextMergeTool implements MergeTool {
       //
       // Getters
       //
-
-      public boolean isContentModified() {
-        return myContentModified;
-      }
 
       @NotNull
       public List<TextMergeChange> getAllChanges() {
