@@ -87,6 +87,30 @@ public class PyCharmEduInitialConfigurator {
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
+  private static final Set<String> HIDDEN_ACTIONS = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsRichText", "EditorPasteSimple",
+                                                                             "Folding", "Generate", "CompareClipboardWithSelection",
+                                                                             "ChangeFileEncodingAction", "CloseAllUnmodifiedEditors",
+                                                                             "CloseAllUnpinnedEditors", "CloseAllEditorsButActive",
+                                                                             "CopyReference", "MoveTabRight", "MoveTabDown", "External Tools",
+                                                                             "MoveEditorToOppositeTabGroup", "OpenEditorInOppositeTabGroup",
+                                                                             "ChangeSplitOrientation", "PinActiveTab", "Tabs Placement",
+                                                                             "TabsAlphabeticalMode", "AddNewTabToTheEndMode", "NextTab",
+                                                                             "PreviousTab", "Add to Favorites", "Add All To Favorites",
+                                                                             "ValidateXml", "NewHtmlFile", "CleanPyc", "Images.ShowThumbnails",
+                                                                             "CompareFileWithEditor", "SynchronizeCurrentFile",
+                                                                             "Mark Directory As", "CompareTwoFiles", "ShowFilePath",
+                                                                             "ChangesView.ApplyPatch", "TemplateProjectProperties",
+                                                                             "ExportToHTML", "SaveAll", "Export/Import Actions",
+                                                                             "Synchronize", "Line Separators", "ToggleReadOnlyAttribute",
+                                                                             "Macros", "EditorToggleCase", "EditorJoinLines", "FillParagraph",
+                                                                             "Convert Indents", "TemplateParametersNavigation", "EscapeEntities",
+                                                                             "QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo",
+                                                                             "ShowErrorDescription", "RecentChanges", "CompareActions",
+                                                                             "GotoCustomRegion", "JumpToLastChange", "JumpToNextChange",
+                                                                             "SelectIn", "GotoTypeDeclaration", "QuickChangeScheme",
+                                                                             "GotoTest", "GotoRelated", "Hierarchy Actions", "Bookmarks",
+                                                                             "Goto Error/Bookmark Actions", "GoToEditPointGroup",
+                                                                             "Change Navigation Actions", "Method Navigation Actions");
 
   public static class First {
 
@@ -221,68 +245,13 @@ public class PyCharmEduInitialConfigurator {
       if ("Main menu".equals(getItemId(treeNode))) {
         hideActionFromMainMenu(root, schema, treeNode);
       }
-      if ("Editor Popup Menu".equals(getItemId(treeNode))) {
-        final HashSet<String> items = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsRichText", "CopyReference", "EditorPasteSimple",
-                                                               "Folding", "Generate", "CompareClipboardWithSelection",
-                                                               "ChangeFileEncodingAction");
-        hideActions(schema, root, treeNode, items);
-      }
-      if ("Editor Tab Popup Menu".equals(getItemId(treeNode))) {
-        final HashSet<String> items = ContainerUtil.newHashSet("CloseAllUnmodifiedEditors", "CloseAllUnpinnedEditors",
-                                                               "CloseAllEditorsButActive", "CopyReference", "MoveTabRight", "MoveTabDown",
-                                                               "MoveEditorToOppositeTabGroup", "OpenEditorInOppositeTabGroup",
-                                                               "ChangeSplitOrientation", "PinActiveTab", "Tabs Placement",
-                                                               "TabsAlphabeticalMode", "AddNewTabToTheEndMode", "NextTab", "PreviousTab",
-                                                               "Add to Favorites", "Add All To Favorites", "External Tools", "ValidateXml");
-        hideActions(schema, root, treeNode, items);
-      }
-      if ("Project View Popup Menu".equals(getItemId(treeNode))) {
-        final HashSet<String> items = ContainerUtil.newHashSet("NewHtmlFile", "CopyAsPlainText", "CopyAsRichText", "CopyReference",
-                                                               "CleanPyc", "Add to Favorites", "Images.ShowThumbnails", "CompareTwoFiles",
-                                                               "CompareFileWithEditor", "SynchronizeCurrentFile", "Mark Directory As",
-                                                               "ShowFilePath");
-        hideActions(schema, root, treeNode, items);
-      }
+      hideActions(schema, root, treeNode, HIDDEN_ACTIONS);
     }
-
     CustomActionsSchema.getInstance().copyFrom(schema);
   }
 
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
                                              @NotNull final CustomActionsSchema schema, DefaultMutableTreeNode mainMenu){
-
-    for (int i = 0; i < mainMenu.getChildCount(); i++) {
-      final DefaultMutableTreeNode menuItem = (DefaultMutableTreeNode)mainMenu.getChildAt(i);
-      if ("File".equals(getItemId(menuItem))) {
-        final HashSet<String> fileItems = ContainerUtil.newHashSet("TemplateProjectProperties", "ExportToHTML", "SaveAll",
-                                                                   "Export/Import Actions", "Add to Favorites", "Synchronize",
-                                                                   "ChangeFileEncodingAction", "Line Separators", "ToggleReadOnlyAttribute");
-        hideActions(schema, root, menuItem, fileItems);
-      }
-
-      else if ("Edit".equals(getItemId(menuItem))) {
-        final HashSet<String>
-          editItems = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsRichText", "CopyReference", "EditorPasteSimple", "Macros",
-                                               "EditorToggleCase", "EditorJoinLines", "FillParagraph", "Convert Indents",
-                                               "TemplateParametersNavigation", "EscapeEntities");
-        hideActions(schema, root, menuItem, editItems);
-      }
-      else if ("View".equals(getItemId(menuItem))) {
-        final HashSet<String>
-          viewItems = ContainerUtil.newHashSet("QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo", "ShowErrorDescription",
-                                               "RecentChanges", "CompareActions", "QuickChangeScheme");
-        hideActions(schema, root, menuItem, viewItems);
-      }
-      else if ("Navigate".equals(getItemId(menuItem))) {
-        final HashSet<String>
-          navigateItems = ContainerUtil.newHashSet("GotoCustomRegion", "JumpToLastChange", "JumpToNextChange", "SelectIn", "GotoTypeDeclaration",
-                                                   "GotoTest", "GotoRelated", "ShowFilePath", "Hierarchy Actions", "Bookmarks",
-                                                   "Goto Error/Bookmark Actions","GoToEditPointGroup","Change Navigation Actions",
-                                                   "Method Navigation Actions");
-        hideActions(schema, root, menuItem, navigateItems);
-      }
-    }
-
     final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Code", "Window", "Run");
     hideActions(schema, root, mainMenu, menuItems);
   }
