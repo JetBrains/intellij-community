@@ -218,9 +218,7 @@ public class TextMergeTool implements MergeTool {
         myModifierProvider = new ModifierProvider();
 
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
-        DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
-        DiffUtil.registerAction(new AppendSelectedChangesAction(Side.RIGHT, true), myPanel);
         DiffUtil.registerAction(new RevertSelectedChangesAction(true), myPanel);
       }
 
@@ -263,9 +261,7 @@ public class TextMergeTool implements MergeTool {
         List<AnAction> group = new ArrayList<AnAction>();
 
         group.add(new ApplySelectedChangesAction(Side.LEFT, false));
-        group.add(new AppendSelectedChangesAction(Side.LEFT, false));
         group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
-        group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
         group.add(new RevertSelectedChangesAction(false));
         group.add(Separator.getInstance());
 
@@ -829,44 +825,6 @@ public class TextMergeTool implements MergeTool {
         }
       }
 
-      @CalledWithWriteLock
-      public void appendChange(@NotNull TextMergeChange change, @NotNull Side side) {
-        LOG.assertTrue(myCurrentMergeCommand != null);
-        if (change.isResolved(side)) return;
-        if (!change.isChange(side)) return;
-
-        ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-        ThreeSide oppositeSide = side.select(ThreeSide.RIGHT, ThreeSide.LEFT);
-        ThreeSide outputSide = ThreeSide.BASE;
-
-        int outputStartLine = change.getStartLine(outputSide);
-        int outputEndLine = change.getEndLine(outputSide);
-        int sourceStartLine = change.getStartLine(sourceSide);
-        int sourceEndLine = change.getEndLine(sourceSide);
-
-        if (sourceStartLine == sourceEndLine) return; // can't append deletion
-
-        enterBulkChangeUpdateBlock();
-        try {
-          DiffUtil.applyModification(getContent(outputSide).getDocument(), outputEndLine, outputEndLine,
-                                     getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
-
-          int newOutputEndLine = outputEndLine + (sourceEndLine - sourceStartLine);
-          moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
-
-          if (!change.isConflict() ||
-              change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) { // conflict modification-deletion
-            markResolved(change);
-          }
-          else {
-            markResolved(change, side);
-          }
-        }
-        finally {
-          exitBulkChangeUpdateBlock();
-        }
-      }
-
       /*
        * We want to include inserted block into change, so we are updating endLine(BASE).
        *
@@ -1106,34 +1064,6 @@ public class TextMergeTool implements MergeTool {
         protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
           for (int i = changes.size() - 1; i >= 0; i--) {
             replaceChange(changes.get(i), mySide);
-          }
-        }
-      }
-
-      private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
-        @NotNull private final Side mySide;
-
-        public AppendSelectedChangesAction(@NotNull Side side, boolean shortcut) {
-          super(shortcut);
-          mySide = side;
-          EmptyAction.setupAction(this, mySide.select("Diff.AppendLeftSide", "Diff.AppendRightSide"), null);
-        }
-
-        @Override
-        protected boolean isVisible(@NotNull ThreeSide side) {
-          if (side == ThreeSide.BASE) return true;
-          return side == mySide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-        }
-
-        @Override
-        protected boolean isEnabled(@NotNull TextMergeChange change) {
-          return !change.isResolved(mySide) && change.isChange(mySide);
-        }
-
-        @Override
-        protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
-          for (int i = changes.size() - 1; i >= 0; i--) {
-            appendChange(changes.get(i), mySide);
           }
         }
       }

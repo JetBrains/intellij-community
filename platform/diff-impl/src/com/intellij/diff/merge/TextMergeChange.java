@@ -276,14 +276,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
         if (!isChange(versionSide)) return null;
 
-        boolean isAppendable = getStartLine(mySide) != getEndLine(mySide) &&
-                               (getStartLine(ThreeSide.BASE) != getEndLine(ThreeSide.BASE) || isConflict());
-
         if (myShiftPressed) {
           return createRevertRenderer();
-        }
-        if (myCtrlPressed && isAppendable) {
-          return createAppendRenderer(versionSide);
         }
         return createApplyRenderer(versionSide);
       }
@@ -299,21 +293,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
           @Override
           public void run() {
             myViewer.replaceChange(TextMergeChange.this, side);
-          }
-        });
-      }
-    });
-  }
-
-  @Nullable
-  private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(DiffBundle.message("merge.dialog.append.change.action.name"), AllIcons.Diff.ArrowLeftDown, new Runnable() {
-      @Override
-      public void run() {
-        myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
-          @Override
-          public void run() {
-            myViewer.appendChange(TextMergeChange.this, side);
           }
         });
       }
