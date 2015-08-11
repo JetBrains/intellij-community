@@ -17,6 +17,7 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.extensionResources.ExtensionsRootType;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -57,6 +58,10 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
 
   @Override
   public void initComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     List<VirtualFile> scripts = getScripts();
     if (scripts.isEmpty()) {
       LOG.debug("No startup scripts detected");
