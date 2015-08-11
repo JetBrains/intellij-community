@@ -970,6 +970,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     // NOTE: sorry, not enough metaprogramming to generalize visitMethods and visitClassAttributes
   }
 
+  @NotNull
+  @Override
+  public final List<PyTargetExpression> getClassAttributesInherited(@NotNull final TypeEvalContext context) {
+    final MyAttributesCollector attributesCollector = new MyAttributesCollector();
+    visitClassAttributes(attributesCollector, true, context);
+    return attributesCollector.getAttributes();
+  }
+
   public List<PyTargetExpression> getClassAttributes() {
     PyClassStub stub = getStub();
     if (stub != null) {
@@ -1525,5 +1533,18 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyClassLikeType getType(@NotNull TypeEvalContext context) {
     return PyUtil.as(context.getType(this), PyClassLikeType.class);
+  }
+
+  private static final class MyAttributesCollector implements Processor<PyTargetExpression> {
+    private final List<PyTargetExpression> myAttributes = new ArrayList<PyTargetExpression>();
+    @Override
+    public boolean process(final PyTargetExpression expression) {
+      myAttributes.add(expression);
+      return true;
+    }
+    @NotNull
+     List<PyTargetExpression> getAttributes() {
+      return Collections.unmodifiableList(myAttributes);
+    }
   }
 }
