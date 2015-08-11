@@ -16,14 +16,40 @@
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class ServersToolWindowFactory implements ToolWindowFactory {
+public class ServersToolWindowFactory implements ToolWindowFactory, Condition<Project> {
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    new ServersToolWindow(project, toolWindow);
+    final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+    final ServersToolWindowContent serversContent = new ServersToolWindowContent(project);
+    Content content = contentFactory.createContent(serversContent.getMainPanel(), null, false);
+    Disposer.register(content, serversContent);
+    toolWindow.getContentManager().addContent(content);
+  }
+
+  @Override
+  public boolean value(Project project) {
+    return isAvailable(project);
+  }
+
+  public static boolean isAvailable(Project project) {
+    if (!RemoteServersManager.getInstance().getServers().isEmpty()) {
+      return true;
+    }
+    for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
+      if (contributor.canContribute(project)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
