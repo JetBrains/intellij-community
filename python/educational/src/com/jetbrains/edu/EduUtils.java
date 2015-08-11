@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.StudyOrderable;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +29,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 
 public class EduUtils {
   private EduUtils() {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
+
+  public static Comparator<StudyOrderable> INDEX_COMPARATOR = new Comparator<StudyOrderable>() {
+    @Override
+    public int compare(StudyOrderable o1, StudyOrderable o2) {
+      return o1.getIndex() - o2.getIndex();
+    }
+  };
 
   public static void commitAndSaveModel(final ModifiableRootModel model) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -83,10 +92,14 @@ public class EduUtils {
    * @return index of object
    */
   public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
-    if (!fullName.contains(logicalName)) {
+    if (!fullName.startsWith(logicalName)) {
       return -1;
     }
-    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+    try {
+      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+    } catch(NumberFormatException e) {
+      return -1;
+    }
   }
 
   public static boolean indexIsValid(int index, Collection collection) {

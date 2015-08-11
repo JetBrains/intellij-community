@@ -7,30 +7,33 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.StudyOrderable;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.ui.CCCreateStudyItemDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
 public class CCCreateLesson extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(CCCreateLesson.class.getName());
+  public static final String TITLE = "Create New " + EduNames.LESSON_TITLED;
 
   public CCCreateLesson() {
-    super("Lesson", "Create new Lesson", PlatformIcons.DIRECTORY_CLOSED_ICON);
+    super(EduNames.LESSON_TITLED, TITLE, PlatformIcons.DIRECTORY_CLOSED_ICON);
   }
 
   @Override
@@ -47,85 +50,87 @@ public class CCCreateLesson extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    //"Create Lesson" invoked from project root creates new lesson as last lesson
-    if (directory.getVirtualFile().equals(project.getBaseDir())) {
-      final int size = course.getLessons().size();
-      createLesson(project, size + 1, view);
-      return;
-    }
-    //"Create Lesson" invoked from any of lesson directories creates new lesson as next lesson
-    Lesson lesson = course.getLesson(directory.getName());
-    if (lesson != null) {
-      int index = lesson.getIndex();
-      List<Lesson> lessons = course.getLessons();
-      int lessonNum = lessons.size();
-      for (int i = lessonNum; i >= index + 1; i--) {
-        updateLesson(project, EduNames.LESSON, i);
-      }
-      final PsiDirectory parent = directory.getParent();
-      if (parent == null) {
-        return;
-      }
-      createLesson(project, index + 1, view);
-    }
-  }
-
-  private static void createLesson(@NotNull final Project project,
-                                   final int index,
-                                   final IdeView view) {
-    final String lessonName = Messages.showInputDialog("Name:", "Lesson Name", null, EduNames.LESSON + index, null);
-    if (lessonName == null) {
-      return;
-    }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        createLessonDir(project, index, lessonName, view);
-      }
-    });
-  }
-
-  private void updateLesson(@NotNull final Project project, final String lessonDirName, int i) {
-    final VirtualFile lessonDir = project.getBaseDir().findChild(lessonDirName + i);
-    if (lessonDir == null) {
-      return;
-    }
-    final CCProjectService service = CCProjectService.getInstance(project);
-    Lesson l = service.getCourse().getLesson(lessonDir.getName());
-    if (l == null) {
-      return;
-    }
-    l.setIndex(l.getIndex() + 1);
-    final int next = i + 1;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          lessonDir.rename(this, lessonDirName + next);
-        }
-        catch (IOException e1) {
-          LOG.error(e1);
-        }
-      }
-    });
+    createLesson(view, project, directory.getVirtualFile(), course);
   }
 
   @Nullable
-  public static PsiDirectory createLessonDir(@NotNull final Project project, int index, String name, final IdeView view) {
-    String lessonFolderName = EduNames.LESSON + index;
-    final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(project.getBaseDir());
-    final PsiDirectory lessonDirectory = DirectoryUtil.createSubdirectories(EduNames.LESSON + index, projectDir, "\\/");
-    final CCProjectService service = CCProjectService.getInstance(project);
-    if (lessonDirectory != null) {
-      if (view != null) {
-        view.selectElement(lessonDirectory);
-      }
-      final Lesson lesson = new Lesson();
-      lesson.setName(name != null ? name : lessonFolderName);
-      lesson.setIndex(index);
-      service.getCourse().addLesson(lesson);
+  public static PsiDirectory createLesson(@Nullable IdeView view, @NotNull final Project project,
+                                          @NotNull final VirtualFile directory, @NotNull final Course course) {
+    Lesson lesson = getLesson(directory, project, course, view);
+    if (lesson == null) {
+      return null;
     }
-    return lessonDirectory;
+    VirtualFile courseDir = project.getBaseDir();
+    int lessonIndex = lesson.getIndex();
+    CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyOrderable>() {
+      @Override
+      public StudyOrderable fun(VirtualFile file) {
+        return course.getLesson(file.getName());
+      }
+    }, lessonIndex - 1, EduNames.LESSON, 1);
+    course.addLesson(lesson);
+    Collections.sort(course.getLessons(), EduUtils.INDEX_COMPARATOR);
+    return createLessonDir(project, lessonIndex, view);
+  }
+
+  @Nullable
+  private static Lesson getLesson(@NotNull final VirtualFile sourceDirectory,
+                                  @NotNull final Project project,
+                                  @NotNull final Course course,
+                                  @Nullable IdeView view) {
+
+    VirtualFile courseDir = project.getBaseDir();
+    String lessonName;
+    int lessonIndex;
+    if (sourceDirectory.equals(courseDir)) {
+      lessonIndex = course.getLessons().size() + 1;
+      String suggestedName = EduNames.LESSON + lessonIndex;
+      lessonName = view == null ? suggestedName : Messages.showInputDialog("Name:", TITLE, null, suggestedName, null);
+    } else {
+      Lesson sourceLesson = course.getLesson(sourceDirectory.getName());
+      if (sourceLesson == null) {
+        return null;
+      }
+      final int index = sourceLesson.getIndex();
+      CCCreateStudyItemDialog dialog = new CCCreateStudyItemDialog(project, EduNames.LESSON, sourceLesson.getName(), index);
+      dialog.show();
+      if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+        return null;
+      }
+      lessonName = dialog.getName();
+      lessonIndex = index + dialog.getIndexDelta();
+    }
+    if (lessonName == null) {
+      return null;
+    }
+    return createAndInitLesson(course, lessonName, lessonIndex);
+  }
+
+  @NotNull
+  private static Lesson createAndInitLesson(@NotNull final Course course, @NotNull String lessonName, int lessonIndex) {
+    Lesson lesson = new Lesson();
+    lesson.setName(lessonName);
+    lesson.setCourse(course);
+    lesson.setIndex(lessonIndex);
+    return lesson;
+  }
+
+  @Nullable
+  public static PsiDirectory createLessonDir(@NotNull final Project project, final int index, final IdeView view) {
+    final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(project.getBaseDir());
+    final PsiDirectory[] lessonDirectory = new PsiDirectory[1];
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + index, projectDir, "\\/");
+      }
+    });
+    if (lessonDirectory[0] != null) {
+      if (view != null) {
+        view.selectElement(lessonDirectory[0]);
+      }
+    }
+    return lessonDirectory[0];
   }
 
   @Override
@@ -151,9 +156,9 @@ public class CCCreateLesson extends DumbAwareAction {
     }
     final CCProjectService service = CCProjectService.getInstance(project);
     Course course = service.getCourse();
-
-    if (directory != null && course != null && project.getBaseDir().equals(directory)) {
-      EduUtils.enableAction(event, false);
+    if (directory != null && course != null && course.getLesson(directory.getName()) != null) {
+      EduUtils.enableAction(event, true);
+      return;
     }
     EduUtils.enableAction(event, false);
   }
