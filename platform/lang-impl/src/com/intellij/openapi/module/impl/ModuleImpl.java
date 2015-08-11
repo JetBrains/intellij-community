@@ -30,7 +30,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.module.OptionManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,6 +42,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Property;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -219,29 +222,23 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void setOption(@NotNull String key, @NotNull String value) {
-    OptionManager manager = getOptionManager();
-    if (manager != null) {
-      manager.setOption(key, value);
-    }
+    getOptionManager().state.options.put(key, value);
   }
 
-  @Nullable
-  private OptionManager getOptionManager() {
-    return (OptionManager)getMainStorage(this).getStorageData();
+  @NotNull
+  private DeprecatedModuleOptionManager getOptionManager() {
+    //noinspection ConstantConditions
+    return ModuleServiceManager.getService(this, DeprecatedModuleOptionManager.class);
   }
 
   @Override
   public void clearOption(@NotNull String key) {
-    OptionManager manager = getOptionManager();
-    if (manager != null) {
-      manager.clearOption(key);
-    }
+    getOptionManager().state.options.remove(key);
   }
 
   @Override
   public String getOptionValue(@NotNull String key) {
-    OptionManager manager = getOptionManager();
-    return manager == null ? null : manager.getOptionValue(key);
+    return getOptionManager().state.options.get(key);
   }
 
   @NotNull
@@ -374,5 +371,27 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   protected MutablePicoContainer createPicoContainer() {
     return Extensions.getArea(this).getPicoContainer();
+  }
+
+  @State(name = "DeprecatedModuleOptionManager", storages = @Storage(file = StoragePathMacros.MODULE_FILE))
+  static class DeprecatedModuleOptionManager implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
+    static final class State {
+      @Property(surroundWithTag = false)
+      @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
+      public final Map<String, String> options = new THashMap<String, String>();
+    }
+
+    private State state = new State();
+
+    @Nullable
+    @Override
+    public State getState() {
+      return state;
+    }
+
+    @Override
+    public void loadState(State state) {
+      this.state = state;
+    }
   }
 }

@@ -21,7 +21,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
+import com.intellij.openapi.components.impl.stores.FileStorage
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
@@ -223,11 +226,14 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     override val isUseXmlProlog: Boolean
       get() = storageManager.isUseXmlProlog
 
-    override fun createStorageData() = storageManager.createStorageData(fileSpec)
-
     override fun beforeElementSaved(element: Element) {
       storageManager.beforeElementSaved(element)
       super<FileBasedStorage>.beforeElementSaved(element)
+    }
+
+    override fun beforeElementLoaded(element: Element) {
+      storageManager.beforeElementLoaded(element)
+      super<FileBasedStorage>.beforeElementLoaded(element)
     }
   }
 
@@ -238,6 +244,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   protected open fun beforeElementSaved(element: Element) {
+  }
+
+  protected open fun beforeElementLoaded(element: Element) {
   }
 
   override final fun rename(path: String, newName: String) {
@@ -281,8 +290,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = pathMacroSubstitutor
 
-  protected open fun createStorageData(fileSpec: String): StorageData = StorageData()
-
   override final fun expandMacros(path: String): String {
     // replacement can contains $ (php tests), so, this check must be performed before expand
     val matcher = MACRO_PATTERN.matcher(path)
@@ -314,7 +321,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   override fun startExternalization() = StateStorageManagerExternalizationSession(this)
 
-  open class StateStorageManagerExternalizationSession(protected val storageManager: StateStorageManagerImpl) : StateStorageManager.ExternalizationSession {
+  class StateStorageManagerExternalizationSession(protected val storageManager: StateStorageManagerImpl) : StateStorageManager.ExternalizationSession {
     private val mySessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {

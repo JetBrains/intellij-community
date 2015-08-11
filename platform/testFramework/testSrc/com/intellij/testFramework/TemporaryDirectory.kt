@@ -17,6 +17,9 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
@@ -42,6 +45,19 @@ public class TemporaryDirectory : ExternalResource() {
   }
 
   public fun newDirectory(directoryName: String? = null): File {
+    val file = createDirectory(directoryName)
+    val fs = LocalFileSystem.getInstance()
+    if (fs != null) {
+      // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
+      val virtualFile = fs.findFileByIoFile(file)
+      if (virtualFile != null) {
+        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+      }
+    }
+    return file
+  }
+
+  private fun createDirectory(directoryName: String?): File {
     val tempDirectory = FileUtilRt.getTempDirectory()
     var testFileName = sanitizedName!!
     if (directoryName != null) {
@@ -59,6 +75,23 @@ public class TemporaryDirectory : ExternalResource() {
       throw IOException("Couldn't generate unique random path")
     }
     files.add(file)
+
+    val fs = LocalFileSystem.getInstance()
+    if (fs != null) {
+      // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
+      val virtualFile = fs.findFileByIoFile(file)
+      if (virtualFile != null) {
+        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+      }
+    }
     return file
+  }
+
+  public fun newVirtualDirectory(directoryName: String? = null): VirtualFile {
+    val file = createDirectory(directoryName)
+    FileUtilRt.createDirectory(file)
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+    return virtualFile!!
   }
 }

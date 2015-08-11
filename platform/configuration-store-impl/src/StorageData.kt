@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.StateMap
 import com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers
 import com.intellij.openapi.components.impl.stores.StorageDataBase
@@ -29,18 +28,12 @@ import java.util.Arrays
 open class StorageData : StorageDataBase {
   val states: StateMap
 
-  open fun isDirty() = false
-
   public constructor() {
     states = StateMap()
   }
 
   protected constructor(storageData: StorageData) {
     states = StateMap(storageData.states)
-  }
-
-  public open fun load(rootElement: Element, pathMacroSubstitutor: PathMacroSubstitutor?, intern: Boolean) {
-    StorageDataBase.load(states, rootElement, pathMacroSubstitutor, intern)
   }
 
   public open fun save(newLiveStates: Map<String, Element>, rootElementName: String): Element? {
@@ -67,7 +60,7 @@ open class StorageData : StorageDataBase {
         }
         else {
           nameAttribute.setValue(componentName)
-          if (elementAttributes.get(0) !== nameAttribute) {
+          if (elementAttributes.get(0) != nameAttribute) {
             elementAttributes.remove(nameAttribute)
             elementAttributes.add(0, nameAttribute)
           }

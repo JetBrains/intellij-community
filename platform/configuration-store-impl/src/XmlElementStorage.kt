@@ -18,10 +18,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.SaveSessionBase
-import com.intellij.openapi.components.impl.stores.StateStorageBase
-import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
+import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
@@ -42,7 +39,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   override fun getStateAndArchive(storageData: StorageData, component: Any, componentName: String) = storageData.states.getStateAndArchive(componentName)
 
   override fun loadData(): StorageData {
-    val storageData = createStorageData()
+    val storageData = StorageData()
     val element: Element?
     // we don't use local data if has stream provider
     if (provider != null && provider.enabled) {
@@ -71,14 +68,13 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
 
   private fun StorageData.loadState(element: Element) {
-    load(element, pathMacroSubstitutor, true)
+    beforeElementLoaded(element)
+    StorageDataBase.load(states, element, pathMacroSubstitutor, true)
   }
-
-  protected open fun createStorageData(): StorageData = StorageData()
 
   fun setDefaultState(element: Element) {
     element.setName(rootElementName)
-    val storageData = createStorageData()
+    val storageData = StorageData()
     storageData.loadState(element)
     storageDataRef.set(storageData)
   }
@@ -118,7 +114,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     private val newLiveStates = THashMap<String, Element>()
 
-    override fun createSaveSession() = if (storage.checkIsSavingDisabled() || (copiedStorageData == null && !originalStorageData.isDirty())) null else this
+    override fun createSaveSession() = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
     override fun setSerializedState(component: Any, componentName: String, element: Element?) {
       if (copiedStorageData == null) {
@@ -130,14 +126,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     }
 
     override fun save() {
-      var storageData = copiedStorageData
-      if (storageData == null) {
-        storageData = originalStorageData
-        if (!storageData.isDirty()) {
-          LOG.warn("Copied storage data must be not null because original storage data is not dirty")
-        }
-      }
-
+      var storageData = copiedStorageData!!
       var element = storageData.save(newLiveStates, storage.rootElementName)
       if (element == null || JDOMUtil.isEmpty(element)) {
         element = null
@@ -165,6 +154,9 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     throws(IOException::class)
     protected abstract fun saveLocally(element: Element?)
+  }
+
+  protected open fun beforeElementLoaded(element: Element) {
   }
 
   protected open fun beforeElementSaved(element: Element) {
@@ -195,7 +187,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         }
       }
       else if (storageData != null) {
-        val newStorageData = createStorageData()
+        val newStorageData = StorageData()
         newStorageData.loadState(newElement)
         changedComponentNames.addAll(storageData.states.getChangedComponentNames(newStorageData))
         setStorageData(storageData, newStorageData)

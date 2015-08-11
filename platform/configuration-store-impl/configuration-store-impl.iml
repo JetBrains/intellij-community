@@ -16,5 +16,6 @@
     <orderEntry type="library" scope="TEST" name="junit-hamcrest" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="eclipse" scope="TEST" />
   </component>
 </module>

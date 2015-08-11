@@ -17,29 +17,27 @@ package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.io.FileMatchers.anExistingFile
 import org.intellij.lang.annotations.Language
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.InputStream
 import kotlin.properties.Delegates
 
@@ -51,12 +49,12 @@ class ApplicationStoreTest {
   private val tempDirManager = TemporaryDirectory()
   public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
 
-  private var testAppConfig: File by Delegates.notNull()
+  private var testAppConfig: VirtualFile by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
   public Before fun setUp() {
-    testAppConfig = tempDirManager.newDirectory()
-    componentStore = MyComponentStore(FileUtilRt.toSystemIndependentName(testAppConfig.systemIndependentPath))
+    testAppConfig = tempDirManager.newVirtualDirectory()
+    componentStore = MyComponentStore(FileUtilRt.toSystemIndependentName(testAppConfig.getPath()))
   }
 
   public Test fun `stream provider save if several storages configured`() {
@@ -103,13 +101,13 @@ class ApplicationStoreTest {
     component.foo = "new2"
     runInEdtAndWait { StoreUtil.save(componentStore, null) }
 
-    assertThat(oldFile, not(anExistingFile()))
+    assertThat(oldFile.exists(), equalTo(false))
   }
 
-  private fun saveConfig(fileName: String, Language("XML") data: String): File {
-    val file = File(testAppConfig, fileName)
-    FileUtil.writeToFile(file, data)
-    return file
+  private fun saveConfig(fileName: String, Language("XML") data: String): VirtualFile {
+    var result: VirtualFile? = null
+    runInEdtAndWait { runWriteAction { result = VfsTestUtil.createFile(testAppConfig, fileName, data) } }
+    return result!!
   }
 
   private class MyStreamProvider : StreamProvider {
