@@ -23,6 +23,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
  */
 public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   private static final String NDASH = new String(new byte[]{-30, -128, -109}, CharsetToolkit.UTF8_CHARSET);
+  private static final String COPY = new String(new byte[]{-62, -82}, CharsetToolkit.UTF8_CHARSET);
 
   public void testSimpleHtml() {
     doTest("<<<", "html", "&lt;&lt;&lt;");
@@ -32,8 +33,12 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
     doTest(">>>", "xml", "&gt;&gt;&gt;");
   }
 
-  public void testWide() {
+  public void testVeryWide() {
     doTest(NDASH, "html", "&ndash;");
+  }
+
+  public void testWide() {
+    doTest(COPY, "html", "&reg;");
   }
 
   public void testAttributeValue() {

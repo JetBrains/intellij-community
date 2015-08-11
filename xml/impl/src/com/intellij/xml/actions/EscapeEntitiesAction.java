@@ -79,7 +79,7 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
       char c = text.charAt(i);
       final PsiElement element = file.findElementAt(start + i);
       if (element != null && isCharacterElement(element)) {
-        if (c == '<' || c == '>' || c == '&' || c == '"' || c == '\'' || c > 0xff) {
+        if (c == '<' || c == '>' || c == '&' || c == '"' || c == '\'' || c > 0x7f) {
           final String escape = ESCAPES.getValue(file).get(c);
           if (escape != null) {
             result.append("&").append(escape).append(";");
