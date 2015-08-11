@@ -624,8 +624,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     try {
       final InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
       final Ref<FileType> result = new Ref<FileType>(UnknownFileType.INSTANCE);
+      boolean r;
       try {
-        FileUtil.processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
+        r = FileUtil.processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
           @Override
           public boolean process(ByteSequence byteSequence) {
             boolean isText = guessIfText(file, byteSequence);
@@ -666,7 +667,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       FileType fileType = result.get();
       if (toLog()) {
-        log("F: Redetect run for file: " + file.getName() + "; result: "+fileType.getName());
+        byte[] buffer = new byte[50];
+        InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
+        int n = newStream.read(buffer, 0, buffer.length);
+        newStream.close();
+        log("F: Redetect run for file: " + file.getName() + "; result: "+fileType.getName()+"; processor ret: "+r+"; stream: "+inputStream+"; newStream: "+newStream+"; read: "+n+"; buffer: "+Arrays.toString(buffer));
       }
 
       if (LOG.isDebugEnabled()) {
