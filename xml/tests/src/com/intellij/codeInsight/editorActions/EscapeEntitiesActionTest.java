@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
@@ -62,12 +63,15 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
            "<a>&lt;</a>\n");
   }
 
-  private void doTest(String text, String extension, String expected) {
-    if (!text.contains("<selection>")) {
-      text = "<selection>" + text + "</selection>";
-    }
-    myFixture.configureByText(getTestName(true) + "." + extension, text);
-    myFixture.performEditorAction("EscapeEntities");
-    myFixture.checkResult(expected);
+  private void doTest(String text, final String extension, final String expected) {
+    final String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
+    PlatformTestUtil.withEncoding("UTF8", new Runnable() {
+      @Override
+      public void run() {
+        myFixture.configureByText(getTestName(true) + "." + extension, finalText);
+        myFixture.performEditorAction("EscapeEntities");
+        myFixture.checkResult(expected);
+      }
+    });
   }
 }
