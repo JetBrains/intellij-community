@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -129,7 +129,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   protected Runnable getDoubleClickHandler() {
     return new Runnable() {
       public void run() {
-        showDiff();
+        showDiff(getChangesSelection());
       }
     };
   }
@@ -182,7 +182,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = myViewer.getSelectedChanges();
       if (list.isEmpty()) list = myViewer.getChanges();
-      sink.put(VcsDataKeys.CHANGES, list.toArray(new Change [list.size()]));
+      sink.put(VcsDataKeys.CHANGES, list.toArray(new Change[list.size()]));
+    }
+    else if (key == VcsDataKeys.CHANGES_SELECTION) {
+      sink.put(VcsDataKeys.CHANGES_SELECTION, getChangesSelection());
     }
     else if (key == VcsDataKeys.CHANGE_LISTS) {
       sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
@@ -260,30 +263,39 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   protected void updateDiffContext(@NotNull ShowDiffContext context) {
   }
 
-  private void showDiff() {
+  private void showDiff(@NotNull ChangesSelection selection) {
+    List<Change> changes = selection.getChanges();
+
+    Change[] changesArray = changes.toArray(new Change[changes.size()]);
+    showDiffForChanges(changesArray, selection.getIndex());
+
+    afterDiffRefresh();
+  }
+
+  @NotNull
+  protected ChangesSelection getChangesSelection() {
     final Change leadSelection = myViewer.getLeadSelection();
     List<Change> changes = myViewer.getSelectedChanges();
 
     if (changes.size() < 2) {
-      changes = myViewer.getChanges();
+      List<Change> allChanges = myViewer.getChanges();
+      if (allChanges.size() > 1) {
+        changes = allChanges;
+      }
     }
-
-    Change[] changesArray = changes.toArray(new Change[changes.size()]);
 
     if (leadSelection != null) {
       int indexInSelection = changes.indexOf(leadSelection);
       if (indexInSelection == -1) {
-        showDiffForChanges(new Change[]{leadSelection}, 0);
+        return new ChangesSelection(Collections.singletonList(leadSelection), 0);
       }
       else {
-        showDiffForChanges(changesArray, indexInSelection);
+        return new ChangesSelection(changes, indexInSelection);
       }
     }
     else {
-      showDiffForChanges(changesArray, 0);
+      return new ChangesSelection(changes, 0);
     }
-
-    afterDiffRefresh();
   }
 
   protected void afterDiffRefresh() {
@@ -328,12 +340,12 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     myDiffAction = new ShowDiffAction() {
       public void update(AnActionEvent e) {
-        Change[] changes = e.getData(VcsDataKeys.CHANGES);
-        e.getPresentation().setEnabled(canShowDiff(myProject, changes));
+        ChangesSelection selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
+        e.getPresentation().setEnabled(selection != null && canShowDiff(myProject, selection.getChanges()));
       }
 
       public void actionPerformed(AnActionEvent e) {
-        showDiff();                     // todo here
+        showDiff(e.getRequiredData(VcsDataKeys.CHANGES_SELECTION));
       }
     };
     myDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);
