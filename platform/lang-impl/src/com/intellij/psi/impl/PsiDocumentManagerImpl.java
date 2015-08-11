@@ -79,7 +79,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
       public void updateFinished(@NotNull Document doc) {
-        documentCommitThread.queueCommit(project, doc, "Bulk update finished");
+        documentCommitThread.queueCommit(project, doc, "Bulk update finished", ApplicationManager.getApplication().getCurrentModalityState());
       }
     });
   }
