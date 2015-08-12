@@ -502,7 +502,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       public boolean process(final PsiReference reference) {
         final PsiElement element = reference.getElement();
 
-        if (!isInside(element, allElementsToDelete)) {
+        if (!isInside(element, allElementsToDelete) && element instanceof PsiJavaCodeReferenceElement) {
           PsiElement parent = element.getParent();
           if (parent instanceof PsiReferenceList) {
             final PsiElement pparent = parent.getParent();
