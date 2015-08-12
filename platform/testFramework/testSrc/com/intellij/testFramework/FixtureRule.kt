@@ -20,6 +20,7 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -41,6 +42,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 import kotlin.properties.Delegates
 
@@ -54,6 +56,7 @@ public class ProjectRule() : ExternalResource() {
     }
 
     private var sharedProject: ProjectEx? = null
+    private val projectOpened = AtomicBoolean()
 
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
@@ -64,13 +67,9 @@ public class ProjectRule() : ExternalResource() {
       java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
 
       val project = PlatformTestCase.createProject(projectFile, "Light project: $buffer") as ProjectEx
-      val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-      projectManager.openTestProject(project)
-      // app will close and dispose all opened project on exit, so, we don't have to dispose it themselves
-      // but we have to be compatible with _LastInSuiteTest
       Disposer.register(ApplicationManager.getApplication(), Disposable {
         try {
-          disposeProject(projectManager)
+          disposeProject()
         }
         finally {
           FileUtil.delete(projectFile)
@@ -79,16 +78,22 @@ public class ProjectRule() : ExternalResource() {
       return project
     }
 
-    private fun disposeProject(projectManager: ProjectManagerImpl) {
+    private fun disposeProject() {
       val project = sharedProject ?: return
       sharedProject = null
-      projectManager.closeProject(project, false, true, false)
+      Disposer.dispose(project)
     }
   }
 
   override final fun before() {
     IdeaTestApplication.getInstance()
     UsefulTestCase.replaceIdeEventQueueSafely()
+  }
+
+  override fun after() {
+    if (projectOpened.compareAndSet(true, false)) {
+      sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).closeProject(it, false, false, false) } }
+    }
   }
 
   public val project: ProjectEx
@@ -102,6 +107,10 @@ public class ProjectRule() : ExternalResource() {
             sharedProject = result
           }
         }
+      }
+
+      if (projectOpened.compareAndSet(false, true)) {
+        ProjectManagerEx.getInstanceEx().openTestProject(project)
       }
       return result!!
     }
