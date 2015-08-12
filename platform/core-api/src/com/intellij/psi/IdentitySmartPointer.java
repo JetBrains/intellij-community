@@ -23,7 +23,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiElementPointer<T> {
   private final T myElement;
   private final PsiFile myFile;
