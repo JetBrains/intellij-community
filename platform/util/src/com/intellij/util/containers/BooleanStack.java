@@ -24,31 +24,31 @@ import com.intellij.util.ArrayUtil;
 import java.util.Arrays;
 import java.util.EmptyStackException;
 
-public class IntStack {
-  private int[] data;
+public class BooleanStack {
+  private boolean[] data;
   private int size;
-  public IntStack(int initialCapacity) {
-    data = new int[initialCapacity];
+  public BooleanStack(int initialCapacity) {
+    data = new boolean[initialCapacity];
     size = 0;
   }
 
-  public IntStack() {
+  public BooleanStack() {
     this(5);
   }
 
-  public void push(int t) {
+  public void push(boolean t) {
     if (size >= data.length) {
       data = ArrayUtil.realloc(data, data.length * 3 / 2);
     }
     data[size++] = t;
   }
 
-  public int peek() {
+  public boolean peek() {
     if (size == 0) throw new EmptyStackException();
     return data[size - 1];
   }
 
-  public int pop() {
+  public boolean pop() {
     if (size == 0) throw new EmptyStackException();
     return data[--size];
   }
@@ -63,8 +63,8 @@ public class IntStack {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof IntStack) {
-      IntStack otherStack = (IntStack)o;
+    if (o instanceof BooleanStack) {
+      BooleanStack otherStack = (BooleanStack)o;
       if (size != otherStack.size) return false;
       for (int i = 0; i < otherStack.size; i++) {
         if (data[i] != otherStack.data[i]) return false;
