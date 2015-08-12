@@ -2,13 +2,11 @@ package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.Function;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.actions.CCRunTestsAction;
 import org.jetbrains.annotations.NotNull;
@@ -78,11 +76,6 @@ class CCFileDeletedListener extends VirtualFileAdapter {
         return lesson.getTask(file.getName());
       }
     }, task.getIndex(), EduNames.TASK, -1);
-    ModifiableRootModel model = EduUtils.getModel(lessonDir, project);
-    if (model == null) {
-      return;
-    }
-    EduUtils.commitAndSaveModel(model);
     lesson.getTaskList().remove(task);
   }
 
