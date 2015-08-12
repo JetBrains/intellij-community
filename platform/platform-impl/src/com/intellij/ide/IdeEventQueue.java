@@ -543,10 +543,6 @@ public class IdeEventQueue extends EventQueue {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
         myMouseEventDispatcher.resetHorScrollingTracker();
       }
-      if (((KeyEvent)e).getKeyCode() == 0) {
-        //todo[kb] remove this check when Oracle fix extra null events while working via VNC
-        return;
-      }
     }
 
     if (!typeAheadFlushing && typeAheadDispatchToFocusManager(e)) {
