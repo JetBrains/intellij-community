@@ -29,6 +29,11 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -894,6 +899,27 @@ public class PyUtil {
       }
     }
     return result;
+  }
+
+  /**
+   * Force re-highlighting in all open editors that belong to specified project.
+   */
+  public static void rehighlightOpenEditors(final @NotNull Project project) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          if (editor instanceof EditorEx && editor.getProject() == project) {
+            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+            if (vFile != null) {
+              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
+              ((EditorEx)editor).setHighlighter(highlighter);
+            }
+          }
+        }
+      }
+    });
   }
 
   public static class KnownDecoratorProviderHolder {

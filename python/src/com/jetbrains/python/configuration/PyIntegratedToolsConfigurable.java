@@ -22,12 +22,6 @@ import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -55,6 +49,7 @@ import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -279,21 +274,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     });
     FileContentUtilCore.reparseFiles(filesToReparse);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          if (editor instanceof EditorEx && editor.getProject() == myProject) {
-            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
-            if (vFile != null) {
-              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, vFile);
-              ((EditorEx)editor).setHighlighter(highlighter);
-            }
-          }
-        }
-      }
-    });
+    PyUtil.rehighlightOpenEditors(myProject);
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
