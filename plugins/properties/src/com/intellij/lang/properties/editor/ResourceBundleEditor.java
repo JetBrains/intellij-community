@@ -292,11 +292,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
                      ? ((ResourceBundlePropertyStructureViewElement)element).getProperty().getPsiElement()
                      : null;
-      if (value instanceof IProperty && propertyName.equals(((IProperty)value).getUnescapedKey())) {
-        final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get((IProperty)value);
-        myStructureViewComponent.select(anchor, true);
-        selectionChanged();
-        return;
+      if (value != null) {
+        final IProperty property = PropertiesImplUtil.getProperty(value);
+        if (propertyName.equals(property.getUnescapedKey())) {
+          final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get(property);
+          myStructureViewComponent.select(anchor, true);
+          selectionChanged();
+          return;
+        }
       }
       else {
         for (TreeElement treeElement : element.getChildren()) {
