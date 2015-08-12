@@ -15,7 +15,10 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.ProjectRule
 import junit.framework.TestCase
 import org.hamcrest.CoreMatchers.equalTo
@@ -75,4 +78,8 @@ class StorageManagerTest {
     storageManager.addMacro("\$DOLLAR_MACRO$", "/temp/d$")
     assertThat(storageManager.getStateStorage("\$DOLLAR_MACRO$/test.xml", RoamingType.PER_USER), notNullValue())
   }
+}
+
+fun ComponentManager.saveStore() {
+  StoreUtil.save(stateStore, null)
 }

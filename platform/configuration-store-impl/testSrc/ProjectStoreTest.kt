@@ -18,7 +18,6 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -100,7 +99,7 @@ class ProjectStoreTest {
   data class TestState(var value: String = "default")
 
   public Test fun directoryBasedStorage() {
-    loadProject(tempDirManager, true, { FileUtil.writeToFile(File(File(it, Project.DIRECTORY_STORE_FOLDER), "misc.xml"), iprFileContent) }) {project ->
+    loadProject(tempDirManager, true, { FileUtil.writeToFile(File(it, Project.DIRECTORY_STORE_FOLDER + "/misc.xml"), iprFileContent) }) {project ->
       test(project)
     }
   }
@@ -117,7 +116,7 @@ class ProjectStoreTest {
     assertThat(testComponent.getState(), equalTo(TestState("customValue")))
 
     testComponent.getState()!!.value = "foo"
-    StoreUtil.save(project.stateStore, project)
+    project.saveStore()
 
     val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
     assertThat(file, anExistingFile())

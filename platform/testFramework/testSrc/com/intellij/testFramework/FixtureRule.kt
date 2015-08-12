@@ -54,6 +54,8 @@ public class ProjectRule() : ExternalResource() {
     private var sharedProject: ProjectEx? = null
 
     private fun createLightProject(): ProjectEx {
+      (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
+
       val projectFile = File("${FileUtilRt.generateRandomTemporaryPath().path}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
 
       val buffer = ByteArrayOutputStream()
@@ -71,8 +73,6 @@ public class ProjectRule() : ExternalResource() {
 
   override final fun before() {
     IdeaTestApplication.getInstance()
-    // avoid stale data
-    (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
     UsefulTestCase.replaceIdeEventQueueSafely()
   }
 

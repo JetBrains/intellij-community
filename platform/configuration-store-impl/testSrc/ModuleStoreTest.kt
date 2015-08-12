@@ -1,9 +1,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.impl.stores.StoreUtil
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
@@ -12,7 +9,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.parentSystemIndependentPath
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
@@ -61,41 +58,38 @@ class ModuleStoreTest {
           assertThat(getOptionValue("foo"), equalTo("bar"))
 
           setOption("foo", "not bar")
-          save()
+          saveStore()
         }
 
         moduleFile.loadModule().useAndDispose {
           assertThat(getOptionValue("foo"), equalTo("not bar"))
 
           setOption("foo", "not bar")
-          save()
+          saveStore()
         }
       }
     }
   }
 
   public Test fun `must be empty if classpath storage`() {
+    // we must not use VFS here, file must not be created
     val moduleFile = File(tempDirManager.newDirectory("module"), "test.iml")
     runInEdtAndWait {
       projectRule.project.runInStoreLoadMode {
         moduleFile.createModule().useAndDispose {
-          ModuleRootModificationUtil.addContentRoot(this, FileUtil.toSystemIndependentName(moduleFile.getParent()))
-          save()
+          ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+          saveStore()
           assertThat(moduleFile, anExistingFile())
           assertThat(moduleFile.readText(), startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">"))
 
           ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
-          save()
+          saveStore()
           assertThat(moduleFile.readText(), equalTo("""<?xml version="1.0" encoding="UTF-8"?>
 <module classpath="eclipse" classpath-dir="$MODULE_DIR" type="JAVA_MODULE" version="4" />"""))
         }
       }
     }
   }
-}
-
-fun ComponentManager.save() {
-  StoreUtil.save(stateStore, null)
 }
 
 inline fun <T> Project.runInStoreLoadMode(task: () -> T): T {

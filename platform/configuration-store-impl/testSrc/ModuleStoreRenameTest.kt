@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -85,7 +84,7 @@ class ModuleStoreRenameTest {
 
   // project structure
   public Test fun `rename module using model`() {
-    runInEdtAndWait { StoreUtil.save(module.stateStore, null) }
+    runInEdtAndWait { module.saveStore() }
     val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
     val oldFile = storage.getFile()
     assertThat(oldFile, anExistingFile())
@@ -99,7 +98,7 @@ class ModuleStoreRenameTest {
 
   // project view
   public Test fun `rename module using rename virtual file`() {
-    runInEdtAndWait { StoreUtil.save(module.stateStore, null) }
+    runInEdtAndWait { module.saveStore() }
     var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
     val oldFile = storage.getFile()
     assertThat(oldFile, anExistingFile())
@@ -126,7 +125,7 @@ class ModuleStoreRenameTest {
   }
 
   public Test fun `rename module parent virtual dir`() {
-    runInEdtAndWait { StoreUtil.save(module.stateStore, null) }
+    runInEdtAndWait { module.saveStore() }
     val storageManager = module.stateStore.getStateStorageManager()
     val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
 
