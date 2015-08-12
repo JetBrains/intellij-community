@@ -33,7 +33,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -126,6 +129,7 @@ public class ShelvedChange {
   }
 
   public Change getChange(Project project) {
+    // todo unify with
     if (myChange == null) {
       File baseDir = new File(project.getBaseDir().getPath());
 
@@ -144,7 +148,11 @@ public class ShelvedChange {
       }
       ContentRevision afterRevision = null;
       if (myFileStatus != FileStatus.DELETED) {
-        FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
+        File afterFile = getAbsolutePath(baseDir, myAfterPath);
+        FilePath afterPath = getFileStatus().equals(FileStatus.ADDED)
+                             ? VcsUtil.getFilePathOnNonLocal(afterFile.getAbsolutePath(), false)
+                             : VcsUtil.getFilePath(
+                               afterFile, false);
         afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
       }
       myChange = new Change(beforeRevision, afterRevision, myFileStatus);

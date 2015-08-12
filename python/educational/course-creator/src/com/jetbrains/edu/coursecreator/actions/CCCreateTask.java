@@ -23,7 +23,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -80,7 +79,6 @@ public class CCCreateTask extends DumbAwareAction {
             return;
           }
 
-          EduUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
           final Task task = new Task(taskName);
           task.setIndex(size + 1);
           lesson.addTask(task);
