@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Dmitry Avdeev
@@ -129,23 +128,23 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
-    return addProperty(property.getKey(), property.getValue()).getPsiElement();
+    return addProperty(property.getKey(), property.getValue()).getPsiElement().getNavigationElement();
   }
 
   @NotNull
   @Override
   public PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException {
-    return addPropertyAfter(property.getKey(), property.getValue(), anchor).getPsiElement();
+    return addPropertyAfter(property.getKey(), property.getValue(), anchor).getPsiElement().getNavigationElement();
   }
 
   @Override
   public IProperty addPropertyAfter(String key, String value, IProperty anchor) {
-    return addPropertyAfterAndCheckAlphaSorting(key, value, anchor, true);
+    return addPropertyAfter(key, value, anchor, true);
   }
 
   @NotNull
-  public IProperty addPropertyAfterAndCheckAlphaSorting(String key, String value, @Nullable IProperty anchor, boolean addToEnd) {
-    final XmlTag anchorTag = anchor == null ? null : (XmlTag)anchor.getPsiElement();
+  public IProperty addPropertyAfter(String key, String value, @Nullable IProperty anchor, boolean addToEnd) {
+    final XmlTag anchorTag = anchor == null ? null : (XmlTag)anchor.getPsiElement().getNavigationElement();
     final XmlTag rootTag = myFile.getRootTag();
     final XmlTag entry = createPropertyTag(key, value);
     final XmlTag addedEntry = (XmlTag) (anchorTag == null ? myFile.getRootTag().addSubTag(entry, !addToEnd) : rootTag.addAfter(entry, anchorTag));
@@ -173,19 +172,19 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
         final IProperty insertPosition;
         final IProperty inserted;
         if (insertIndex == -1) {
-          inserted = addPropertyAfterAndCheckAlphaSorting(key, value, null, false);
+          inserted = addPropertyAfter(key, value, null, false);
           myProperties.add(0, inserted);
         }
         else {
           final int position = insertIndex < 0 ? -insertIndex - 2 : insertIndex;
           insertPosition = myProperties.get(position);
-          inserted = addPropertyAfterAndCheckAlphaSorting(key, value, insertPosition, false);
+          inserted = addPropertyAfter(key, value, insertPosition, false);
           myProperties.add(position + 1, inserted);
         }
         return inserted;
       }
       else {
-        return addPropertyAfterAndCheckAlphaSorting(key, value, null, true);
+        return addPropertyAfter(key, value, null, true);
       }
     }
   }
