@@ -16,11 +16,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -542,6 +540,8 @@ public class Switcher extends AnAction implements DumbAware {
       final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
       ALT_KEY = isAlt ? VK_CONTROL : VK_ALT;
       CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
+      files.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
+      toolWindows.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
 
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
         .setResizable(pinned)
@@ -994,42 +994,9 @@ public class Switcher extends AnAction implements DumbAware {
       @Override
       protected void processKeyEvent(@NotNull final KeyEvent e) {
         final int keyCode = e.getKeyCode();
+        if (keyCode == VK_ENTER) return;
         if (keyCode == VK_LEFT || keyCode == VK_RIGHT) {
           return;
-        }
-        if (keyCode == VK_ENTER && files.getModel().getSize() + toolWindows.getModel().getSize() == 0) {
-          AnAction gotoFile = ActionManager.getInstance().getAction("GotoFile");
-          if (gotoFile != null) {
-            final String search = mySpeedSearch.getEnteredPrefix();
-            myPopup.cancel();
-            final AnAction action = gotoFile;
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-
-                DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-                  @Override
-                  public void consume(@NotNull final DataContext context) {
-                    final DataContext dataContext = new DataContext() {
-                      @Nullable
-                      @Override
-                      public Object getData(@NonNls String dataId) {
-                        if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-                          return search;
-                        }
-                        return context.getData(dataId);
-                      }
-                    };
-                    final AnActionEvent event =
-                      new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
-                                        ActionManager.getInstance(), 0);
-                    action.actionPerformed(event);
-                  }
-                });
-              }
-            });
-            return;
-          }
         }
         super.processKeyEvent(e);
       }
@@ -1078,16 +1045,24 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       @Override
-      protected void selectElement(Object element, String selectedText) {
+      protected void selectElement(final Object element, String selectedText) {
         if (element instanceof FileInfo) {
           if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
-          files.setSelectedValue(element, false);
-          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true);
+          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true).doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              files.setSelectedValue(element, true);
+            }
+          });
         }
         else {
           if (!files.isSelectionEmpty()) files.clearSelection();
-          toolWindows.setSelectedValue(element, false);
-          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true);
+          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true).doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              toolWindows.setSelectedValue(element, true);
+            }
+          });
         }
       }
 
@@ -1102,6 +1077,7 @@ public class Switcher extends AnAction implements DumbAware {
       public void propertyChange(@NotNull PropertyChangeEvent evt) {
         final MyList list = getSelectedList();
         final Object value = list.getSelectedValue();
+
         if (project.isDisposed()) {
           myPopup.cancel();
           return;
@@ -1118,7 +1094,9 @@ public class Switcher extends AnAction implements DumbAware {
         }
         files.repaint();
         toolWindows.repaint();
-        getSelectedList(list).setSelectedValue(value, true);
+        if (value != null) {
+          ListScrollingUtil.ensureSelectionExists(getSelectedList(list));
+        }
       }
     }
 
