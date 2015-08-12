@@ -156,6 +156,12 @@ public class CreateResourceBundleDialogComponent {
       return myComponent.getPanel();
     }
 
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myComponent.myResourceBundleBaseNameTextField;
+    }
+
     public PsiElement[] getCreatedFiles() {
       return myCreatedFiles;
     }
