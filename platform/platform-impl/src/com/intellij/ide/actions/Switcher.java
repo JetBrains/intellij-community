@@ -203,8 +203,8 @@ public class Switcher extends AnAction implements DumbAware {
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
     final JBPopup myPopup;
-    final MyList toolWindows;
-    final MyList files;
+    final JBList toolWindows;
+    final JBList files;
     final JPanel separator;
     final ToolWindowManager twManager;
     final JLabel pathLabel = new JLabel(" ");
@@ -283,7 +283,7 @@ public class Switcher extends AnAction implements DumbAware {
         twModel.addElement(window);
       }
 
-      toolWindows = new MyList(twModel);
+      toolWindows = new JBList(twModel);
       if (pinned) {
         new NameFilteringListModel<ToolWindow>(toolWindows, new Function<ToolWindow, String>() {
           @NotNull
@@ -480,7 +480,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
       };
 
-      files = new MyList(filesModel);
+      files = new JBList(filesModel);
       if (pinned) {
         new NameFilteringListModel<FileInfo>(files, new Function<FileInfo, String>() {
           @Override
@@ -870,12 +870,12 @@ public class Switcher extends AnAction implements DumbAware {
       go(false);
     }
 
-    public MyList getSelectedList() {
+    public JBList getSelectedList() {
       return getSelectedList(files);
     }
 
     @Nullable
-    MyList getSelectedList(@Nullable MyList preferable) {
+    JBList getSelectedList(@Nullable JBList preferable) {
       return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
     }
 
@@ -1075,7 +1075,7 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       public void propertyChange(@NotNull PropertyChangeEvent evt) {
-        final MyList list = getSelectedList();
+        final JBList list = getSelectedList();
         final Object value = list.getSelectedValue();
 
         if (project.isDisposed()) {
@@ -1189,17 +1189,6 @@ public class Switcher extends AnAction implements DumbAware {
         myNameForRendering = EditorTabbedContainer.calcTabTitle(myProject, first);
       }
       return myNameForRendering;
-    }
-  }
-
-  private static class MyList extends JBList {
-    public MyList(@NotNull DefaultListModel model) {
-      super(model);
-    }
-
-    @Override
-    public void processKeyEvent(@NotNull KeyEvent e) {
-      super.processKeyEvent(e);
     }
   }
 }
