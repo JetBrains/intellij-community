@@ -150,7 +150,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     final IProperty position = findInsertionPosition(property);
-    return addPropertyAfter((Property)property, (Property)position);
+    return addPropertyAfter(property, position);
   }
 
   private IProperty findInsertionPosition(@NotNull IProperty property) {

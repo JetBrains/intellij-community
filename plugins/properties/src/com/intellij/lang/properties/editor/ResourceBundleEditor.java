@@ -63,6 +63,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
@@ -511,8 +512,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private void installPropertiesChangeListeners() {
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     if (myVfsListener != null) {
-      assert false;
-      virtualFileManager.removeVirtualFileListener(myVfsListener);
+      throw new AssertionError("Listeners can't be initialized twice");
     }
     myVfsListener = new VirtualFileAdapter() {
       @Override
@@ -549,49 +549,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Nullable
-      private String getPropertyKey(final @Nullable PsiElement element) {
-        if (!(element instanceof PropertyKeyImpl)) {
-          return null;
-        }
-        final IProperty property = (IProperty)PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
-          @Override
-          public boolean value(PsiElement element) {
-            return element instanceof IProperty;
+        final PsiFile file = event.getFile();
+        if (file instanceof XmlFile) {
+          final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+          if (propertiesFile != null) {
+            final ResourceBundle bundle = propertiesFile.getResourceBundle();
+            if (bundle.equals(myResourceBundle) && !myEditors.containsKey(propertiesFile)) {
+              recreateEditorsPanel();
+            }
           }
-        });
-        return property == null ? null : property.getKey();
-      }
-
-      @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        final String oldKey = getPropertyKey(event.getOldChild());
-        if (oldKey == null || !oldKey.equals(getSelectedPropertyName())) {
-          return;
         }
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        //   final PsiFile file = event.getFile();
-        //PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-        //if (propertiesFile == null) return;
-        //if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
-        //updateEditorsFromProperties();
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
@@ -1008,5 +975,4 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       return false;
     }
   }
-
 }

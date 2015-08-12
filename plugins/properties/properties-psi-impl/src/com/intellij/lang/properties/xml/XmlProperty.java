@@ -3,6 +3,7 @@ package com.intellij.lang.properties.xml;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.pom.PomRenameableTarget;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiTarget;
@@ -82,7 +83,7 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
   @NotNull
   @Override
   public PsiElement getPsiElement() {
-    return myTag;
+    return PomService.convertToPsi(this);
   }
 
   @Override
@@ -113,6 +114,6 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
-    return getPsiElement();
+    return myTag;
   }
 }
