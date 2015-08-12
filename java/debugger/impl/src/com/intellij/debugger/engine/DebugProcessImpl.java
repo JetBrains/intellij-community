@@ -1605,22 +1605,19 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myRunToCursorBreakpoint.createRequest(debugProcess);
       DebugProcessImpl.this.myRunToCursorBreakpoint = myRunToCursorBreakpoint;
 
-      if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
-        super.contextAction();
-      }
-      else {
-        myDebugProcessDispatcher.getMulticaster().resumed(getSuspendContext());
+      if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) != null) {
         DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
           @Override
           public void run() {
             SourcePosition position = myRunToCursorBreakpoint.getSourcePosition();
             String name = position != null ? position.getFile().getName() : "<No File>";
             Messages.showErrorDialog(
-              DebuggerBundle.message("error.running.to.cursor.no.executable.code", name, myRunToCursorBreakpoint.getLineIndex()+1),
+              DebuggerBundle.message("error.running.to.cursor.no.executable.code", name, myRunToCursorBreakpoint.getLineIndex() + 1),
               UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR)));
           }
         });
       }
+      super.contextAction();
     }
   }
 
