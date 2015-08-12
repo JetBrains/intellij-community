@@ -62,16 +62,17 @@ public abstract class LRUPopupBuilder<T> {
   private JBIterable<T> myExtraItems = JBIterable.empty();
 
   @NotNull
-  public static ListPopup forFileLanguages(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final PerFileMappings<Language> mappings) {
+  public static ListPopup forFileLanguages(@NotNull Project project, @NotNull final Iterable<VirtualFile> files, @NotNull final PerFileMappings<Language> mappings) {
     Consumer<Language> onChosen = new Consumer<Language>() {
       @Override
       public void consume(Language t) {
-        mappings.setMapping(file, t);
+        for (VirtualFile file : files) {
+          mappings.setMapping(file, t);
+        }
       }
     };
     return languagePopupBuilder(project, "Languages").
       forValues(mappings.getAvailableValues(null)).
-      //withSelection(mappings.getMapping(file)).
       onChosen(onChosen).
       buildPopup();
   }

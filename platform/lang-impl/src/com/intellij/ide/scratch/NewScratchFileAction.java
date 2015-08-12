@@ -31,15 +31,23 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+
+import static com.intellij.openapi.util.Conditions.*;
 
 /**
  * @author ignatov
@@ -99,7 +107,7 @@ public class NewScratchFileAction extends DumbAwareAction {
           public void run() {
             if (!textEditor.isValid()) return;
             PerFileMappings<Language> mappings = ScratchFileService.getInstance().getScratchesMapping();
-            LRUPopupBuilder.forFileLanguages(project, file, mappings).showInBestPositionFor(textEditor.getEditor());
+            LRUPopupBuilder.forFileLanguages(project, JBIterable.of(file), mappings).showInBestPositionFor(textEditor.getEditor());
           }
         });
       }
@@ -107,37 +115,62 @@ public class NewScratchFileAction extends DumbAwareAction {
     return file;
   }
 
+  @NotNull
+  private static Function<VirtualFile, RootType> ROOT_TYPE(final ScratchFileService service) {
+    return new Function<VirtualFile, RootType>() {
+      @Override
+      public RootType fun(VirtualFile virtualFile) {
+        return service.getRootType(virtualFile);
+      }
+    };
+  }
+
+  @NotNull
+  private static Function<VirtualFile, Language> SCRATCH_LANG(final ScratchFileService service, final Project project) {
+    return new Function<VirtualFile, Language>() {
+      @Override
+      public Language fun(VirtualFile file) {
+        Language lang = service.getScratchesMapping().getMapping(file);
+        if (lang == null) {
+          lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
+        }
+        return lang;
+      }
+    };
+  }
 
   public static class LanguageAction extends DumbAwareAction {
     @Override
     public void update(AnActionEvent e) {
       Project project = e.getProject();
-      VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-      if (project == null || file == null) {
+      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+      if (project == null || files.isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
       ScratchFileService fileService = ScratchFileService.getInstance();
-      if (!(fileService.getRootType(file) instanceof ScratchRootType)) {
+      Condition<VirtualFile> isScratch = compose(ROOT_TYPE(fileService), instanceOf(ScratchRootType.class));
+      if (!files.filter(not(isScratch)).isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
-      Language lang = fileService.getScratchesMapping().getMapping(file);
-      if (lang == null) {
-        lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
-      }
-      e.getPresentation().setText("Change Language (" + lang.getDisplayName() +")...");
+      Set<Language> langs = files.filter(isScratch).transform(SCRATCH_LANG(fileService, project)).filter(notNull()).
+        addAllTo(ContainerUtil.<Language>newLinkedHashSet());
+      String langName = langs.size() == 1 ? langs.iterator().next().getDisplayName() : langs.size() + " different";
+      e.getPresentation().setText("Change Language (" + langName + ")...");
       e.getPresentation().setEnabledAndVisible(true);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       Project project = e.getProject();
-      final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-      if (project == null || file == null) return;
-      final PerFileMappings<Language> mapping = ScratchFileService.getInstance().getScratchesMapping();
-      LRUPopupBuilder.forFileLanguages(project, file, mapping).showInBestPositionFor(e.getDataContext());
+      ScratchFileService fileService = ScratchFileService.getInstance();
+      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
+        filter(compose(ROOT_TYPE(fileService), instanceOf(ScratchRootType.class)));
+      if (project == null || files.isEmpty()) return;
+      PerFileMappings<Language> mapping = fileService.getScratchesMapping();
+      LRUPopupBuilder.forFileLanguages(project, files, mapping).showInBestPositionFor(e.getDataContext());
     }
   }
 
