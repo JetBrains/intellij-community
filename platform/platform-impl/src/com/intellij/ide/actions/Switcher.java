@@ -325,6 +325,7 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows.addKeyListener(this);
       toolWindows.addMouseListener(this);
       toolWindows.addMouseMotionListener(this);
+      ListScrollingUtil.ensureSelectionExists(toolWindows);
       myClickListener.installOn(toolWindows);
       toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(@NotNull ListSelectionEvent e) {
@@ -515,6 +516,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.addMouseListener(this);
       files.addMouseMotionListener(this);
       myClickListener.installOn(files);
+      ListScrollingUtil.ensureSelectionExists(files);
 
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
