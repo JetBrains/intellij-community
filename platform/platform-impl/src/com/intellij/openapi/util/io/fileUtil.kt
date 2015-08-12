@@ -18,4 +18,8 @@ package com.intellij.openapi.util.io
 import java.io.File
 
 public val File.systemIndependentPath: String
-  get() = FileUtilRt.toSystemIndependentName(getPath())
+  get() = getPath().replace(File.separatorChar, '/')
+
+
+public val File.parentSystemIndependentPath: String
+  get() = getParent().replace(File.separatorChar, '/')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -257,6 +261,10 @@ public class ListScrollingUtil {
   }
 
   public static void installActions(final JList list) {
+    installActions(list, null);
+  }
+
+  public static void installActions(final JList list, @Nullable JComponent focusParent) {
     ActionMap actionMap = list.getActionMap();
     actionMap.put(SCROLLUP_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -303,40 +311,64 @@ public class ListScrollingUtil {
 
     maybeInstallDefaultShortcuts(list);
 
-    new ListScrollAction(CommonShortcuts.getMoveUp(), list) {
+    installMoveUpAction(list, focusParent);
+    installMoveDownAction(list, focusParent);
+    installMovePageUpAction(list, focusParent);
+    installMovePageDownAction(list, focusParent);
+    installMoveHomeAction(list, focusParent);
+    installMoveEndAction(list, focusParent);
+  }
+
+  public static void installMoveEndAction(final JList list, @Nullable JComponent focusParent) {
+    new ListScrollAction(CommonShortcuts.getMoveEnd(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(AnActionEvent e) {
-        moveUp(list, 0);
+        moveEnd(list);
       }
     };
-    new ListScrollAction(CommonShortcuts.getMoveDown(), list){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        moveDown(list, 0);
-      }
-    };
-    new ListScrollAction(CommonShortcuts.getMovePageUp(), list){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        movePageUp(list);
-      }
-    };
-    new ListScrollAction(CommonShortcuts.getMovePageDown(), list){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        movePageDown(list);
-      }
-    };
-    new ListScrollAction(CommonShortcuts.getMoveHome(), list){
+  }
+
+  public static void installMoveHomeAction(final JList list, @Nullable JComponent focusParent) {
+    new ListScrollAction(CommonShortcuts.getMoveHome(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveHome(list);
       }
     };
-    new ListScrollAction(CommonShortcuts.getMoveEnd(), list){
+  }
+
+  public static void installMovePageDownAction(final JList list, @Nullable JComponent focusParent) {
+    new ListScrollAction(CommonShortcuts.getMovePageDown(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(AnActionEvent e) {
-        moveEnd(list);
+        movePageDown(list);
+      }
+    };
+  }
+
+  public static void installMovePageUpAction(final JList list, @Nullable JComponent focusParent) {
+    new ListScrollAction(CommonShortcuts.getMovePageUp(), focusParent == null ? list : focusParent){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        movePageUp(list);
+      }
+    };
+  }
+
+  public static void installMoveDownAction(final JList list, @Nullable JComponent focusParent) {
+    new ListScrollAction(CommonShortcuts.getMoveDown(), focusParent == null ? list : focusParent){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveDown(list, 0);
+      }
+    };
+  }
+
+  public static void installMoveUpAction(final JList list, @Nullable JComponent focusParent) {
+    new ListScrollAction(CommonShortcuts.getMoveUp(), focusParent == null ? list : focusParent) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveUp(list, 0);
       }
     };
   }

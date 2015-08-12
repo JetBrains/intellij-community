@@ -2178,7 +2178,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     String newText = Character.toString(c);
     Point point = newArea.getLocation();
     int ascent = getAscent();
-    Color color = attributes.getForegroundColor();
+    Color color = attributes.getForegroundColor() == null ? getForegroundColor() : attributes.getForegroundColor();
 
     EditorUIUtil.setupAntialiasing(g);
 
@@ -2232,7 +2232,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Point point = newArea.getLocation();
       int ascent = getAscent();
       Font font = fontFor(attributes.getFontType());
-      Color color = attributes.getForegroundColor();
+      Color color = attributes.getForegroundColor() == null ? getForegroundColor() : attributes.getForegroundColor();
 
       EditorUIUtil.setupAntialiasing(g);
 

@@ -1,6 +1,5 @@
 package org.jetbrains.ide
 
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -8,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.runInEdtAndWait
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
@@ -64,7 +64,7 @@ class TestManager(val fixtureManager: FixtureRule) : TestWatcher() {
       return
     }
 
-    invokeAndWaitIfNeed {
+    runInEdtAndWait {
       val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
         val root = fixtureManager.projectFixture.getProject().getBaseDir()
@@ -103,7 +103,7 @@ class TestManager(val fixtureManager: FixtureRule) : TestWatcher() {
     }
 
     if (fileToDelete != null) {
-      invokeAndWaitIfNeed { runWriteAction { fileToDelete?.delete(this@TestManager) } }
+      runInEdtAndWait { runWriteAction { fileToDelete?.delete(this@TestManager) } }
       fileToDelete = null
     }
 

@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VfsUtil
 class ApplicationPathMacroManager : BasePathMacroManager(null)
 
 class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
-  private val storageManager = object : StateStorageManagerImpl("application", pathMacroManager.createTrackingSubstitutor(), application) {
+  override val storageManager = object : StateStorageManagerImpl("application", pathMacroManager.createTrackingSubstitutor(), application) {
     override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
       if (component is NamedJDOMExternalizable) {
         return "${StoragePathMacros.APP_CONFIG}/${component.getExternalFileName()}${DirectoryStorageData.DEFAULT_EXT}"
@@ -78,6 +78,4 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
   }
 
   override fun getMessageBus() = application.getMessageBus()
-
-  override fun getStateStorageManager() = storageManager
 }

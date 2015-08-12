@@ -51,7 +51,6 @@ public class DirectoryStorageData extends StorageDataBase {
     myStates = states;
   }
 
-  @Override
   @NotNull
   public Set<String> getComponentNames() {
     return myStates.keySet();

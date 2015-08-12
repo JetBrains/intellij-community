@@ -21,7 +21,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 
-class ModuleStoreImpl(private val module: Module, pathMacroManager: PathMacroManager) : BaseFileConfigurableStoreImpl(pathMacroManager) {
+class ModuleStoreImpl(private val module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
+
   override val project: Project?
     get() = module.getProject()
 
@@ -33,5 +35,5 @@ class ModuleStoreImpl(private val module: Module, pathMacroManager: PathMacroMan
 
   override fun getMessageBus() = module.getMessageBus()
 
-  override fun createStorageManager() = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
+  override final fun getPathMacroManagerForDefaults() = pathMacroManager
 }

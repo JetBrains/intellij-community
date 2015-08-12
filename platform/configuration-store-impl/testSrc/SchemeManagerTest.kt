@@ -23,10 +23,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.exists
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
@@ -41,7 +40,10 @@ import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.CoreMatchers.sameInstance
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.collection.IsMapContaining.hasKey
+import org.hamcrest.io.FileMatchers.anExistingDirectory
+import org.hamcrest.io.FileMatchers.anExistingFile
 import org.jdom.Element
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -53,8 +55,9 @@ val FILE_SPEC = "REMOTE"
  * Functionality without stream provider covered, ICS has own test suite
  */
 class SchemeManagerTest {
-  private val fixtureManager = FixtureRule()
-  public Rule fun getFixtureManager(): FixtureRule = fixtureManager
+  companion object {
+    ClassRule val projectRule = ProjectRule()
+  }
 
   private val tempDirManager = TemporaryDirectory()
   public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
@@ -169,14 +172,14 @@ class SchemeManagerTest {
     schemesManager.loadSchemes()
     assertThat(schemesManager.getAllSchemes(), equalTo(listOf(scheme)))
 
-    assertThat(File(dir, "1.icls"), exists())
-    assertThat(File(dir, "1.xml"), exists())
+    assertThat(File(dir, "1.icls"), anExistingFile())
+    assertThat(File(dir, "1.xml"), anExistingFile())
 
     scheme.data = "newTrue"
     schemesManager.save()
 
-    assertThat(File(dir, "1.icls"), exists())
-    assertThat(File(dir, "1.xml"), not(exists()))
+    assertThat(File(dir, "1.icls"), anExistingFile())
+    assertThat(File(dir, "1.xml"), not(anExistingFile()))
   }
 
   public Test fun setSchemes() {
@@ -192,18 +195,18 @@ class SchemeManagerTest {
     assertThat(schemes.size(), equalTo(1))
     assertThat(schemes.get(0), sameInstance(scheme))
 
-    assertThat(File(dir, "s1.xml"), not(exists()))
+    assertThat(File(dir, "s1.xml"), not(anExistingFile()))
 
     scheme.data = "newTrue"
     schemeManager.save()
 
-    assertThat(File(dir, "s1.xml"), exists())
+    assertThat(File(dir, "s1.xml"), anExistingFile())
 
     schemeManager.setSchemes(emptyList())
 
     schemeManager.save()
 
-    assertThat(dir, not(exists()))
+    assertThat(dir, not(anExistingFile()))
   }
 
   public Test fun `save only if scheme differs from bundled`() {
@@ -218,11 +221,11 @@ class SchemeManagerTest {
     assertThat(schemes.get(0), equalTo(customScheme))
 
     schemeManager.save()
-    assertThat(dir, not(exists()))
+    assertThat(dir, not(anExistingFile()))
 
     schemeManager.save()
     schemeManager.setSchemes(listOf(customScheme))
-    assertThat(dir, not(exists()))
+    assertThat(dir, not(anExistingFile()))
 
     schemes = schemeManager.getAllSchemes()
     assertThat(schemes.size(), equalTo(1))
@@ -231,7 +234,7 @@ class SchemeManagerTest {
     customScheme.data = "foo"
     schemeManager.save()
     val schemeFile = File(dir, "default.xml")
-    assertThat(schemeFile, exists())
+    assertThat(schemeFile, anExistingFile())
 
     schemeManager = createSchemeManager(dir)
     schemeManager.loadBundledScheme(bundledPath, this, converter)
@@ -271,15 +274,15 @@ class SchemeManagerTest {
 
     assertThat(dir.mkdirs(), equalTo(true))
     schemeManager.save()
-    assertThat(dir, exists())
+    assertThat(dir, anExistingDirectory())
 
     schemeManager.addScheme(TestScheme("test"))
     schemeManager.save()
-    assertThat(dir, exists())
+    assertThat(dir, anExistingDirectory())
 
     schemeManager.setSchemes(emptyList())
     schemeManager.save()
-    assertThat(dir, not(exists()))
+    assertThat(dir, not(anExistingDirectory()))
   }
 
   public Test fun rename() {

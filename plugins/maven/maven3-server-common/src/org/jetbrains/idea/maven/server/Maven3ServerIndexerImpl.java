@@ -53,7 +53,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
+public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
   private Maven3ServerEmbedder myEmbedder;
   private final NexusIndexer myIndexer;
@@ -159,7 +159,7 @@ public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenS
         }
       }
       else {
-        final Maven3ServerEmbedder embedder = myEmbedder; //new Maven3ServerEmbedderImpl(settings);
+        final Maven3ServerEmbedder embedder = createEmbedder(settings);
 
         MavenExecutionRequest r =
           embedder.createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
@@ -221,6 +221,9 @@ public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenS
       throw new MavenServerIndexerException(wrapException(e));
     }
   }
+
+  public abstract Maven3ServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException;
+
 
   @Override
   public void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws RemoteException, MavenServerIndexerException {

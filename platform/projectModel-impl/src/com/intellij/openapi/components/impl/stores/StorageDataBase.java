@@ -27,16 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.Set;
 
 public abstract class StorageDataBase {
   protected static final Logger LOG = Logger.getInstance(StorageDataBase.class);
 
   public static final String COMPONENT = "component";
   public static final String NAME = "name";
-
-  @NotNull
-  public abstract Set<String> getComponentNames();
 
   public abstract boolean hasState(@NotNull String componentName);
 

@@ -769,7 +769,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       @Override
       public void exitDumbMode() {
-        rebuildList(myPopupField.getText());
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            rebuildList(myPopupField.getText());
+          }
+        });
       }
     });
 

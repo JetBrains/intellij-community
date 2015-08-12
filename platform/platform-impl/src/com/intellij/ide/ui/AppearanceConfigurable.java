@@ -17,6 +17,11 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -35,6 +40,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Dictionary;
+import java.util.HashSet;
 import java.util.Hashtable;
 
 /**
@@ -201,7 +207,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     if (settings.COLOR_BLINDNESS != blindness) {
       settings.COLOR_BLINDNESS = blindness;
       update = true;
-      //TODO:SAM: reload <component name="DefaultColorSchemesManager">
+      reloadComponent(DefaultColorSchemesManager.class);
+      shouldUpdateUI = true;
     }
 
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
@@ -473,5 +480,18 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  private static void reloadComponent(Class<?> type) {
+    State state = type.getAnnotation(State.class);
+    if (state != null) {
+      IComponentStore store = ComponentsPackage.getStateStore(ApplicationManager.getApplication());
+      StateStorageManager manager = store.getStateStorageManager();
+      HashSet<StateStorage> storages = new HashSet<StateStorage>();
+      for (Storage storage : state.storages()) {
+        storages.add(manager.getStateStorage(storage));
+      }
+      store.reinitComponent(state.name(), storages);
+    }
   }
 }

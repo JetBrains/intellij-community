@@ -20,13 +20,10 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
-
 import java.io.IOException
 
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
@@ -39,10 +36,10 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
   protected abstract fun loadLocalData(): Element?
 
-  override fun getStateAndArchive(storageData: StorageData, component: Any, componentName: String) = storageData.getStateAndArchive(componentName)
+  override fun getStateAndArchive(storageData: StorageData, component: Any, componentName: String) = storageData.states.getStateAndArchive(componentName)
 
   override fun loadData(): StorageData {
-    val storageData = createStorageData()
+    val storageData = StorageData()
     val element: Element?
     // we don't use local data if has stream provider
     if (provider != null && provider.enabled) {
@@ -71,14 +68,13 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
 
   private fun StorageData.loadState(element: Element) {
-    load(element, pathMacroSubstitutor, true)
+    beforeElementLoaded(element)
+    StorageDataBase.load(states, element, pathMacroSubstitutor, true)
   }
-
-  protected open fun createStorageData(): StorageData = StorageData()
 
   fun setDefaultState(element: Element) {
     element.setName(rootElementName)
-    val storageData = createStorageData()
+    val storageData = StorageData()
     storageData.loadState(element)
     storageDataRef.set(storageData)
   }
@@ -94,10 +90,10 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       if (LOG.isDebugEnabled()) {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: old data null, load new for ${toString()}")
       }
-      componentNames.addAll(newData.getComponentNames())
+      componentNames.addAll(newData.states.keys())
     }
     else {
-      val changedComponentNames = oldData.getChangedComponentNames(newData, pathMacroSubstitutor)
+      val changedComponentNames = oldData.states.getChangedComponentNames(newData)
       if (LOG.isDebugEnabled()) {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}")
       }
@@ -118,37 +114,25 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     private val newLiveStates = THashMap<String, Element>()
 
-    override fun createSaveSession() = if (storage.checkIsSavingDisabled() || (copiedStorageData == null && !originalStorageData.isDirty())) null else this
+    override fun createSaveSession() = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
     override fun setSerializedState(component: Any, componentName: String, element: Element?) {
       if (copiedStorageData == null) {
-        copiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, originalStorageData, newLiveStates)
+        copiedStorageData = setStateAndCloneIfNeed(componentName, element, originalStorageData, newLiveStates)
       }
       else {
-        copiedStorageData!!.setState(componentName, element, newLiveStates)
+        copiedStorageData!!.states.setState(componentName, element, newLiveStates)
       }
     }
 
     override fun save() {
-      var storageData = copiedStorageData
-      if (storageData == null) {
-        storageData = originalStorageData
-        if (!storageData.isDirty()) {
-          LOG.warn("Copied storage data must be not null because original storage data is not dirty")
-        }
-      }
-
+      var storageData = copiedStorageData!!
       var element = storageData.save(newLiveStates, storage.rootElementName)
       if (element == null || JDOMUtil.isEmpty(element)) {
         element = null
       }
-      else if (storage.pathMacroSubstitutor != null) {
-        try {
-          storage.pathMacroSubstitutor.collapsePaths(element)
-        }
-        finally {
-          storage.pathMacroSubstitutor.reset()
-        }
+      else {
+        storage.beforeElementSaved(element)
       }
 
       val provider = storage.provider
@@ -172,6 +156,20 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     protected abstract fun saveLocally(element: Element?)
   }
 
+  protected open fun beforeElementLoaded(element: Element) {
+  }
+
+  protected open fun beforeElementSaved(element: Element) {
+    if (pathMacroSubstitutor != null) {
+      try {
+        pathMacroSubstitutor.collapsePaths(element)
+      }
+      finally {
+        pathMacroSubstitutor.reset()
+      }
+    }
+  }
+
   public fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     if (roamingType == RoamingType.DISABLED) {
       // storage roaming was changed to DISABLED, but settings repository has old state
@@ -184,14 +182,14 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       if (newElement == null) {
         // if data was loaded, mark as changed all loaded components
         if (storageData != null) {
-          changedComponentNames.addAll(storageData.getComponentNames())
+          changedComponentNames.addAll(storageData.states.keys())
           setStorageData(storageData, null)
         }
       }
       else if (storageData != null) {
-        val newStorageData = createStorageData()
+        val newStorageData = StorageData()
         newStorageData.loadState(newElement)
-        changedComponentNames.addAll(storageData.getChangedComponentNames(newStorageData, pathMacroSubstitutor))
+        changedComponentNames.addAll(storageData.states.getChangedComponentNames(newStorageData))
         setStorageData(storageData, newStorageData)
       }
     }

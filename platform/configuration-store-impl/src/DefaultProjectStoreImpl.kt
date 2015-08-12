@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.FileStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StorageData
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -59,7 +58,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     }
   }
 
-  private val storageManager = object : StateStorageManager {
+  override val storageManager = object : StateStorageManager {
     override fun rename(path: String, newName: String) {
     }
 
@@ -91,8 +90,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
   fun getStateCopy() = storage.loadLocalData()
 
   override fun getMessageBus() = project.getMessageBus()
-
-  override final fun getStateStorageManager() = storageManager
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 

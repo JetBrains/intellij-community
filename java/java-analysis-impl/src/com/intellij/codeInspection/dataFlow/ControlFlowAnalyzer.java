@@ -26,11 +26,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import org.jetbrains.annotations.Contract;
@@ -116,88 +114,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     return myCurrentFlow;
-  }
-
-  // returns the array[i] = true if instruction[i] is inside the loop
-  boolean[] calcInLoop(ControlFlow controlFlow) {
-    Instruction[] myInstructions = controlFlow.getInstructions();
-    boolean[] visited = new boolean[myInstructions.length];
-    IntArrayList path = new IntArrayList(myInstructions.length);
-    boolean[] inLoop = new boolean[myInstructions.length];
-    dfs(visited, path, myInstructions, inLoop);
-
-    return inLoop;
-  }
-
-  private void dfs(boolean[] visited,
-                   IntArrayList path,
-                   Instruction[] myInstructions,
-                   boolean[] inLoop) {
-    int nextI = 0;
-    int curI = -1;
-    all:
-    while (true) {
-      boolean backTrack = false;
-      if (!visited[nextI]) {
-        inLoop[nextI] |= curI != -1 && inLoop[curI];
-        visited[nextI] = true;
-        path.add(nextI);
-      }
-      else {
-        if (path.contains(nextI)) {
-          // cycle found
-          // mark all nextI .. i as cycle
-          for (int k = path.size() - 1; k >= 0; k--) {
-            int v = path.get(k);
-            inLoop[v] = true;
-            if (v == nextI) break;
-          }
-        }
-        backTrack = true;
-      }
-
-      int[] next = backTrack ? new int[]{} : next(nextI, myInstructions);
-      if (next.length != 0) {
-        curI = nextI;
-        nextI = next[0];
-        continue;
-      }
-      if (!backTrack) {
-        path.remove(path.size() - 1);
-      }
-
-      // backtrack
-      while(true) {
-        if (path.isEmpty()) break all;
-        int last = path.get(path.size() - 1);
-        int[] lastNext = next(last, myInstructions);
-        int ni = ArrayUtil.lastIndexOf(lastNext, nextI) + 1;
-        curI = nextI = last;
-        if (ni != lastNext.length) {
-          nextI = lastNext[ni];
-          break;
-        }
-        // else backtrack more
-        path.remove(path.size() - 1);
-      }
-    }
-  }
-
-  private int[] next(int i, Instruction[] myInstructions) {
-    Instruction instruction = myInstructions[i];
-    if (instruction instanceof GotoInstruction) {
-      return new int[]{((GotoInstruction)instruction).getOffset()};
-    }
-    if (instruction instanceof ReturnInstruction) {
-      return new int[]{};
-    }
-    if (instruction instanceof ConditionalGotoInstruction) {
-      int offset = ((ConditionalGotoInstruction)instruction).getOffset();
-      if (offset != i+1) {
-        return new int[]{i + 1, offset};
-      }
-    }
-    return i == myInstructions.length-1 ? new int[]{} : new int[]{i + 1};
   }
 
 

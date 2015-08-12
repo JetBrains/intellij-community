@@ -23,6 +23,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.ide.wizard.StepWithSubSteps;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
@@ -270,6 +271,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   protected void doPreviousAction() {
     final ModuleWizardStep step = getCurrentStepObject();
     step.onStepLeaving();
+    if (step instanceof StepWithSubSteps) {
+      ((StepWithSubSteps)step).doPreviousAction();
+    }
     super.doPreviousAction();
   }
 
@@ -280,8 +284,12 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     super.doCancelAction();
   }
 
+  protected boolean isLastStep() {
+    return myCurrentStep == mySteps.size() - 1 || isLastStep(getCurrentStep());
+  }
+
   private boolean isLastStep(int step) {
-    return getNextStep(step) == step;
+    return getNextStep(step) == step && !isStepWithNotCompletedSubSteps(mySteps.get(step));
   }
 
   @Override
@@ -290,6 +298,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     final StepSequence stepSequence = getSequence();
     if (stepSequence != null) {
       ModuleWizardStep current = mySteps.get(step);
+      if (isStepWithNotCompletedSubSteps(current)) {
+        return step;
+      }
+
       nextStep = stepSequence.getNextStep(current);
       while (nextStep != null && !nextStep.isStepVisible()) {
         nextStep = stepSequence.getNextStep(nextStep);
@@ -303,11 +315,24 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ModuleWizardStep previousStep = null;
       final StepSequence stepSequence = getSequence();
       if (stepSequence != null) {
-        previousStep = stepSequence.getPreviousStep(mySteps.get(step));
+        final ModuleWizardStep current = mySteps.get(step);
+        if (isNotFirstSubStepInStep(current)) {
+          return step;
+        }
+
+        previousStep = stepSequence.getPreviousStep(current);
         while (previousStep != null && !previousStep.isStepVisible()) {
           previousStep = stepSequence.getPreviousStep(previousStep);
         }
       }
       return previousStep == null ? 0 : mySteps.indexOf(previousStep);
+  }
+
+  private static boolean isStepWithNotCompletedSubSteps(ModuleWizardStep current) {
+    return current instanceof StepWithSubSteps && !((StepWithSubSteps)current).isLast();
+  }
+
+  private static boolean isNotFirstSubStepInStep(ModuleWizardStep current) {
+    return current instanceof StepWithSubSteps && !((StepWithSubSteps)current).isFirst();
   }
 }
