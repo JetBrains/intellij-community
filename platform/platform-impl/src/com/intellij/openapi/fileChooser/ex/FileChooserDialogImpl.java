@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
@@ -318,6 +319,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
     };
     toolbarPanel.add(myTextFieldAction, BorderLayout.EAST);
+    JPanel extraToolbarPanel = createExtraToolbarPanel();
+    if(extraToolbarPanel != null){
+      toolbarPanel.add(extraToolbarPanel, BorderLayout.SOUTH);
+    }
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
     myPathTextFieldWrapper.setBorder(JBUI.Borders.emptyBottom(2));
@@ -365,6 +370,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return panel;
   }
 
+  @Nullable
+  protected JPanel createExtraToolbarPanel() {
+    return null;
+  }
 
   public JComponent getPreferredFocusedComponent() {
     if (isToShowTextField()) {
@@ -426,7 +435,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected JTree createTree() {
-    myFileSystemTree = new FileSystemTreeImpl(myProject, myChooserDescriptor);
+    Tree internalTree = createInternalTree();
+    myFileSystemTree = new FileSystemTreeImpl(myProject, myChooserDescriptor, internalTree, null, null, null);
+    internalTree.setRootVisible(myChooserDescriptor.isTreeRootVisible());
+    internalTree.setShowsRootHandles(true);
     Disposer.register(myDisposable, myFileSystemTree);
 
     myFileSystemTree.addOkAction(new Runnable() {
@@ -466,6 +478,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     });
 
     return tree;
+  }
+
+  @NotNull
+  protected Tree createInternalTree() {
+    return new Tree();
   }
 
   protected final void registerMouseListener(final ActionGroup group) {
