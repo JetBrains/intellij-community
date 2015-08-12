@@ -18,9 +18,11 @@ package com.intellij.testFramework
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -62,12 +64,25 @@ public class ProjectRule() : ExternalResource() {
       java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
 
       val project = PlatformTestCase.createProject(projectFile, "Light project: $buffer") as ProjectEx
-      ProjectManagerEx.getInstanceEx().openTestProject(project)
+      val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+      projectManager.openTestProject(project)
       // app will close and dispose all opened project on exit, so, we don't have to dispose it themselves
-      Disposer.register(project, Disposable {
-        FileUtil.delete(projectFile)
+      // but we have to be compatible with _LastInSuiteTest
+      Disposer.register(ApplicationManager.getApplication(), Disposable {
+        try {
+          disposeProject(projectManager)
+        }
+        finally {
+          FileUtil.delete(projectFile)
+        }
       })
       return project
+    }
+
+    private fun disposeProject(projectManager: ProjectManagerImpl) {
+      val project = sharedProject ?: return
+      sharedProject = null
+      projectManager.closeProject(project, false, true, false)
     }
   }
 
