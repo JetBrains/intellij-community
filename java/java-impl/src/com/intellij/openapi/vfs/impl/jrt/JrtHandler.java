@@ -71,10 +71,16 @@ class JrtHandler extends ArchiveHandler {
     map.put("", createRootEntry());
 
     //FileSystem fs = (FileSystem)getFileSystem();
-    //Path root = fs.getPath("/");
-    //Files.walk(root).forEachOrdered((p) -> {
+    //Path root = fs.getPath("/modules"); // b74+
+    //if (!Files.exists(root)) root = fs.getPath("/");
     Object fs = getFileSystem();
-    Object root = call(getPath, fs, "/", ArrayUtil.EMPTY_STRING_ARRAY);
+    Object root = call(getPath, fs, "/modules", ArrayUtil.EMPTY_STRING_ARRAY);
+    if (Boolean.FALSE.equals(call(exists, root, linkOptions))) {
+      root = call(getPath, fs, "/", ArrayUtil.EMPTY_STRING_ARRAY);
+    }
+
+    final int start = root.toString().length() + 1;
+    //Files.walk(root).forEachOrdered((p) -> {
     Object stream = call(walk, root, Array.newInstance(cls("java.nio.file.FileVisitOption"), 0));
     call(forEachOrdered, stream, Proxy.newProxyInstance(
       getClass().getClassLoader(), new Class[]{cls("java.util.function.Consumer")}, new InvocationHandler() {
@@ -83,7 +89,7 @@ class JrtHandler extends ArchiveHandler {
           //String path = p.toString();
           String path = args[0].toString();
 
-          int p = path.indexOf('/', 1);
+          int p = path.indexOf('/', start);
           if (p < 0) return null;
           String module = path.substring(1, p);
           path = path.substring(p + 1);
@@ -144,6 +150,7 @@ class JrtHandler extends ArchiveHandler {
 
   private static final Method newFileSystem = method("java.nio.file.FileSystems#newFileSystem", URI.class, Map.class, ClassLoader.class);
   private static final Method getPath = method("java.nio.file.FileSystem#getPath", String.class, String[].class);
+  private static final Method exists = method("java.nio.file.Files#exists", cls("java.nio.file.Path"), cls("java.nio.file.LinkOption", true));
   private static final Method walk = method("java.nio.file.Files#walk", cls("java.nio.file.Path"), cls("java.nio.file.FileVisitOption", true));
   private static final Method forEachOrdered = method("java.util.stream.Stream#forEachOrdered", cls("java.util.function.Consumer"));
   private static final Method readAttributes =
