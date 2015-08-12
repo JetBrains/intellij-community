@@ -116,4 +116,21 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
   public PsiElement getNavigationElement() {
     return myTag;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    XmlProperty property = (XmlProperty)o;
+
+    if (!myTag.equals(property.myTag)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myTag.hashCode();
+  }
 }
