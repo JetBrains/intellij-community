@@ -176,31 +176,38 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
-                                                                       @NotNull VcsLogFilterCollection filterCollection,
-                                                                       int maxCount) throws VcsException {
+                                                       @NotNull VcsLogFilterCollection filterCollection,
+                                                       int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
-    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
+    VcsLogBranchFilter branchFilter = filterCollection.getBranchFilter();
+    if (branchFilter != null) {
       HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
       if (repository == null) {
         LOG.error("Repository not found for root " + root);
         return Collections.emptyList();
       }
 
+      Collection<String> branchNames = repository.getBranches().keySet();
+      Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repository.getBookmarks());
+      Collection<String> predefinedNames = ContainerUtil.list(TIP_REFERENCE);
+
       boolean atLeastOneBranchExists = false;
-      for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (branchName.equals(TIP_REFERENCE) || branchExists(repository, branchName)) {
+      for (String branchName : ContainerUtil.concat(branchNames, bookmarkNames, predefinedNames)) {
+        if (branchFilter.isShown(branchName)) {
           filterParameters.add(HgHistoryUtil.prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
         }
-        else if (branchName.equals(HEAD_REFERENCE)) {
-          filterParameters.add(HgHistoryUtil.prepareParameter("branch", "."));
-          filterParameters.add("-r");
-          filterParameters.add("::."); //all ancestors for current revision;
-          atLeastOneBranchExists = true;
-        }
       }
+
+      if (branchFilter.isShown(HEAD_REFERENCE)) {
+        filterParameters.add(HgHistoryUtil.prepareParameter("branch", "."));
+        filterParameters.add("-r");
+        filterParameters.add("::."); //all ancestors for current revision;
+        atLeastOneBranchExists = true;
+      }
+
       if (!atLeastOneBranchExists) { // no such branches => filter matches nothing
         return Collections.emptyList();
       }
@@ -287,10 +294,4 @@ public class HgLogProvider implements VcsLogProvider {
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
     return null;
   }
-
-  private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {
-    return repository.getBranches().keySet().contains(branchName) ||
-           HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(branchName);
-  }
-
 }

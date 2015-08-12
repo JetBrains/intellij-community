@@ -405,17 +405,37 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
+    VcsLogBranchFilter branchFilter = filterCollection.getBranchFilter();
+    if (branchFilter != null) {
       GitRepository repository = getRepository(root);
       assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
 
+      Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
+      Collection<String> localBranchNames = ContainerUtil.map(localBranches, new Function<GitLocalBranch, String>() {
+        @Override
+        public String fun(GitLocalBranch branch) {
+          return branch.getName();
+        }
+      });
+
+      Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
+      Collection<String> remoteBranchNames = ContainerUtil.map(remoteBranches, new Function<GitRemoteBranch, String>() {
+        @Override
+        public String fun(GitRemoteBranch branch) {
+          return branch.getNameForLocalOperations();
+        }
+      });
+
+      Collection<String> predefinedNames = ContainerUtil.list("HEAD");
+
       boolean atLeastOneBranchExists = false;
-      for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (branchName.equals("HEAD") || repository.getBranches().findBranchByName(branchName) != null) {
+      for (String branchName: ContainerUtil.concat(localBranchNames, remoteBranchNames, predefinedNames)) {
+        if (branchFilter.isShown(branchName)) {
           filterParameters.add(branchName);
           atLeastOneBranchExists = true;
         }
       }
+
       if (!atLeastOneBranchExists) { // no such branches in this repository => filter matches nothing
         return Collections.emptyList();
       }

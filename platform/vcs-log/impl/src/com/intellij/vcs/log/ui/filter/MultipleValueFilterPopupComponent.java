@@ -54,7 +54,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   @NotNull
   protected abstract List<String> getAllValues();
 
-  @NotNull
+  @Nullable
   protected abstract Filter createFilter(@NotNull Collection<String> values);
 
   @NotNull

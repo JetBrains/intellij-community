@@ -143,14 +143,11 @@ class VisiblePackBuilder {
     return new HashSet<Integer>(ContainerUtil.intersection(filteredByBranch, filteredByFile));
   }
 
-  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull VcsLogBranchFilter filter) {
-    final Collection<String> branchNames = new HashSet<String>(filter.getBranchNames());
-    final Collection<String> excludedBranches = new HashSet<String>(filter.getExcludedBranchNames());
-    final boolean filterByAcceptance = !filter.getBranchNames().isEmpty();
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull final VcsLogBranchFilter filter) {
     return new HashSet<Integer>(ContainerUtil.mapNotNull(refs.getBranches(), new Function<VcsRef, Integer>() {
       @Override
       public Integer fun(@NotNull VcsRef ref) {
-        boolean acceptRef = filterByAcceptance ? branchNames.contains(ref.getName()) : !excludedBranches.contains(ref.getName());
+        boolean acceptRef = filter.isShown(ref.getName());
         return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash()) : null;
       }
     }));

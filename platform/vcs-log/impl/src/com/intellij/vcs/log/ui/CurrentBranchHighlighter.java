@@ -17,7 +17,6 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -61,7 +60,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   }
 
   private boolean isFilteredByCurrentBranch(@NotNull String currentBranch, @NotNull VcsLogBranchFilter branchFilter) {
-    return branchFilter.getBranchNames().size() == 1 && currentBranch.equals(ContainerUtil.getFirstItem(branchFilter.getBranchNames()));
+    return currentBranch.equals(branchFilter.getSingleFilteredBranch());
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
