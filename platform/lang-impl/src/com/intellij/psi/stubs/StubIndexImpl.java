@@ -36,6 +36,7 @@ import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiDocumentManager;
@@ -60,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -74,22 +76,20 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
 
   private final StubProcessingHelper myStubProcessingHelper;
+  private final ScheduledFuture<?> myPeriodicFlushing = FlushingDaemon.everyFiveSeconds(new Runnable() {
+    @Override
+    public void run() {
+      flushAllStubIndices();
+    }
+  });
 
   private StubIndexState myPreviouslyRegistered;
   private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
-      try {
-        for (StubIndexKey key : getAllStubIndexKeys()) {
-          flush(key);
-        }
-      } catch (StorageException e) {
-        LOG.info(e);
-        FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
-      }
+      flushAllStubIndices();
     }
   });
-
 
   public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
     final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
@@ -120,6 +120,17 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     dropUnregisteredIndices();
 
     myStubProcessingHelper = new StubProcessingHelper(fileBasedIndex);
+  }
+
+  private void flushAllStubIndices() {
+    try {
+      for (StubIndexKey key : getAllStubIndexKeys()) {
+        flush(key);
+      }
+    } catch (StorageException e) {
+      LOG.info(e);
+      FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
+    }
   }
 
   @Nullable
@@ -411,6 +422,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public void dispose() {
     myLowMemoryFlusher.stop();
+    myPeriodicFlushing.cancel(false);
     for (UpdatableIndex index : myIndices.values()) {
       index.dispose();
     }
