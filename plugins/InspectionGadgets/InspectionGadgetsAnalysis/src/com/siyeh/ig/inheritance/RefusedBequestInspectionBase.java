@@ -36,7 +36,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField") final ExternalizableStringSet annotations =
     new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
 
-  @SuppressWarnings("PublicField") boolean onlyReportWhenAnnotated;
+  @SuppressWarnings("PublicField") boolean onlyReportWhenAnnotated = true;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -56,6 +56,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
+    onlyReportWhenAnnotated = false;
     for (Element option : node.getChildren("option")) {
       if ("onlyReportWhenAnnotated".equals(option.getAttributeValue("name"))) {
         onlyReportWhenAnnotated = Boolean.parseBoolean(option.getAttributeValue("value"));
