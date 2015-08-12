@@ -15,11 +15,16 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -27,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.regex.Matcher;
 
 /**
@@ -162,5 +168,31 @@ public class DocStringUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames.DOCFORMAT} attribute or
+   * in module settings. If none of them applies, show standard choose dialog, asking user to pick one and updates module settings
+   * accordingly.
+   *
+   * @param element PSI element that will be used to locate containing file and project module
+   * @return false if no structured docstring format was specified initially and user didn't select any, true otherwise
+   */
+  public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement element) {
+    final Module module = ModuleManager.getInstance(element.getProject()).getModules()[0];
+    return ensureNotPlainDocstringFormatForFile(element.getContainingFile(), module);
+  }
+
+  private static boolean ensureNotPlainDocstringFormatForFile(@NotNull PsiFile file, @NotNull Module module) {
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
+    if (documentationSettings.isPlain(file)) {
+      final List<String> values = DocStringFormat.ALL_NAMES_BUT_PLAIN;
+      final int i = Messages.showChooseDialog("Docstring format:", "Select Docstring Type", ArrayUtil.toStringArray(values), values.get(0), null);
+      if (i < 0) {
+        return false;
+      }
+      documentationSettings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
+    }
+    return true;
   }
 }

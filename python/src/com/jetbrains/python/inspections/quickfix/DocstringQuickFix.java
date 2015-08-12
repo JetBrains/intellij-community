@@ -118,8 +118,7 @@ public class DocstringQuickFix implements LocalQuickFix {
 
   private static void addEmptyDocstring(Project project, PyDocStringOwner docStringOwner) {
     if (docStringOwner instanceof PyFunction) {
-      PyGenerateDocstringIntention
-        .generateDocstringForFunction(project, getEditor(project, docStringOwner.getContainingFile()), (PyFunction)docStringOwner);
+      PyGenerateDocstringIntention.generateDocstringForFunction((PyFunction)docStringOwner);
     }
     if (docStringOwner instanceof PyClass) {
       PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false, null);

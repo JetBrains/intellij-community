@@ -39,10 +39,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.jetbrains.python.PyBundle;
@@ -64,6 +64,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -91,7 +92,14 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myProject = myModule.getProject();
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
     //noinspection unchecked
-    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
+    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<DocStringFormat>(Arrays.asList(DocStringFormat.values()),
+                                                                                    myDocumentationSettings.getFormat()));
+    myDocstringFormatComboBox.setRenderer(new ListCellRendererWrapper<DocStringFormat>() {
+      @Override
+      public void customize(JList list, DocStringFormat value, int index, boolean selected, boolean hasFocus) {
+        setText(value.getName());
+      }
+    });
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myWorkDir.addBrowseFolderListener("Please choose working directory:", null, myProject, fileChooserDescriptor);
@@ -209,7 +217,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (myTestRunnerComboBox.getSelectedItem() != myModel.getTestRunner()) {
       return true;
     }
-    if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
+    if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
       return true;
     }
     if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
@@ -229,7 +237,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
+    if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
       DaemonCodeAnalyzer.getInstance(myProject).restart();
     }
     if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
@@ -246,7 +254,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       FileContentUtil.reparseFiles(myProject, Lists.newArrayList(files), false);
     }
     myModel.apply();
-    myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
+    myDocumentationSettings.setFormat((DocStringFormat)myDocstringFormatComboBox.getSelectedItem());
     final ReSTService reSTService = ReSTService.getInstance(myModule);
     reSTService.setWorkdir(myWorkDir.getText());
     if (txtIsRst.isSelected() != reSTService.txtIsRst()) {
@@ -295,7 +303,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myTestRunnerComboBox.setSelectedItem(myModel.getTestRunner());
     myTestRunnerComboBox.repaint();
     myModel.reset();
-    myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
+    myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.getFormat());
     myWorkDir.setText(ReSTService.getInstance(myModule).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);

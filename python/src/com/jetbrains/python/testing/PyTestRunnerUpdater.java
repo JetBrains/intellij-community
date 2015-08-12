@@ -96,11 +96,12 @@ public class PyTestRunnerUpdater implements StartupActivity {
                 if (testRunner.isEmpty()) testRunner = checkImports(file, module);   //find test runner import
               }
               else {
-                if (PyDocumentationSettings.getInstance(module).getFormat().isEmpty()) {
+                // FIXME: Find a better way to run this updater only once when new project from existing sources is created
+                if (PyDocumentationSettings.getInstance(module).getFormat() == null) {
                   checkDocstring(file, module);    // detect docstring type
                 }
               }
-              if (!testRunner.isEmpty() && !PyDocumentationSettings.getInstance(module).getFormat().isEmpty()) {
+              if (!testRunner.isEmpty() && PyDocumentationSettings.getInstance(module).getFormat() != null) {
                 break;
               }
             }
@@ -124,8 +125,9 @@ public class PyTestRunnerUpdater implements StartupActivity {
               testRunner = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
 
             runnerService.setProjectConfiguration(testRunner);
-            if (PyDocumentationSettings.getInstance(module).getFormat().isEmpty())
+            if (PyDocumentationSettings.getInstance(module).getFormat() == null) {
               PyDocumentationSettings.getInstance(module).setFormat(DocStringFormat.PLAIN);
+            }
           }
         }, ModalityState.any(), module.getDisposed());
       }

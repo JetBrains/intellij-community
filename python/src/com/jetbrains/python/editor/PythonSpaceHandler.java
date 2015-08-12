@@ -59,7 +59,7 @@ public class PythonSpaceHandler extends TypedHandlerDelegate {
             Module module = ModuleUtilCore.findModuleForPsiElement(element);
             if (module == null) return Result.CONTINUE;
             PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-            if (!documentationSettings.myDocStringFormat.equals(DocStringFormat.PLAIN))
+            if (!(documentationSettings.getFormat() == DocStringFormat.PLAIN))
               editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
             return Result.STOP;
           }

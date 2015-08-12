@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class PyQuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
-  private String myFormat;
+  private DocStringFormat myFormat;
 
   @Override
   protected void setUp() throws Exception {

@@ -199,7 +199,7 @@ public class PyEditingTest extends PyTestCase {
 
   public void testEnterStubInDocstring() {  // CR-PY-144
     final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    final String oldFormat = documentationSettings.getFormat();
+    final DocStringFormat oldFormat = documentationSettings.getFormat();
     documentationSettings.setFormat(DocStringFormat.PLAIN);
     try {
       doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +

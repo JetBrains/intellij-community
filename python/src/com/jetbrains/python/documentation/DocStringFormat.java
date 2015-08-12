@@ -15,22 +15,70 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.google.common.collect.ImmutableList;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author yole
  */
-public class DocStringFormat {
-  public static final String PLAIN = "Plain";
-  public static final String EPYTEXT = "Epytext";
-  public static final String REST = "reStructuredText";
-  public static final String NUMPY = "NumPy";
-  public static final String GOOGLE = "Google";
+public enum DocStringFormat {
+  PLAIN("Plain"),
+  EPYTEXT("Epytext"),
+  REST("reStructuredText"),
+  NUMPY("NumPy"),
+  GOOGLE("Google");
 
-  public static final List<String> ALL = ImmutableList.of(PLAIN, EPYTEXT, REST, NUMPY, GOOGLE);
+  public static final List<String> ALL_NAMES = getAllNames();
+  public static final List<String> ALL_NAMES_BUT_PLAIN = getAllNamesButPlain();
 
-  private DocStringFormat() {
+  @NotNull
+  private static List<String> getAllNames() {
+    return Collections.unmodifiableList(ContainerUtil.map(values(), new Function<DocStringFormat, String>() {
+      @Override
+      public String fun(DocStringFormat format) {
+        return format.getName();
+      }
+    }));
+  }
+
+  @NotNull
+  private static List<String> getAllNamesButPlain() {
+    return Collections.unmodifiableList(ContainerUtil.mapNotNull(values(), new Function<DocStringFormat, String>() {
+      @Override
+      public String fun(DocStringFormat format) {
+        return format == PLAIN ? null : format.getName();
+      }
+    }));
+  }
+
+  @Nullable
+  public static DocStringFormat fromName(@NotNull String name) {
+    for (DocStringFormat format : values()) {
+      if (format.getName().equals(name)) {
+        return format;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static DocStringFormat fromNameOrPlain(@NotNull String name) {
+    return ObjectUtils.notNull(fromName(name), PLAIN);
+  }
+
+  String myName;
+  DocStringFormat(@NotNull String name) {
+    myName = name;
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
   }
 }
