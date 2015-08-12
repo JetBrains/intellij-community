@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.graph;
 
 import com.intellij.openapi.util.Couple;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -26,20 +27,20 @@ import java.util.*;
  */
 public class DFSTBuilder<Node> {
   private final Graph<Node> myGraph;
-  private final Map<Node, Integer> myNodeToNNumber;
-  private Map<Node, Integer> myNodeToTNumber;
+  private final TObjectIntHashMap<Node> myNodeToNNumber;
+  private TObjectIntHashMap<Node> myNodeToTNumber;
   private final Node[] myInvN;
-  private Couple<Node> myBackEdge = null;
+  private Couple<Node> myBackEdge;
 
-  private Comparator<Node> myComparator = null;
-  private boolean myNBuilt = false;
-  private boolean myTBuilt = false;
-  private TIntArrayList mySCCs = null;
+  private Comparator<Node> myComparator;
+  private boolean myNBuilt;
+  private boolean myTBuilt;
+  private TIntArrayList mySCCs;
   private Node[] myInvT;
 
   public DFSTBuilder(Graph<Node> graph) {
     myGraph = graph;
-    myNodeToNNumber = new LinkedHashMap<Node, Integer>(myGraph.getNodes().size() * 2, 0.5f);
+    myNodeToNNumber = new TObjectIntHashMap<Node>(myGraph.getNodes().size() * 2, 0.5f);
     myInvN = (Node[])new Object[myGraph.getNodes().size()];
   }
 
@@ -64,7 +65,7 @@ public class DFSTBuilder<Node> {
   public Comparator<Node> comparator() {
     if (myComparator == null) {
       buildDFST();
-      final Map<Node, Integer> map;
+      final TObjectIntHashMap<Node> map;
       if (isAcyclic()) {
         map = myNodeToNNumber;
       }
@@ -74,8 +75,8 @@ public class DFSTBuilder<Node> {
       }
       myComparator = new Comparator<Node>() {
         @Override
-        public int compare(Node t, Node t1) {
-          return map.get(t).compareTo(map.get(t1));
+        public int compare(@NotNull Node t, @NotNull Node t1) {
+          return map.get(t) - map.get(t1);
         }
       };
     }
@@ -90,15 +91,15 @@ public class DFSTBuilder<Node> {
       }
 
       nNumber--;
-      myNodeToNNumber.put(node, Integer.valueOf(nNumber));
+      myNodeToNNumber.put(node, nNumber);
       myInvN[nNumber] = node;
 
       //Check for cycles
       if (myBackEdge == null) {
         for (Iterator<Node> it = myGraph.getIn(node); it.hasNext(); ) {
           Node prev = it.next();
-          Integer prevNumber = myNodeToNNumber.get(prev);
-          if (prevNumber != null && prevNumber.intValue() > nNumber) {
+          int prevNumber = myNodeToNNumber.get(prev);
+          if (myNodeToNNumber.containsKey(prev) && prevNumber > nNumber) {
             myBackEdge = Couple.of(node, prev);
             break;
           }
@@ -113,14 +114,14 @@ public class DFSTBuilder<Node> {
     LinkedList<Node> frontier = new LinkedList<Node>();
     frontier.addFirst(v);
     Set<Node> result = new LinkedHashSet<Node>();
-    int number = myNodeToNNumber.get(v).intValue();
+    int number = myNodeToNNumber.get(v);
     while (!frontier.isEmpty()) {
       Node curr = frontier.removeFirst();
       result.add(curr);
       Iterator<Node> it = myGraph.getIn(curr);
       while (it.hasNext()) {
         Node w = it.next();
-        if (myNodeToNNumber.get(w).intValue() > number && !result.contains(w)) frontier.add(w);
+        if (myNodeToNNumber.get(w) > number && !result.contains(w)) frontier.add(w);
       }
     }
 
@@ -135,7 +136,7 @@ public class DFSTBuilder<Node> {
 
     int size = myGraph.getNodes().size();
 
-    myNodeToTNumber = new LinkedHashMap<Node, Integer>(size * 2, 0.5f);
+    myNodeToTNumber = new TObjectIntHashMap<Node>(size * 2, 0.5f);
 
     int currT = 0;
     for (int i = 0; i < size; i++) {
@@ -145,12 +146,12 @@ public class DFSTBuilder<Node> {
 
         mySCCs.add(region.size());
 
-        myNodeToTNumber.put(v, Integer.valueOf(currT));
+        myNodeToTNumber.put(v, currT);
         myInvT[currT++]=v;
 
         for (Node w : region) {
           if (w != v) {
-            myNodeToTNumber.put(w, Integer.valueOf(currT));
+            myNodeToTNumber.put(w, currT);
             myInvT[currT++] = w;
           }
         }
