@@ -13,10 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Named;
-import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 public class CCRenameHandler implements RenameHandler {
@@ -59,12 +56,12 @@ public class CCRenameHandler implements RenameHandler {
   }
 
 
-  private static void processRename(@NotNull final Named named, String namePrefix, @NotNull final Project project) {
-    String name = named.getName();
+  private static void processRename(@NotNull final StudyItem item, String namePrefix, @NotNull final Project project) {
+    String name = item.getName();
     String text = "Rename " + StringUtil.toTitleCase(namePrefix);
     String newName = Messages.showInputDialog(project, text + " '" + name + "' to", text, null, name, null);
     if (newName != null) {
-      named.setName(newName);
+      item.setName(newName);
     }
   }
 

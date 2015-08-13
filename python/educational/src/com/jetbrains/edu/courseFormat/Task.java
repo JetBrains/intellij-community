@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
-public class Task implements Named, StudyOrderable {
+public class Task implements StudyItem {
   @Expose
   private String name;
 

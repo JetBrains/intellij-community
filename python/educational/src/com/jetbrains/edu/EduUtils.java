@@ -13,7 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.StudyOrderable;
+import com.jetbrains.edu.courseFormat.StudyItem;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +31,9 @@ public class EduUtils {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
-  public static Comparator<StudyOrderable> INDEX_COMPARATOR = new Comparator<StudyOrderable>() {
+  public static Comparator<StudyItem> INDEX_COMPARATOR = new Comparator<StudyItem>() {
     @Override
-    public int compare(StudyOrderable o1, StudyOrderable o2) {
+    public int compare(StudyItem o1, StudyItem o2) {
       return o1.getIndex() - o2.getIndex();
     }
   };

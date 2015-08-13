@@ -48,9 +48,9 @@ class CCFileDeletedListener extends VirtualFileAdapter {
       return;
     }
     VirtualFile courseDir = myProject.getBaseDir();
-    CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyOrderable>() {
+    CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyItem>() {
       @Override
-      public StudyOrderable fun(VirtualFile file) {
+      public StudyItem fun(VirtualFile file) {
         return course.getLesson(file.getName());
       }
     }, removedLesson.getIndex(), EduNames.LESSON, -1);
@@ -70,9 +70,9 @@ class CCFileDeletedListener extends VirtualFileAdapter {
     if (task == null) {
       return;
     }
-    CCUtils.updateHigherElements(lessonDir.getChildren(), new Function<VirtualFile, StudyOrderable>() {
+    CCUtils.updateHigherElements(lessonDir.getChildren(), new Function<VirtualFile, StudyItem>() {
       @Override
-      public StudyOrderable fun(VirtualFile file) {
+      public StudyItem fun(VirtualFile file) {
         return lesson.getTask(file.getName());
       }
     }, task.getIndex(), EduNames.TASK, -1);

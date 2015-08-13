@@ -17,7 +17,7 @@ import java.util.List;
  * which is visible to student in project view
  */
 
-public class TaskFile implements StudyOrderable {
+public class TaskFile {
   @SerializedName("placeholders")
   @Expose
   private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();

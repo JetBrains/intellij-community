@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Implementation of windows which user should type in
  */
 
-public class AnswerPlaceholder implements StudyOrderable {
+public class AnswerPlaceholder {
 
   @Expose private int line = 0;
   @Expose private int start = 0;
