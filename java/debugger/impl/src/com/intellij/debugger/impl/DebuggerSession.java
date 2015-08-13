@@ -68,7 +68,6 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.event.Event;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +95,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
-  private @NotNull GlobalSearchScope mySearchScope;
+  private final GlobalSearchScope mySearchScope;
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
@@ -118,8 +117,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   @NotNull
   public GlobalSearchScope getSearchScope() {
-    //noinspection ConstantConditions
-    LOG.assertTrue(mySearchScope != null, "Accessing Session's search scope before its initialization");
     return mySearchScope;
   }
 
@@ -187,7 +184,20 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  protected DebuggerSession(String sessionName, final DebugProcessImpl debugProcess) {
+  static DebuggerSession create(String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment)
+    throws ExecutionException {
+    DebuggerSession session = new DebuggerSession(sessionName, debugProcess, environment);
+    try {
+      session.attach(environment);
+    }
+    catch (ExecutionException e) {
+      session.dispose();
+      throw e;
+    }
+    return session;
+  }
+
+  private DebuggerSession(String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment) {
     mySessionName  = sessionName;
     myDebugProcess = debugProcess;
     SESSION_EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext(this, null, null, null);
@@ -196,6 +206,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
     myDebugProcess.addEvaluationListener(new MyEvaluationListener());
     ValueLookupManager.getInstance(getProject()).startListening();
+    mySearchScope = environment.getSearchScope();
   }
 
   @NotNull
@@ -211,6 +222,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return mySessionName;
   }
 
+  @NotNull
   public DebugProcessImpl getProcess() {
     return myDebugProcess;
   }
@@ -400,11 +412,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   @Nullable
-  protected ExecutionResult attach(DebugEnvironment environment) throws ExecutionException {
+  private ExecutionResult attach(DebugEnvironment environment) throws ExecutionException {
     RemoteConnection remoteConnection = environment.getRemoteConnection();
     final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
     final String transportName = DebuggerBundle.getTransportName(remoteConnection);
-    mySearchScope = environment.getSearchScope();
     final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(environment, this);
     getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH,
                                  Event.START_WAIT_ATTACH,
