@@ -29,10 +29,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlEntityDecl;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ParameterizedCachedValueImpl;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
@@ -99,6 +96,7 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
     if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       if (element.getParent().getParent() instanceof XmlAttribute) return true;
     }
+    if (type == XmlTokenType.XML_BAD_CHARACTER) return true;
     if (type == XmlTokenType.XML_START_TAG_START) {
       if (element.getNextSibling() instanceof PsiErrorElement) return true;
       if (element.getParent() instanceof PsiErrorElement) return true;

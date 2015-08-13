@@ -63,6 +63,15 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
            "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">");
   }
 
+  public void testXmlAmp() {
+    doTest("<component>\n" +
+           "  amp  &    U+0026 (38) XML 1.0 ampersand\n" +
+           "</component>", "xml",
+           "<component>\n" +
+           "  amp  &amp;    U+0026 (38) XML 1.0 ampersand\n" +
+           "</component>");
+  }
+
   public void testMultiCaret() {
     doTest("<a><selection><</selection></a>\n" +
            "<a><selection><</selection></a>\n" +
