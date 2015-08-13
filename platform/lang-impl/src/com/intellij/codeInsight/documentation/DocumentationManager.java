@@ -1132,6 +1132,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
           }
       );
+      LOG.debug("Using provider ", provider);
 
       if (provider instanceof ExternalDocumentationProvider) {
         final List<String> urls = ApplicationManager.getApplication().runReadAction(
