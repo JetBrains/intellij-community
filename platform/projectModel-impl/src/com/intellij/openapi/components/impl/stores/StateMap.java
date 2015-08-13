@@ -49,6 +49,7 @@ public final class StateMap implements StorageDataBase {
 
   public static final String COMPONENT = "component";
   public static final String NAME = "name";
+  public static final String DEFAULT_EXT = ".xml";
 
   private static final Format XML_FORMAT = Format.getRawFormat().
     setTextMode(Format.TextMode.TRIM).

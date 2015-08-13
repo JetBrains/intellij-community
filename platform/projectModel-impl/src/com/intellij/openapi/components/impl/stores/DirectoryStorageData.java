@@ -42,8 +42,6 @@ import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfD
 public class DirectoryStorageData implements StorageDataBase {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
 
-  public static final String DEFAULT_EXT = ".xml";
-
   private final Map<String, StateMap> myStates;
 
   public DirectoryStorageData() {
@@ -63,11 +61,6 @@ public class DirectoryStorageData implements StorageDataBase {
     return myStates.isEmpty();
   }
 
-  public static boolean isStorageFile(@NotNull VirtualFile file) {
-    // ignore system files like .DS_Store on Mac
-    return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), DEFAULT_EXT);
-  }
-
   public void loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
     if (dir == null || !dir.exists()) {
       return;
@@ -75,7 +68,8 @@ public class DirectoryStorageData implements StorageDataBase {
 
     StringInterner interner = new StringInterner();
     for (VirtualFile file : dir.getChildren()) {
-      if (!isStorageFile(file)) {
+      // ignore system files like .DS_Store on Mac
+      if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), StateMap.DEFAULT_EXT)) {
         continue;
       }
 
