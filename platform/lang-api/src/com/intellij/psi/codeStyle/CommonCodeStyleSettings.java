@@ -922,6 +922,7 @@ public class CommonCodeStyleSettings {
 
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
+    private boolean myInaccurate;
 
     @Override
     public void readExternal(Element element) throws InvalidDataException {
@@ -1020,6 +1021,14 @@ public class CommonCodeStyleSettings {
     static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
+    }
+
+    boolean isRecalculateForCommittedDocument() {
+      return myInaccurate;
+    }
+
+    void setRecalculateForCommittedDocument(boolean value) {
+      myInaccurate = value;
     }
   }
 }

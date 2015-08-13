@@ -19,6 +19,7 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,6 +27,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
@@ -42,7 +44,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 /**
  * @author Rustam Vishnyakov
  */
-public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
+public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider implements ProviderForCommittedDocument {
   private boolean myIsEnabledInTest;
   private final List<VirtualFile> myAcceptedFiles = new WeakList<VirtualFile>();
   private final List<VirtualFile> myDisabledFiles = new WeakList<VirtualFile>();
@@ -50,7 +52,15 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   @Nullable
   @Override
   public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
-    return isEnabled(settings, file) ? new IndentOptionsDetectorImpl(file).getIndentOptions() : null;
+    return isDocumentCommitted(file) && isEnabled(settings, file)
+           ? new IndentOptionsDetectorImpl(file).getIndentOptions()
+           : null;
+  }
+
+  private static boolean isDocumentCommitted(@NotNull PsiFile file) {
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+    Document document = manager.getDocument(file);
+    return document != null && manager.isCommitted(document);
   }
 
   @Override

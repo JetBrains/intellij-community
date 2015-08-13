@@ -73,7 +73,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
@@ -778,8 +777,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     clearSettingsCache();
 
-    reinitDocumentIndentOptions();
-
     for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
       if (scheme instanceof MyColorSchemeDelegate) {
         ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
@@ -838,17 +835,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlainFontMetrics = null;
 
     clearTextWidthCache();
-  }
-
-  private void reinitDocumentIndentOptions() {
-    if (myProject != null && !myProject.isDisposed()) {
-      PsiDocumentManager.getInstance(myProject).performForCommittedDocument(myDocument, new Runnable() {
-        @Override
-        public void run() {
-          CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
-        }
-      });
-    }
   }
 
   private void initTabPainter() {
