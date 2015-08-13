@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public abstract class ExecutableValidator {
       commandLine.setExePath(executable);
       commandLine.addParameters(processParameters);
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-      ProcessOutput result = handler.runProcess(60 * 1000);
+      ProcessOutput result = handler.runProcess(Registry.intValue("vcs.executable.validator.timeout.sec", 60) * 1000);
       boolean timeout = result.isTimeout();
       int exitCode = result.getExitCode();
       String stderr = result.getStderr();
