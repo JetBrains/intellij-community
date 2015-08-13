@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.util.Couple;
 import org.intellij.lang.annotations.JdkConstants;
@@ -314,12 +315,32 @@ public class TableScrollingUtil {
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0)), table);
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), table);
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0)), table);
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        moveDown(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        moveUp(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        movePageUp(table);
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), table);
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        movePageDown(table);
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), table);
   }
 
 }
