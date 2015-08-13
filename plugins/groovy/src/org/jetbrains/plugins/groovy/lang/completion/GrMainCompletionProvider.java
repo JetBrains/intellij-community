@@ -470,7 +470,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     if (reference == null) {
       if (parameters.getInvocationCount() >= 2) {
         result.stopHere();
-        addAllClasses(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), new InheritorsHolder(parameters.getPosition(), result));
+        addAllClasses(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), new InheritorsHolder(result));
       }
       return;
     }
@@ -479,7 +479,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       result.addElement(LookupElementBuilder.create("*"));
     }
 
-    InheritorsHolder inheritors = new InheritorsHolder(position, result);
+    InheritorsHolder inheritors = new InheritorsHolder(result);
     if (GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
       GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors);
     }

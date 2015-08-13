@@ -310,7 +310,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         final PsiCodeBlock tryBlock = context.get(tryKey).getTryBlock();
         if (tryBlock == null) return;
 
-        final InheritorsHolder holder = new InheritorsHolder(parameters.getPosition(), result);
+        final InheritorsHolder holder = new InheritorsHolder(result);
 
         for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
           PsiClass typeClass = type.resolve();

@@ -219,7 +219,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    final InheritorsHolder inheritors = new InheritorsHolder(position, result);
+    final InheritorsHolder inheritors = new InheritorsHolder(result);
     if (JavaSmartCompletionContributor.IN_TYPE_ARGS.accepts(position)) {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
@@ -487,7 +487,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       for (final LookupElement element : set) {
         result.addElement(element);
       }
-      addAllClasses(parameters, result, new InheritorsHolder(insertedElement, result));
+      addAllClasses(parameters, result, new InheritorsHolder(result));
     }
 
     if (annoClass != null) {

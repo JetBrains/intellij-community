@@ -241,7 +241,7 @@ public class JavaCompletionUtil {
   public static List<? extends PsiElement> getAllPsiElements(final LookupElement item) {
     List<PsiMethod> allMethods = getAllMethods(item);
     if (allMethods != null) return allMethods;
-    if (item.getObject() instanceof PsiElement) return Arrays.asList((PsiElement)item.getObject());
+    if (item.getObject() instanceof PsiElement) return Collections.singletonList((PsiElement)item.getObject());
     return null;
   }
 
@@ -552,17 +552,6 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  private static LookupElement highlight(LookupElement decorator) {
-    return PrioritizedLookupElement.withExplicitProximity(
-      LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
-        @Override
-        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-          element.getDelegate().renderElement(presentation);
-          presentation.setItemTextBold(true);
-        }
-      }), 1);
-  }
-
   private static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
@@ -570,7 +559,7 @@ public class JavaCompletionUtil {
     if (reference instanceof PsiJavaCodeReferenceElement) {
       if (completion instanceof PsiMethod &&
           ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiImportStaticStatement) {
-        return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY));
+        return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY));
       }
 
       if (completion instanceof PsiClass) {
@@ -582,7 +571,7 @@ public class JavaCompletionUtil {
     }
     
     if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
-      return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
+      return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
     }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
@@ -593,7 +582,7 @@ public class JavaCompletionUtil {
       ((LookupItem<?>)_ret).setAttribute(LookupItem.SUBSTITUTOR, substitutor);
     }
 
-    return Arrays.asList(_ret);
+    return Collections.singletonList(_ret);
   }
 
   public static boolean hasAccessibleConstructor(PsiType type) {
