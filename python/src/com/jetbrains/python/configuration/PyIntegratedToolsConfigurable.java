@@ -101,7 +101,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     ReSTService service = ReSTService.getInstance(myModule);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
-    analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
+    analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
@@ -215,7 +215,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
       return true;
     }
-    if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
+    if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       return true;
     }
     if (!ReSTService.getInstance(myModule).getWorkdir().equals(myWorkDir.getText())) {
@@ -235,7 +235,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
       DaemonCodeAnalyzer.getInstance(myProject).restart();
     }
-    if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
+    if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       final List<VirtualFile> files = Lists.newArrayList();
       ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
         @Override
@@ -256,7 +256,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       reSTService.setTxtIsRst(txtIsRst.isSelected());
       reparseFiles(Collections.singletonList(PlainTextFileType.INSTANCE.getDefaultExtension()));
     }
-    myDocumentationSettings.analyzeDoctest = analyzeDoctest.isSelected();
+    myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
@@ -287,7 +287,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.getFormat());
     myWorkDir.setText(ReSTService.getInstance(myModule).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
-    analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
+    analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     myRequirementsPathField.setText(getRequirementsPath());
   }
 
