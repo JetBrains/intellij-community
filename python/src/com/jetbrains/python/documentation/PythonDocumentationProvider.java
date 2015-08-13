@@ -566,7 +566,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                    @NotNull Project project,
                                    @Nullable Editor editor) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    final String ws = "\n" + (getStatementListIndent(insertPlace));
+    final String ws = "\n" + getStatementListIndent(insertPlace);
     final String docContent = ws + generateDocumentationContentStub(function, ws, true);
     final PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
     final PyStatement[] statements = insertPlace.getStatements();
@@ -607,13 +607,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), function.getContainingFile());
     final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
     final PyDecoratorList decoratorList = function.getDecoratorList();
-    final PyDecorator classMethod = decoratorList == null ? null : decoratorList.findDecorator(PyNames.CLASSMETHOD);
+    final boolean classMethod = decoratorList != null && decoratorList.findDecorator(PyNames.CLASSMETHOD) != null;
     for (PyParameter p : PyUtil.getParameters(function, context)) {
       final String parameterName = p.getName();
-      if (p.getText().equals(PyNames.CANONICAL_SELF) || parameterName == null) {
+      if (parameterName == null ||
+          parameterName.equals(PyNames.CANONICAL_SELF) ||
+          (classMethod && parameterName.equals(PyNames.CANONICAL_CLS))) {
         continue;
       }
-      if (classMethod != null && parameterName.equals(PyNames.CANONICAL_CLS)) continue;
       final String argType = signature == null ? null : signature.getArgTypeQualifiedName(parameterName);
 
       if (argType == null) {
@@ -634,61 +635,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         builder.append(offset);
       }
     }
-    builder.append(generateRaiseOrReturn(function, offset, prefix, checkReturn));
+    builder.append(PyDocstringGenerator.generateRaiseOrReturn(function, offset, prefix, checkReturn));
     return builder.toString();
-  }
-
-  public static String generateRaiseOrReturn(@NotNull PyFunction element, String offset, String prefix, boolean checkReturn) {
-    final StringBuilder builder = new StringBuilder();
-    if (checkReturn) {
-      final RaiseVisitor visitor = new RaiseVisitor();
-      final PyStatementList statementList = element.getStatementList();
-      statementList.accept(visitor);
-      if (visitor.myHasReturn) {
-        builder.append(prefix).append("return:").append(offset);
-        if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-          builder.append(prefix).append("rtype:").append(offset);
-        }
-      }
-      if (visitor.myHasRaise) {
-        builder.append(prefix).append("raise");
-        if (visitor.myRaiseTarget != null) {
-          String raiseTarget = visitor.myRaiseTarget.getText();
-          if (visitor.myRaiseTarget instanceof PyCallExpression) {
-            final PyExpression callee = ((PyCallExpression)visitor.myRaiseTarget).getCallee();
-            if (callee != null) {
-              raiseTarget = callee.getText();
-            }
-          }
-          builder.append(" ").append(raiseTarget);
-        }
-        builder.append(":").append(offset);
-      }
-    }
-    else {
-      builder.append(prefix).append("return:").append(offset);
-      if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-        builder.append(prefix).append("rtype:").append(offset);
-      }
-    }
-    return builder.toString();
-  }
-
-  private static class RaiseVisitor extends PyRecursiveElementVisitor {
-    private boolean myHasRaise = false;
-    private boolean myHasReturn = false;
-    @Nullable private PyExpression myRaiseTarget = null;
-
-    @Override
-    public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
-      myHasRaise = true;
-      final PyExpression[] expressions = node.getExpressions();
-      if (expressions.length > 0) myRaiseTarget = expressions[0];
-    }
-
-    @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
-      myHasReturn = true;
-    }
   }
 }

@@ -24,8 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.debugger.PySignature;
-import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
@@ -71,11 +69,8 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
   private boolean isAvailableForFunction(Project project, PyFunction function) {
     if (function.getDocStringValue() != null) {
-      PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
-
-      PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
-
-      docstringGenerator.addFunctionArguments(function, signature);
+      final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
+      docstringGenerator.withSignatures();
 
 
       if (docstringGenerator.haveParametersToAdd()) {
