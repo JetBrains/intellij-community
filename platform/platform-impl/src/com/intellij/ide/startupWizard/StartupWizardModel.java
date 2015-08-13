@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class StartupWizardModel extends WizardModel {
       add(myOtherStep);
     }
 
-    myAllPlugins = PluginManager.loadDescriptors(null);
+    myAllPlugins = PluginManager.loadDescriptors(null, ContainerUtil.<String>newArrayList());
     for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
       if (pluginDescriptor.getPluginId().getIdString().equals("com.intellij")) {
         // skip 'IDEA CORE' plugin
