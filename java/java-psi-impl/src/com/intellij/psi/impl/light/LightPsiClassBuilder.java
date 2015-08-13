@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +106,11 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
   @Override
   public LightTypeParameterListBuilder getTypeParameterList() {
     return myTypeParametersList;
+  }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return PsiClassImplUtil.isClassEquivalentTo(this, another);
   }
 
   public LightPsiClassBuilder setOriginInfo(String originInfo) {
