@@ -22,11 +22,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+import static com.intellij.psi.PsiReferenceList.Role.EXTENDS_LIST;
+import static com.intellij.psi.PsiReferenceList.Role.IMPLEMENTS_LIST;
+
 public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInfoAwareElement {
 
   private final LightModifierList myModifierList = new LightModifierList(getManager());
-  private final LightReferenceListBuilder myImplementsList = new LightReferenceListBuilder(getManager(), PsiReferenceList.Role.EXTENDS_LIST);
-  private final LightReferenceListBuilder myExtendsList = new LightReferenceListBuilder(getManager(), PsiReferenceList.Role.EXTENDS_LIST);
+  private final LightReferenceListBuilder myImplementsList = new LightReferenceListBuilder(getManager(), IMPLEMENTS_LIST);
+  private final LightReferenceListBuilder myExtendsList = new LightReferenceListBuilder(getManager(), EXTENDS_LIST);
   private final LightTypeParameterListBuilder myTypeParametersList = new LightTypeParameterListBuilder(getManager(), getLanguage());
   private final Collection<PsiMethod> myMethods = ContainerUtil.newArrayList();
   private PsiElement myScope;
