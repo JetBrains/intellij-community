@@ -19,6 +19,7 @@ import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +39,9 @@ import java.util.Set;
 
 import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
 
-public class DirectoryStorageData extends StorageDataBase {
+public class DirectoryStorageData implements StorageDataBase {
+  private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
+
   public static final String DEFAULT_EXT = ".xml";
 
   private final Map<String, StateMap> myStates;
@@ -83,12 +86,12 @@ public class DirectoryStorageData extends StorageDataBase {
         }
 
         Element element = JDOMUtil.load(file.getInputStream());
-        String name = getComponentNameIfValid(element);
+        String name = StateMap.getComponentNameIfValid(element);
         if (name == null) {
           continue;
         }
 
-        if (!element.getName().equals(COMPONENT)) {
+        if (!element.getName().equals(StateMap.COMPONENT)) {
           LOG.error("Incorrect root tag name (" + element.getName() + ") in " + file.getPresentableUrl());
           continue;
         }
@@ -245,7 +248,7 @@ public class DirectoryStorageData extends StorageDataBase {
   @Nullable
   public Element getCompositeStateAndArchive(@NotNull String componentName, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
     StateMap fileToState = myStates.get(componentName);
-    Element state = new Element(COMPONENT);
+    Element state = new Element(StateMap.COMPONENT);
     if (fileToState == null || fileToState.isEmpty()) {
       return state;
     }

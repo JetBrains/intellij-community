@@ -43,7 +43,7 @@ public interface StateStorage {
   void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames);
 
   interface ExternalizationSession {
-    void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);
+    void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
 
     /**
      * return null if nothing to save
