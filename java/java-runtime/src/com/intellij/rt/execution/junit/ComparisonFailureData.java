@@ -89,10 +89,13 @@ public class ComparisonFailureData {
       if (actualFilePath != null) {
         attrs.put("actualFile", actualFilePath);
       }
-      final int expectedIdx = trace.indexOf("expected");
+      final int expectedIdx = trace.indexOf("expected:<");
       final String comparisonFailureMessage;
       if (expectedIdx > 0) {
         comparisonFailureMessage = trace.substring(0, expectedIdx);
+      }
+      else if (failureIdx > -1) {
+        comparisonFailureMessage = trace.substring(0, failureIdx + failureMessageLength);
       }
       else {
         comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + "Comparison Failure: ";
@@ -109,7 +112,8 @@ public class ComparisonFailureData {
       if (!isAssertionError(throwable.getClass()) && !isAssertionError(throwableCause != null ? throwableCause.getClass() : null)) {
         attrs.put("error", "true");
       }
-      attrs.put("message", failureMessage != null ? failureMessage : "");
+      attrs.put("message", failureIdx > -1 ? trace.substring(0, failureIdx + failureMessageLength) 
+                                           : failureMessage != null ? failureMessage : "");
     }
   }
 
