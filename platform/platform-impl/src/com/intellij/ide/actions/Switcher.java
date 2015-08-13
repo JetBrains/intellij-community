@@ -321,6 +321,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
       });
       toolWindows.addKeyListener(this);
+      ListScrollingUtil.installActions(toolWindows);
       toolWindows.addMouseListener(this);
       toolWindows.addMouseMotionListener(this);
       ListScrollingUtil.ensureSelectionExists(toolWindows);
@@ -511,6 +512,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.setCellRenderer(filesRenderer);
       files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       files.addKeyListener(this);
+      ListScrollingUtil.installActions(files);
       files.addMouseListener(this);
       files.addMouseMotionListener(this);
       myClickListener.installOn(files);
@@ -660,37 +662,6 @@ public class Switcher extends AnAction implements DumbAware {
       if (mySpeedSearch != null && mySpeedSearch.isPopupActive() || lastEvent == e) return;
       lastEvent = e;
       switch (e.getKeyCode()) {
-        case VK_UP:
-          if (!isPinnedMode()) {
-            goBack();
-          }
-          else {
-            //getSelectedList().processKeyEvent(e);
-          }
-          break;
-        case VK_DOWN:
-          if (!isPinnedMode()) {
-            goForward();
-          }
-          else {
-            //getSelectedList().processKeyEvent(e);
-          }
-          break;
-        case VK_ESCAPE:
-          cancel();
-          break;
-        case VK_END:
-          ListScrollingUtil.moveEnd(getSelectedList());
-          break;
-        case VK_PAGE_DOWN:
-          ListScrollingUtil.movePageDown(getSelectedList());
-          break;
-        case VK_HOME:
-          ListScrollingUtil.moveHome(getSelectedList());
-          break;
-        case VK_PAGE_UP:
-          ListScrollingUtil.movePageUp(getSelectedList());
-          break;
         case VK_DELETE:
         case VK_BACK_SPACE: // Mac users
         case VK_Q:
