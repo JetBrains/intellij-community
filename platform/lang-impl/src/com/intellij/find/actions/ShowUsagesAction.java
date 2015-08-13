@@ -1182,6 +1182,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static class MyTable extends JBTableWithHintProvider implements DataProvider {
+
+    public MyTable() {
+      TableScrollingUtil.installActions(this);
+    }
+
     @Override
     public boolean getScrollableTracksViewportWidth() {
       return true;
