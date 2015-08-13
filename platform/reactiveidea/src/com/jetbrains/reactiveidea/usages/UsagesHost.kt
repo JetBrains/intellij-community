@@ -64,20 +64,20 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
 
   init {
     init += { m ->
-      reaction(false, "tree reaction", usageView.usagesSignal) { usages ->
-        reactiveModel.transaction { model ->
-          model.putIn(path / tree, MapModel(hashMapOf("0" to convertTree(usageView.root), tagsField to tagsModel("tree"))))
-        }
-      }
-      reaction(true, "progress reaction", usageView.progressSignal) { progress ->
-        if (progress != null) {
-          reactiveModel.host(path / "progress") { path, lifetime, init ->
-            ProgressIndicatorHost(reactiveModel, path, lifetime, progress, init)
-          }
-        }
-      }
       m.putIn(path / presentation, convertPresentation(usageView.getPresentation()))
           .putIn(path / name, PrimitiveModel(usageView.getPresentation().getTabName()))
+    }
+    reaction(false, "tree reaction", usageView.usagesSignal) { usages ->
+      reactiveModel.transaction { model ->
+        model.putIn(path / tree, MapModel(hashMapOf("0" to convertTree(usageView.root), tagsField to tagsModel("tree"))))
+      }
+    }
+    reaction(true, "progress reaction", usageView.progressSignal) { progress ->
+      if (progress != null) {
+        reactiveModel.host(path / "progress") { path, lifetime, init ->
+          ProgressIndicatorHost(reactiveModel, path, lifetime, progress, init)
+        }
+      }
     }
 
     lifetime += {
