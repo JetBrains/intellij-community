@@ -165,7 +165,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return DebuggerUtilsEx.getContainingMethod(position);
   }
 
-  class JavaBreakpointVariant extends XLineBreakpointVariant {
+  public class JavaBreakpointVariant extends XLineBreakpointVariant {
     protected final XSourcePosition mySourcePosition;
 
     private JavaBreakpointVariant(XSourcePosition position) {
