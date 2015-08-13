@@ -26,6 +26,7 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -106,8 +107,9 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   @Override
   public String getName() {
     final String fieldName = myField.name();
-    if (isOuterLocalVariableValue() && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-      return StringUtil.trimStart(fieldName, OUTER_LOCAL_VAR_FIELD_PREFIX);
+    NodeDescriptorNameAdjuster nameAdjuster = NodeDescriptorNameAdjuster.findFor(this);
+    if (nameAdjuster != null) {
+      return nameAdjuster.fixName(fieldName, this);
     }
     return fieldName;
   }
