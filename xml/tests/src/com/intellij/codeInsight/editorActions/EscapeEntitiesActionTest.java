@@ -72,6 +72,15 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
            "</component>");
   }
 
+  public void testXmlLt() {
+    doTest("<component>\n" +
+           "  lt   <    U+003C (60) XML 1.0 less-than sign\n" +
+           "</component>", "xml",
+           "<component>\n" +
+           "  lt   &lt;    U+003C (60) XML 1.0 less-than sign\n" +
+           "</component>");
+  }
+
   public void testMultiCaret() {
     doTest("<a><selection><</selection></a>\n" +
            "<a><selection><</selection></a>\n" +
