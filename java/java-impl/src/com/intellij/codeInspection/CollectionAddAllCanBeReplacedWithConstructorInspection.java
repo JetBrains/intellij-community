@@ -94,7 +94,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     if (myCollectionClassesToCheck.isEmpty()) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new JavaRecursiveElementWalkingVisitor() {
+    return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         final String methodName = expression.getMethodExpression().getReferenceName();
@@ -224,7 +224,9 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
   private static List<String> resetDefault(final List<String> classes) {
     classes.clear();
     classes.add(CommonClassNames.JAVA_UTIL_ARRAY_LIST);
+    classes.add("java.util.LinkedList");
     classes.add(CommonClassNames.JAVA_UTIL_HASH_SET);
+    classes.add("java.util.LinkedHashSet");
     classes.add("java.util.Vector");
     classes.add("java.util.concurrent.CopyOnWriteArrayList");
     return classes;
