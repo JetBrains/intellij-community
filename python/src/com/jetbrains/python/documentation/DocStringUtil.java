@@ -17,6 +17,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
@@ -179,7 +180,10 @@ public class DocStringUtil {
    * @return false if no structured docstring format was specified initially and user didn't select any, true otherwise
    */
   public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement element) {
-    final Module module = ModuleManager.getInstance(element.getProject()).getModules()[0];
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) {
+      module = ModuleManager.getInstance(element.getProject()).getModules()[0];
+    }
     return ensureNotPlainDocstringFormatForFile(element.getContainingFile(), module);
   }
 
