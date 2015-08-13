@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -40,7 +38,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Dictionary;
-import java.util.HashSet;
 import java.util.Hashtable;
 
 /**
@@ -207,7 +204,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     if (settings.COLOR_BLINDNESS != blindness) {
       settings.COLOR_BLINDNESS = blindness;
       update = true;
-      reloadComponent(DefaultColorSchemesManager.class);
+      ComponentsPackage.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
       shouldUpdateUI = true;
     }
 
@@ -480,18 +477,5 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
-  }
-
-  private static void reloadComponent(Class<?> type) {
-    State state = type.getAnnotation(State.class);
-    if (state != null) {
-      IComponentStore store = ComponentsPackage.getStateStore(ApplicationManager.getApplication());
-      StateStorageManager manager = store.getStateStorageManager();
-      HashSet<StateStorage> storages = new HashSet<StateStorage>();
-      for (Storage storage : state.storages()) {
-        storages.add(manager.getStateStorage(storage));
-      }
-      store.reinitComponent(state.name(), storages);
-    }
   }
 }

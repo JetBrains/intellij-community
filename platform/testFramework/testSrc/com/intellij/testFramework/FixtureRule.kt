@@ -26,9 +26,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TestFixtureBuilder
@@ -41,6 +42,10 @@ import org.junit.runners.model.Statement
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
+import java.lang.annotation.ElementType
+import java.lang.annotation.Retention
+import java.lang.annotation.RetentionPolicy
+import java.lang.annotation.Target
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
@@ -61,7 +66,7 @@ public class ProjectRule() : ExternalResource() {
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = File("${FileUtilRt.generateRandomTemporaryPath().path}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
+      val projectFile = File("${generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").path}")
 
       val buffer = ByteArrayOutputStream()
       java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
@@ -75,6 +80,8 @@ public class ProjectRule() : ExternalResource() {
           FileUtil.delete(projectFile)
         }
       })
+
+      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).storePointers()
       return project
     }
 
@@ -197,6 +204,25 @@ public fun runInEdtAndWait(runnable: () -> Unit) {
     }
     catch (e: InvocationTargetException) {
       throw e.getCause() ?: e
+    }
+  }
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD, ElementType.TYPE)
+annotation public class RunsInEdt
+
+public class EdtRule : TestRule {
+  override fun apply(base: Statement, description: Description): Statement {
+    return if ((description.getAnnotation(javaClass<RunsInEdt>()) ?: description.getTestClass()!!.getAnnotation(javaClass<RunsInEdt>())) == null) {
+      base
+    }
+    else {
+      object : Statement() {
+        override fun evaluate() {
+          runInEdtAndWait { base.evaluate() }
+        }
+      }
     }
   }
 }

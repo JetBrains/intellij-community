@@ -85,12 +85,12 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
         catch (Exception ignored) {
         }
         DirectoryUtil.createSubdirectories(EduNames.HINTS, projectDir, "\\/");
-        PsiDirectory lessonDir = CCCreateLesson.createLesson(null, project, baseDir, course);
+        PsiDirectory lessonDir = new CCCreateLesson().createItem(null, project, projectDir, course);
         if (lessonDir == null) {
           LOG.error("Failed to create lesson");
           return;
         }
-        CCCreateTask.createTask(null, project, lessonDir, false);
+        new CCCreateTask().createItem(null, project, lessonDir, course);
       }
     }.execute();
   }

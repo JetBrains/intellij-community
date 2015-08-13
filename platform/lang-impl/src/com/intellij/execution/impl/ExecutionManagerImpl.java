@@ -394,6 +394,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
               started = true;
               processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
             }
+            environment.setContentToReuse(descriptor);
           }
         }
         catch (ProcessCanceledException e) {

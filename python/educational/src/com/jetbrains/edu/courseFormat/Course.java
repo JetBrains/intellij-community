@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Course implements Named {
+public class Course {
   @Expose
   private List<Lesson> lessons = new ArrayList<Lesson>();
 

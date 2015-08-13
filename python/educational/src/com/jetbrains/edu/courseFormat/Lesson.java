@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Lesson implements Named, StudyOrderable {
+public class Lesson implements StudyItem {
   @Transient
   public int id;
   @Transient

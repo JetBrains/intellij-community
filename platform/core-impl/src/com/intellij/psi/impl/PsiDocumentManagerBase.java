@@ -621,7 +621,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    if (myStopTrackingDocuments) return;
+    if (myStopTrackingDocuments || myProject.isDisposed()) return;
 
     final Document document = event.getDocument();
     if (document instanceof DocumentImpl && !myUncommittedInfos.containsKey(document)) {
@@ -661,7 +661,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    if (myStopTrackingDocuments) return;
+    if (myStopTrackingDocuments || myProject.isDisposed()) return;
 
     final Document document = event.getDocument();
     if (document instanceof DocumentImpl) {

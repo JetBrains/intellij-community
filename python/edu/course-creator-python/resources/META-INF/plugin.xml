@@ -32,6 +32,10 @@
     <executeFile implementation="com.jetbrains.edu.coursecreator.PyCCRunTests"/>
   </extensions>
 
+  <extensions defaultExtensionNs="Pythonid">
+    <pyReferenceResolveProvider implementation="com.jetbrains.edu.coursecreator.PyCCReferenceResolveProvider"/>
+  </extensions>
+
   <application-components>
     <!-- Add your application components here -->
   </application-components>

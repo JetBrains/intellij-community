@@ -595,7 +595,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
   public static boolean isSuitableForClass(PsiElement position) {
     if (psiElement().afterLeaf("@").accepts(position) ||
-        PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) != null) {
+        PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class, PsiExpressionCodeFragment.class) != null) {
       return false;
     }
 

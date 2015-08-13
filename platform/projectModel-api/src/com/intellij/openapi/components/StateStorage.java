@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,28 +23,14 @@ import java.util.Set;
 
 public interface StateStorage {
   /**
-   * @deprecated use StateStorageManager.STORAGE_TOPIC (to be removed in IDEA 16)
-   * app storage files changed
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  Topic<Listener> STORAGE_TOPIC = new Topic<Listener>("STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
-
-  /**
-   * @deprecated use StateStorageManager.STORAGE_TOPIC (to be removed in IDEA 16)
-   * project storage files changes (project or modules)
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  Topic<Listener> PROJECT_STORAGE_TOPIC = new Topic<Listener>("PROJECT_STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
-
-  /**
    * You can call this method only once.
    * If state exists and not archived - not-null result.
    * If doesn't exists or archived - null result.
    */
   @Nullable
-  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto);
+  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto, boolean reload);
+
+  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass);
 
   boolean hasState(@NotNull String componentName, boolean reloadData);
 
@@ -70,9 +54,5 @@ public interface StateStorage {
 
   interface SaveSession {
     void save() throws IOException;
-  }
-
-  interface Listener {
-    void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage);
   }
 }

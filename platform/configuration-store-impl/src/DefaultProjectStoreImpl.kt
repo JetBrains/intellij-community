@@ -17,12 +17,10 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.FileStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import java.io.File
@@ -67,8 +65,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun getStateStorage(storageSpec: Storage) = storage
 
     override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
-
-    override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileStorage>> = Couple(emptyList<FileStorage>(), emptyList<FileStorage>())
 
     override fun startExternalization(): StateStorageManager.ExternalizationSession? {
       val externalizationSession = storage.startExternalization()

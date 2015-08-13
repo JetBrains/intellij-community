@@ -48,47 +48,52 @@ public class TemporaryDirectory : ExternalResource() {
    * Directory is not created.
    */
   public fun newDirectory(directoryName: String? = null): File {
-    val file = generateRandomTemporaryPath(directoryName)
+    val file = generatePath(directoryName)
     val fs = LocalFileSystem.getInstance()
     if (fs != null) {
       // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
       val virtualFile = fs.findFileByIoFile(file)
       if (virtualFile != null) {
-        VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
+        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
       }
     }
     return file
   }
 
-  private fun generateRandomTemporaryPath(directoryName: String?): File {
-    val tempDirectory = FileUtilRt.getTempDirectory()
-    var testFileName = sanitizedName!!
-    if (directoryName != null) {
-      testFileName += "_$directoryName"
+  public fun generatePath(suffix: String?): File {
+    var fileName = sanitizedName!!
+    if (suffix != null) {
+      fileName += "_$suffix"
     }
 
-    var file = File(tempDirectory, testFileName)
-    var i = 0
-    while (file.exists() && i < 9) {
-      file = File(tempDirectory, "${testFileName}_$i")
-      i++
-    }
-
-    if (file.exists()) {
-      throw IOException("Cannot generate unique random path")
-    }
+    var file = generateTemporaryPath(fileName)
     files.add(file)
     return file
   }
 
   public fun newVirtualDirectory(directoryName: String? = null): VirtualFile {
-    val file = generateRandomTemporaryPath(directoryName)
+    val file = generatePath(directoryName)
     if (!file.mkdirs()) {
       throw AssertionError("Cannot create directory")
     }
 
     val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
-    VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
+    VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     return virtualFile!!
   }
+}
+
+public fun generateTemporaryPath(fileName: String?): File {
+  val tempDirectory = FileUtilRt.getTempDirectory()
+  var file = File(tempDirectory, fileName)
+  var i = 0
+  while (file.exists() && i < 9) {
+    file = File(tempDirectory, "${fileName}_$i")
+    i++
+  }
+
+  if (file.exists()) {
+    throw IOException("Cannot generate unique random path")
+  }
+  return file
 }

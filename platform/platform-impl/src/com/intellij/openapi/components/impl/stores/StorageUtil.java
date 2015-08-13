@@ -26,8 +26,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -37,12 +39,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +58,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public class StorageUtil {
   public static final String DEFAULT_EXT = ".xml";
@@ -74,29 +76,31 @@ public class StorageUtil {
 
   public static void checkUnknownMacros(@NotNull final ComponentManager componentManager, @NotNull final Project project) {
     Application application = ApplicationManager.getApplication();
-    if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
-      // should be invoked last
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-        @Override
-        public void run() {
-          TrackingPathMacroSubstitutor substitutor = ComponentsPackage.getStateStore(componentManager).getStateStorageManager().getMacroSubstitutor();
-          if (substitutor != null) {
-            notifyUnknownMacros(substitutor, project, null);
-          }
-        }
-      });
+    if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
+      return;
     }
+
+    // should be invoked last
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        notifyUnknownMacros(ComponentsPackage.getStateStore(componentManager), project, null);
+      }
+    });
   }
 
-  public static void notifyUnknownMacros(@NotNull TrackingPathMacroSubstitutor substitutor,
-                                         @NotNull final Project project,
-                                         @Nullable final String componentName) {
+  public static void notifyUnknownMacros(@NotNull final IComponentStore store, @NotNull final Project project, @Nullable final String componentName) {
+    TrackingPathMacroSubstitutor substitutor = store.getStateStorageManager().getMacroSubstitutor();
+    if (substitutor == null) {
+      return;
+    }
+
     final LinkedHashSet<String> macros = new LinkedHashSet<String>(substitutor.getUnknownMacros(componentName));
     if (macros.isEmpty()) {
       return;
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
         List<String> notified = null;
@@ -111,26 +115,82 @@ public class StorageUtil {
           macros.removeAll(notified);
         }
 
-        if (!macros.isEmpty()) {
-          LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
-          String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
-          String productName = ApplicationNamesInfo.getInstance().getProductName();
-          String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +
-                           "<br>Path variables are used to substitute absolute paths " +
-                           "in " + productName + " project files " +
-                           "and allow project file sharing in version control systems.<br>" +
-                           "Some of the files describing the current project settings contain unknown path variables " +
-                           "and " + productName + " cannot restore those paths.";
-          new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
-                                       new NotificationListener() {
-                                         @Override
-                                         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                                           ((ProjectEx)project).checkUnknownMacros(true);
-                                         }
-                                       }, macros).notify(project);
+        if (macros.isEmpty()) {
+          return;
+        }
+
+        LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
+        String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
+        String productName = ApplicationNamesInfo.getInstance().getProductName();
+        String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +
+                         "<br>Path variables are used to substitute absolute paths " +
+                         "in " + productName + " project files " +
+                         "and allow project file sharing in version control systems.<br>" +
+                         "Some of the files describing the current project settings contain unknown path variables " +
+                         "and " + productName + " cannot restore those paths.";
+        new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
+                                     new NotificationListener() {
+                                       @Override
+                                       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                                         checkUnknownMacros(store, project, true);
+                                       }
+                                     }, macros).notify(project);
+      }
+    }, project.getDisposed());
+  }
+
+  public static void checkUnknownMacros(@NotNull IComponentStore store, @NotNull Project project, boolean showDialog) {
+    // default project doesn't have it
+    List<TrackingPathMacroSubstitutor> substitutors;
+    if (store instanceof IProjectStore) {
+      substitutors = ((IProjectStore)store).getSubstitutors();
+    }
+    else {
+      substitutors = Collections.emptyList();
+    }
+    Set<String> unknownMacros = new THashSet<String>();
+    for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+      unknownMacros.addAll(substitutor.getUnknownMacros(null));
+    }
+
+    if (unknownMacros.isEmpty() || showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<String>(unknownMacros))) {
+      return;
+    }
+
+    final PathMacros pathMacros = PathMacros.getInstance();
+    final Set<String> macrosToInvalidate = new THashSet<String>(unknownMacros);
+    for (Iterator<String> it = macrosToInvalidate.iterator(); it.hasNext(); ) {
+      String macro = it.next();
+      if (StringUtil.isEmptyOrSpaces(pathMacros.getValue(macro)) && !pathMacros.isIgnoredMacroName(macro)) {
+        it.remove();
+      }
+    }
+
+    if (macrosToInvalidate.isEmpty()) {
+      return;
+    }
+
+    Set<String> components = new THashSet<String>();
+    for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+      components.addAll(substitutor.getComponents(macrosToInvalidate));
+    }
+
+    if (store.isReloadPossible(components)) {
+      for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+        substitutor.invalidateUnknownMacros(macrosToInvalidate);
+      }
+
+      for (UnknownMacroNotification notification : NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, project)) {
+        if (macrosToInvalidate.containsAll(notification.getMacros())) {
+          notification.expire();
         }
       }
-    });
+
+      store.reloadStates(components);
+    }
+    else if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration Changed", Messages.getQuestionIcon()) == Messages.YES) {
+      ProjectManagerEx.getInstanceEx().reloadProject(project);
+    }
   }
 
   @NotNull

@@ -22,9 +22,9 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-class ModuleStoreTest {
+@RunsInEdt class ModuleStoreTest {
   companion object {
-     ClassRule val projectRule: ProjectRule = ProjectRule()
+     ClassRule val projectRule = ProjectRule()
 
     val MODULE_DIR = "\$MODULE_DIR$"
 
@@ -44,49 +44,48 @@ class ModuleStoreTest {
 
   private val tempDirManager = TemporaryDirectory()
 
-  private val ruleChain = RuleChain(tempDirManager)
+  private val ruleChain = RuleChain(tempDirManager, EdtRule())
 
   public Rule fun getChain(): RuleChain = ruleChain
 
-  public Test fun `set option`() {
-    runInEdtAndWait {
-      val moduleFile = runWriteAction { VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />") }
+  public @Test fun `set option`() {
+    val moduleFile = runWriteAction {
+      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+    }
 
-      projectRule.project.runInStoreLoadMode {
-        moduleFile.loadModule().useAndDispose {
-          assertThat(getOptionValue("foo"), equalTo("bar"))
+    projectRule.project.runInStoreLoadMode {
+      moduleFile.loadModule().useAndDispose {
+        assertThat(getOptionValue("foo"), equalTo("bar"))
 
-          setOption("foo", "not bar")
-          saveStore()
-        }
+        setOption("foo", "not bar")
+        saveStore()
+      }
 
-        moduleFile.loadModule().useAndDispose {
-          assertThat(getOptionValue("foo"), equalTo("not bar"))
+      moduleFile.loadModule().useAndDispose {
+        assertThat(getOptionValue("foo"), equalTo("not bar"))
 
-          setOption("foo", "not bar")
-          saveStore()
-        }
+        setOption("foo", "not bar")
+        saveStore()
+
       }
     }
   }
 
-  public Test fun `must be empty if classpath storage`() {
+  public @Test fun `must be empty if classpath storage`() {
     // we must not use VFS here, file must not be created
     val moduleFile = File(tempDirManager.newDirectory("module"), "test.iml")
-    runInEdtAndWait {
-      projectRule.project.runInStoreLoadMode {
-        moduleFile.createModule().useAndDispose {
-          ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
-          saveStore()
-          assertThat(moduleFile, anExistingFile())
-          assertThat(moduleFile.readText(), startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">"))
+    projectRule.project.runInStoreLoadMode {
+      moduleFile.createModule().useAndDispose {
+        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+        saveStore()
+        assertThat(moduleFile, anExistingFile())
+        assertThat(moduleFile.readText(), startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">"))
 
-          ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
-          saveStore()
-          assertThat(moduleFile.readText(), equalTo("""<?xml version="1.0" encoding="UTF-8"?>
+        ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
+        saveStore()
+        assertThat(moduleFile.readText(), equalTo("""<?xml version="1.0" encoding="UTF-8"?>
 <module classpath="eclipse" classpath-dir="$MODULE_DIR" type="JAVA_MODULE" version="4" />"""))
-        }
       }
     }
   }
