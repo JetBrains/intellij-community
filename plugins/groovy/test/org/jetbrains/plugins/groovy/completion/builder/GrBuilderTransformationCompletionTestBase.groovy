@@ -33,7 +33,11 @@ abstract class GrBuilderTransformationCompletionTestBase extends GroovyCompletio
     return GroovyLightProjectDescriptor.GROOVY_2_3_9;
   }
 
-  void doVariantableTest(String text, CompletionResult cr = CompletionResult.contain, String... args) {
+  void doVariantableTest(String text, String... args) {
+    doVariantableTest(text, CompletionResult.contain, args)
+  }
+
+  void doVariantableTest(String text, CompletionResult cr, String... args) {
     doVariantableTest(text, '', BASIC, cr, 1, args)
   }
 }
