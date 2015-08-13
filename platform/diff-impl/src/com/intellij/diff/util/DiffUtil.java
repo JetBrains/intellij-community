@@ -821,6 +821,10 @@ public class DiffUtil {
       boolean isUnderDialog = LaterInvocator.isInModalContext();
       mode = isUnderDialog ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
     }
+    if (mode == WindowWrapper.Mode.FRAME &&
+        (hints.getOkAction() != null || hints.getCancelAction() != null)) {
+      mode = WindowWrapper.Mode.MODAL;
+    }
     return mode;
   }
 

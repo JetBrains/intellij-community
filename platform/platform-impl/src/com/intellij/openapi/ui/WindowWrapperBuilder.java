@@ -2,6 +2,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper.Mode;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,8 @@ public class WindowWrapperBuilder {
   @Nullable private JComponent myPreferredFocusedComponent;
   @Nullable private String myDimensionServiceKey;
   @Nullable private Runnable myOnShowCallback;
+  @Nullable private BooleanGetter myOkAction;
+  @Nullable private BooleanGetter myCancelAction;
 
   public WindowWrapperBuilder(@NotNull Mode mode, @NotNull JComponent component) {
     myMode = mode;
@@ -65,6 +68,18 @@ public class WindowWrapperBuilder {
   }
 
   @NotNull
+  public WindowWrapperBuilder setOkAction(@Nullable BooleanGetter value) {
+    myOkAction = value;
+    return this;
+  }
+
+  @NotNull
+  public WindowWrapperBuilder setCancelAction(@Nullable BooleanGetter value) {
+    myCancelAction = value;
+    return this;
+  }
+
+  @NotNull
   public WindowWrapper build() {
     switch (myMode) {
       case FRAME:
@@ -92,7 +107,10 @@ public class WindowWrapperBuilder {
       myDialog = builder.myParent != null
                  ? new MyDialogWrapper(builder.myParent, builder.myComponent)
                  : new MyDialogWrapper(builder.myProject, builder.myComponent);
-      myDialog.setParameters(builder.myDimensionServiceKey, builder.myPreferredFocusedComponent);
+      myDialog.setParameters(builder.myDimensionServiceKey,
+                             builder.myPreferredFocusedComponent,
+                             builder.myOkAction,
+                             builder.myCancelAction);
 
       final Runnable onShowCallback = builder.myOnShowCallback;
       if (onShowCallback != null) {
@@ -164,13 +182,15 @@ public class WindowWrapperBuilder {
 
     @Override
     public void close() {
-      myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+      myDialog.getCancelAction().actionPerformed(null);
     }
 
     private static class MyDialogWrapper extends DialogWrapper {
       @NotNull private JComponent myComponent;
       @Nullable private String myDimensionServiceKey;
       @Nullable private JComponent myPreferredFocusedComponent;
+      @Nullable private BooleanGetter myOkAction;
+      @Nullable private BooleanGetter myCancelAction;
 
       public MyDialogWrapper(@Nullable Project project, @NotNull JComponent component) {
         super(project, true);
@@ -183,15 +203,20 @@ public class WindowWrapperBuilder {
       }
 
       public void setParameters(@Nullable String dimensionServiceKey,
-                                @Nullable JComponent preferredFocusedComponent) {
+                                @Nullable JComponent preferredFocusedComponent,
+                                @Nullable BooleanGetter okAction,
+                                @Nullable BooleanGetter cancelAction) {
         myDimensionServiceKey = dimensionServiceKey;
         myPreferredFocusedComponent = preferredFocusedComponent;
+        myOkAction = okAction;
+        myCancelAction = cancelAction;
       }
 
       @Nullable
       @Override
       protected Border createContentPaneBorder() {
-        return null;
+        if (myOkAction == null && myCancelAction == null) return null;
+        return super.createContentPaneBorder();
       }
 
       @Override
@@ -203,13 +228,25 @@ public class WindowWrapperBuilder {
       @NotNull
       @Override
       protected Action[] createActions() {
-        return new Action[0];
+        if (myOkAction == null && myCancelAction == null) return new Action[0];
+        return super.createActions();
+      }
+
+      @Override
+      protected void doOKAction() {
+        if (myOkAction == null || myOkAction.get()) super.doOKAction();
+      }
+
+      @Override
+      public void doCancelAction() {
+        if (myCancelAction == null || myCancelAction.get()) super.doCancelAction();
       }
 
       @Nullable
       @Override
       protected JComponent createSouthPanel() {
-        return null;
+        if (myOkAction == null && myCancelAction == null) return null;
+        return super.createSouthPanel();
       }
 
       @Nullable
@@ -236,6 +273,7 @@ public class WindowWrapperBuilder {
 
     public FrameWindowWrapper(@NotNull WindowWrapperBuilder builder) {
       assert builder.myMode == Mode.FRAME;
+      if (builder.myOkAction != null || builder.myCancelAction != null) throw new IllegalArgumentException();
 
       myProject = builder.myProject;
       myComponent = builder.myComponent;
