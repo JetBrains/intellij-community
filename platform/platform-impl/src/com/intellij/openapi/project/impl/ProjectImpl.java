@@ -363,7 +363,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
     LOG.assertTrue(application.isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
 
-    LOG.assertTrue(!isDisposed());
+    // we use super here, because temporarilyDisposed will be true if project closed
+    LOG.assertTrue(!super.isDisposed());
     if (myProjectManagerListener != null) {
       myProjectManager.removeProjectManagerListener(this, myProjectManagerListener);
     }

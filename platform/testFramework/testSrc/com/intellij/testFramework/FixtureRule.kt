@@ -66,7 +66,7 @@ public class ProjectRule() : ExternalResource() {
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = File("${generateTemporaryPath("shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").path}")
+      val projectFile = File("${generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").path}")
 
       val buffer = ByteArrayOutputStream()
       java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
