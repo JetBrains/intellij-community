@@ -15,7 +15,8 @@
  */
 package com.intellij.xml.actions;
 
-import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
+import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,7 +30,10 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ParameterizedCachedValueImpl;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
@@ -40,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dennis.Ushakov
  */
-public class EscapeEntitiesAction extends SimpleCodeInsightAction {
+public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private static ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile> ESCAPES = new ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile>(
     new ParameterizedCachedValueProvider<IntObjectHashMap<String>, PsiFile>() {
       @Nullable
@@ -109,6 +113,12 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
     return ApplicationManager.getApplication().isInternal() && file instanceof XmlFile;
   }
 
+  @NotNull
+  @Override
+  protected CodeInsightActionHandler getHandler() {
+    return this;
+  }
+
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
@@ -128,5 +138,10 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
         });
       }
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
   }
 }
