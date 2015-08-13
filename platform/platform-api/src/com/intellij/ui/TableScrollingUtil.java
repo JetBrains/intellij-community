@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,21 +63,21 @@ public class TableScrollingUtil {
     }
   }
 
-  public static void ensureSelectionExists(@NotNull JTable list) {
-    int size = list.getModel().getRowCount();
+  public static void ensureSelectionExists(@NotNull JTable table) {
+    int size = table.getModel().getRowCount();
     if (size == 0) {
-      list.clearSelection();
+      table.clearSelection();
       return;
     }
-    int selectedIndex = list.getSelectedRow();
+    int selectedIndex = table.getSelectedRow();
     boolean reselect = false;
     if (selectedIndex < 0 || selectedIndex >= size) { // fit index to [0, size-1] range
       selectedIndex = 0;
       reselect = true;
     }
-    ensureIndexIsVisible(list, selectedIndex, 0);
+    ensureIndexIsVisible(table, selectedIndex, 0);
     if (reselect) {
-      list.getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+      table.getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
     }
   }
 
@@ -85,17 +85,17 @@ public class TableScrollingUtil {
     return table.getCellRect(top, 0, true).union(table.getCellRect(bottom,0,true));
   }
 
-  private static int getVisibleRowCount(JTable list) {
-    Rectangle visibleRect = list.getVisibleRect();
-    return getTrailingRow(list, visibleRect) - getLeadingRow(list, visibleRect) + 1;
+  private static int getVisibleRowCount(JTable table) {
+    Rectangle visibleRect = table.getVisibleRect();
+    return getTrailingRow(table, visibleRect) - getLeadingRow(table, visibleRect) + 1;
   }
 
-  public static Couple<Integer> getVisibleRows(JTable list) {
-    Rectangle visibleRect = list.getVisibleRect();
-    return Couple.of(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
+  public static Couple<Integer> getVisibleRows(JTable table) {
+    Rectangle visibleRect = table.getVisibleRect();
+    return Couple.of(getLeadingRow(table, visibleRect) + 1, getTrailingRow(table, visibleRect));
   }
 
-  private static int getLeadingRow(JTable table,Rectangle visibleRect) {
+  private static int getLeadingRow(JTable table, Rectangle visibleRect) {
     return table.rowAtPoint(getLeadingPoint(table, visibleRect));
   }
 
@@ -122,7 +122,7 @@ public class TableScrollingUtil {
 
   }
 
-  private static int getTrailingRow(JTable table,Rectangle visibleRect) {
+  private static int getTrailingRow(JTable table, Rectangle visibleRect) {
       Point trailingPoint;
 
       if (table.getComponentOrientation().isLeftToRight()) {
@@ -137,12 +137,12 @@ public class TableScrollingUtil {
   }
 
 
-  public static void moveDown(JTable list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
-    int size = list.getModel().getRowCount();
+  public static void moveDown(JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
+    int size = table.getModel().getRowCount();
     if (size == 0) {
       return;
     }
-    final ListSelectionModel selectionModel = list.getSelectionModel();
+    final ListSelectionModel selectionModel = table.getSelectionModel();
     int index = selectionModel.getLeadSelectionIndex();
     final int indexToSelect;
     if (index < size - 1) {
@@ -154,7 +154,7 @@ public class TableScrollingUtil {
     else {
       return;
     }
-    ensureIndexIsVisible(list, indexToSelect, +1);
+    ensureIndexIsVisible(table, indexToSelect, +1);
     if (selectionModel.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
       selectionModel.setSelectionInterval(indexToSelect,indexToSelect);
     }
@@ -166,9 +166,9 @@ public class TableScrollingUtil {
     }
   }
 
-  public static void moveUp(JTable list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
-    int size = list.getModel().getRowCount();
-    final ListSelectionModel selectionModel = list.getSelectionModel();
+  public static void moveUp(JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
+    int size = table.getModel().getRowCount();
+    final ListSelectionModel selectionModel = table.getSelectionModel();
     int index = selectionModel.getMinSelectionIndex();
     int indexToSelect;
     if (index > 0) {
@@ -180,7 +180,7 @@ public class TableScrollingUtil {
     else {
       return;
     }
-    ensureIndexIsVisible(list, indexToSelect, -1);
+    ensureIndexIsVisible(table, indexToSelect, -1);
     if (selectionModel.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
       selectionModel.setSelectionInterval(indexToSelect, indexToSelect);
     }
@@ -192,28 +192,28 @@ public class TableScrollingUtil {
     }
   }
 
-  public static void moveHome(JTable list) {
-    list.getSelectionModel().setSelectionInterval(0,0);
-    ensureIndexIsVisible(list, 0,0);
+  public static void moveHome(JTable table) {
+    table.getSelectionModel().setSelectionInterval(0,0);
+    ensureIndexIsVisible(table, 0,0);
   }
 
-  public static void moveEnd(JTable list) {
-    int index = list.getModel().getRowCount() - 1;
-    list.getSelectionModel().setSelectionInterval(index, index);
-    ensureIndexIsVisible(list, index, 0);
+  public static void moveEnd(JTable table) {
+    int index = table.getModel().getRowCount() - 1;
+    table.getSelectionModel().setSelectionInterval(index, index);
+    ensureIndexIsVisible(table, index, 0);
   }
 
-  public static void movePageUp(JTable list) {
-    int visible = getVisibleRowCount(list);
+  public static void movePageUp(JTable table) {
+    int visible = getVisibleRowCount(table);
     if (visible <= 0) {
-      moveHome(list);
+      moveHome(table);
       return;
     }
-    int size = list.getModel().getRowCount();
+    int size = table.getModel().getRowCount();
     int decrement = visible - 1;
-    ListSelectionModel selectionModel = list.getSelectionModel();
+    ListSelectionModel selectionModel = table.getSelectionModel();
     int index = Math.max(selectionModel.getMinSelectionIndex() - decrement, 0);
-    int visibleIndex = getLeadingRow(list, list.getVisibleRect());
+    int visibleIndex = getLeadingRow(table, table.getVisibleRect());
     int top = visibleIndex - decrement;
     if (top < 0) {
       top = 0;
@@ -223,103 +223,103 @@ public class TableScrollingUtil {
       bottom = size - 1;
     }
 
-    Rectangle cellBounds = getCellBounds(list, top, bottom);
+    Rectangle cellBounds = getCellBounds(table, top, bottom);
     if (cellBounds == null) {
-      moveHome(list);
+      moveHome(table);
       return;
     }
-    list.scrollRectToVisible(cellBounds);
+    table.scrollRectToVisible(cellBounds);
 
-    list.getSelectionModel().setSelectionInterval(index, index);
-    ensureIndexIsVisible(list, index, 0);
+    table.getSelectionModel().setSelectionInterval(index, index);
+    ensureIndexIsVisible(table, index, 0);
   }
 
-  public static void movePageDown(JTable list) {
-    int visible = getVisibleRowCount(list);
+  public static void movePageDown(JTable table) {
+    int visible = getVisibleRowCount(table);
     if (visible <= 0) {
-      moveEnd(list);
+      moveEnd(table);
       return;
     }
-    ListSelectionModel selectionModel = list.getSelectionModel();
-    int size = list.getModel().getRowCount();
+    ListSelectionModel selectionModel = table.getSelectionModel();
+    int size = table.getModel().getRowCount();
     int increment = visible - 1;
     int index = Math.min(selectionModel.getMinSelectionIndex() + increment, size - 1);
-    int fisrtVisibleRow = getLeadingRow(list, list.getVisibleRect());
+    int fisrtVisibleRow = getLeadingRow(table, table.getVisibleRect());
     int top = fisrtVisibleRow + increment;
     int bottom = top + visible - 1;
     if (bottom >= size) {
       bottom = size - 1;
     }
-    Rectangle cellBounds = getCellBounds(list, top, bottom);
+    Rectangle cellBounds = getCellBounds(table, top, bottom);
     if (cellBounds == null) {
-      moveEnd(list);
+      moveEnd(table);
       return;
     }
-    list.scrollRectToVisible(cellBounds);
-    list.getSelectionModel().setSelectionInterval(index, index);
-    ensureIndexIsVisible(list, index, 0);
+    table.scrollRectToVisible(cellBounds);
+    table.getSelectionModel().setSelectionInterval(index, index);
+    ensureIndexIsVisible(table, index, 0);
   }
 
-  public static void installActions(final JTable list) {
-    installActions(list, UISettings.getInstance().CYCLE_SCROLLING);
+  public static void installActions(final JTable table) {
+    installActions(table, UISettings.getInstance().CYCLE_SCROLLING);
   }
 
-  public static void installActions(final JTable list, final boolean cycleScrolling) {
-    ActionMap actionMap = list.getActionMap();
+  public static void installActions(final JTable table, final boolean cycleScrolling) {
+    ActionMap actionMap = table.getActionMap();
     actionMap.put(ListScrollingUtil.SCROLLUP_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        movePageUp(list);
+        movePageUp(table);
       }
     });
     actionMap.put(ListScrollingUtil.SCROLLDOWN_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        movePageDown(list);
+        movePageDown(table);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_PREVIOUS_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveUp(list, e.getModifiers(), cycleScrolling);
+        moveUp(table, e.getModifiers(), cycleScrolling);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_NEXT_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveDown(list, e.getModifiers(), cycleScrolling);
+        moveDown(table, e.getModifiers(), cycleScrolling);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_LAST_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveEnd(list);
+        moveEnd(table);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_FIRST_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveHome(list);
+        moveHome(table);
       }
     });
 
-    ListScrollingUtil.maybeInstallDefaultShortcuts(list);
+    ListScrollingUtil.maybeInstallDefaultShortcuts(table);
 
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveHome(list);
+        moveHome(table);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), list);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), table);
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveEnd(list);
+        moveEnd(table);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), list);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
 
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveHome(list);
+        moveHome(table);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0)), list);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0)), table);
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveEnd(list);
+        moveEnd(table);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0)), list);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0)), table);
   }
 
 }
