@@ -29,6 +29,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
@@ -95,7 +96,9 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
   private static boolean isCharacterElement(PsiElement element) {
     final IElementType type = element.getNode().getElementType();
     if (type == XmlTokenType.XML_DATA_CHARACTERS) return true;
-    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) return true;
+    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      if (element.getParent().getParent() instanceof XmlAttribute) return true;
+    }
     if (type == XmlTokenType.XML_START_TAG_START) {
       if (element.getNextSibling() instanceof PsiErrorElement) return true;
       if (element.getParent() instanceof PsiErrorElement) return true;
