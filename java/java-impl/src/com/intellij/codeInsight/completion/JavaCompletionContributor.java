@@ -238,12 +238,18 @@ public class JavaCompletionContributor extends CompletionContributor {
       MethodReturnTypeProvider.addProbableReturnTypes(parameters, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
-          PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getPsiType();
-          PsiClass aClass = type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0 ? ((PsiClassType)type).resolve() : null;
-          if (aClass != null) {
-            inheritors.registerClass(aClass);
-          }
+          registerClassFromTypeElement(element, inheritors);
           result.addElement(element);
+        }
+      });
+    }
+
+    if (SmartCastProvider.shouldSuggestCast(parameters)) {
+      SmartCastProvider.addCastVariants(parameters, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          registerClassFromTypeElement(element, inheritors);
+          result.addElement(PrioritizedLookupElement.withPriority(element, 1));
         }
       });
     }
@@ -283,6 +289,15 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
     result.stopHere();
+  }
+
+  private void registerClassFromTypeElement(LookupElement element, InheritorsHolder inheritors) {
+    PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getPsiType();
+    PsiClass aClass =
+      type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0 ? ((PsiClassType)type).resolve() : null;
+    if (aClass != null) {
+      inheritors.registerClass(aClass);
+    }
   }
 
   private static void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, CompletionResultSet result) {

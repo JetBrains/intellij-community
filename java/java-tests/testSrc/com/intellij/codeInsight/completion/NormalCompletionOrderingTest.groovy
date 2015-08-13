@@ -696,4 +696,8 @@ interface TxANotAnno {}
     assert 'SomeInterface<String>' == LookupElementPresentation.renderElement(myFixture.lookupElements[3]).itemText
   }
 
+  public void testPreferCastTypesHavingSpecifiedMethod() {
+    checkPreferredItems 0, 'MainClass1', 'MainClass2', 'Maa'
+  }
+
 }

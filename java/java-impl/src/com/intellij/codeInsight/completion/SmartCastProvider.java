@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -17,6 +18,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +48,26 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
 
   @Override
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+    addCastVariants(parameters, result);
+  }
+
+  static void addCastVariants(@NotNull CompletionParameters parameters, @NotNull Consumer<LookupElement> result) {
     if (!shouldSuggestCast(parameters)) return;
-    
+
     PsiElement position = parameters.getPosition();
     PsiElement parenthesisOwner = getParenthesisOwner(position);
-    final boolean overwrite = parenthesisOwner instanceof PsiTypeCastExpression;
-    
+    final boolean insideCast = parenthesisOwner instanceof PsiTypeCastExpression;
+
+    if (insideCast) {
+      PsiElement parent = parenthesisOwner.getParent();
+      if (parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {
+        for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiParenthesizedExpression)parent, false)) {
+          result.consume(PsiTypeLookupItem.createLookupItem(info.getType(), parent));
+        }
+        return;
+      }
+    }
+
     for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
       PsiType type = info.getDefaultType();
       if (type instanceof PsiWildcardType) {
@@ -71,7 +87,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
           }
         }
       }
-      result.addElement(createSmartCastElement(parameters, overwrite, type));
+      result.consume(createSmartCastElement(parameters, insideCast, type));
     }
   }
 
@@ -120,7 +136,9 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
           context.setTailOffset(TailType.insertChar(editor, context.getTailOffset(), ' '));
         }
 
-        editor.getCaretModel().moveToOffset(context.getTailOffset());
+        if (parameters.getCompletionType() == CompletionType.SMART) {
+          editor.getCaretModel().moveToOffset(context.getTailOffset());
+        }
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
