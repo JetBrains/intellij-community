@@ -24,7 +24,10 @@ import com.intellij.usageView.UsageTreeColorsScheme
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.*
+import com.intellij.util.ui.EdtInvocationManager
+import com.jetbrains.reactiveidea.progress.ProgressIndicatorHost
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -64,6 +67,13 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
       reaction(false, "tree reaction", usageView.usagesSignal) { usages ->
         reactiveModel.transaction { model ->
           model.putIn(path / tree, MapModel(hashMapOf("0" to convertTree(usageView.root), tagsField to tagsModel("tree"))))
+        }
+      }
+      reaction(true, "progress reaction", usageView.progressSignal) { progress ->
+        if (progress != null) {
+          reactiveModel.host(path / "progress") { path, lifetime, init ->
+            ProgressIndicatorHost(reactiveModel, path, lifetime, progress, init)
+          }
         }
       }
       m.putIn(path / presentation, convertPresentation(usageView.getPresentation()))

@@ -20,25 +20,27 @@ import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Factory
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.SmartPointerManager
-import com.intellij.usageView.UsageViewManager
 import com.intellij.usages.*
-import com.intellij.usages.impl.GroupNode
-import com.intellij.usages.impl.UsageNodeTreeBuilder
-import com.intellij.usages.impl.UsageViewImpl
-import com.intellij.usages.impl.UsageViewTreeModelBuilder
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
 import com.intellij.util.containers.TransferToEDTQueue
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.reactiveidea.progress.ReactiveStateProgressIndicator
+import com.jetbrains.reactivemodel.AtomSignal
 import com.jetbrains.reactivemodel.VariableSignal
 import com.jetbrains.reactivemodel.util.Lifetime
 import gnu.trove.THashSet
-import java.util.*
+import java.util.ArrayList
+import java.util.Collections
+import java.util.HashSet
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.tree.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreePath
 
 public fun DefaultMutableTreeNode.text(view: UsageView): String = (if (this is Node) getText(view) else getUserObject().toString()) ?: ""
 
@@ -52,10 +54,7 @@ public class ServerUsageView(val project: Project,
   }
 
   override fun cancelCurrentSearch() {
-    val progress = associatedProgress
-    if (progress != null) {
-      ProgressWrapper.unwrap(progress).cancel()
-    }
+    ProgressWrapper.unwrap(associatedProgress)?.cancel()
   }
 
   companion object {
@@ -82,10 +81,11 @@ public class ServerUsageView(val project: Project,
     }
   }, 200)
   private val usageNodes = ConcurrentHashMap<Usage, UsageNode>()
-  private volatile var associatedProgress: ProgressIndicator? = null
-
   val lifetime = Lifetime.create(Lifetime.Eternal)
   val usagesSignal = VariableSignal<Set<Usage>>(lifetime, "usages", HashSet())
+
+  val progressSignal: AtomSignal<ReactiveStateProgressIndicator?> = AtomSignal(lifetime, null);
+  private volatile var associatedProgress: ProgressIndicator? = null
 
   override fun appendUsage(usage: Usage) {
     if (!usage.isValid()) {
@@ -108,6 +108,14 @@ public class ServerUsageView(val project: Project,
   }
 
   override fun associateProgress(indicator: ProgressIndicator) {
+    indicator as ProgressIndicatorEx
+    val reactiveIndicator = ReactiveStateProgressIndicator(lifetime.lifetime)
+    progressSignal.value = reactiveIndicator
+    reactiveIndicator.start()
+    indicator.addStateDelegate(reactiveIndicator)
+    reactiveIndicator.lifetime += {
+      indicator.removeStateDelegate(reactiveIndicator)
+    }
     associatedProgress = indicator
   }
 

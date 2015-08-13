@@ -438,6 +438,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
 
     @Override
+    public void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+      throw new RuntimeException();
+    }
+
+    @Override
     public boolean isModalityEntered() {
       throw new RuntimeException();
     }

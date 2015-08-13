@@ -1,12 +1,14 @@
 package com.jetbrains.reactivemodel
 
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.log
 import com.jetbrains.reactivemodel.log.catch
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.LifetimeDefinition
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 public interface Signal<out T> {
   val lifetime: Lifetime
@@ -30,6 +32,31 @@ public class VariableSignal<T>(val lifetimeDefinition: LifetimeDefinition, val n
     }
 
   override fun toString(): String = name
+}
+
+/**
+ * Thread safe signal based on atomic references
+ */
+public class AtomSignal<T>(val lifetimeDefinition: LifetimeDefinition, initial: T) : MutableSignal<T> {
+  override val lifetime: Lifetime
+    get() = lifetimeDefinition.lifetime
+
+  private val ref = AtomicReference(initial)
+
+  override var value: T
+    get() = ref.get()
+    set(newValue) {
+      var oldValue: T
+      do {
+        oldValue = ref.get()
+      } while (!ref.compareAndSet(oldValue, newValue));
+
+      // Changes may be reordered, 2->3 my be scheduled early then 1->2
+      // If we need more robust solution we should use something blocking
+      UIUtil.invokeLaterIfNeeded {
+        ReactGraph.scheduleUpdate(Change(this, oldValue, newValue))
+      }
+    }
 }
 
 public class Change<out T>(val s: Signal<T>, val oldValue: T, val newValue: T)
@@ -163,12 +190,12 @@ fun <T1, T2, T3, T4, T> reaction(immediate: Boolean = false, name: String, s1: S
       { handler(it[0] as T1, it[1] as T2, it[2] as T3, it[3] as T4) })
 }
 
-fun <V, T> reaction(immediate: Boolean = false, name: String, s1: List<Signal<V>> , handler: (List<V>) -> T) : VariableSignal<T> {
-    return ReactGraph.register(VariableSignal<T>(Lifetime.create(Lifetime.Eternal),
-        name,
-        if (immediate) handler(s1.map { it.value }) else null as T),
-        s1,
-        { handler(it as List<V>) })
+fun <V, T> reaction(immediate: Boolean = false, name: String, s1: List<Signal<V>>, handler: (List<V>) -> T): VariableSignal<T> {
+  return ReactGraph.register(VariableSignal<T>(Lifetime.create(Lifetime.Eternal),
+      name,
+      if (immediate) handler(s1.map { it.value }) else null as T),
+      s1,
+      { handler(it as List<V>) })
 }
 
 
