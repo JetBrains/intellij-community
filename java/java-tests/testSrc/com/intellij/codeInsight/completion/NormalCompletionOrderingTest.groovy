@@ -691,4 +691,9 @@ interface TxANotAnno {}
     assert LookupElementPresentation.renderElement(items.find { it.lookupString == 'BAR' }).itemTextForeground == JBColor.RED
   }
 
+  public void testPreferValueTypesReturnedFromMethod() {
+    checkPreferredItems 0, 'StringBuffer', 'String', 'Serializable', 'SomeInterface', 'SomeOtherClass'
+    assert 'SomeInterface<String>' == LookupElementPresentation.renderElement(myFixture.lookupElements[3]).itemText
+  }
+
 }

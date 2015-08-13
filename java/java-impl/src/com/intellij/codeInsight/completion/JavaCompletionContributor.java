@@ -61,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author peter
@@ -231,6 +232,20 @@ public class JavaCompletionContributor extends CompletionContributor {
     PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
+    }
+
+    if (MethodReturnTypeProvider.IN_METHOD_RETURN_TYPE.accepts(position)) {
+      MethodReturnTypeProvider.addProbableReturnTypes(parameters, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getPsiType();
+          PsiClass aClass = type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0 ? ((PsiClassType)type).resolve() : null;
+          if (aClass != null) {
+            inheritors.registerClass(aClass);
+          }
+          result.addElement(element);
+        }
+      });
     }
 
     PsiElement parent = position.getParent();
