@@ -688,10 +688,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
         final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null && !(ref instanceof PsiReferenceExpression)) {
-          if (ref.getParent() instanceof PsiTypeElement) {
-            context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
-          }
-
           if (JavaSmartCompletionContributor.AFTER_NEW.accepts(ref)) {
             final PsiReferenceParameterList paramList = ref.getParameterList();
             if (paramList != null && paramList.getTextLength() > 0) {
@@ -755,7 +751,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
     if (iterator.atEnd()) return false;
 
-    return iterator.getTokenType() == JavaTokenType.EQ || iterator.getTokenType() == JavaTokenType.LPARENTH;
+    return iterator.getTokenType() == JavaTokenType.EQ; // <caret> foo = something, we don't want the reference to be treated as a type
   }
 
   private static void autoImport(@NotNull final PsiFile file, int offset, @NotNull final Editor editor) {

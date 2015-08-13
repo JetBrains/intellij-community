@@ -293,7 +293,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferModifiers() {
-    checkPreferredItems(0, "private", "protected", "public", "paaa", "paab");
+    checkPreferredItems(0, "private", "protected", "public");
   }
 
   public void testPreferEnumConstants() {
