@@ -21,6 +21,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.LambdaMethodFilter;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -64,6 +65,8 @@ class LocalVariableEvaluator implements Evaluator {
       ThreadReferenceProxyImpl threadProxy = null;
       int lastFrameIndex = -1;
 
+      boolean anotherFrame = false;
+
       while (true) {
         try {
           LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
@@ -77,25 +80,30 @@ class LocalVariableEvaluator implements Evaluator {
           if (!(e.getCause() instanceof AbsentInformationException)) {
             throw e;
           }
-          if (myParameterIndex < 0) {
-            throw e;
+          if (!anotherFrame) {
+            if (myParameterIndex < 0) {
+              throw e;
+            }
+            final List<Value> values = frameProxy.getArgumentValues();
+            if (values.isEmpty() || myParameterIndex >= values.size()) {
+              throw e;
+            }
+            return values.get(myParameterIndex);
           }
-          final List<Value> values = frameProxy.getArgumentValues();
-          if (values.isEmpty() || myParameterIndex >= values.size()) {
-            throw e;
-          }
-          return values.get(myParameterIndex);
         }
 
-        if (myIsJspSpecial) {
+        if (anotherFrame || needToSwitchFrames(frameProxy)) {
           if (threadProxy == null /* initialize it lazily */) {
             threadProxy = frameProxy.threadProxy();
             lastFrameIndex = threadProxy.frameCount() - 1;
           }
-          final int currentFrameIndex = frameProxy.getFrameIndex();
+          int currentFrameIndex = frameProxy.getFrameIndex();
           if (currentFrameIndex < lastFrameIndex) {
             frameProxy = threadProxy.frame(currentFrameIndex + 1);
-            continue;
+            if (frameProxy != null) {
+              anotherFrame = true;
+              continue;
+            }
           }
         }
 
@@ -108,6 +116,17 @@ class LocalVariableEvaluator implements Evaluator {
       myContext = null;
       throw e;
     }
+  }
+
+  private boolean needToSwitchFrames(StackFrameProxyImpl frameProxy) {
+    if (myIsJspSpecial) return true;
+    try {
+      Location location = frameProxy.location();
+      if (location == null) return false;
+      return LambdaMethodFilter.isLambdaName(location.method().name());
+    }
+    catch (EvaluateException ignored) {}
+    return false;
   }
 
   @Override

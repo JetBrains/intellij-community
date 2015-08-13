@@ -16,25 +16,18 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.ui.UiUtils;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,56 +38,12 @@ import java.util.List;
 public class CollectionAddAllCanBeReplacedWithConstructorInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(CollectionAddAllCanBeReplacedWithConstructorInspection.class);
 
-  private final List<String> myCollectionClassesToCheck = resetDefault(new ArrayList<String>());
-
-  @Override
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
-    resetDefault(myCollectionClassesToCheck);
-    for (Element element : node.getChildren()) {
-      final String classFQN = element.getAttributeValue("name");
-      if (element.getAttribute("delete") == null) {
-        myCollectionClassesToCheck.add(classFQN);
-      }
-      else {
-        myCollectionClassesToCheck.remove(classFQN);
-      }
-    }
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    List<String> defaultClasses = resetDefault(new ArrayList<String>());
-    for (String aClass : myCollectionClassesToCheck) {
-      defaultClasses.remove(aClass);
-    }
-    for (String aClass : defaultClasses) {
-      node.addContent(new Element("cls").setAttribute("name", aClass).setAttribute("delete", "true"));
-    }
-    defaultClasses = resetDefault(new ArrayList<String>());
-    for (String aClass : myCollectionClassesToCheck) {
-      if (!defaultClasses.contains(aClass)) {
-        node.addContent(new Element("cls").setAttribute("name", aClass));
-      }
-    }
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final String title = QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.title");
-    final ListTable table = new ListTable(new ListWrappingTableModel(myCollectionClassesToCheck, title));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, title, CommonClassNames.JAVA_UTIL_COLLECTION);
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (myCollectionClassesToCheck.isEmpty()) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    return new JavaRecursiveElementWalkingVisitor() {
+    return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         final String methodName = expression.getMethodExpression().getReferenceName();
@@ -147,7 +96,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     };
   }
 
-  private boolean checkLocalVariableAssignmentOrInitializer(PsiExpression initializer) {
+  private static boolean checkLocalVariableAssignmentOrInitializer(PsiExpression initializer) {
     if (!(initializer instanceof PsiNewExpression)) {
       return false;
     }
@@ -157,14 +106,31 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       return false;
     }
     final PsiClass initializerClass = (PsiClass)classReference.resolve();
-    if (initializerClass == null || !myCollectionClassesToCheck.contains(initializerClass.getQualifiedName())) {
+    if (initializerClass == null || !hasProperConstructor(initializerClass)) {
       return false;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     return argumentList != null && argumentList.getExpressions().length == 0;
   }
 
-  private Pair<Boolean, PsiNewExpression> isProperAssignmentStatementFound(PsiLocalVariable localVariable, PsiMethodCallExpression addAllExpression) {
+  private static boolean hasProperConstructor(PsiClass psiClass) {
+    for (PsiMethod psiMethod : psiClass.getConstructors()) {
+      PsiParameterList parameterList = psiMethod.getParameterList();
+      if(parameterList.getParametersCount() == 1) {
+        PsiParameter parameter = parameterList.getParameters()[0];
+        PsiTypeElement typeElement = parameter.getTypeElement();
+        if (typeElement != null) {
+          PsiType type = typeElement.getType();
+          if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static Pair<Boolean, PsiNewExpression> isProperAssignmentStatementFound(PsiLocalVariable localVariable, PsiMethodCallExpression addAllExpression) {
     PsiStatement currentStatement = PsiTreeUtil.getParentOfType(addAllExpression, PsiStatement.class);
     final PsiStatement localVariableDefinitionStatement = PsiTreeUtil.getParentOfType(localVariable, PsiStatement.class);
     while (currentStatement != null) {
@@ -219,15 +185,6 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       constructorArguments.add(parameter);
       methodCallExpression.delete();
     }
-  }
-
-  private static List<String> resetDefault(final List<String> classes) {
-    classes.clear();
-    classes.add(CommonClassNames.JAVA_UTIL_ARRAY_LIST);
-    classes.add(CommonClassNames.JAVA_UTIL_HASH_SET);
-    classes.add("java.util.Vector");
-    classes.add("java.util.concurrent.CopyOnWriteArrayList");
-    return classes;
   }
 
   private static List<PsiElement> extractReferencedElementsFromParameter(PsiMethodCallExpression expression) {

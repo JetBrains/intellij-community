@@ -95,7 +95,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         }
         result.addElement(element);
       }
-    }, new InheritorsHolder(parameters.getPosition(), result), result.getPrefixMatcher());
+    }, new InheritorsHolder(result), result.getPrefixMatcher());
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {
@@ -116,7 +116,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     String fullPrefix = position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
     final CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
-    InheritorsHolder inheritors = new InheritorsHolder(position, result);
+    InheritorsHolder inheritors = new InheritorsHolder(result);
     for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement)qualifier, inheritors)) {
       final PsiType type = JavaCompletionUtil.getLookupElementType(base);
       if (type != null && !PsiType.VOID.equals(type)) {

@@ -100,6 +100,10 @@ public class TextAttributes implements Cloneable {
     return isEmpty() && !myEnforcedDefaults;
   }
 
+  public boolean containsValue() {
+    return !isEmpty() || myEnforcedDefaults;
+  }
+
   public void reset() {
     setForegroundColor(null);
     setBackgroundColor(null);
