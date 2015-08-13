@@ -188,8 +188,8 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
       set2.set(fragment.getStartLine2(), fragment.getEndLine2());
     }
 
-    assertEquals(policy.name(), set1, matchings.first);
-    assertEquals(policy.name(), set2, matchings.second);
+    assertEquals(policy.name(), matchings.first, set1);
+    assertEquals(policy.name(), matchings.second, set2);
   }
 
   private static void checkDiffMatching(@NotNull List<? extends DiffFragment> fragments,
@@ -204,8 +204,8 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
       set2.set(fragment.getStartOffset2(), fragment.getEndOffset2());
     }
 
-    assertEquals(policy.name(), set1, matchings.first);
-    assertEquals(policy.name(), set2, matchings.second);
+    assertEquals(policy.name(), matchings.first, set1);
+    assertEquals(policy.name(), matchings.second, set2);
   }
 
   @NotNull
