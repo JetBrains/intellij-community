@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.codeInsight.completion;
-
-
+package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
@@ -24,11 +22,12 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.ui.JBColor
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
@@ -679,6 +678,17 @@ interface TxANotAnno {}
 
   public void testPreferLocalToExpectedTypedMethod() {
     checkPreferredItems 0, 'event', 'equals'
+  }
+
+  public void testDispreferJustUsedEnumConstantsInSwitch() {
+    checkPreferredItems 0, 'BAR', 'FOO', 'GOO'
+    myFixture.type('\nbreak;\ncase ')
+
+    def items = myFixture.completeBasic()
+    assertPreferredItems 0, 'FOO', 'GOO', 'BAR'
+
+    assert LookupElementPresentation.renderElement(items[0]).itemTextForeground == JBColor.foreground()
+    assert LookupElementPresentation.renderElement(items.find { it.lookupString == 'BAR' }).itemTextForeground == JBColor.RED
   }
 
 }

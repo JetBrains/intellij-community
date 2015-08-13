@@ -59,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JavaCompletionUtil {
@@ -498,15 +499,14 @@ public class JavaCompletionUtil {
                                                 @NotNull LookupElement item,
                                                 @NotNull Object object,
                                                 @NotNull PsiElement place) {
-    if (object instanceof PsiMember &&
-        Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) {
-      return LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+    if (shouldMarkRed(object, place)) {
+      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
           element.getDelegate().renderElement(presentation);
           presentation.setItemTextForeground(JBColor.RED);
         }
-      });
+      }), -1);
     }
     if (containsMember(qualifierType, object)) {
       LookupElementRenderer<LookupElementDecorator<LookupElement>> boldRenderer =
@@ -520,6 +520,16 @@ public class JavaCompletionUtil {
       return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, boldRenderer), 1);
     }
     return item;
+  }
+
+  private static boolean shouldMarkRed(@NotNull Object object, @NotNull PsiElement place) {
+    if (!(object instanceof PsiMember)) return false;
+    if (Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) return true;
+
+    if (object instanceof PsiEnumConstant) {
+      return findConstantsUsedInSwitch(place).contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
+    }
+    return false;
   }
 
   public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
