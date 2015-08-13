@@ -46,6 +46,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.TimedReference;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
@@ -63,7 +64,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   public static final String NAME_FILE = ".name";
-  public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+  public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+  public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
 
   private ProjectManager myProjectManager;
   private MyProjectManagerListener myProjectManagerListener;
@@ -80,6 +82,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
     putUserData(CREATION_TIME, System.nanoTime());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
+    }
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
