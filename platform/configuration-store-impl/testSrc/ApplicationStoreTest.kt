@@ -19,15 +19,12 @@ import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.VfsTestUtil
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.*
+import com.intellij.util.SmartList
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.hamcrest.CoreMatchers.equalTo
@@ -49,6 +46,9 @@ class ApplicationStoreTest {
   private val tempDirManager = TemporaryDirectory()
   public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
 
+  private val edtRule = EdtRule()
+  public Rule fun _edtRule(): EdtRule = edtRule
+
   private var testAppConfig: VirtualFile by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
@@ -65,7 +65,7 @@ class ApplicationStoreTest {
 
     componentStore.initComponent(component, false)
     component.foo = "newValue"
-    StoreUtil.save(componentStore, null)
+    componentStore.save(SmartList())
 
     assertThat<String>(streamProvider.data.get(RoamingType.PER_USER)!!.get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>"))
   }
@@ -83,32 +83,28 @@ class ApplicationStoreTest {
     assertThat(component.foo, equalTo("newValue"))
   }
 
-  public Test fun `remove deprecated storage on write`() {
+  public @Test @RunsInEdt fun `remove deprecated storage on write`() {
     doRemoveDeprecatedStorageOnWrite(SeveralStoragesConfigured())
   }
 
-  public Test fun `remove deprecated storage on write 2`() {
+  public @Test @RunsInEdt fun `remove deprecated storage on write 2`() {
     doRemoveDeprecatedStorageOnWrite(ActualStorageLast())
   }
 
   private fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
-    val oldFile = saveConfig("other.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"old\" /></component></application>")
-    saveConfig("proxy.settings.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"new\" /></component></application>")
+    val oldFile = writeConfig("other.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"old\" /></component></application>")
+    writeConfig("proxy.settings.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"new\" /></component></application>")
 
     componentStore.initComponent(component, false)
     assertThat(component.foo, equalTo("new"))
 
     component.foo = "new2"
-    runInEdtAndWait { StoreUtil.save(componentStore, null) }
+    componentStore.save(SmartList())
 
     assertThat(oldFile.exists(), equalTo(false))
   }
 
-  private fun saveConfig(fileName: String, Language("XML") data: String): VirtualFile {
-    var result: VirtualFile? = null
-    runInEdtAndWait { runWriteAction { result = VfsTestUtil.createFile(testAppConfig, fileName, data) } }
-    return result!!
-  }
+  private fun writeConfig(fileName: String, Language("XML") data: String) = runWriteAction { testAppConfig.writeChild(fileName, data) }
 
   private class MyStreamProvider : StreamProvider {
     public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
@@ -181,3 +177,8 @@ class ApplicationStoreTest {
     }
   }
 }
+
+fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)
+
+val VirtualFile.path: String
+  get() = getPath()

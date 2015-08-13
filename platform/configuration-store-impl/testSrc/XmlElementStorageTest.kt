@@ -24,7 +24,7 @@ import org.junit.Test
 class XmlElementStorageTest {
   public Test fun testGetStateSucceeded() {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
-    val state = storage.getState(this, "test", javaClass<Element>(), null)
+    val state = storage.getState(this, "test", javaClass<Element>())
     TestCase.assertNotNull(state)
     TestCase.assertEquals("component", state.getName())
     TestCase.assertNotNull(state.getChild("foo"))
@@ -32,7 +32,7 @@ class XmlElementStorageTest {
 
   public Test fun testGetStateNotSucceeded() {
     val storage = MyXmlElementStorage(tag("root"))
-    val state = storage.getState(this, "test", javaClass<Element>(), null)
+    val state = storage.getState(this, "test", javaClass<Element>())
     TestCase.assertNull(state)
   }
 

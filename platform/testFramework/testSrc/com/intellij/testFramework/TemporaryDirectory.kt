@@ -54,7 +54,7 @@ public class TemporaryDirectory : ExternalResource() {
       // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
       val virtualFile = fs.findFileByIoFile(file)
       if (virtualFile != null) {
-        VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
+        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
       }
     }
     return file
@@ -88,7 +88,7 @@ public class TemporaryDirectory : ExternalResource() {
     }
 
     val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
-    VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
+    VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     return virtualFile!!
   }
 }

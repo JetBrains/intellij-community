@@ -32,8 +32,13 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
 
   @Override
   @Nullable
-  public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
-    return deserializeState(getStateAndArchive(getStorageData(), component, componentName), stateClass, mergeInto);
+  public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto, boolean reload) {
+    return deserializeState(getStateAndArchive(getStorageData(reload), component, componentName), stateClass, mergeInto);
+  }
+
+  @Override
+  public final <S> S getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<S> stateClass) {
+    return getState(component, componentName, stateClass, null, false);
   }
 
   @Nullable
