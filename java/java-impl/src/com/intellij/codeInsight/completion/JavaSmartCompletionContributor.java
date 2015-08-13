@@ -129,7 +129,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
 
   public JavaSmartCompletionContributor() {
-    extend(CompletionType.SMART, SmartCastProvider.INSIDE_TYPECAST_TYPE, new SmartCastProvider());
+    extend(CompletionType.SMART, SmartCastProvider.TYPECAST_TYPE_CANDIDATE, new SmartCastProvider());
 
     extend(CompletionType.SMART, SameSignatureCallParametersProvider.IN_CALL_ARGUMENT, new SameSignatureCallParametersProvider());
     
@@ -172,6 +172,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        if (SmartCastProvider.shouldSuggestCast(parameters)) return;
+        
         final PsiElement element = parameters.getPosition();
         final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
         if (reference != null) {
@@ -215,6 +217,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider() {
       @Override
       protected void addCompletions(final CompletionParameters params, final CompletionResultSet result, final Collection<ExpectedTypeInfo> _infos) {
+        if (SmartCastProvider.shouldSuggestCast(params)) return;
+
         Consumer<LookupElement> noTypeCheck = decorateWithoutTypeCheck(result, _infos);
 
         THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
@@ -525,16 +529,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     }
 
     PsiElement lastElement = context.getFile().findElementAt(context.getStartOffset() - 1);
-    if (lastElement != null && lastElement.getText().equals("(")) {
-      final PsiElement parent = lastElement.getParent();
-      if (parent instanceof PsiTypeCastExpression) {
-        context.setDummyIdentifier("");
-        return;
-      }
-      if (parent instanceof PsiParenthesizedExpression) {
-        context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + ")" + CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + " "); // to handle type cast
-        return;
-      }
+    if (lastElement != null && lastElement.getText().equals("(") && lastElement.getParent() instanceof PsiParenthesizedExpression) {
+      // don't trim dummy identifier or we won't be able to determine the type of the expression after '(' 
+      // which is needed to insert correct cast
+      return;
     }
     context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
