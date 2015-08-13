@@ -24,7 +24,7 @@ import java.io.File
 
 @RunsInEdt class ModuleStoreTest {
   companion object {
-     ClassRule val projectRule: ProjectRule = ProjectRule()
+     ClassRule val projectRule = ProjectRule()
 
     val MODULE_DIR = "\$MODULE_DIR$"
 

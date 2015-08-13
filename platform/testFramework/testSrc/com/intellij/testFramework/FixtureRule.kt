@@ -26,7 +26,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -67,7 +66,7 @@ public class ProjectRule() : ExternalResource() {
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = File("${FileUtilRt.generateRandomTemporaryPath().path}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
+      val projectFile = File("${generateTemporaryPath("shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").path}")
 
       val buffer = ByteArrayOutputStream()
       java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
