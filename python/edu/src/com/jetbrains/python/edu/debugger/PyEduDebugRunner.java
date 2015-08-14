@@ -40,7 +40,6 @@ import java.io.File;
 import java.net.ServerSocket;
 
 public class PyEduDebugRunner extends PyDebugRunner {
-  public static final String OUTPUT = "Output";
   private static final Logger LOG = Logger.getInstance(PyEduDebugRunner.class);
   public static final int NO_LINE = -1;
 
@@ -138,7 +137,9 @@ public class PyEduDebugRunner extends PyDebugRunner {
     view.enableConsole(false);
 
     Content eduConsole =
-      ui.createContent(OUTPUT, view.getComponent(), OUTPUT, AllIcons.Debugger.ToolConsole, view.getPreferredFocusableComponent());
+      ui.createContent("EduConsole", view.getComponent(),
+                       XDebuggerBundle.message("debugger.session.tab.console.content.name"),
+                       AllIcons.Debugger.ToolConsole, view.getPreferredFocusableComponent());
     eduConsole.setCloseable(false);
     ui.addContent(eduConsole, 0, PlaceInGrid.right, false);
 
