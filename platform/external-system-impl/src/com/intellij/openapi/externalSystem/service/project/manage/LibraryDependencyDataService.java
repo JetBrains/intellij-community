@@ -188,10 +188,10 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                                       @NotNull Library lib,
                                       @NotNull Module module,
                                       @NotNull LibraryDependencyData dependencyData) {
-    LOG.info(String.format("Adding library dependency '%s' to module '%s'", lib.getName(), module.getName()));
+    LOG.debug(String.format("Adding library dependency '%s' to module '%s'", lib.getName(), module.getName()));
     orderEntry.setExported(dependencyData.isExported());
     orderEntry.setScope(dependencyData.getScope());
-    LOG.info(String.format(
+    LOG.debug(String.format(
       "Configuring library dependency '%s' of module '%s' to be%s exported and have scope %s",
       lib.getName(), module.getName(), dependencyData.isExported() ? " not" : "", dependencyData.getScope()
     ));
