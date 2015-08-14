@@ -445,9 +445,15 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         oldViewProvider.performNonPhysically(new Runnable() {
           @Override
           public void run() {
-            final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
-                                                                oldFileNode.getText());
-            DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
+            DebugUtil.startPsiModification("injected tree diff");
+            try {
+              final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+                                                                  oldFileNode.getText());
+              DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
+            }
+            finally {
+              DebugUtil.finishPsiModification();
+            }
           }
         });
         assert shreds.isValid();
