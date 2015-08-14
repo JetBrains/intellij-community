@@ -23,11 +23,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
+import com.intellij.ui.picker.MacColorPipette;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -159,13 +161,26 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   @Nullable
-  private DefaultColorPipette createPipette(@NotNull ColorListener colorListener, @NotNull Disposable parentDisposable) {
-    DefaultColorPipette defaultPipette = new DefaultColorPipette(this, colorListener);
-    Disposer.register(parentDisposable, defaultPipette);
-    if (defaultPipette.isAvailable()) {
-      return defaultPipette;
+  private ColorPipette createPipette(@NotNull ColorListener colorListener, @NotNull Disposable parentDisposable) {
+    if (SystemInfo.isMac && Registry.is("ide.mac.new.color.picker")) {
+      ColorPipette pipette = getPipetteIfAvailable(new MacColorPipette(this, colorListener), parentDisposable);
+      if (pipette != null) {
+        return pipette;
+      }
     }
-    return null;
+    return getPipetteIfAvailable(new DefaultColorPipette(this, colorListener), parentDisposable);
+  }
+
+  @Nullable
+  private static ColorPipette getPipetteIfAvailable(@NotNull ColorPipette pipette, @NotNull Disposable parentDisposable) {
+    if (pipette.isAvailable()) {
+      Disposer.register(parentDisposable, pipette);
+      return pipette;
+    }
+    else {
+      Disposer.dispose(pipette);
+      return null;
+    }
   }
 
   private boolean isRGBMode() {
@@ -369,7 +384,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       pipette.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          myPicker.setColor(getColor());
+          myPicker.setInitialColor(getColor());
           myPicker.show();
         }
       });
@@ -1030,34 +1045,22 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   private static class DefaultColorPipette extends ColorPipetteBase {
     private static final int SIZE = 32;
-    
-    private final JComponent myParent;
-    private final Robot myRobot;
-    private final ColorListener myColorListener;
-    private final Timer myTimer;
+    private static final Point HOT_SPOT = new Point(SIZE / 2, SIZE / 2);
     
     @SuppressWarnings("UseJBColor")
     private final Color myTransparentColor = new Color(0, true);
     private final Rectangle myCaptureRect = new Rectangle(-4, -4, 8, 8);
     private final Rectangle myZoomRect = new Rectangle(0, 0, SIZE, SIZE);
-    private final Point myHotSpot = new Point(SIZE / 2, SIZE / 2);
     private final Point myPreviousLocation = new Point();
     
-    private final Alarm myColorListenersNotifier = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-    
-    private Color myOldColor;
-    private Color myPreviousColor;
-    
-    private Dialog myPickerFrame;
     private Graphics2D myGraphics;
     private BufferedImage myImage;
     private BufferedImage myPipetteImage;
     private BufferedImage myMaskImage;
+    private final Timer myTimer;
 
     private DefaultColorPipette(@NotNull JComponent parent, @NotNull ColorListener colorListener) {
-      myParent = parent;
-      myRobot = createRobot();
-      myColorListener = colorListener;
+      super(parent, colorListener);
       myTimer = new Timer(5, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -1067,37 +1070,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     @Override
-    public void setColor(@Nullable Color color) {
-      myOldColor = color;
-      myPreviousColor = color;
-    }
-
-    @Nullable
-    @Override
-    public Color getColor() {
-      return myPreviousColor;
-    }
-
-    @Override
-    public void show() {
-      Dialog picker = getPicker();
-      updateLocation();
-      picker.setVisible(true);
+    public Dialog show() {
+      Dialog picker = super.show();
       myTimer.start();
       // it seems like it's the lowest value for opacity for mouse events to be processed correctly
       WindowManager.getInstance().setAlphaModeRatio(picker, SystemInfo.isMac ? 0.95f : 0.99f);
-    }
-
-    @Override
-    public void close() {
-      PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-      Point location = pointerInfo.getLocation();
-      Color pixelColor = myRobot.getPixelColor(location.x, location.y);
-      cancelPipette();
-      if (myColorListener != null) {
-        myColorListener.colorChanged(pixelColor, this);
-        myOldColor = pixelColor;
-      }
+      return picker;
     }
 
     @Override
@@ -1109,59 +1087,32 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       return false;
     }
 
+    @NotNull
     @SuppressWarnings("UseJBColor")
-    private Dialog getPicker() {
-      if (myPickerFrame == null) {
-        Window owner = SwingUtilities.getWindowAncestor(myParent);
-        if (owner instanceof Dialog) {
-          myPickerFrame = new JDialog((Dialog)owner);
-        }
-        else if (owner instanceof Frame) {
-          myPickerFrame = new JDialog((Frame)owner);
-        }
-        else {
-          myPickerFrame = new JDialog(new JFrame());
-        }
-
-        myPickerFrame.addMouseListener(new MouseAdapter() {
+    protected Dialog getOrCreatePickerDialog() {
+      Dialog pickerDialog = getPickerDialog();
+      if (pickerDialog == null) {
+        pickerDialog = super.getOrCreatePickerDialog();
+        pickerDialog.addMouseListener(new MouseAdapter() {
           @Override
-          public void mousePressed(MouseEvent e) {
-            e.consume();
-            close();
-          }
-
-          @Override
-          public void mouseClicked(MouseEvent e) {
-            e.consume();
-          }
-
-          @Override
-          public void mouseExited(MouseEvent e) {
+          public void mouseExited(MouseEvent event) {
             updatePipette();
           }
         });
-
-        myPickerFrame.addMouseMotionListener(new MouseAdapter() {
+        pickerDialog.addMouseMotionListener(new MouseAdapter() {
           @Override
           public void mouseMoved(MouseEvent e) {
             updatePipette();
           }
         });
-
-        myPickerFrame.addFocusListener(new FocusAdapter() {
+        pickerDialog.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
             cancelPipette();
           }
         });
 
-        myPickerFrame.setSize(SIZE - 4, SIZE - 4);
-        myPickerFrame.setUndecorated(true);
-        myPickerFrame.setAlwaysOnTop(!SystemInfo.isJavaVersionAtLeast("1.8.0"));
-
-        JRootPane rootPane = ((JDialog)myPickerFrame).getRootPane();
-        rootPane.putClientProperty("Window.shadow", Boolean.FALSE);
-
+        pickerDialog.setSize(SIZE - 4, SIZE - 4);
         myMaskImage = UIUtil.createImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D maskG = myMaskImage.createGraphics();
         maskG.setColor(Color.BLUE);
@@ -1182,30 +1133,20 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myGraphics = (Graphics2D)myImage.getGraphics();
         myGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-
-        myPickerFrame.addKeyListener(new KeyAdapter() {
-          public void keyPressed(KeyEvent e) {
-            switch (e.getKeyCode()) {
-              case KeyEvent.VK_ESCAPE:
-                cancelPipette();
-                break;
-              case KeyEvent.VK_ENTER:
-                close();
-                break;
-            }
-          }
-        });
+        pickerDialog.setBackground(myTransparentColor);
       }
 
-      return myPickerFrame;
+      return pickerDialog;
     }
-
+    
     private void updatePipette() {
-      if (myPickerFrame != null && myPickerFrame.isShowing()) {
+      Dialog pickerDialog = getPickerDialog();
+      if (pickerDialog != null && pickerDialog.isShowing()) {
         Point mouseLoc = updateLocation();
+        if (mouseLoc == null) return;
         final Color c = myRobot.getPixelColor(mouseLoc.x, mouseLoc.y);
-        if (!c.equals(myPreviousColor) || !mouseLoc.equals(myPreviousLocation)) {
-          myPreviousColor = c;
+        if (!c.equals(getColor()) || !mouseLoc.equals(myPreviousLocation)) {
+          setColor(c);
           myPreviousLocation.setLocation(mouseLoc);
           myCaptureRect.setLocation(mouseLoc.x - 2, mouseLoc.y - 2);
           myCaptureRect.setBounds(mouseLoc.x - 2, mouseLoc.y - 2, 5, 5);
@@ -1228,56 +1169,25 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
           UIUtil.drawImage(myGraphics, myPipetteImage, SIZE - AllIcons.Ide.Pipette.getIconWidth(), 0, this);
 
-          myPickerFrame.setCursor(myParent.getToolkit().createCustomCursor(myImage, myHotSpot, "ColorPicker"));
-          if (myColorListener != null && !myColorListenersNotifier.isDisposed()) {
-            myColorListenersNotifier.cancelAllRequests();
-            myColorListenersNotifier.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                myColorListener.colorChanged(c, DefaultColorPipette.this);
-              }
-            }, 300);
-          }
+          pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(myImage, HOT_SPOT, "ColorPicker"));
+          notifyListener(c, 300);
         }
       }
     }
 
-    @NotNull
-    private Point updateLocation() {
-      PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-      Point mouseLoc = pointerInfo.getLocation();
-      if (myPickerFrame != null) {
-        myPickerFrame.setLocation(mouseLoc.x - myPickerFrame.getWidth() / 2, mouseLoc.y - myPickerFrame.getHeight() / 2);
-      }
-      return mouseLoc;
-    }
-
-    private void cancelPipette() {
+    @Override
+    public void cancelPipette() {
       myTimer.stop();
-      myPickerFrame.setVisible(false);
-      if (myColorListener != null && myOldColor != null) {
-        myColorListener.colorChanged(myOldColor, this);
-      }
-    }
-
-    @Nullable
-    private static Robot createRobot() {
-      try {
-        return new Robot();
-      }
-      catch (AWTException e) {
-        return null;
-      }
+      super.cancelPipette();
     }
 
     @Override
     public void dispose() {
-      UIUtil.dispose(myPickerFrame);
+      myTimer.stop();
+      super.dispose();
       if (myGraphics != null) {
         myGraphics.dispose();
       }
-      myOldColor = null;
-      myPreviousColor = null;
       myImage = null;
       myPipetteImage = null;
       myMaskImage = null;

@@ -22,14 +22,16 @@ import java.awt.*;
 import java.awt.image.ImageObserver;
 
 public interface ColorPipette extends ImageObserver, Disposable {
-  void setColor(@Nullable Color color);
+  void setInitialColor(@Nullable Color initialColor);
   
   @Nullable
   Color getColor();
 
-  void show();
+  Dialog show();
   
-  void close();
+  void pickAndClose();
   
+  void cancelPipette();
+
   boolean isAvailable();
 }
