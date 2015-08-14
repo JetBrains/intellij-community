@@ -29,6 +29,7 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -87,6 +88,9 @@ class XmlSerializerImpl {
     else if (type instanceof TypeVariable) {
       Type bound = ((TypeVariable)type).getBounds()[0];
       return bound instanceof Class ? (Class)bound : (Class<?>)((ParameterizedType)bound).getRawType();
+    }
+    else if (type instanceof WildcardType) {
+      return (Class<?>)((WildcardType) type).getUpperBounds()[0];
     }
     else {
       return (Class<?>)((ParameterizedType)type).getRawType();
