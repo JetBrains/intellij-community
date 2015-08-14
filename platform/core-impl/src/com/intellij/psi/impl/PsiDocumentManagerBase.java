@@ -624,12 +624,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (myStopTrackingDocuments || myProject.isDisposed()) return;
 
     final Document document = event.getDocument();
-    if (document instanceof DocumentImpl && !myUncommittedInfos.containsKey(document)) {
-      myUncommittedInfos.put(document, new UncommittedInfo((DocumentImpl)document));
-    }
-
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
+
+    if (document instanceof DocumentImpl && !myUncommittedInfos.containsKey(document)) {
+      myUncommittedInfos.put(document, new UncommittedInfo((DocumentImpl)document));
+      if (isRelevant) {
+        ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).fastenBelts(virtualFile);
+      }
+    }
 
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     boolean inMyProject = viewProvider != null && viewProvider.getManager() == myPsiManager;

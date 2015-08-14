@@ -17,6 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
@@ -38,6 +39,7 @@ import java.util.List;
 * User: cdr
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SelfElementInfo");
   private final VirtualFile myVirtualFile;
   private final Class myType;
   private final Project myProject;
@@ -155,7 +157,11 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   void updateValidity() {
-    assert myPsiRange == null;
+    if (myPsiRange != null) {
+      LOG.error("Non-fastened smart pointer " + this + " " + myRangeMarker);
+      myPsiRange = null;
+      myRangeMarker = null;
+    }
     if (myRangeMarker != null && !myRangeMarker.isValid()) {
       myRangeMarker = null;
     }
