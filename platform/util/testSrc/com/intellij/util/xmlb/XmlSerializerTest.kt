@@ -18,6 +18,7 @@ package com.intellij.util.xmlb
 import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.annotations.*
@@ -37,7 +38,7 @@ import java.util.LinkedHashSet
 import java.util.concurrent.atomic.AtomicReference
 
 public class XmlSerializerTest {
-  public @Test fun EmptyBeanSerialization() {
+  @Test fun EmptyBeanSerialization() {
     @Tag("bean")
     class EmptyBean
 
@@ -47,7 +48,7 @@ public class XmlSerializerTest {
   @Tag("Bean")
   class EmptyBeanWithCustomName
 
-  public @Test fun EmptyBeanSerializationWithCustomName() {
+  @Test fun EmptyBeanSerializationWithCustomName() {
     doSerializerTest("<Bean />", EmptyBeanWithCustomName())
   }
 
@@ -55,7 +56,7 @@ public class XmlSerializerTest {
     override fun compareTo(other: BeanWithPublicFields) = StringUtil.compare(STRING_V, other.STRING_V, false)
   }
 
-  public @Test fun PublicFieldSerialization() {
+  @Test fun PublicFieldSerialization() {
     val bean = BeanWithPublicFields()
 
     doSerializerTest("<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "  <option name=\"STRING_V\" value=\"hello\" />\n" + "</BeanWithPublicFields>", bean)
@@ -166,7 +167,7 @@ public class XmlSerializerTest {
     public var VALUES: Set<String> = LinkedHashSet(Arrays.asList("a", "b", "w"))
   }
 
-  public @Test fun SetSerialization() {
+  @Test fun SetSerialization() {
     val bean = BeanWithSet()
     doSerializerTest("<BeanWithSet>\n" + "  <option name=\"VALUES\">\n" + "    <set>\n" + "      <option value=\"a\" />\n" + "      <option value=\"b\" />\n" + "      <option value=\"w\" />\n" + "    </set>\n" + "  </option>\n" + "</BeanWithSet>", bean)
     bean.VALUES = LinkedHashSet(Arrays.asList("1", "2", "3"))
@@ -184,7 +185,7 @@ public class XmlSerializerTest {
     }
   }
 
-  public @Test fun MapSerialization() {
+  @Test fun MapSerialization() {
     val bean = BeanWithMap()
     doSerializerTest("<BeanWithMap>\n" + "  <option name=\"VALUES\">\n" + "    <map>\n" + "      <entry key=\"a\" value=\"1\" />\n" + "      <entry key=\"b\" value=\"2\" />\n" + "      <entry key=\"c\" value=\"3\" />\n" + "    </map>\n" + "  </option>\n" + "</BeanWithMap>", bean)
     bean.VALUES.clear()
@@ -208,7 +209,7 @@ public class XmlSerializerTest {
     }
   }
 
-  public @Test fun MapSerializationWithAnnotations() {
+  @Test fun MapSerializationWithAnnotations() {
     val bean = BeanWithMapWithAnnotations()
     doSerializerTest("<BeanWithMapWithAnnotations>\n" + "  <option name=\"a\" value=\"1\" />\n" + "  <option name=\"b\" value=\"2\" />\n" + "  <option name=\"c\" value=\"3\" />\n" + "</BeanWithMapWithAnnotations>", bean)
     bean.VALUES.clear()
@@ -224,7 +225,7 @@ public class XmlSerializerTest {
     public var VALUES: MutableMap<String, BeanWithProperty> = LinkedHashMap()
   }
 
-  public @Test fun MapWithBeanValue() {
+  @Test fun MapWithBeanValue() {
     val bean = BeanWithMapWithBeanValue()
 
     bean.VALUES.put("a", BeanWithProperty("James"))
@@ -240,15 +241,14 @@ public class XmlSerializerTest {
     public var values: Map<String, BeanWithProperty> = THashMap()
   }
 
-
-  public @Test fun MapWithBeanValueUsingSkipDefaultsFilter() {
+  @Test fun MapWithBeanValueUsingSkipDefaultsFilter() {
     val bean = BeanWithMapWithBeanValue2()
     doSerializerTest("<BeanWithMapWithBeanValue2 />", bean, SkipDefaultsSerializationFilter())
   }
 
   data class BeanWithOption(@OptionTag("path") public var PATH: String? = null)
 
-  public @Test fun OptionTag() {
+  @Test fun OptionTag() {
     val bean = BeanWithOption()
     bean.PATH = "123"
     doSerializerTest("<BeanWithOption>\n" + "  <option name=\"path\" value=\"123\" />\n" + "</BeanWithOption>", bean)
@@ -256,13 +256,13 @@ public class XmlSerializerTest {
 
   data class BeanWithCustomizedOption(@OptionTag(tag = "setting", nameAttribute = "key", valueAttribute = "saved") public var PATH: String? = null)
 
-  public @Test fun CustomizedOptionTag() {
+  @Test fun CustomizedOptionTag() {
     val bean = BeanWithCustomizedOption()
     bean.PATH = "123"
     doSerializerTest("<BeanWithCustomizedOption>\n" + "  <setting key=\"PATH\" saved=\"123\" />\n" + "</BeanWithCustomizedOption>", bean)
   }
 
-  public class BeanWithProperty {
+  class BeanWithProperty {
     public var name: String = "James"
 
     public constructor() {
@@ -273,7 +273,7 @@ public class XmlSerializerTest {
     }
   }
 
-  public @Test fun PropertySerialization() {
+  @Test fun PropertySerialization() {
     val bean = BeanWithProperty()
 
     doSerializerTest("<BeanWithProperty>\n" + "  <option name=\"name\" value=\"James\" />\n" + "</BeanWithProperty>", bean)
@@ -283,12 +283,12 @@ public class XmlSerializerTest {
     doSerializerTest("<BeanWithProperty>\n" + "  <option name=\"name\" value=\"Bond\" />\n" + "</BeanWithProperty>", bean)
   }
 
-  public class BeanWithFieldWithTagAnnotation {
+  class BeanWithFieldWithTagAnnotation {
     Tag("name")
     public var STRING_V: String = "hello"
   }
 
-  public @Test fun ParallelDeserialization() {
+  @Test fun ParallelDeserialization() {
     val e = Element("root").addContent(Element("name").setText("x"))
     XmlSerializer.deserialize<BeanWithArray>(e, javaClass<BeanWithArray>())//to initialize XmlSerializerImpl.ourBindings
     val exc = AtomicReference<AssertionFailedError>()
@@ -296,9 +296,9 @@ public class XmlSerializerTest {
       Thread(Runnable {
         try {
           for (j in 0..9) {
-            val bean = XmlSerializer.deserialize<BeanWithFieldWithTagAnnotation>(e, javaClass<BeanWithFieldWithTagAnnotation>())
-            TestCase.assertNotNull(bean)
-            TestCase.assertEquals("x", bean.STRING_V)
+            val bean = e.deserialize<BeanWithFieldWithTagAnnotation>()
+            assertThat(bean).isNotNull()
+            assertThat(bean.STRING_V).isEqualTo("x")
           }
         }
         catch (e: AssertionFailedError) {
@@ -315,32 +315,32 @@ public class XmlSerializerTest {
     exc.get()?.let { throw it }
   }
 
-  public @Test fun FieldWithTagAnnotation() {
+  @Test fun FieldWithTagAnnotation() {
     val bean = BeanWithFieldWithTagAnnotation()
     doSerializerTest("<BeanWithFieldWithTagAnnotation>\n" + "  <name>hello</name>\n" + "</BeanWithFieldWithTagAnnotation>", bean)
     bean.STRING_V = "bye"
     doSerializerTest("<BeanWithFieldWithTagAnnotation>\n" + "  <name>bye</name>\n" + "</BeanWithFieldWithTagAnnotation>", bean)
   }
 
-  public @Test fun EscapeCharsInTagText() {
+  @Test fun EscapeCharsInTagText() {
     val bean = BeanWithFieldWithTagAnnotation()
     bean.STRING_V = "a\nb\"<"
 
     doSerializerTest("<BeanWithFieldWithTagAnnotation>\n" + "  <name>a\nb&quot;&lt;</name>\n" + "</BeanWithFieldWithTagAnnotation>", bean)
   }
 
-  public @Test fun EscapeCharsInAttributeValue() {
+  @Test fun EscapeCharsInAttributeValue() {
     val bean = BeanWithPropertiesBoundToAttribute()
     bean.name = "a\nb\"<"
     doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"3\" name=\"a&#10;b&quot;&lt;\" />", bean)
   }
 
-  public @Test fun ShuffledDeserialize() {
+  @Test fun ShuffledDeserialize() {
     var bean: BeanWithPublicFields? = BeanWithPublicFields()
     bean!!.INT_V = 987
     bean.STRING_V = "1234"
 
-    val element = serialize(bean, null)
+    val element = bean.serialize(null)
 
     val node = element.getChildren().get(0)
     element.removeContent(node)
@@ -352,7 +352,7 @@ public class XmlSerializerTest {
     TestCase.assertEquals("1234", bean.STRING_V)
   }
 
-  public @Test fun FilterSerializer() {
+  @Test fun FilterSerializer() {
     val bean = BeanWithPublicFields()
     assertSerializer(bean, "<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "</BeanWithPublicFields>", object : SerializationFilter {
       override fun accepts(accessor: Accessor, bean: Any) = accessor.getName().startsWith("I")
@@ -361,7 +361,7 @@ public class XmlSerializerTest {
 
   data class BeanWithArray(public var ARRAY_V: Array<String> = arrayOf("a", "b"))
 
-  public @Test fun Array() {
+  @Test fun Array() {
     val bean = BeanWithArray()
     doSerializerTest("<BeanWithArray>\n" + "  <option name=\"ARRAY_V\">\n" + "    <array>\n" + "      <option value=\"a\" />\n" + "      <option value=\"b\" />\n" + "    </array>\n" + "  </option>\n" + "</BeanWithArray>", bean)
 
@@ -369,7 +369,7 @@ public class XmlSerializerTest {
     doSerializerTest("<BeanWithArray>\n" + "  <option name=\"ARRAY_V\">\n" + "    <array>\n" + "      <option value=\"1\" />\n" + "      <option value=\"2\" />\n" + "      <option value=\"3\" />\n" + "      <option value=\"\" />\n" + "    </array>\n" + "  </option>\n" + "</BeanWithArray>", bean)
   }
 
-  public @Test fun Transient() {
+  @Test fun Transient() {
     @Tag("bean")
     class Bean {
       public var INT_V: Int = 1
@@ -387,7 +387,7 @@ public class XmlSerializerTest {
     public var V: Array<String> = arrayOf("a")
   }
 
-  public @Test fun ArrayAnnotationWithoutTagNAmeGivesError() {
+  @Test fun ArrayAnnotationWithoutTagNAmeGivesError() {
     val bean = BeanWithArrayWithoutTagName()
 
     try {
@@ -507,23 +507,23 @@ public class XmlSerializerTest {
     @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
     var v = arrayOf("a", "b")
 
-    var INT_V = 1
+    var intV = 1
   }
 
   @Test fun arrayWithoutAllTags() {
     val bean = BeanWithArrayWithoutAllsTag()
 
     doSerializerTest("""<bean>
-  <option name="INT_V" value="1" />
+  <option name="intV" value="1" />
   <vvalue v="a" />
   <vvalue v="b" />
 </bean>""", bean)
 
-    bean.INT_V = 2
+    bean.intV = 2
     bean.v = arrayOf("1", "2", "3")
 
     doSerializerTest("""<bean>
-  <option name="INT_V" value="2" />
+  <option name="intV" value="2" />
   <vvalue v="1" />
   <vvalue v="2" />
   <vvalue v="3" />
@@ -536,29 +536,31 @@ public class XmlSerializerTest {
       @Property(surroundWithTag = false)
       @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "", surroundWithTag = false)
       var v = arrayOf("a", "b")
-      var INT_V = 1
+      var intV = 1
     }
 
     val bean = BeanWithArrayWithoutAllTag2()
 
     doSerializerTest("""<bean>
-  <option name="INT_V" value="1" />
+  <option name="intV" value="1" />
   <vvalue>a</vvalue>
   <vvalue>b</vvalue>
 </bean>""", bean)
 
-    bean.INT_V = 2
+    bean.intV = 2
     bean.v = arrayOf("1", "2", "3")
 
-    doSerializerTest("<bean>\n" + "  <vvalue>1</vvalue>\n" + "  <vvalue>2</vvalue>\n" + "  <vvalue>3</vvalue>\n" + "  <option name=\"INT_V\" value=\"2\" />\n" + "</bean>", bean)
+    doSerializerTest("""<bean>
+  <option name="intV" value="2" />
+  <vvalue>1</vvalue>
+  <vvalue>2</vvalue>
+  <vvalue>3</vvalue>
+</bean>""", bean)
   }
 
-  @Test fun DeserializeFromFormattedXML() {
-    val xml = "<bean>\n" + "  <option name=\"INT_V\" value=\"2\"/>\n" + "  <vvalue v=\"1\"/>\n" + "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</bean>"
-
-    val bean = XmlSerializer.deserialize<BeanWithArrayWithoutAllsTag>(JDOMUtil.loadDocument(xml).getRootElement(), javaClass<BeanWithArrayWithoutAllsTag>())
-
-    assertThat(2).isEqualTo(bean.INT_V)
+  @Test fun deserializeFromFormattedXML() {
+    val bean = JDOMUtil.loadDocument("<bean>\n" + "  <option name=\"intV\" value=\"2\"/>\n" + "  <vvalue v=\"1\"/>\n" + "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</bean>").getRootElement().deserialize<BeanWithArrayWithoutAllsTag>()
+    assertThat(bean.intV).isEqualTo(2)
     assertThat("[1, 2, 3]").isEqualTo(Arrays.asList(*bean.v).toString())
   }
 
@@ -605,7 +607,7 @@ public class XmlSerializerTest {
     var occupation: String? = null
   }
 
-  public @Test fun BeanWithPrimitivePropertyBoundToAttribute() {
+  @Test fun BeanWithPrimitivePropertyBoundToAttribute() {
     val bean = BeanWithPropertiesBoundToAttribute()
 
     doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"3\" name=\"James\" />", bean)
@@ -659,7 +661,7 @@ public class XmlSerializerTest {
   }
 
   throws(Exception::class)
-  public @Test fun DeserializeJDOMElementField() {
+  @Test fun DeserializeJDOMElementField() {
 
 
     val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").getRootElement(), javaClass<BeanWithJDOMElement>())
@@ -783,7 +785,7 @@ public class XmlSerializerTest {
     doSerializerTest("<bean>\n  <condition expression=\"2+2\" />\n" + "</bean>", bean)
   }
 
-  public @Test fun deserializeInto() {
+  @Test fun deserializeInto() {
     val bean = BeanWithPublicFields()
     bean.STRING_V = "zzz"
 
@@ -811,7 +813,7 @@ public class XmlSerializerTest {
     doSerializerTest("<bean>\n" + "  <map>\n" + "    <pair>\n" + "      <BeanWithPublicFields>\n" + "        <option name=\"INT_V\" value=\"1\" />\n" + "        <option name=\"STRING_V\" value=\"a\" />\n" + "      </BeanWithPublicFields>\n" + "      <BeanWithTextAnnotation>\n" + "        <option name=\"INT_V\" value=\"2\" />\n" + "        b\n" + "      </BeanWithTextAnnotation>\n" + "    </pair>\n" + "    <pair>\n" + "      <BeanWithPublicFields>\n" + "        <option name=\"INT_V\" value=\"3\" />\n" + "        <option name=\"STRING_V\" value=\"c\" />\n" + "      </BeanWithPublicFields>\n" + "      <BeanWithTextAnnotation>\n" + "        <option name=\"INT_V\" value=\"4\" />\n" + "        d\n" + "      </BeanWithTextAnnotation>\n" + "    </pair>\n" + "    <pair>\n" + "      <BeanWithPublicFields>\n" + "        <option name=\"INT_V\" value=\"5\" />\n" + "        <option name=\"STRING_V\" value=\"e\" />\n" + "      </BeanWithPublicFields>\n" + "      <BeanWithTextAnnotation>\n" + "        <option name=\"INT_V\" value=\"6\" />\n" + "        f\n" + "      </BeanWithTextAnnotation>\n" + "    </pair>\n" + "  </map>\n" + "</bean>", bean)
   }
 
-  public @Test fun MapAtTopLevel() {
+  @Test fun MapAtTopLevel() {
     @Tag("bean")
     class BeanWithMapAtTopLevel {
       @Property(surroundWithTag = false)
@@ -848,7 +850,7 @@ public class XmlSerializerTest {
     var bar: Ref<String>? = null
   }
 
-  public @Test fun Converter() {
+  @Test fun Converter() {
     val bean = BeanWithConverter()
     doSerializerTest("<BeanWithConverter>\n" + "  <option name=\"bar\" />\n" + "</BeanWithConverter>", bean)
 
@@ -860,7 +862,7 @@ public class XmlSerializerTest {
     doSerializerTest("<BeanWithConverter foo=\"\">\n" + "  <option name=\"bar\" value=\"testValue2\" />\n" + "</BeanWithConverter>", bean)
   }
 
-  public @Test fun ConverterUsingSkipDefaultsFilter() {
+  @Test fun ConverterUsingSkipDefaultsFilter() {
     val bean = BeanWithConverter()
     doSerializerTest("<BeanWithConverter />", bean, SkipDefaultsSerializationFilter())
 
@@ -882,7 +884,7 @@ public class XmlSerializerTest {
     }
   }
 
-  public @Test fun DefaultAttributeName() {
+  @Test fun DefaultAttributeName() {
     val bean = BeanWithDefaultAttributeName()
     doSerializerTest("<BeanWithDefaultAttributeName foo=\"foo\" />", bean)
   }
@@ -899,7 +901,7 @@ public class XmlSerializerTest {
   }
 
   throws(IOException::class, JDOMException::class)
-  public @Test fun Ordered() {
+  @Test fun Ordered() {
     val bean = Bean2()
     bean.module = "module"
     bean.ab = "ab"
@@ -924,7 +926,7 @@ public class XmlSerializerTest {
     val list = SmartList<String>()
   }
 
-  public @Test fun testJDOMExternalizableStringList() {
+  @Test fun testJDOMExternalizableStringList() {
     val bean = Bean3()
     bean.list.add("one")
     bean.list.add("two")
@@ -1006,7 +1008,7 @@ public class XmlSerializerTest {
     }
 
     private fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
-      val element = XmlSerializer.serialize(bean, filter)
+      val element = bean.serialize(filter)
       var actual = JDOMUtil.writeElement(element, "\n").trim()
       if (!expected.startsWith(XML_PREFIX) && actual.startsWith(XML_PREFIX)) {
         actual = actual.substring(XML_PREFIX.length()).trim()
@@ -1015,7 +1017,15 @@ public class XmlSerializerTest {
       assertThat(actual).`as`(description).isEqualTo(expected)
       return element
     }
-
-    private fun serialize(bean: Any, filter: SerializationFilter?) = XmlSerializer.serialize(bean, filter)
   }
+}
+
+public fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
+
+public inline fun <reified T: Any> Element.deserialize(): T = XmlSerializer.deserialize(this, javaClass<T>())
+
+public fun Element.toByteArray(): ByteArray {
+  val out = BufferExposingByteArrayOutputStream(512)
+  JDOMUtil.writeParent(this, out, "\n")
+  return out.toByteArray()
 }

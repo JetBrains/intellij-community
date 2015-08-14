@@ -20,7 +20,6 @@ import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -28,11 +27,12 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.serialize
+import com.intellij.util.xmlb.toByteArray
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -395,12 +395,4 @@ fun SchemeManagerImpl<*, *>.save() {
   val errors = SmartList<Throwable>()
   save(errors)
   CompoundRuntimeException.doThrow(errors)
-}
-
-public fun <T : Any> T.serialize(): Element = XmlSerializer.serialize(this, SkipDefaultValuesSerializationFilters())
-
-public fun Element.toByteArray(): ByteArray {
-  val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, "\n")
-  return out.toByteArray()
 }
