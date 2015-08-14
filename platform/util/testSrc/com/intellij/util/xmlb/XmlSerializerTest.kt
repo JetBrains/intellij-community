@@ -968,6 +968,23 @@ public class XmlSerializerTest {
     doSerializerTest("<bean>\n" + "  <option name=\"myValues\">\n" + "    <entry-tag key-attr=\"a\">\n" + "      <value>\n" + "        <set>\n" + "          <option value=\"first1\" />\n" + "          <option value=\"second1\" />\n" + "        </set>\n" + "      </value>\n" + "    </entry-tag>\n" + "    <entry-tag key-attr=\"b\">\n" + "      <value>\n" + "        <set>\n" + "          <option value=\"first2\" />\n" + "          <option value=\"second2\" />\n" + "        </set>\n" + "      </value>\n" + "    </entry-tag>\n" + "  </option>\n" + "</bean>", bean)
   }
 
+  @Test fun cdataAfterNewLine() {
+    @Tag("bean")
+    @data class Bean(@Tag var description: String? = null)
+
+    var bean = XmlSerializer.deserialize(JDOMUtil.load("""<bean>
+  <description>
+    <![CDATA[
+    <h4>Node.js integration</h4>
+    ]]>
+  </description>
+</bean>""".reader), javaClass<Bean>())
+    assertThat(bean.description).isEqualToIgnoringWhitespace("<h4>Node.js integration</h4>")
+
+    bean = XmlSerializer.deserialize(JDOMUtil.load("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader), javaClass<Bean>())
+    assertThat(bean.description).isEqualTo("<h4>Node.js integration</h4>")
+  }
+
   companion object {
     private val XML_PREFIX = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 

@@ -296,13 +296,22 @@ class XmlSerializerImpl {
   @NotNull
   static String getTextValue(@NotNull Element element, @NotNull String defaultText) {
     List<Content> content = element.getContent();
-    String value = defaultText;
-    if (!content.isEmpty()) {
-      Content child = content.get(0);
+    int size = content.size();
+    StringBuilder builder = null;
+    for (int i = 0; i < size; i++) {
+      Content child = content.get(i);
       if (child instanceof Text) {
-        value = child.getValue();
+        String value = child.getValue();
+        if (builder == null && i == (size - 1)) {
+          return value;
+        }
+
+        if (builder == null) {
+          builder = new StringBuilder();
+        }
+        builder.append(value);
       }
     }
-    return value;
+    return builder == null ? defaultText : builder.toString();
   }
 }
