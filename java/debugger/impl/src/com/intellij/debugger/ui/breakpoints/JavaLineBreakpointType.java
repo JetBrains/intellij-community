@@ -136,7 +136,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return res;
   }
 
-  public boolean matchesPosition(@NotNull LineBreakpoint breakpoint, @NotNull SourcePosition position) {
+  public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties == null || properties instanceof JavaLineBreakpointProperties) {
       if (properties != null && ((JavaLineBreakpointProperties)properties).getLambdaOrdinal() == null) return true;
@@ -148,7 +148,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   @Nullable
-  public PsiElement getContainingMethod(@NotNull LineBreakpoint breakpoint) {
+  public PsiElement getContainingMethod(@NotNull LineBreakpoint<?> breakpoint) {
     SourcePosition position = breakpoint.getSourcePosition();
     if (position == null) return null;
 
@@ -168,7 +168,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   public class JavaBreakpointVariant extends XLineBreakpointVariant {
     protected final XSourcePosition mySourcePosition;
 
-    private JavaBreakpointVariant(XSourcePosition position) {
+    public JavaBreakpointVariant(XSourcePosition position) {
       mySourcePosition = position;
     }
 
