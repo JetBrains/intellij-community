@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import java.util.List;
 
 /**
 * User: cdr
@@ -66,7 +66,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
-    myRangeMarker = ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).obtainMarker(document, ProperTextRange.create(range));
+    FrozenDocument frozenDocument = getDocumentManager().getLastCommittedDocument(document);
+    myRangeMarker = getMarkerCache(document).obtainMarker(ProperTextRange.create(range), frozenDocument, false, false);
+  }
+
+  @NotNull
+  private MarkerCache getMarkerCache(@NotNull Document document) {
+    return ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).getMarkerCache(document);
   }
 
   private PsiDocumentManagerBase getDocumentManager() {
@@ -148,15 +154,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myPsiRange = null;
   }
 
-  public void updateRange(@NotNull DocumentEvent event, @NotNull Set<ManualRangeMarker> processedMarkers) {
+  void updateValidity() {
     assert myPsiRange == null;
-    if (myRangeMarker != null) {
-      if (processedMarkers.add(myRangeMarker)) {
-        myRangeMarker.applyEvent(event);
-      }
-      if (!myRangeMarker.isValid()) {
-        myRangeMarker = null;
-      }
+    if (myRangeMarker != null && !myRangeMarker.isValid()) {
+      myRangeMarker = null;
     }
   }
 
@@ -254,13 +255,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       Document document = getDocumentToSynchronize();
       if (document != null) {
         FrozenDocument frozen = getDocumentManager().getLastCommittedDocument(document);
-        ManualRangeMarker marker = myRangeMarker;
-        for (DocumentEvent event : getDocumentManager().getEventsSinceCommit(document)) {
-          frozen = frozen.applyEvent(event, 0);
-          marker = marker.getUpdatedRange(withFrozen(frozen, event));
-          if (marker == null) return null;
-        }
-        return marker.getRange();
+        List<DocumentEvent> events = getDocumentManager().getEventsSinceCommit(document);
+        return getMarkerCache(document).getUpdatedRange(myRangeMarker, frozen, events);
       }
       return myRangeMarker.getRange();
     }

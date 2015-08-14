@@ -670,23 +670,49 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(node);
   }
 
-  public void testLargeFileWithManyChanges() {
+  public void testLargeFileWithManyChangesPerformance() {
     configureByText(PlainTextFileType.INSTANCE, StringUtil.repeat("foo foo \n", 50000));
     final TextRange range = TextRange.from(10, 10);
     final SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, range);
 
     final Document document = myFile.getViewProvider().getDocument();
     assertNotNull(document);
-    
-    for (int i = 0; i < 10000; i++) {
-      document.insertString(i * 20 + 100, "x\n");
-      assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
-      if (i % 500 == 0) {
+
+    PlatformTestUtil.startPerformanceTest("smart pointer range update", 25000, () -> {
+      for (int i = 0; i < 10000; i++) {
+        document.insertString(i * 20 + 100, "x\n");
+        assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
         assertEquals(range, pointer.getRange());
       }
-    }
+    }).cpuBound().assertTiming();
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
+  }
+
+  public void testConvergingRanges() {
+    configureByText(PlainTextFileType.INSTANCE, "aba");
+    final Document document = myFile.getViewProvider().getDocument();
+    assertNotNull(document);
+
+    SmartPsiFileRange range1 = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, TextRange.create(0, 2));
+    SmartPsiFileRange range2 = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, TextRange.create(1, 3));
+
+    document.deleteString(0, 1);
+    document.deleteString(1, 2);
+    assertEquals(TextRange.create(0, 1), range1.getRange());
+    assertEquals(TextRange.create(0, 1), range2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(0, 1), range1.getRange());
+    assertEquals(TextRange.create(0, 1), range2.getRange());
+
+    document.insertString(0, "a");
+    assertEquals(TextRange.create(1, 2), range1.getRange());
+    assertEquals(TextRange.create(1, 2), range2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(1, 2), range1.getRange());
+    assertEquals(TextRange.create(1, 2), range2.getRange());
   }
 }
