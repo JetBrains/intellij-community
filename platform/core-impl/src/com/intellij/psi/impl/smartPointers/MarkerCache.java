@@ -47,28 +47,34 @@ class MarkerCache {
 
   @NotNull
   synchronized ManualRangeMarker obtainMarker(@NotNull ProperTextRange range, @NotNull FrozenDocument frozen, boolean greedyLeft, boolean greedyRight) {
-    Trinity key = Trinity.create(frozen, greedyLeft, greedyRight);
-    if (myByRange == null) {
-      myByRange = new WeakValueHashMap<Trinity, ManualRangeMarker>();
-      for (ManualRangeMarker marker1 : myMarkerSet) {
-        Trinity eachKey = keyOf(marker1);
-        if (eachKey != null) {
-          myByRange.put(eachKey, marker1);
-        }
-      }
-    }
-    ManualRangeMarker marker = myByRange.get(key);
+    WeakValueHashMap<Trinity, ManualRangeMarker> byRange = getByRangeCache();
+    Trinity key = Trinity.create(range, greedyLeft, greedyRight);
+    ManualRangeMarker marker = byRange.get(key);
     if (marker == null) {
       marker = new ManualRangeMarker(frozen, range, greedyLeft, greedyRight, true);
       myMarkerSet.add(marker);
-      myByRange.put(key, marker);
+      byRange.put(key, marker);
       myUpdatedRanges = null;
     }
     return marker;
   }
 
+  private WeakValueHashMap<Trinity, ManualRangeMarker> getByRangeCache() {
+    if (myByRange == null) {
+      myByRange = new WeakValueHashMap<Trinity, ManualRangeMarker>();
+      for (ManualRangeMarker marker : myMarkerSet) {
+        Trinity key = keyOf(marker);
+        if (key != null) {
+          myByRange.put(key, marker);
+        }
+      }
+    }
+    return myByRange;
+  }
+
   private Map<Trinity, ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     int eventCount = events.size();
+    if (eventCount == 0) return getByRangeCache();
 
     Trinity<Integer, Map<Trinity, ManualRangeMarker>, FrozenDocument> cache = myUpdatedRanges;
     if (cache != null && cache.first.intValue() == eventCount) return cache.second;
@@ -94,9 +100,7 @@ class MarkerCache {
         frozen = applyEvents(frozen, events, answer);
       }
 
-      if (eventCount > 0) {
-        myUpdatedRanges = Trinity.create(eventCount, answer, frozen);
-      }
+      myUpdatedRanges = Trinity.create(eventCount, answer, frozen);
       return answer;
     }
   }
