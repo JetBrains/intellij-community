@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.containers.WeakValueHashMap;
@@ -74,7 +75,7 @@ class MarkerCache {
 
   private Map<Trinity, ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     int eventCount = events.size();
-    if (eventCount == 0) return getByRangeCache();
+    assert eventCount > 0;
 
     Trinity<Integer, Map<Trinity, ManualRangeMarker>, FrozenDocument> cache = myUpdatedRanges;
     if (cache != null && cache.first.intValue() == eventCount) return cache.second;
@@ -122,26 +123,44 @@ class MarkerCache {
   }
 
   synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events, @NotNull List<SmartPsiElementPointerImpl> pointers) {
+    List<SelfElementInfo> infos = ContainerUtil.findAll(ContainerUtil.map(pointers, new NullableFunction<SmartPsiElementPointerImpl, SmartPointerElementInfo>() {
+      @Nullable
+      @Override
+      public SmartPointerElementInfo fun(SmartPsiElementPointerImpl pointer) {
+        return pointer.getElementInfo();
+      }
+    }), SelfElementInfo.class);
+
     Map<Trinity, ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
+    Map<ManualRangeMarker, ManualRangeMarker> newStates = ContainerUtil.newHashMap();
+    for (SelfElementInfo info : infos) {
+      ManualRangeMarker marker = info.getRangeMarker();
+      Trinity key = marker == null ? null : keyOf(marker);
+      if (key != null) {
+        newStates.put(marker, updated.get(key));
+      }
+    }
+
     myMarkerSet.clear();
-    for (SmartPsiElementPointerImpl pointer : pointers) {
-      SmartPointerElementInfo info = pointer.getElementInfo();
-      if (info instanceof SelfElementInfo) {
-        ManualRangeMarker marker = ((SelfElementInfo)info).getRangeMarker();
-        Trinity key = marker == null ? null : keyOf(marker);
-        if (key != null) {
-          marker.applyState(updated.get(key));
-          ((SelfElementInfo)info).updateValidity();
-          myMarkerSet.add(marker); //re-add only alive markers
-        }
+    for (Map.Entry<ManualRangeMarker, ManualRangeMarker> entry : newStates.entrySet()) {
+      ManualRangeMarker marker = entry.getKey();
+      marker.applyState(entry.getValue());
+      if (marker.isValid()) {
+        myMarkerSet.add(marker); //re-add only alive markers
       }
     }
     myByRange = null;
     myUpdatedRanges = null;
+
+    for (SelfElementInfo info : infos) {
+      info.updateValidity();
+    }
   }
 
   @Nullable
   ProperTextRange getUpdatedRange(@NotNull ManualRangeMarker marker, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+    if (events.isEmpty()) return marker.getRange();
+
     ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(keyOf(marker));
     return updated == null ? null : updated.getRange();
   }
