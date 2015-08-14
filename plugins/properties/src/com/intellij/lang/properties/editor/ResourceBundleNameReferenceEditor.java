@@ -94,7 +94,7 @@ public class ResourceBundleNameReferenceEditor extends ReferenceEditorWithBrowse
           return true;
         }
       },
-        BundleNameEvaluator.NULL);
+        BundleNameEvaluator.DEFAULT);
       final List<ResourceBundle> sortedBundles = ContainerUtil.sorted(ContainerUtil.filter(bundles, new Condition<ResourceBundle>() {
         @Override
         public boolean value(ResourceBundle resourceBundle) {
