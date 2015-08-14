@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>3</line>
-    <description>Line is longer than allowed by code style (&gt; 120 symbols)</description>
-  </problem>
-</problems>
