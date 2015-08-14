@@ -83,9 +83,8 @@ public class RuntimeModuleDescriptorsGenerator {
     }
 
     generateDescriptorsForModules();
-    generateDescriptorsZip(new File(outputDir, RepositoryConstants.MODULES_ZIP_NAME),
-                           collectUsedLibrariesAndRuntimeResources(new File(outputDir, RepositoryConstants.MODULES_ZIP_NAME))
-    );
+    File descriptorsOutputFile = new File(outputDir, RepositoryConstants.MODULES_ZIP_NAME);
+    generateDescriptorsZip(descriptorsOutputFile, collectUsedLibrariesAndRuntimeResources(outputDir));
 
     try {
       FileUtil.writeToFile(new File(outputDir, RepositoryConstants.VERSION_FILE_NAME), String.valueOf(RepositoryConstants.VERSION_NUMBER));
@@ -169,7 +168,7 @@ public class RuntimeModuleDescriptorsGenerator {
     return JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly();
   }
 
-  private List<RuntimeModuleDescriptorData> collectUsedLibrariesAndRuntimeResources(File outputDir) {
+  private List<RuntimeModuleDescriptorData> collectUsedLibrariesAndRuntimeResources(File descriptorsOutputDir) {
     List<RuntimeModuleDescriptorData> descriptors = new ArrayList<RuntimeModuleDescriptorData>();
     Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
     for (JpsModule module : myProject.getModules()) {
@@ -180,7 +179,7 @@ public class RuntimeModuleDescriptorsGenerator {
         for (JpsRuntimeResourceRoot root : rootsCollection.getRoots()) {
           RuntimeModuleId id = RuntimeModuleId.moduleResource(module.getName(), root.getName());
           final List<File> files = Collections.singletonList(JpsPathUtil.urlToFile(root.getUrl()));
-          descriptors.add(createDescriptor(id, files, outputDir));
+          descriptors.add(createDescriptor(id, files, descriptorsOutputDir));
         }
       }
     }
@@ -194,7 +193,7 @@ public class RuntimeModuleDescriptorsGenerator {
     for (JpsLibrary library : libraries) {
       final RuntimeModuleId moduleId = getLibraryId(library);
       final List<File> files = library.getFiles(JpsOrderRootType.COMPILED);
-      descriptors.add(createDescriptor(moduleId, files, outputDir));
+      descriptors.add(createDescriptor(moduleId, files, descriptorsOutputDir));
     }
     return descriptors;
   }
@@ -272,10 +271,11 @@ public class RuntimeModuleDescriptorsGenerator {
   }
 
   @Nullable
-  private List<String> getRelativePaths(List<File> files, File descriptorsOutput) {
+  private List<String> getRelativePaths(List<File> files, File descriptorsOutputDir) {
     List<String> paths = new ArrayList<String>(files.size());
     for (File root : files) {
-      String relativePath = FileUtilRt.getRelativePath(descriptorsOutput.getAbsolutePath(), root.getAbsolutePath(), '/');
+      String relativePath = FileUtilRt.getRelativePath(FileUtil.toSystemIndependentName(descriptorsOutputDir.getAbsolutePath()),
+                                                       FileUtil.toSystemIndependentName(root.getAbsolutePath()), '/');
       if (relativePath == null) {
         myMessageHandler.reportError("Cannot get relative path for " + root.getAbsolutePath());
       }
