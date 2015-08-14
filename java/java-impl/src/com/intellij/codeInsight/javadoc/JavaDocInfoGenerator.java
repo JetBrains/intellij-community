@@ -467,8 +467,6 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateTypeParametersSection(final StringBuilder buffer, final PsiClass aClass) {
-    final PsiDocComment docComment = aClass.getDocComment();
-    if (docComment == null) return;
     final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> result =
       new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
