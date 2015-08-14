@@ -143,11 +143,18 @@ public class MacColorPipette extends ColorPipetteBase {
 
   private static void drawCurrentColorRectangle(@NotNull Graphics2D graphics, @NotNull Point offset, @NotNull Color currentColor) {
     graphics.setColor(Gray._0.withAlpha(150));
-    graphics.fillRoundRect(SIZE / 4 + offset.x, SIZE * 3 / 4 + offset.y, SIZE / 2, SIZE / 8, 10, 10);
+    int x = SIZE / 4 + offset.x;
+    int y = SIZE * 3 / 4 + offset.y;
+    int width = SIZE / 2;
+    int height = SIZE / 8;
+    graphics.fillRoundRect(x, y, width, height, 10, 10);
+    
     graphics.setColor(Gray._255);
-    graphics.drawString(" " + currentColor.getRed(), offset.x + SIZE / 4, offset.y + SIZE * 3 / 4 + 15);
-    graphics.drawString(" " + currentColor.getGreen(), offset.x + SIZE / 4 + SIZE / 2 / 3, offset.y + SIZE * 3 / 4 + 15);
-    graphics.drawString(" " + currentColor.getBlue(), offset.x + SIZE / 4 + SIZE / 3, offset.y + SIZE * 3 / 4 + 15);
+    String colorString = currentColor.getRed() + " " + currentColor.getBlue() + " " + currentColor.getGreen();
+    FontMetrics metrics = graphics.getFontMetrics();
+    int stringWidth = metrics.stringWidth(colorString);
+    int stringHeight = metrics.getHeight();
+    graphics.drawString(colorString, x + (width - stringWidth) / 2, y + stringHeight);
   }
 
   private static void drawCenterPixel(@NotNull Graphics2D graphics, @NotNull Point offset, @NotNull Color currentColor) {
