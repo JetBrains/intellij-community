@@ -64,7 +64,7 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
 
   private class ShareWithTeamCheckBoxAction extends CheckboxAction implements DumbAware {
     public ShareWithTeamCheckBoxAction() {
-      super("Share with team members");
+      super("Copy to Project");
     }
 
     @Override
