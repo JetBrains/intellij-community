@@ -274,4 +274,9 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   public int hashCode() {
     return myFile.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return "XmlPropertiesFileImpl:" + getName();
+  }
 }
