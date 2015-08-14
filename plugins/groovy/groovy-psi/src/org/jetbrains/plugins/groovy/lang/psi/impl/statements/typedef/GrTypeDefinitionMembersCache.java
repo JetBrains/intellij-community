@@ -154,7 +154,7 @@ public class GrTypeDefinitionMembersCache {
     return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<PsiMethod[]>() {
       @Override
       public Result<PsiMethod[]> compute() {
-        Collection<PsiMethod> result = ContainerUtil.newHashSet();
+        Collection<PsiMethod> result = ContainerUtil.newLinkedHashSet();
 
         GrClassImplUtil.collectMethodsFromBody(myDefinition, result);
         for (PsiMethod method : AstTransformContributor.runContributors(myDefinition).getMethods()) {
