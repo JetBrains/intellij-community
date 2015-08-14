@@ -691,11 +691,9 @@ public class JavaDocInfoGenerator {
     try {
       final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(htmlText.getBytes(CharsetToolkit.UTF8_CHARSET)));
       final Element rootTag = document.getRootElement();
-      if (rootTag != null) {
-        final Element subTag = rootTag.getChild("body");
-        if (subTag != null) {
-          htmlText = subTag.getValue();
-        }
+      final Element subTag = rootTag.getChild("body");
+      if (subTag != null) {
+        htmlText = subTag.getValue();
       }
     }
     catch (JDOMException ignore) {}
@@ -1105,6 +1103,7 @@ public class JavaDocInfoGenerator {
   }
 
   private PsiDocComment loadSyntheticDocComment(final PsiMethod method, final String resourceName) {
+    //noinspection IOResourceOpenedButNotSafelyClosed
     final InputStream commentStream = JavaDocInfoGenerator.class.getResourceAsStream(resourceName);
     if (commentStream == null) {
       return null;
@@ -1132,7 +1131,9 @@ public class JavaDocInfoGenerator {
     }
 
     String s = buffer.toString();
-    s = StringUtil.replace(s, "<ClassName>", method.getContainingClass().getName());
+    PsiClass containingClass = method.getContainingClass();
+    assert containingClass != null;
+    s = StringUtil.replace(s, "<ClassName>", containingClass.getName());
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     try {
       return elementFactory.createDocCommentFromText(s);
@@ -1296,6 +1297,7 @@ public class JavaDocInfoGenerator {
       return "";
     }
 
+    //noinspection ReplaceAllDot
     return "../" + ourNotDot.matcher(qName).replaceAll("").replaceAll(".", "../");
   }
 
@@ -2013,7 +2015,7 @@ public class JavaDocInfoGenerator {
             buffer.append(separator);
             length += 3;
           }
-          length += generateType(buffer, psiType, context, generateLink, useShortNames);
+          length += generateType(buffer, psiType, context, true, useShortNames);
         }
         return length;
       }
