@@ -138,9 +138,9 @@
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection" />
-    <localInspection language="JAVA" shortName="RuntimeModuleReferences" displayName="Runtime module references"
+    <localInspection language="JAVA" shortName="RuntimeModuleJavaReferences" displayName="Runtime module references"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.RuntimeModuleReferencesInspection"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RuntimeModuleJavaReferencesInspection"/>
     <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful Extension"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"

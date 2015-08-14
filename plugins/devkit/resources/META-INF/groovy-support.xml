@@ -2,5 +2,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <psi.referenceContributor language="Groovy"
                               implementation="org.jetbrains.idea.devkit.references.RuntimeModuleGroovyReferenceContributor"/>
+    <localInspection language="Groovy" shortName="RuntimeModuleGroovyReferences" displayName="Runtime module references from Groovy"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RuntimeModuleGroovyReferencesInspection"/>
   </extensions>
 </idea-plugin>

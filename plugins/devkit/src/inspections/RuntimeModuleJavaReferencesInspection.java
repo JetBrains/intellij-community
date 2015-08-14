@@ -18,10 +18,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.references.IdeaModuleReference;
 import org.jetbrains.idea.devkit.references.RuntimeModuleReferenceBase;
@@ -29,21 +26,24 @@ import org.jetbrains.idea.devkit.references.RuntimeModuleReferenceBase;
 /**
  * @author nik
  */
-public class RuntimeModuleReferencesInspection extends BaseJavaLocalInspectionTool {
+public class RuntimeModuleJavaReferencesInspection extends BaseJavaLocalInspectionTool {
+  protected static void checkReferences(PsiLiteral literal, @NotNull ProblemsHolder holder) {
+    for (PsiReference reference : literal.getReferences()) {
+      if (reference instanceof RuntimeModuleReferenceBase && reference.resolve() == null) {
+        RuntimeModuleReferenceBase moduleReference = (RuntimeModuleReferenceBase)reference;
+        String kind = moduleReference instanceof IdeaModuleReference ? "module" : "library";
+        holder.registerProblem(literal, "Cannot resolve runtime " + kind + " '" + moduleReference.getValue() + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, reference.getRangeInElement());
+      }
+    }
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        for (PsiReference reference : expression.getReferences()) {
-          if (reference instanceof RuntimeModuleReferenceBase && reference.resolve() == null) {
-            RuntimeModuleReferenceBase moduleReference = (RuntimeModuleReferenceBase)reference;
-            String kind = moduleReference instanceof IdeaModuleReference ? "module" : "library";
-            holder.registerProblem(expression, "Cannot resolve runtime " + kind + " '" + moduleReference.getValue() + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-                                   reference.getRangeInElement());
-          }
-        }
+        checkReferences(expression, holder);
       }
     };
   }
