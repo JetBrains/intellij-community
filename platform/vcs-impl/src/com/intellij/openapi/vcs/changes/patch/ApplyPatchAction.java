@@ -22,16 +22,21 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.diff.DiffRequestFactory;
-import com.intellij.diff.InvalidDiffRequestException;
+import com.intellij.diff.*;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -41,11 +46,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
@@ -57,6 +63,7 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -233,7 +240,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       MergeRequest request = DiffRequestFactory.getInstance()
         .createMergeRequest(project, file.getFileType(), document, contents, windowTitle, titles, callback);
 
-      com.intellij.diff.DiffManager.getInstance().showMerge(project, request);
+      DiffManager.getInstance().showMerge(project, request);
 
       return successRef.get() == Boolean.TRUE ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
     }
@@ -246,12 +253,57 @@ public class ApplyPatchAction extends DumbAwareAction {
   @NotNull
   private static ApplyPatchStatus showBadDiffDialog(@Nullable Project project,
                                                     @NotNull VirtualFile file,
-                                                    @NotNull ApplyPatchForBaseRevisionTexts texts,
+                                                    @NotNull final ApplyPatchForBaseRevisionTexts texts,
                                                     boolean readonly) {
-    if (texts.getLocal() == null) return ApplyPatchStatus.FAILURE;
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (texts.getLocal() == null || document == null) return ApplyPatchStatus.FAILURE;
 
-    final SimpleDiffRequest simpleRequest = createBadDiffRequest(project, file, texts, readonly);
-    DiffManager.getInstance().getDiffTool().show(simpleRequest);
+    final CharSequence oldContent = document.getImmutableCharSequence();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        document.setText(texts.getPatched());
+      }
+    });
+
+    final String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
+    final String windowTitle = "Result Of Patch Apply To " + file.getName() + " (" + fullPath + ")";
+    final List<String> titles = ContainerUtil.list(VcsBundle.message("diff.title.local"), "Patched (with problems)");
+
+    final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+    final DocumentContent originalContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
+    final DiffContent mergedContent = contentFactory.create(project, document);
+
+    final List<DiffContent> contents = ContainerUtil.list(originalContent, mergedContent);
+
+    final DiffRequest request = new com.intellij.diff.requests.SimpleDiffRequest(windowTitle, contents, titles);
+    DiffUtil.addNotification(new DiffIsApproximateNotification(), request);
+
+    final DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.MODAL);
+    if (!readonly) {
+      dialogHints.setCancelAction(new BooleanGetter() {
+        @Override
+        public boolean get() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              document.setText(oldContent);
+              FileDocumentManager.getInstance().saveDocument(document);
+            }
+          });
+          return true;
+        }
+      });
+      dialogHints.setOkAction(new BooleanGetter() {
+        @Override
+        public boolean get() {
+          FileDocumentManager.getInstance().saveDocument(document);
+          return true;
+        }
+      });
+    }
+
+    DiffManager.getInstance().showDiff(project, request, dialogHints);
 
     return ApplyPatchStatus.SUCCESS;
   }
@@ -268,7 +320,8 @@ public class ApplyPatchAction extends DumbAwareAction {
     final DocumentImpl patched = new DocumentImpl(texts.getPatched());
     patched.setReadOnly(false);
 
-    final DocumentContent mergedContent = new DocumentContent(project, patched, file.getFileType());
+    final com.intellij.openapi.diff.DocumentContent mergedContent =
+      new com.intellij.openapi.diff.DocumentContent(project, patched, file.getFileType());
     mergedContent.getDocument().setReadOnly(readonly);
     final SimpleContent originalContent = new SimpleContent(texts.getLocal().toString(), file.getFileType());
 
@@ -311,5 +364,11 @@ public class ApplyPatchAction extends DumbAwareAction {
     Messages.showErrorDialog(project,
                              VcsBundle.message("patch.apply.error", name, e.getMessage()),
                              VcsBundle.message("patch.apply.dialog.title"));
+  }
+
+  private static class DiffIsApproximateNotification extends EditorNotificationPanel {
+    public DiffIsApproximateNotification() {
+      myLabel.setText("<html>Couldn't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
+    }
   }
 }
