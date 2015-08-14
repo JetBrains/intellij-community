@@ -20,6 +20,7 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -122,7 +123,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         if (child.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
           child = processCaseAndStatementAfter(result, child, childAlignment, childWrap, indent);
         }
-        else if (myNode.getElementType() == JavaElementType.CLASS && child.getElementType() == JavaTokenType.LBRACE) {
+        else if (myNode.getPsi() instanceof PsiClass && child.getElementType() == JavaTokenType.LBRACE) {
           child = composeCodeBlock(result, child, getCodeBlockExternalIndent(), myChildrenIndent, null);
         }
         else if (myNode.getElementType() == JavaElementType.CODE_BLOCK && child.getElementType() == JavaTokenType.LBRACE
