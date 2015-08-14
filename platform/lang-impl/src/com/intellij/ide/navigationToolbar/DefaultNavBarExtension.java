@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,8 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       return ((Module)object).getName();
     }
     else if (object instanceof PsiFile) {
-      return ((PsiFile)object).getName();
+      VirtualFile file = ((PsiFile)object).getVirtualFile();
+      return file != null ? file.getPresentableName() : ((PsiFile)object).getName();
     }
     else if (object instanceof PsiDirectory) {
       return ((PsiDirectory)object).getVirtualFile().getName();
@@ -180,5 +182,52 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
         });
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getParent(PsiElement psiElement) {
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile != null) {
+      PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+      if (containingDirectory != null) {
+        return containingDirectory;
+      }
+    }
+    else if (psiElement instanceof PsiDirectory) {
+      PsiDirectory psiDirectory = (PsiDirectory)psiElement;
+      Project project = psiElement.getProject();
+
+      PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
+
+      if (parentDirectory == null) {
+        VirtualFile jar = PathUtil.getLocalFile(psiDirectory.getVirtualFile());
+        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(jar)) {
+          parentDirectory = PsiManager.getInstance(project).findDirectory(jar.getParent());
+        }
+      }
+      return parentDirectory;
+    }
+    else if (psiElement instanceof PsiFileSystemItem) {
+      VirtualFile virtualFile = ((PsiFileSystemItem)psiElement).getVirtualFile();
+      if (virtualFile == null) return null;
+      PsiManager psiManager = psiElement.getManager();
+      PsiElement resultElement;
+      if (virtualFile.isDirectory()) {
+        resultElement = psiManager.findDirectory(virtualFile);
+      }
+      else {
+        resultElement = psiManager.findFile(virtualFile);
+      }
+      if (resultElement == null) return null;
+      VirtualFile parentVFile = virtualFile.getParent();
+      if (parentVFile != null) {
+        PsiDirectory parentDirectory = psiManager.findDirectory(parentVFile);
+        if (parentDirectory != null) {
+          return parentDirectory;
+        }
+      }
+    }
+    return null;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -42,7 +43,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
 
     String message = getMessage(files);
     e.getPresentation().setEnabledAndVisible(true);
-    e.getPresentation().setText(message.replace("_", "__").replace("&", "&&"));
+    e.getPresentation().setText(StringUtil.escapeMnemonics(message));
   }
 
   private static String getMessage(VirtualFile[] files) {

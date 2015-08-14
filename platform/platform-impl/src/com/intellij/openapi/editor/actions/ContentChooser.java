@@ -330,7 +330,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   @NotNull
   public String getSelectedText() {
     StringBuilder sb = new StringBuilder();
+    boolean first = true;
     for (Object o : myList.getSelectedValues()) {
+      if (first) first = false;
+      else sb.append("\n");
       String s = ((Item)o).longText;
       sb.append(StringUtil.convertLineSeparators(s));
     }

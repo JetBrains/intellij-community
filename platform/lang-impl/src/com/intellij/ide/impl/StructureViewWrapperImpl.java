@@ -222,11 +222,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        if (!Comparing.equal(myFileEditor, fileEditor)) {
+          myFile = file;
+          rebuild();
+        }
         if (myStructureView != null) {
-          if (!Comparing.equal(myFileEditor, fileEditor)) {
-            myFile = file;
-            rebuild();
-          }
           myStructureView.navigateToSelectedElement(requestFocus);
         }
       }

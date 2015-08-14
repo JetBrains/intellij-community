@@ -26,7 +26,7 @@ import com.intellij.psi.tree.IElementType;
 /**
  * @author Maxim.Mossienko
  */
-class CustomFileTypeQuoteHandler implements QuoteHandler {
+public class CustomFileTypeQuoteHandler implements QuoteHandler {
   @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();

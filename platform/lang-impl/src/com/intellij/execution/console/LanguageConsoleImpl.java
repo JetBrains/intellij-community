@@ -43,6 +43,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -56,6 +57,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -92,6 +94,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private EditorEx myCurrentEditor;
 
+  private final MessageBusConnection myBusConnection;
   private final FocusChangeListener myFocusListener = new FocusChangeListener() {
     @Override
     public void focusGained(Editor editor) {
@@ -133,6 +136,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
 
+    myBusConnection = myProject.getMessageBus().connect();
     // action shortcuts are not yet registered
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -246,10 +250,8 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     editor.setVerticalScrollbarVisible(true);
     editor.setBorder(null);
 
-    final EditorSettings editorSettings = editor.getSettings();
-    if (myHistoryViewer != editor) {
-      editorSettings.setAdditionalLinesCount(1);
-    }
+    EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setAdditionalLinesCount(1);
     editorSettings.setAdditionalColumnsCount(1);
   }
 
@@ -451,6 +453,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     // double dispose via RunContentDescriptor and ContentImpl
     if (myHistoryViewer.isDisposed()) return;
 
+    myBusConnection.deliverImmediately();
+    Disposer.dispose(myBusConnection);
+
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myConsoleEditor);
     editorFactory.releaseEditor(myHistoryViewer);
@@ -515,7 +520,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
         }
       }
     };
-    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileEditorListener);
+    myBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileEditorListener);
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     if (editorManager.isFileOpen(myVirtualFile)) {
       fileEditorListener.fileOpened(editorManager, myVirtualFile);
@@ -632,10 +637,23 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
         newInputHeight = panelSize.height - historyPreferredHeight;
       }
 
+      int oldHistoryHeight = history.getComponent().getHeight();
       int newHistoryHeight = panelSize.height - newInputHeight;
-      // apply
+      int delta = newHistoryHeight - ((newHistoryHeight / history.getLineHeight()) * history.getLineHeight());
+      newHistoryHeight -= delta;
+      newInputHeight += delta;
+
+      // apply new bounds & scroll history viewer
       input.getComponent().setBounds(0, newHistoryHeight, panelSize.width, newInputHeight);
       history.getComponent().setBounds(0, 0, panelSize.width, newHistoryHeight);
+      input.getComponent().doLayout();
+      history.getComponent().doLayout();
+      if (newHistoryHeight < oldHistoryHeight) {
+        JViewport viewport = history.getScrollPane().getViewport();
+        Point position = viewport.getViewPosition();
+        position.translate(0, oldHistoryHeight - newHistoryHeight);
+        viewport.setViewPosition(position);
+      }
     }
   }
 

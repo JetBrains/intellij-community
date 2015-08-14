@@ -16,92 +16,58 @@
 
 package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.codeInsight.highlighting.BraceMatcher;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.codeInsight.highlighting.PairedBraceMatcherAdapter;
+import com.intellij.lang.BracePair;
+import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.CustomHighlighterTokenType.*;
+
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeBraceMatcher implements BraceMatcher {
-  @Override
-  public int getBraceTokenGroupId(IElementType tokenType) {
-    return 777;
-  }
+public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
+  public static final BracePair[] PAIRS = new BracePair[]{
+    new BracePair(L_BRACKET, R_BRACKET, true),
+    new BracePair(L_ANGLE, R_ANGLE, true),
+    new BracePair(L_PARENTH, R_PARENTH, true),
+    new BracePair(L_BRACE, R_BRACE, true),
+  };
 
   @Override
-  public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
-    final IElementType tokenType = iterator.getTokenType();
-
-    return tokenType == CustomHighlighterTokenType.L_BRACKET ||
-           tokenType == CustomHighlighterTokenType.L_ANGLE ||
-           tokenType == CustomHighlighterTokenType.L_PARENTH ||
-           tokenType == CustomHighlighterTokenType.L_BRACE;
+  public BracePair[] getPairs() {
+    return PAIRS;
   }
 
-  @Override
-  public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
-    return isRBraceToken(iterator.getTokenType());
-  }
-
-  private static boolean isRBraceToken(IElementType tokenType) {
-    return tokenType == CustomHighlighterTokenType.R_BRACKET ||
-           tokenType == CustomHighlighterTokenType.R_ANGLE ||
-           tokenType == CustomHighlighterTokenType.R_PARENTH ||
-           tokenType == CustomHighlighterTokenType.R_BRACE;
-  }
-
-  @Override
-  public boolean isPairBraces(IElementType tokenType, IElementType tokenType2) {
-    return (tokenType == CustomHighlighterTokenType.L_BRACE && tokenType2 == CustomHighlighterTokenType.R_BRACE) ||
-           (tokenType == CustomHighlighterTokenType.R_BRACE && tokenType2 == CustomHighlighterTokenType.L_BRACE) ||
-           (tokenType == CustomHighlighterTokenType.L_BRACKET && tokenType2 == CustomHighlighterTokenType.R_BRACKET) ||
-           (tokenType == CustomHighlighterTokenType.R_BRACKET && tokenType2 == CustomHighlighterTokenType.L_BRACKET) ||
-           (tokenType == CustomHighlighterTokenType.L_ANGLE && tokenType2 == CustomHighlighterTokenType.R_ANGLE) ||
-           (tokenType == CustomHighlighterTokenType.R_ANGLE && tokenType2 == CustomHighlighterTokenType.L_ANGLE) ||
-           (tokenType == CustomHighlighterTokenType.L_PARENTH && tokenType2 == CustomHighlighterTokenType.R_PARENTH) ||
-           (tokenType == CustomHighlighterTokenType.R_PARENTH && tokenType2 == CustomHighlighterTokenType.L_PARENTH);
-  }
-
-  @Override
-  public boolean isStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType) {
-    final IElementType type = iterator.getTokenType();
-    return type == CustomHighlighterTokenType.L_BRACE || type == CustomHighlighterTokenType.R_BRACE;
-  }
-
-  @Override
-  public IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
-    if (!(type instanceof CustomHighlighterTokenType.CustomElementType)) {
-      return null;
-    }
-
-    if (type == CustomHighlighterTokenType.L_BRACE) return CustomHighlighterTokenType.R_BRACE;
-    if (type == CustomHighlighterTokenType.R_BRACE) return CustomHighlighterTokenType.L_BRACE;
-
-    if (type == CustomHighlighterTokenType.L_BRACKET) return CustomHighlighterTokenType.R_BRACKET;
-    if (type == CustomHighlighterTokenType.R_BRACKET) return CustomHighlighterTokenType.L_BRACKET;
-    if (type == CustomHighlighterTokenType.L_ANGLE) return CustomHighlighterTokenType.R_ANGLE;
-    if (type == CustomHighlighterTokenType.R_ANGLE) return CustomHighlighterTokenType.L_ANGLE;
-    if (type == CustomHighlighterTokenType.L_PARENTH) return CustomHighlighterTokenType.R_PARENTH;
-    if (type == CustomHighlighterTokenType.R_PARENTH) return CustomHighlighterTokenType.L_PARENTH;
-
-    return null;
-  }
-
-  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
-    return contextType == CustomHighlighterTokenType.PUNCTUATION ||
-           contextType == CustomHighlighterTokenType.WHITESPACE ||
+    return contextType == PUNCTUATION ||
+           contextType == WHITESPACE ||
            isRBraceToken(contextType);
   }
 
   @Override
   public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {
     return openingBraceOffset;
+  }
+
+  private static boolean isRBraceToken(IElementType type) {
+    for (BracePair pair : PAIRS) {
+      if (type == pair.getRightBraceType()) return true;
+    }
+    return false;
+  }
+
+  @NotNull
+  public static PairedBraceMatcherAdapter createBraceMatcher() {
+    return new PairedBraceMatcherAdapter(new CustomFileTypeBraceMatcher(), IDENTIFIER.getLanguage()) {
+      @Override
+      public int getBraceTokenGroupId(IElementType tokenType) {
+        int id = super.getBraceTokenGroupId(tokenType);
+        return id == -1 ? -1 : 777;
+      }
+    };
   }
 }
