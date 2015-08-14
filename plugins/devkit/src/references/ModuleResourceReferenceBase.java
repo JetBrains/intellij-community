@@ -19,7 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLiteral;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ModuleResourceReferenceBase extends RuntimeModuleReferenceBase {
   private final IdeaModuleReference myModuleReference;
 
-  public ModuleResourceReferenceBase(@NotNull PsiElement element, @NotNull PsiLiteralExpression moduleNameElement) {
+  public ModuleResourceReferenceBase(@NotNull PsiElement element, @NotNull PsiLiteral moduleNameElement) {
     super(element);
     myModuleReference = findModuleReference(moduleNameElement);
   }
@@ -53,7 +53,7 @@ public abstract class ModuleResourceReferenceBase extends RuntimeModuleReference
   }
 
   @Nullable
-  private static IdeaModuleReference findModuleReference(PsiLiteralExpression moduleNameElement) {
+  private static IdeaModuleReference findModuleReference(PsiLiteral moduleNameElement) {
     for (PsiReference reference : moduleNameElement.getReferences()) {
       if (reference instanceof IdeaModuleReference) {
         return (IdeaModuleReference)reference;

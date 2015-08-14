@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLiteral;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ import java.util.Map;
  * @author nik
  */
 public class ModuleLibraryReference extends ModuleResourceReferenceBase {
-  public ModuleLibraryReference(@NotNull PsiElement libraryNameElement, @NotNull PsiLiteralExpression moduleNameElement) {
+  public ModuleLibraryReference(@NotNull PsiElement libraryNameElement, @NotNull PsiLiteral moduleNameElement) {
     super(libraryNameElement, moduleNameElement);
   }
 

@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLiteral;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ import java.util.List;
  * @author nik
  */
 public class IdeaRuntimeResourceReference extends ModuleResourceReferenceBase {
-  public IdeaRuntimeResourceReference(@NotNull PsiElement element, @NotNull PsiLiteralExpression moduleNameElement) {
+  public IdeaRuntimeResourceReference(@NotNull PsiElement element, @NotNull PsiLiteral moduleNameElement) {
     super(element, moduleNameElement);
   }
 

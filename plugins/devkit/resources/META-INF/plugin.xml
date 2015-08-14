@@ -19,6 +19,7 @@
 
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.java-i18n</depends>
+  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -174,7 +175,7 @@
     <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
-    <psi.referenceContributor language="JAVA" implementation="org.jetbrains.idea.devkit.references.RuntimeModuleReferenceContributor"/>
+    <psi.referenceContributor language="JAVA" implementation="org.jetbrains.idea.devkit.references.RuntimeModuleJavaReferenceContributor"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
   </extensions>
 
