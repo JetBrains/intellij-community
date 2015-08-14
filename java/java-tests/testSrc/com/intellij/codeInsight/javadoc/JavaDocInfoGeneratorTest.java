@@ -48,6 +48,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestMethod();
   }
 
+  public void testValueInMethodNoHash() throws Exception {
+    doTestMethod();
+  }
+
   public void testIdeadev2326() throws Exception {
     doTestMethod();
   }

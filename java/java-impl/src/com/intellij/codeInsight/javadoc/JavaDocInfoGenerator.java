@@ -1415,6 +1415,9 @@ public class JavaDocInfoGenerator {
       if (myElement instanceof PsiField) valueField = (PsiField) myElement;
     }
     else {
+      if (text.indexOf('#') == -1) {
+        text = "#" + text;
+      }
       PsiElement target = JavaDocUtil.findReferenceTarget(PsiManager.getInstance(myProject), text, myElement);
       if (target instanceof PsiField) {
         valueField = (PsiField) target;
