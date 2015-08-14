@@ -25,11 +25,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class DiffPanelBase extends JPanel implements DataProvider {
   @Nullable protected final Project myProject;
   @NotNull private final DataProvider myDataProvider;
   @NotNull protected final DiffContext myContext;
+
+  @NotNull private final List<JComponent> myPersistentNotifications = new ArrayList<JComponent>();
 
   @NotNull protected final JPanel myContentPanel;
   @NotNull protected final JPanel myNotificationsPanel;
@@ -95,8 +99,25 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   // Notifications
   //
 
+  public void setPersistentNotifications(@NotNull List<JComponent> components) {
+    for (JComponent notification : myPersistentNotifications) {
+      myNotificationsPanel.remove(notification);
+    }
+
+    myPersistentNotifications.clear();
+    myPersistentNotifications.addAll(components);
+
+    for (JComponent notification : myPersistentNotifications) {
+      myNotificationsPanel.add(notification);
+    }
+    myNotificationsPanel.revalidate();
+  }
+
   public void resetNotifications() {
     myNotificationsPanel.removeAll();
+    for (JComponent notification : myPersistentNotifications) {
+      myNotificationsPanel.add(notification);
+    }
     myNotificationsPanel.revalidate();
   }
 

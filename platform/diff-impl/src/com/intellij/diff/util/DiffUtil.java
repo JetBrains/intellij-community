@@ -895,6 +895,22 @@ public class DiffUtil {
     return null;
   }
 
+  public static void addNotification(@NotNull JComponent component, @NotNull UserDataHolder holder) {
+    List<JComponent> components = holder.getUserData(DiffUserDataKeys.NOTIFICATIONS);
+    if (components == null) {
+      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, Collections.singletonList(component));
+    }
+    else {
+      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(components, component));
+    }
+  }
+
+  public static List<JComponent> getCustomNotifications(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
+    List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
+    return ContainerUtil.concat(ContainerUtil.notNullize(contextComponents), ContainerUtil.notNullize(requestComponents));
+  }
+
   //
   // DataProvider
   //

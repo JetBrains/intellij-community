@@ -135,6 +135,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     installEditorListeners();
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
+    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
   }
 
   @Override
