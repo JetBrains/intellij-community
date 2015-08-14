@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import org.jetbrains.platform.loader.repository.RuntimeModuleId
+
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
@@ -85,7 +88,7 @@ String patchAppDescriptor(String targetDirectory) {
 
 def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
   projectBuilder.stage("layout to $targetDirectory")
-  generateModuleDescriptors(null, true)
+  createRuntimeModuleDescriptorGenerator().generateDescriptorsForModules()
   List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]
   List<String> openapiModules = [platformApiModules,
     "compiler-openapi",
@@ -148,6 +151,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     exclude(name: "tips")
   }
 
+  List<String> platformModules = []
   def info = layout(targetDirectory) {
     dir("lib") {
       dir("rt") {
@@ -249,12 +253,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("platform-loader")
       }
 
-      fileset(dir: "$home/jps/lib") {
-        include(name: "optimizedFileManager.jar")
-      }
-
-      fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
-
       fileset(dir: "$home/build/kotlinc/lib") {
         include(name: "kotlin-runtime.jar")
         include(name: "kotlin-reflect.jar")
@@ -265,7 +263,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           include(name: "trove4j_src.jar")
         }
       }
-      fileset(dir: "$home/xml/relaxng/lib", includes: "*.jar")
 
       dir("ant") {
         fileset(dir: "$home/lib/ant") {
@@ -280,6 +277,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("annotations-java8")
       }
     }
+
+    platformModules.addAll(currentLayoutInfo.modules)
 
     layoutCommunityPlugins(home, maySkipAndroidPlugin())
 
@@ -319,10 +318,15 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     }
   }
 
+  registerLibraryDescriptor(RuntimeModuleId.projectLibrary("KotlinJavaRuntime"), ["../lib/kotlin-runtime.jar", "../lib/kotlin-reflect.jar"])
+  registerJarDirLibraryDescriptor(RuntimeModuleId.projectLibrary("Ant"), new File("${home}/community/lib/ant/lib"), "../lib/ant/lib")
   // product specific custom layout
   customLayout(targetDirectory)
 
-  generateModuleDescriptors(targetDirectory)
+
+  copyPlatformLibraries(targetDirectory, platformModules, info)
+  generateRuntimeModuleDescriptors(targetDirectory, info)
+
   reorder(home, targetDirectory)
   return info
 }
@@ -502,65 +506,16 @@ def reorder(String home, String targetDirectory) {
 
 def layoutAndroid(String androidHome, String androidToolsBaseHome) {
   dir("plugins") {
-    layoutPlugin("android") {
-      fileset(dir: "${androidHome}/android/lib") {
-        include(name: "**/*.jar")
-        exclude(name: "**/fest-*.jar")
-        exclude(name: "src/*.jar")
-      }
-
-      jar("android-common.jar") {
-        module("android-common")
-      }
-
-      jar("android-rt.jar") {
-        module("android-rt")
-      }
-
-      jar("common.jar") {
-        module("common")
-      }
-      jar("sdklib.jar") {
-        module("sdklib")
-      }
-      jar("sdk-common.jar") {
-        module("sdk-common")
-      }
-      jar("layoutlib-api.jar") {
-        module("layoutlib-api")
-      }
-      jar("manifest-merger.jar") {
-        module("manifest-merger")
-      }
-      jar("sdk-tools.jar") {
-        module("assetstudio")
-        module("ddmlib")
-        module("dvlib")
-        module("draw9patch")
-        module("lint-api")
-        module("lint-checks")
-        module("ninepatch")
-        module("perflib")
-        module("rpclib")
-        module("chartlib")
-        module("builder-model")
-        module("builder-test-api")
-      }
-      jar("androidAnnotations.jar") {
-        fileset(dir: "$androidHome/android/annotations")
-      }
-      dir("jps") {
-        jar("android-gradle-jps.jar") { module("android-gradle-jps") }
-      }
-      dir("device-art-resources") {
-        fileset(dir: "$androidHome/android/device-art-resources")
-      }
-
-      dir("jps") {
-        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
-      }
-      dir("templates") {
-        fileset(dir: "$androidToolsBaseHome/templates")
+    layoutPluginByRuntimeModules("android")
+    dir("android") {
+      dir("lib") {
+        fileset(file: "$androidHome/android/lib/gson-2.2.4.jar")
+        jar("androidAnnotations.jar") {
+          fileset(dir: "$androidHome/android/annotations")
+        }
+        dir("templates") {
+          fileset(dir: "$androidToolsBaseHome/templates")
+        }
       }
     }
   }

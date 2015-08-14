@@ -44,6 +44,7 @@
     <module>lib.Kryo</module>
     <module>lib.gradle-tooling-extension-api.Gradle</module>
     <module>lib.gradle-tooling-extension-impl.GradleGuava</module>
+    <module>lib.gradle.GradleGuava</module>
     <module>lib.gradle.GradleJnaPosix</module>
     <module>lib.gradle.Gradle</module>
     <module>lib.gradle-jps-plugin.Gradle</module>

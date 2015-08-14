@@ -7,5 +7,6 @@ contributor ([ctx], {
   method name:"requireProperty", type:"String", params:[key:"String"]
   method name:"requireProperty", type:"String", params:[key:"String", defaultValue:"String"]
   method name:"notifyArtifactBuilt", type:"void", params:[artifactPath:"String"]
+  method name:"createRuntimeModuleDescriptorGenerator", type:"org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorsGenerator", params:[:]
   property name: "productProperties", type: "ProductProperties"
 })

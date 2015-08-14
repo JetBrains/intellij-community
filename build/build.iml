@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="groovy_rt" scope="RUNTIME" />
     <orderEntry type="module" module-name="platform-module-descriptors-generator" exported="" />
     <orderEntry type="module" module-name="devkit-jps-model" />
+    <orderEntry type="module" module-name="platform-loader" exported="" />
   </component>
 </module>

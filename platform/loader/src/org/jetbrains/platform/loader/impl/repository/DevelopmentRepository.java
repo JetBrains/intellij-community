@@ -38,7 +38,7 @@ public class DevelopmentRepository extends PlatformRepositoryBase {
    */
   public DevelopmentRepository(@NotNull File projectHome, @NotNull File outputRoot) {
     if (Boolean.parseBoolean(System.getProperty(RepositoryConstants.CHECK_DEVELOPMENT_REPOSITORY_UP_TO_DATE_PROPERTY, "true"))) {
-      ModuleDescriptorsGenerationRunner.runGenerator(projectHome, outputRoot, null);
+      ModuleDescriptorsGenerationRunner.runGenerator(projectHome, outputRoot);
     }
     myOutputRoot = outputRoot;
     myLibraryModules = loadModulesFromZip(outputRoot);

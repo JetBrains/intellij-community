@@ -58,18 +58,28 @@ final class JpsGantTool {
       def layoutInfo = new LayoutInfo()
 
       ["module", "moduleTests", "zip", "dir"].each {tag ->
-        binding.setVariable(tag, {Object[] args ->
-          if (args.length == 1) {
-            binding.ant."$tag"(name: args[0])
+        binding.setVariable(tag, { Object[] args ->
+          if (tag == "zip" || tag == "dir") {
+            layoutInfo.pushPathComponent(args[0].toString())
           }
-          else if (args.length == 2) {
-            binding.ant."$tag"(name: args[0], args[1])
+          try {
+            if (args.length == 1) {
+              binding.ant."$tag"(name: args[0])
+            }
+            else if (args.length == 2) {
+              binding.ant."$tag"(name: args[0], args[1])
+            }
+            else {
+              builder.error("unexpected number of parameters for $tag")
+            }
           }
-          else {
-            builder.error("unexpected number of parameters for $tag")
+          finally {
+            if (tag == "zip" || tag == "dir") {
+              layoutInfo.popPathComponent()
+            }
           }
           if (tag == "module") {
-            layoutInfo.usedModules << args[0].toString()
+            layoutInfo.addModule(args[0].toString())
           }
         })
       }
@@ -87,12 +97,19 @@ final class JpsGantTool {
             params.duplicate = "fail"
           }
           params.compress = builder.compressJars
-          binding.ant.jar(params, args[1])
+          try {
+            layoutInfo.pushPathComponent(params.name)
+            binding.ant.jar(params, args[1])
+          }
+          finally {
+            layoutInfo.popPathComponent()
+          }
         }
         else {
           builder.error("unexpected number of parameters for 'jar' task: $args.length")
         }
       })
+      binding.setVariable("currentLayoutInfo", layoutInfo)
 
       def meta = new Expando()
       body.delegate = meta

@@ -30,24 +30,21 @@ public class ModuleDescriptorsGenerationRunner {
   private final File myIdeaProjectHome;
   private final File myOutputDir;
   private String myProjectConfigurationHash;
-  private File myIdeDist;
 
-  public ModuleDescriptorsGenerationRunner(File ideaProjectHome, File outputDir, File ideDist) {
+  public ModuleDescriptorsGenerationRunner(File ideaProjectHome, File outputDir) {
     myIdeaProjectHome = ideaProjectHome;
     myOutputDir = outputDir;
-    myIdeDist = ideDist;
   }
 
   public static void main(String[] args) {
     final File ideaProjectHome = new File("").getAbsoluteFile().getParentFile();
     File outputDir = new File(ideaProjectHome, "out/classes");
-    File ideDist = args.length > 0 ? new File(args[0]) : null;
-    runGenerator(ideaProjectHome, outputDir, ideDist);
+    runGenerator(ideaProjectHome, outputDir);
     System.exit(0);
   }
 
-  public static void runGenerator(File ideaProjectHome, File outputDir, File ideDist) {
-    ModuleDescriptorsGenerationRunner runner = new ModuleDescriptorsGenerationRunner(ideaProjectHome, outputDir, ideDist);
+  public static void runGenerator(File ideaProjectHome, File outputDir) {
+    ModuleDescriptorsGenerationRunner runner = new ModuleDescriptorsGenerationRunner(ideaProjectHome, outputDir);
     if (!runner.isUpToDate()) {
       runner.runGenerator();
     }
@@ -140,7 +137,7 @@ public class ModuleDescriptorsGenerationRunner {
       }
       UrlClassLoader classLoader = UrlClassLoader.build().urls(classpath).get();
       Class<?> aClass = Class.forName("org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorsGenerator", true, classLoader);
-      aClass.getMethod("generate", String.class, String.class, File.class).invoke(null, myIdeaProjectHome.getAbsolutePath(), null, myIdeDist);
+      aClass.getMethod("generate", String.class, String.class).invoke(null, myIdeaProjectHome.getAbsolutePath(), null);
       FileUtil.writeToFile(getProjectConfigurationHashFile(), getProjectConfigurationHash());
     }
     catch (Exception e) {

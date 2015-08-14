@@ -17,7 +17,6 @@ package org.jetbrains.jps.devkit.builder;
 
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,26 +25,28 @@ import java.util.List;
  */
 public class RuntimeModuleDescriptorData {
   private final RuntimeModuleId myId;
-  private final List<File> myModuleRoots;
+  private final List<String> myModuleRoots;
   private final List<RuntimeModuleId> myDependencies;
 
-  public RuntimeModuleDescriptorData(RuntimeModuleId id, List<File> moduleRoots) {
+  public RuntimeModuleDescriptorData(RuntimeModuleId id, List<String> moduleRoots) {
     this(id, moduleRoots, Collections.<RuntimeModuleId>emptyList());
   }
 
   public RuntimeModuleDescriptorData(RuntimeModuleId id,
-                                     List<File> moduleRoots,
+                                     List<String> moduleRoots,
                                      List<RuntimeModuleId> dependencies) {
     myId = id;
     myModuleRoots = moduleRoots;
     myDependencies = dependencies;
   }
 
+
+
   public RuntimeModuleId getModuleId() {
     return myId;
   }
 
-  public List<File> getModuleRoots() {
+  public List<String> getModuleRoots() {
     return myModuleRoots;
   }
 

@@ -15,8 +15,41 @@
  */
 package org.jetbrains.jps.gant;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author nik
  */
 public class LayoutInfo extends org.jetbrains.jps.LayoutInfo {
+  private final MultiMap<String, String> myModuleToPath = new LinkedMultiMap<String, String>();
+  private final List<String> myPathComponents = new ArrayList<String>();
+
+  public void pushPathComponent(String name) {
+    myPathComponents.add(name);
+  }
+
+  public void popPathComponent() {
+    myPathComponents.remove(myPathComponents.size() - 1);
+  }
+
+  public void addModule(String moduleName) {
+    String path = StringUtil.join(myPathComponents, "/");
+    getUsedModules().add(moduleName);
+    myModuleToPath.putValue(moduleName, path);
+  }
+
+  public Set<String> getModules() {
+    return myModuleToPath.keySet();
+  }
+
+  public Collection<String> getModulePaths(String moduleName) {
+    return myModuleToPath.get(moduleName);
+  }
 }

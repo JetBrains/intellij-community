@@ -18,6 +18,7 @@
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorsGenerator
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.*
@@ -1179,24 +1180,18 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
   return usedJars
 })
 
-binding.setVariable("generateModuleDescriptors", { String distDir, boolean inModuleOutputs = false ->
-  projectBuilder.info("Generating module descriptors")
-  ant.java(classname: "org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorsGenerator", fork: true, failonerror: true) {
-    if (inModuleOutputs) {
-      arg(value: "--in-module-outputs")
-      arg(value: home)
+binding.setVariable("createRuntimeModuleDescriptorGenerator", { ->
+  return new RuntimeModuleDescriptorsGenerator(project, new RuntimeModuleDescriptorsGenerator.MessageHandler() {
+    @Override
+    void showProgressMessage(String message) {
+      projectBuilder.info(message)
     }
-    else {
-      arg(value: home)
-      arg(value: distDir)
+
+    @Override
+    void reportError(String message) {
+      projectBuilder.warning(message)
     }
-    classpath {
-      pathelement(location: projectBuilder.moduleOutput(findModule("jps-plugin-system")))
-      projectBuilder.moduleRuntimeClasspath(findModule("platform-module-descriptors-generator"), false).each {
-        pathelement(location: it)
-      }
-    }
-  }
+  })
 })
 
 
@@ -1206,7 +1201,7 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
   clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
-  generateModuleDescriptors(null, true)
+  createRuntimeModuleDescriptorGenerator().generateDescriptorsForModules()
   return usedJars
 })
 
