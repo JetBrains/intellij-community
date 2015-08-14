@@ -46,8 +46,6 @@ public class MacColorPipette extends ColorPipetteBase {
   private static final int SIZE = PIXELS * ZOOM;
   @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, true);
 
-  private final Rectangle myCaptureRect = new Rectangle(0, 0, PIXELS, PIXELS);
-
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
     super(picker, listener);
   }
@@ -98,9 +96,8 @@ public class MacColorPipette extends ColorPipetteBase {
             Point offset = new Point(10, 10);
             //final int pixels = UIUtil.isRetina(graphics2d) ? PIXELS / 2 + 1 : PIXELS;
             int left = PIXELS / 2 + 1;
-            myCaptureRect.setBounds(mouseLoc.x - left, mouseLoc.y - left, PIXELS, PIXELS);
-
-            BufferedImage captureScreen = captureScreen(pickerDialog, myCaptureRect);
+            Rectangle captureRectangle = new Rectangle(mouseLoc.x - left, mouseLoc.y - left, PIXELS, PIXELS);
+            BufferedImage captureScreen = captureScreen(pickerDialog, captureRectangle);
             graphics2d.setComposite(AlphaComposite.Clear);
             graphics2d.fillRect(0, 0, getWidth(), getHeight());
 
