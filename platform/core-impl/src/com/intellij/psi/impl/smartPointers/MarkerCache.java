@@ -37,19 +37,19 @@ import java.util.Set;
  */
 class MarkerCache {
   private final Set<ManualRangeMarker> myMarkerSet = Collections.newSetFromMap(new WeakHashMap<ManualRangeMarker, Boolean>());
-  private WeakValueHashMap<Trinity, ManualRangeMarker> myByRange = new WeakValueHashMap<Trinity, ManualRangeMarker>();
-  private volatile Trinity<Integer, Map<Trinity, ManualRangeMarker>, FrozenDocument> myUpdatedRanges;
+  private WeakValueHashMap<RangeKey, ManualRangeMarker> myByRange = new WeakValueHashMap<RangeKey, ManualRangeMarker>();
+  private volatile Trinity<Integer, Map<RangeKey, ManualRangeMarker>, FrozenDocument> myUpdatedRanges;
 
   @Nullable
-  private static Trinity keyOf(@NotNull ManualRangeMarker marker) {
+  private static RangeKey keyOf(@NotNull ManualRangeMarker marker) {
     ProperTextRange range = marker.getRange();
-    return range == null ? null : Trinity.create(range, marker.isGreedyLeft(), marker.isGreedyRight());
+    return range == null ? null : new RangeKey(range, marker.isGreedyLeft(), marker.isGreedyRight());
   }
 
   @NotNull
   synchronized ManualRangeMarker obtainMarker(@NotNull ProperTextRange range, @NotNull FrozenDocument frozen, boolean greedyLeft, boolean greedyRight) {
-    WeakValueHashMap<Trinity, ManualRangeMarker> byRange = getByRangeCache();
-    Trinity key = Trinity.create(range, greedyLeft, greedyRight);
+    WeakValueHashMap<RangeKey, ManualRangeMarker> byRange = getByRangeCache();
+    RangeKey key = new RangeKey(range, greedyLeft, greedyRight);
     ManualRangeMarker marker = byRange.get(key);
     if (marker == null) {
       marker = new ManualRangeMarker(frozen, range, greedyLeft, greedyRight, true);
@@ -60,11 +60,11 @@ class MarkerCache {
     return marker;
   }
 
-  private WeakValueHashMap<Trinity, ManualRangeMarker> getByRangeCache() {
+  private WeakValueHashMap<RangeKey, ManualRangeMarker> getByRangeCache() {
     if (myByRange == null) {
-      myByRange = new WeakValueHashMap<Trinity, ManualRangeMarker>();
+      myByRange = new WeakValueHashMap<RangeKey, ManualRangeMarker>();
       for (ManualRangeMarker marker : myMarkerSet) {
-        Trinity key = keyOf(marker);
+        RangeKey key = keyOf(marker);
         if (key != null) {
           myByRange.put(key, marker);
         }
@@ -73,11 +73,11 @@ class MarkerCache {
     return myByRange;
   }
 
-  private Map<Trinity, ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  private Map<RangeKey, ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     int eventCount = events.size();
     assert eventCount > 0;
 
-    Trinity<Integer, Map<Trinity, ManualRangeMarker>, FrozenDocument> cache = myUpdatedRanges;
+    Trinity<Integer, Map<RangeKey, ManualRangeMarker>, FrozenDocument> cache = myUpdatedRanges;
     if (cache != null && cache.first.intValue() == eventCount) return cache.second;
 
     //noinspection SynchronizeOnThis
@@ -85,7 +85,7 @@ class MarkerCache {
       cache = myUpdatedRanges;
       if (cache != null && cache.first.intValue() == eventCount) return cache.second;
 
-      Map<Trinity, ManualRangeMarker> answer = ContainerUtil.newHashMap();
+      Map<RangeKey, ManualRangeMarker> answer = ContainerUtil.newHashMap();
       if (cache != null && cache.first < eventCount) {
         // apply only the new events
         answer.putAll(cache.second);
@@ -93,7 +93,7 @@ class MarkerCache {
       }
       else {
         for (ManualRangeMarker marker : myMarkerSet) {
-          Trinity key = keyOf(marker);
+          RangeKey key = keyOf(marker);
           if (key != null) {
             answer.put(key, marker);
           }
@@ -108,11 +108,11 @@ class MarkerCache {
 
   private static FrozenDocument applyEvents(@NotNull FrozenDocument frozen,
                                   @NotNull List<DocumentEvent> events,
-                                  Map<Trinity, ManualRangeMarker> map) {
+                                  Map<RangeKey, ManualRangeMarker> map) {
     for (DocumentEvent event : events) {
       frozen = frozen.applyEvent(event, 0);
       final DocumentEvent corrected = SelfElementInfo.withFrozen(frozen, event);
-      for (Map.Entry<Trinity, ManualRangeMarker> entry : map.entrySet()) {
+      for (Map.Entry<RangeKey, ManualRangeMarker> entry : map.entrySet()) {
         ManualRangeMarker currentRange = entry.getValue();
         if (currentRange != null) {
           entry.setValue(currentRange.getUpdatedRange(corrected));
@@ -131,11 +131,11 @@ class MarkerCache {
       }
     }), SelfElementInfo.class);
 
-    Map<Trinity, ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
+    Map<RangeKey, ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
     Map<ManualRangeMarker, ManualRangeMarker> newStates = ContainerUtil.newHashMap();
     for (SelfElementInfo info : infos) {
       ManualRangeMarker marker = info.getRangeMarker();
-      Trinity key = marker == null ? null : keyOf(marker);
+      RangeKey key = marker == null ? null : keyOf(marker);
       if (key != null) {
         newStates.put(marker, updated.get(key));
       }
@@ -163,6 +163,49 @@ class MarkerCache {
 
     ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(keyOf(marker));
     return updated == null ? null : updated.getRange();
+  }
+
+  private static class RangeKey {
+    final int start;
+    final int end;
+    final int flags;
+
+    RangeKey(ProperTextRange range, boolean greedyLeft, boolean greedyRight) {
+      start = range.getStartOffset();
+      end = range.getEndOffset();
+      flags = (greedyLeft ? 2 : 0) + (greedyRight ? 1 : 0);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof RangeKey)) return false;
+
+      RangeKey key = (RangeKey)o;
+
+      if (start != key.start) return false;
+      if (end != key.end) return false;
+      if (flags != key.flags) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = start;
+      result = 31 * result + end;
+      result = 31 * result + flags;
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "RangeKey{" +
+             "start=" + start +
+             ", end=" + end +
+             ", flags=" + flags +
+             '}';
+    }
   }
 
 }
