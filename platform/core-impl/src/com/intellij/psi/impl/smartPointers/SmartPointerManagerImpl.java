@@ -223,6 +223,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
+  @TestOnly
+  public int getMarkerCount(@NotNull Document document) {
+    synchronized (lock) {
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      return file == null ? 0 : getMarkerCache(file).getMarkerCount();
+    }
+  }
+
   @Override
   public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);

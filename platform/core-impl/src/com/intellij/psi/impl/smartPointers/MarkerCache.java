@@ -27,6 +27,7 @@ import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +54,7 @@ class MarkerCache {
     RangeKey key = new RangeKey(range, greedyLeft, greedyRight, persistent);
     ManualRangeMarker marker = byRange.get(key);
     if (marker == null) {
-      marker = new ManualRangeMarker(frozen, range, greedyLeft, greedyRight, true);
+      marker = new ManualRangeMarker(frozen, range, greedyLeft, greedyRight, persistent);
       myMarkerSet.add(marker);
       byRange.put(key, marker);
       myUpdatedRanges = null;
@@ -164,6 +165,11 @@ class MarkerCache {
   ProperTextRange getUpdatedRange(@NotNull ManualRangeMarker marker, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(keyOf(marker));
     return updated == null ? null : updated.getRange();
+  }
+
+  @TestOnly
+  synchronized int getMarkerCount() {
+    return myMarkerSet.size();
   }
 
   private static class RangeKey {
