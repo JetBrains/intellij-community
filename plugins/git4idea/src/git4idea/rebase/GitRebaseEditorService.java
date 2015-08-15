@@ -20,12 +20,12 @@ import com.intellij.openapi.components.ServiceManager;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import gnu.trove.THashMap;
-import org.apache.commons.codec.DecoderException;
-import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.Map;
 import java.util.Random;
@@ -87,9 +87,12 @@ public class GitRebaseEditorService {
   public synchronized String getEditorCommand() {
     synchronized (myScriptLock) {
       if (myEditorCommand == null) {
+        //todo[nik, runtime modules] move GitRebaseEditorMain to git4idea-rt?
         ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorMain.class);
+        generator.addToClasspath(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("git4idea")));
+        generator.addToClasspath(RuntimeModuleId.module("git4idea-rt"));
+        generator.addToClasspath(RuntimeModuleId.projectLibrary("commons-codec"));
         generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().getPort()));
-        generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
         myEditorCommand = generator.commandLine();
       }
       return myEditorCommand;

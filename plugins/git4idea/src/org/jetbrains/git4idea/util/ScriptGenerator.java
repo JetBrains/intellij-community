@@ -21,12 +21,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Script generator utility class. It uses to generate a temporary scripts that
@@ -73,45 +78,45 @@ public class ScriptGenerator {
   public ScriptGenerator(final String prefix, final Class mainClass) {
     myPrefix = prefix;
     myMainClass = mainClass;
-    addClasses(myMainClass);
   }
 
   /**
-   * Add jar or directory that contains the class to the classpath
-   *
-   * @param classes classes which sources will be added
-   * @return this script generator
+   * @deprecated use {@link #addToClasspath(RuntimeModuleId)} instead
    */
   public ScriptGenerator addClasses(final Class... classes) {
     for (Class<?> c : classes) {
-      addPath(PathUtil.getJarPathForClass(c));
+      addToClasspath(Collections.singletonList(PathUtil.getJarPathForClass(c)));
     }
     return this;
   }
 
   /**
-   * Add path to class path. The methods checks if the path has been already added to the classpath.
+   * Add paths to class path. The methods checks if the path has been already added to the classpath.
    *
-   * @param path the path to add
+   * @param paths the paths to add
    */
-  private void addPath(final String path) {
-    if (!myPaths.contains(path)) {
-      // the size of path is expected to be quite small, so no optimization is done here
-      myPaths.add(path);
+  public void addToClasspath(final Collection<String> paths) {
+    for (String path : paths) {
+      if (!myPaths.contains(path)) {
+        // the size of path is expected to be quite small, so no optimization is done here
+        myPaths.add(path);
+      }
     }
   }
 
   /**
-   * Add source for the specified resource
-   *
-   * @param base     the resource base
-   * @param resource the resource name
-   * @return this script generator
+   * @deprecated use {@link #addToClasspath(RuntimeModuleId)} instead
    */
   public ScriptGenerator addResource(final Class base, @NonNls String resource) {
-    addPath(getJarForResource(base, resource));
+    addToClasspath(Collections.singletonList(getJarForResource(base, resource)));
     return this;
   }
+
+  public ScriptGenerator addToClasspath(@NotNull RuntimeModuleId moduleId) {
+    addToClasspath(PlatformLoader.getInstance().getRepository().getModuleClasspath(moduleId));
+    return this;
+  }
+
 
   /**
    * Add internal parameters for the script
@@ -196,7 +201,7 @@ public class ScriptGenerator {
    * @return a path to classpath entry
    */
   @SuppressWarnings({"SameParameterValue"})
-  public static String getJarForResource(Class context, String res) {
+  private static String getJarForResource(Class context, String res) {
     String resourceRoot = PathManager.getResourceRoot(context, res);
     return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
   }

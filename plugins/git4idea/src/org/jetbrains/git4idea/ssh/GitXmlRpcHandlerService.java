@@ -20,13 +20,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
-import org.apache.commons.codec.DecoderException;
-import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.GitExternalApp;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,7 +87,8 @@ public abstract class GitXmlRpcHandlerService<T> {
   @NotNull
   public File getScriptPath() throws IOException {
     ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
-    generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
+    generator.addToClasspath(RuntimeModuleId.module("git4idea-rt"));
+    generator.addToClasspath(RuntimeModuleId.projectLibrary("commons-codec"));
     customizeScriptGenerator(generator);
 
     synchronized (SCRIPT_FILE_LOCK) {

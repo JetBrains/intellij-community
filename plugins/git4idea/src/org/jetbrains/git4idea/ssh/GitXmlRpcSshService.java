@@ -15,10 +15,10 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import com.trilead.ssh2.KnownHosts;
 import git4idea.commands.GitSSHGUIHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.Vector;
 
@@ -33,8 +33,7 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
 
   @Override
   protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
-    generator.addClasses(KnownHosts.class);
-    generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
+    generator.addToClasspath(RuntimeModuleId.module("git4idea-rt"));
   }
 
   @NotNull
