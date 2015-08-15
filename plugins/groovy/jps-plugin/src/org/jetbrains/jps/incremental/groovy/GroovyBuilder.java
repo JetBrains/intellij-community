@@ -27,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -37,7 +36,6 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
@@ -55,6 +53,9 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.PlatformRepository;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -503,10 +504,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   static List<String> getGroovyRtRoots() {
-    File rt = ClasspathBootstrap.getResourceFile(GroovyBuilder.class);
-    File constants = ClasspathBootstrap.getResourceFile(GroovyRtConstants.class);
-    return Arrays.asList(new File(rt.getParentFile(), rt.isFile() ? "groovy_rt.jar" : "groovy_rt").getPath(), 
-                         new File(constants.getParentFile(), constants.isFile() ? "groovy-rt-constants.jar" : "groovy-rt-constants").getPath());
+    //todo[nik,runtime modules] remove unnecessary dependencies and replace by 'getModuleClassPath' for 'groovy_rt' module
+    PlatformRepository repository = PlatformLoader.getInstance().getRepository();
+    List<String> paths = new ArrayList<String>();
+    paths.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("groovy_rt")));
+    paths.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("groovy-rt-constants")));
+    return paths;
   }
 
   public static boolean isGroovyFile(String path) {
