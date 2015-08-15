@@ -374,6 +374,7 @@ public class FindDialog extends DialogWrapper {
         if(myResultsPreviewTable != null &&
           myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
           newAction.run();
+          return;
         }
 
         if (previousAction != null) {
