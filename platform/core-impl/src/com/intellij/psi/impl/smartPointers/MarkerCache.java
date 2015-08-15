@@ -18,6 +18,7 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.NullableFunction;
@@ -111,7 +112,9 @@ class MarkerCache {
                                   Map<RangeKey, ManualRangeMarker> map) {
     for (DocumentEvent event : events) {
       frozen = frozen.applyEvent(event, 0);
-      final DocumentEvent corrected = SelfElementInfo.withFrozen(frozen, event);
+      final DocumentEvent corrected =
+        new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(),
+                              event.isWholeTextReplaced());
       for (Map.Entry<RangeKey, ManualRangeMarker> entry : map.entrySet()) {
         ManualRangeMarker currentRange = entry.getValue();
         if (currentRange != null) {
@@ -159,8 +162,6 @@ class MarkerCache {
 
   @Nullable
   ProperTextRange getUpdatedRange(@NotNull ManualRangeMarker marker, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
-    if (events.isEmpty()) return marker.getRange();
-
     ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(keyOf(marker));
     return updated == null ? null : updated.getRange();
   }

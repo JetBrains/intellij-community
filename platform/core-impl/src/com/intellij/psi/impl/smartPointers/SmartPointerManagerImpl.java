@@ -210,9 +210,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @NotNull
-  MarkerCache getMarkerCache(@NotNull Document document) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    assert file != null;
+  MarkerCache getMarkerCache(@NotNull VirtualFile file) {
     return getNotNullPointerList(file).markerCache;
   }
 

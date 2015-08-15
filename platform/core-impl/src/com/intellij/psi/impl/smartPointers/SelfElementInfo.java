@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -44,6 +43,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private final Class myType;
   private final Project myProject;
   private final Language myLanguage;
+  private final MarkerCache myMarkerCache;
   @Nullable private ManualRangeMarker myRangeMarker;
   @Nullable private ProperTextRange myPsiRange;
 
@@ -59,6 +59,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
     myProject = project;
     myPsiRange = range;
+    myMarkerCache = myVirtualFile == null ? null : ((SmartPointerManagerImpl)SmartPointerManager.getInstance(project)).getMarkerCache(myVirtualFile);
 
     Document document = getDocumentManager().getCachedDocument(containingFile);
     if (document != null) {
@@ -69,12 +70,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
     FrozenDocument frozenDocument = getDocumentManager().getLastCommittedDocument(document);
-    myRangeMarker = getMarkerCache(document).obtainMarker(ProperTextRange.create(range), frozenDocument, false, false);
-  }
-
-  @NotNull
-  private MarkerCache getMarkerCache(@NotNull Document document) {
-    return ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).getMarkerCache(document);
+    myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, false, false);
   }
 
   private PsiDocumentManagerBase getDocumentManager() {
@@ -260,18 +256,15 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (myRangeMarker != null) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        FrozenDocument frozen = getDocumentManager().getLastCommittedDocument(document);
-        List<DocumentEvent> events = getDocumentManager().getEventsSinceCommit(document);
-        return getMarkerCache(document).getUpdatedRange(myRangeMarker, frozen, events);
+        PsiDocumentManagerBase documentManager = getDocumentManager();
+        List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
+        if (!events.isEmpty()) {
+          return myMarkerCache.getUpdatedRange(myRangeMarker, documentManager.getLastCommittedDocument(document), events);
+        }
       }
       return myRangeMarker.getRange();
     }
     return myPsiRange;
-  }
-
-  @NotNull
-  static DocumentEventImpl withFrozen(FrozenDocument frozen, DocumentEvent e) {
-    return new DocumentEventImpl(frozen, e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp(), e.isWholeTextReplaced());
   }
 
   @NotNull
