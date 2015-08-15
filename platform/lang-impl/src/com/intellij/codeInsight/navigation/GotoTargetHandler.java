@@ -242,7 +242,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     };
   }
 
-  public static PsiElementListCellRenderer createRenderer(GotoData gotoData, PsiElement eachTarget) {
+  protected static PsiElementListCellRenderer createRenderer(GotoData gotoData, PsiElement eachTarget) {
     PsiElementListCellRenderer renderer = null;
     for (GotoTargetRendererProvider eachProvider : Extensions.getExtensions(GotoTargetRendererProvider.EP_NAME)) {
       renderer = eachProvider.getRenderer(eachTarget, gotoData);
