@@ -39,6 +39,7 @@ import java.util.List;
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SelfElementInfo");
+  private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   private final VirtualFile myVirtualFile;
   private final Class myType;
   private final Project myProject;
@@ -46,6 +47,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private final MarkerCache myMarkerCache;
   @Nullable private ManualRangeMarker myRangeMarker;
   @Nullable private ProperTextRange myPsiRange;
+  private final PsiDocumentManagerBase myPsiDocManager;
 
   SelfElementInfo(@NotNull Project project,
                   @NotNull ProperTextRange range,
@@ -60,8 +62,9 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myProject = project;
     myPsiRange = range;
     myMarkerCache = myVirtualFile == null ? null : ((SmartPointerManagerImpl)SmartPointerManager.getInstance(project)).getMarkerCache(myVirtualFile);
+    myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
 
-    Document document = getDocumentManager().getCachedDocument(containingFile);
+    Document document = myPsiDocManager.getCachedDocument(containingFile);
     if (document != null) {
       setRange(range, document);
     }
@@ -69,17 +72,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
-    FrozenDocument frozenDocument = getDocumentManager().getLastCommittedDocument(document);
+    FrozenDocument frozenDocument = myPsiDocManager.getLastCommittedDocument(document);
     myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, false, false, true);
-  }
-
-  private PsiDocumentManagerBase getDocumentManager() {
-    return (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
   }
 
   @Override
   public Document getDocumentToSynchronize() {
-    return myVirtualFile == null ? null : FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
+    return myVirtualFile == null ? null : ourFileDocManager.getCachedDocument(myVirtualFile);
   }
 
   // before change
@@ -88,8 +87,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (myRangeMarker != null) return; // already tracks changes
     if (myPsiRange == null) return; // invalid
 
-    Document document = myVirtualFile == null ? null : FileDocumentManager.getInstance().getDocument(myVirtualFile);
-    if (document == null || !getDocumentManager().isCommitted(document)) {
+    Document document = myVirtualFile == null ? null : ourFileDocManager.getDocument(myVirtualFile);
+    if (document == null || !myPsiDocManager.isCommitted(document)) {
       // we only have PSI range and now they say the document is uncommitted, so this PSI range is useless
       // so, just invalidate
       myPsiRange = null;
@@ -256,7 +255,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (myRangeMarker != null) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        PsiDocumentManagerBase documentManager = getDocumentManager();
+        PsiDocumentManagerBase documentManager = myPsiDocManager;
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
           return myMarkerCache.getUpdatedRange(myRangeMarker, documentManager.getLastCommittedDocument(document), events);
