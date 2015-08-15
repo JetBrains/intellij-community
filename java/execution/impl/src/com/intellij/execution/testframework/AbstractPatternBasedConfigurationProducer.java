@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -31,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -153,13 +153,13 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
 
   public static String getQName(PsiElement psiMember, Location location) {
     if (psiMember instanceof PsiClass) {
-      return ((PsiClass)psiMember).getQualifiedName();
+      return ClassUtil.getJVMClassName((PsiClass)psiMember);
     }
     else if (psiMember instanceof PsiMember) {
       final PsiClass containingClass = location instanceof MethodLocation
                                        ? ((MethodLocation)location).getContainingClass(): ((PsiMember)psiMember).getContainingClass();
       assert containingClass != null;
-      return containingClass.getQualifiedName() + "," + ((PsiMember)psiMember).getName();
+      return ClassUtil.getJVMClassName(containingClass) + "," + ((PsiMember)psiMember).getName();
     } else if (psiMember instanceof PsiPackage) {
       return ((PsiPackage)psiMember).getQualifiedName();
     }
