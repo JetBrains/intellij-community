@@ -300,7 +300,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
             PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("Slf4j")));
         }
         //todo[nik,runtime-modules] include resource-en.jar to module paths
-        params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
+        params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("platform-resources-en")));
         params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(forceMaven2));
 
         String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
