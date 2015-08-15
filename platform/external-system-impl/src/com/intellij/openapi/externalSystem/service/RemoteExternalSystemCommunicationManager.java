@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service;
 
-import com.intellij.CommonBundle;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -41,7 +40,6 @@ import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemPr
 import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -129,6 +127,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
           RuntimeModuleId.module("core-api"),
           RuntimeModuleId.module("platform-api"),
           RuntimeModuleId.module("platform-impl"),
+          RuntimeModuleId.module("platform-resources-en"),
           RuntimeModuleId.module("extensions"),
           RuntimeModuleId.module("external-system-api"),
           RuntimeModuleId.module("external-system-impl"),
@@ -141,8 +140,6 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         for (RuntimeModuleId module : modules) {
           params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(module));
         }
-        ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.ProjectBundle", ProjectBundle.class);
-        ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
         params.getClassPath().addAll(classPath);
 
         params.setMainClass(MAIN_CLASS_NAME);

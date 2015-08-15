@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
@@ -28,11 +27,13 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.ExternalProcessUtil;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.PlatformRepository;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -63,9 +64,10 @@ class ForkedGroovyc implements GroovycFlavor {
     List<String> classpath = new ArrayList<String>();
     if (myOptimizeClassLoading) {
       classpath.addAll(GroovyBuilder.getGroovyRtRoots());
-      classpath.add(ClasspathBootstrap.getResourcePath(Function.class));
-      classpath.add(ClasspathBootstrap.getResourcePath(UrlClassLoader.class));
-      classpath.add(ClasspathBootstrap.getResourceFile(THashMap.class).getPath());
+      PlatformRepository repository = PlatformLoader.getInstance().getRepository();
+      classpath.addAll(repository.getModuleClasspath(RuntimeModuleId.module("util-rt")));
+      classpath.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("util")));
+      classpath.addAll(repository.getModuleRootPaths(RuntimeModuleId.projectLibrary("Trove4j")));
     } else {
       classpath.addAll(compilationClassPath);
     }
