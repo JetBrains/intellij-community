@@ -70,7 +70,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
     FrozenDocument frozenDocument = getDocumentManager().getLastCommittedDocument(document);
-    myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, false, false);
+    myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, false, false, true);
   }
 
   private PsiDocumentManagerBase getDocumentManager() {

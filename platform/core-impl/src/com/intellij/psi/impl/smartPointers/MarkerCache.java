@@ -44,13 +44,13 @@ class MarkerCache {
   @Nullable
   private static RangeKey keyOf(@NotNull ManualRangeMarker marker) {
     ProperTextRange range = marker.getRange();
-    return range == null ? null : new RangeKey(range, marker.isGreedyLeft(), marker.isGreedyRight());
+    return range == null ? null : new RangeKey(range, marker.isGreedyLeft(), marker.isGreedyRight(), marker.isSurviveOnExternalChange());
   }
 
   @NotNull
-  synchronized ManualRangeMarker obtainMarker(@NotNull ProperTextRange range, @NotNull FrozenDocument frozen, boolean greedyLeft, boolean greedyRight) {
+  synchronized ManualRangeMarker obtainMarker(@NotNull ProperTextRange range, @NotNull FrozenDocument frozen, boolean greedyLeft, boolean greedyRight, boolean persistent) {
     WeakValueHashMap<RangeKey, ManualRangeMarker> byRange = getByRangeCache();
-    RangeKey key = new RangeKey(range, greedyLeft, greedyRight);
+    RangeKey key = new RangeKey(range, greedyLeft, greedyRight, persistent);
     ManualRangeMarker marker = byRange.get(key);
     if (marker == null) {
       marker = new ManualRangeMarker(frozen, range, greedyLeft, greedyRight, true);
@@ -171,10 +171,10 @@ class MarkerCache {
     final int end;
     final int flags;
 
-    RangeKey(ProperTextRange range, boolean greedyLeft, boolean greedyRight) {
+    RangeKey(ProperTextRange range, boolean greedyLeft, boolean greedyRight, boolean persistent) {
       start = range.getStartOffset();
       end = range.getEndOffset();
-      flags = (greedyLeft ? 2 : 0) + (greedyRight ? 1 : 0);
+      flags = (persistent ? 4 : 0) + (greedyLeft ? 2 : 0) + (greedyRight ? 1 : 0);
     }
 
     @Override

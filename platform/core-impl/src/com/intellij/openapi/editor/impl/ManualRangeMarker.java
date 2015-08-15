@@ -84,6 +84,10 @@ public class ManualRangeMarker {
     return myGreedyRight;
   }
 
+  public boolean isSurviveOnExternalChange() {
+    return myLinesCols != null;
+  }
+
   @Nullable
   public ProperTextRange getRange() {
     return myValid ? myRange : null;
