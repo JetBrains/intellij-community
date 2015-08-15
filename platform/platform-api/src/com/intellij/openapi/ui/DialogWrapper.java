@@ -1573,7 +1573,12 @@ public abstract class DialogWrapper {
   public void show() {
     invokeShow();
   }
-
+  
+  /**
+   * Show dialog and check if exit code is OK_EXIT_CODE
+   * 
+   * @return True if exit code is OK_EXIT_CODE
+   */
   public boolean showAndGet() {
     if (!isModal()) {
       throw new IllegalStateException("The showAndGet() method is for modal dialogs only");
