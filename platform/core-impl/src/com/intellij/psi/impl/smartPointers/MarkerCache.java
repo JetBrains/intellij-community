@@ -76,6 +76,8 @@ class MarkerCache {
   }
 
   private Map<RangeKey, ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+    if (myMarkerSet.isEmpty()) return Collections.emptyMap();
+
     int eventCount = events.size();
     assert eventCount > 0;
 
