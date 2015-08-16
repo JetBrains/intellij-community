@@ -64,7 +64,7 @@ public class MacColorPipette extends ColorPipetteBase {
           super.keyPressed(event);
           int diff = BitUtil.isSet(event.getModifiers(), Event.SHIFT_MASK) ? 10 : 1;
           Point location = updateLocation();
-          if (location != null) {
+          if (myRobot != null && location != null) {
             switch (event.getKeyCode()) {
               case KeyEvent.VK_DOWN:
                 myRobot.mouseMove(location.x, location.y + diff);
@@ -92,14 +92,18 @@ public class MacColorPipette extends ColorPipetteBase {
           if (pickerDialog != null && pickerDialog.isShowing()) {
             Point mouseLoc = updateLocation();
             if (mouseLoc == null) return;
-            final Color newColor = myRobot.getPixelColor(mouseLoc.x, mouseLoc.y);
 
-            Graphics2D graphics2d = ((Graphics2D)g);
-            Point offset = new Point(10, 10);
             //final int pixels = UIUtil.isRetina(graphics2d) ? PIXELS / 2 + 1 : PIXELS;
             int left = PIXELS / 2 + 1;
             Rectangle captureRectangle = new Rectangle(mouseLoc.x - left, mouseLoc.y - left, PIXELS, PIXELS);
             BufferedImage captureScreen = captureScreen(pickerDialog, captureRectangle);
+            if (captureScreen == null) return;
+
+            //noinspection UseJBColor
+            Color newColor = new Color(captureScreen.getRGB(captureRectangle.width / 2, captureRectangle.height / 2));
+
+            Graphics2D graphics2d = ((Graphics2D)g);
+            Point offset = new Point(10, 10);
             graphics2d.setComposite(AlphaComposite.Clear);
             graphics2d.fillRect(0, 0, getWidth(), getHeight());
 
@@ -180,7 +184,7 @@ public class MacColorPipette extends ColorPipetteBase {
 
   @Override
   public boolean isAvailable() {
-    return myRobot != null && captureScreen(null, new Rectangle(0, 0, 1, 1)) != null;
+    return captureScreen(null, new Rectangle(0, 0, 1, 1)) != null;
   }
 
   @Nullable
