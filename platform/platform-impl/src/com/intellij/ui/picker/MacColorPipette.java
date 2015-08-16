@@ -155,7 +155,7 @@ public class MacColorPipette extends ColorPipetteBase {
     graphics.fillRoundRect(x, y, width, height, 10, 10);
     
     graphics.setColor(Gray._255);
-    String colorString = currentColor.getRed() + " " + currentColor.getBlue() + " " + currentColor.getGreen();
+    String colorString = currentColor.getRed() + " " + currentColor.getGreen() + currentColor.getBlue();
     FontMetrics metrics = graphics.getFontMetrics();
     int stringWidth = metrics.stringWidth(colorString);
     int stringHeight = metrics.getHeight();
