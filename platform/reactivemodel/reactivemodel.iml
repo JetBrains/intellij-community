@@ -12,9 +12,9 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" name="javassist-3.20.0-GA" level="project" />
-    <orderEntry type="library" name="reflections-0.9.10" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="library" name="reflections-0.9.10" level="project" />
+    <orderEntry type="library" name="javassist-3.20.0-GA" level="project" />
   </component>
 </module>

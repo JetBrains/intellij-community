@@ -32,7 +32,7 @@ public class ModelMappingTest {
   @Test
   public fun constructorMap() {
     val user = User("Anton", "Petrov")
-    val myUser = KDM.map<MyUser>(user).toModel()
+    val myUser = user.toModel()
 
     myUser as MapModel
     assertEquals(PrimitiveModel(user.getName()), myUser["name"])
@@ -44,7 +44,7 @@ public class ModelMappingTest {
     val car = Car()
     car.name = "Chevro"
     car.year = 1992
-    val mini = KDM.map<MiniCar>(car).toModel() as MapModel
+    val mini = car.toModel() as MapModel
     assertEquals(PrimitiveModel(car.name), mini["name"])
     assertEquals(car.year, value(mini["year"]))
   }
@@ -52,7 +52,7 @@ public class ModelMappingTest {
   @Test
   public fun recursiveTest() {
     val gar = Garage(User("Nikolay", "Ivanov"), "my garage")
-    val gar2 = KDM.map<Garage2>(gar).toModel() as MapModel
+    val gar2 = gar.toModel() as MapModel
 
     val user = gar2["user"] as MapModel
 
@@ -65,7 +65,7 @@ public class ModelMappingTest {
   @Test
   public fun mapperTest() {
     val color = MyColor(20)
-    val col2 = KDM.map<StrColor>(color).toModel() as MapModel
+    val col2 = color.toModel() as MapModel
     assertTrue(col2.size() == 1)
     assertEquals(PrimitiveModel(color.value.toString()), col2["str"])
   }

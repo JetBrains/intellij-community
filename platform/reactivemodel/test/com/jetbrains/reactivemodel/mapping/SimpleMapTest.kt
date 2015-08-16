@@ -17,6 +17,7 @@ package com.jetbrains.reactivemodel.mapping
 
 import com.jetbrains.reactivemodel.mapping.KDM
 import org.junit.Test
+import kotlin.reflect.jvm.java
 import kotlin.test.assertEquals
 
 public class SimpleMapTest {

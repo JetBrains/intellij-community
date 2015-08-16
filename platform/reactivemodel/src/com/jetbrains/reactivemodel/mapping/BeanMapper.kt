@@ -16,6 +16,7 @@
 package com.jetbrains.reactivemodel.mapping
 
 import java.lang.annotation.*
+import kotlin.reflect.KClass
 
 /**
  * Define custom bean mapper. Mapper should have default constructor
@@ -23,4 +24,4 @@ import java.lang.annotation.*
 Documented
 Retention(RetentionPolicy.RUNTIME)
 Target(value = ElementType.TYPE)
-public annotation class BeanMapper(val from: Class<out Any>, val to: Class<out Any>)
+public annotation class BeanMapper(public val from: KClass<out Any>, public val to: KClass<out Any>)

@@ -20,7 +20,7 @@ import com.jetbrains.reactivemodel.mapping.BeanMapper
 import com.jetbrains.reactivemodel.mapping.Mapper
 import java.awt.Color
 
-@BeanMapper(javaClass<Color>(), javaClass<String>())
+@BeanMapper(from = Color::class, to = String::class)
 public class ColorMapper() : Mapper<Color, String> {
   override fun map(obj: Color): String = "#" + ColorUtil.toHex(obj)
 }

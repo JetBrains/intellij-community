@@ -23,7 +23,7 @@ import com.jetbrains.reactivemodel.mapping.Original
 import com.jetbrains.reactivemodel.mapping.model.ModelBean
 import com.jetbrains.reactivemodel.models.MapModel
 
-@Mapping(javaClass<UsageViewPresentation>())
+@Mapping(UsageViewPresentation::class)
 data class UsageViewPresentationBean(
     val tabText: String,
     val scopeText: String,
@@ -41,10 +41,10 @@ data class UsageViewPresentationBean(
     val tabName: String?,
     val toolwindowTitle: String?,
     val dynamicCodeUsagesString: String?,
-    val mergeDupLinesAvailable: Boolean) : ModelBean
+    val mergeDupLinesAvailable: Boolean)
 
 
-@Mapping(javaClass<TextChunk>())
+@Mapping(TextChunk::class)
 data class TextChunkBean(val text: String,
                          @Original("attributes") val attr: TextAttributesBean)
 

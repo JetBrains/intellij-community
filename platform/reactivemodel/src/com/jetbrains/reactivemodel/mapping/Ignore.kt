@@ -23,4 +23,4 @@ import java.lang.annotation.*
 Documented
 Retention(RetentionPolicy.RUNTIME)
 Target(value = ElementType.FIELD)
-public annotation class Ignore()
+public annotation class Ignore

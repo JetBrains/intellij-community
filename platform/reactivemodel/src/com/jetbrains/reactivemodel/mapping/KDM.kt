@@ -15,7 +15,7 @@
  */
 package com.jetbrains.reactivemodel.mapping
 
-
+import kotlin.reflect.jvm.java
 import com.jetbrains.reactivemodel.Model
 import com.jetbrains.reactivemodel.mapping.model.ModelMapper
 import com.jetbrains.reactivemodel.util.Primitives
@@ -26,6 +26,10 @@ import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+
+public fun Any.toModel(): Model {
+  return ModelMapper.map(KDM.map<Any>(this))
+}
 
 /**
  * Kotlin data mapper.
@@ -50,20 +54,20 @@ public object KDM {
     val types = reflections.getTypesAnnotatedWith(javaClass<Mapping>())
     for (type in types) {
       val annotation = type.getAnnotation(javaClass<Mapping>())
-      typeBindings.put(annotation.clz, type)
-      if (annotation.mapper != javaClass<Mapper<*, *>>()) {
-        registerMapper(annotation.clz as Class<Any>, type as Class<Any>, annotation.mapper.newInstance() as Mapper<Any, Any>);
+      typeBindings.put(annotation.value.java, type)
+      if (annotation.mapper.java != javaClass<Mapper<*, *>>()) {
+        registerMapper(annotation.value.java, type, (annotation.mapper.java as Class<Mapper<*, *>>).newInstance());
       }
     }
 
     val customMappers = reflections.getTypesAnnotatedWith(javaClass<BeanMapper>())
     for (mapper in customMappers) {
       val anno = mapper.getAnnotation(javaClass<BeanMapper>())
-      registerMapper(anno.from, anno.to as Class<Any>, mapper.newInstance() as Mapper<Any, Any>)
+      registerMapper(anno.from.java, anno.to.java, mapper.newInstance() as Mapper<Any, Any>)
     }
   }
 
-  public fun <F, T>registerMapper(clz: Class<F>, to: Class<T>, mapper: Mapper<in F, T>) {
+  public fun <F, T>registerMapper(clz: Class<in F>, to: Class<out T>, mapper: Mapper<in F, out T>) {
     mappers[clz] = mapper
     typeBindings.put(clz, to)
   }
@@ -85,9 +89,6 @@ public object KDM {
     }
     return mapper.map(obj)
   }
-
-  // TODO. Is this method should be here? it is convenient, but isn't logical
-  public fun toModel(obj: Any): Model = ModelMapper.map(map<Any>(obj))
 
   @suppress("UNCHECKED_CAST")
   private fun <T> forSuperClass(clz: Class<Any>): Mapper<Any, T>? {
@@ -203,15 +204,14 @@ public object KDM {
     val pMapper = object : Mapper<Any, Any> {
       override fun map(obj: Any) = obj
     }
-    for (primClz in Primitives.TYPES) {
-      val clz = primClz as Class<Any>
+    for (clz in Primitives.TYPES) {
       registerMapper(clz, clz, pMapper)
     }
   }
 
   private fun registerCollections() {
-    val listClz = javaClass<List<*>>()
-    registerMapper(listClz, listClz, object : Mapper<List<Any?>, List<Any?>> {
+    val clz = javaClass<List<*>>()
+    registerMapper(clz, clz, object : Mapper<List<Any?>, List<Any?>> {
       override fun map(obj: List<Any?>): List<Any?> {
         return obj.map { KDM.map<Any?>(it) }.toArrayList()
       }

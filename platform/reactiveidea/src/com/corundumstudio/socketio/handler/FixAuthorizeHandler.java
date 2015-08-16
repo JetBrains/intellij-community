@@ -27,6 +27,8 @@ import com.corundumstudio.socketio.scheduler.SchedulerKey;
 import com.corundumstudio.socketio.store.StoreFactory;
 import com.corundumstudio.socketio.store.pubsub.ConnectMessage;
 import com.corundumstudio.socketio.store.pubsub.PubSubStore;
+import com.github.krukow.clj_lang.PersistentHashMap;
+import com.jetbrains.reactivemodel.models.MapModel;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
@@ -73,6 +75,7 @@ public class FixAuthorizeHandler extends AuthorizeHandler {
     this.ackManager = ackManager;
     this.clientsBox = clientsBox;
   }
+
 
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {

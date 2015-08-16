@@ -28,6 +28,7 @@ import com.jetbrains.reactiveidea.mapping.UsageViewPresentationBean
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.mapping.KDM
 import com.jetbrains.reactivemodel.mapping.model.ModelBean
+import com.jetbrains.reactivemodel.mapping.toModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -69,7 +70,7 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
           model.putIn(path / tree, MapModel(hashMapOf("0" to convertTree(usageView.root), tagsField to tagsModel("tree"))))
         }
       }
-      m.putIn(path / presentation, KDM.map<ModelBean>(usageView.getPresentation()).toModel())
+      m.putIn(path / presentation, usageView.getPresentation().toModel())
           .putIn(path / name, PrimitiveModel(usageView.getPresentation().getTabName()))
     }
 
@@ -95,17 +96,17 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
     if (node is UsageNode) {
       res[tagsField] = tagsModel("usage")
       val chunks = node.getUsage().getPresentation().getText()
-      res["chunks"] = KDM.toModel(arrayListOf(*chunks))
+      res["chunks"] = arrayListOf(*chunks).toModel()
 
     } else if (node is GroupNode) {
       res[tagsField] = tagsModel("usage-group")
       res["count"] = PrimitiveModel(node.getRecursiveUsageCount())
       if (node.isRoot()) {
         val textAttr = UsageViewTreeCellRenderer.patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES).toTextAttributes()
-        res["attr"] = KDM.toModel(textAttr)
+        res["attr"] = textAttr.toModel()
       }
       val usNumAttr = UsageViewTreeCellRenderer.patchAttrs(node, ourNumberOfUsagesAttribute).toTextAttributes()
-      res["usage-num-attr"] = KDM.toModel(usNumAttr)
+      res["usage-num-attr"] = usNumAttr.toModel()
     } else if (node is UsageTargetNode) {
       res[tagsField] = tagsModel("usage-target")
     }

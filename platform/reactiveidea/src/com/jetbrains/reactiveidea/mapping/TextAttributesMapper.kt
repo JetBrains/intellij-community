@@ -22,7 +22,7 @@ import com.jetbrains.reactivemodel.mapping.Mapping
 import com.jetbrains.reactivemodel.mapping.Original
 import java.awt.Color
 
-@Mapping(javaClass<TextAttributes>(), mapper = javaClass<TextAttributesMapper>())
+@Mapping(TextAttributes::class, mapper = TextAttributesMapper::class)
 data class TextAttributesBean(
     val color: String?,
     val backgroundColor: String?,

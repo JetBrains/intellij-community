@@ -16,9 +16,11 @@
 package com.jetbrains.reactivemodel.mapping
 
 import java.lang.annotation.*
+import kotlin.reflect.KClass
 
 /**
  * Define pojo, which would be used for converting specified class.
+ *
  *
  * Annotation can contain class of mapper, which would be used for converting, or else
  * mapper would be generated based on field information
@@ -26,4 +28,4 @@ import java.lang.annotation.*
 Documented
 Retention(RetentionPolicy.RUNTIME)
 Target(value = ElementType.TYPE)
-public annotation class Mapping(val clz: Class<*>, val mapper: Class<out Mapper<*, *>> = javaClass<Mapper<*, *>>())
+annotation public class Mapping(public val value: KClass<out Any>, public val mapper: KClass<out Mapper<*, *>> = Mapper::class)
