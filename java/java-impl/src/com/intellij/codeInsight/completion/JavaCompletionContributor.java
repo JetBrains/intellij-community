@@ -54,7 +54,9 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -291,7 +293,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     result.stopHere();
   }
 
-  private void registerClassFromTypeElement(LookupElement element, InheritorsHolder inheritors) {
+  private static void registerClassFromTypeElement(LookupElement element, InheritorsHolder inheritors) {
     PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getPsiType();
     PsiClass aClass =
       type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0 ? ((PsiClassType)type).resolve() : null;
@@ -348,6 +350,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
     final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
+    final PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
     LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
       @Override
       public void consume(final PsiReference reference, final CompletionResultSet result) {
@@ -377,6 +380,22 @@ public class JavaCompletionContributor extends CompletionContributor {
                 if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
                     !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
                   item.setTailType(TailType.NONE);
+                }
+                if (item instanceof JavaMethodCallElement) {
+                  JavaMethodCallElement call = (JavaMethodCallElement)item;
+                  final PsiMethod method = call.getObject();
+                  if (method.getTypeParameters().length > 0) {
+                    final PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
+                    PsiType matchingExpectation = returned == null ? null : ContainerUtil.find(expectedTypes, new Condition<PsiType>() {
+                      @Override
+                      public boolean value(PsiType type) {
+                        return type.isAssignableFrom(returned);
+                      }
+                    });
+                    if (matchingExpectation != null && SmartCompletionDecorator.hasUnboundTypeParams(method, matchingExpectation)) {
+                      call.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, matchingExpectation), position);
+                    }
+                  }
                 }
 
                 result.addElement(element);
