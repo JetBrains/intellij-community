@@ -16,12 +16,14 @@
 
 package com.intellij.psi.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -60,7 +62,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.*;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, ProjectComponent {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
@@ -840,7 +842,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return false;
   }
 
-  @TestOnly
+  @VisibleForTesting
   public void clearUncommittedDocuments() {
     for (UncommittedInfo info : myUncommittedInfos.values()) {
       Disposer.dispose(info);
@@ -860,6 +862,29 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         myPerformBackgroundCommit = true;
       }
     });
+  }
+
+  @Override
+  public void projectOpened() {
+  }
+
+  @Override
+  public void projectClosed() {
+  }
+
+  @Override
+  public void initComponent() {
+  }
+
+  @Override
+  public void disposeComponent() {
+    clearUncommittedDocuments();
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return getClass().getSimpleName();
   }
 
   @NotNull
