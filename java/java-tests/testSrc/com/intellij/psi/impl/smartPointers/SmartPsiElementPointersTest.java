@@ -715,4 +715,15 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals(TextRange.create(1, 2), range1.getRange());
     assertEquals(TextRange.create(1, 2), range2.getRange());
   }
+
+  public void testNonPhysicalFile() {
+    PsiJavaFile file = (PsiJavaFile)myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject())).getContainingFile().copy();
+    SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(file, TextRange.create(1, 2));
+
+    file.getViewProvider().getDocument().insertString(0, " ");
+
+    assertEquals(TextRange.create(2, 3), pointer.getRange());
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(2, 3), pointer.getRange());
+  }
 }

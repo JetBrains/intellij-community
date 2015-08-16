@@ -28,7 +28,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ import java.util.List;
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SelfElementInfo");
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
-  private final VirtualFile myVirtualFile;
+  @NotNull private final VirtualFile myVirtualFile;
   private final Class myType;
   private final Project myProject;
   private final Language myLanguage;
@@ -55,13 +54,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                   @NotNull PsiFile containingFile,
                   @NotNull Language language) {
     myLanguage = language;
-    myVirtualFile = PsiUtilCore.getVirtualFile(containingFile);
+    myVirtualFile = containingFile.getViewProvider().getVirtualFile();
     myType = anchorClass;
     assert !PsiFile.class.isAssignableFrom(anchorClass) : "FileElementInfo must be used for files";
 
     myProject = project;
     myPsiRange = range;
-    myMarkerCache = myVirtualFile == null ? null : ((SmartPointerManagerImpl)SmartPointerManager.getInstance(project)).getMarkerCache(myVirtualFile);
+    myMarkerCache = ((SmartPointerManagerImpl)SmartPointerManager.getInstance(project)).getMarkerCache(myVirtualFile);
     myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
 
     Document document = myPsiDocManager.getCachedDocument(containingFile);
@@ -78,7 +77,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public Document getDocumentToSynchronize() {
-    return myVirtualFile == null ? null : ourFileDocManager.getCachedDocument(myVirtualFile);
+    return ourFileDocManager.getCachedDocument(myVirtualFile);
   }
 
   // before change
@@ -87,7 +86,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (myRangeMarker != null) return; // already tracks changes
     if (myPsiRange == null) return; // invalid
 
-    Document document = myVirtualFile == null ? null : ourFileDocManager.getDocument(myVirtualFile);
+    Document document = ourFileDocManager.getDocument(myVirtualFile);
     if (document == null || !myPsiDocManager.isCommitted(document)) {
       // we only have PSI range and now they say the document is uncommitted, so this PSI range is useless
       // so, just invalidate
@@ -163,9 +162,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  public static PsiFile restoreFileFromVirtual(final VirtualFile virtualFile, @NotNull final Project project, @Nullable final Language language) {
-    if (virtualFile == null) return null;
-
+  public static PsiFile restoreFileFromVirtual(@NotNull final VirtualFile virtualFile, @NotNull final Project project, @Nullable final Language language) {
     return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiFile>() {
       @Override
       public PsiFile compute() {
@@ -218,8 +215,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public int elementHashCode() {
-    VirtualFile virtualFile = myVirtualFile;
-    return virtualFile == null ? 0 : virtualFile.hashCode();
+    return myVirtualFile.hashCode();
   }
 
   @Override
@@ -245,6 +241,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
