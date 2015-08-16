@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -714,6 +715,33 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(TextRange.create(1, 2), range1.getRange());
     assertEquals(TextRange.create(1, 2), range2.getRange());
+  }
+
+  public void testMoveText() {
+    PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
+    DocumentEx document = (DocumentEx)file.getViewProvider().getDocument();
+
+    SmartPsiElementPointer<PsiClass> pointer1 =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[0]);
+    SmartPsiElementPointer<PsiClass> pointer2 =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[1]);
+    assertEquals("C1", pointer1.getElement().getName());
+    assertEquals("C2", pointer2.getElement().getName());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer1).getCachedElement());
+    assertNull(((SmartPointerEx) pointer2).getCachedElement());
+
+    TextRange range = file.getClasses()[1].getTextRange();
+    document.moveText(range.getStartOffset(), range.getEndOffset(), 0);
+
+    System.out.println(pointer1.getRange());
+    System.out.println(pointer2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    assertEquals("C1", pointer1.getElement().getName());
+    assertEquals("C2", pointer2.getElement().getName());
   }
 
   public void testNonPhysicalFile() {

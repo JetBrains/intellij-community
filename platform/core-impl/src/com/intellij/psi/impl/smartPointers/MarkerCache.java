@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.NullableFunction;
@@ -114,10 +115,17 @@ class MarkerCache {
                                   @NotNull List<DocumentEvent> events,
                                   Map<RangeKey, ManualRangeMarker> map) {
     for (DocumentEvent event : events) {
-      frozen = frozen.applyEvent(event, 0);
-      final DocumentEvent corrected =
-        new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(),
-                              event.isWholeTextReplaced());
+      DocumentEvent corrected;
+      if ((event instanceof RetargetRangeMarkers)) {
+        RetargetRangeMarkers retarget = (RetargetRangeMarkers)event;
+        corrected = new RetargetRangeMarkers(frozen, retarget.getStartOffset(), retarget.getEndOffset(), retarget.getMoveDestinationOffset());
+      }
+      else {
+        frozen = frozen.applyEvent(event, 0);
+        corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(),
+                                          event.isWholeTextReplaced());
+      }
+
       for (Map.Entry<RangeKey, ManualRangeMarker> entry : map.entrySet()) {
         ManualRangeMarker currentRange = entry.getValue();
         if (currentRange != null) {
