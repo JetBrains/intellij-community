@@ -41,7 +41,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
 
   @Override
   public boolean isValid() {
-    return super.isValid() && myDelegate.isValid();
+    return myDelegate.isValid() && super.isValid();
   }
 
   @Override
