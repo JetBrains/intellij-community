@@ -44,6 +44,8 @@ public class MacColorPipette extends ColorPipetteBase {
   private static final int PIXELS = 17;
   private static final int ZOOM = 10;
   private static final int SIZE = PIXELS * ZOOM;
+  private static final int DIALOG_SIZE = SIZE + 20;
+
   @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, true);
 
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
@@ -121,10 +123,12 @@ public class MacColorPipette extends ColorPipetteBase {
           }
         }
       };
-      
       pickerDialog.add(label);
-      pickerDialog.setSize(SIZE + 20, SIZE + 20);
+      pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
       pickerDialog.setBackground(myTransparentColor);
+      
+      BufferedImage emptyImage = UIUtil.createImage(1, 1, Transparency.TRANSLUCENT);
+      pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(emptyImage, new Point(0, 0), "ColorPicker"));
     }
     return pickerDialog;
   }
