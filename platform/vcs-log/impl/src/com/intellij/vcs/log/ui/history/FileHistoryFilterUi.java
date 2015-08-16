@@ -19,27 +19,34 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
+import static com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
+
 public class FileHistoryFilterUi implements VcsLogFilterUi {
   @NotNull private final FilePath myPath;
+  @NotNull private final FileHistoryUiProperties myProperties;
 
-  public FileHistoryFilterUi(@NotNull FilePath path) {
+  public FileHistoryFilterUi(@NotNull FilePath path, @NotNull FileHistoryUiProperties properties) {
     myPath = path;
+    myProperties = properties;
   }
 
   @NotNull
   @Override
   public VcsLogFilterCollection getFilters() {
     VcsLogStructureFilterImpl fileFilter = new VcsLogStructureFilterImpl(Collections.singleton(myPath));
-    return new VcsLogFilterCollectionImpl(null, null, null, null, null, fileFilter, null);
+    VcsLogBranchFilterImpl branchFilter =
+      myProperties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES) ? null : VcsLogBranchFilterImpl.fromBranch("HEAD");
+    return new VcsLogFilterCollectionBuilder().with(fileFilter).with(branchFilter).build();
   }
 
   @Override
   public void setFilter(@NotNull VcsLogFilter filter) {
+    throw new UnsupportedOperationException();
   }
 }

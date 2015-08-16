@@ -55,11 +55,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     super(logData, project, manager, refresher);
     myUiProperties = uiProperties;
 
-    myFilterUi = new FileHistoryFilterUi(path);
+    myFilterUi = new FileHistoryFilterUi(path, uiProperties);
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
-    myRefresher.onFiltersChange(myFilterUi.getFilters());
+    updateFilter();
 
     for (VcsLogHighlighterFactory factory : ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
                                                                  f -> HIGHLIGHTERS.contains(f.getId()))) {
@@ -133,6 +133,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myFilterUi.getFilters();
   }
 
+  private void updateFilter() {
+    myRefresher.onFiltersChange(myFilterUi.getFilters());
+  }
+
   @NotNull
   public FileHistoryUiProperties getProperties() {
     return myUiProperties;
@@ -149,6 +153,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
       if (property == MainVcsLogUiProperties.SHOW_DETAILS) {
         myFileHistoryPanel.showDetails(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
+      }
+      else if (property == FileHistoryUiProperties.SHOW_ALL_BRANCHES) {
+        updateFilter();
       }
     }
   }
