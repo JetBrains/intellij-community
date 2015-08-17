@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
@@ -46,8 +47,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
-
-import static com.intellij.ui.ListScrollingUtil.ensureSelectionExists;
 
 public class JdkChooserPanel extends JPanel {
   private JList myList = null;
@@ -226,7 +225,7 @@ public class JdkChooserPanel extends JPanel {
       jdkChooserPanel.selectJdk(jdkToSelect);
     }
     else {
-      ensureSelectionExists(jdkChooserPanel.myList);
+      ScrollingUtil.ensureSelectionExists(jdkChooserPanel.myList);
     }
     new DoubleClickListener() {
       @Override

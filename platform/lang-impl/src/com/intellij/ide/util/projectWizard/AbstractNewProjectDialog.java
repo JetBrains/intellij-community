@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -68,7 +68,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     UiNotifyConnector.doWhenFirstShown(myList, new Runnable() {
       @Override
       public void run() {
-        ListScrollingUtil.ensureSelectionExists(myList);
+        ScrollingUtil.ensureSelectionExists(myList);
       }
     });
     return component;
