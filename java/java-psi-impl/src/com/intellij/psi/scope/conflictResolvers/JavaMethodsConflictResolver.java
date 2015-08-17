@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.scope.conflictResolvers;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -594,19 +593,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (class1 != class2) {
       if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
-        if (MethodSignatureUtil.isSubsignature(method1.getSignature(getSubstitutor(info1, map)), method2.getSignature(getSubstitutor(info2, map)))) {
+        if (isSubSignature(method1, method2, classSubstitutor1, classSubstitutor2, boxingHappened)) {
           return Specifics.SECOND;
         }
-        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
-          return Specifics.SECOND;
-        }
-      }
-      else if (MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) &&
-               MethodSignatureUtil.isSubsignature(method2.getSignature(getSubstitutor(info2, map)), method1.getSignature(getSubstitutor(info1, map)))) {
-        return Specifics.FIRST;
       }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
-        if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
+        if (isSubSignature(method2, method1, classSubstitutor2, classSubstitutor1, boxingHappened)) {
           return Specifics.FIRST;
         }
       }
@@ -625,6 +617,16 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     return Specifics.NEITHER;
+  }
+
+  private static boolean isSubSignature(PsiMethod method1,
+                                        PsiMethod method2,
+                                        PsiSubstitutor classSubstitutor1,
+                                        PsiSubstitutor classSubstitutor2,
+                                        int[] boxingHappened) {
+    return MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) &&
+           MethodSignatureUtil.isSubsignature(method1.getSignature(classSubstitutor1), method2.getSignature(classSubstitutor2)) ||
+           method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0;
   }
 
   private boolean isApplicableTo(@NotNull PsiType[] types2AtSite,
