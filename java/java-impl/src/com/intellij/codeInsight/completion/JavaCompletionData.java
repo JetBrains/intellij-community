@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -40,6 +41,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
@@ -173,7 +175,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
   public JavaCompletionData(){
     declareCompletionSpaces();
 
-    initVariantsInFileScope();
     initVariantsInClassScope();
 
     defineScopeEquivalence(PsiMethod.class, PsiClassInitializer.class);
@@ -226,9 +227,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
     declareFinalScope(PsiLiteralExpression.class);
     declareFinalScope(PsiComment.class);
-  }
-
-  protected void initVariantsInFileScope(){
   }
 
   /**
@@ -348,7 +346,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
   }
 
-  public void fillCompletions(CompletionParameters parameters, final Consumer<LookupElement> result) {
+  public static void addKeywords(CompletionParameters parameters, final Consumer<LookupElement> result) {
     final PsiElement position = parameters.getPosition();
     if (PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) != null) {
       return;
@@ -369,13 +367,13 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
     addThisSuper(result, position);
 
-    addExpressionKeywords(parameters, result, position);
+    addExpressionKeywords(parameters, result, position, prevLeaf);
 
     addFileHeaderKeywords(result, position, prevLeaf);
 
     addInstanceof(result, position);
 
-    addClassKeywords(result, position);
+    addClassKeywords(result, position, prevLeaf);
 
     addMethodHeaderKeywords(result, position, prevLeaf);
 
@@ -462,7 +460,14 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     }
   }
 
-  private static void addExpressionKeywords(CompletionParameters parameters, Consumer<LookupElement> result, PsiElement position) {
+  private static void addExpressionKeywords(CompletionParameters parameters, Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
+    if (psiElement(JavaTokenType.DOUBLE_COLON).accepts(prevLeaf)) {
+      PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiMethodReferenceExpression.class);
+      TailType tail = parent != null && !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), tail));
+      return;
+    }
+
     if (isExpressionPosition(position)) {
       if (PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) == null) {
         result.consume(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
@@ -487,6 +492,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       else if (END_OF_BLOCK.getValue().isAcceptable(position, position) && PsiTreeUtil.getParentOfType(position, PsiMember.class) == null) {
         result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.IMPORT), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
+    }
+
+    if (PsiUtil.isLanguageLevel5OrHigher(position) && prevLeaf != null && prevLeaf.textMatches(PsiKeyword.IMPORT)) {
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
@@ -518,18 +527,30 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     }
   }
 
-  private static void addClassKeywords(Consumer<LookupElement> result, PsiElement position) {
+  private static void addClassKeywords(Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
     if (isSuitableForClass(position)) {
       for (String s : ModifierChooser.getKeywords(position)) {
         result.consume(new OverrideableSpace(createKeyword(position, s), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
+      if (PsiUtil.isLanguageLevel8OrHigher(position)) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class);
+        if (containingClass != null && containingClass.isInterface()) {
+          result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        }
+      }
+
       result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       if (PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, true, PsiMember.class) == null) {
         result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-        if (PsiUtil.getLanguageLevel(position).isAtLeast(LanguageLevel.JDK_1_5)) {
+        if (PsiUtil.isLanguageLevel5OrHigher(position)) {
           result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.ENUM), TailType.INSERT_SPACE));
         }
       }
+    }
+
+    if (psiElement().withText("@").andNot(psiElement().inside(PsiParameterList.class)).andNot(psiElement().inside(psiNameValuePair()))
+      .accepts(prevLeaf)) {
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 

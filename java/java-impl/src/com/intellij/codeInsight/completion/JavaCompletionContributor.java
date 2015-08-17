@@ -71,26 +71,13 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class JavaCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionContributor");
 
-  private static final Map<LanguageLevel, JavaCompletionData> ourCompletionData;
-
-  static {
-    ourCompletionData = new LinkedHashMap<LanguageLevel, JavaCompletionData>();
-    ourCompletionData.put(LanguageLevel.JDK_1_8, new Java18CompletionData());
-    ourCompletionData.put(LanguageLevel.JDK_1_5, new Java15CompletionData());
-    ourCompletionData.put(LanguageLevel.JDK_1_3, new JavaCompletionData());
-  }
-
   public static final ElementPattern<PsiElement> ANNOTATION_NAME = psiElement().
     withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
   private static final PsiJavaElementPattern.Capture<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
 
   private static JavaCompletionData getCompletionData(LanguageLevel level) {
-    final Set<Map.Entry<LanguageLevel, JavaCompletionData>> entries = ourCompletionData.entrySet();
-    for (Map.Entry<LanguageLevel, JavaCompletionData> entry : entries) {
-      if (entry.getKey().isAtLeast(level)) return entry.getValue();
-    }
-    return ourCompletionData.get(LanguageLevel.JDK_1_3);
+    return new JavaCompletionData();
   }
 
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
@@ -460,10 +447,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-    final JavaCompletionData completionData = getCompletionData(PsiUtil.getLanguageLevel(position));
+    final JavaCompletionData completionData = new JavaCompletionData();
     completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
     completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
-    completionData.fillCompletions(parameters, noMiddleMatches);
+    JavaCompletionData.addKeywords(parameters, noMiddleMatches);
 
     for (final LookupElement item : lookupSet) {
       noMiddleMatches.consume(item);
