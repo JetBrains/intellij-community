@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.reflect.ConstructorAccessor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -483,6 +484,23 @@ public class ReflectionUtil {
       return constructor.newInstance();
     }
     catch (Exception e) {
+      // support Kotlin data classes - pass null as default value
+      for (Annotation annotation : aClass.getAnnotations()) {
+        if (annotation.annotationType().getName().equals("kotlin.jvm.internal.KotlinClass")) {
+          Constructor<?>[] constructors = aClass.getDeclaredConstructors();
+          if (constructors.length > 0) {
+            try {
+              Constructor<?> constructor = constructors[0];
+              //noinspection unchecked
+              return (T)constructor.newInstance(new Object[constructor.getParameterTypes().length]);
+            }
+            catch (Exception e1) {
+              throw new RuntimeException(e1);
+            }
+          }
+        }
+      }
+
       throw new RuntimeException(e);
     }
   }

@@ -21,11 +21,7 @@ import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Function
 import com.intellij.util.SmartList
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.not
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.collection.IsEmptyCollection.empty
-import org.hamcrest.io.FileMatchers.anExistingFile
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
@@ -61,8 +57,7 @@ class ModuleStoreRenameTest {
       override fun before() {
         module.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
           override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
-            assertThat(modules.size(), equalTo(1))
-            assertThat(modules.get(0), equalTo(module))
+            assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))
           }
         })
@@ -87,13 +82,13 @@ class ModuleStoreRenameTest {
     runInEdtAndWait { module.saveStore() }
     val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
     val oldFile = storage.getFile()
-    assertThat(oldFile, anExistingFile())
+    assertThat(oldFile).isFile()
 
     val oldName = module.getName()
     val newName = "foo"
     module.change { renameModule(module, newName) }
     assertRename(newName, oldFile)
-    assertThat(oldModuleNames, equalTo(listOf(oldName)))
+    assertThat(oldModuleNames).containsOnly(oldName)
   }
 
   // project view
@@ -101,13 +96,13 @@ class ModuleStoreRenameTest {
     runInEdtAndWait { module.saveStore() }
     var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
     val oldFile = storage.getFile()
-    assertThat(oldFile, anExistingFile())
+    assertThat(oldFile).isFile()
 
     val oldName = module.getName()
     val newName = "foo"
     runInEdtAndWait { runWriteAction { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(oldFile)!!.rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}") } }
     assertRename(newName, oldFile)
-    assertThat(oldModuleNames, equalTo(listOf(oldName)))
+    assertThat(oldModuleNames).containsOnly(oldName)
   }
 
   // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support delete and create events (in case of external change we don't get move event, but get "delete old" and "create new")
@@ -115,13 +110,14 @@ class ModuleStoreRenameTest {
   private fun assertRename(newName: String, oldFile: File) {
     val storageManager = moduleFixture.getModule().stateStore.getStateStorageManager()
     val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage).getFile()
-    assertThat(newFile.getName(), equalTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}"))
-    assertThat(oldFile, not(anExistingFile()))
-    assertThat(oldFile, not(equalTo(newFile)))
-    assertThat(newFile, anExistingFile())
+    assertThat(newFile.getName()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    assertThat(oldFile)
+      .doesNotExist()
+      .isNotEqualTo(newFile)
+    assertThat(newFile).isFile()
 
     // ensure that macro value updated
-    assertThat(storageManager.expandMacros(StoragePathMacros.MODULE_FILE), equalTo(newFile.systemIndependentPath))
+    assertThat(storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
   }
 
   public Test fun `rename module parent virtual dir`() {
@@ -135,9 +131,9 @@ class ModuleStoreRenameTest {
 
     val newFile = File(parentVirtualDir.getPath(), module.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
     try {
-      assertThat(newFile, anExistingFile())
+      assertThat(newFile).isFile()
       assertRename(module.getName(), oldFile)
-      assertThat(oldModuleNames, empty())
+      assertThat(oldModuleNames).isEmpty()
     }
     finally {
       runInEdtAndWait { runWriteAction { parentVirtualDir.delete(this) } }

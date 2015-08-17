@@ -240,6 +240,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/usageView.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/util.iml" filepath="$PROJECT_DIR$/platform/util/util.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/util-rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/util-rt.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util/testSrc/util-tests.iml" filepath="$PROJECT_DIR$/platform/util/testSrc/util-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" filepath="$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/vcs-api-core/vcs-api-core.iml" filepath="$PROJECT_DIR$/platform/vcs-api/vcs-api-core/vcs-api-core.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" group="platform" />
