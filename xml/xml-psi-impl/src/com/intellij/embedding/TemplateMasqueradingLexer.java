@@ -35,11 +35,11 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
 
     private int myStartOffset;
     private int myEndOffset;
-    private CharSequence myBuffer;
+    protected CharSequence myBuffer;
 
     private int myState;
     private IElementType myTokenType;
-    private int myTokenStart;
+    protected int myTokenStart;
     private int myTokenEnd;
 
     public MyLexer(int indent, Lexer delegateLexer) {
@@ -50,7 +50,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
     protected abstract IElementType getIndentTokenType();
     protected abstract IElementType getEmbeddedContentTokenType();
 
-    protected abstract boolean isEmbeddedCodeStartMarker(char c);
+    protected abstract int getEmbeddedCodeStartMarkerLength();
 
     protected int getDelegateState(int state) {
       return state;
@@ -156,9 +156,10 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
           return;
         }
 
-        if (isEmbeddedCodeStartMarker(myBuffer.charAt(myTokenStart))) {
+        int embeddedCodeStartMarkerLength = getEmbeddedCodeStartMarkerLength();
+        if (embeddedCodeStartMarkerLength > 0) {
           myTokenType = MINUS_TYPE;
-          myTokenEnd = myTokenStart + 1;
+          myTokenEnd = myTokenStart + embeddedCodeStartMarkerLength;
         }
         else {
           myTokenEnd = findEol(myTokenStart);
