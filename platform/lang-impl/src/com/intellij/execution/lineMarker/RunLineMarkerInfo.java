@@ -21,11 +21,11 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.actions.BaseRunConfigurationAction;
-import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.actions.*;
 import com.intellij.execution.configurations.LocatableConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -154,7 +154,7 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
                                                                    new Function<RunConfigurationProducer<?>, ConfigurationFromContext>() {
                                                                      @Override
                                                                      public ConfigurationFromContext fun(RunConfigurationProducer<?> producer) {
-                                                                       return producer.createLightConfiguration(context);
+                                                                       return createConfiguration(producer, context);
                                                                      }
                                                                    }
     );
@@ -162,5 +162,13 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     Collections.sort(list, ConfigurationFromContext.COMPARATOR);
     String actionName = BaseRunConfigurationAction.suggestRunActionName((LocatableConfiguration)list.get(0).getConfiguration());
     return executor.getStartActionText(actionName);
+  }
+
+  @Nullable
+  private ConfigurationFromContext createConfiguration(RunConfigurationProducer<?> producer, ConfigurationContext context) {
+    RunConfiguration configuration = producer.createLightConfiguration(context);
+    if (configuration == null) return null;
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.getProject()), configuration, false);
+    return new ConfigurationFromContextImpl(producer, settings, getElement());
   }
 }
