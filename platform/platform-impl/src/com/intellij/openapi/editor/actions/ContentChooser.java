@@ -168,8 +168,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     mySplitter.setSecondComponent(new JPanel());
     rebuildListContent();
 
-    ListScrollingUtil.installActions(myList);
-    ListScrollingUtil.ensureSelectionExists(myList);
+    ScrollingUtil.installActions(myList);
+    ScrollingUtil.ensureSelectionExists(myList);
     updateViewerForSelection();
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -309,7 +309,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   
   public void setSelectedIndex(int index) {
     myList.setSelectedIndex(index);
-    ListScrollingUtil.ensureIndexIsVisible(myList, index, 0);
+    ScrollingUtil.ensureIndexIsVisible(myList, index, 0);
     updateViewerForSelection();
   }
 
