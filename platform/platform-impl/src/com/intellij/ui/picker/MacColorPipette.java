@@ -44,9 +44,9 @@ public class MacColorPipette extends ColorPipetteBase {
   private static final int PIXELS = 17;
   private static final int ZOOM = 10;
   private static final int SIZE = PIXELS * ZOOM;
-  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, true);
+  private static final int DIALOG_SIZE = SIZE + 20;
 
-  private final Rectangle myCaptureRect = new Rectangle(0, 0, PIXELS, PIXELS);
+  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, true);
 
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
     super(picker, listener);
@@ -64,7 +64,7 @@ public class MacColorPipette extends ColorPipetteBase {
           super.keyPressed(event);
           int diff = BitUtil.isSet(event.getModifiers(), Event.SHIFT_MASK) ? 10 : 1;
           Point location = updateLocation();
-          if (location != null) {
+          if (myRobot != null && location != null) {
             switch (event.getKeyCode()) {
               case KeyEvent.VK_DOWN:
                 myRobot.mouseMove(location.x, location.y + diff);
@@ -92,15 +92,18 @@ public class MacColorPipette extends ColorPipetteBase {
           if (pickerDialog != null && pickerDialog.isShowing()) {
             Point mouseLoc = updateLocation();
             if (mouseLoc == null) return;
-            final Color newColor = myRobot.getPixelColor(mouseLoc.x, mouseLoc.y);
+
+            //final int pixels = UIUtil.isRetina(graphics2d) ? PIXELS / 2 + 1 : PIXELS;
+            int left = PIXELS / 2 + 1;
+            Rectangle captureRectangle = new Rectangle(mouseLoc.x - left, mouseLoc.y - left, PIXELS, PIXELS);
+            BufferedImage captureScreen = captureScreen(pickerDialog, captureRectangle);
+            if (captureScreen == null) return;
+
+            //noinspection UseJBColor
+            Color newColor = new Color(captureScreen.getRGB(captureRectangle.width / 2, captureRectangle.height / 2));
 
             Graphics2D graphics2d = ((Graphics2D)g);
             Point offset = new Point(10, 10);
-            //final int pixels = UIUtil.isRetina(graphics2d) ? PIXELS / 2 + 1 : PIXELS;
-            int left = PIXELS / 2 + 1;
-            myCaptureRect.setBounds(mouseLoc.x - left, mouseLoc.y - left, PIXELS, PIXELS);
-
-            BufferedImage captureScreen = captureScreen(pickerDialog, myCaptureRect);
             graphics2d.setComposite(AlphaComposite.Clear);
             graphics2d.fillRect(0, 0, getWidth(), getHeight());
 
@@ -124,10 +127,12 @@ public class MacColorPipette extends ColorPipetteBase {
           }
         }
       };
-      
       pickerDialog.add(label);
-      pickerDialog.setSize(SIZE + 20, SIZE + 20);
+      pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
       pickerDialog.setBackground(myTransparentColor);
+      
+      BufferedImage emptyImage = UIUtil.createImage(1, 1, Transparency.TRANSLUCENT);
+      pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(emptyImage, new Point(0, 0), "ColorPicker"));
     }
     return pickerDialog;
   }
@@ -143,11 +148,18 @@ public class MacColorPipette extends ColorPipetteBase {
 
   private static void drawCurrentColorRectangle(@NotNull Graphics2D graphics, @NotNull Point offset, @NotNull Color currentColor) {
     graphics.setColor(Gray._0.withAlpha(150));
-    graphics.fillRoundRect(SIZE / 4 + offset.x, SIZE * 3 / 4 + offset.y, SIZE / 2, SIZE / 8, 10, 10);
+    int x = SIZE / 4 + offset.x;
+    int y = SIZE * 3 / 4 + offset.y;
+    int width = SIZE / 2;
+    int height = SIZE / 8;
+    graphics.fillRoundRect(x, y, width, height, 10, 10);
+    
     graphics.setColor(Gray._255);
-    graphics.drawString(" " + currentColor.getRed(), offset.x + SIZE / 4, offset.y + SIZE * 3 / 4 + 15);
-    graphics.drawString(" " + currentColor.getGreen(), offset.x + SIZE / 4 + SIZE / 2 / 3, offset.y + SIZE * 3 / 4 + 15);
-    graphics.drawString(" " + currentColor.getBlue(), offset.x + SIZE / 4 + SIZE / 3, offset.y + SIZE * 3 / 4 + 15);
+    String colorString = currentColor.getRed() + " " + currentColor.getGreen() + currentColor.getBlue();
+    FontMetrics metrics = graphics.getFontMetrics();
+    int stringWidth = metrics.stringWidth(colorString);
+    int stringHeight = metrics.getHeight();
+    graphics.drawString(colorString, x + (width - stringWidth) / 2, y + stringHeight);
   }
 
   private static void drawCenterPixel(@NotNull Graphics2D graphics, @NotNull Point offset, @NotNull Color currentColor) {
@@ -172,7 +184,7 @@ public class MacColorPipette extends ColorPipetteBase {
 
   @Override
   public boolean isAvailable() {
-    return myRobot != null && captureScreen(null, new Rectangle(0, 0, 1, 1)) != null;
+    return captureScreen(null, new Rectangle(0, 0, 1, 1)) != null;
   }
 
   @Nullable
