@@ -32,7 +32,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -118,7 +117,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     final TableSpeedSearch speedSearch = new TableSpeedSearch(myTable);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installUnknownPopupHandler(myTable, createPopupGroup(), ActionManager.getInstance());
-    TableScrollingUtil.installActions(myTable);
+    ScrollingUtil.installActions(myTable);
 
     myTable.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
