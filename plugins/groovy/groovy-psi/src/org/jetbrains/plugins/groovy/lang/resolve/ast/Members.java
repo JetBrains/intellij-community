@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,9 @@ public abstract class Members {
 
   @NotNull
   public abstract Collection<PsiClass> getClasses();
+
+  @NotNull
+  public abstract Collection<PsiClassType> getImplementsTypes();
 
   public abstract void addFrom(@NotNull Members other);
 
@@ -57,6 +61,12 @@ public abstract class Members {
       return Collections.emptyList();
     }
 
+    @NotNull
+    @Override
+    public Collection<PsiClassType> getImplementsTypes() {
+      return Collections.emptyList();
+    }
+
     @Override
     public void addFrom(@NotNull Members other) {
       // do nothing
@@ -70,6 +80,7 @@ public abstract class Members {
       private final Collection<PsiMethod> methods = ContainerUtil.newArrayList();
       private final Collection<GrField> fields = ContainerUtil.newArrayList();
       private final Collection<PsiClass> classes = ContainerUtil.newArrayList();
+      private final Collection<PsiClassType> implementsTypes = ContainerUtil.newArrayList();
 
       @NotNull
       @Override
@@ -89,11 +100,18 @@ public abstract class Members {
         return classes;
       }
 
+      @NotNull
+      @Override
+      public Collection<PsiClassType> getImplementsTypes() {
+        return implementsTypes;
+      }
+
       @Override
       public void addFrom(@NotNull Members other) {
         methods.addAll(other.getMethods());
         fields.addAll(other.getFields());
         classes.addAll(other.getClasses());
+        implementsTypes.addAll(other.getImplementsTypes());
       }
     };
   }

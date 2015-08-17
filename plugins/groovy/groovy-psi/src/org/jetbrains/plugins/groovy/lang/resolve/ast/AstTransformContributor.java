@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -30,26 +29,28 @@ import java.util.Collection;
  * @author Max Medvedev
  */
 public abstract class AstTransformContributor {
+
   public static final ExtensionPointName<AstTransformContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
 
+  @Deprecated
   public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
 
   }
 
+  @Deprecated
   public void collectFields(@NotNull final GrTypeDefinition clazz, Collection<GrField> collector) {
 
   }
 
-  public void collectClasses(@NotNull final GrTypeDefinition clazz, Collection<PsiClass> collector) {
-
-  }
-
+  /**
+   * Subclasses should override this method.
+   */
   @NotNull
+  @SuppressWarnings("deprecation")
   public Members collect(@NotNull final GrTypeDefinition clazz) {
     final Members members = Members.create();
     collectMethods(clazz, members.getMethods());
     collectFields(clazz, members.getFields());
-    collectClasses(clazz, members.getClasses());
     return members;
   }
 
