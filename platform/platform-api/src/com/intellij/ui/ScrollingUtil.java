@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -547,43 +548,42 @@ public class ScrollingUtil {
 
     maybeInstallDefaultShortcuts(table);
 
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), table);
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
-
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), table);
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         moveDown(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         moveUp(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         movePageUp(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), table);
-    new AnAction() {
+    new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
         movePageDown(table);
       }
