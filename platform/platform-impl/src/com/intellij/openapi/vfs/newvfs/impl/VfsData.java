@@ -199,8 +199,8 @@ public class VfsData {
       myObjectArray.set(getOffset(fileId), map);
     }
 
-    KeyFMap getUserMap(VirtualFileSystemEntry file) {
-      Object o = myObjectArray.get(getOffset(Math.abs(file.getId())));
+    KeyFMap getUserMap(VirtualFileSystemEntry file, int id) {
+      Object o = myObjectArray.get(getOffset(id));
       if (!(o instanceof KeyFMap)) {
         throw reportDeadFileAccess(file);
       }

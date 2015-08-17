@@ -658,6 +658,10 @@ interface TxANotAnno {}
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
+  public void testStaticMemberTypes() {
+    checkPreferredItems 0, 'newMap', 'newList'
+  }
+
   public void testNoStatsInSuperInvocation() {
     checkPreferredItems 0, 'put', 'putAll'
 

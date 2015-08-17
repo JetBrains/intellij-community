@@ -38,7 +38,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> {
   protected static final ElementPattern<PsiElement> IN_METHOD_RETURN_TYPE =
     psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMethod.class)
-      .andNot(JavaCompletionData.AFTER_DOT);
+      .andNot(JavaKeywordCompletion.AFTER_DOT);
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,

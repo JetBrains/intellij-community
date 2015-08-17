@@ -398,27 +398,28 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       final LabeledComponent testLocation = getTestLocation(i);
       final JComponent component = testLocation.getComponent();
       final ComponentWithBrowseButton field;
-      final Object document;
+      Object document;
       if (component instanceof TextFieldWithBrowseButton) {
         field = (TextFieldWithBrowseButton)component;
         document = new PlainDocument();
         ((TextFieldWithBrowseButton)field).getTextField().setDocument((Document)document);
-        myModel.setJUnitDocument(i, document);
       } else if (component instanceof EditorTextFieldWithBrowseButton) {
         field = (ComponentWithBrowseButton)component;
         document = ((EditorTextField)field.getChildComponent()).getDocument();
-        myModel.setJUnitDocument(i, document);
       }
       else {
         field = myPatternTextField;
         document = new PlainDocument();
         ((TextFieldWithBrowseButton)field).getTextField().setDocument((Document)document);
-        myModel.setJUnitDocument(i, document);
+        
       }
       myBrowsers[i].setField(field);
       if (myBrowsers[i] instanceof MethodBrowser) {
-        ((MethodBrowser)myBrowsers[i]).installCompletion((EditorTextField)field.getChildComponent());
+        final EditorTextField childComponent = (EditorTextField)field.getChildComponent();
+        ((MethodBrowser)myBrowsers[i]).installCompletion(childComponent);
+        document = childComponent.getDocument();
       }
+      myModel.setJUnitDocument(i, document);
     }
   }
 

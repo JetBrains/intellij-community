@@ -269,7 +269,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       @Override
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
-        final ElementPattern<? extends PsiElement> leftNeighbor = JavaCompletionData.AFTER_DOT;
+        final ElementPattern<? extends PsiElement> leftNeighbor = JavaKeywordCompletion.AFTER_DOT;
         final boolean needQualify = leftNeighbor.accepts(element);
 
         for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(element, false)) {
@@ -382,7 +382,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                                              boolean quick,
                                              Consumer<LookupElement> consumer) {
     PsiElement position = params.getPosition();
-    if (!JavaCompletionData.AFTER_DOT.accepts(position)) {
+    if (!JavaKeywordCompletion.AFTER_DOT.accepts(position)) {
       for (ExpectedTypeInfo info : mergedInfos) {
         new JavaMembersGetter(info.getType(), params).addMembers(!quick, consumer);
         if (!info.getDefaultType().equals(info.getType())) {

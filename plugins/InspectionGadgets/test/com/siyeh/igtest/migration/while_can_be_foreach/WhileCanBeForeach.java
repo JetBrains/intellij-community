@@ -2,13 +2,13 @@ package com.siyeh.igtest.migration.while_can_be_foreach;
 
 import java.util.*;
 
-public class WhileCanBeForeachInspection {
+public class WhileCanBeForeach {
 
     public int baz() {
         int total = 0;
         final List ints = new ArrayList();
         Iterator iterator = ints.iterator();
-        while ( iterator.hasNext()) {
+        <warning descr="'while' loop replaceable with 'foreach'">while</warning> ( iterator.hasNext()) {
             total += (Integer) iterator.next();
         }
         return total;
@@ -18,7 +18,7 @@ public class WhileCanBeForeachInspection {
         int total = 0;
         final List ints = new ArrayList();
         Iterator iterator = ints.iterator();
-        while ( iterator.hasNext()) {
+        <warning descr="'while' loop replaceable with 'foreach'">while</warning> ( iterator.hasNext()) {
             total += (Integer) iterator.next();
         }
         iterator = ints.iterator(); // write use here
@@ -38,7 +38,7 @@ public class WhileCanBeForeachInspection {
 
     void no(Collection pbps, Map tracksToPBP) {
         final Iterator pbpsIt = pbps.iterator();
-        while (pbpsIt.hasNext()) {
+        <warning descr="'while' loop replaceable with 'foreach'">while</warning> (pbpsIt.hasNext()) {
             final String pbp = (String) pbpsIt.next();
             final Iterator trackIt = it();
             while (trackIt.hasNext()) {
@@ -70,7 +70,7 @@ public class WhileCanBeForeachInspection {
     int total = 0;
     final List ints = new ArrayList();
     ListIterator iterator = ints.listIterator();
-    while ( iterator.hasNext()) {
+    <warning descr="'while' loop replaceable with 'foreach'">while</warning> ( iterator.hasNext()) {
       final Object next = iterator.next();
       total += (Integer) next;
     }

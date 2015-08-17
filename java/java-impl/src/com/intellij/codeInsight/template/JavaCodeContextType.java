@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.completion.JavaCompletionData;
+import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.java.JavaLanguage;
@@ -136,7 +136,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      if (JavaCompletionData.isInsideParameterList(element)) {
+      if (JavaKeywordCompletion.isInsideParameterList(element)) {
         return false;
       }
 
@@ -167,7 +167,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return JavaCompletionData.isSuitableForClass(element) || JavaCompletionData.isInsideParameterList(element);
+      return JavaKeywordCompletion.isSuitableForClass(element) || JavaKeywordCompletion.isInsideParameterList(element);
     }
   }
 

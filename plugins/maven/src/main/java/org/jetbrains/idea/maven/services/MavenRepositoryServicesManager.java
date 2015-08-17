@@ -42,7 +42,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   private final List<String> myUrls = new ArrayList<String>();
 
   public MavenRepositoryServicesManager() {
-    myUrls.add("http://oss.sonatype.org/service/local/");
+    myUrls.add("https://oss.sonatype.org/service/local/");
     myUrls.add("http://repo.jfrog.org/artifactory/api/");
     myUrls.add("https://repository.jboss.org/nexus/service/local/");
   }

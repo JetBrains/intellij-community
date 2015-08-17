@@ -329,14 +329,14 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           continue
         }
 
-        getExternalizationSession(storageManager.getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state, storageSpec)
+        getExternalizationSession(storageManager.getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state)
       }
     }
 
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
       val stateStorage = storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)
       if (stateStorage != null) {
-        getExternalizationSession(stateStorage)?.setState(component, componentName, state, null)
+        getExternalizationSession(stateStorage)?.setState(component, componentName, state)
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class MethodCallUtils {
   public static boolean isSimpleCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @NonNls @Nullable String methodName, @NonNls @Nullable String... parameterTypeStrings) {
     if (parameterTypeStrings == null) {
-      return isCallToMethod(expression, calledOnClassName, returnType, methodName);
+      return isCallToMethod(expression, calledOnClassName, returnType, methodName, null);
     }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expression.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -259,5 +259,22 @@ public class MethodCallUtils {
       }
     }
     return false;
+  }
+
+  public static boolean isMethodCallOnVariable(@NotNull PsiMethodCallExpression expression,
+                                               @NotNull PsiVariable variable,
+                                               @NotNull String methodName) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    @NonNls final String name = methodExpression.getReferenceName();
+    if (!methodName.equals(name)) {
+      return false;
+    }
+    final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+    if (!(qualifier instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+    final PsiElement element = referenceExpression.resolve();
+    return variable.equals(element);
   }
 }

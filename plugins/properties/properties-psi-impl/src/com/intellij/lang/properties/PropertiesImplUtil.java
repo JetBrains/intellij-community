@@ -191,7 +191,6 @@ public class PropertiesImplUtil extends PropertiesUtil {
     return true;
   }
 
-  @NotNull
   public static IProperty getProperty(PsiElement element) {
     if (element instanceof IProperty) {
       return (IProperty)element;
@@ -202,6 +201,6 @@ public class PropertiesImplUtil extends PropertiesUtil {
         return (IProperty)target;
       }
     }
-    throw new IllegalArgumentException(element.getText());
+    return null;
   }
 }
