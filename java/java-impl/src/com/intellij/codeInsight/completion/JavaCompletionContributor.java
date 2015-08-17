@@ -38,7 +38,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
@@ -55,7 +54,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,10 +77,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
   private static final PsiJavaElementPattern.Capture<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
-
-  private static JavaCompletionData getCompletionData(LanguageLevel level) {
-    return new JavaCompletionData();
-  }
 
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
@@ -444,17 +442,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     };
 
-    PsiElement position = parameters.getPosition();
-    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-    final JavaCompletionData completionData = new JavaCompletionData();
-    completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
-    completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
     JavaCompletionData.addKeywords(parameters, noMiddleMatches);
-
-    for (final LookupElement item : lookupSet) {
-      noMiddleMatches.consume(item);
-    }
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
