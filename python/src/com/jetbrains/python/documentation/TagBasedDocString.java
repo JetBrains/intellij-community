@@ -39,9 +39,9 @@ public abstract class TagBasedDocString implements StructuredDocString {
   protected final Map<String, Substring> mySimpleTagValues = Maps.newHashMap();
   protected final Map<String, Map<Substring, Substring>> myArgTagValues = Maps.newHashMap();
 
-  private static final Pattern RE_STRICT_TAG_LINE = Pattern.compile("([a-z]+)([^:]*| :class:[^:]*): (.*)");
-  private static final Pattern RE_LOOSE_TAG_LINE = Pattern.compile("([a-z]+) ([a-zA-Z_0-9]*):?([^:]*)");
-  private static final Pattern RE_ARG_TYPE = Pattern.compile("(.*) ([a-zA-Z_0-9]+)");
+  private static final Pattern RE_STRICT_TAG_LINE = Pattern.compile("([a-z]+)(\\s+:class:[^:]*|[^:]*)\\s*:\\s*?(.*)");
+  private static final Pattern RE_LOOSE_TAG_LINE = Pattern.compile("([a-z]+)\\s+([a-zA-Z_0-9]*)\\s*:?\\s*?([^:]*)");
+  private static final Pattern RE_ARG_TYPE = Pattern.compile("(.*?)\\s+([a-zA-Z_0-9]+)");
 
   public static String[] PARAM_TAGS = new String[]{"param", "parameter", "arg", "argument"};
   public static String[] PARAM_TYPE_TAGS = new String[]{"type"};
@@ -111,7 +111,7 @@ public abstract class TagBasedDocString implements StructuredDocString {
   }
 
   protected int parseTag(List<Substring> lines, int lineno, String tagPrefix) {
-    final Substring lineWithPrefix = lines.get(lineno).trim();
+    final Substring lineWithPrefix = lines.get(lineno).trimLeft();
     if (lineWithPrefix.startsWith(tagPrefix)) {
       final Substring line = lineWithPrefix.substring(tagPrefix.length());
       final Matcher strictTagMatcher = RE_STRICT_TAG_LINE.matcher(line);

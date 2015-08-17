@@ -88,8 +88,8 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     if (mayHaveType) {
       final Matcher matcher = FIELD_NAME_AND_TYPE_RE.matcher(textBeforeColon);
       if (matcher.matches()) {
-        name = Substring.fromMatcherGroup(textBeforeColon, matcher, 1).trim();
-        type = Substring.fromMatcherGroup(textBeforeColon, matcher, 2).trim();
+        name = textBeforeColon.getMatcherGroup(matcher, 1).trim();
+        type = textBeforeColon.getMatcherGroup(matcher, 2).trim();
       }
     }
 

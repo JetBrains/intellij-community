@@ -280,7 +280,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       return allRanges.get(0);
     }
     if (allRanges.size() > 1) {
-      return new TextRange(allRanges.get(0).getStartOffset(), allRanges.get(allRanges.size()-1).getEndOffset());
+      return allRanges.get(0).union(allRanges.get(allRanges.size() - 1));
     }
     return new TextRange(0, getTextLength());
   }

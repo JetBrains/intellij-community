@@ -34,22 +34,6 @@ import java.util.regex.Pattern;
 public class Substring implements CharSequence {
   private static final Pattern RE_NL = Pattern.compile("(\\r?\\n)");
 
-  @NotNull
-  public static Substring fromMatcherGroup(@NotNull String s, @NotNull Matcher matcher, int groupNumber) {
-    if (matcher.groupCount() < groupNumber || matcher.end(groupNumber) > s.length()) {
-      throw new IllegalArgumentException("Inconsistent matcher, group number and underlying string");
-    }
-    return new Substring(s, matcher.start(groupNumber), matcher.end(groupNumber));
-  }
-
-  @NotNull
-  public static Substring fromMatcherGroup(@NotNull Substring s, @NotNull Matcher matcher, int groupNumber) {
-    if (matcher.groupCount() < groupNumber || matcher.end(groupNumber) > s.length()) {
-      throw new IllegalArgumentException("Inconsistent matcher, group number and underlying string");
-    }
-    return new Substring(s.getSuperString(), s.myStartOffset + matcher.start(groupNumber), s.myStartOffset + matcher.end(groupNumber));
-  }
-
   @NotNull private final String myString;
   private final int myStartOffset;
   private final int myEndOffset;
@@ -150,7 +134,7 @@ public class Substring implements CharSequence {
   public Substring trim() {
     return trimLeft().trimRight();
   }
-  
+
   @NotNull
   public Substring trimLeft() {
     int start;

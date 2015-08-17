@@ -18,19 +18,15 @@ package com.jetbrains.python.documentation;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author traff
@@ -72,9 +67,6 @@ public class PyDocstringGenerator {
   private final Project myProject;
   private PyStringLiteralExpression myDocStringExpression;
 
-  // Formatter can increase indentation inside multiline docstring, that's why we don't keep plain
-  // text offsets and instead save pair of line and *unindented* column of that offset.
-  private final Map<String, Couple<VisualPosition>> myParamTypesOffset = Maps.newHashMap();
   private PsiFile myFile;
   private boolean myGenerateReturn;
 
@@ -180,19 +172,32 @@ public class PyDocstringGenerator {
       throw new IllegalArgumentException("TemplateBuilder can be created only for one parameter");
     }
 
-    int offset = getStartOffset();
-    if (offset > 0) {
-      builder.replaceRange(TextRange.create(offset, getEndOffset()), getDefaultType());
-
-      Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-
-      final VirtualFile virtualFile = myFile.getVirtualFile();
-      if (virtualFile == null) return;
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, virtualFile, myDocStringExpression.getTextOffset());
-      Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
-      if (targetEditor != null) {
-        TemplateManager.getInstance(myProject).startTemplate(targetEditor, template);
-      }
+    final DocstringParam paramToEdit = getParamToEdit();
+    final String paramName = paramToEdit.getName();
+    final String stringContent = myDocStringExpression.getStringValue();
+    final StructuredDocString parsed = DocStringUtil.parse(stringContent);
+    if (parsed == null) {
+      return;
+    }
+    Substring substring = null;
+    if (paramToEdit.getKind().equals("type")) {
+      substring = parsed.getParamTypeSubstring(paramName);
+    }
+    else if (paramToEdit.getKind().equals("rtype")){
+      substring = parsed.getReturnTypeSubstring();
+    }
+    if (substring == null) {
+      return;
+    }
+    builder.replaceRange(substring.getTextRange().shiftRight(myDocStringExpression.getStringValueTextRange().getStartOffset()),
+                         getDefaultType());
+    Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+    final VirtualFile virtualFile = myFile.getVirtualFile();
+    if (virtualFile == null) return;
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, virtualFile, myDocStringExpression.getTextOffset());
+    Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+    if (targetEditor != null) {
+      TemplateManager.getInstance(myProject).startTemplate(targetEditor, template);
     }
   }
 
@@ -297,7 +302,6 @@ public class PyDocstringGenerator {
       if (documentationSettings.isPlain(getFile())) return replacementText.length() - 1;
     }
 
-    int line = StringUtil.getLineBreakCount(replacementText);
     final List<String> unindentedLines = new ArrayList<String>();
     for (DocstringParam param : paramsToAdd) {
       final StringBuilder lineBuilder = new StringBuilder();
@@ -306,15 +310,10 @@ public class PyDocstringGenerator {
       lineBuilder.append(" ");
       lineBuilder.append(param.getName());
       lineBuilder.append(": ");
-      final int startOffset = lineBuilder.length();
-      int endOffset = startOffset;
       if (param.getType() != null) {
         lineBuilder.append(param.getType());
-        endOffset += param.getType().length();
       }
-      myParamTypesOffset.put(param.getName(), Couple.of(new VisualPosition(line, startOffset), new VisualPosition(line, endOffset)));
       unindentedLines.add(lineBuilder.toString());
-      line++;
     }
     StringUtil.join(unindentedLines, ws, replacementText);
 
@@ -380,49 +379,6 @@ public class PyDocstringGenerator {
 
   public String docStringAsText() {
     return addParamToDocstring();
-  }
-
-  public int getStartOffset() {
-    final Couple<VisualPosition> range = getOffsets();
-    return range == null ? -1 : visualPositionToOffset(range.getFirst());
-  }
-
-  public int getEndOffset() {
-    final Couple<VisualPosition> range = getOffsets();
-    return range == null ? -1 : visualPositionToOffset(range.getSecond());
-  }
-
-  private int visualPositionToOffset(@NotNull VisualPosition pos) {
-    final String text = myDocStringExpression.getText();
-    int offset = offsetOfLineFeed(text, pos.getLine());
-    if (offset < 0) {
-      return -1;
-    }
-    offset++;
-    // Indentation consists solely of whitespaces
-    while (offset < text.length() && text.charAt(offset) == ' ') {
-      offset++;
-    }
-    if (offset == text.length()) {
-      return -1;
-    }
-    return offset + pos.getColumn();
-  }
-
-  private static int offsetOfLineFeed(@NotNull String s, int count) {
-    int result = -1;
-    for (int i = 0; i < count; i++) {
-      result = s.indexOf('\n', result + 1);
-      if (result < 0) {
-        break;
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private Couple<VisualPosition> getOffsets() {
-    return myParamTypesOffset.get(getParamToEdit().getName());
   }
 
   private DocstringParam getParamToEdit() {
