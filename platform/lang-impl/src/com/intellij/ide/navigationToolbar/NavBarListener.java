@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -311,7 +311,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     return action instanceof PopupAction
            || action instanceof CopyAction
            || action instanceof CutAction
-           || action instanceof ListScrollingUtil.ListScrollAction;
+           || action instanceof ScrollingUtil.ListScrollAction;
   }
 
   @Override
