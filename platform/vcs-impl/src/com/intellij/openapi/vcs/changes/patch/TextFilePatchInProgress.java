@@ -18,10 +18,12 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -87,6 +89,10 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       @Override
       public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
         throws DiffRequestProducerException, ProcessCanceledException {
+        if (myCurrentBase != null && myCurrentBase.getFileType() == UnknownFileType.INSTANCE) {
+          return new UnknownFileTypeDiffRequest(myCurrentBase, getName());
+        }
+
         if (isConflictingChange()) {
           final VirtualFile file = getCurrentBase();
 

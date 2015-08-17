@@ -22,6 +22,7 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -29,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -192,6 +194,10 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
           throws DiffRequestProducerException, ProcessCanceledException {
+          if (file != null && file.getFileType() == UnknownFileType.INSTANCE) {
+            return new UnknownFileTypeDiffRequest(file, getName());
+          }
+
           if (shelvedChange.isConflictingChange(project)) {
             try {
               final CommitContext commitContext = new CommitContext();

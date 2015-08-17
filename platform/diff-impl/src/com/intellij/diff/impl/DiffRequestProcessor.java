@@ -159,6 +159,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   @CalledInAwt
+  protected void reloadRequest() {
+    updateRequest(true);
+  }
+
+  @CalledInAwt
   public void updateRequest() {
     updateRequest(false);
   }
@@ -902,8 +907,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void reloadDiffRequest() {
+    public void reopenDiffRequest() {
       updateRequest(true);
+    }
+
+    @Override
+    public void reloadDiffRequest() {
+      reloadRequest();
     }
 
     @Nullable
