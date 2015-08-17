@@ -24,7 +24,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -37,7 +36,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,21 +43,11 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
 
 public class JavaKeywordCompletion {
-  private static final @NonNls String[] BLOCK_FINALIZERS = {"{", "}", ";", ":", "else"};
-
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
-  public static final PsiJavaElementPattern.Capture<PsiElement> VARIABLE_AFTER_FINAL =
-    psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
+  static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL = psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
 
-  public static final LeftNeighbour AFTER_TRY_BLOCK = new LeftNeighbour(new AndFilter(
-    new TextFilter("}"),
-    new ParentElementFilter(new AndFilter(
-      new LeftNeighbour(new TextFilter(PsiKeyword.TRY)),
-      new ParentElementFilter(new ClassFilter(PsiTryStatement.class)))
-    )));
-
-  private static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_PARAMETER_LIST =
+  private static final ElementPattern<PsiElement> INSIDE_PARAMETER_LIST =
     psiElement().withParent(
       psiElement(PsiJavaCodeReferenceElement.class).insideStarting(
         psiElement().withTreeParent(
@@ -98,7 +86,7 @@ public class JavaKeywordCompletion {
           new LeftNeighbour(
             new OrFilter(
               new AndFilter (
-                new TextFilter(BLOCK_FINALIZERS),
+                new TextFilter("{", "}", ";", ":", "else"),
                 new NotFilter (
                   new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
                 )
@@ -151,10 +139,10 @@ public class JavaKeywordCompletion {
     }
   };
 
-  public static final ElementPattern<PsiElement> START_FOR =
+  static final ElementPattern<PsiElement> START_FOR =
     psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class,
                                                                                     PsiExpressionStatement.class, PsiForStatement.class);
-  private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_REFERENCE =
+  private static final ElementPattern<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
 
   private static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
@@ -170,7 +158,7 @@ public class JavaKeywordCompletion {
     not(psiElement().afterLeaf("."))
   );
 
-  public static final NotNullLazyValue<ElementPattern<PsiElement>> DECLARATION_START = new NotNullLazyValue<ElementPattern<PsiElement>>() {
+  static final NotNullLazyValue<ElementPattern<PsiElement>> DECLARATION_START = new NotNullLazyValue<ElementPattern<PsiElement>>() {
     @NotNull
     @Override
     protected ElementPattern<PsiElement> compute() {
@@ -215,7 +203,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  private static void addStatementKeywords(Consumer<LookupElement> variant, PsiElement position, PsiElement prevLeaf) {
+  private static void addStatementKeywords(Consumer<LookupElement> variant, PsiElement position, @Nullable PsiElement prevLeaf) {
     variant.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.SWITCH), TailTypes.SWITCH_LPARENTH));
     variant.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.WHILE), TailTypes.WHILE_LPARENTH));
     variant.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.DO), TailTypes.DO_LBRACE));
@@ -249,7 +237,7 @@ public class JavaKeywordCompletion {
 
   }
 
-  public static void addKeywords(CompletionParameters parameters, final Consumer<LookupElement> result) {
+  static void addKeywords(CompletionParameters parameters, final Consumer<LookupElement> result) {
     final PsiElement position = parameters.getPosition();
     if (PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) != null) {
       return;
@@ -289,7 +277,7 @@ public class JavaKeywordCompletion {
     addExtendsSuperImplements(result, position, prevLeaf);
   }
 
-  private static void addMethodHeaderKeywords(Consumer<LookupElement> result, PsiElement position, PsiElement prevLeaf) {
+  private static void addMethodHeaderKeywords(Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
     if (psiElement().withText(")").withParents(PsiParameterList.class, PsiMethod.class).accepts(prevLeaf)) {
       assert prevLeaf != null;
       if (prevLeaf.getParent().getParent() instanceof PsiAnnotationMethod) {
@@ -307,7 +295,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  private static void addFinal(Consumer<LookupElement> result, PsiElement position, PsiElement prevLeaf) {
+  private static void addFinal(Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiExpressionStatement.class);
     if (statement == null) {
       statement = PsiTreeUtil.getParentOfType(position, PsiDeclarationStatement.class);
@@ -383,7 +371,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  private static void addFileHeaderKeywords(Consumer<LookupElement> result, PsiElement position, PsiElement prevLeaf) {
+  private static void addFileHeaderKeywords(Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
     PsiFile file = position.getContainingFile();
     if (!(file instanceof PsiExpressionCodeFragment) &&
         !(file instanceof PsiJavaCodeReferenceCodeFragment) &&

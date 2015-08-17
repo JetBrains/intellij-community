@@ -126,7 +126,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return ElementClassFilter.CLASS;
     }
 
-    if (JavaKeywordCompletion.AFTER_TRY_BLOCK.isAcceptable(position, position) ||
+    if (psiElement().afterLeaf(psiElement(JavaTokenType.RBRACE).withParents(PsiCodeBlock.class, PsiTryStatement.class)).accepts(position) ||
         JavaKeywordCompletion.START_SWITCH.accepts(position) ||
         JavaKeywordCompletion.isInstanceofPlace(position) ||
         JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
