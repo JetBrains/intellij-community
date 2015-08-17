@@ -23,25 +23,23 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.*;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -61,7 +59,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
@@ -276,7 +273,7 @@ public class ApplyPatchAction extends DumbAwareAction {
 
     final List<DiffContent> contents = ContainerUtil.list(originalContent, mergedContent);
 
-    final DiffRequest request = new com.intellij.diff.requests.SimpleDiffRequest(windowTitle, contents, titles);
+    final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
     DiffUtil.addNotification(new DiffIsApproximateNotification(), request);
 
     final DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.MODAL);
@@ -309,61 +306,26 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   @NotNull
-  public static SimpleDiffRequest createBadDiffRequest(@Nullable final Project project,
-                                                       @NotNull final VirtualFile file,
-                                                       @NotNull ApplyPatchForBaseRevisionTexts texts,
-                                                       boolean readonly) {
-    final String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
-    final String title = "Result Of Patch Apply To " + file.getName() + " (" + fullPath + ")";
-
-    final SimpleDiffRequest simpleRequest = new SimpleDiffRequest(project, title);
-    final DocumentImpl patched = new DocumentImpl(texts.getPatched());
-    patched.setReadOnly(false);
-
-    final com.intellij.openapi.diff.DocumentContent mergedContent =
-      new com.intellij.openapi.diff.DocumentContent(project, patched, file.getFileType());
-    mergedContent.getDocument().setReadOnly(readonly);
-    final SimpleContent originalContent = new SimpleContent(texts.getLocal().toString(), file.getFileType());
-
-    simpleRequest.setContents(originalContent, mergedContent);
-    simpleRequest.setContentTitles(VcsBundle.message("diff.title.local"), "Patched (with problems)");
-    simpleRequest.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
-    simpleRequest.addHint(DiffTool.HINT_DIFF_IS_APPROXIMATE);
-
-    if (!readonly) {
-      simpleRequest.setOnOkRunnable(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final String resultText = mergedContent.getDocument().getText();
-              final Document document = FileDocumentManager.getInstance().getDocument(file);
-              if (document == null) {
-                try {
-                  VfsUtil.saveText(file, resultText);
-                }
-                catch (IOException e) {
-                  // todo bad: we had already returned success by now
-                  showIOException(project, file.getName(), e);
-                }
-              }
-              else {
-                document.setText(resultText);
-                FileDocumentManager.getInstance().saveDocument(document);
-              }
-            }
-          });
-        }
-      });
+  public static DiffRequest createBadDiffRequest(@NotNull final VirtualFile file,
+                                                 @NotNull final ApplyPatchForBaseRevisionTexts texts) throws DiffRequestProducerException {
+    if (texts.getLocal() == null) {
+      throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
     }
-    return simpleRequest;
-  }
 
-  private static void showIOException(@Nullable Project project, @NotNull String name, @NotNull IOException e) {
-    Messages.showErrorDialog(project,
-                             VcsBundle.message("patch.apply.error", name, e.getMessage()),
-                             VcsBundle.message("patch.apply.dialog.title"));
+    final String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
+    final String windowTitle = "Result Of Patch Apply To " + file.getName() + " (" + fullPath + ")";
+    final List<String> titles = ContainerUtil.list(VcsBundle.message("diff.title.local"), "Patched (with problems)");
+
+    final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+    final DocumentContent originalContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
+    final DiffContent mergedContent = contentFactory.create(texts.getPatched(), file.getFileType());
+
+    final List<DiffContent> contents = ContainerUtil.list(originalContent, mergedContent);
+
+    final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
+    DiffUtil.addNotification(new DiffIsApproximateNotification(), request);
+
+    return request;
   }
 
   private static class DiffIsApproximateNotification extends EditorNotificationPanel {
