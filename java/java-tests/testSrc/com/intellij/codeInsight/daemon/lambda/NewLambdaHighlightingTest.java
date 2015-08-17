@@ -203,6 +203,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNonAccessibleFunctionalInterfaceTypeArguments() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
