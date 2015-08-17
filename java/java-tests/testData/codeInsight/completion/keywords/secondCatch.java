@@ -1,3 +1,5 @@
+import java.lang.Exception;
+
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
@@ -14,5 +16,11 @@
  * limitations under the License.
  */
 public class A{
- public void method() <caret>x {}
+ public void method(){
+  try{
+   String str = "";
+  }
+  catch (Exception e) {}
+  <caret>
+ }
 }
