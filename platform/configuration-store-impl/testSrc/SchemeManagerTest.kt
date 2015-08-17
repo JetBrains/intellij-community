@@ -27,11 +27,12 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.xmlb.SerializationFilter
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
-import com.intellij.util.xmlb.serialize
 import com.intellij.util.xmlb.toByteArray
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
@@ -146,7 +147,7 @@ class SchemeManagerTest {
   }
 
   fun TestScheme.save(file: File) {
-    FileUtil.writeToFile(file, serialize().toByteArray())
+    FileUtil.writeToFile(file, _serialize().toByteArray())
   }
 
   public Test fun `different extensions`() {
@@ -389,7 +390,7 @@ public data class TestScheme(@Attribute private var name: String = "", @Attribut
 public open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
   override fun readScheme(element: Element) = XmlSerializer.deserialize(element, javaClass<TestScheme>())
 
-  override fun writeScheme(scheme: TestScheme) = scheme.serialize()
+  override fun writeScheme(scheme: TestScheme) = scheme._serialize()
 }
 
 fun SchemeManagerImpl<*, *>.save() {
@@ -397,3 +398,5 @@ fun SchemeManagerImpl<*, *>.save() {
   save(errors)
   CompoundRuntimeException.doThrow(errors)
 }
+
+public fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)

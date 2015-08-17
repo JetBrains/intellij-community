@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
@@ -2174,8 +2175,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     print(g, newText, point, ascent, font, color);
   }
 
-  private static boolean canPaintImmediately(@NotNull DocumentEvent e) {
-    return !contains(e.getOldFragment(), '\n') &&
+  private boolean canPaintImmediately(@NotNull DocumentEvent e) {
+    UndoManager undoManager = UndoManager.getInstance(myProject);
+    return !undoManager.isUndoInProgress() && // Undo / Redo actions might start multiple write actions and make multiple document changes.
+           !undoManager.isRedoInProgress() && // Can we optimize the subsystem to start only one write action and do a single update?
+           myDocument instanceof DocumentImpl &&
+           !((DocumentImpl)myDocument).isGuardsSuppressed() && // Heuristics. Can PsiToDocumentSynchronizer perform bulk document updates?
+           !contains(e.getOldFragment(), '\n') &&
            !contains(e.getNewFragment(), '\n') &&
            !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
   }
