@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.StudyItem;
@@ -138,15 +139,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   @Nullable
   @Override
   protected StudyItem getThresholdItem(@NotNull Course course, @NotNull PsiDirectory sourceDirectory) {
-    PsiDirectory parent = sourceDirectory.getParent();
-    if (parent == null) {
-      return null;
-    }
-    Lesson lesson = course.getLesson(parent.getName());
-    if (lesson == null) {
-      return null;
-    }
-    return lesson.getTask(sourceDirectory.getName());
+    return EduUtils.getTask(sourceDirectory, course);
   }
 
   @Override

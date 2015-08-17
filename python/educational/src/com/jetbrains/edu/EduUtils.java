@@ -12,10 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.StudyItem;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -239,5 +237,18 @@ public class EduUtils {
         }
       });
     }
+  }
+
+  @Nullable
+  public static Task getTask(@NotNull final PsiDirectory directory, @NotNull final Course course) {
+    PsiDirectory lessonDir = directory.getParent();
+    if (lessonDir == null) {
+      return null;
+    }
+    Lesson lesson = course.getLesson(lessonDir.getName());
+    if (lesson == null) {
+      return null;
+    }
+    return lesson.getTask(directory.getName());
   }
 }
