@@ -374,7 +374,8 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
   }
 }
 
-public data Tag("scheme") class TestScheme(Attribute private var name: String = "", Attribute var data: String? = null) : ExternalizableScheme {
+Tag("scheme")
+public data class TestScheme(@Attribute private var name: String = "", @Attribute public var data: String? = null) : ExternalizableScheme {
   override fun getName() = name
 
   override Transient fun setName(newName: String) {
