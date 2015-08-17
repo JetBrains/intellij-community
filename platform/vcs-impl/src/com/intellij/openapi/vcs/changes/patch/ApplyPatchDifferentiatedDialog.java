@@ -37,13 +37,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.actions.*;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.DocumentAdapter;
@@ -999,35 +999,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         for (AbstractFilePatchInProgress.PatchChange change : changes) {
           final AbstractFilePatchInProgress patchInProgress = change.getPatchInProgress();
           if (!patchInProgress.baseExistsOrAdded()) continue;
-          DiffRequestPresentable diffRequestPresentable;
-          if (patchInProgress instanceof BinaryFilePatchInProgress) {
-            final ShelvedBinaryFile file = ((BinaryFilePatchInProgress)patchInProgress).getPatch().getShelvedBinaryFile();
-            diffRequestPresentable = new DiffRequestPresentableProxy() {
-              @NotNull
-              @Override
-              public DiffRequestPresentable init() throws VcsException {
-                return new ChangeDiffRequestPresentable(myProject, file.createChange(myProject));
-              }
-
-              @Override
-              public String getPathPresentation() {
-                final File file1 = new File(VfsUtilCore.virtualToIoFile(patchInProgress.getBase()),
-                                            file.AFTER_PATH == null ? file.BEFORE_PATH : file.AFTER_PATH);
-                return FileUtil.toSystemDependentName(file1.getPath());
-              }
-            };
-          }
-          else {
-            final FilePatch patch = patchInProgress.getPatch();
-            final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
-            diffRequestPresentable =
-              change.createDiffRequestPresentable(myProject, new Getter<CharSequence>() {
-                @Override
-                public CharSequence get() {
-                  return myReader.getBaseRevision(myProject, path);
-                }
-              });
-          }
+          DiffRequestPresentable diffRequestPresentable = patchInProgress.getDiffRequestPresentable(myProject, myReader);
           if (diffRequestPresentable != null) {
             diffRequestPresentableList.add(diffRequestPresentable);
           }

@@ -16,17 +16,23 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
+import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Collection;
 
 public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFilePatch> {
@@ -62,21 +68,44 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
     return myNewContentRevision;
   }
 
-  @NotNull
   @Override
-  protected DiffRequestPresentable diffRequestForConflictingChanges(@NotNull final Project project,
-                                                                    @NotNull PatchChange change,
-                                                                    @NotNull final Getter<CharSequence> baseContents) {
-    final Getter<ApplyPatchForBaseRevisionTexts> revisionTextsGetter = new Getter<ApplyPatchForBaseRevisionTexts>() {
+  public DiffRequestPresentable getDiffRequestPresentable(final Project project, final PatchReader patchReader) {
+    final PatchChange change = getChange();
+    final FilePatch patch = getPatch();
+    final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
+    final Getter<CharSequence> baseContents = new Getter<CharSequence>() {
       @Override
-      public ApplyPatchForBaseRevisionTexts get() {
-        final VirtualFile currentBase = getCurrentBase();
-        return ApplyPatchForBaseRevisionTexts.create(project, currentBase,
-                                                     VcsUtil.getFilePath(currentBase),
-                                                     getPatch(), baseContents);
+      public CharSequence get() {
+        return patchReader.getBaseRevision(project, path);
       }
     };
-    return new MergedDiffRequestPresentable(project, revisionTextsGetter,
-                                            getCurrentBase(), getPatch().getAfterVersionId());
+    return new DiffRequestPresentableProxy() {
+      @NotNull
+      @Override
+      public DiffRequestPresentable init() throws VcsException {
+        if (isConflictingChange()) {
+          final Getter<ApplyPatchForBaseRevisionTexts> revisionTextsGetter = new Getter<ApplyPatchForBaseRevisionTexts>() {
+            @Override
+            public ApplyPatchForBaseRevisionTexts get() {
+              final VirtualFile currentBase = getCurrentBase();
+              return ApplyPatchForBaseRevisionTexts.create(project, currentBase,
+                                                           VcsUtil.getFilePath(currentBase),
+                                                           getPatch(), baseContents);
+            }
+          };
+          return new MergedDiffRequestPresentable(project, revisionTextsGetter,
+                                                  getCurrentBase(), getPatch().getAfterVersionId());
+        }
+        else {
+          return new ChangeDiffRequestPresentable(project, change);
+        }
+      }
+
+      @Override
+      public String getPathPresentation() {
+        final File ioCurrentBase = getIoCurrentBase();
+        return ioCurrentBase == null ? getCurrentPath() : ioCurrentBase.getPath();
+      }
+    };
   }
 }

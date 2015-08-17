@@ -15,13 +15,24 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.diff.impl.patch.PatchReader;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryContentRevision;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Collection;
 
 public class BinaryFilePatchInProgress extends AbstractFilePatchInProgress<ShelvedBinaryFilePatch> {
@@ -45,5 +56,24 @@ public class BinaryFilePatchInProgress extends AbstractFilePatchInProgress<Shelv
       myNewContentRevision = new ShelvedBinaryContentRevision(newFilePath, myPatch.getShelvedBinaryFile().SHELVED_PATH);
     }
     return myNewContentRevision;
+  }
+
+  @Override
+  public DiffRequestPresentable getDiffRequestPresentable(final Project project, final PatchReader baseContents) {
+    final ShelvedBinaryFile file = getPatch().getShelvedBinaryFile();
+    return new DiffRequestPresentableProxy() {
+      @NotNull
+      @Override
+      public DiffRequestPresentable init() throws VcsException {
+        return new ChangeDiffRequestPresentable(project, file.createChange(project));
+      }
+
+      @Override
+      public String getPathPresentation() {
+        final File file1 = new File(VfsUtilCore.virtualToIoFile(getBase()),
+                                    file.AFTER_PATH == null ? file.BEFORE_PATH : file.AFTER_PATH);
+        return FileUtil.toSystemDependentName(file1.getPath());
+      }
+    };
   }
 }
