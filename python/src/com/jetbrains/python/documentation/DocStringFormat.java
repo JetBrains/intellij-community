@@ -15,9 +15,16 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringBuilder;
+import com.jetbrains.python.documentation.docstrings.DocStringProvider;
+import com.jetbrains.python.documentation.docstrings.DocStringUpdater;
+import com.jetbrains.python.documentation.docstrings.SphinxDocstringProvider;
+import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,14 +35,22 @@ import java.util.List;
  * @author yole
  */
 public enum DocStringFormat {
+  /**
+   * @see DocStringUtil#ensureNotPlainDocstringFormat(PsiElement)
+   */
   PLAIN("Plain"),
   EPYTEXT("Epytext"),
-  REST("reStructuredText"),
+  REST("reStructuredText") {
+    @NotNull
+    @Override
+    public DocStringProvider<? extends StructuredDocString> getProvider() {
+      return new SphinxDocstringProvider();
+    }
+  },
   NUMPY("NumPy"),
   GOOGLE("Google");
 
   public static final List<String> ALL_NAMES = getAllNames();
-  public static final List<String> ALL_NAMES_BUT_PLAIN = getAllNamesButPlain();
 
   @NotNull
   private static List<String> getAllNames() {
@@ -46,6 +61,8 @@ public enum DocStringFormat {
       }
     }));
   }
+
+  public static final List<String> ALL_NAMES_BUT_PLAIN = getAllNamesButPlain();
 
   @NotNull
   private static List<String> getAllNamesButPlain() {
@@ -73,6 +90,7 @@ public enum DocStringFormat {
   }
 
   String myName;
+
   DocStringFormat(@NotNull String name) {
     myName = name;
   }
@@ -80,5 +98,29 @@ public enum DocStringFormat {
   @NotNull
   public String getName() {
     return myName;
+  }
+
+  @NotNull
+  public DocStringProvider<? extends StructuredDocString> getProvider() {
+    return new StubDocStringProvider();
+  }
+
+  private static class StubDocStringProvider extends DocStringProvider<StructuredDocString> {
+    @Override
+    public StructuredDocString parseDocString(@NotNull Substring content) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public DocStringUpdater updateDocString(@NotNull StructuredDocString docstring) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public DocStringBuilder createDocString() {
+      throw new UnsupportedOperationException();
+    }
   }
 }

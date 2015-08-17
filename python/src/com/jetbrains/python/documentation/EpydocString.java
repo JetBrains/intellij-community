@@ -46,14 +46,7 @@ public class EpydocString extends TagBasedDocString {
     "precondition", "postcondition", "invariant", "author", "organization", "copyright", "license", "contact", "summary", "see"
   };
 
-  /**
-   * Empty doc (for {@link #createParameterType(String, String)} probably)
-   */
-  public EpydocString() {
-    this("");
-  }
-
-  public EpydocString(@NotNull String docstringText) {
+  public EpydocString(@NotNull Substring docstringText) {
     super(docstringText, "@");
   }
 

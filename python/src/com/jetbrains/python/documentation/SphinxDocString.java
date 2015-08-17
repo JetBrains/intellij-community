@@ -31,14 +31,7 @@ public class SphinxDocString extends TagBasedDocString {
                                                    ":type", ":raise", ":raises", ":var", ":cvar", ":ivar",
                                                    ":return", ":returns", ":rtype", ":except", ":exception" };
 
-  /**
-   * Empty doc (for {@link #createParameterType(String, String)} probably)
-   */
-  public SphinxDocString() {
-    this("");
-  }
-
-  public SphinxDocString(@NotNull final String docstringText) {
+  public SphinxDocString(@NotNull final Substring docstringText) {
     super(docstringText, ":");
   }
 

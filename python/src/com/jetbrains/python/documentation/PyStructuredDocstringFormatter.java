@@ -70,12 +70,12 @@ public class PyStructuredDocstringFormatter {
     final StructuredDocString structuredDocString;
     if (documentationSettings.isEpydocFormat(element.getContainingFile()) || DocStringUtil.isEpydocDocString(preparedDocstring)) {
       formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
-      structuredDocString = new EpydocString(preparedDocstring);
+      structuredDocString = DocStringFormat.EPYTEXT.getProvider().parseDocStringContent(preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
     else if (documentationSettings.isReSTFormat(element.getContainingFile()) || DocStringUtil.isSphinxDocString(preparedDocstring)) {
       formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
-      structuredDocString = new SphinxDocString(preparedDocstring);
+      structuredDocString = DocStringFormat.REST.getProvider().parseDocStringContent(preparedDocstring);
     }
     else if (documentationSettings.isGoogleFormat(element.getContainingFile()) || DocStringUtil.isGoogleDocString(preparedDocstring)) {
       formatter = PythonHelpersLocator.getHelperPath("google_formatter.py");

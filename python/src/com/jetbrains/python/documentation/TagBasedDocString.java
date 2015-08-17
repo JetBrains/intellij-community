@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public abstract class TagBasedDocString implements StructuredDocString {
+public abstract class TagBasedDocString extends DocStringLineParser implements StructuredDocString {
   protected final String myDescription;
 
   protected final Map<String, Substring> mySimpleTagValues = Maps.newHashMap();
@@ -56,17 +56,15 @@ public abstract class TagBasedDocString implements StructuredDocString {
 
   public static String TYPE = "type";
 
-  protected TagBasedDocString(@NotNull String docStringText, String tagPrefix) {
+  protected TagBasedDocString(@NotNull Substring docStringText, @NotNull String tagPrefix) {
+    super(docStringText);
     myTagPrefix = tagPrefix;
-    final Substring docString = new Substring(docStringText);
-    final List<Substring> lines = docString.splitLines();
-    final int nlines = lines.size();
     final StringBuilder builder = new StringBuilder();
     int lineno = 0;
-    while (lineno < nlines) {
-      Substring line = lines.get(lineno).trim();
+    while (lineno < getLineCount()) {
+      Substring line = getLine(lineno).trim();
       if (line.startsWith(tagPrefix)) {
-        lineno = parseTag(lines, lineno, tagPrefix);
+        lineno = parseTag(lineno, tagPrefix);
       }
       else {
         builder.append(line.toString()).append("\n");
@@ -110,8 +108,8 @@ public abstract class TagBasedDocString implements StructuredDocString {
     return map;
   }
 
-  protected int parseTag(List<Substring> lines, int lineno, String tagPrefix) {
-    final Substring lineWithPrefix = lines.get(lineno).trimLeft();
+  protected int parseTag(int lineno, String tagPrefix) {
+    final Substring lineWithPrefix = getLine(lineno).trimLeft();
     if (lineWithPrefix.startsWith(tagPrefix)) {
       final Substring line = lineWithPrefix.substring(tagPrefix.length());
       final Matcher strictTagMatcher = RE_STRICT_TAG_LINE.matcher(line);
@@ -127,11 +125,11 @@ public abstract class TagBasedDocString implements StructuredDocString {
         final Substring tagName = line.getMatcherGroup(tagMatcher, 1);
         final Substring argName = line.getMatcherGroup(tagMatcher, 2).trim();
         final TextRange firstArgLineRange = line.getMatcherGroup(tagMatcher, 3).trim().getTextRange();
-        final int linesCount = lines.size();
+        final int linesCount = getLineCount();
         final int argStart = firstArgLineRange.getStartOffset();
         int argEnd = firstArgLineRange.getEndOffset();
         while (lineno + 1 < linesCount) {
-          final Substring nextLine = lines.get(lineno + 1).trim();
+          final Substring nextLine = getLine(lineno + 1).trim();
           if (nextLine.length() == 0 || nextLine.startsWith(tagPrefix)) {
             break;
           }

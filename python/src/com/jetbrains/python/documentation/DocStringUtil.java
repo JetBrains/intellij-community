@@ -54,7 +54,7 @@ public class DocStringUtil {
       return null;
     }
     if (isSphinxDocString(text)) {
-      return new SphinxDocString(text);
+      return DocStringFormat.REST.getProvider().parseDocStringContent(text);
     }
     if (isGoogleDocString(text)) {
       return new GoogleCodeStyleDocString(text);
@@ -62,7 +62,7 @@ public class DocStringUtil {
     if (isNumpyDocstring(text)) {
       return new NumpyDocString(text);
     }
-    return new EpydocString(text);
+    return DocStringFormat.EPYTEXT.getProvider().parseDocStringContent(text);
   }
 
   public static boolean isSphinxDocString(@NotNull String text) {

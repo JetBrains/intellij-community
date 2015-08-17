@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * @author Mikhail Golubev
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
-public abstract class SectionBasedDocString implements StructuredDocString {
+public abstract class SectionBasedDocString extends DocStringLineParser implements StructuredDocString {
 
   /**
    * Frequently used section types
@@ -88,18 +88,16 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   private static final ImmutableSet<String> SECTIONS_WITH_TYPE = ImmutableSet.of(RAISES_SECTION);
   private static final ImmutableSet<String> SECTIONS_WITH_NAME = ImmutableSet.of(METHODS_SECTION);
 
-  protected final List<Substring> myLines;
-
   private final Substring mySummary;
   private final List<Section> mySections = new ArrayList<Section>();
   private final List<Substring> myOtherContent = new ArrayList<Substring>();
 
   protected SectionBasedDocString(@NotNull String text) {
-    myLines = new Substring(text).splitLines();
+    super(new Substring(text));
     List<Substring> summary = Collections.emptyList();
     int startLine = skipEmptyLines(parseHeader(0));
     int lineNum = startLine;
-    while (lineNum < myLines.size()) {
+    while (lineNum < getLineCount()) {
       final Pair<Section, Integer> parsedSection = parseSection(lineNum);
       if (parsedSection.getFirst() != null) {
         mySections.add(parsedSection.getFirst());
@@ -200,7 +198,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
   protected abstract Pair<String, Integer> parseSectionHeader(int lineNum);
 
   protected int skipEmptyLines(int lineNum) {
-    while (lineNum < myLines.size() && isEmpty(lineNum)) {
+    while (lineNum < getLineCount() && isEmpty(lineNum)) {
       lineNum++;
     }
     return lineNum;
@@ -211,21 +209,13 @@ public abstract class SectionBasedDocString implements StructuredDocString {
     return title == null ? null : SECTION_ALIASES.get(title.toLowerCase());
   }
 
-  protected boolean isEmptyOrDoesNotExist(int lineNum) {
-    return lineNum < 0 || lineNum >= myLines.size() || isEmpty(lineNum);
-  }
-
-  protected boolean isEmpty(int lineNum) {
-    return StringUtil.isEmptyOrSpaces(getLine(lineNum));
-  }
-
   protected boolean isSectionStart(int lineNum) {
     final Pair<String, Integer> pair = parseSectionHeader(lineNum);
     return pair.getFirst() != null;
   }
 
   protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
-    return lineNum >= myLines.size() ||
+    return lineNum >= getLineCount() ||
            isSectionStart(lineNum) ||
            (!isEmpty(lineNum) && getIndent(getLine(lineNum)) <= curSectionIndent);
   }
@@ -288,7 +278,7 @@ public abstract class SectionBasedDocString implements StructuredDocString {
    * @return new substring as described
    */
   @NotNull
-  public static Substring mergeSubstrings(@NotNull Substring s1, @NotNull Substring s2) {
+  protected static Substring mergeSubstrings(@NotNull Substring s1, @NotNull Substring s2) {
     if (!s1.getSuperString().equals(s2.getSuperString())) {
       throw new IllegalArgumentException(String.format("Substrings '%s' and '%s' must belong to the same origin", s1, s2));
     }
@@ -322,25 +312,6 @@ public abstract class SectionBasedDocString implements StructuredDocString {
       }
     });
     return StringUtil.join(skipFirstLine ? ContainerUtil.prepend(dedentedLines, firstLine) : dedentedLines, "\n");
-  }
-
-  protected static int getIndent(@NotNull CharSequence line) {
-    for (int i = 0; i < line.length(); i++) {
-      if (!Character.isSpaceChar(line.charAt(i))) {
-        return i;
-      }
-    }
-    return 0;
-  }
-
-  @NotNull
-  protected Substring getLine(int lineNum) {
-    return myLines.get(lineNum);
-  }
-
-  @Nullable
-  protected Substring getLineOrNull(int lineNum) {
-    return lineNum >= 0 && lineNum < myLines.size() ? myLines.get(lineNum) : null;
   }
 
   @VisibleForTesting
