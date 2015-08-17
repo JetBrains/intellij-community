@@ -175,7 +175,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
     initVariantsInFileScope();
     initVariantsInClassScope();
-    initVariantsInMethodScope();
 
     defineScopeEquivalence(PsiMethod.class, PsiClassInitializer.class);
     defineScopeEquivalence(PsiMethod.class, JavaCodeFragment.class);
@@ -289,29 +288,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     }
   }
 
-  private void initVariantsInMethodScope() {
-// Completion for classes in method throws section
-// position
-    {
-      final ElementFilter position = new LeftNeighbour(new AndFilter(
-        new TextFilter(")"),
-        new ParentElementFilter(new ClassFilter(PsiParameterList.class))));
-
-// completion
-      CompletionVariant variant = new CompletionVariant(PsiMethod.class, position);
-      variant.includeScopeClass(PsiClass.class); // for throws on separate line
-      variant.addCompletion(PsiKeyword.THROWS);
-
-      registerVariant(variant);
-
-//in annotation methods
-      variant = new CompletionVariant(PsiAnnotationMethod.class, position);
-      variant.addCompletion(PsiKeyword.DEFAULT);
-      registerVariant(variant);
-    }
-
-  }
-
   private static TailType getReturnTail(PsiElement position) {
     PsiElement scope = position;
     while(true){
@@ -401,6 +377,8 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
     addClassKeywords(result, position);
 
+    addMethodHeaderKeywords(result, position, prevLeaf);
+
     addPrimitiveTypes(result, position);
 
     addClassLiteral(result, position);
@@ -408,6 +386,17 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     addUnfinishedMethodTypeParameters(position, result);
 
     addExtendsSuper(result, position);
+  }
+
+  private static void addMethodHeaderKeywords(Consumer<LookupElement> result, PsiElement position, PsiElement prevLeaf) {
+    if (psiElement().withText(")").withParents(PsiParameterList.class, PsiMethod.class).accepts(prevLeaf)) {
+      assert prevLeaf != null;
+      if (prevLeaf.getParent().getParent() instanceof PsiAnnotationMethod) {
+        result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      } else {
+        result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.THROWS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+    }
   }
 
   private static void addCaseDefault(Consumer<LookupElement> result, PsiElement position) {
