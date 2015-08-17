@@ -15,6 +15,8 @@
  */
 package com.theoryinpractice.testng.intention;
 
+import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
+
 import com.beust.jcommander.JCommander;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;

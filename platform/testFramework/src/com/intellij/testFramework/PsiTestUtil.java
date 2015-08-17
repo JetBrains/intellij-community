@@ -303,10 +303,10 @@ public class PsiTestUtil {
                                            final String libName,
                                            final List<VirtualFile> classesRoots,
                                            final List<VirtualFile> sourceRoots) {
+    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
     RunResult<Library> result = new WriteAction<Library>() {
       @Override
       protected void run(@NotNull Result<Library> result) throws Throwable {
-        LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
         Library library = libraryTable.createLibrary(libName);
         Library.ModifiableModel libraryModel = library.getModifiableModel();
         try {
