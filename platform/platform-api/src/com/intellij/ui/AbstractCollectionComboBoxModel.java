@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author traff
@@ -31,8 +31,8 @@ public abstract class AbstractCollectionComboBoxModel<T> extends CollectionListM
     mySelection = selection;
   }
 
-  public AbstractCollectionComboBoxModel(@Nullable T selection, @NotNull Collection<T> items) {
-    super(items);
+  public AbstractCollectionComboBoxModel(@Nullable T selection, @NotNull List<T> items) {
+    super(items, true);
 
     mySelection = selection;
   }
