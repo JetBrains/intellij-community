@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,7 +46,7 @@ public abstract class BlockSupport {
                                        @NotNull CharSequence lastCommittedText) throws IncorrectOperationException;
 
   public static final Key<Boolean> DO_NOT_REPARSE_INCREMENTALLY = Key.create("DO_NOT_REPARSE_INCREMENTALLY");
-  public static final Key<ASTNode> TREE_TO_BE_REPARSED = Key.create("TREE_TO_BE_REPARSED");
+  public static final Key<Pair<ASTNode, CharSequence>> TREE_TO_BE_REPARSED = Key.create("TREE_TO_BE_REPARSED");
 
   public static class ReparsedSuccessfullyException extends RuntimeException {
     private final DiffLog myDiffLog;
@@ -59,6 +60,7 @@ public abstract class BlockSupport {
       return myDiffLog;
     }
 
+    @NotNull
     @Override
     public synchronized Throwable fillInStackTrace() {
       return this;

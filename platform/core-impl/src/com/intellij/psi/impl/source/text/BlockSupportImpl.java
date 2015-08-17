@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -86,7 +87,7 @@ public class BlockSupportImpl extends BlockSupport {
     final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, changedPsiRange, newFileText);
     return reparseableRoots != null
            ? mergeTrees(fileImpl, reparseableRoots.first, reparseableRoots.second, indicator, lastCommittedText)
-           : makeFullParse(fileImpl.getTreeElement(), newFileText, newFileText.length(), fileImpl, indicator);
+           : makeFullParse(fileImpl, newFileText, indicator, lastCommittedText);
   }
 
   /**
@@ -171,16 +172,16 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @NotNull
-  private static DiffLog makeFullParse(ASTNode parent,
+  private static DiffLog makeFullParse(@NotNull PsiFileImpl fileImpl,
                                        @NotNull CharSequence newFileText,
-                                       int textLength,
-                                       @NotNull PsiFileImpl fileImpl,
-                                       @NotNull ProgressIndicator indicator) {
+                                       @NotNull ProgressIndicator indicator,
+                                       @NotNull CharSequence lastCommittedText) {
     if (fileImpl instanceof PsiCodeFragment) {
+      FileElement parent = fileImpl.getTreeElement();
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
-      holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, textLength)));
+      holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, newFileText.length())));
       DiffLog diffLog = new DiffLog();
-      diffLog.appendReplaceFileElement((FileElement)parent, (FileElement)holderElement.getFirstChildNode());
+      diffLog.appendReplaceFileElement(parent, (FileElement)holderElement.getFirstChildNode());
 
       return diffLog;
     }
@@ -205,8 +206,10 @@ public class BlockSupportImpl extends BlockSupport {
 
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
-
-      DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, oldFileElement.getText());
+      if (!lastCommittedText.toString().equals(oldFileElement.getText())) {
+        throw new IncorrectOperationException();
+      }
+      DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
 
       ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
       return diffLog;
@@ -266,7 +269,7 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     try {
-      newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
+      newRoot.putUserData(TREE_TO_BE_REPARSED, Pair.create(oldRoot, lastCommittedText));
       if (isReplaceWholeNode(fileImpl, newRoot)) {
         DiffLog treeChangeEvent = replaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
         fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);

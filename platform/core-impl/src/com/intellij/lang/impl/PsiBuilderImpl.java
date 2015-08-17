@@ -22,10 +22,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -34,6 +32,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.*;
@@ -48,6 +47,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.util.AbstractList;
@@ -82,6 +82,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private CharTable myCharTable;
   private final CharSequence myText;
+  private final CharSequence myLastCommittedText;
   private final char[] myTextArray;
   private boolean myDebugMode;
   private int myLexemeCount;
@@ -133,6 +134,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
+  @TestOnly
   public PsiBuilderImpl(@NotNull Project project,
                         PsiFile containingFile,
                         @NotNull ParserDefinition parserDefinition,
@@ -142,7 +144,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree) {
     this(project, containingFile, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, charTable, text,
-         originalTree, parentLightTree, null);
+         originalTree, originalTree == null ? null : originalTree.getText(), parentLightTree, null);
   }
 
   public PsiBuilderImpl(Project project,
@@ -154,18 +156,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final CharSequence text,
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree) {
-    this(project, containingFile, whiteSpaces, comments, lexer, charTable, text, originalTree, parentLightTree, null);
+    this(project, containingFile, whiteSpaces, comments, lexer, charTable, text, originalTree, originalTree == null ? null : originalTree.getText(), parentLightTree, null);
   }
 
   private PsiBuilderImpl(Project project,
-                        PsiFile containingFile,
-                        @NotNull TokenSet whiteSpaces,
-                        @NotNull TokenSet comments,
-                        @NotNull Lexer lexer,
-                        CharTable charTable,
-                        @NotNull final CharSequence text,
-                        @Nullable ASTNode originalTree,
-                        @Nullable MyTreeStructure parentLightTree,
+                         PsiFile containingFile,
+                         @NotNull TokenSet whiteSpaces,
+                         @NotNull TokenSet comments,
+                         @NotNull Lexer lexer,
+                         CharTable charTable,
+                         @NotNull final CharSequence text,
+                         @Nullable ASTNode originalTree,
+                         @Nullable CharSequence lastCommittedText,
+                         @Nullable MyTreeStructure parentLightTree,
                          LazyParseableToken parentToken) {
     myProject = project;
     myFile = containingFile;
@@ -178,6 +181,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myComments = comments;
     myCharTable = charTable;
     myOriginalTree = originalTree;
+    myLastCommittedText = lastCommittedText;
+    if ((originalTree == null) != (lastCommittedText == null)) {
+      throw new IllegalArgumentException("originalTree and lastCommittedText must be null/notnull together but got: originalTree=" + originalTree + "; lastCommittedText=" +
+                                         (lastCommittedText == null ? null : "'"+StringUtil.first(lastCommittedText, 80, true)+"'"));
+    }
     myParentLightTree = parentLightTree;
     myOffset = parentToken != null ? parentToken.getStartOffset() : 0;
 
@@ -189,8 +197,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final Lexer lexer,
                         @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
-    this(project, SharedImplUtil.getContainingFile(chameleon), parserDefinition, lexer, SharedImplUtil.findCharTableByTree(chameleon), text,
-         chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED), null);
+    this(project, SharedImplUtil.getContainingFile(chameleon), parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(),
+         lexer, SharedImplUtil.findCharTableByTree(chameleon), text,
+         Pair.getFirst(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)), Pair.getSecond(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)), null, null);
   }
 
   public PsiBuilderImpl(@NotNull final Project project,
@@ -199,7 +208,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final LighterLazyParseableNode chameleon,
                         @NotNull final CharSequence text) {
     this(project, chameleon.getContainingFile(), parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer,
-         chameleon.getCharTable(), text, null, ((LazyParseableToken)chameleon).myParent, (LazyParseableToken)chameleon);
+         chameleon.getCharTable(), text, null, null, ((LazyParseableToken)chameleon).myParent, (LazyParseableToken)chameleon);
   }
 
   private void cacheLexemes(@Nullable LazyParseableToken parentToken) {
@@ -522,8 +531,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (myBuilder == null) return "<dropped>";
       boolean isDone = myDoneMarker != null;
       CharSequence originalText = myBuilder.getOriginalText();
-      int startOffset = getStartOffset();
-      int endOffset = isDone ? getEndOffset() : myBuilder.getCurrentOffset();
+      int startOffset = getStartOffset() - myBuilder.myOffset;
+      int endOffset = isDone ? getEndOffset() - myBuilder.myOffset : myBuilder.getCurrentOffset();
       CharSequence text = originalText.subSequence(startOffset, endOffset);
       return isDone ? text.toString() : text + "...";
     }
@@ -1124,7 +1133,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final boolean isTooDeep = myFile != null && BlockSupport.isTooDeep(myFile.getOriginalFile());
 
     if (myOriginalTree != null && !isTooDeep) {
-      DiffLog diffLog = merge(myOriginalTree, rootMarker);
+      DiffLog diffLog = merge(myOriginalTree, rootMarker, myLastCommittedText);
       throw new BlockSupport.ReparsedSuccessfullyException(diffLog);
     }
 
@@ -1192,7 +1201,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
 
   @NotNull
-  private DiffLog merge(@NotNull final ASTNode oldRoot, @NotNull StartMarker newRoot) {
+  private DiffLog merge(@NotNull final ASTNode oldRoot, @NotNull StartMarker newRoot, @NotNull CharSequence lastCommittedText) {
     DiffLog diffLog = new DiffLog();
     DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog);
     MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
@@ -1200,7 +1209,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator == null ? new EmptyProgressIndicator() : indicator,
-                               oldRoot.getText());
+                               lastCommittedText);
     return diffLog;
   }
 
