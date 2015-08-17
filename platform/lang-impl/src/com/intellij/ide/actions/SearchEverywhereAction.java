@@ -2046,7 +2046,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             return;
           }
           if (myPopup == null || !myPopup.isVisible()) {
-            ListScrollingUtil.installActions(myList, getField().getTextEditor());
+            ScrollingUtil.installActions(myList, getField().getTextEditor());
             JBScrollPane content = new JBScrollPane(myList) {
               {
                 if (UIUtil.isUnderDarcula()) {

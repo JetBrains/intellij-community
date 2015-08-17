@@ -552,11 +552,13 @@ public class TestDiscoveryIndex implements ProjectComponent {
             }
           }
         }
-        for (int classQName : previousClassData.keys()) {
-          if (classData.containsKey(classQName)) continue;
+        if (classData != null) {
+          for (int classQName : previousClassData.keys()) {
+            if (classData.containsKey(classQName)) continue;
 
-          TIntArrayList previousMethods = previousClassData.get(classQName);
-          removedClassData.put(classQName, previousMethods);
+            TIntArrayList previousMethods = previousClassData.get(classQName);
+            removedClassData.put(classQName, previousMethods);
+          }
         }
       }
 

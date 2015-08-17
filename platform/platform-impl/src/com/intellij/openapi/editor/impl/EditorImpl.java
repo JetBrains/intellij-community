@@ -2232,8 +2232,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Rectangle lineRectangleBetween(int begin, int end) {
     Point p1 = offsetToXY(begin, false);
     Point p2 = offsetToXY(end, false);
-    LOG.assertTrue(p1.y == p2.y);
-    return new Rectangle(p1.x, p1.y, p2.x - p1.x, getLineHeight());
+    // When soft wrap is present, handle only the first visual line (for simplicity, yet it works reasonably well)
+    int x2 = p1.y == p2.y ? p2.x : Math.max(p1.x, myEditorComponent.getWidth() - getVerticalScrollBar().getWidth());
+    return new Rectangle(p1.x, p1.y, x2 - p1.x, getLineHeight());
   }
 
   @NotNull

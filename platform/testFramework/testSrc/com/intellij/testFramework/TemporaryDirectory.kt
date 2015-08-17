@@ -49,8 +49,7 @@ public class TemporaryDirectory : ExternalResource() {
    */
   public fun newDirectory(directoryName: String? = null): File {
     val file = generatePath(directoryName)
-    val fs = LocalFileSystem.getInstance()
-    if (fs != null) {
+    LocalFileSystem.getInstance()?.let { fs ->
       // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
       val virtualFile = fs.findFileByIoFile(file)
       if (virtualFile != null) {
