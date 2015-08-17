@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
@@ -197,7 +198,8 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     }
   }
 
-  public abstract DiffRequestPresentable getDiffRequestPresentable(Project project, PatchReader baseContents);
+  @NotNull
+  public abstract DiffRequestProducer getDiffRequestProducers(Project project, PatchReader baseContents);
 
   public List<VirtualFile> getAutoBasesCopy() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(myAutoBases.size() + 1);

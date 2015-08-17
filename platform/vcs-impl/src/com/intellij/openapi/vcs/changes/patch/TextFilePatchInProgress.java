@@ -15,19 +15,21 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
-import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,41 +70,44 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
     return myNewContentRevision;
   }
 
+  @NotNull
   @Override
-  public DiffRequestPresentable getDiffRequestPresentable(final Project project, final PatchReader patchReader) {
+  public DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader patchReader) {
     final PatchChange change = getChange();
     final FilePatch patch = getPatch();
     final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
-    final Getter<CharSequence> baseContents = new Getter<CharSequence>() {
+    final Getter<CharSequence> baseContentGetter = new Getter<CharSequence>() {
       @Override
       public CharSequence get() {
         return patchReader.getBaseRevision(project, path);
       }
     };
-    return new DiffRequestPresentableProxy() {
+    return new DiffRequestProducer() {
       @NotNull
       @Override
-      public DiffRequestPresentable init() throws VcsException {
+      public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+        throws DiffRequestProducerException, ProcessCanceledException {
         if (isConflictingChange()) {
-          final Getter<ApplyPatchForBaseRevisionTexts> revisionTextsGetter = new Getter<ApplyPatchForBaseRevisionTexts>() {
+          final VirtualFile file = getCurrentBase();
+
+          Getter<ApplyPatchForBaseRevisionTexts> getter = new Getter<ApplyPatchForBaseRevisionTexts>() {
             @Override
             public ApplyPatchForBaseRevisionTexts get() {
-              final VirtualFile currentBase = getCurrentBase();
-              return ApplyPatchForBaseRevisionTexts.create(project, currentBase,
-                                                           VcsUtil.getFilePath(currentBase),
-                                                           getPatch(), baseContents);
+              return ApplyPatchForBaseRevisionTexts.create(project, file, VcsUtil.getFilePath(file), getPatch(), baseContentGetter);
             }
           };
-          return new MergedDiffRequestPresentable(project, revisionTextsGetter,
-                                                  getCurrentBase(), getPatch().getAfterVersionId());
+
+          String afterTitle = getPatch().getAfterVersionId();
+          return PatchDiffRequestFactory.createConflict(project, file, afterTitle, getter, getName(), context, indicator);
         }
         else {
-          return new ChangeDiffRequestPresentable(project, change);
+          return PatchDiffRequestFactory.createFromChange(project, change, getName(), context, indicator);
         }
       }
 
+      @NotNull
       @Override
-      public String getPathPresentation() {
+      public String getName() {
         final File ioCurrentBase = getIoCurrentBase();
         return ioCurrentBase == null ? getCurrentPath() : ioCurrentBase.getPath();
       }
