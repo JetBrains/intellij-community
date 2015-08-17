@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
 
-public class JavaCompletionData {
+public class JavaKeywordCompletion {
   private static final @NonNls String[] BLOCK_FINALIZERS = {"{", "}", ";", ":", "else"};
 
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");

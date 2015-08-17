@@ -112,8 +112,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AnnotationTypeFilter();
     }
 
-    if (JavaCompletionData.DECLARATION_START.getValue().accepts(position) ||
-        JavaCompletionData.isInsideParameterList(position) ||
+    if (JavaKeywordCompletion.DECLARATION_START.getValue().accepts(position) ||
+        JavaKeywordCompletion.isInsideParameterList(position) ||
         psiElement().inside(psiElement(PsiJavaCodeReferenceElement.class).withParent(psiAnnotation())).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
     }
@@ -122,18 +122,18 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new ElementExtractorFilter(ElementClassFilter.CLASS);
     }
 
-    if (JavaCompletionData.VARIABLE_AFTER_FINAL.accepts(position)) {
+    if (JavaKeywordCompletion.VARIABLE_AFTER_FINAL.accepts(position)) {
       return ElementClassFilter.CLASS;
     }
 
-    if (JavaCompletionData.AFTER_TRY_BLOCK.isAcceptable(position, position) ||
-        JavaCompletionData.START_SWITCH.accepts(position) ||
-        JavaCompletionData.isInstanceofPlace(position) ||
-        JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
+    if (JavaKeywordCompletion.AFTER_TRY_BLOCK.isAcceptable(position, position) ||
+        JavaKeywordCompletion.START_SWITCH.accepts(position) ||
+        JavaKeywordCompletion.isInstanceofPlace(position) ||
+        JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
       return null;
     }
 
-    if (JavaCompletionData.START_FOR.accepts(position)) {
+    if (JavaKeywordCompletion.START_FOR.accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.VARIABLE);
     }
 
@@ -200,8 +200,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
 
-    if (ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
-      JavaCompletionData.addExpectedTypeMembers(parameters, result);
+    if (ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
+      JavaKeywordCompletion.addExpectedTypeMembers(parameters, result);
       completeAnnotationAttributeName(result, position, parameters);
       result.stopHere();
       return;
@@ -289,8 +289,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   private static void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, CompletionResultSet result) {
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
-        !JavaCompletionData.AFTER_DOT.accepts(position) && !SmartCastProvider.shouldSuggestCast(parameters)) {
-      JavaCompletionData.addExpectedTypeMembers(parameters, result);
+        !JavaKeywordCompletion.AFTER_DOT.accepts(position) && !SmartCastProvider.shouldSuggestCast(parameters)) {
+      JavaKeywordCompletion.addExpectedTypeMembers(parameters, result);
       if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
       }
@@ -442,14 +442,14 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     };
 
-    JavaCompletionData.addKeywords(parameters, noMiddleMatches);
+    JavaKeywordCompletion.addKeywords(parameters, noMiddleMatches);
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
     boolean isSecondCompletion = parameters.getInvocationCount() >= 2;
 
     PsiElement position = parameters.getPosition();
-    if (JavaCompletionData.isInstanceofPlace(position)) return false;
+    if (JavaKeywordCompletion.isInstanceofPlace(position)) return false;
 
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return isSecondCompletion;
@@ -476,7 +476,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    if (JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
+    if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
       return false;
     }
 
