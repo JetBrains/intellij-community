@@ -231,4 +231,15 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     assert false : aClass;
     return null;
   }
+
+  @Nullable
+  public ConfigurationFromContext createLightConfiguration(@NotNull final ConfigurationContext context) {
+    RunConfiguration configuration = myConfigurationFactory.createTemplateConfiguration(context.getProject());
+    RunnerAndConfigurationSettings settings =
+      RunManager.getInstance(context.getProject()).createConfiguration(configuration, myConfigurationFactory);
+    if (!setupConfigurationFromContext((T)configuration, context, new Ref<PsiElement>(context.getPsiLocation()))) {
+      return null;
+    }
+    return new ConfigurationFromContextImpl(this, settings, context.getPsiLocation());
+  }
 }
