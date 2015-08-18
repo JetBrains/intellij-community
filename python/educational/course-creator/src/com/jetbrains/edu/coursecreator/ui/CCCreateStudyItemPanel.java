@@ -9,18 +9,16 @@ public class CCCreateStudyItemPanel extends JPanel {
   private JTextField myNameField;
   private CCItemPositionPanel myPositionalPanel;
   private String myThresholdName;
-  private int myThresholdIndex;
 
   public CCCreateStudyItemPanel(String itemName, String thresholdName, int thresholdIndex) {
     myThresholdName = thresholdName;
-    myThresholdIndex = thresholdIndex;
     myItemName = itemName;
     myNameField.setText(itemName + thresholdIndex);
     add(myPanel, BorderLayout.CENTER);
   }
 
   private void createUIComponents() {
-    myPositionalPanel = new CCItemPositionPanel(myItemName, myThresholdName, myThresholdIndex);
+    myPositionalPanel = new CCItemPositionPanel(myItemName, myThresholdName);
   }
 
   public String getItemName() {

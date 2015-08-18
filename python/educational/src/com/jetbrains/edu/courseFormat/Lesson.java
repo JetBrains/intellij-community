@@ -79,7 +79,12 @@ public class Lesson implements StudyItem {
     if (!EduUtils.indexIsValid(index, tasks)) {
       return null;
     }
-    return tasks.get(index);
+    for (Task task : tasks) {
+      if (task.getIndex() - 1 == index) {
+        return task;
+      }
+    }
+    return null;
   }
 
 }

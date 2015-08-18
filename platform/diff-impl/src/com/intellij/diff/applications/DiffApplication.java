@@ -58,7 +58,7 @@ public class DiffApplication extends ApplicationStarterBase {
     if (file1 == null) throw new Exception("Can't find file " + path1);
     if (file2 == null) throw new Exception("Can't find file " + path2);
 
-    VfsUtil.markDirtyAndRefresh(false, false, false, file1, file2);
+    VfsUtil.markDirtyAndRefresh(false, true, true, file1, file2);
     DiffRequest request = DiffRequestFactory.getInstance().createFromFiles(null, file1, file2);
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();

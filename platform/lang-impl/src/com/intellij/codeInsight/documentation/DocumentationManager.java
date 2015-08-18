@@ -58,7 +58,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -185,7 +185,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             ((AbstractPopup)hint).focusPreferredComponent();
             return;
           }
-          if (action instanceof ListScrollingUtil.ListScrollAction) return;
+          if (action instanceof ScrollingUtil.ListScrollAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
@@ -41,7 +40,6 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,11 +49,10 @@ import java.util.List;
 import java.util.Map;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor");
 
   protected final PsiElement[] myElementsToMove;
-  private final boolean mySearchForReferences;
+  protected final boolean mySearchForReferences;
   protected final boolean mySearchInComments;
   protected final boolean mySearchInNonJavaFiles;
   private final PsiDirectory myNewParent;
@@ -63,25 +60,24 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private NonCodeUsageInfo[] myNonCodeUsages;
   private final Map<PsiFile, List<UsageInfo>> myFoundUsages = new HashMap<PsiFile, List<UsageInfo>>();
 
-  public MoveFilesOrDirectoriesProcessor(
-    Project project,
-    PsiElement[] elements,
-    PsiDirectory newParent,
-    boolean searchInComments,
-    boolean searchInNonJavaFiles,
-    MoveCallback moveCallback,
-    Runnable prepareSuccessfulCallback) {
+  public MoveFilesOrDirectoriesProcessor(Project project,
+                                         PsiElement[] elements,
+                                         PsiDirectory newParent,
+                                         boolean searchInComments,
+                                         boolean searchInNonJavaFiles,
+                                         MoveCallback moveCallback,
+                                         Runnable prepareSuccessfulCallback) {
     this(project, elements, newParent, true, searchInComments, searchInNonJavaFiles, moveCallback, prepareSuccessfulCallback);
   }
 
-  public MoveFilesOrDirectoriesProcessor(
-    Project project,
-    PsiElement[] elements,
-    PsiDirectory newParent,
-    final boolean searchForReferences, boolean searchInComments,
-    boolean searchInNonJavaFiles,
-    MoveCallback moveCallback,
-    Runnable prepareSuccessfulCallback) {
+  public MoveFilesOrDirectoriesProcessor(Project project,
+                                         PsiElement[] elements,
+                                         PsiDirectory newParent,
+                                         boolean searchForReferences,
+                                         boolean searchInComments,
+                                         boolean searchInNonJavaFiles,
+                                         MoveCallback moveCallback,
+                                         Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
     myElementsToMove = elements;
     myNewParent = newParent;
@@ -133,7 +129,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-
   @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
@@ -150,7 +145,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     // If files are being moved then I need to collect some information to delete these
-    // filese from CVS. I need to know all common parents of the moved files and releative
+    // files from CVS. I need to know all common parents of the moved files and relative
     // paths.
 
     // Move files with correction of references.
@@ -206,17 +201,16 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
     }
     catch (IncorrectOperationException e) {
-      @NonNls final String message = e.getMessage();
+      final String message = e.getMessage();
       final int index = message != null ? message.indexOf("java.io.IOException") : -1;
-      if (index >= 0) {
+      if (index >= 0 && message != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showMessageDialog(myProject, message.substring(index + "java.io.IOException".length()),
-                                           RefactoringBundle.message("error.title"),
-                                           Messages.getErrorIcon());
-              }
-            });
+          @Override
+          public void run() {
+            String cause = message.substring(index + "java.io.IOException".length());
+            Messages.showMessageDialog(myProject, cause, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+          }
+        });
       }
       else {
         LOG.error(e);
@@ -295,7 +289,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("move.title"); //TODO!!
+    return RefactoringBundle.message("move.title");
   }
 
   static class MyUsageInfo extends UsageInfo {

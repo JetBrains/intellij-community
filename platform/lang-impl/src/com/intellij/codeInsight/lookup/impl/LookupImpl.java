@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,7 +323,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     if (!forceTopSelection) {
-      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
+      ScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
       return;
     }
 
@@ -338,7 +338,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return;
     }
 
-    ListScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
+    ScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
   }
 
   boolean truncatePrefix(boolean preserveSelection) {
@@ -402,7 +402,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private boolean isSelectionVisible() {
-    return ListScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
+    return ScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
   }
 
   private boolean checkReused() {

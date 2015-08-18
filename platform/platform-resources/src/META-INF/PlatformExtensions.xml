@@ -319,6 +319,8 @@
 
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
+    
+    <applicationService serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <projectService serviceImplementation="com.intellij.ui.switcher.SwitchManager"/>
 

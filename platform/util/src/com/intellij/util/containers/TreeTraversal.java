@@ -16,15 +16,14 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
-import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * A redesigned version of com.google.common.collect.TreeTraversal.
@@ -203,55 +202,51 @@ public abstract class TreeTraversal {
   // -----------------------------------------------------------------------------
 
   private abstract static class DfsIt<T> extends TracingIt<T> {
-    final ArrayDeque<Pair<T, Iterator<? extends T>>> stack = new ArrayDeque<Pair<T, Iterator<? extends T>>>();
+    final ArrayDeque<P<T>> stack = new ArrayDeque<P<T>>();
 
     @Nullable
     public T parent() {
-      Iterator<Pair<T, Iterator<? extends T>>> it = stack.descendingIterator();
+      if (stack.isEmpty()) throw new NoSuchElementException();
+      Iterator<P<T>> it = stack.descendingIterator();
       it.next();
-      return it.hasNext() ? it.next().first : null;
+      return it.hasNext() ? it.next().node : null;
     }
 
     @NotNull
     public JBIterable<T> backtrace() {
-      return new JBIterable<Pair<T, Iterator<? extends T>>>() {
+      if (stack.isEmpty()) throw new NoSuchElementException();
+      return new JBIterable<P<T>>() {
         @Override
-        public Iterator<Pair<T, Iterator<? extends T>>> iterator() {
-          Iterator<Pair<T, Iterator<? extends T>>> iterator = stack.descendingIterator();
-          iterator.next();
-          return iterator;
+        public Iterator<P<T>> iterator() {
+          return stack.descendingIterator();
         }
-      }.transform(Functions.<T>pairFirst()).filter(Condition.NOT_NULL);
+      }.transform(P.<T>toNode()).filter(Condition.NOT_NULL);
     }
   }
 
   private final static class PreOrderIt<T> extends DfsIt<T> {
 
     final Function<T, ? extends Iterable<? extends T>> tree;
-    int doneCount;
 
     PreOrderIt(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       this.tree = tree;
-      Iterator<? extends T> iterator = roots.iterator();
-      if (iterator.hasNext()) {
-        stack.addLast(Pair.<T, Iterator<? extends T>>create(null, iterator));
-      }
+      stack.addLast(P.create(roots));
     }
 
     @Override
     public T nextImpl() {
-      if (stack.size() <= doneCount) return stop();
-      Pair<T, Iterator<? extends T>> top;
-      while (!(top = stack.getLast()).second.hasNext()) {
-        stack.removeLast();
-        doneCount--;
+      while (!stack.isEmpty()) {
+        Iterator<? extends T> it = stack.getLast().iterator(tree);
+        if (it.hasNext()) {
+          T result = it.next();
+          stack.addLast(P.create(result));
+          return result;
+        }
+        else {
+          stack.removeLast();
+        }
       }
-      T result = top.second.next();
-      if (!top.second.hasNext()) doneCount++;
-      Iterator<? extends T> childItr = children(result, tree).iterator();
-      stack.addLast(Pair.<T, Iterator<? extends T>>create(result, childItr));
-      if (!childItr.hasNext()) doneCount++;
-      return result;
+      return stop();
     }
   }
 
@@ -262,21 +257,20 @@ public abstract class TreeTraversal {
     PostOrderIt(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       this.tree = tree;
       for (T root : roots) {
-        stack.addLast(Pair.<T, Iterator<? extends T>>create(root, children(root, tree).iterator()));
+        stack.addLast(P.create(root));
       }
     }
 
     @Override
     public T nextImpl() {
       while (!stack.isEmpty()) {
-        Pair<T, Iterator<? extends T>> top = stack.getLast();
-        if (top.second.hasNext()) {
-          T child = top.second.next();
-          stack.addLast(Pair.<T, Iterator<? extends T>>create(child, children(child, tree).iterator()));
+        Iterator<? extends T> it = stack.getLast().iterator(tree);
+        if (it.hasNext()) {
+          T result = it.next();
+          stack.addLast(P.create(result));
         }
         else {
-          stack.removeLast();
-          return top.first;
+          return stack.removeLast().node;
         }
       }
       return stop();
@@ -289,29 +283,20 @@ public abstract class TreeTraversal {
 
     LeavesDfsIt(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       this.tree = tree;
-      for (T root : roots) {
-        Iterator<? extends T> childrenIt = children(root, tree).iterator();
-        stack.addLast(Pair.<T, Iterator<? extends T>>create(root, childrenIt.hasNext() ? childrenIt : null));
-      }
+      stack.addLast(P.create(roots));
     }
 
     @Override
     public T nextImpl() {
       while (!stack.isEmpty()) {
-        Pair<T, Iterator<? extends T>> top = stack.getLast();
-        if (top.second != null && top.second.hasNext()) {
-          T child = top.second.next();
-          Iterator<? extends T> childrenIt = children(child, tree).iterator();
-          if (childrenIt.hasNext()) {
-            stack.addLast(Pair.<T, Iterator<? extends T>>create(child, childrenIt));
-          }
-          else {
-            return child;
-          }
+        P<T> top = stack.getLast();
+        if (top.iterator(tree).hasNext() && !top.empty) {
+          T child = top.iterator(tree).next();
+          stack.addLast(P.create(child));
         }
         else {
           stack.removeLast();
-          if (top.second == null) return top.first;
+          if (top.empty) return stack.isEmpty() ? stop() : top.node;
         }
       }
       return stop();
@@ -409,5 +394,43 @@ public abstract class TreeTraversal {
         }
       };
     }
+  }
+  
+  private static class P<T> {
+    T node;
+    Iterable<? extends T> itle;
+    Iterator<? extends T> it;
+    boolean empty;
+
+    Iterator<? extends T> iterator(@NotNull Function<T, ? extends Iterable<? extends T>> tree) {
+      if (it != null) return it;
+      it = (itle != null ? itle : (itle = children(node, tree))).iterator();
+      empty = !it.hasNext();
+      return it;
+    }
+    
+    static <T> P<T> create(T node) {
+      P<T> p = new P<T>();
+      p.node = node;
+      return p;
+    }
+
+    static <T> P<T> create(Iterable<? extends T> it) {
+      P<T> p = new P<T>();
+      p.itle = it;
+      return p;
+    }
+
+    static <T> Function<P<T>, T> toNode() {
+      //noinspection unchecked
+      return TO_NODE;
+    }
+
+    static final Function TO_NODE = new Function<P<?>, Object>() {
+      @Override
+      public Object fun(P<?> tp) {
+        return tp.node;
+      }
+    };
   }
 }

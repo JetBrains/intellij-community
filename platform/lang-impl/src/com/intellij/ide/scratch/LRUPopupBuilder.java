@@ -63,18 +63,14 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project, @NotNull final Iterable<VirtualFile> files, @NotNull final PerFileMappings<Language> mappings) {
-    Consumer<Language> onChosen = new Consumer<Language>() {
+    return forFileLanguages(project, null, new Consumer<Language>() {
       @Override
       public void consume(Language t) {
         for (VirtualFile file : files) {
           mappings.setMapping(file, t);
         }
       }
-    };
-    return languagePopupBuilder(project, "Languages").
-      forValues(mappings.getAvailableValues(null)).
-      onChosen(onChosen).
-      buildPopup();
+    });
   }
 
   @NotNull

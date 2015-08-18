@@ -58,7 +58,12 @@ public class Course {
     if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
       return null;
     }
-    return lessons.get(lessonIndex);
+    for (Lesson lesson : lessons) {
+      if (lesson.getIndex() - 1 == lessonIndex) {
+        return lesson;
+      }
+    }
+    return null;
   }
 
   @NotNull
