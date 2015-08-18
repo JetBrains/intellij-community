@@ -267,7 +267,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
     Couple<String> pair = UriUtil.splitScheme(url);
     String scheme = pair.getFirst();
-    if (StringUtil.isEmpty(scheme)) {
+    if (!StringUtil.isEmpty(scheme)) {
       return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
     }
     return login + "@" + url;
