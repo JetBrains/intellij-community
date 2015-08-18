@@ -1136,7 +1136,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     DataContext dataContext = getDataContext();
 
     if (isZeroLatencyTypingEnabled() && myDocument.isWritable() && !isViewer() && canPaintImmediately(c)) {
-      paintImmediately(myCaretModel.getOffset(), c);
+      paintImmediately(myCaretModel.getOffset(), c, myIsInsertMode);
       myEventPaintedAsChar = true;
     }
 
@@ -2140,7 +2140,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Called to display a single character insertion before starting a write action and the general painting routine.
   // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
   // TODO Should be replaced with the generic paintImmediately(event) call when we implement typing without starting write actions.
-  private void paintImmediately(int offset, char c) {
+  private void paintImmediately(int offset, char c, boolean insert) {
     Graphics g = myEditorComponent.getGraphics();
 
     if (g == null) return; // editor component is currently not displayable
@@ -2150,7 +2150,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int fontType = attributes.getFontType();
     Font font = fontFor(fontType);
 
-    int charWidth = g.getFontMetrics(font).charWidth(c);
+    FontMetrics fontMetrics = g.getFontMetrics(font);
+
+    int charWidth = fontMetrics.charWidth(c);
+
+    int delta = charWidth;
+
+    if (!insert && offset < myDocument.getTextLength()) {
+      delta -= fontMetrics.charWidth(myDocument.getCharsSequence().charAt(offset));
+    }
 
     Rectangle tailArea = lineRectangleBetween(offset, myDocument.getLineEndOffset(offsetToLogicalLine(offset)));
     if (tailArea.isEmpty()) {
@@ -2170,7 +2178,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     EditorUIUtil.setupAntialiasing(g);
 
     // pre-compute all the arguments beforehand to minimize delays between the calls (as there's no double-buffering)
-    shift(g, tailArea, charWidth);
+    if (delta != 0) {
+      shift(g, tailArea, delta);
+    }
     fill(g, newArea, lineColor);
     print(g, newText, point, ascent, font, color);
   }
