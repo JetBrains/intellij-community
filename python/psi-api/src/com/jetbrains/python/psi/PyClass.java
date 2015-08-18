@@ -160,14 +160,27 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   boolean visitMethods(Processor<PyFunction> processor, boolean inherited);
 
-  boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited);
+  boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited, TypeEvalContext context);
 
   /**
    * Effectively collects assignments inside the class body.
    * <p/>
    * This method does not access AST if underlying PSI is stub based.
+   * Note that only <strong>own</strong> attrs are fetched, not parent attrs.
+   * If you need parent attributes, consider using {@link #getClassAttributesInherited(TypeEvalContext)}
+   * @see #getClassAttributesInherited(TypeEvalContext)
    */
   List<PyTargetExpression> getClassAttributes();
+
+
+  /**
+   * Returns all class attributes this class class contains, including inherited one.
+   * Process may be heavy, depending or your context.
+   * @param context context to use for this process
+   * @return list of attrs.
+   */
+  @NotNull
+  List<PyTargetExpression> getClassAttributesInherited(@NotNull TypeEvalContext context);
 
   @Nullable
   PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited);
