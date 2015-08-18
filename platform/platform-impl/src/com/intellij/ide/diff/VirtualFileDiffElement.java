@@ -20,6 +20,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.DiffRequest;
@@ -29,10 +30,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -298,7 +301,10 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
         }.execute();
       }
 
-      VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile);
+      ModalityState modalityState = ProgressManager.getInstance().getProgressIndicator().getModalityState();
+
+      VfsUtil.markDirty(true, true, virtualFile);
+      RefreshQueue.getInstance().refresh(false, true, null, modalityState, virtualFile);
     }
   }
 }
