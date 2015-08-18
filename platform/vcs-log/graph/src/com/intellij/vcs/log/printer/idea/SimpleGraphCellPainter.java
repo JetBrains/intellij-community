@@ -53,22 +53,34 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return ROW_HEIGHT;
   }
 
-  private void paintUpLine(int from, int to, Color color) {
+  private void paintUpLine(int from, int to, Color color, boolean hasArrow) {
     int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
     int y1 = getRowHeight() / 2;
     int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
     int y2 = -getRowHeight() / 2;
     g2.setColor(color);
     g2.drawLine(x2, y2, x1, y1);
+    if (hasArrow) {
+      int r = PrintParameters.CIRCLE_RADIUS;
+      int y = r + 2;
+      g2.drawLine(x1, y - r, x1 + r, y);
+      g2.drawLine(x1, y - r, x1 - r, y);
+    }
   }
 
-  private void paintDownLine(int from, int to, Color color) {
+  private void paintDownLine(int from, int to, Color color, boolean hasArrow) {
     int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
     int y1 = getRowHeight() / 2;
     int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
     int y2 = getRowHeight() + getRowHeight() / 2;
     g2.setColor(color);
     g2.drawLine(x1, y1, x2, y2);
+    if (hasArrow) {
+      int r = PrintParameters.CIRCLE_RADIUS;
+      int y = getRowHeight() - r - 2;
+      g2.drawLine(x1, y + r, x1 + r, y);
+      g2.drawLine(x1, y + r, x1 - r, y);
+    }
   }
 
   private void paintCircle(int position, Color color, boolean select) {
@@ -81,24 +93,6 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     Ellipse2D.Double circle = new Ellipse2D.Double(x0 - r + 0.5, y0 - r + 0.5, 2 * r, 2 * r);
     g2.setColor(color);
     g2.fill(circle);
-  }
-
-  private void paintDownArrow(int position, Color color) {
-    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
-    int r = PrintParameters.CIRCLE_RADIUS;
-    int y0 = getRowHeight() - r - 2;
-    g2.setColor(color);
-    g2.drawLine(x0, y0 + r, x0 + r, y0);
-    g2.drawLine(x0, y0 + r, x0 - r, y0);
-  }
-
-  private void paintUpArrow(int position, Color color) {
-    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
-    int r = PrintParameters.CIRCLE_RADIUS;
-    int y0 = r + 2;
-    g2.setColor(color);
-    g2.drawLine(x0, y0 - r, x0 + r, y0);
-    g2.drawLine(x0, y0 - r, x0 - r, y0);
   }
 
   private void setStroke(boolean usual, boolean select) {
@@ -164,16 +158,10 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
             int to = edgePrintElement.getPositionInOtherRow();
 
             if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-              paintDownLine(from, to, color);
-              if (edgePrintElement.hasArrow()) {
-                paintDownArrow(from, color);
-              }
+              paintDownLine(from, to, color, edgePrintElement.hasArrow());
             }
             else {
-              paintUpLine(from, to, color);
-              if (edgePrintElement.hasArrow()) {
-                paintUpArrow(from, color);
-              }
+              paintUpLine(from, to, color, edgePrintElement.hasArrow());
             }
           }
         };
