@@ -965,7 +965,11 @@ public class Switcher extends AnAction implements DumbAware {
       @Override
       protected void processKeyEvent(@NotNull final KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        if (keyCode == VK_ENTER) return;
+        if (keyCode == VK_ENTER) {
+          SWITCHER.navigate(e.isShiftDown());
+          e.consume();
+          return;
+        }
         if (keyCode == VK_LEFT || keyCode == VK_RIGHT) {
           return;
         }

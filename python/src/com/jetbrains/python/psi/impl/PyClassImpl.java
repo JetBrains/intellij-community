@@ -955,18 +955,27 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return true;
   }
 
-  public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited) {
+  public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited, @Nullable final TypeEvalContext context) {
     List<PyTargetExpression> methods = getClassAttributes();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
-      for (PyClass ancestor : getAncestorClasses(null)) {
-        if (!ancestor.visitClassAttributes(processor, false)) {
+      for (PyClass ancestor : getAncestorClasses(context)) {
+        // TODO: Why there is FALSE here? We support only one level of inheritance?
+        if (!ancestor.visitClassAttributes(processor, false, context)) {
           return false;
         }
       }
     }
     return true;
     // NOTE: sorry, not enough metaprogramming to generalize visitMethods and visitClassAttributes
+  }
+
+  @NotNull
+  @Override
+  public final List<PyTargetExpression> getClassAttributesInherited(@NotNull final TypeEvalContext context) {
+    final MyAttributesCollector attributesCollector = new MyAttributesCollector();
+    visitClassAttributes(attributesCollector, true, context);
+    return attributesCollector.getAttributes();
   }
 
   public List<PyTargetExpression> getClassAttributes() {
@@ -993,7 +1002,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited) {
     final NameFinder<PyTargetExpression> processor = new NameFinder<PyTargetExpression>(name);
-    visitClassAttributes(processor, inherited);
+    visitClassAttributes(processor, inherited, null);
     return processor.getResult();
   }
 
@@ -1524,5 +1533,18 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyClassLikeType getType(@NotNull TypeEvalContext context) {
     return PyUtil.as(context.getType(this), PyClassLikeType.class);
+  }
+
+  private static final class MyAttributesCollector implements Processor<PyTargetExpression> {
+    private final List<PyTargetExpression> myAttributes = new ArrayList<PyTargetExpression>();
+    @Override
+    public boolean process(final PyTargetExpression expression) {
+      myAttributes.add(expression);
+      return true;
+    }
+    @NotNull
+     List<PyTargetExpression> getAttributes() {
+      return Collections.unmodifiableList(myAttributes);
+    }
   }
 }

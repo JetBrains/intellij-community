@@ -139,12 +139,12 @@ public class SwingHelper {
   }
 
   public static void setPreferredWidthToFitText(@NotNull TextFieldWithHistoryWithBrowseButton component) {
-    int childWidth = calcWidthToFitText(component.getChildComponent().getTextEditor(), 35);
+    int childWidth = calcWidthToFitText(component.getChildComponent().getTextEditor(), JBUI.scale(32));
     setPreferredWidthForComponentWithBrowseButton(component, childWidth);
   }
 
   public static void setPreferredWidthToFitText(@NotNull TextFieldWithBrowseButton component) {
-    int childWidth = calcWidthToFitText(component.getChildComponent(), 20);
+    int childWidth = calcWidthToFitText(component.getChildComponent(), JBUI.scale(20));
     setPreferredWidthForComponentWithBrowseButton(component, childWidth);
   }
 
@@ -155,7 +155,7 @@ public class SwingHelper {
   }
 
   public static void setPreferredWidthToFitText(@NotNull JTextField textField) {
-    setPreferredWidthToFitText(textField, 15);
+    setPreferredWidthToFitText(textField, JBUI.scale(15));
   }
 
   public static void setPreferredWidthToFitText(@NotNull JTextField textField, int additionalWidth) {
@@ -163,7 +163,7 @@ public class SwingHelper {
   }
 
   public static void setPreferredWidthToFitText(@NotNull JTextField textField, @NotNull String text) {
-    setPreferredSizeToFitText(textField, text, 15);
+    setPreferredSizeToFitText(textField, text, JBUI.scale(15));
   }
 
   private static void setPreferredSizeToFitText(@NotNull JTextField textField, @NotNull String text, int additionalWidth) {

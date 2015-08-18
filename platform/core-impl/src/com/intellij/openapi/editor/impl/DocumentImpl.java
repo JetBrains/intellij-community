@@ -624,13 +624,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myGuardsSuppressed = true;
   }
 
-  // This data is used during the immediate editor painting to detect whether PSI synchronization is in progress.
-  // PsiToDocumentSynchronizer.doCommitTransaction should probably perform bulk document updates.
-  // TODO Remove this getter later
-  public boolean isGuardsSuppressed() {
-    return myGuardsSuppressed;
-  }
-
   @Override
   public void unSuppressGuardedExceptions() {
     myGuardsSuppressed = false;

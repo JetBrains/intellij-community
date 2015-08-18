@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public interface Group extends Actions {
 	 * @return the value of the class child.
 	 */
 	@NotNull
-	@com.intellij.util.xml.Attribute ("class")
+	@Attribute ("class")
         @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
             instantiatable = true, allowAbstract = false, allowInterface = false)
         @Convert(PluginPsiClassConverter.class)
@@ -104,37 +104,11 @@ public interface Group extends Actions {
 	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
-	 * Returns the list of reference children.
-	 * @return the list of reference children.
-	 */
-	@NotNull
-	List<Reference> getReferences();
-	/**
-	 * Adds new child to the list of reference children.
-	 * @return created child
-	 */
-	Reference addReference();
-
-
-	/**
 	 * Returns the value of the separator child.
 	 * @return the value of the separator child.
 	 */
 	@NotNull
 	List<GenericDomValue<String>> getSeparators();
-
-
-	/**
-	 * Returns the list of action children.
-	 * @return the list of action children.
-	 */
-	@NotNull
-	List<Action> getActions();
-	/**
-	 * Adds new child to the list of action children.
-	 * @return created child
-	 */
-	Action addAction();
 
 
 	/**

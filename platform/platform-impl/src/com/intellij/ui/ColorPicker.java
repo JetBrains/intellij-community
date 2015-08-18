@@ -1046,9 +1046,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private static class DefaultColorPipette extends ColorPipetteBase {
     private static final int SIZE = 32;
     private static final Point HOT_SPOT = new Point(SIZE / 2, SIZE / 2);
-    
-    @SuppressWarnings("UseJBColor")
-    private final Color myTransparentColor = new Color(0, true);
+
     private final Rectangle myCaptureRect = new Rectangle(-4, -4, 8, 8);
     private final Rectangle myZoomRect = new Rectangle(0, 0, SIZE, SIZE);
     private final Point myPreviousLocation = new Point();
@@ -1133,7 +1131,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myGraphics = (Graphics2D)myImage.getGraphics();
         myGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        pickerDialog.setBackground(myTransparentColor);
+        pickerDialog.setBackground(UIUtil.TRANSPARENT_COLOR);
       }
 
       return pickerDialog;
@@ -1155,7 +1153,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
           // Clear the cursor graphics
           myGraphics.setComposite(AlphaComposite.Src);
-          myGraphics.setColor(myTransparentColor);
+          myGraphics.setColor(UIUtil.TRANSPARENT_COLOR);
           myGraphics.fillRect(0, 0, myImage.getWidth(), myImage.getHeight());
 
           myGraphics.drawImage(capture, myZoomRect.x, myZoomRect.y, myZoomRect.width, myZoomRect.height, this);
