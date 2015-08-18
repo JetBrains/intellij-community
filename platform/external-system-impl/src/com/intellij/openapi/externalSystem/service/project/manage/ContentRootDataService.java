@@ -135,7 +135,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
               final ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
               contentEntry.clearExcludeFolders();
               contentEntry.clearSourceFolders();
-              LOG.info(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
+              LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
               for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
               }
@@ -197,7 +197,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         return;
       }
     }
-    LOG.info(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
+    LOG.debug(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
     SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(root.getPath()), sourceRootType);
     if (!StringUtil.isEmpty(root.getPackagePrefix())) {
       sourceFolder.setPackagePrefix(root.getPackagePrefix());
@@ -225,7 +225,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         return;
       }
     }
-    LOG.info(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
+    LOG.debug(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
     entry.addExcludeFolder(toVfsUrl(rootPath));
     if (!Registry.is("ide.hide.excluded.files")) {
       ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(rootPath);
