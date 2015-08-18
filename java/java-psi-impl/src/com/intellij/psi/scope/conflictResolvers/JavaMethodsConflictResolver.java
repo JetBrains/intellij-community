@@ -208,11 +208,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        final PsiMethod superMethod = methodSignature.getMethod();
-        final PsiClass aClass = superMethod.getContainingClass();
-        if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-          superMethods.add(superMethod);
-        }
+        superMethods.add(methodSignature.getMethod());
       }
     }
     nextConflict:
