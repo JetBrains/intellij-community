@@ -2209,6 +2209,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Color lineColor = getCaretRowBackground();
 
     if (delta != 0) {
+      if (delta < 0) {
+        // Pre-paint carets at new positions, if needed, before shifting the tail area (to avoid flickering),
+        // because painting takes some time while copyArea is almost instantaneous.
+        CaretRectangle[] caretRectangles = myCaretCursor.getCaretLocations(true);
+        if (caretRectangles != null) {
+          for (CaretRectangle it : caretRectangles) {
+            Rectangle r = toRectangle(it);
+            if (myOldArea.contains(r) && !newArea.contains(r)) {
+              myCaretCursor.paintAt(g, it.myPoint.x - delta, it.myPoint.y, it.myWidth, it.myCaret);
+            }
+          }
+        }
+      }
+
       shift(g, myOldTailArea, delta);
 
       if (delta < 0) {
@@ -2241,6 +2255,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // When soft wrap is present, handle only the first visual line (for simplicity, yet it works reasonably well)
     int x2 = p1.y == p2.y ? p2.x : Math.max(p1.x, myEditorComponent.getWidth() - getVerticalScrollBar().getWidth());
     return new Rectangle(p1.x, p1.y, x2 - p1.x, getLineHeight());
+  }
+
+  @NotNull
+  private Rectangle toRectangle(@NotNull CaretRectangle caretRectangle) {
+    Point p = caretRectangle.myPoint;
+    return new Rectangle(p.x, p.y, caretRectangle.myWidth, getLineHeight());
   }
 
   @NotNull
@@ -4982,7 +5002,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Nullable
-    private CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
+    CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
       if (onlyIfShown && (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent()))) return null;
       return myLocations;
     }    
@@ -4996,7 +5016,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private void paintAt(@NotNull Graphics g, int x, int y, int width, Caret caret) {
+    void paintAt(@NotNull Graphics g, int x, int y, int width, Caret caret) {
       int lineHeight = getLineHeight();
 
       Rectangle viewRectangle = getScrollingModel().getVisibleArea();
