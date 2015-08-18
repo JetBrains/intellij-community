@@ -14,14 +14,15 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
@@ -302,5 +303,23 @@ public class StudyUtils {
         });
       }
     }
+  }
+
+  @Nullable
+  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    Task task = taskFile.getTask();
+    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
+    String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
+    Course course = task.getLesson().getCourse();
+    File resourceFile = new File(course.getCourseDirectory());
+    if (!resourceFile.exists()) {
+      return  null;
+    }
+    String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, name);
+    VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
+    if (patternFile == null) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(patternFile);
   }
 }

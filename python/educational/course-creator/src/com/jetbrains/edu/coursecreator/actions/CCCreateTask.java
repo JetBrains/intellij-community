@@ -14,14 +14,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.StudyItem;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import icons.EducationalIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   public static final String TITLE = "Create New " + EduNames.TASK_TITLED;
 
   public CCCreateTask() {
-    super(EduNames.TASK_TITLED, TITLE, PlatformIcons.DIRECTORY_CLOSED_ICON);
+    super(EduNames.TASK_TITLED, TITLE, EducationalIcons.Task);
   }
 
 
@@ -138,15 +139,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   @Nullable
   @Override
   protected StudyItem getThresholdItem(@NotNull Course course, @NotNull PsiDirectory sourceDirectory) {
-    PsiDirectory parent = sourceDirectory.getParent();
-    if (parent == null) {
-      return null;
-    }
-    Lesson lesson = course.getLesson(parent.getName());
-    if (lesson == null) {
-      return null;
-    }
-    return lesson.getTask(sourceDirectory.getName());
+    return EduUtils.getTask(sourceDirectory, course);
   }
 
   @Override

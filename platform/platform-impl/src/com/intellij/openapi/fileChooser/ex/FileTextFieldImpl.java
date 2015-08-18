@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.update.LazyUiDisposable;
@@ -778,20 +778,20 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     if ("selectNextRow".equals(action)) {
       if (ensureSelectionExists()) {
-        ListScrollingUtil.moveDown(myList, e.getModifiersEx());
+        ScrollingUtil.moveDown(myList, e.getModifiersEx());
         e.consume();
       }
     }
     else if ("selectPreviousRow".equals(action)) {
-      ListScrollingUtil.moveUp(myList, e.getModifiersEx());
+      ScrollingUtil.moveUp(myList, e.getModifiersEx());
       e.consume();
     }
     else if ("scrollDown".equals(action)) {
-      ListScrollingUtil.movePageDown(myList);
+      ScrollingUtil.movePageDown(myList);
       e.consume();
     }
     else if ("scrollUp".equals(action)) {
-      ListScrollingUtil.movePageUp(myList);
+      ScrollingUtil.movePageUp(myList);
       e.consume();
     }
     else if (getSelectedFileFromCompletionPopup() != null && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB) && e.getModifiers() == 0) {

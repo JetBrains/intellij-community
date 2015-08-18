@@ -22,12 +22,9 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -38,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,38 +50,89 @@ import static com.intellij.openapi.util.Conditions.*;
 /**
  * @author ignatov
  */
-public class NewScratchFileAction extends DumbAwareAction {
+public class ScratchFileActions {
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(isEnabled(e));
+  public static class NewFileAction extends DumbAwareAction {
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean enabled = e.getProject() != null && Registry.is("ide.scratch.enabled");
+      e.getPresentation().setEnabledAndVisible(enabled);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final Project project = e.getProject();
+      if (project == null) return;
+
+      PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+
+      final String text = StringUtil.notNullize(getSelectionText(editor));
+      Language language = text.isEmpty() ? null : getLanguageFromCaret(project, editor, file);
+      Consumer<Language> consumer = new Consumer<Language>() {
+        @Override
+        public void consume(Language language) {
+          doCreateNewScratch(project, false, language, text);
+        }
+      };
+      if (language != null) {
+        consumer.consume(language);
+      }
+      else {
+        LRUPopupBuilder.forFileLanguages(project, null, consumer).showCenteredInCurrentWindow(project);
+      }
+    }
   }
 
-  public static boolean isEnabled(@NotNull AnActionEvent e) {
-    return e.getProject() != null && Registry.is("ide.scratch.enabled");
+  public static class NewBufferAction extends DumbAwareAction {
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean enabled = e.getProject() != null && Registry.is("ide.scratch.enabled") && Registry.intValue("ide.scratch.buffers") > 0;
+      e.getPresentation().setEnabledAndVisible(enabled);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project == null) return;
+
+      PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+
+      String text = StringUtil.notNullize(getSelectionText(editor));
+      Language language = text.isEmpty() ? null : getLanguageFromCaret(project, editor, file);
+
+      doCreateNewScratch(project, true, ObjectUtils.notNull(language, StdLanguages.TEXT), text);
+    }
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
-    if (project == null) return;
-    
-    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    Editor editor = e.getData(CommonDataKeys.EDITOR);
+  static void doCreateNewScratch(@NotNull Project project, boolean buffer, @NotNull Language language, @NotNull String text) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
 
-    String text = StringUtil.notNullize(getSelectionText(editor));
-    Language language = ObjectUtils.notNull(text.isEmpty() ? null : getLanguageFromCaret(project, editor, file), Language.ANY);
-    openNewFile(project, language, text);
+    String fileName = buffer ? "buffer" + nextBufferIndex() : "scratch";
+    ScratchFileService.Option option = buffer ? ScratchFileService.Option.create_if_missing : ScratchFileService.Option.create_new_always;
+    VirtualFile f = ScratchRootType.getInstance().createScratchFile(project, fileName, language, text, option);
+    if (f != null) {
+      FileEditorManager.getInstance(project).openFile(f, true);
+    }
+  }
+
+  private static int ourCurrentBuffer = 0;
+  private static int nextBufferIndex() {
+    ourCurrentBuffer = (ourCurrentBuffer % Registry.intValue("ide.scratch.buffers")) + 1;
+    return ourCurrentBuffer;
   }
 
   @Nullable
-  public String getSelectionText(@Nullable Editor editor) {
+  static String getSelectionText(@Nullable Editor editor) {
     if (editor == null) return null;
     return editor.getSelectionModel().getSelectedText();
   }
 
   @Nullable
-  public Language getLanguageFromCaret(@NotNull Project project,
+  static Language getLanguageFromCaret(@NotNull Project project,
                                        @Nullable Editor editor,
                                        @Nullable PsiFile psiFile) {
     if (editor == null || psiFile == null) return null;
@@ -92,27 +141,6 @@ public class NewScratchFileAction extends DumbAwareAction {
     PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
     PsiFile file = element != null ? element.getContainingFile() : psiFile;
     return file.getLanguage();
-  }
-
-  public static VirtualFile openNewFile(@NotNull final Project project, @NotNull Language language, @NotNull String text) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
-    Language initialLanguage = language == Language.ANY ? StdLanguages.TEXT : language;
-    final VirtualFile file = ScratchRootType.getInstance().createScratchFile(project, "scratch", initialLanguage, text);
-    if (file != null) {
-      FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true);
-      if (language == Language.ANY && editors.length != 0 && editors[0] instanceof TextEditor) {
-        final TextEditor textEditor = (TextEditor)editors[0];
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (!textEditor.isValid()) return;
-            PerFileMappings<Language> mappings = ScratchFileService.getInstance().getScratchesMapping();
-            LRUPopupBuilder.forFileLanguages(project, JBIterable.of(file), mappings).showInBestPositionFor(textEditor.getEditor());
-          }
-        });
-      }
-    }
-    return file;
   }
 
   @NotNull

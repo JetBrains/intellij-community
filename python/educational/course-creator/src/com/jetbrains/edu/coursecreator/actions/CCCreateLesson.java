@@ -8,11 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.StudyItem;
+import icons.EducationalIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public class CCCreateLesson extends CCCreateStudyItemActionBase {
   public static final String TITLE = "Create New " + EduNames.LESSON_TITLED;
 
   public CCCreateLesson() {
-    super(EduNames.LESSON_TITLED, TITLE, PlatformIcons.DIRECTORY_CLOSED_ICON);
+    super(EduNames.LESSON_TITLED, TITLE, EducationalIcons.Lesson);
   }
 
   @Nullable

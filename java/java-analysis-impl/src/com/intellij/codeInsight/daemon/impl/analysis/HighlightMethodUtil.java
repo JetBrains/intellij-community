@@ -359,6 +359,10 @@ public class HighlightMethodUtil {
         } else {
           highlightInfo = GenericsHighlightUtil.checkInferredIntersections(substitutor, fixRange);
         }
+        
+        if (highlightInfo == null) {
+          highlightInfo = checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
+        }
       }
     }
     else {
@@ -1509,7 +1513,41 @@ public class HighlightMethodUtil {
           }
         }
       }
+      
+      if (result != null && !holder.hasErrorResults()) {
+        holder.add(checkVarargParameterErasureToBeAccessible(result, constructorCall));
+      }
     }
+  }
+
+  /**
+   * If the compile-time declaration is applicable by variable arity invocation,
+   * then where the last formal parameter type of the invocation type of the method is Fn[], 
+   * it is a compile-time error if the type which is the erasure of Fn is not accessible at the point of invocation.
+   */
+  private static HighlightInfo checkVarargParameterErasureToBeAccessible(MethodCandidateInfo info, PsiCall place) {
+    final PsiMethod method = info.getElement();
+    if (info.isVarargs() || method.isVarArgs() && !PsiUtil.isLanguageLevel8OrHigher(place)) {
+      if (method.hasTypeParameters()) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        final PsiType componentType = ((PsiEllipsisType)parameters[parameters.length - 1].getType()).getComponentType();
+        final PsiClass classOfComponent = PsiUtil.resolveClassInClassTypeOnly(componentType);
+        if (classOfComponent instanceof PsiTypeParameter) {
+          final PsiType substitutedTypeErasure = TypeConversionUtil.erasure(info.getSubstitutor().substitute(componentType));
+          final PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(substitutedTypeErasure);
+          if (targetClass != null && !PsiUtil.isAccessible(targetClass, place, null)) {
+            final PsiExpressionList argumentList = place.getArgumentList();
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                         .descriptionAndTooltip("Formal varargs element type " +
+                                                PsiFormatUtil.formatClass(targetClass, PsiFormatUtilBase.SHOW_FQ_NAME) +
+                                                " is inaccessible here")
+                         .range(argumentList != null ? argumentList : place)
+                         .create();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static void registerFixesOnInvalidConstructorCall(PsiConstructorCall constructorCall,
