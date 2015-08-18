@@ -48,6 +48,9 @@
             description="Navigate to the next task"/>
     <action id="RefreshTaskAction" class="com.jetbrains.edu.learning.actions.StudyRefreshTaskFileAction" text="Reset Task File"
             description="Refresh current task"/>
+    <action id="RefreshAnswerPlaceholder" class="com.jetbrains.edu.learning.actions.StudyRefreshAnswerPlaceholder" text="Refresh Answer Placeholder">
+        <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
     <action id="WatchInputAction" class="com.jetbrains.edu.learning.actions.StudyEditInputAction" text="Watch Test Input"
             description="Watch test input "/>
     <action id="ShowHintAction" class="com.jetbrains.edu.learning.actions.StudyShowHintAction" text="Show Hint for Answer Placeholder"
