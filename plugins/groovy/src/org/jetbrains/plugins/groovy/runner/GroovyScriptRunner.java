@@ -28,11 +28,11 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
@@ -66,14 +66,9 @@ public abstract class GroovyScriptRunner {
   }
 
   public static String getPathInConf(String fileName) {
+    RuntimeModuleId moduleId = RuntimeModuleId.moduleResource("jetgroovy", "conf");
     try {
-      final String jarPath = PathUtil.getJarPathForClass(GroovyLanguage.class);
-      if (new File(jarPath).isFile()) { //jar; distribution mode
-        return new File(jarPath, "../" + fileName).getCanonicalPath();
-      }
-
-      //else, it's directory in out, development mode
-      return new File(jarPath, "conf/" + fileName).getCanonicalPath();
+      return new File(PlatformLoader.getInstance().getRepository().getModuleRootPath(moduleId), fileName).getCanonicalPath();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
