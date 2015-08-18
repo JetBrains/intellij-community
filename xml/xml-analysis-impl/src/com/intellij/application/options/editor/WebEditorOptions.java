@@ -31,7 +31,6 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     new Topic<WebEditorOptionsListener>("web editor options changed", WebEditorOptionsListener.class);
 
   private boolean myBreadcrumbsEnabled = true;
-  private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
   private boolean mySelectWholeCssIdentifierOnDoubleClick = true;
   private boolean myShowCssInlineColorPreview = false;
@@ -62,18 +61,6 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   public void setBreadcrumbsEnabled(boolean b) {
     boolean oldValue = myBreadcrumbsEnabled;
     myBreadcrumbsEnabled = b;
-    if (oldValue != b) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
-    }
-  }
-
-  public boolean isBreadcrumbsEnabledInXml() {
-    return myBreadcrumbsEnabledInXml;
-  }
-
-  public void setBreadcrumbsEnabledInXml(boolean b) {
-    boolean oldValue = myBreadcrumbsEnabledInXml;
-    myBreadcrumbsEnabledInXml = b;
     if (oldValue != b) {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
     }

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.lang.Language;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -357,11 +356,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   @Nullable
   public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider, @NotNull WebEditorOptions webEditorOptions) {
     BreadcrumbsInfoProvider provider = null;
-    if (viewProvider != null) {
+    if (webEditorOptions.isBreadcrumbsEnabled() && viewProvider != null) {
       final Language baseLang = viewProvider.getBaseLanguage();
       provider = getInfoProvider(baseLang);
-      if (!webEditorOptions.isBreadcrumbsEnabledInXml() && baseLang == XMLLanguage.INSTANCE) return null;
-      if (!webEditorOptions.isBreadcrumbsEnabled() && baseLang != XMLLanguage.INSTANCE) return null;
       if (provider == null) {
         for (final Language language : viewProvider.getLanguages()) {
           provider = getInfoProvider(language);
