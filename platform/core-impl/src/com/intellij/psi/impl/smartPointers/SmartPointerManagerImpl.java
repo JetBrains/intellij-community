@@ -144,11 +144,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   @Override
   @NotNull
   public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
+    return createSmartPsiFileRangePointer(file, range, false);
+  }
+
+  @NotNull
+  public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
+                                                          @NotNull TextRange range,
+                                                          boolean forInjected) {
     if (!file.isValid()) {
       LOG.error("Invalid element:" + file);
     }
     processQueue();
-    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range));
+    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range), forInjected);
     initPointer(pointer, file.getViewProvider().getVirtualFile());
 
     return pointer;
