@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
@@ -44,9 +45,13 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
     if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       return Result.Continue;
     }
+
+    int prevCharOffset = CharArrayUtil.shiftBackward(text, caretOffset - 1, " \t");
+    int nextCharOffset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
     
-    if (caretOffset <= 0 || caretOffset >= text.length() || !isBracePair(text.charAt(caretOffset - 1), text.charAt(caretOffset)) ||
-      file.findElementAt(caretOffset) == file.findElementAt(caretOffset-1)) {
+    if (!isValidOffset(prevCharOffset, text) || !isValidOffset(nextCharOffset, text) || 
+        !isBracePair(text.charAt(prevCharOffset), text.charAt(nextCharOffset)) ||
+        file.findElementAt(prevCharOffset) == file.findElementAt(nextCharOffset)) {
       return Result.Continue;
     }
 
@@ -75,6 +80,10 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
       LOG.error(e);
     }
     return indentInsideJavadoc == null ? Result.Continue : Result.DefaultForceIndent;
+  }
+
+  private static boolean isValidOffset(int offset, CharSequence text) {
+    return offset >= 0 && offset < text.length();
   }
 
   protected boolean isBracePair(char c1, char c2) {
