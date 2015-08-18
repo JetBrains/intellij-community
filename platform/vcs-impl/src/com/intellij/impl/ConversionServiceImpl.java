@@ -50,7 +50,7 @@ import java.util.*;
  * @author nik
  */
 public class ConversionServiceImpl extends ConversionService {
-  private static final Logger LOG = Logger.getInstance("#ConversionServiceImpl");
+  private static final Logger LOG = Logger.getInstance(ConversionServiceImpl.class);
 
   @NotNull
   @Override
