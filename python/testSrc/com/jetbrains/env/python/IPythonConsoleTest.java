@@ -84,6 +84,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
 
       }
 
+      @NotNull
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("-ipython");
@@ -92,6 +93,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
   }
 
   private static class IPythonTask extends PyConsoleTask {
+    @NotNull
     @Override
     public Set<String> getTags() {
       return ImmutableSet.of("ipython");

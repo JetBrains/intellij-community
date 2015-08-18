@@ -157,6 +157,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
   }
 
 
+  @NotNull
   @Override
   public Set<String> getTags() {
     return Collections.unmodifiableSet(IRON_TAGS);

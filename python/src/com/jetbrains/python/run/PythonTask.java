@@ -127,6 +127,15 @@ public class PythonTask {
   }
 
 
+  /**
+   * Runs command using env vars from facet
+   * @param consoleView console view to be used for command or null to create new
+   * @throws ExecutionException failed to execute command
+   */
+  public void run(@Nullable final ConsoleView consoleView) throws ExecutionException {
+    run(createCommandLine().getEnvironment(), consoleView);
+  }
+
   public GeneralCommandLine createCommandLine() {
     GeneralCommandLine cmd = new GeneralCommandLine();
 
