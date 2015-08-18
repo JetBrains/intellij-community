@@ -102,10 +102,10 @@ public class DebuggerPanelsManager implements ProjectComponent {
         if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
           DebuggerSession session = descriptor == null ? null : getSession(myProject, descriptor);
           if (session != null) {
-            getContextManager().setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
+            getContextManager().setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.Event.CONTEXT, null);
           }
           else {
-            getContextManager().setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_CONTEXT, null);
+            getContextManager().setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
           }
         }
       }

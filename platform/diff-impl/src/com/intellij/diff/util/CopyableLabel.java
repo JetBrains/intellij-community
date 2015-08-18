@@ -16,6 +16,9 @@
 package com.intellij.diff.util;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,9 +27,10 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.Collections;
 
 public class CopyableLabel extends JTextArea {
-  @NotNull private JLabel ELLIPSIS_LABEL = new JLabel("...");
+  @NotNull private JLabel ELLIPSIS_LABEL = new JBLabel("...");
 
   @NotNull
   public static JComponent create(@NotNull String text) {
@@ -57,8 +61,9 @@ public class CopyableLabel extends JTextArea {
     setBackground(UIUtil.TRANSPARENT_COLOR);
     setBorder(null);
     setOpaque(false);
-    setText(text);
+    setText(StringUtil.stripHtml(text, false));
     setCaretPosition(0);
+    UIUtil.putClientProperty(this, JBSwingUtilities.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ELLIPSIS_LABEL));
   }
 
   @Override

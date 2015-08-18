@@ -28,7 +28,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -187,14 +189,19 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       return;
     }
     PsiElement parent = atCaret.getParent();
-    if (parent instanceof PsiCodeBlock) {
-      final PsiCodeBlock block = (PsiCodeBlock) parent;
-      if (block.getStatements().length > 0 && block.getStatements()[0] == atCaret) {
-        atCaret = block;
-      }
-    }
-    else if (parent instanceof PsiForStatement) {
+    if (parent instanceof PsiForStatement) {
       atCaret = parent;
+    }
+
+    if (parent instanceof PsiIfStatement && atCaret == ((PsiIfStatement)parent).getElseBranch()) {
+      PsiFile file = atCaret.getContainingFile();
+      Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        TextRange elseIfRange = atCaret.getTextRange();
+        int lineStart = document.getLineStartOffset(document.getLineNumber(elseIfRange.getStartOffset()));
+        CodeStyleManager.getInstance(atCaret.getProject()).reformatText(file, lineStart, elseIfRange.getEndOffset());
+        return;
+      }
     }
 
     super.reformat(atCaret);
@@ -248,7 +255,8 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
     final PsiElement[] children = atCaret.getChildren();
     for (PsiElement child : children) {
-      if (atCaret instanceof PsiStatement && child instanceof PsiStatement) continue;
+      if (atCaret instanceof PsiStatement && child instanceof PsiStatement &&
+          !(atCaret instanceof PsiForStatement && child == ((PsiForStatement)atCaret).getInitialization())) continue;
       collectAllElements(child, res, recurse);
     }
   }
@@ -260,10 +268,15 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   @Override
   @Nullable
   protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
-    final PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
+    PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (atCaret instanceof PsiWhiteSpace) return null;
-    if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText()) && !(atCaret.getParent() instanceof PsiArrayInitializerExpression)) return null;
+    if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) {
+      atCaret = atCaret.getParent();
+      if (!(atCaret instanceof PsiAnonymousClass || atCaret instanceof PsiArrayInitializerExpression)) {
+        return null;
+      }
+    }
 
     PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
                                                               PsiStatement.class,
@@ -309,7 +322,11 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-      PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), PsiCodeBlock.class);
+      PsiElement leaf = file.findElementAt(caretOffset - 1);
+      PsiElement elt = PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class);
+      if (elt == null && leaf != null && leaf.getParent() instanceof PsiClass) {
+        elt = leaf.getParent();
+      }
       reformat(elt);
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
       editor.getCaretModel().moveToOffset(caretOffset - 1);

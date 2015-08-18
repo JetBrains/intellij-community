@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning;
 
+import com.jetbrains.edu.EduNames;
 import org.jetbrains.annotations.NotNull;
 
 public class PyStudyLanguageManager implements StudyLanguageManager {
@@ -7,7 +8,7 @@ public class PyStudyLanguageManager implements StudyLanguageManager {
   @NotNull
   @Override
   public String getTestFileName() {
-    return "tests.py";
+    return EduNames.TESTS_FILE;
   }
 
   @NotNull

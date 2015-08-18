@@ -29,3 +29,22 @@ class S {
     System.out.println();
   }
 }
+class A {
+  void f() {
+    new X();
+  }
+
+  class X {}
+}
+class BB extends A {
+  void f() {
+    new X();
+  }
+
+  class X {}
+}
+class CC extends A {
+  void <warning descr="Method 'f()' is identical to its super method">f</warning>() {
+    new X();
+  }
+}

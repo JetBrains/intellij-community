@@ -110,4 +110,9 @@ class AboutHttpService extends RestService {
     send(byteOut, request, context);
     return null;
   }
+
+  @Override
+  protected boolean activateToolBeforeExecution() {
+    return false;
+  }
 }

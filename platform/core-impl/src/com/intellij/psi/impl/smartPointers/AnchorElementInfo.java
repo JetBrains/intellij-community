@@ -17,7 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
@@ -72,14 +72,17 @@ class AnchorElementInfo extends SelfElementInfo {
       IStubElementType stubElementType = (IStubElementType)IElementType.find(index);
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, stubElementType, false);
     }
-    if (!mySyncMarkerIsValid) return null;
+
+    Segment psiRange = getPsiRange();
+    if (psiRange == null) return null;
+
     PsiFile file = restoreFile();
     if (file == null) return null;
-    PsiElement anchor = file.findElementAt(getSyncStartOffset());
+    PsiElement anchor = file.findElementAt(psiRange.getStartOffset());
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
-    if (range.getStartOffset() != getSyncStartOffset() || range.getEndOffset() != getSyncEndOffset()) return null;
+    if (range.getStartOffset() != psiRange.getStartOffset() || range.getEndOffset() != psiRange.getEndOffset()) return null;
 
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
       final PsiElement element = provider.restoreElement(anchor);
@@ -106,20 +109,21 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
+  public void fastenBelt() {
     if (getStubId() != -1) {
       switchToTree();
     }
-    super.fastenBelt(offset, cachedRangeMarker);
+    super.fastenBelt();
   }
 
   private void switchToTree() {
     PsiElement element = restoreElement();
-    if (element != null) {
+    Document document = getDocumentToSynchronize();
+    if (element != null && document != null) {
       // switch to tree
       myStubElementTypeAndId = pack(-1, null);
       PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
-      setRange((anchor == null ? element : anchor).getTextRange());
+      setRange((anchor == null ? element : anchor).getTextRange(), document);
     }
   }
 

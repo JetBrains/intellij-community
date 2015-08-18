@@ -232,7 +232,7 @@ public abstract class AutoScrollToSourceHandler {
 
   private ActionCallback getReady(DataContext context) {
     ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
-    return toolWindow != null ? toolWindow.getReady(this) : new ActionCallback.Done();
+    return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
   }
 }
 

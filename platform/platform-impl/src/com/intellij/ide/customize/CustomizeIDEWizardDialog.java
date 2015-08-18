@@ -104,12 +104,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
     PluginGroups pluginGroups = new PluginGroups();
     mySteps.add(new CustomizePluginsStepPanel(pluginGroups));
-    try {
-      mySteps.add(new CustomizeFeaturedPluginsStepPanel(pluginGroups));
-    }
-    catch (CustomizeFeaturedPluginsStepPanel.OfflineException e) {
-      //skip featured step if we're offline
-    }
+    mySteps.add(new CustomizeFeaturedPluginsStepPanel(pluginGroups));
   }
 
   @Override

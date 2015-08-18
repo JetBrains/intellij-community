@@ -35,12 +35,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIntroduceTest {
 
-  @Override
-  protected void setUp() throws Exception {
-    IdeaTestCase.initPlatformPrefix();
-    super.setUp();
-  }
-
   @Nullable
   protected PsiExpression getExpressionFromEditor() {
     final PsiExpression expression = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);

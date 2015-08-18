@@ -457,6 +457,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private void setTitle(@Nullable String title) {
+    if (getContextUserData(DiffUserDataKeys.DO_NOT_CHANGE_WINDOW_TITLE) == Boolean.TRUE) return;
     if (title == null) title = "Diff";
     setWindowTitle(title);
   }

@@ -31,8 +31,6 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -139,7 +137,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected void initApplication() throws Exception {
     boolean firstTime = ourApplication == null;
-    autodetectPlatformPrefix();
     ourApplication = IdeaTestApplication.getInstance(getApplicationConfigDirPath());
     ourApplication.setDataProvider(this);
 
@@ -424,8 +421,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     try {
-      CompositeException damage = checkForSettingsDamage();
-      result.add(damage);
+      result.addAll(checkForSettingsDamage());
     }
     catch (Throwable e) {
       result.add(e);
@@ -540,18 +536,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       result.add(e);
     }
     finally {
-      if (myProject != null) {
-        try {
-          PsiDocumentManager documentManager = myProject.getComponent(PsiDocumentManager.class, null);
-          if (documentManager != null) {
-            EditorFactory.getInstance().getEventMulticaster().removeDocumentListener((DocumentListener)documentManager);
-          }
-        }
-        catch (Exception ignored) {
-
-        }
-        myProject = null;
-      }
+      myProject = null;
     }
   }
 
@@ -833,7 +818,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
    * @deprecated calling this method is no longer necessary
    */
   public static void initPlatformLangPrefix() {
-    initPlatformPrefix(IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
   /**
@@ -844,7 +828,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
    * is NOT present in classpath.
    * Also, only the very FIRST call to this method will take effect.
    *
-   * @param classToTest marker class qualified name e.g. {@link #IDEA_MARKER_CLASS}.
+   * @param classToTest marker class qualified name
    * @param prefix platform prefix to be set up if marker class not found in classpath.
    * @deprecated calling this method is no longer necessary
    */

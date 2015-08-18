@@ -112,6 +112,11 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
+  @Override
+  protected void clear() {
+    removeSelectionListener();
+  }
+
   private void disposeTreeRestorer() {
     if (myTreeRestorer != null) {
       myTreeRestorer.dispose();

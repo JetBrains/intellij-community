@@ -35,6 +35,7 @@ public abstract class EditorColorsManager {
   @Deprecated
   public abstract void removeAllSchemes();
 
+  @Deprecated
   public abstract void setSchemes(@NotNull List<EditorColorsScheme> schemes);
 
   @NotNull

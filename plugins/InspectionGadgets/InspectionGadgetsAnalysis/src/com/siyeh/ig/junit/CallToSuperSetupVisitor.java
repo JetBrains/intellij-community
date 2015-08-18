@@ -19,9 +19,8 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperSetupVisitor extends JavaRecursiveElementVisitor {
-
-  private boolean callToSuperSetupFound = false;
+class CallToSuperSetupVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean callToSuperSetupFound;
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
@@ -51,7 +50,7 @@ class CallToSuperSetupVisitor extends JavaRecursiveElementVisitor {
     callToSuperSetupFound = true;
   }
 
-  public boolean isCallToSuperSetupFound() {
+  boolean isCallToSuperSetupFound() {
     return callToSuperSetupFound;
   }
 }

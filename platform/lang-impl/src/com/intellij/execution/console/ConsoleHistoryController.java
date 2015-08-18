@@ -369,7 +369,7 @@ public class ConsoleHistoryController {
       String s2 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryPrev);
       String title = myConsole.getTitle() + " History" +
                      (StringUtil.isNotEmpty(s1) && StringUtil.isNotEmpty(s2) ? " (" + s1 + " and " + s2 + " while in editor)" : "");
-      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true) {
+      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true, true) {
 
         @Override
         protected void removeContentAt(String content) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ public class ConfigurableExtensionPointUtil {
 
 
   public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions,
-                                                          final Configurable[] components,
+                                                          final List<Configurable> components,
                                                           @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<Configurable>();
     for (Configurable component : components) {
@@ -182,18 +183,35 @@ public class ConfigurableExtensionPointUtil {
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
-      LOG.warn("use other group instead of unexpected one: " + groupId);
-      groupId = "other";
-      id = "configurable.group." + groupId;
       bundle = OptionsBundle.getBundle();
+      if ("root".equals(groupId)) {
+        try {
+          String value = bundle.getString("configurable.group.root.settings.display.name");
+          LOG.error("OptionsBundle does not contain root group", value);
+        }
+        catch (Exception exception) {
+          LOG.error("OptionsBundle does not contain root group", exception);
+        }
+      }
+      else {
+        LOG.warn("use other group instead of unexpected one: " + groupId);
+        groupId = "other";
+        id = "configurable.group." + groupId;
+      }
     }
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
     if (node.myValue == null) {
       int weight = getInt(bundle, id + ".settings.weight");
       String help = getString(bundle, id + ".settings.help.topic");
       String name = getString(bundle, id + ".settings.display.name");
-      if (name != null && project != null && 0 <= name.indexOf('{')) {
-        name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
+      if (name != null && project != null) {
+        if (!project.isDefault() && !name.contains("{")) {
+          String named = getString(bundle, id + ".named.settings.display.name");
+          name = named != null ? named : name;
+        }
+        if (name.contains("{")) {
+          name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
+        }
       }
       node.myValue = new SortedConfigurableGroup(id, name, help, weight);
     }
@@ -306,7 +324,9 @@ public class ConfigurableExtensionPointUtil {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
         if (loadComponents) {
-          addValid(list, application.getComponents(Configurable.class), null);
+          for (Configurable configurable : ComponentsPackage.getComponents(application, Configurable.class)) {
+            addValid(list, configurable, project);
+          }
         }
         for (ConfigurableEP<Configurable> extension : application.getExtensions(Configurable.APPLICATION_CONFIGURABLE)) {
           addValid(list, ConfigurableWrapper.wrapConfigurable(extension), null);
@@ -314,8 +334,9 @@ public class ConfigurableExtensionPointUtil {
       }
     }
     if (project != null && !project.isDisposed()) {
-      if (loadComponents) {
-        addValid(list, project.getComponents(Configurable.class), project);
+      //noinspection unchecked
+      for (Configurable configurable : ComponentsPackage.getComponents(project, Configurable.class)) {
+        addValid(list, configurable, project);
       }
       for (ConfigurableEP<Configurable> extension : project.getExtensions(Configurable.PROJECT_CONFIGURABLE)) {
         addValid(list, ConfigurableWrapper.wrapConfigurable(extension), project);
@@ -327,12 +348,6 @@ public class ConfigurableExtensionPointUtil {
   private static void addValid(List<Configurable> list, Configurable configurable, Project project) {
     if (isValid(configurable, project)) {
       list.add(configurable);
-    }
-  }
-
-  private static void addValid(List<Configurable> list, Configurable[] configurables, Project project) {
-    for (Configurable configurable : configurables) {
-      addValid(list, configurable, project);
     }
   }
 

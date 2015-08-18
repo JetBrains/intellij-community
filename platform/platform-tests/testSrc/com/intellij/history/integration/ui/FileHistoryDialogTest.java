@@ -16,13 +16,13 @@
 
 package com.intellij.history.integration.ui;
 
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.FileHistoryDialog;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,7 +89,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 0);
 
     assertDiffContents("old", "current", m);
-    assertEquals(DocumentContent.class, getRightDiffContent(m).getClass());
+    assertTrue(getRightDiffContent(m) instanceof DocumentContent);
   }
 
   public void testRevertion() throws Exception {
@@ -110,8 +110,8 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     DiffContent left = getLeftDiffContent(m);
     DiffContent right = getRightDiffContent(m);
 
-    assertEquals(leftContent, new String(left.getBytes()));
-    assertEquals(rightContent, new String(right.getBytes()));
+    assertContent(leftContent, left);
+    assertContent(rightContent, right);
   }
 
   private DiffContent getLeftDiffContent(FileHistoryDialogModel m) {

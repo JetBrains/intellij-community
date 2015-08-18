@@ -134,8 +134,7 @@ public class AnnotationsHighlightUtil {
         }
       }
 
-      String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                     formatReference(nameRef), JavaHighlightUtil.formatType(expectedType));
+      String description = JavaErrorMessages.message("incompatible.types", JavaHighlightUtil.formatType(expectedType), formatReference(nameRef) );
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
 
@@ -161,8 +160,7 @@ public class AnnotationsHighlightUtil {
         return null;
       }
 
-      String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                     JavaHighlightUtil.formatType(type), JavaHighlightUtil.formatType(expectedType));
+      String description = JavaErrorMessages.message("incompatible.types", JavaHighlightUtil.formatType(expectedType), JavaHighlightUtil.formatType(type));
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createSurroundWithQuotesAnnotationParameterValueFix(value, expectedType));
       return info;
@@ -321,12 +319,11 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkValidAnnotationType(final PsiTypeElement typeElement) {
-    PsiType type = typeElement.getType();
-    if (type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
+  static HighlightInfo checkValidAnnotationType(PsiType type, final PsiTypeElement typeElement) {
+    if (type != null && type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
     }
-    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type");
+    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type", type != null ? type.getPresentableText() : type);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
   }
 

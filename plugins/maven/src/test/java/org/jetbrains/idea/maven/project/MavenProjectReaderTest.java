@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.model.*;
 
@@ -241,7 +242,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testDefaults() throws Exception {
     VirtualFile file = new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
         result.setResult(res);
         VfsUtil.saveText(res, "<project>" +
@@ -306,7 +307,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testCustomSettings() throws Exception {
     VirtualFile file = new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
         result.setResult(res);
         VfsUtil.saveText(res, "<project>" +

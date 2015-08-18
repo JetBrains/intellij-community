@@ -18,8 +18,10 @@ import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -27,8 +29,12 @@ import java.util.Map;
 
 
 abstract public class StudyTaskNavigationAction extends DumbAwareAction {
+  public StudyTaskNavigationAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
   public void navigateTask(@NotNull final Project project) {
-    StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+    StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     StudyState studyState = new StudyState(studyEditor);
     if (!studyState.isValid()) {
       return;
@@ -39,7 +45,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
         JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(getNavigationFinishedMessage(), MessageType.INFO, null);
       Balloon balloon = balloonBuilder.createBalloon();
       assert studyEditor != null;
-      balloon.showInCenterOf(getButton(studyEditor));
+      balloon.show(StudyUtils.computeLocation(studyEditor.getEditor()), Balloon.Position.above);
       return;
     }
     for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
@@ -65,18 +71,8 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     if (taskDir == null) {
       return;
     }
-    VirtualFile shouldBeActive = null;
-    for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
-      String name = entry.getKey();
-      TaskFile taskFile = entry.getValue();
-      VirtualFile vf = taskDir.findChild(name);
-      if (vf != null) {
-        FileEditorManager.getInstance(project).openFile(vf, true);
-        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
-          shouldBeActive = vf;
-        }
-      }
-    }
+
+    VirtualFile shouldBeActive = getFileToActivate(project, nextTaskFiles, taskDir);
     JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
     TreePath path = TreeUtil.getFirstNodePath(tree);
     tree.collapsePath(path);
@@ -90,7 +86,22 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     }
   }
 
-  protected abstract JButton getButton(@NotNull final StudyEditor selectedStudyEditor);
+  @Nullable
+  protected VirtualFile getFileToActivate(@NotNull Project project, Map<String, TaskFile> nextTaskFiles, VirtualFile taskDir) {
+    VirtualFile shouldBeActive = null;
+    for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
+      String name = entry.getKey();
+      TaskFile taskFile = entry.getValue();
+      VirtualFile vf = taskDir.findChild(name);
+      if (vf != null) {
+        FileEditorManager.getInstance(project).openFile(vf, true);
+        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
+          shouldBeActive = vf;
+        }
+      }
+    }
+    return shouldBeActive;
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -104,4 +115,9 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
   protected abstract String getNavigationFinishedMessage();
 
   protected abstract Task getTargetTask(@NotNull final Task sourceTask);
+
+  @Override
+  public void update(AnActionEvent e) {
+    StudyUtils.updateAction(e);
+  }
 }

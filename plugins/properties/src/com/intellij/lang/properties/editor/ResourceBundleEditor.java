@@ -59,8 +59,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
@@ -131,7 +134,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
-    myPropertiesInsertDeleteManager = ResourceBundlePropertiesUpdateManagerImpl.create(resourceBundle);
+    myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
 
     myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
     myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
@@ -289,11 +292,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
                      ? ((ResourceBundlePropertyStructureViewElement)element).getProperty().getPsiElement()
                      : null;
-      if (value instanceof IProperty && propertyName.equals(((IProperty)value).getUnescapedKey())) {
-        final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get((IProperty)value);
-        myStructureViewComponent.select(anchor, true);
-        selectionChanged();
-        return;
+      if (value != null) {
+        final IProperty property = PropertiesImplUtil.getProperty(value);
+        if (propertyName.equals(property.getUnescapedKey())) {
+          final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get(property);
+          myStructureViewComponent.select(anchor, true);
+          selectionChanged();
+          return;
+        }
       }
       else {
         for (TreeElement treeElement : element.getChildren()) {
@@ -407,11 +413,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         @Override
         public void focusGained(final Editor editor) {
           mySelectedEditor = editor;
+          final EditorEx editorEx = (EditorEx)editor;
+          editorEx.setViewer(ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles());
         }
 
         @Override
         public void focusLost(final Editor eventEditor) {
-          writeEditorPropertyValue(null, editor, propertiesFile);
+          if (propertiesFile.getContainingFile().isValid()) {
+            writeEditorPropertyValue(null, editor, propertiesFile);
+          }
         }
       });
       gc.gridx = 0;
@@ -505,8 +515,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private void installPropertiesChangeListeners() {
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     if (myVfsListener != null) {
-      assert false;
-      virtualFileManager.removeVirtualFileListener(myVfsListener);
+      throw new AssertionError("Listeners can't be initialized twice");
     }
     myVfsListener = new VirtualFileAdapter() {
       @Override
@@ -543,49 +552,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Nullable
-      private String getPropertyKey(final @Nullable PsiElement element) {
-        if (!(element instanceof PropertyKeyImpl)) {
-          return null;
-        }
-        final IProperty property = (IProperty)PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
-          @Override
-          public boolean value(PsiElement element) {
-            return element instanceof IProperty;
+        final PsiFile file = event.getFile();
+        if (file instanceof XmlFile) {
+          final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+          if (propertiesFile != null) {
+            final ResourceBundle bundle = propertiesFile.getResourceBundle();
+            if (bundle.equals(myResourceBundle) && !myEditors.containsKey(propertiesFile)) {
+              recreateEditorsPanel();
+            }
           }
-        });
-        return property == null ? null : property.getKey();
-      }
-
-      @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        final String oldKey = getPropertyKey(event.getOldChild());
-        if (oldKey == null || !oldKey.equals(getSelectedPropertyName())) {
-          return;
         }
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        //   final PsiFile file = event.getFile();
-        //PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-        //if (propertiesFile == null) return;
-        //if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
-        //updateEditorsFromProperties();
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
@@ -596,6 +572,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       @Override
       public void run() {
         updateEditorsFromProperties();
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar != null) {
+          statusBar.setInfo("Selected property: " + getSelectedPropertyName());
+        }
       }
     });
   }
@@ -807,7 +787,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   @Override
   public void deselectNotify() {
-
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar != null) {
+      statusBar.setInfo("");
+    }
   }
 
   @Override
@@ -995,5 +978,4 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       return false;
     }
   }
-
 }

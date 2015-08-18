@@ -4,11 +4,17 @@
  */
 package com.intellij.util.ui.update;
 
-import com.intellij.testFramework.FlyIdeaTestCase;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.WaitFor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class MergingUpdateQueueTest extends FlyIdeaTestCase {
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class MergingUpdateQueueTest extends UsefulTestCase {
   public void testOnShowNotify() throws Exception {
     final MyUpdate first = new MyUpdate("first");
     final MyUpdate second = new MyUpdate("second");
@@ -30,7 +36,7 @@ public class MergingUpdateQueueTest extends FlyIdeaTestCase {
   }
 
   public void testPriority() throws Exception {
-    final boolean attemps[] = new boolean[3];
+    final boolean[] attemps = new boolean[3];
 
     final MyQueue queue = new MyQueue();
 
@@ -223,7 +229,7 @@ public class MergingUpdateQueueTest extends FlyIdeaTestCase {
   }
 
 
-  private void assertAfterProcessing(MyUpdate update, boolean shouldBeExecuted, boolean shouldBeProcessed) {
+  private static void assertAfterProcessing(MyUpdate update, boolean shouldBeExecuted, boolean shouldBeProcessed) {
     assertEquals(shouldBeExecuted, update.isExecuted());
     assertEquals(shouldBeProcessed, update.wasProcessed());
   }
@@ -254,7 +260,11 @@ public class MergingUpdateQueueTest extends FlyIdeaTestCase {
     private boolean myExecuted;
 
     MyQueue() {
-      super("Test", 400, false, null);
+      this(400);
+    }
+
+    MyQueue(int mergingTimeSpan) {
+      super("Test", mergingTimeSpan, false, null);
       setPassThrough(false);
     }
 
@@ -291,6 +301,82 @@ public class MergingUpdateQueueTest extends FlyIdeaTestCase {
         return queue.wasExecuted();
       }
     };
+  }
+
+  public void testReallyMergeEqualIdentityEqualPriority() {
+    final MyQueue queue = new MyQueue();
+
+    final AtomicInteger count = new AtomicInteger();
+    for (int i = 0; i < 100; i++) {
+      for (int j = 0; j < 100; j++) {
+        queue.queue(new Update("foo" + j) {
+          @Override
+          public void run() {
+            count.incrementAndGet();
+          }
+        });
+      }
+    }
+    queue.showNotify();
+    waitForExecution(queue);
+
+    assertEquals(100, count.get());
+  }
+
+  public void testMultiThreadedQueueing() throws ExecutionException, InterruptedException {
+    final MyQueue queue = new MyQueue(20);
+    queue.showNotify();
+
+    final AtomicInteger count = new AtomicInteger();
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(100);
+    List<Future> futures = ContainerUtil.newArrayList();
+    for (int i = 0; i < 10; i++) {
+      ScheduledFuture<?> future = executor.schedule(new Runnable() {
+        @Override
+        public void run() {
+          for (int j = 0; j < 100; j++) {
+            TimeoutUtil.sleep(1);
+            queue.queue(new Update(new Object()) {
+              @Override
+              public void run() {
+                count.incrementAndGet();
+              }
+            });
+          }
+        }
+      }, 0, TimeUnit.MILLISECONDS);
+      futures.add(future);
+    }
+
+    for (Future future : futures) {
+      future.get();
+    }
+
+    waitForExecution(queue);
+
+    assertEquals(1000, count.get());
+  }
+
+  public void testSamePriorityQueriesAreExecutedInAdditionOrder() {
+    final MyQueue queue = new MyQueue();
+
+    StringBuilder expected = new StringBuilder();
+    final StringBuilder actual = new StringBuilder();
+    for (int i = 0; i < 20; i++) {
+      expected.append(i);
+      final int finalI = i;
+      queue.queue(new Update(new Object()) {
+        @Override
+        public void run() {
+          actual.append(finalI);
+        }
+      });
+    }
+    queue.showNotify();
+    waitForExecution(queue);
+
+    assertEquals(expected.toString(), actual.toString());
+
   }
 
 }

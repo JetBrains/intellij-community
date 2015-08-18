@@ -20,9 +20,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -176,10 +173,5 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   @Override
   public SelectInTarget createSelectInTarget() {
     return new FavoritesViewSelectInTarget(myProject);
-  }
-
-  @Override
-  public void addToolbarActions(final DefaultActionGroup group) {
-    group.add(ActionManager.getInstance().getAction(IdeActions.RENAME_FAVORITES_LIST));
   }
 }

@@ -175,7 +175,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @Override
   public String[] getSuperClassNames() {
-    return new String[]{getBaseClassReferenceGroovy().getReferenceName()};
+    return new String[]{getBaseClassReferenceGroovy().getClassNameText()};
   }
 
   @Override

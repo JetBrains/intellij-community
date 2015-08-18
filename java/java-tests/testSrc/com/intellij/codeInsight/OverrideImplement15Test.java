@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
@@ -68,6 +69,7 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
   public void testMultipleInterfaceInheritance() { doTest(false); }
   public void testResolveTypeParamConflict() { doTest(false); }
   public void testRawInheritance() { doTest(false); }
+  public void testRawInheritanceWithMethodTypeParameters() { doTest(false); }
 
   public void testLongFinalParameterList() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
@@ -156,7 +158,8 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
       assert superClass != null;
       PsiMethod method = superClass.getMethods()[0];
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
-      final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method, substitutor));
+      final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method, 
+                                                                                             OverrideImplementExploreUtil.correctSubstitutor(method, substitutor)));
       OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
     }
     else {

@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -97,53 +96,6 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
       if (getComponentCount() == 0) {
         return;
       }
-      Dimension preferredSize = getPreferredSize();
-
-      // Translate (x,y) into screen coordinate syetem
-
-      int _x, _y; // these are screen coordinates of clicked point
-      Point p = component.getLocationOnScreen();
-      _x = p.x + x;
-      _y = p.y + y;
-
-      // Determine graphics device which contains our point
-
-      GraphicsConfiguration targetGraphicsConfiguration = null;
-      GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      GraphicsDevice[] devices = env.getScreenDevices();
-      for (GraphicsDevice device : devices) {
-        GraphicsConfiguration graphicsConfiguration = device.getDefaultConfiguration();
-        Rectangle r = graphicsConfiguration.getBounds();
-        if (r.x <= _x && _x <= r.x + r.width && r.y <= _y && _y <= r.y + r.height) {
-          targetGraphicsConfiguration = graphicsConfiguration;
-          break;
-        }
-      }
-      if (targetGraphicsConfiguration == null && devices.length > 0) {
-        targetGraphicsConfiguration = env.getDefaultScreenDevice().getDefaultConfiguration();
-      }
-      if (targetGraphicsConfiguration == null) {
-        //noinspection HardCodedStringLiteral
-        throw new IllegalStateException("It's impossible to determine target graphics environment for point (" + _x + "," + _y + ")");
-      }
-
-      // Determine real client area of target graphics configuration
-      Rectangle targetRectangle = ScreenUtil.getScreenRectangle(targetGraphicsConfiguration);
-
-      // Fit popup into targetRectangle.
-      // The algorithm is the following:
-      // First of all try to move menu up on its height. If menu's left-top corner
-      // is inside screen bounds after that, then OK. Otherwise, if menu is too high
-      // (left-top corner is outside of screen bounds) then try to move menu up on
-      // not visible visible area height.
-      if (_x + preferredSize.width > targetRectangle.x + targetRectangle.width) {
-        x -= preferredSize.width;
-      }
-      if (_y + preferredSize.height > targetRectangle.y + targetRectangle.height) {
-        int invisibleHeight = _y + preferredSize.height - targetRectangle.y - targetRectangle.height;
-        y -= invisibleHeight;
-      }
-
       if (myApp != null) {
         if (myApp.isActive()) {
           Component frame = UIUtil.findUltimateParent(component);

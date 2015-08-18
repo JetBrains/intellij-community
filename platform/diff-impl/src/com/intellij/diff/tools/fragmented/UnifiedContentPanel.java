@@ -44,8 +44,8 @@ class UnifiedContentPanel extends JPanel {
         BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(layout);
 
-        panel.add(title2);
         panel.add(title1);
+        panel.add(title2);
         add(panel, BorderLayout.NORTH);
       }
     }

@@ -20,18 +20,34 @@ import org.jetbrains.annotations.NotNull;
 
 public class SemVerTest extends TestCase {
   public void testParsing() throws Exception {
-    String version = "0.9.2";
-    assertEquals(new SemVer(version, 0, 9, 2), parseNotNull(version));
+    checkParsed("0.9.2", 0, 9, 2);
   }
 
   public void testExtendedVersion() throws Exception {
-    String version = "0.9.2-dart";
-    assertEquals(new SemVer(version, 0, 9, 2), parseNotNull(version));
+    checkParsed("0.9.2-dart", 0, 9, 2);
   }
 
   public void testGulp4Alpha() throws Exception {
-    String version = "4.0.0-alpha.1";
-    assertEquals(new SemVer(version, 4, 0, 0), parseNotNull(version));
+    checkParsed("4.0.0-alpha.1", 4, 0, 0);
+  }
+
+  public void testMisc() throws Exception {
+    checkParsed("0.10.0-rc-1", 0, 10, 0);
+    checkParsed("1.0.0-rc-1", 1, 0, 0);
+    checkParsed("1.0.0-alpha", 1, 0, 0);
+    checkParsed("1.0.0-0.3.7", 1, 0, 0);
+    checkParsed("1.0.0-x.7.z.92", 1, 0, 0);
+    checkNotParsed("1.0.a");
+    checkNotParsed("1.0");
+    checkNotParsed("1..a");
+  }
+
+  private static void checkParsed(@NotNull String version, int expectedMajor, int expectedMinor, int expectedPatch) {
+    assertEquals(new SemVer(version, expectedMajor, expectedMinor, expectedPatch), parseNotNull(version));
+  }
+
+  private static void checkNotParsed(@NotNull String version) {
+    assertNull(SemVer.parseFromText(version));
   }
 
   public void testCompare() throws Exception {

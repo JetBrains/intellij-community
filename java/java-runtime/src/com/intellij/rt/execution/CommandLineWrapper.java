@@ -15,15 +15,14 @@
  */
 package com.intellij.rt.execution;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 /**
  * @author anna
@@ -31,22 +30,104 @@ import java.util.List;
  */
 public class CommandLineWrapper {
 
-  /**
-   * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
-   * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
-   */
-  public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
-
   private static final String PREFIX = "-D";
 
   public static void main(String[] args) throws Exception {
-    final boolean notEscapeClasspathUrl = Boolean.valueOf(System.getProperty(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL)).booleanValue();
+    final File jarFile = new File(args[0]);
+    final MainPair mainPair = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(jarFile, args) 
+                                                       : loadMainClassWithOldCustomLoader(jarFile, args);
+    String[] mainArgs = mainPair.getArgs();
+    Class mainClass = mainPair.getMainClass();
+    System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
+    //noinspection SSBasedInspection
+    Class mainArgType = (new String[0]).getClass();
+    Method main = mainClass.getMethod("main", new Class[]{mainArgType});
+    ensureAccess(main);
+    main.invoke(null, new Object[]{mainArgs});
+  }
+
+  private static MainPair loadMainClassFromClasspathJar(File jarFile, String[] args) throws Exception {
+    final JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
+    try {
+      final Manifest manifest = inputStream.getManifest();
+      final String vmParams = manifest.getMainAttributes().getValue("VM-Options");
+      if (vmParams != null) {
+        final HashMap vmOptions = new HashMap();
+        parseVmOptions(vmParams, vmOptions);
+        for (Iterator iterator = vmOptions.keySet().iterator(); iterator.hasNext(); ) {
+          String optionName = (String)iterator.next();
+          System.setProperty(optionName, (String)vmOptions.get(optionName));
+        }
+      }
+    }
+    finally {
+      if (inputStream != null) {
+        inputStream.close();
+      }
+      jarFile.deleteOnExit();
+    }
+
+    return new MainPair(Class.forName(args[1]), new String[args.length - 2]);
+  }
+
+  private static class MainPair {
+    private Class mainClass;
+    private String[] args;
+
+    public MainPair(Class mainClass, String[] args) {
+      this.mainClass = mainClass;
+      this.args = args;
+    }
+
+    public Class getMainClass() {
+      return mainClass;
+    }
+
+    public String[] getArgs() {
+      return args;
+    }
+  }
+  
+  public static void parseVmOptions(String vmParams, Map vmOptions) {
+    int idx = vmParams.indexOf(PREFIX);
+    while (idx >= 0) {
+      final int indexOf = vmParams.indexOf(PREFIX, idx + PREFIX.length());
+      final String vmParam = indexOf < 0 ? vmParams.substring(idx) : vmParams.substring(idx, indexOf - 1);
+      final int eqIdx = vmParam.indexOf('=');
+      String vmParamName;
+      String vmParamValue;
+      if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
+        vmParamName = vmParam.substring(0, eqIdx);
+        vmParamValue = vmParam.substring(eqIdx + 1);
+      } else {
+        vmParamName = vmParam;
+        vmParamValue = "";
+      }
+      vmOptions.put(vmParamName.trim().substring(PREFIX.length()), vmParamValue);
+      idx = indexOf;
+    }
+  }
+
+  private static void ensureAccess(Object reflectionObject) {
+    // need to call setAccessible here in order to be able to launch package-local classes
+    // calling setAccessible() via reflection because the method is missing from java version 1.1.x
+    final Class aClass = reflectionObject.getClass();
+    try {
+      final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[]{boolean.class});
+      setAccessibleMethod.invoke(reflectionObject, new Object[]{Boolean.TRUE});
+    }
+    catch (Exception e) {
+      // the method not found
+    }
+  }
+
+  //todo delete; but new idea won't run correctly tests which start process with CommandLineWrapper
+  private static MainPair loadMainClassWithOldCustomLoader(File file, String[] args) throws Exception {
     final List urls = new ArrayList();
-    final File file = new File(args[0]);
     final StringBuffer buf = new StringBuffer();
     final BufferedReader reader = new BufferedReader(new FileReader(file));
     try {
-      while(reader.ready()) {
+      while (reader.ready()) {
         final String fileName = reader.readLine();
         if (buf.length() > 0) {
           buf.append(File.pathSeparator);
@@ -55,7 +136,7 @@ public class CommandLineWrapper {
         File classpathElement = new File(fileName);
         try {
           //noinspection Since15, deprecation
-          urls.add(notEscapeClasspathUrl ? classpathElement.toURL() : classpathElement.toURI().toURL());
+          urls.add(classpathElement.toURI().toURL());
         }
         catch (NoSuchMethodError e) {
           //noinspection deprecation
@@ -70,36 +151,6 @@ public class CommandLineWrapper {
     System.setProperty("java.class.path", buf.toString());
 
     int startArgsIdx = 2;
-    if (args[1].equals("@vm_params")) {
-      startArgsIdx = 4;
-      final File vmParamsFile = new File(args[2]);
-      final BufferedReader vmParamsReader = new BufferedReader(new FileReader(vmParamsFile));
-      try {
-        while (vmParamsReader.ready()) {
-          final String vmParam = vmParamsReader.readLine().trim();
-          final int eqIdx = vmParam.indexOf('=');
-          String vmParamName;
-          String vmParamValue;
-
-          if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
-            vmParamName = vmParam.substring(0, eqIdx);
-            vmParamValue = vmParam.substring(eqIdx + 1);
-          } else {
-            vmParamName = vmParam;
-            vmParamValue = "";
-          }
-          vmParamName = vmParamName.trim();
-          if (vmParamName.startsWith(PREFIX)) {
-            vmParamName = vmParamName.substring(PREFIX.length());
-            System.setProperty(vmParamName, vmParamValue);
-          }
-        }
-      }
-      finally {
-        vmParamsReader.close();
-      }
-      if (!vmParamsFile.delete()) vmParamsFile.deleteOnExit();
-    }
 
     String mainClassName = args[startArgsIdx - 1];
     String[] mainArgs = new String[args.length - startArgsIdx];
@@ -120,14 +171,10 @@ public class CommandLineWrapper {
         //leave URL class loader
       }
     }
-
     Class mainClass = loader.loadClass(mainClassName);
     Thread.currentThread().setContextClassLoader(loader);
-    //noinspection SSBasedInspection
-    Class mainArgType = (new String[0]).getClass();
-    Method main = mainClass.getMethod("main", new Class[]{mainArgType});
-    ensureAccess(main);
-    main.invoke(null, new Object[]{mainArgs});
+
+    return new MainPair(mainClass, mainArgs);
   }
 
   private static URL internFileProtocol(URL url) {
@@ -140,17 +187,4 @@ public class CommandLineWrapper {
     }
     return url;
   }
-
-  private static void ensureAccess(Object reflectionObject) {
-   // need to call setAccessible here in order to be able to launch package-local classes
-   // calling setAccessible() via reflection because the method is missing from java version 1.1.x
-   final Class aClass = reflectionObject.getClass();
-   try {
-     final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[] {boolean.class});
-     setAccessibleMethod.invoke(reflectionObject, new Object[] {Boolean.TRUE});
-   }
-   catch (Exception e) {
-     // the method not found
-   }
- }
 }

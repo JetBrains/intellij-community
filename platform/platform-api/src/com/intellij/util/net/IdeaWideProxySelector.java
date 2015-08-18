@@ -20,6 +20,7 @@ import com.btr.proxy.selector.pac.PacProxySelector;
 import com.btr.proxy.selector.pac.UrlPacScriptSource;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.Contract;
@@ -41,7 +42,7 @@ public class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");
 
   private final HttpConfigurable myHttpConfigurable;
-  private final AtomicReference<ProxySelector> myPacProxySelector = new AtomicReference<ProxySelector>();
+  private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<Pair<ProxySelector, String>>();
 
   public IdeaWideProxySelector(HttpConfigurable configurable) {
     myHttpConfigurable = configurable;
@@ -76,16 +77,28 @@ public class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (myHttpConfigurable.USE_PROXY_PAC) {
-      ProxySelector pacProxySelector = myPacProxySelector.get();
-      if (myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL)) {
-        myPacProxySelector.set(new PacProxySelector(new UrlPacScriptSource(myHttpConfigurable.PAC_URL)));
+      // It is important to avoid resetting Pac based ProxySelector unless option was changed
+      // New instance will download configuration file and interpret it before making the connection
+      String pacUrlForUse = myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL)? myHttpConfigurable.PAC_URL : null;
+      Pair<ProxySelector, String> pair = myPacProxySelector.get();
+      if (pair != null && !Comparing.equal(pair.second, pacUrlForUse)) {
+        pair = null;
       }
-      else if (pacProxySelector == null) {
-        ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
-        proxySearch.setPacCacheSettings(32, 10 * 60 * 1000); // Cache 32 urls for up to 10 min.
-        pacProxySelector = proxySearch.getProxySelector();
-        myPacProxySelector.lazySet(pacProxySelector);
+
+      if (pair == null) {
+        ProxySelector newProxySelector;
+        if (pacUrlForUse != null) {
+          newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
+        } else {
+          ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
+          proxySearch.setPacCacheSettings(32, 10 * 60 * 1000); // Cache 32 urls for up to 10 min.
+          newProxySelector = proxySearch.getProxySelector();
+        }
+        pair = Pair.create(newProxySelector, pacUrlForUse);
+        myPacProxySelector.lazySet(pair);
       }
+
+      ProxySelector pacProxySelector = pair.first;
 
       if (pacProxySelector != null) {
         List<Proxy> select = pacProxySelector.select(uri);

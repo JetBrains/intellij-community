@@ -20,7 +20,6 @@ import com.intellij.codeInspection.i18n.I18nizeAction;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -44,7 +43,7 @@ public class I18nizeTest extends LightCodeInsightTestCase {
     configureByFile(getBasePath() + "/before"+getTestName(false)+"."+ext);
     I18nizeAction action = new I18nizeAction();
     DataContext dataContext = DataManager.getInstance().getDataContext(myEditor.getComponent());
-    AnActionEvent event = new AnActionEvent(null, dataContext, "place", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "place", dataContext);
     action.update(event);
     @NonNls String afterFile = getBasePath() + "/after" + getTestName(false) + "." + ext;
     boolean afterFileExists = new File(PathManagerEx.getTestDataPath() + afterFile).exists();

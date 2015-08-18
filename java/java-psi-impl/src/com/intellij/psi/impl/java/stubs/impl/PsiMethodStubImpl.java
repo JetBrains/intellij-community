@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private static final int DEPRECATED = 0x08;
   private static final int DEPRECATED_ANNOTATION = 0x10;
   private static final int PARSED_VIA_GENERIC_SIGNATURE = 0x20;
+  private static final int HAS_DOC_COMMENT = 0x40;
 
   public PsiMethodStubImpl(StubElement parent,
                            StringRef name,
@@ -90,17 +91,18 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
 
   @Override
   public boolean isConstructor() {
-    return (myFlags & CONSTRUCTOR) != 0;
+    return BitUtil.isSet(myFlags, CONSTRUCTOR);
   }
 
   @Override
   public boolean isVarArgs() {
-    return (myFlags & VARARGS) != 0;
+    return BitUtil.isSet(myFlags, VARARGS);
   }
 
   public boolean isParsedViaGenericSignature() {
     return BitUtil.isSet(myFlags, PARSED_VIA_GENERIC_SIGNATURE);
   }
+
   @Override
   public boolean isAnnotationMethod() {
     return isAnnotationMethod(myFlags);
@@ -129,6 +131,11 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   public boolean hasDeprecatedAnnotation() {
     return (myFlags & DEPRECATED_ANNOTATION) != 0;
+  }
+
+  @Override
+  public boolean hasDocComment() {
+    return (myFlags & HAS_DOC_COMMENT) != 0;
   }
 
   @Override
@@ -166,17 +173,19 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
                                boolean isAnnotationMethod,
                                boolean isVarargs,
                                boolean isDeprecated,
-                               boolean hasDeprecatedAnnotation) {
+                               boolean hasDeprecatedAnnotation,
+                               boolean hasDocComment) {
     byte flags = 0;
     if (isConstructor) flags |= CONSTRUCTOR;
     if (isAnnotationMethod) flags |= ANNOTATION;
     if (isVarargs) flags |= VARARGS;
     if (isDeprecated) flags |= DEPRECATED;
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
+    if (hasDocComment) flags |= HAS_DOC_COMMENT;
     return flags;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiMethodStub[");

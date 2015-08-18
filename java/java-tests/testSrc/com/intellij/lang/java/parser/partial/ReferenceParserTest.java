@@ -50,10 +50,8 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testTypeParams7() { doTypeParamsParserTest("<T extends X, Y>"); }
   public void testTypeParams8() { doTypeParamsParserTest("<?>"); }
 
-  public void testAnyType() {
-    setLanguageLevel(LanguageLevel.JDK_1_9);
-    doTypeParamsParserTest("<any T>");
-  }
+  public void testAnyTypeParams() { setLanguageLevel(LanguageLevel.JDK_X); doTypeParamsParserTest("<any T>"); }
+  public void testAnyTypeArgs() { setLanguageLevel(LanguageLevel.JDK_X); doTypeParserTest("T<E_SRC, any, E_DST, ?>"); }
 
   private void doRefParserTest(String text, boolean incomplete) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, incomplete, false, false, false));

@@ -136,11 +136,6 @@ if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
 
-MAIN_CLASS_NAME="$@@product_uc@@_MAIN_CLASS_NAME"
-if [ -z "$MAIN_CLASS_NAME" ]; then
-  MAIN_CLASS_NAME="com.intellij.idea.Main"
-fi
-
 VM_OPTIONS=""
 VM_OPTIONS_FILES_USED=""
 for vm_opts_file in "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" "$OS_SPECIFIC_BIN_DIR/@@vm_options@@$BITS.vmoptions" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" "$@@product_uc@@_VM_OPTIONS"; do
@@ -182,8 +177,7 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/jre/bin/java" \
   -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
   $IDE_PROPERTIES_PROPERTY \
   $IDE_JVM_ARGS \
-  $REQUIRED_JVM_ARGS \
-  $MAIN_CLASS_NAME \
+  com.intellij.idea.Main \
   "$@"
 EC=$?
 test $EC -ne 88 && exit $EC

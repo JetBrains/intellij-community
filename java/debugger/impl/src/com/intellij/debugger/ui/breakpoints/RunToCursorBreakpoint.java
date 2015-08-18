@@ -17,15 +17,13 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.sun.jdi.Location;
-import com.sun.jdi.ReferenceType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
@@ -34,7 +32,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
  * @author Eugene Zhuravlev
  *         Date: Sep 13, 2006
  */
-public class RunToCursorBreakpoint extends LineBreakpoint {
+public class RunToCursorBreakpoint<P extends JavaBreakpointProperties> extends LineBreakpoint<P> {
   private final boolean myRestoreBreakpoints;
   @NotNull
   protected final SourcePosition myCustomPosition;
@@ -47,6 +45,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
     myRestoreBreakpoints = restoreBreakpoints;
   }
 
+  @NotNull
   @Override
   public SourcePosition getSourcePosition() {
     return myCustomPosition;
@@ -116,7 +115,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   }
 
   @Override
-  protected JavaBreakpointProperties getProperties() {
+  protected P getProperties() {
     return null;
   }
 
@@ -125,17 +124,18 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
     return false;  // always enabled
   }
 
+  @Nullable
   @Override
-  protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
-    if (!super.acceptLocation(debugProcess, classType, loc)) return false;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
-        if (position == null) return false;
-        return DebuggerUtilsEx.inTheSameMethod(myCustomPosition, position);
+  protected JavaLineBreakpointType getXBreakpointType() {
+    SourcePosition position = getSourcePosition();
+    VirtualFile file = position.getFile().getVirtualFile();
+    int line = position.getLine();
+    for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
+      if (type instanceof JavaLineBreakpointType && type.canPutAt(file, line, getProject())) {
+        return ((JavaLineBreakpointType)type);
       }
-    });
+    }
+    return null;
   }
 
   @Nullable

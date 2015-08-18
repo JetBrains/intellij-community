@@ -42,16 +42,15 @@ import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
-import javax.swing.text.DefaultEditorKit;
-import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.NumberFormatter;
+import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -266,9 +265,6 @@ public class UIUtil {
       return true;
     }
   };
-
-  // accessed only from EDT
-  private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
   private static volatile Pair<String, Integer> ourSystemFontData = null;
 
@@ -599,7 +595,7 @@ public class UIUtil {
   }
 
   public static void drawWave(Graphics2D g, Rectangle rectangle) {
-    WavePainter.forColor(g.getColor()).paint(g, (int) rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
+    WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
   @NotNull
@@ -1677,82 +1673,8 @@ public class UIUtil {
       drawLine(g, startX, lineY + 2, endX, lineY + 2);
     }
 
-    // Draw apple like dotted line:
-    //
-    // CCC CCC CCC ...
-    // CCC CCC CCC ...
-    // CCC CCC CCC ...
-    //
-    // (where "C" - colored pixel, " " - white pixel)
-
-    final int step = 4;
-    final int startPosCorrection = startX % step < 3 ? 0 : 1;
-
-    // Optimization - lets draw dotted line using dot sample image.
-
-    // draw one dot by pixel:
-
-    // save old settings
-    final Composite oldComposite = g.getComposite();
-    // draw image "over" on top of background
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-
-    // sample
-    final BufferedImage image = getAppleDotStamp(fgColor, oldColor);
-
-    // Now copy our dot several times
-    final int dotX0 = (startX / step + startPosCorrection) * step;
-    for (int dotXi = dotX0; dotXi < endX; dotXi += step) {
-      g.drawImage(image, dotXi, lineY, null);
-    }
-
-    //restore previous settings
-    g.setComposite(oldComposite);
-  }
-
-  private static BufferedImage getAppleDotStamp(final Color fgColor,
-                                                final Color oldColor) {
-    final Color color = fgColor != null ? fgColor : oldColor;
-
-    // let's avoid of generating tons of GC and store samples for different colors
-    BufferedImage sample = ourAppleDotSamples.get(color);
-    if (sample == null) {
-      sample = createAppleDotStamp(color);
-      ourAppleDotSamples.put(color, sample);
-    }
-    return sample;
-  }
-
-  private static BufferedImage createAppleDotStamp(final Color color) {
-    final BufferedImage image = createImage(3, 3, BufferedImage.TYPE_INT_ARGB);
-    final Graphics2D g = image.createGraphics();
-
-    g.setColor(color);
-
-    // Each dot:
-    // | 20%  | 50%  | 20% |
-    // | 80%  | 80%  | 80% |
-    // | 50%  | 100% | 50% |
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .2f));
-    g.drawLine(0, 0, 0, 0);
-    g.drawLine(2, 0, 2, 0);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 0.7f));
-    g.drawLine(0, 1, 2, 1);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1.0f));
-    g.drawLine(1, 2, 1, 2);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .5f));
-    g.drawLine(1, 0, 1, 0);
-    g.drawLine(0, 2, 0, 2);
-    g.drawLine(2, 2, 2, 2);
-
-    // dispose graphics
-    g.dispose();
-
-    return image;
+    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
+    painter.paint(g, startX, endX, lineY);
   }
 
   /** This method is intended to use when user settings are not accessible yet.
@@ -2132,6 +2054,13 @@ public class UIUtil {
     for (MouseWheelListener each : mouseWheelListeners) {
       c.removeMouseWheelListener(each);
     }
+    
+    if (c instanceof AbstractButton) {
+      final ActionListener[] listeners = ((AbstractButton)c).getActionListeners();
+      for (ActionListener listener : listeners) {
+        ((AbstractButton)c).removeActionListener(listener);
+      }
+    }
   }
 
   public static void disposeProgress(final JProgressBar progress) {
@@ -2356,6 +2285,12 @@ public class UIUtil {
     return result.toString();
   }
 
+  /**
+   * Please use Application.invokeLater() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
+   *
+   * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
+   */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
     if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
@@ -2366,6 +2301,9 @@ public class UIUtil {
   }
 
   /**
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
+   *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
@@ -2389,6 +2327,9 @@ public class UIUtil {
   }
 
   /**
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
+   *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
@@ -2409,6 +2350,9 @@ public class UIUtil {
   }
 
   /**
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
+   *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
@@ -2626,7 +2570,7 @@ public class UIUtil {
    * @param parent parent component
    * @return true if parent if a top parent of child, false otherwise
    *
-   * @see javax.swing.SwingUtilities#isDescendingFrom(java.awt.Component, java.awt.Component)
+   * @see SwingUtilities#isDescendingFrom(Component, Component)
    */
   public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
     while (child != null && child != parent) {
@@ -3192,10 +3136,40 @@ public class UIUtil {
     }
   }
 
+  private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
+    @Override
+    protected void textChanged(DocumentEvent e) {
+      Document document = e.getDocument();
+      if (document instanceof AbstractDocument) {
+        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+        for (StackTraceElement element : stackTrace) {
+          if (!element.getClassName().equals(JTextComponent.class.getName()) || !element.getMethodName().equals("setText")) continue;
+          UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
+          for (final UndoableEditListener listener : undoableEditListeners) {
+            if (listener instanceof UndoManager) {
+              Runnable runnable = new Runnable() {
+                public void run() {
+                  ((UndoManager)listener).discardAllEdits();
+                }
+              };
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(runnable);
+              return;
+            }
+          }
+        }
+      }
+    }
+  };
+
   public static void addUndoRedoActions(@NotNull final JTextComponent textComponent) {
+    if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
+      return;
+    }
     UndoManager undoManager = new UndoManager();
     textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
+    textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");

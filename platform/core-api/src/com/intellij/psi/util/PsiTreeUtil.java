@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -530,6 +530,9 @@ public class PsiTreeUtil {
     }
 
     if (strict) {
+      if (element instanceof PsiFile) {
+        return null;
+      }
       element = element.getParent();
     }
 
@@ -555,6 +558,7 @@ public class PsiTreeUtil {
                                                          @NotNull Class<? extends PsiElement>... stopAt) {
     if (element == null) return null;
     if (strict) {
+      if (element instanceof PsiFile) return null;
       element = element.getParent();
     }
 
@@ -608,7 +612,7 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static <T extends PsiElement> T getParentOfType(@Nullable final PsiElement element,
                                                          @NotNull final Class<? extends T>... classes) {
-    if (element == null) return null;
+    if (element == null || element instanceof PsiFile) return null;
     PsiElement parent = element.getParent();
     if (parent == null) return null;
     return getNonStrictParentOfType(parent, classes);
@@ -1039,5 +1043,30 @@ public class PsiTreeUtil {
     }
 
     return res;
+  }
+
+  @NotNull
+  public static <T extends PsiElement> Iterator<T> childIterator(@NotNull final PsiElement element, @NotNull final Class<T> aClass) {
+    return new Iterator<T>() {
+      private T next = getChildOfType(element, aClass);
+
+      @Override
+      public boolean hasNext() {
+        return next != null;
+      }
+
+      @Override
+      public T next() {
+        if (next == null) throw new NoSuchElementException();
+        T current = this.next;
+        next = getNextSiblingOfType(current, aClass);
+        return current;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    };
   }
 }

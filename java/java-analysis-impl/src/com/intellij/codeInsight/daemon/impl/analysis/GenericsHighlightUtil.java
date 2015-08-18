@@ -658,7 +658,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkReferenceTypeUsedAsTypeArgument(final PsiTypeElement typeElement) {
+  static HighlightInfo checkReferenceTypeUsedAsTypeArgument(PsiTypeElement typeElement, LanguageLevel level) {
     final PsiType type = typeElement.getType();
     if (type != PsiType.NULL && type instanceof PsiPrimitiveType ||
         type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
@@ -668,9 +668,11 @@ public class GenericsHighlightUtil {
         .getElement();
       if (element == null) return null;
 
-      String description = JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type");
-      final HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+      if (level.isAtLeast(LanguageLevel.JDK_X)) return null;
+
+      String text = JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type");
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(text).create();
+
       PsiType toConvert = type;
       if (type instanceof PsiWildcardType) {
         toConvert = ((PsiWildcardType)type).getBound();
@@ -678,8 +680,8 @@ public class GenericsHighlightUtil {
       if (toConvert instanceof PsiPrimitiveType) {
         final PsiClassType boxedType = ((PsiPrimitiveType)toConvert).getBoxedType(typeElement);
         if (boxedType != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo,
-                                                QUICK_FIX_FACTORY.createReplacePrimitiveWithBoxedTypeAction(typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
+          QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createReplacePrimitiveWithBoxedTypeAction(
+            typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
         }
       }
       return highlightInfo;

@@ -813,9 +813,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.setStroke(g.getStroke());
 
       // 1. Strikeout effect
-      if (attributes.isStrikeout()) {
-        final int strikeOutAt = textBaseline + (baseMetrics.getDescent() - baseMetrics.getAscent()) / 2;
-        UIUtil.drawLine(g, offset, strikeOutAt, offset + fragmentWidth, strikeOutAt);
+      if (attributes.isStrikeout() && !attributes.isSearchMatch()) {
+        drawStrikeout(g, offset, offset + fragmentWidth, textBaseline);
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
@@ -837,7 +836,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
 
       if (attributes.isSearchMatch()) {
-        searchMatches.add(new Object[]{offset, offset + fragmentWidth, textBaseline, fragment, g.getFont()});
+        searchMatches.add(new Object[]{offset, offset + fragmentWidth, textBaseline, fragment, g.getFont(), attributes});
       }
 
       offset = endOffset;
@@ -855,18 +854,32 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     // draw search matches after all
     for (final Object[] info : searchMatches) {
-      UIUtil.drawSearchMatch(g, (Integer)info[0], (Integer)info[1], getHeight());
+      Integer x1 = (Integer)info[0];
+      Integer x2 = (Integer)info[1];
+      UIUtil.drawSearchMatch(g, x1, x2, getHeight());
       g.setFont((Font)info[4]);
 
+      Integer baseline = (Integer)info[2];
+      String text = (String)info[3];
       if (shouldDrawMacShadow()) {
         g.setColor(SHADOW_COLOR);
-        g.drawString((String)info[3], (Integer)info[0], (Integer)info[2] + 1);
+        g.drawString(text, x1, baseline + 1);
       }
 
       g.setColor(new JBColor(Gray._50, Gray._0));
-      g.drawString((String)info[3], (Integer)info[0], (Integer)info[2]);
+      g.drawString(text, x1, baseline);
+
+      if (((SimpleTextAttributes)info[5]).isStrikeout()) {
+        drawStrikeout(g, x1, x2, baseline);
+      }
     }
     return offset;
+  }
+
+  private static void drawStrikeout(Graphics g, int x1, int x2, int y) {
+    // magic of determining character height
+    int strikeOutAt = y - g.getFontMetrics().charWidth('a') / 2;
+    UIUtil.drawLine(g, x1, strikeOutAt, x2, strikeOutAt);
   }
 
   private int computeTextAlignShift(@NotNull Font font) {

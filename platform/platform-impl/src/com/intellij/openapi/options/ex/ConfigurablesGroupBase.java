@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,8 +49,7 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
         return new Configurable[0];
       }
       final ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
-      Configurable[] components = myLoadComponents ? myComponentManager.getComponents(Configurable.class) : new Configurable[0];
-
+      List<Configurable> components = myLoadComponents ? ComponentsPackage.getComponents(myComponentManager, Configurable.class) : Collections.<Configurable>emptyList();
       List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, getConfigurableFilter());
       myChildren = result.toArray(new Configurable[result.size()]);
     }

@@ -62,6 +62,7 @@ object ::= '{' object_element* '}' {
     findProperty
     getPresentation
   ]
+  mixin="com.intellij.json.psi.impl.JsonObjectMixin"
 }
 
 // Hackity-hack to parse array elements and properties even if separating commas are missing,

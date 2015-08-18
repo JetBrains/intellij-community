@@ -18,51 +18,63 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.actions.GenerateProjectCallback;
 import com.jetbrains.python.newProject.actions.ProjectSpecificSettingsStep;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
 
 public class PyStudyIntroductionCourseAction extends AnAction {
 
+  public static final String INTRODUCTION_TO_PYTHON = "Introduction to Python";
+  public static final String INTRODUCTION_FOLDER = "PythonIntroduction";
+
   public PyStudyIntroductionCourseAction() {
-    super("Introduction to Python", "Introduction to Python", InteractiveLearningPythonIcons.EducationalProjectType);
+    super(INTRODUCTION_TO_PYTHON, INTRODUCTION_TO_PYTHON, InteractiveLearningPythonIcons.EducationalProjectType);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final File projectDir = new File(ProjectUtil.getBaseDir(), INTRODUCTION_FOLDER);
+    if (projectDir.exists()) {
+      return;
+    }
+    final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
+    if (getIntroCourseInfo(generator.getCourses()) != null) {
+      return;
+    }
+    Presentation presentation = e.getPresentation();
+    presentation.setVisible(false);
+    presentation.setEnabled(false);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final File projectDir = new File(ProjectUtil.getBaseDir(), "PythonIntroduction");
+    final File projectDir = new File(ProjectUtil.getBaseDir(), INTRODUCTION_FOLDER);
     if (projectDir.exists()) {
       ProjectUtil.openProject(projectDir.getPath(), null, false);
     }
     else {
-      final GenerateProjectCallback callback = new GenerateProjectCallback();
       final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
-      final List<CourseInfo> courses = generator.getCourses();
-      CourseInfo introCourse = null;
-      for (CourseInfo info : courses) {
-        if ("Introduction to Python".equals(info.getName())) {
-          introCourse = info;
-        }
-      }
+      CourseInfo introCourse = getIntroCourseInfo(generator.getCourses());
       if (introCourse == null) {
-        introCourse = StudyUtils.getFirst(courses);
+        return;
       }
-      generator.setSelectedCourse(introCourse);
+      final GenerateProjectCallback callback = new GenerateProjectCallback();
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
-
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
+      generator.setSelectedCourse(introCourse);
 
       final Project project = ProjectManager.getInstance().getDefaultProject();
       final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
@@ -70,5 +82,15 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       step.setSdk(sdk);
       callback.consume(step);
     }
+  }
+
+  @Nullable
+  private static CourseInfo getIntroCourseInfo(final List<CourseInfo> courses) {
+    for (CourseInfo courseInfo : courses) {
+      if (INTRODUCTION_TO_PYTHON.equals(courseInfo.getName())) {
+        return courseInfo;
+      }
+    }
+    return null;
   }
 }

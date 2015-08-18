@@ -1,13 +1,13 @@
 package org.jetbrains.ide
 
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
+import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.runInEdtAndWait
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
@@ -16,7 +16,7 @@ import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
 
-class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
+class TestManager(val fixtureManager: FixtureRule) : TestWatcher() {
   companion object {
     val EXCLUDED_DIR_NAME = "excludedDir"
   }
@@ -64,17 +64,17 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
       return
     }
 
-    invokeAndWaitIfNeed {
+    runInEdtAndWait {
       val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
-        val root = projectFixture.getProject().getBaseDir()
+        val root = fixtureManager.projectFixture.getProject().getBaseDir()
         runWriteAction {
           fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
         }
       }
       else {
         if (annotation!!.excluded) {
-          ModuleRootModificationUtil.updateModel(projectFixture.getModule()) { model ->
+          ModuleRootModificationUtil.updateModel(fixtureManager.projectFixture.getModule()) { model ->
             val contentEntry = model.getContentEntries()[0]
             val contentRoot = contentEntry.getFile()!!
             runWriteAction {
@@ -88,7 +88,7 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
           filePath = "$EXCLUDED_DIR_NAME/$filePath"
         }
         else {
-          val root = ModuleRootManager.getInstance(projectFixture.getModule()).getSourceRoots()[0]
+          val root = ModuleRootManager.getInstance(fixtureManager.projectFixture.getModule()).getSourceRoots()[0]
           runWriteAction {
             fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
           }
@@ -99,11 +99,11 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
 
   override fun finished(description: Description?) {
     if (annotation!!.excluded) {
-      ModuleRootModificationUtil.updateModel(projectFixture.getModule()) { model -> model.getContentEntries()[0].removeExcludeFolder(EXCLUDED_DIR_NAME) }
+      ModuleRootModificationUtil.updateModel(fixtureManager.projectFixture.getModule()) { model -> model.getContentEntries()[0].removeExcludeFolder(EXCLUDED_DIR_NAME) }
     }
 
     if (fileToDelete != null) {
-      invokeAndWaitIfNeed { runWriteAction { fileToDelete?.delete(this@TestManager) } }
+      runInEdtAndWait { runWriteAction { fileToDelete?.delete(this@TestManager) } }
       fileToDelete = null
     }
 

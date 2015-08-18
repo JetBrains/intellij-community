@@ -53,7 +53,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   private static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
-  private ScheduledFuture<?> myCheckCancelledFuture;
+  private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
   // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
   private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new THashMap<ProgressIndicator, Set<Thread>>();
@@ -63,8 +63,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   static final Set<Thread> threadsUnderCanceledIndicator = ContainerUtil.newConcurrentSet();
   private static volatile boolean thereIsProcessUnderCanceledIndicator;
 
-  // active (i.e. which have executeProcessUnderProgress() method running) indicators which are not inherited from StandardProgressIndicator.
-  // for them an extra processing thread (see myCheckCancelledFuture) has to be run to call their non-standard checkCanceled() method periodically.
+  /** active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
+   *  which are not inherited from {@link StandardProgressIndicator}.
+   *  for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
+   *  to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
+   */
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   @NotNull

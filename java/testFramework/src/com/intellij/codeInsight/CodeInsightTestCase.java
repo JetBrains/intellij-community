@@ -568,10 +568,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     undoManager.undo(textEditor);
   }
 
+  protected void caretLeft() {
+    caretRight(getEditor());
+  }
+  protected void caretLeft(@NotNull Editor editor) {
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, editor, getProject());
+  }
   protected void caretRight() {
     caretRight(getEditor());
   }
-  protected void caretRight(Editor editor) {
+  protected void caretRight(@NotNull Editor editor) {
     LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor, getProject());
   }
   protected void caretUp() {

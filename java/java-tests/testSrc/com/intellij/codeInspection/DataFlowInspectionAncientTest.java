@@ -118,5 +118,4 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
   public void testSwitchEnumCases() { doTest15(); }
 
   public void testSCR15406() { doTest(); }
-  public void testIDEADEV11033() { doTest15(); }
 }

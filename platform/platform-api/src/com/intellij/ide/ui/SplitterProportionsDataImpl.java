@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.SmartList;
@@ -86,19 +86,18 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   @Override
   public void externalizeToDimensionService(String key) {
     for (int i = 0; i < proportions.size(); i++) {
-      float proportion = proportions.get(i).floatValue();
-      String serviceKey = key + "."+i;
-      int value = (int)(proportion * 1000);
-      DimensionService.getInstance().setExtendedState(serviceKey, value);
+      PropertiesComponent.getInstance().setValue(key + "." + i, (int)(proportions.get(i).floatValue() * 1000), -1);
     }
   }
   @Override
   public void externalizeFromDimensionService(String key) {
     proportions.clear();
     for (int i = 0; ;i++) {
-      String serviceKey = key + "."+i;
-      int value = DimensionService.getInstance().getExtendedState(serviceKey);
-      if (value == -1) break;
+      int value = PropertiesComponent.getInstance().getInt(key + "." + i, -1);
+      if (value == -1) {
+        break;
+      }
+
       proportions.add(new Float(value * 0.001));
     }
   }

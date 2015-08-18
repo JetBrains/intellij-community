@@ -34,19 +34,19 @@ public class SelectAllAction extends EditorHeaderAction implements DumbAware {
     List<Shortcut> shortcuts = new ArrayList<Shortcut>();
     ContainerUtil.addAll(shortcuts, getShortcutSet().getShortcuts());
     ContainerUtil.addAll(shortcuts, CommonShortcuts.ALT_ENTER.getShortcuts());
-    registerShortcutsForComponent(shortcuts, editorSearchComponent.getSearchField());
+    registerShortcutsForComponent(shortcuts, editorSearchComponent.getSearchTextComponent());
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    getEditorSearchComponent().selectAllOccurrences();
-    getEditorSearchComponent().close();
+    myEditorSearchComponent.selectAllOccurrences();
+    myEditorSearchComponent.close();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean isFind = !getEditorSearchComponent().getFindModel().isReplaceState();
-    boolean hasMatches = getEditorSearchComponent().hasMatches();
+    boolean isFind = !myEditorSearchComponent.getFindModel().isReplaceState();
+    boolean hasMatches = myEditorSearchComponent.hasMatches();
     e.getPresentation().setVisible(isFind);
     e.getPresentation().setEnabled(isFind && hasMatches);
   }

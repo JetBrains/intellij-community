@@ -53,10 +53,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.*;
 import java.awt.image.*;
 import java.util.List;
 import java.util.Set;
@@ -114,7 +111,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
         if (myClickHandler != null && id == MouseEvent.MOUSE_CLICKED) {
           if (!(me.getComponent() instanceof CloseButton) && insideBalloon) {
-            myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
+            myClickHandler.actionPerformed(new ActionEvent(me, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
             if (myCloseOnClick) {
               hide();
               return;
@@ -450,7 +447,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myFocusManager = IdeFocusManager.findInstanceByComponent(myLayeredPane);
     final Ref<Component> originalFocusOwner = new Ref<Component>();
     final Ref<FocusRequestor> focusRequestor = new Ref<FocusRequestor>();
-    final Ref<ActionCallback> proxyFocusRequest = new Ref<ActionCallback>(new ActionCallback.Done());
+    final Ref<ActionCallback> proxyFocusRequest = new Ref<ActionCallback>(ActionCallback.DONE);
 
     boolean mnemonicsFix = myDialogMode && SystemInfo.isMac && Registry.is("ide.mac.inplaceDialogMnemonicsFix");
     if (mnemonicsFix) {
@@ -1008,20 +1005,19 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       Rectangle pointless = getPointlessContentRec(bounds, pointerLength);
 
-      int size = getDistanceToTarget(pointless, targetPoint);
-      if (size < pointerLength - 1) return false;
+      int distance = getDistanceToTarget(pointless, targetPoint);
+      if (distance < pointerLength - 1 || distance > 2 * pointerLength) return false;
 
       UnfairTextRange balloonRange;
       UnfairTextRange pointerRange;
       if (isTopBottomPointer()) {
-        balloonRange = new UnfairTextRange(bounds.x + arc, bounds.x + bounds.width - arc * 2);
+        balloonRange = new UnfairTextRange(bounds.x + arc - 1, bounds.x + bounds.width - arc * 2 + 1);
         pointerRange = new UnfairTextRange(targetPoint.x - pointerWidth / 2, targetPoint.x + pointerWidth / 2);
       }
       else {
-        balloonRange = new UnfairTextRange(bounds.y + arc, bounds.y + bounds.height - arc * 2);
+        balloonRange = new UnfairTextRange(bounds.y + arc - 1, bounds.y + bounds.height - arc * 2 + 1);
         pointerRange = new UnfairTextRange(targetPoint.y - pointerWidth / 2, targetPoint.y + pointerWidth / 2);
       }
-
       return balloonRange.contains(pointerRange);
     }
 
@@ -1412,10 +1408,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       super.paintChildren(imageGraphics);
       imageGraphics.dispose();
       Graphics2D g2d = (Graphics2D)g.create();
-      if (UIUtil.isRetina()) {
-        g2d.scale(.5, .5);
+      try {
+        if (UIUtil.isRetina()) {
+          g2d.scale(.5, .5);
+        }
+        UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
       }
-      UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
+      finally {
+        g2d.dispose();
+      }
     }
 
     private Image makeColorTransparent(Image image, Color color) {

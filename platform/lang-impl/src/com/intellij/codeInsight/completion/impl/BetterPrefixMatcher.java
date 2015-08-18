@@ -16,35 +16,51 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionResult;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.LinkedHashSet;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class BetterPrefixMatcher extends PrefixMatcher {
   private final PrefixMatcher myOriginal;
+  @Nullable private final CamelHumpMatcher myHumpMatcher;
   private final int myMinMatchingDegree;
 
   public BetterPrefixMatcher(PrefixMatcher original, int minMatchingDegree) {
     super(original.getPrefix());
     myOriginal = original;
+    myHumpMatcher = original instanceof CamelHumpMatcher ? (CamelHumpMatcher)original : null;
     myMinMatchingDegree = minMatchingDegree;
   }
-  
-  public static int getBestMatchingDegree(LinkedHashSet<CompletionResult> plainResults) {
-    int bestMatchingDegree = Integer.MIN_VALUE;
-    for (CompletionResult cr : plainResults) {
-      bestMatchingDegree = Math.max(bestMatchingDegree, RealPrefixMatchingWeigher
-        .getBestMatchingDegree(cr.getLookupElement(), cr.getPrefixMatcher()));
-    }
-    return bestMatchingDegree;
+
+  public BetterPrefixMatcher(CompletionResultSet set) {
+    this(set.getPrefixMatcher(), Integer.MIN_VALUE);
   }
 
+  @NotNull
+  public BetterPrefixMatcher improve(CompletionResult result) {
+    int degree = RealPrefixMatchingWeigher.getBestMatchingDegree(result.getLookupElement(), result.getPrefixMatcher());
+    if (degree <= myMinMatchingDegree) return this;
+
+    return new BetterPrefixMatcher(myOriginal, degree);
+  }
+  
   @Override
   public boolean prefixMatches(@NotNull String name) {
+    if (myHumpMatcher != null) {
+      FList<TextRange> fragments = myHumpMatcher.matchingFragments(name);
+      if (fragments == null || !MinusculeMatcher.isStartMatch(fragments)) {
+        return false;
+      }
+      return myHumpMatcher.matchingDegree(name, fragments) >= myMinMatchingDegree;
+    }
+
     if (!myOriginal.prefixMatches(name) || !myOriginal.isStartMatch(name)) {
       return false;
     }

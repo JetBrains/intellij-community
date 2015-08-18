@@ -973,6 +973,9 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
+  ;do not show feedback web page checkbox for EAP builds.
+  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page
+feedback_web_page:
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" hide_feedback_checkbox done
 hide_feedback_checkbox:
     ; do not show feedback web page checkbox through products uninstall.
@@ -1189,7 +1192,9 @@ remove_IntelliJIdeaProjectFile:
   Call un.OMDeleteRegKey
 done:
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
-; UNCOMMENT THIS IN RELEASE BUILD
+  ;do not show feedback web page checkbox for EAP builds.
+  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" end_of_uninstall feedback_web_page
+feedback_web_page:
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" end_of_uninstall
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 6" "State"
   StrCmp "$R3" "0" end_of_uninstall

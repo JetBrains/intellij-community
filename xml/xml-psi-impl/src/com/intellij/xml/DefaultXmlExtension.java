@@ -36,7 +36,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class DefaultXmlExtension extends XmlExtension {
-  
+
   @Override
   public boolean isAvailable(final PsiFile file) {
     return true;
@@ -98,6 +98,10 @@ public class DefaultXmlExtension extends XmlExtension {
 
   private static boolean hasTag(@NotNull XmlElementDescriptor elementDescriptor, String tagName, Set<XmlElementDescriptor> visited) {
     final String name = elementDescriptor.getDefaultName();
+    if (name == null) {
+      LOG.error(elementDescriptor + " returned null as default name");
+      return false;
+    }
     if (name.equals(tagName)) {
       return true;
     }

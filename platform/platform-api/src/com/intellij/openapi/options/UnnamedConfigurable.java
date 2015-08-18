@@ -31,6 +31,9 @@ public interface UnnamedConfigurable {
    * Creates new Swing form that enables user to configure the settings.
    * Usually this method is called on the EDT, so it should not take a long time.
    *
+   * Also this place is designed to allocate resources (subscriptions/listeners etc.)
+   * @see #disposeUIResources
+   *
    * @return new Swing form to show, or {@code null} if it cannot be created
    */
   @Nullable

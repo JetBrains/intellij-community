@@ -340,7 +340,6 @@
       <keyboard-shortcut first-keystroke="control F1"/>
       <keyboard-shortcut first-keystroke="alt SPACE"/>
     </action>
-    <action id="RemoveFromFavorites" />
     <action id="RenameElement">
       <keyboard-shortcut first-keystroke="control meta E" />
       <keyboard-shortcut first-keystroke="shift F6" />

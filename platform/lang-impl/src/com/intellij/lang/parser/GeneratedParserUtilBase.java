@@ -130,7 +130,7 @@ public class GeneratedParserUtilBase {
 
   private static boolean consumeTokens(PsiBuilder builder, boolean smart, int pin, IElementType... tokens) {
     ErrorState state = ErrorState.get(builder);
-    if (state.completionState != null && state.predicateCount == 0) {
+    if (state.completionState != null && state.predicateSign) {
       addCompletionVariant(builder, state.completionState, tokens);
     }
     // suppress single token completion
@@ -301,7 +301,7 @@ public class GeneratedParserUtilBase {
   private static void addCompletionVariantSmart(PsiBuilder builder, Object token) {
     ErrorState state = ErrorState.get(builder);
     CompletionState completionState = state.completionState;
-    if (completionState != null && state.predicateCount == 0) {
+    if (completionState != null && state.predicateSign) {
       addCompletionVariant(builder, completionState, token);
     }
   }
@@ -862,6 +862,10 @@ public class GeneratedParserUtilBase {
       return count > 0;
     }
 
+    public int getVariantsSize() {
+      return variants.size();
+    }
+
     public void clearVariants(boolean expected, int start) {
       MyList<Variant> list = expected? variants : unexpected;
       if (start < 0 || start >= list.size()) return;
@@ -869,9 +873,15 @@ public class GeneratedParserUtilBase {
         VARIANTS.recycle(list.get(i));
       }
       list.setSize(start);
+      if (expected) {
+        lastExpectedVariantPos = -1;
+        for (Variant variant : list) {
+          if (lastExpectedVariantPos < variant.position) lastExpectedVariantPos = variant.position;
+        }
+      }
     }
 
-    boolean typeExtends(IElementType child, IElementType parent) {
+    public boolean typeExtends(IElementType child, IElementType parent) {
       if (child == parent) return true;
       if (extendsSets != null) {
         for (TokenSet set : extendsSets) {

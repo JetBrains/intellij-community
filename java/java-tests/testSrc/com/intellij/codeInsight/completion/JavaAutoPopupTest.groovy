@@ -113,7 +113,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   def assertContains(String... items) {
-    myFixture.assertPreferredCompletionItems(0, items)
+    assert myFixture.lookupElementStrings.containsAll(items as List)
   }
 
   public void testRecalculateItemsOnBackspace() {
@@ -1260,9 +1260,9 @@ public class Test {
   }
 
   public void testNoLiveTemplatesAfterDot() {
-    myFixture.configureByText "a.java", "class Foo {{ Iterable t; t.<caret> }}"
-    type 'iter'
-    assert myFixture.lookupElementStrings == ['iterator']
+    myFixture.configureByText "a.java", "import java.util.List; class Foo {{ List t; t.<caret> }}"
+    type 'toar'
+    assert myFixture.lookupElementStrings == ['toArray', 'toArray']
   }
 
   public void testTypingFirstVarargDot() {

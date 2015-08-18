@@ -24,6 +24,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -330,6 +331,7 @@ public class FindDialog extends DialogWrapper {
           public void run() {
             int row = myResultsPreviewTable.getSelectedRow();
             if (row > 0) myResultsPreviewTable.setRowSelectionInterval(row - 1, row - 1);
+            TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
           }
         }
       );
@@ -344,6 +346,7 @@ public class FindDialog extends DialogWrapper {
             int row = myResultsPreviewTable.getSelectedRow();
             if (row >= 0 && row + 1 < myResultsPreviewTable.getRowCount()) {
               myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
+              TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
             }
           }
         }
@@ -369,14 +372,14 @@ public class FindDialog extends DialogWrapper {
     component.getActionMap().put(newActionKey, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (previousAction != null && component.isPopupVisible()) {
-          previousAction.actionPerformed(e);
-          return;
-        }
-
         if(myResultsPreviewTable != null &&
           myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
           newAction.run();
+          return;
+        }
+
+        if (previousAction != null) {
+          previousAction.actionPerformed(e);
         }
       }
     });
@@ -645,7 +648,7 @@ public class FindDialog extends DialogWrapper {
       pane.insertTab("Options", null, optionsPanel, null, 0);
       pane.insertTab(PREVIEW_TITLE, null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
-      AnAction anAction = new AnAction() {
+      final AnAction anAction = new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
           int selectedIndex = myContent.getSelectedIndex();
@@ -654,7 +657,16 @@ public class FindDialog extends DialogWrapper {
       };
 
       final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
-      anAction.registerCustomShortcutSet(shortcutSet, getRootPane());
+      final JRootPane rootPane = getRootPane();
+
+      anAction.registerCustomShortcutSet(shortcutSet, rootPane);
+      Disposer.register(myDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          anAction.unregisterCustomShortcutSet(rootPane);
+        }
+      });
+
       if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
 
       return pane.getComponent();

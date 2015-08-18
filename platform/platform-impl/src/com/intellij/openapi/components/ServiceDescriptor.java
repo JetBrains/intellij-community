@@ -28,6 +28,9 @@ public class ServiceDescriptor {
   @Attribute("overrides")
   public boolean overrides;
 
+  @Attribute("os")
+  public String os;
+
   public String getInterface() {
     return serviceInterface != null ? serviceInterface : getImplementation();
   }

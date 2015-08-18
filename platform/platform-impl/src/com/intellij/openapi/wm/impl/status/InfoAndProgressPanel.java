@@ -46,6 +46,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -84,30 +85,26 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private String myCurrentRequestor;
 
+  private final Set<InlineProgressIndicator> myDirtyIndicators = ContainerUtil.newIdentityTroveSet();
+  private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
+    @Override
+    public void run() {
+      List<InlineProgressIndicator> indicators;
+      synchronized (myDirtyIndicators) {
+        indicators = ContainerUtil.newArrayList(myDirtyIndicators);
+        myDirtyIndicators.clear();
+      }
+      for (InlineProgressIndicator indicator : indicators) {
+        indicator.updateAndRepaint();
+      }
+    }
+  };
+
   public InfoAndProgressPanel() {
 
     setOpaque(false);
 
     myRefreshIcon = new RefreshFileSystemIcon();
-    //  new AsyncProcessIcon("Refreshing filesystem") {
-    //  protected Icon getPassiveIcon() {
-    //    return myEmptyRefreshIcon;
-    //  }
-    //
-    //  @Override
-    //  public Dimension getPreferredSize() {
-    //    if (!isRunning()) return new Dimension(0, 0);
-    //    return super.getPreferredSize();
-    //  }
-    //
-    //  @Override
-    //  public void paint(Graphics g) {
-    //    g.translate(0, -1);
-    //    super.paint(g);
-    //    g.translate(0, 1);
-    //  }
-    //};
-
     myRefreshIcon.setPaintPassiveIcon(false);
 
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
@@ -234,7 +231,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private void removeProgress(@NotNull InlineProgressIndicator progress) {
     synchronized (myOriginals) {
-      if (!myInline2Original.containsKey(progress)) return;
+      if (!myInline2Original.containsKey(progress)) return; // already disposed
 
       final boolean last = myOriginals.size() == 1;
       final boolean beforeLast = myOriginals.size() == 2;
@@ -242,7 +239,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       myPopup.removeIndicator(progress);
 
       final ProgressIndicatorEx original = removeFromMaps(progress);
-      if (myOriginals.contains(original)) return;
+      if (myOriginals.contains(original)) {
+        Disposer.dispose(progress);
+        return;
+      }
 
       if (last) {
         restoreEmptyStatus();
@@ -272,6 +272,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     final ProgressIndicatorEx original = myInline2Original.get(progress);
 
     myInline2Original.remove(progress);
+    synchronized (myDirtyIndicators) {
+      myDirtyIndicators.remove(progress);
+    }
 
     myOriginal2Inlines.remove(original, progress);
     if (myOriginal2Inlines.get(original) == null) {
@@ -343,7 +346,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
-    progressCountPanel.setBorder(JBUI.Borders.empty(0, 0, 0, 4));
+    progressCountPanel.setBorder(JBUI.Borders.emptyRight(4));
     add(progressCountPanel, BorderLayout.EAST);
 
     revalidate();
@@ -665,13 +668,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
 
     @Override
-    protected void queueProgressUpdate(final Runnable update) {
-      myUpdateQueue.queue(new Update(MyInlineProgressIndicator.this, false, 1) {
-        @Override
-        public void run() {
-          update.run();
-        }
-      });
+    protected void queueProgressUpdate() {
+      synchronized (myDirtyIndicators) {
+        myDirtyIndicators.add(this);
+      }
+      myUpdateQueue.queue(myUpdateIndicators);
     }
 
     @Override

@@ -23,7 +23,9 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class PostfixPrefixIntentionTest extends IPPTestCase {
   public void testSimple() { doTest(); }
+  public void testPrefixExpression() { doTest(IntentionPowerPackBundle.message("postfix.prefix.intention.name", "i++")); }
   public void testIncomplete() { assertIntentionNotAvailable(); }
+  public void testUnaryExpression() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getIntentionName() {

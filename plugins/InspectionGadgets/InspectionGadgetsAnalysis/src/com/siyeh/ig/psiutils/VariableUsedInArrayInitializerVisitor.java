@@ -18,14 +18,12 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementVisitor {
-
+class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementWalkingVisitor {
   @NotNull
   private final PsiVariable variable;
-  private boolean passed = false;
+  private boolean passed;
 
-  public VariableUsedInArrayInitializerVisitor(@NotNull PsiVariable variable) {
-    super();
+  VariableUsedInArrayInitializerVisitor(@NotNull PsiVariable variable) {
     this.variable = variable;
   }
 

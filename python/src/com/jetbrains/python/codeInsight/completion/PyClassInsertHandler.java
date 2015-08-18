@@ -42,7 +42,7 @@ public class PyClassInsertHandler implements InsertHandler<LookupElement> {
       document.insertString(offset, "()");
 
       PyClass pyClass = (PyClass) item.getObject();
-      PyFunction init = pyClass.findInitOrNew(true);
+      PyFunction init = pyClass.findInitOrNew(true, null);
       if (init != null && PyFunctionInsertHandler.hasParams(context, init)) {
         editor.getCaretModel().moveToOffset(offset+1);
         AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), init);

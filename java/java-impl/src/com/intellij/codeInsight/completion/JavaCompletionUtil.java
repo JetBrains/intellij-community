@@ -50,10 +50,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.ui.JBColor;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.PairFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
@@ -62,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JavaCompletionUtil {
@@ -102,7 +100,7 @@ public class JavaCompletionUtil {
     return null;
   }
 
-  public static final Key<List<PsiMethod>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
+  private static final Key<List<SmartPsiElementPointer<PsiMethod>>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
   public static PsiType getQualifierType(LookupItem item) {
     return item.getUserData(QUALIFIER_TYPE_ATTR);
@@ -111,6 +109,27 @@ public class JavaCompletionUtil {
   public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, String prefix, PsiType varType, VariableKind varKind) {
     final CamelHumpMatcher camelHumpMatcher = new CamelHumpMatcher(prefix);
     JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, camelHumpMatcher, varType, varKind, true, false);
+  }
+
+  public static void putAllMethods(LookupElement item, List<PsiMethod> methods) {
+    item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, new Function<PsiMethod, SmartPsiElementPointer<PsiMethod>>() {
+      @Override
+      public SmartPsiElementPointer<PsiMethod> fun(PsiMethod method) {
+        return SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method);
+      }
+    }));
+  }
+
+  public static List<PsiMethod> getAllMethods(LookupElement item) {
+    List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
+    if (pointers == null) return null;
+
+    return ContainerUtil.mapNotNull(pointers, new Function<SmartPsiElementPointer<PsiMethod>, PsiMethod>() {
+      @Override
+      public PsiMethod fun(SmartPsiElementPointer<PsiMethod> pointer) {
+        return pointer.getElement();
+      }
+    });
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, @Nullable final PsiType varType,
@@ -220,9 +239,9 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static List<? extends PsiElement> getAllPsiElements(final LookupElement item) {
-    List<PsiMethod> allMethods = item.getUserData(ALL_METHODS_ATTRIBUTE);
+    List<PsiMethod> allMethods = getAllMethods(item);
     if (allMethods != null) return allMethods;
-    if (item.getObject() instanceof PsiElement) return Arrays.asList((PsiElement)item.getObject());
+    if (item.getObject() instanceof PsiElement) return Collections.singletonList((PsiElement)item.getObject());
     return null;
   }
 
@@ -480,15 +499,14 @@ public class JavaCompletionUtil {
                                                 @NotNull LookupElement item,
                                                 @NotNull Object object,
                                                 @NotNull PsiElement place) {
-    if (object instanceof PsiMember &&
-        Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) {
-      return LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+    if (shouldMarkRed(object, place)) {
+      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
           element.getDelegate().renderElement(presentation);
           presentation.setItemTextForeground(JBColor.RED);
         }
-      });
+      }), -1);
     }
     if (containsMember(qualifierType, object)) {
       LookupElementRenderer<LookupElementDecorator<LookupElement>> boldRenderer =
@@ -502,6 +520,16 @@ public class JavaCompletionUtil {
       return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, boldRenderer), 1);
     }
     return item;
+  }
+
+  private static boolean shouldMarkRed(@NotNull Object object, @NotNull PsiElement place) {
+    if (!(object instanceof PsiMember)) return false;
+    if (Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) return true;
+
+    if (object instanceof PsiEnumConstant) {
+      return findConstantsUsedInSwitch(place).contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
+    }
+    return false;
   }
 
   public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
@@ -524,17 +552,6 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  private static LookupElement highlight(LookupElement decorator) {
-    return PrioritizedLookupElement.withExplicitProximity(
-      LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
-        @Override
-        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-          element.getDelegate().renderElement(presentation);
-          presentation.setItemTextBold(true);
-        }
-      }), 1);
-  }
-
   private static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
@@ -542,7 +559,7 @@ public class JavaCompletionUtil {
     if (reference instanceof PsiJavaCodeReferenceElement) {
       if (completion instanceof PsiMethod &&
           ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiImportStaticStatement) {
-        return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY));
+        return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY));
       }
 
       if (completion instanceof PsiClass) {
@@ -554,7 +571,7 @@ public class JavaCompletionUtil {
     }
     
     if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
-      return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
+      return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
     }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
@@ -565,7 +582,7 @@ public class JavaCompletionUtil {
       ((LookupItem<?>)_ret).setAttribute(LookupItem.SUBSTITUTOR, substitutor);
     }
 
-    return Arrays.asList(_ret);
+    return Collections.singletonList(_ret);
   }
 
   public static boolean hasAccessibleConstructor(PsiType type) {
@@ -665,9 +682,15 @@ public class JavaCompletionUtil {
 
         if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
           final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
-          PsiElement newElement = staticImport
-                                  ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
-                                  : ref.bindToElement(psiClass);
+          PsiElement newElement;
+          try {
+            newElement = staticImport
+                                    ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
+                                    : ref.bindToElement(psiClass);
+          }
+          catch (IncorrectOperationException e) {
+            return endOffset; // can happen if fqn contains reserved words, for example
+          }
 
           final RangeMarker rangeMarker = document.createRangeMarker(newElement.getTextRange());
           documentManager.doPostponedOperationsAndUnblockDocument(document);

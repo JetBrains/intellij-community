@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -128,7 +129,7 @@ public class DomNamespacesTest extends DomTestCase {
     final MyElement hardcodedElement = element.getHardcodedElement();
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         hardcodedElement.ensureTagExists();
       }
     }.execute();
@@ -140,7 +141,7 @@ public class DomNamespacesTest extends DomTestCase {
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         hardcodedElement.getHardcodedElement().getHardcodedElement().ensureTagExists();
       }
     }.execute();
@@ -271,7 +272,7 @@ public class DomNamespacesTest extends DomTestCase {
     registerNamespacePolicies(element2, "foo1", "bar1");
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         element.copyFrom(element2);
       }
     }.execute();

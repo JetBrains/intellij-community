@@ -116,7 +116,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       String summary = "";
       PyStringLiteralExpression docStringExpression = cls.getDocStringExpression();
       if (docStringExpression == null) {
-        final PyFunction initOrNew = cls.findInitOrNew(false);
+        final PyFunction initOrNew = cls.findInitOrNew(false, null);
         if (initOrNew != null) {
           docStringExpression = initOrNew.getDocStringExpression();
         }
@@ -354,7 +354,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       PyClass cls = inferContainingClassOf(context);
       if (cls != null) {
         String desired_name = link.substring(LINK_TYPE_PARENT.length());
-        for (PyClass parent : cls.getAncestorClasses()) {
+        for (PyClass parent : cls.getAncestorClasses(null)) {
           final String parent_name = parent.getName();
           if (parent_name != null && parent_name.equals(desired_name)) return parent;
         }

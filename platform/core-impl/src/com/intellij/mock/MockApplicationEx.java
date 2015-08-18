@@ -43,7 +43,12 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
-  public void load(String path) throws IOException {
+  public void load(String path) {
+  }
+
+  @Override
+  public void load() throws IOException {
+    load(null);
   }
 
   @Override

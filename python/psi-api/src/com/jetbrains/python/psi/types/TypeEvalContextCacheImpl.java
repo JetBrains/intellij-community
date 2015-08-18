@@ -15,15 +15,9 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Caches context by their constraints (to prevent context cache loss). Flushes cache every PSI change or low memory conditions.
@@ -34,53 +28,27 @@ import java.util.Map;
  */
 final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
 
-  /**
-   * Producer to create map to store cache
-   */
   @NotNull
-  private static final MapCreator MAP_CREATOR = new MapCreator();
-
-  /**
-   * Lock to sync
-   */
+  private static final Function<TypeEvalContext, TypeEvalContext> VALUE_PROVIDER = new MyValueProvider();
   @NotNull
-  private final Object myLock = new Object();
-
-  @NotNull
-  private final CachedValue<Map<TypeEvalConstraints, TypeEvalContext>> myCachedMapStorage;
-
+  private final TypeEvalContextBasedCache<TypeEvalContext> myCache;
 
   TypeEvalContextCacheImpl(@NotNull final CachedValuesManager manager) {
-    myCachedMapStorage = manager.createCachedValue(MAP_CREATOR, false);
+    myCache = new TypeEvalContextBasedCache<TypeEvalContext>(manager, VALUE_PROVIDER);
   }
 
 
   @NotNull
   @Override
   public TypeEvalContext getContext(@NotNull final TypeEvalContext standard) {
-
-    // Map is not thread safe, and "getValue" is not atomic. I do not want several maps to be created.
-    synchronized (myLock) {
-      final Map<TypeEvalConstraints, TypeEvalContext> map = myCachedMapStorage.getValue();
-      final TypeEvalContext context = map.get(standard.getConstraints());
-      if (context != null) {
-        return context;
-      }
-      map.put(standard.getConstraints(), standard);
-      return standard;
-    }
+    return myCache.getValue(standard);
   }
 
-  /**
-   * Provider that creates map to store cache. Map depends on PSI modification
-   */
-  private static final class MapCreator implements CachedValueProvider<Map<TypeEvalConstraints, TypeEvalContext>> {
-    @Nullable
+  private static class MyValueProvider implements Function<TypeEvalContext, TypeEvalContext> {
     @Override
-    public Result<Map<TypeEvalConstraints, TypeEvalContext>> compute() {
-      // This method is called if cache is empty. Create new map for it.
-      final HashMap<TypeEvalConstraints, TypeEvalContext> map = new HashMap<TypeEvalConstraints, TypeEvalContext>();
-      return new Result<Map<TypeEvalConstraints, TypeEvalContext>>(map, PsiModificationTracker.MODIFICATION_COUNT);
+    public TypeEvalContext fun(final TypeEvalContext param) {
+      // key and value are both context here. If no context stored, then key is stored. Old one is returned otherwise to cache.
+      return param;
     }
   }
 }

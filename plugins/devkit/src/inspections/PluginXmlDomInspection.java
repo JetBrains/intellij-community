@@ -20,6 +20,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -142,6 +144,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     for (DomAttributeChildDescription attributeDescription : descriptions) {
       final GenericAttributeValue attributeValue = attributeDescription.getDomAttributeValue(extension);
       if (attributeValue == null || !DomUtil.hasXml(attributeValue)) continue;
+
+      // IconsReferencesContributor
+      if ("icon".equals(attributeDescription.getXmlElementName())) {
+        final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
+        if (value != null) {
+          for (PsiReference reference : value.getReferences()) {
+            if (reference.resolve() == null) {
+              holder.createResolveProblem(attributeValue, reference);
+            }
+          }
+        }
+      }
 
       final PsiElement declaration = attributeDescription.getDeclaration(extension.getManager().getProject());
       if (declaration instanceof PsiField) {

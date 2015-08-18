@@ -83,7 +83,11 @@ public final class StoreUtil {
 
   @NotNull
   public static <T> State getStateSpec(@NotNull PersistentStateComponent<T> persistentStateComponent) {
-    Class<? extends PersistentStateComponent> componentClass = persistentStateComponent.getClass();
+    return getStateSpecOrError(persistentStateComponent.getClass());
+  }
+
+  @NotNull
+  public static State getStateSpecOrError(@NotNull Class<? extends PersistentStateComponent> componentClass) {
     State spec = getStateSpec(componentClass);
     if (spec != null) {
       return spec;

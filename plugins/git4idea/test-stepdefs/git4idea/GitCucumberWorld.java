@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -97,8 +96,7 @@ public class GitCucumberWorld {
 
   @Before
   public void setUp() throws Throwable {
-    PlatformTestCase.initPlatformLangPrefix();
-    IdeaTestApplication.getInstance(null);
+    IdeaTestApplication.getInstance();
 
     myTestName = createTestName();
     myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(myTestName).getFixture();

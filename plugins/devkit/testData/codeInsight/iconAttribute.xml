@@ -1,0 +1,17 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+
+  <extensionPoints>
+    <extensionPoint name="myIconEP" beanClass="MyIconAttributeEPBean"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.myPlugin">
+
+    <myIconEP icon="MyIcons.MyCustomIcon"/>
+
+    <myIconEP icon="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+    <myIconEP icon="<error descr="Cannot resolve symbol 'MyIcons.INVALID_VALUE'">MyIcons.INVALID_VALUE</error>"/>
+
+  </extensions>
+
+</idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "SHOW_METHOD_SEPARATORS",   valueOf(ds.SHOW_METHOD_SEPARATORS));    ds.SHOW_METHOD_SEPARATORS   = p.getBoolean(after + "SHOW_METHOD_SEPARATORS", value);
     
     p.setValue(before + "HIDE_TOOL_STRIPES",        valueOf(ui.HIDE_TOOL_STRIPES));         ui.HIDE_TOOL_STRIPES        = p.getBoolean(after + "HIDE_TOOL_STRIPES", !value);
-    p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.EDITOR_TAB_PLACEMENT));      ui.EDITOR_TAB_PLACEMENT     = p.getOrInitInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE);
+    p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.EDITOR_TAB_PLACEMENT));      ui.EDITOR_TAB_PLACEMENT     = p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE);
     // @formatter:on
   }
 }

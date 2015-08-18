@@ -283,6 +283,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (currentVersionCorrupted) {
         FileUtil.deleteWithRenaming(indexRoot);
         indexRoot.mkdirs();
+        // serialization manager is initialized before and use removed index root so we need to reinitialize it
+        mySerializationManagerEx.reinitializeNameStorage();
       }
 
       FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
@@ -1077,6 +1079,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myContentlessIndicesUpdateQueue.signalUpdateStart();
     myContentlessIndicesUpdateQueue.ensureUpToDate();
     myProjectsBeingUpdated.add(project);
+    ++myFilesModCount;
   }
 
   void filesUpdateFinished(@NotNull Project project) {
@@ -1210,6 +1213,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Nullable
   public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // avoid rebuilding index in tests since we do it synchronously in requestRebuild and we can have readAction at hand
+      return null;
+    }
     if (e instanceof IndexOutOfBoundsException) return e; // something wrong with direct byte buffer
     Throwable cause = e.getCause();
     if (cause instanceof StorageException || cause instanceof IOException ||
@@ -1514,15 +1521,23 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       final Runnable rebuildRunnable = new Runnable() {
         @Override
         public void run() {
-          try {
-            doClearIndex(indexId);
+          final Ref<Boolean> success = Ref.create(true);
+          new Task.Modal(null, "Updating index", false) {
+            @Override
+            public void run(@NotNull final ProgressIndicator indicator) {
+              indicator.setIndeterminate(true);
+              try {
+                doClearIndex(indexId);
+              }
+              catch (StorageException e) {
+                success.set(false);
+                requestRebuild(indexId);
+                LOG.info(e);
+              }
+            }
+          }.queue();
+          if (success.get()) {
             scheduleIndexRebuild("checkRebuild");
-          }
-          catch (StorageException e) {
-            requestRebuild(indexId);
-            LOG.info(e);
-          }
-          finally {
             status.compareAndSet(REQUIRES_REBUILD, OK);
           }
         }
@@ -1534,18 +1549,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         // we do invoke later since we can have read lock acquired
         //noinspection SSBasedInspection
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            new Task.Modal(null, "Updating index", false) {
-              @Override
-              public void run(@NotNull final ProgressIndicator indicator) {
-                indicator.setIndeterminate(true);
-                rebuildRunnable.run();
-              }
-            }.queue();
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(rebuildRunnable, ModalityState.NON_MODAL);
       }
     }
   }
@@ -1733,15 +1737,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
 
-    // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
-    // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
-    final Computable<Boolean> update = index.update(inputId, currentFC);
-
+    boolean updateCalculated = false;
     try {
+      // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
+      // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
+      final Computable<Boolean> update = index.update(inputId, currentFC);
+      updateCalculated = true;
+
       scheduleUpdate(indexId, update, inputId, hasContent);
     } catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
-      if (causeToRebuildIndex != null) {
+      if (causeToRebuildIndex != null && (updateCalculated || causeToRebuildIndex instanceof IOException)) {
         LOG.error("Exception in update single index:" + exception);
         requestRebuild(indexId, exception);
         return;
@@ -1783,7 +1789,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
     }
     else {
-      IndexingStamp.setFileIndexedStateUnindexed(fileId, indexId);
+      IndexingStamp.setFileIndexedStateOutdated(fileId, indexId);
     }
     if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(fileId);
   }
@@ -2643,32 +2649,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
     return tasks;
-  }
-
-  private static void iterateRecursively(@Nullable final VirtualFile root,
-                                         @NotNull final ContentIterator processor,
-                                         @Nullable final ProgressIndicator indicator,
-                                         @Nullable final Set<VirtualFile> visitedRoots,
-                                         @Nullable final ProjectFileIndex projectFileIndex) {
-    if (root == null) {
-      return;
-    }
-
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
-          return false; // avoid visiting files more than once, e.g. additional indexed roots intersect sometimes
-        }
-        if (projectFileIndex != null && projectFileIndex.isExcluded(file)) {
-          return false;
-        }
-        if (indicator != null) indicator.checkCanceled();
-
-        processor.processFile(file);
-        return true;
-      }
-    });
   }
 
   @SuppressWarnings({"WhileLoopSpinsOnField", "SynchronizeOnThis"})

@@ -21,6 +21,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +98,13 @@ public class PyAddImportTest extends PyTestCase {
   // PY-13668
   public void testLocalImportInlineBranch() {
     testLocalImport();
+  }
+
+  // PY-16373
+  public void testLocalImportQuickFixAvailable() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    assertNotNull(myFixture.findSingleIntention("Import 'sys' locally"));
   }
 
   private void doAddOrUpdateFromImport(final String path, final String name, final ImportPriority priority) {

@@ -44,6 +44,8 @@ if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
   args << "-Dfile.encoding=UTF-8"
 };
 
+args << "-Djna.nosys=true"
+
 setProperty("jvm_args", args)
 
 setProperty("testcases", ["com.intellij.AllTests"])

@@ -1939,6 +1939,14 @@ public class StringUtil extends StringUtilRt {
     return -1;
   }
 
+  @Contract(pure = true)
+  public static int lastIndexOfAny(@NotNull CharSequence s, @NotNull final String chars) {
+    for (int i = s.length() - 1; i >= 0; i--) {
+      if (containsChar(chars, s.charAt(i))) return i;
+    }
+    return -1;
+  }
+
   @Nullable
   @Contract(pure = true)
   public static String substringBefore(@NotNull String text, @NotNull String subString) {
@@ -2149,9 +2157,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean isNotEscapedBackslash(@NotNull char[] chars, int startOffset, int backslashOffset) {
+  public static boolean isEscapedBackslash(@NotNull char[] chars, int startOffset, int backslashOffset) {
     if (chars[backslashOffset] != '\\') {
-      return false;
+      return true;
     }
     boolean escaped = false;
     for (int i = startOffset; i < backslashOffset; i++) {
@@ -2162,13 +2170,13 @@ public class StringUtil extends StringUtilRt {
         escaped = false;
       }
     }
-    return !escaped;
+    return escaped;
   }
 
   @Contract(pure = true)
-  public static boolean isNotEscapedBackslash(@NotNull CharSequence text, int startOffset, int backslashOffset) {
+  public static boolean isEscapedBackslash(@NotNull CharSequence text, int startOffset, int backslashOffset) {
     if (text.charAt(backslashOffset) != '\\') {
-      return false;
+      return true;
     }
     boolean escaped = false;
     for (int i = startOffset; i < backslashOffset; i++) {
@@ -2179,7 +2187,7 @@ public class StringUtil extends StringUtilRt {
         escaped = false;
       }
     }
-    return !escaped;
+    return escaped;
   }
 
   @NotNull

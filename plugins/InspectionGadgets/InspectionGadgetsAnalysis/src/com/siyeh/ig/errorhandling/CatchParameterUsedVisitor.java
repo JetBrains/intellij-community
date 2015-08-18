@@ -15,19 +15,18 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
-class CatchParameterUsedVisitor extends JavaRecursiveElementVisitor {
+class CatchParameterUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiParameter parameter;
-  private boolean used = false;
+  private boolean used;
 
   CatchParameterUsedVisitor(PsiParameter variable) {
-    super();
     parameter = variable;
   }
 

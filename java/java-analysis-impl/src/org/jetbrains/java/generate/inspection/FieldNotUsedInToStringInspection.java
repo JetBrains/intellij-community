@@ -62,7 +62,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
     private final ProblemsHolder myHolder;
 
-    public FieldNotUsedInToStringVisitor(ProblemsHolder holder) {
+    private FieldNotUsedInToStringVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -116,12 +116,12 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     }
   }
 
-  private static class FieldUsedVisitor extends JavaRecursiveElementVisitor {
+  private static class FieldUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final THashSet<PsiField> myUnusedFields = new THashSet<PsiField>();
     private final THashSet<PsiMethod> myUnusedMethods = new THashSet<PsiMethod>();
 
-    public FieldUsedVisitor(PsiField[] fields, PsiMethod[] methods) {
+    FieldUsedVisitor(PsiField[] fields, PsiMethod[] methods) {
       Collections.addAll(myUnusedFields, fields);
       Collections.addAll(myUnusedMethods, methods);
     }
@@ -168,11 +168,11 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
       return false;
     }
 
-    public THashSet<PsiField> getUnusedFields() {
+    THashSet<PsiField> getUnusedFields() {
       return myUnusedFields;
     }
 
-    public THashSet<PsiMethod> getUnusedMethods() {
+    THashSet<PsiMethod> getUnusedMethods() {
       return myUnusedMethods;
     }
   }

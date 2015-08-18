@@ -7,6 +7,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 
 /**
@@ -17,6 +18,7 @@ import com.intellij.openapi.editor.Editor;
 * To change this template use File | Settings | File Templates.
 */
 public class SwitchToReplace extends EditorHeaderAction {
+
   public SwitchToReplace(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
     AnAction replaceAction = ActionManager.getInstance().getAction("Replace");
@@ -27,15 +29,14 @@ public class SwitchToReplace extends EditorHeaderAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Editor editor = getEditorSearchComponent().getEditor();
-    e.getPresentation().setEnabled(!ConsoleViewUtil.isConsoleViewEditor(editor));
+    final Editor editor = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(e.getDataContext());
+    e.getPresentation().setEnabled(editor != null && !ConsoleViewUtil.isConsoleViewEditor(editor));
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    EditorSearchComponent component = getEditorSearchComponent();
-    final FindModel findModel = component.getFindModel();
+    final FindModel findModel = myEditorSearchComponent.getFindModel();
     FindUtil.configureFindModel(true, null, findModel, false);
-    component.selectAllText();
+    myEditorSearchComponent.getSearchTextComponent().selectAll();
   }
 }

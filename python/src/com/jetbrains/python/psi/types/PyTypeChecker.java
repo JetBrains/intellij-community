@@ -232,7 +232,7 @@ public class PyTypeChecker {
       attributes.add(classAttribute.getName());
     }
     if (inherited) {
-      for (PyClass ancestor : cls.getAncestorClasses()) {
+      for (PyClass ancestor : cls.getAncestorClasses(null)) {
         final PyType ancestorType = context.getType(ancestor);
         if (ancestorType instanceof PyClassType) {
           attributes.addAll(getClassTypeAttributes((PyClassType)ancestorType, false, context));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,41 +19,41 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +66,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,14 +116,6 @@ public class ExternalSystemApiUtil {
     @Override
     public Key<?> fun(DataNode<?> node) {
       return node.getKey();
-    }
-  };
-
-  @NotNull private static final Comparator<Object> COMPARABLE_GLUE = new Comparator<Object>() {
-    @SuppressWarnings("unchecked")
-    @Override
-    public int compare(Object o1, Object o2) {
-      return ((Comparable)o1).compareTo(o2);
     }
   };
 
@@ -245,13 +238,27 @@ public class ExternalSystemApiUtil {
     return result;
   }
 
+  public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
+    MultiMap<Key<?>, DataNode<?>> result = new KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+    Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
+    queue.add(nodes);
+    while (!queue.isEmpty()) {
+      Collection<DataNode<?>> _nodes = queue.remove();
+      result.putAllValues(group(_nodes));
+      for (DataNode<?> _node : _nodes) {
+        queue.add(_node.getChildren());
+      }
+    }
+    return result;
+  }
+
   @NotNull
-  public static Map<Key<?>, List<DataNode<?>>> group(@NotNull Collection<DataNode<?>> nodes) {
+  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<DataNode<?>> nodes) {
     return groupBy(nodes, GROUPER);
   }
 
   @NotNull
-  public static <K, V> Map<DataNode<K>, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
     return groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
       @Nullable
       @Override
@@ -262,8 +269,8 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static <K, V> Map<K, List<V>> groupBy(@NotNull Collection<V> nodes, @NotNull NullableFunction<V, K> grouper) {
-    Map<K, List<V>> result = ContainerUtilRt.newHashMap();
+  public static <K, V> MultiMap<K, V> groupBy(@NotNull Collection<V> nodes, @NotNull NullableFunction<V, K> grouper) {
+    MultiMap<K, V> result = MultiMap.createLinked();
     for (V data : nodes) {
       K key = grouper.fun(data);
       if (key == null) {
@@ -275,21 +282,11 @@ public class ExternalSystemApiUtil {
           nodes));
         continue;
       }
-      List<V> grouped = result.get(key);
-      if (grouped == null) {
-        result.put(key, grouped = ContainerUtilRt.newArrayList());
-      }
-      grouped.add(data);
+      result.putValue(key, data);
     }
 
     if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
-      List<K> ordered = ContainerUtilRt.newArrayList(result.keySet());
-      Collections.sort(ordered, COMPARABLE_GLUE);
-      Map<K, List<V>> orderedResult = ContainerUtilRt.newLinkedHashMap();
-      for (K k : ordered) {
-        orderedResult.put(k, result.get(k));
-      }
-      return orderedResult;
+      return new KeyOrderedMultiMap<K, V>(result);
     }
     return result;
   }
@@ -366,7 +363,7 @@ public class ExternalSystemApiUtil {
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
   }
 
-  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode> consumer) {
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
     if(node == null) return;
 
     Stack<DataNode> toProcess = ContainerUtil.newStack(node);
@@ -467,26 +464,34 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      task.run();
+      return;
+    }
+    
     if (synchronous) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        task.run();
-      }
-      else {
-        UIUtil.invokeAndWaitIfNeeded(task);
-      }
+      app.invokeAndWait(task, ModalityState.defaultModalityState());
     }
     else {
-      UIUtil.invokeLaterIfNeeded(task);
+      app.invokeLater(task, ModalityState.defaultModalityState());
     }
   }
 
-  public static <T> T executeOnEdt(@NotNull Computable<T> task) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+  public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       return task.compute();
     }
-    else {
-      return UIUtil.invokeAndWaitIfNeeded(task);
-    }
+
+    final Ref<T> result = Ref.create();
+    app.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        result.set(task.compute());
+      }
+    }, ModalityState.defaultModalityState());
+    return result.get();
   }
 
   public static <T> T executeOnEdtUnderWriteAction(@NotNull final Computable<T> task) {
@@ -545,26 +550,62 @@ public class ExternalSystemApiUtil {
   }
 
   /**
-   * We can divide all 'import from external system' use-cases into at least as below:
-   * <pre>
-   * <ul>
-   *   <li>this is a new project being created (import project from external model);</li>
-   *   <li>a new module is being imported from an external project into an existing ide project;</li>
-   * </ul>
-   * </pre>
-   * This method allows to differentiate between them (e.g. we don't want to change language level when new module is imported to
-   * an existing project).
+   * Allows to answer if given ide project has 1-1 mapping with the given external project, i.e. the ide project has been
+   * imported from external system and no other external projects have been added.
+   * <p/>
+   * This might be necessary in a situation when project-level setting is changed (e.g. project name). We don't want to rename
+   * ide project if it doesn't completely corresponds to the given ide project then.
    *
-   * @return    <code>true</code> if new project is being imported; <code>false</code> if new module is being imported
+   * @param ideProject       target ide project
+   * @param externalProject  target external project
+   * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
+   *                         <code>false</code> otherwise
    */
-  public static boolean isNewProjectConstruction() {
-    return ProjectManager.getInstance().getOpenProjects().length == 0;
-  }
+  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
+    String linkedExternalProjectPath = null;
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : getAllManagers()) {
+      ProjectSystemId externalSystemId = manager.getSystemId();
+      AbstractExternalSystemSettings systemSettings = getSettings(ideProject, externalSystemId);
+      Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
+      int linkedProjectsNumber = projectsSettings.size();
+      if (linkedProjectsNumber > 1) {
+        // More than one external project of the same external system type is linked to the given ide project.
+        return false;
+      }
+      else if (linkedProjectsNumber == 1) {
+        if (linkedExternalProjectPath == null) {
+          // More than one external project of different external system types is linked to the current ide project.
+          linkedExternalProjectPath = ((ExternalProjectSettings)projectsSettings.iterator().next()).getExternalProjectPath();
+        }
+        else {
+          return false;
+        }
+      }
+    }
 
-//  @NotNull
-//  public static String getLastUsedExternalProjectPath(@NotNull ProjectSystemId externalSystemId) {
-//    return PropertiesComponent.getInstance().getValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), "");
-//  }
+    ProjectData projectData = externalProject.getData();
+    if (linkedExternalProjectPath != null && !linkedExternalProjectPath.equals(projectData.getLinkedExternalProjectPath())) {
+      // New external project is being linked.
+      return false;
+    }
+
+    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
+    for (DataNode<ModuleData> moduleNode : findAll(externalProject, ProjectKeys.MODULE)) {
+      if(!moduleNode.isIgnored()) {
+        externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
+      }
+    }
+    externalModulePaths.remove(linkedExternalProjectPath);
+
+    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    for (Module module : platformFacade.getModules(ideProject)) {
+      String path = getExternalProjectPath(module);
+      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
+        return false;
+      }
+    }
+    return externalModulePaths.isEmpty();
+  }
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
@@ -817,5 +858,27 @@ public class ExternalSystemApiUtil {
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
     getSettings(project, systemId).subscribe(listener);
+  }
+
+  public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
+
+    public KeyOrderedMultiMap() {
+    }
+
+    public KeyOrderedMultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
+      super(toCopy);
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap() {
+      return new TreeMap<K, Collection<V>>();
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+      return new TreeMap<K, Collection<V>>();
+    }
   }
 }

@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
+class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiJavaFile myFile;
   private final List<PsiImportStatementBase> importStatements;
@@ -142,7 +142,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     return null;
   }
 
-  public PsiImportStatementBase[] getUnusedImportStatements() {
+  PsiImportStatementBase[] getUnusedImportStatements() {
     if (importStatements.isEmpty()) {
       return PsiImportStatementBase.EMPTY_ARRAY;
     }

@@ -156,6 +156,7 @@ public class TestResultsXmlFormatter {
           rootAttrs.put("location", rootLocation);
         }
         startElement(ROOT_ELEM, rootAttrs);
+        writeOutput(myTestRoot, f);
         endElement(ROOT_ELEM);
       }
     }
@@ -211,45 +212,7 @@ public class TestResultsXmlFormatter {
     if (node.isLeaf()) {
       started = true;
       startElement(elemName, attrs);
-      final StringBuilder buffer = new StringBuilder();
-      final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
-      final Ref<SAXException> error = new Ref<SAXException>();
-
-      node.printOn(new Printer() {
-        @Override
-        public void print(String text, ConsoleViewContentType contentType) {
-          if (contentType != lastType.get()) {
-            if (buffer.length() > 0) {
-              try {
-                writeOutput(lastType.get(), buffer, filter);
-              }
-              catch (SAXException e) {
-                error.set(e);
-              }
-            }
-            lastType.set(contentType);
-          }
-          buffer.append(text);
-        }
-
-        @Override
-        public void onNewAvailable(@NotNull Printable printable) {
-        }
-
-        @Override
-        public void printHyperlink(String text, HyperlinkInfo info) {
-        }
-
-        @Override
-        public void mark() {
-        }
-      });
-      if (!error.isNull()) {
-        throw error.get();
-      }
-      if (buffer.length() > 0) {
-        writeOutput(lastType.get(), buffer, filter);
-      }
+      writeOutput(node, filter);
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
@@ -266,6 +229,49 @@ public class TestResultsXmlFormatter {
     }
     if (started) {
       endElement(elemName);
+    }
+  }
+
+  private void writeOutput(AbstractTestProxy node, final Filter filter) throws SAXException {
+    final StringBuilder buffer = new StringBuilder();
+    final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
+    final Ref<SAXException> error = new Ref<SAXException>();
+
+    final Printer printer = new Printer() {
+      @Override
+      public void print(String text, ConsoleViewContentType contentType) {
+        if (contentType != lastType.get()) {
+          if (buffer.length() > 0) {
+            try {
+              writeOutput(lastType.get(), buffer, filter);
+            }
+            catch (SAXException e) {
+              error.set(e);
+            }
+          }
+          lastType.set(contentType);
+        }
+        buffer.append(text);
+      }
+
+      @Override
+      public void onNewAvailable(@NotNull Printable printable) {
+      }
+
+      @Override
+      public void printHyperlink(String text, HyperlinkInfo info) {
+      }
+
+      @Override
+      public void mark() {
+      }
+    };
+    node.printOwnPrintablesOn(printer);
+    if (!error.isNull()) {
+      throw error.get();
+    }
+    if (buffer.length() > 0) {
+      writeOutput(lastType.get(), buffer, filter);
     }
   }
 

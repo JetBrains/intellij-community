@@ -39,7 +39,14 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private final Future<ScriptEngineManager> myManagerFuture = PooledThreadExecutor.INSTANCE.submit(new Callable<ScriptEngineManager>() {
     @Override
     public ScriptEngineManager call() {
-      return new ScriptEngineManager();
+      long start = System.currentTimeMillis();
+      try {
+        return new ScriptEngineManager();
+      }
+      finally {
+        long end = System.currentTimeMillis();
+        LOG.info(ScriptEngineManager.class.getName() + " initialized in " + (end - start) + " ms");
+      }
     }
   });
 

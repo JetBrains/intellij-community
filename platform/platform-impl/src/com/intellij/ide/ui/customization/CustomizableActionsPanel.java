@@ -451,7 +451,7 @@ public class CustomizableActionsPanel {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, false);
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
         Icon icon = null;

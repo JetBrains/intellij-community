@@ -28,11 +28,14 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -92,6 +95,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myVMOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         mySharedVMOptionsField.setEnabled(e.getDocument().getLength() == 0);
+        myHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()), new Condition<String>() {
+          @Override
+          public boolean value(String s) {
+            return StringUtil.startsWithIgnoreCase(s, "-Xmx");
+          }
+        }) == null);
       }
     });
   }

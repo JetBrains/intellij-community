@@ -26,6 +26,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +88,11 @@ public class JBRunnerTabs extends JBEditorTabs {
         break;
       }
     }
+  }
+
+  @Override
+  protected Color getEmptySpaceColor() {
+    return UIUtil.getBgFillColor(getParent());
   }
 
   @Override

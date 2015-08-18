@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -67,10 +68,18 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     if (document != null) {
       XmlTag tag = document.getRootTag();
       if (tag != null) {
-        return toString(tag, token.getAttributes(), hasChildren, context);
+        return replaceQuotesIfNeeded(toString(tag, token.getAttributes(), hasChildren, context), context.getContainingFile());
       }
     }
-    return file.getText();
+    return replaceQuotesIfNeeded(file.getText(), context.getContainingFile());
+  }
+
+  private static String replaceQuotesIfNeeded(@NotNull String text, @NotNull PsiFile file) {
+    PsiElement context = file.getContext();
+    if (context != null && context.getText().startsWith("\"")) {
+      text = text.replace('"', '\'');
+    }
+    return text;
   }
 
   public abstract String toString(@NotNull XmlTag tag,

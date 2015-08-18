@@ -66,7 +66,6 @@ public abstract class IdeaTestCase extends PlatformTestCase {
    * @deprecated calling this method is no longer necessary
    */
   public static void initPlatformPrefix() {
-    initPlatformPrefix("com.intellij.idea.IdeaUltimateApplication", "Idea");
   }
 
   protected static void sortClassesByName(final PsiClass[] classes) {

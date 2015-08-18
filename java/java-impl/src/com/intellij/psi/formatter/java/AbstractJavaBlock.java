@@ -355,6 +355,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap createChildWrap() {
+    if (!isBuildInjectedBlocks()) {
+      return null; //when detecting indent we do not care about wraps
+    }
     return myWrapManager.createChildBlockWrap(this, getSettings(), this);
   }
 
@@ -816,6 +819,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap arrangeChildWrap(final ASTNode child, Wrap defaultWrap) {
+    if (!isBuildInjectedBlocks()) {
+      return null; //when detecting indent we do not care about wraps
+    }
     return myWrapManager.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
   }
 

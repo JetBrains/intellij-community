@@ -95,8 +95,9 @@ def bindableMethods = {
 
 contributor(ctype:hasField(hasAnnotation("groovy.beans.Bindable"))) {
   if (psiClass?.fields?.find {it.hasAnnotation("groovy.beans.Bindable")}) {
-    bindableMethods.delegate = delegate
-    bindableMethods.resolveStrategy = Closure.DELEGATE_FIRST
-    bindableMethods()
+    Closure c = bindableMethods.clone()
+    c.delegate = delegate
+    c.resolveStrategy = Closure.DELEGATE_FIRST
+    c()
   }
 }

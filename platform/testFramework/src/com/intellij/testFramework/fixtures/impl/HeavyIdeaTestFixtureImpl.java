@@ -172,7 +172,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
   private void initApplication() throws Exception {
-    myApplication = IdeaTestApplication.getInstance(null);
+    myApplication = IdeaTestApplication.getInstance();
     myApplication.setDataProvider(new MyDataProvider());
   }
 

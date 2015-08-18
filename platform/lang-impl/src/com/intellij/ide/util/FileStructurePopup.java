@@ -48,6 +48,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -57,6 +58,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -189,7 +191,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myTree.setCellRenderer(new NodeRenderer());
 
     mySpeedSearch = new MyTreeSpeedSearch();
-    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
+    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true) {
+      @NotNull
+      @Override
+      protected MinusculeMatcher createMatcher(@NotNull String pattern) {
+        return FileStructureDialog.createFileStructureMatcher(pattern);
+      }
+    });
 
     final FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, ApplicationManager.getApplication().isUnitTestMode());
@@ -549,7 +557,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     final Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     final Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
     final CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(F4, ENTER));
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final boolean succeeded = navigateSelectedElement();
@@ -559,7 +567,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     }.registerCustomShortcutSet(shortcutSet, panel);
 
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
@@ -788,7 +796,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     final boolean selected = getDefaultValue(action);
     chkFilter.setSelected(selected);
-    myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !selected : selected);
+    final boolean isRevertedStructureFilter = action instanceof FileStructureFilter && ((FileStructureFilter)action).isReverted();
+    myTreeActionsOwner.setActionIncluded(action, isRevertedStructureFilter ? !selected : selected);
     chkFilter.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -796,7 +805,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         if (!myAutoClicked.contains(chkFilter)) {
           saveState(action, state);
         }
-        myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
+        myTreeActionsOwner.setActionIncluded(action, isRevertedStructureFilter ? !state : state);
         //final String filter = mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
         //mySpeedSearch.hidePopup();
         Object selection = ContainerUtil.getFirstItem(myAbstractTreeBuilder.getSelectedElements());
@@ -837,7 +846,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     if (shortcuts.length > 0) {
       text += " (" + KeymapUtil.getShortcutText(shortcuts[0]) + ")";
-      new AnAction() {
+      new DumbAwareAction() {
         @Override
         public void actionPerformed(final AnActionEvent e) {
           chkFilter.doClick();

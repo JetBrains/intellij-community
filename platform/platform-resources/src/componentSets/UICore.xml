@@ -33,6 +33,7 @@
     <component>
       <interface-class>com.intellij.ide.SaveAndSyncHandler</interface-class>
       <implementation-class>com.intellij.ide.SaveAndSyncHandlerImpl</implementation-class>
+      <headless-implementation-class/>
     </component>
     <component>
       <interface-class>com.intellij.ide.FrameStateManager</interface-class>
@@ -49,13 +50,12 @@
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
       <headless-implementation-class/>
     </component>
+    <component>
+      <implementation-class>com.intellij.ui.switcher.SwitchManagerAppComponent</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.SwitchManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
     <component>
       <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
     </component>

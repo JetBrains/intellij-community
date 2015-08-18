@@ -30,6 +30,8 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.DefaultExternalProject;
+import org.jetbrains.plugins.gradle.model.ExternalProject;
 
 import java.io.File;
 import java.util.Collection;
@@ -78,6 +80,7 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
   public void importData(@NotNull final Collection<DataNode<ExternalProject>> toImport,
                          @NotNull final Project project,
                          final boolean synchronous) {
+    if(toImport.isEmpty()) return;
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(
         String.format("Expected to get a single external project but got %d: %s", toImport.size(), toImport));

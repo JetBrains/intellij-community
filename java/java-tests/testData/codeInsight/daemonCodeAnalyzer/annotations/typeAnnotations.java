@@ -126,7 +126,6 @@ class Outer {
   }
   static class This extends Super {
     void superField() {
-      Outer.<error descr="Annotations are not allowed here">@TA</error> This.super.aField = 0;
       IntFunction<Super> f = Outer.<error descr="Annotations are not allowed here">@TA</error> This.super::getField;
     }
   }

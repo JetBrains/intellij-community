@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -42,6 +43,6 @@ interface InternalDecoratorListener extends EventListener{
 
   public void sideStatusChanged(InternalDecorator source,boolean isSideTool);
 
-  public void contentUiTypeChanges(InternalDecorator sources, ToolWindowContentUiType type);
+  public void contentUiTypeChanges(InternalDecorator sources, @NotNull ToolWindowContentUiType type);
 
 }

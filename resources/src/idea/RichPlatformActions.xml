@@ -341,11 +341,7 @@
     </group>
 
     <group id="TestStatisticsTablePopupMenu">
-      <reference ref="RunContextGroup"/>
-      <separator/>
-      <reference ref="EditSource"/>
-      <reference ref="ViewSource"/>
-      <separator/>
+      <reference ref="TestTreePopupMenu"/>
       <action id="Testing.SelectInTree" class="com.intellij.execution.testframework.actions.SelectInTreeAction"
               text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
     </group>

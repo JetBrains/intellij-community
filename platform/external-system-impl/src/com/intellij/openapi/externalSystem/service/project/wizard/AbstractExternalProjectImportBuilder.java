@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
@@ -17,6 +18,7 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
@@ -135,6 +137,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @Override
       public Module newModule(Project project, @NotNull @NonNls String filePath, String moduleTypeId) {
         final Module module = model.newModule(filePath, moduleTypeId);
+        // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
+        module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
         modules.add(module);
         return module;
       }
@@ -154,14 +158,21 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     systemSettings.setLinkedProjectsSettings(projects);
 
     if (externalProjectNode != null) {
+      ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
+        project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
+      if (dialog.hasMultipleDataToSelect()) {
+        dialog.showAndGet();
+      } else {
+        dialog.dispose();
+      }
+
       ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
         @Override
         public void execute() {
           ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
             @Override
             public void run() {
-              myProjectDataManager.importData(
-                externalProjectNode.getKey(), Collections.singleton(externalProjectNode), project, platformFacade, true);
+              myProjectDataManager.importData(externalProjectNode, project, platformFacade, true);
               myExternalProjectNode = null;
             }
           });

@@ -47,8 +47,8 @@ public class ExceptionUtils {
     if (element == null) return out;
     if (element instanceof PsiResourceList) {
       final PsiResourceList resourceList = (PsiResourceList)element;
-      for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
-        final PsiMethod method = PsiUtil.getResourceCloserMethod(variable);
+      for (PsiResourceListElement resource : resourceList) {
+        final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
         collectExceptionsThrown(method, out);
       }
     }
@@ -85,7 +85,7 @@ public class ExceptionUtils {
     return throwable.equals(element);
   }
 
-  public static boolean statementThrowsException(PsiStatement statement) {
+  static boolean statementThrowsException(PsiStatement statement) {
     if (statement == null) {
       return false;
     }
@@ -143,7 +143,7 @@ public class ExceptionUtils {
     }
   }
 
-  public static boolean blockThrowsException(@Nullable PsiCodeBlock block) {
+  static boolean blockThrowsException(@Nullable PsiCodeBlock block) {
     if (block == null) {
       return false;
     }
@@ -233,11 +233,11 @@ public class ExceptionUtils {
     return out;
   }
 
-  private static class ExceptionsThrownVisitor extends JavaRecursiveElementVisitor {
+  private static class ExceptionsThrownVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final Set<PsiType> m_exceptionsThrown;
 
-    public ExceptionsThrownVisitor(Set<PsiType> thrownTypes) {
+    private ExceptionsThrownVisitor(Set<PsiType> thrownTypes) {
       m_exceptionsThrown = thrownTypes;
     }
 

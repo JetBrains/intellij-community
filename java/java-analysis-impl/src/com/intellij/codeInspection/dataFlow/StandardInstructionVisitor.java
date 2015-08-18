@@ -66,13 +66,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
 
-      DfaValueFactory factory = runner.getFactory();
-      if (dfaSource instanceof DfaVariableValue && factory.getVarFactory().getAllQualifiedBy(var).contains(dfaSource)) {
-        Nullness nullability = memState.isNotNull(dfaSource) ? Nullness.NOT_NULL
-                                                             : ((DfaVariableValue)dfaSource).getInherentNullability();
-        dfaSource = factory.createTypeValue(((DfaVariableValue)dfaSource).getVariableType(), nullability);
-      }
-
       if (var.getInherentNullability() == Nullness.NOT_NULL) {
         checkNotNullable(memState, dfaSource, NullabilityProblem.assigningToNotNull, instruction.getRExpression());
       }
@@ -590,9 +583,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return true;
       }
     }
-    if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) {
-      return true;
-    }
     return false;
   }
+
 }

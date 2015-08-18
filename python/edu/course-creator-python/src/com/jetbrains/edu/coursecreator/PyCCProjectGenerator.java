@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
@@ -29,6 +31,7 @@ import javax.swing.*;
 
 
 public class PyCCProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
+  private static final Logger LOG = Logger.getInstance(PyCCProjectGenerator.class);
   private CCNewProjectPanel mySettingsPanel;
 
   @Nls
@@ -81,9 +84,12 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
         }
         catch (Exception ignored) {
         }
-        DirectoryUtil.createSubdirectories("hints", projectDir, "\\/");
-        final PsiDirectory lessonDir = CCCreateLesson.createLessonDir(project, 1, null, null);
-        CCCreateTask.createTask(null, project, lessonDir, false);
+        PsiDirectory lessonDir = new CCCreateLesson().createItem(null, project, projectDir, course);
+        if (lessonDir == null) {
+          LOG.error("Failed to create lesson");
+          return;
+        }
+        new CCCreateTask().createItem(null, project, lessonDir, course);
       }
     }.execute();
   }

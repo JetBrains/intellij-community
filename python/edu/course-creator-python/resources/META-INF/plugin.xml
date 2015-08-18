@@ -29,6 +29,11 @@
 
   <extensions defaultExtensionNs="Edu">
     <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
+    <executeFile implementation="com.jetbrains.edu.coursecreator.PyCCRunTests"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <pyReferenceResolveProvider implementation="com.jetbrains.edu.coursecreator.PyCCReferenceResolveProvider"/>
   </extensions>
 
   <application-components>

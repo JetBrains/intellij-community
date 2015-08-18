@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -54,11 +54,11 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -66,7 +66,7 @@ import java.util.Set;
 /**
  * @author Dennis.Ushakov
  */
-public class XmlTagNameSynchronizer extends CommandAdapter implements ApplicationComponent {
+public class XmlTagNameSynchronizer extends CommandAdapter implements NamedComponent {
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
                                                                            XMLLanguage.INSTANCE.getID(),
@@ -84,22 +84,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         installSynchronizer(event.getEditor());
       }
-
-      @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
-        uninstallSynchronizer(event.getEditor());
-      }
     }, ApplicationManager.getApplication());
     processor.addCommandListener(this);
-  }
-
-  public void uninstallSynchronizer(final Editor editor) {
-    final Document document = editor.getDocument();
-    final TagNameSynchronizer synchronizer = findSynchronizer(document);
-    if (synchronizer != null) {
-      synchronizer.clearMarkers();
-    }
-    document.putUserData(SYNCHRONIZER_KEY, null);
   }
 
   private void installSynchronizer(final Editor editor) {
@@ -128,31 +114,29 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     return "XmlTagNameSynchronizer";
   }
 
-  @Override
-  public void initComponent() {
+  @NotNull
+  private static TagNameSynchronizer[] findSynchronizers(final Document document) {
+    if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
+    final Editor[] editors = EditorFactory.getInstance().getEditors(document);
 
-  }
-
-  @Override
-  public void disposeComponent() {
-
-  }
-
-  @Nullable
-  public TagNameSynchronizer findSynchronizer(final Document document) {
-    if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return null;
-    return document.getUserData(SYNCHRONIZER_KEY);
+    return ContainerUtil.mapNotNull(editors, new Function<Editor, TagNameSynchronizer>() {
+      @Override
+      public TagNameSynchronizer fun(Editor editor) {
+        return editor.getUserData(SYNCHRONIZER_KEY);
+      }
+    }, TagNameSynchronizer.EMPTY);
   }
 
   @Override
   public void beforeCommandFinished(CommandEvent event) {
-    final TagNameSynchronizer synchronizer = findSynchronizer(event.getDocument());
-    if (synchronizer != null) {
+    final TagNameSynchronizer[] synchronizers = findSynchronizers(event.getDocument());
+    for (TagNameSynchronizer synchronizer : synchronizers) {
       synchronizer.beforeCommandFinished();
     }
   }
 
   private static class TagNameSynchronizer extends DocumentAdapter {
+    public static final TagNameSynchronizer[] EMPTY = new TagNameSynchronizer[0];
     private final PsiDocumentManagerBase myDocumentManager;
     private final Language myLanguage;
 
@@ -168,7 +152,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       final Disposable disposable = ((EditorImpl)editor).getDisposable();
       final Document document = editor.getDocument();
       document.addDocumentListener(this, disposable);
-      document.putUserData(SYNCHRONIZER_KEY, this);
+      editor.putUserData(SYNCHRONIZER_KEY, this);
       myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     }
 
@@ -308,6 +292,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       final Document document = myEditor.getDocument();
       final Runnable apply = new Runnable() {
+        @Override
         public void run() {
           for (Couple<RangeMarker> couple : myMarkers) {
             final RangeMarker leader = couple.first;

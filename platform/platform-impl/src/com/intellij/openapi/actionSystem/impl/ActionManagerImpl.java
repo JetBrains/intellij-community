@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
@@ -73,7 +72,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 
-public final class ActionManagerImpl extends ActionManagerEx implements ApplicationComponent {
+public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @NonNls public static final String ACTION_ELEMENT_NAME = "action";
   @NonNls public static final String GROUP_ELEMENT_NAME = "group";
   @NonNls public static final String ACTIONS_ELEMENT_NAME = "actions";
@@ -404,11 +403,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
 
-  @Override
-  public void initComponent() {}
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     if (myTimer != null) {
       myTimer.stop();
       myTimer = null;
@@ -1276,12 +1273,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   private void doPreloadActions() {
-    try {
-      Thread.sleep(5000); // wait for project initialization to complete
-    }
-    catch (InterruptedException e) {
-      return; // IDEA exited
-    }
+    pausePreloading(5000); // wait for project initialization to complete
     preloadActionGroup(IdeActions.GROUP_EDITOR_POPUP);
     preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
     preloadActionGroup(IdeActions.GROUP_PROJECT_VIEW_POPUP);
@@ -1320,14 +1312,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
       myActionsPreloaded++;
       if (myActionsPreloaded % 10 == 0) {
-        try {
-          //noinspection BusyWait
-          Thread.sleep(300);
-        }
-        catch (InterruptedException ignored) {
-          throw new RuntimeInterruptedException(ignored);
-        }
+        pausePreloading(300);
       }
+    }
+  }
+
+  private static void pausePreloading(int millis) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    try {
+      Thread.sleep(millis);
+    }
+    catch (InterruptedException ignored) {
+      throw new RuntimeInterruptedException(ignored);
     }
   }
 

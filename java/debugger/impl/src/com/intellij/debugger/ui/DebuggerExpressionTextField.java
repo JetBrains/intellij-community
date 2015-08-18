@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,18 @@ package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,8 +40,9 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   private static final @NonNls String EDITOR = "editor";
   private static final @NonNls String STUB = "stub";
 
-  public DebuggerExpressionTextField(Project project, PsiElement context, final @NonNls String recentsId) {
-    super(project, context, recentsId, DefaultCodeFragmentFactory.getInstance());
+  public DebuggerExpressionTextField(@NotNull Project project, @NotNull Disposable parentDisposable, @Nullable PsiElement context, @Nullable String recentsId) {
+    super(project, DefaultCodeFragmentFactory.getInstance(), parentDisposable, context, recentsId);
+
     myStubField.setEnabled(false);
     myEditor = new EditorTextField("", project, StdFileTypes.JAVA);
     setLayout(new BorderLayout());

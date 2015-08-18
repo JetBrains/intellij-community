@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,8 @@ public class ThreadsDebuggerTree extends DebuggerTree {
     DebuggerSession session = context.getDebuggerSession();
     final RefreshThreadsTreeCommand command = new RefreshThreadsTreeCommand(session);
     
-    final int state = session != null? session.getState() : DebuggerSession.STATE_DISPOSED;
-    if (ApplicationManager.getApplication().isUnitTestMode() || state == DebuggerSession.STATE_PAUSED || state == DebuggerSession.STATE_RUNNING) {
+    final DebuggerSession.State state = session != null ? session.getState() : DebuggerSession.State.DISPOSED;
+    if (ApplicationManager.getApplication().isUnitTestMode() || state == DebuggerSession.State.PAUSED || state == DebuggerSession.State.RUNNING) {
       showMessage(MessageDescriptor.EVALUATING);
       context.getDebugProcess().getManagerThread().schedule(command);
     }

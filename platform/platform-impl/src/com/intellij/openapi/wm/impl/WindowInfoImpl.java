@@ -56,7 +56,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private float mySideWeight;
   private boolean mySplitMode;
 
-  private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
+  @NotNull private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
   /**
    * Defines order of tool window button inside the stripe.
    * The default value is <code>-1</code>.
@@ -132,6 +132,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     mySideWeight = info.mySideWeight;
     myOrder = info.myOrder;
     mySplitMode = info.mySplitMode;
+    myContentUiType = info.myContentUiType;
   }
 
   /**
@@ -143,12 +144,13 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myAnchor;
   }
 
+  @NotNull
   @Override
   public ToolWindowContentUiType getContentUiType() {
     return myContentUiType;
   }
 
-  void setContentUiType(ToolWindowContentUiType type) {
+  void setContentUiType(@NotNull ToolWindowContentUiType type) {
     myContentUiType = type;
   }
 
@@ -415,7 +417,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
            + "; myType=" + myType
            + "; myInternalType=" + myInternalType
            + "; myFloatingBounds=" + myFloatingBounds
-           + "; mySplitMode=" + mySplitMode +
+           + "; mySplitMode=" + mySplitMode
+           + "; myContentUiType=" + myContentUiType.getName() +
            ']';
   }
 

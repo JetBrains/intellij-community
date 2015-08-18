@@ -17,12 +17,25 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.junit.rules.ExternalResource
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 import java.io.File
+import java.io.IOException
 
 public class TemporaryDirectory : ExternalResource() {
   private val files = SmartList<File>()
+
+  private var sanitizedName: String? = null
+
+  override fun apply(base: Statement, description: Description): Statement {
+    sanitizedName = FileUtil.sanitizeName(description.getMethodName())
+    return super.apply(base, description)
+  }
 
   override fun after() {
     for (file in files) {
@@ -31,9 +44,55 @@ public class TemporaryDirectory : ExternalResource() {
     files.clear()
   }
 
-  public fun newDirectory(): File {
-    val file = FileUtilRt.generateRandomTemporaryPath()
-    files.add(file)
-    return file;
+  /**
+   * Directory is not created.
+   */
+  public fun newDirectory(directoryName: String? = null): File {
+    val file = generatePath(directoryName)
+    LocalFileSystem.getInstance()?.let { fs ->
+      // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
+      val virtualFile = fs.findFileByIoFile(file)
+      if (virtualFile != null) {
+        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+      }
+    }
+    return file
   }
+
+  public fun generatePath(suffix: String?): File {
+    var fileName = sanitizedName!!
+    if (suffix != null) {
+      fileName += "_$suffix"
+    }
+
+    var file = generateTemporaryPath(fileName)
+    files.add(file)
+    return file
+  }
+
+  public fun newVirtualDirectory(directoryName: String? = null): VirtualFile {
+    val file = generatePath(directoryName)
+    if (!file.mkdirs()) {
+      throw AssertionError("Cannot create directory")
+    }
+
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+    return virtualFile!!
+  }
+}
+
+public fun generateTemporaryPath(fileName: String?): File {
+  val tempDirectory = FileUtilRt.getTempDirectory()
+  var file = File(tempDirectory, fileName)
+  var i = 0
+  while (file.exists() && i < 9) {
+    file = File(tempDirectory, "${fileName}_$i")
+    i++
+  }
+
+  if (file.exists()) {
+    throw IOException("Cannot generate unique random path")
+  }
+  return file
 }

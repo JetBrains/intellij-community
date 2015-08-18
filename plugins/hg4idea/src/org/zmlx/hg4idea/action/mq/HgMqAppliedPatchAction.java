@@ -29,7 +29,6 @@ public abstract class HgMqAppliedPatchAction extends HgLogSingleCommitAction {
   @Override
   protected boolean isEnabled(@NotNull MultiMap<HgRepository, VcsFullCommitDetails> grouped) {
     return super.isEnabled(grouped) &&
-           grouped.values().size() == 1 &&
            isAppliedPatch(grouped.keySet().iterator().next(), grouped.values().iterator().next());
   }
 

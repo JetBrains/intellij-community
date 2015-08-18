@@ -14,10 +14,11 @@ import java.io.BufferedOutputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.properties.Delegates
 
 public class RestApiTest {
   private val fixtureManager = FixtureRule()
-  private val manager = TestManager(fixtureManager.projectFixture)
+  private val manager by Delegates.lazy { TestManager(fixtureManager) }
 
   private val _chain = RuleChain
       .outerRule(fixtureManager)

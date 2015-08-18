@@ -139,6 +139,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
            " oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
   }
 
+  @NotNull
   public String getOldPath() {
     String path = getPath();
     if (VirtualFile.PROP_NAME.equals(myPropertyName) && myNewValue instanceof String && myOldValue instanceof String) {

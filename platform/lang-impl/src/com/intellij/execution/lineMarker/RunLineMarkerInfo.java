@@ -21,6 +21,11 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.actions.*;
+import com.intellij.execution.configurations.LocatableConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -34,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,7 +71,7 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
                                                 new Function<Executor, AnAction>() {
                                                   @Override
                                                   public AnAction fun(Executor executor) {
-                                                    return new ActionWrapper(ActionManager.getInstance().getAction(executor.getContextActionId()));
+                                                    return new ActionWrapper(ActionManager.getInstance().getAction(executor.getContextActionId()), executor);
                                                   }
                                                 }));
         actions.add(Separator.getInstance());
@@ -75,7 +81,7 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
                                                   @Override
                                                   public AnAction fun(RunLineMarkerContributor contributor) {
                                                     AnAction action = contributor.getAdditionalAction(myElement);
-                                                    return action != null ? new ActionWrapper(action) : null;
+                                                    return action != null ? new ActionWrapper(action, null) : null;
                                                   }
                                                 }));
 
@@ -92,26 +98,37 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
   private class ActionWrapper extends AnAction {
 
     private final AnAction myOrigin;
+    @Nullable
+    private final Executor myExecutor;
 
-    public ActionWrapper(@NotNull AnAction origin) {
+    public ActionWrapper(@NotNull AnAction origin, @Nullable Executor executor) {
       myOrigin = origin;
+      myExecutor = executor;
       copyFrom(origin);
     }
 
     @Override
     public void update(AnActionEvent e) {
-      myOrigin.update(createEvent(e));
+      AnActionEvent event = wrapEvent(e);
+      if (myExecutor != null) {
+        String name = getActionName(event.getDataContext(), myExecutor);
+        e.getPresentation().setVisible(name != null);
+        e.getPresentation().setText(name);
+      }
+      else {
+        myOrigin.update(event);
+      }
     }
 
     @NotNull
-    private AnActionEvent createEvent(AnActionEvent e) {
+    private AnActionEvent wrapEvent(AnActionEvent e) {
       return new AnActionEvent(
         e.getInputEvent(), new MyDataContext(e.getDataContext()), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myOrigin.actionPerformed(createEvent(e));
+      myOrigin.actionPerformed(wrapEvent(e));
     }
   }
   
@@ -125,8 +142,33 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {
-      if (Location.DATA_KEY.is(dataId)) return new PsiLocation<PsiElement>(myElement);
+      if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<PsiElement>(myElement) : null;
       return myDelegate.getData(dataId);
     }
+  }
+
+  public String getActionName(DataContext dataContext, @NotNull Executor executor) {
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    List<RunConfigurationProducer<?>> producers = RunConfigurationProducer.getProducers(context.getProject());
+    List<ConfigurationFromContext> list = ContainerUtil.mapNotNull(producers,
+                                                                   new Function<RunConfigurationProducer<?>, ConfigurationFromContext>() {
+                                                                     @Override
+                                                                     public ConfigurationFromContext fun(RunConfigurationProducer<?> producer) {
+                                                                       return createConfiguration(producer, context);
+                                                                     }
+                                                                   }
+    );
+    if (list.isEmpty()) return null;
+    Collections.sort(list, ConfigurationFromContext.COMPARATOR);
+    String actionName = BaseRunConfigurationAction.suggestRunActionName((LocatableConfiguration)list.get(0).getConfiguration());
+    return executor.getStartActionText(actionName);
+  }
+
+  @Nullable
+  private ConfigurationFromContext createConfiguration(RunConfigurationProducer<?> producer, ConfigurationContext context) {
+    RunConfiguration configuration = producer.createLightConfiguration(context);
+    if (configuration == null) return null;
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.getProject()), configuration, false);
+    return new ConfigurationFromContextImpl(producer, settings, getElement());
   }
 }

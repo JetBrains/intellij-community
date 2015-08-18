@@ -89,7 +89,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
 
-  static final String TEMPLATES_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/templates";
+  static final String TEMPLATES_DIR_PATH = "templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 

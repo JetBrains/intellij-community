@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.BaseTableView;
@@ -555,7 +555,7 @@ public abstract class UIPropertyBinding {
 
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       getModel().setAll(getProperty().get(container));
-      ListScrollingUtil.ensureSelectionExists(getList());
+      ScrollingUtil.ensureSelectionExists(getList());
     }
 
     private SortedListModel<T> getModel() {
@@ -577,7 +577,7 @@ public abstract class UIPropertyBinding {
         Object item = iterator.next();
         model.addElement(item);
       }
-      ListScrollingUtil.ensureSelectionExists(getList());
+      ScrollingUtil.ensureSelectionExists(getList());
     }
 
     private DefaultListModel getModel() {
@@ -594,7 +594,7 @@ public abstract class UIPropertyBinding {
           }
           for (final T item : items) {
             getModel().addElement(item);
-            ListScrollingUtil.selectItem(getList(), item);
+            ScrollingUtil.selectItem(getList(), item);
           }
         }
       });

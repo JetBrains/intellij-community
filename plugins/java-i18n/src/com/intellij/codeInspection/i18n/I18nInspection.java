@@ -424,13 +424,14 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private ProblemDescriptor[] checkElement(final PsiElement element, InspectionManager manager, boolean isOnTheFly) {
+  private ProblemDescriptor[] checkElement(@NotNull PsiElement element, @NotNull InspectionManager manager, boolean isOnTheFly) {
     StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  @NotNull
   private static LocalQuickFix createIntroduceConstantFix() {
     return new LocalQuickFix() {
       @Override
@@ -462,30 +463,35 @@ public class I18nInspection extends BaseLocalInspectionTool {
     };
   }
 
-  private class StringI18nVisitor extends JavaRecursiveElementVisitor {
+  private class StringI18nVisitor extends JavaRecursiveElementWalkingVisitor {
     private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
     private final InspectionManager myManager;
     private final boolean myOnTheFly;
 
-    private StringI18nVisitor(final InspectionManager manager, boolean onTheFly) {
+    private StringI18nVisitor(@NotNull InspectionManager manager, boolean onTheFly) {
       myManager = manager;
       myOnTheFly = onTheFly;
     }
 
-    @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
-      final PsiExpressionList argumentList = aClass.getArgumentList();
-      if (argumentList != null) {
-        argumentList.accept(this);
-      }
+    @Override
+    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+      visitElement(aClass); // visit argument list but anon. class members should be not visited
     }
 
-    @Override public void visitClass(PsiClass aClass) {}
+    @Override
+    public void visitClass(PsiClass aClass) {
+    }
 
-    @Override public void visitField(PsiField field) {}
+    @Override
+    public void visitField(PsiField field) {
+    }
 
-    @Override public void visitMethod(PsiMethod method) {}
+    @Override
+    public void visitMethod(PsiMethod method) {
+    }
 
-    @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
+    @Override
+    public void visitLiteralExpression(PsiLiteralExpression expression) {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
       String stringValue = (String)value;
@@ -517,7 +523,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
         if (PsiUtil.isLanguageLevel5OrHigher(expression)) {
           for (PsiModifierListOwner element : nonNlsTargets) {
             if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true, false)) {
-              if (!element.getManager().isInProject(element) || facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
+              if (!element.getManager().isInProject(element) ||
+                  facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
                 fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
               }
             }
@@ -533,16 +540,17 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
 
     private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
-      PsiField parentField = expression.getParent() instanceof PsiField ? (PsiField) expression.getParent() : null;
+      PsiField parentField = expression.getParent() instanceof PsiField ? (PsiField)expression.getParent() : null;
       return parentField != null && expression == parentField.getInitializer() &&
              parentField.hasModifierProperty(PsiModifier.FINAL) &&
              parentField.hasModifierProperty(PsiModifier.STATIC);
     }
 
 
-    @Override public void visitAnnotation(PsiAnnotation annotation) {
+    @Override
+    public void visitAnnotation(PsiAnnotation annotation) {
       //prevent from @SuppressWarnings
-      if (!BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName())){
+      if (!BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName())) {
         super.visitAnnotation(annotation);
       }
     }
@@ -552,7 +560,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
   }
 
-  private boolean canBeI18ned(@NotNull Project project, @NotNull PsiLiteralExpression expression, @NotNull String value, @NotNull Set<PsiModifierListOwner> nonNlsTargets) {
+  private boolean canBeI18ned(@NotNull Project project,
+                              @NotNull PsiLiteralExpression expression,
+                              @NotNull String value,
+                              @NotNull Set<PsiModifierListOwner> nonNlsTargets) {
     if (ignoreForNonAlpha && !StringUtil.containsAlphaCharacters(value)) {
       return false;
     }

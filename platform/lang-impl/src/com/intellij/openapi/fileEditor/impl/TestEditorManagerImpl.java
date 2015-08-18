@@ -113,7 +113,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   @Override
   public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
     runnable.run();
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override
@@ -339,6 +339,8 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void closeFile(@NotNull VirtualFile file) {
     Editor editor = myVirtualFile2Editor.remove(file);
     if (editor != null){
+      TextEditorProvider editorProvider = TextEditorProvider.getInstance();
+      editorProvider.disposeEditor(editorProvider.getTextEditor(editor));
       EditorFactory.getInstance().releaseEditor(editor);
     }
     if (Comparing.equal(file, myActiveFile)) {
@@ -494,7 +496,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
-    return new ActionCallback.Done();
+    return ActionCallback.DONE;
   }
 
   @Override

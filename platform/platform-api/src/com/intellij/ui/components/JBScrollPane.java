@@ -118,6 +118,7 @@ public class JBScrollPane extends JScrollPane {
     return new MyScrollBar(Adjustable.VERTICAL);
   }
 
+  @NotNull
   @Override
   public JScrollBar createHorizontalScrollBar() {
     return new MyScrollBar(Adjustable.HORIZONTAL);

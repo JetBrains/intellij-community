@@ -59,6 +59,7 @@ public class RangesBuilder {
 
     switch (mode) {
       case DEFAULT:
+      case SILENT:
         processDefault(current, vcs, shift, vcsShift);
         break;
       case SMART:

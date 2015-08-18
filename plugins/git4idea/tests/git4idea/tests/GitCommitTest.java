@@ -15,19 +15,21 @@
  */
 package git4idea.tests;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
+import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.overwrite;
 import static git4idea.test.GitExecutor.*;
@@ -64,18 +66,22 @@ public class GitCommitTest extends GitSingleRepoTest {
     updateChangeListManager();
     final LocalChangeList changeList = changeListManager.getDefaultChangeList();
     changeList.setComment("Commit message");
-    assertTrue(!changeListManager.getChangesIn(myProjectRoot).isEmpty());
-    final AtomicBoolean res = new AtomicBoolean();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        res.set(changeListManager.commitChangesSynchronouslyWithResult(changeList, new ArrayList<Change>(
-          changeListManager.getChangesIn(myProjectRoot))));
-      }
-    }, ModalityState.defaultModalityState());
-    assertTrue(res.get());
+    List<Change> changes = ContainerUtil.newArrayList(changeListManager.getChangesIn(myProjectRoot));
+    assertTrue(!changes.isEmpty());
+
+    CheckinEnvironment checkingEnv = ObjectUtils.assertNotNull(myVcs.getCheckinEnvironment());
+    List<VcsException> exceptions = checkingEnv.commit(changes, "comment");
+    assertNoExceptions(exceptions);
+
     updateChangeListManager();
     assertTrue(changeListManager.getChangesIn(myProjectRoot).isEmpty());
   }
 
+  private static void assertNoExceptions(@Nullable List<VcsException> exceptions) {
+    VcsException ex = ContainerUtil.getFirstItem(exceptions);
+    if (ex != null) {
+      LOG.error(ex);
+      fail("Exception during executing the commit: " + ex.getMessage());
+    }
+  }
 }

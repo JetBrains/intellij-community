@@ -35,7 +35,7 @@ import java.util.Set;
 public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
 
   @NonNls
-  private static final Set<String> returnSelfNames = new HashSet();
+  private static final Set<String> returnSelfNames = new HashSet<String>();
 
   static {
     returnSelfNames.add("append");
@@ -198,10 +198,9 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     return visitor.isUpdated();
   }
 
-  private static class StringBuilderUpdateCalledVisitor extends JavaRecursiveElementVisitor {
-
+  private static class StringBuilderUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
-    private static final Set<String> updateNames = new HashSet();
+    private static final Set<String> updateNames = new HashSet<String>();
 
     static {
       updateNames.add("append");
@@ -215,7 +214,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     private final PsiVariable variable;
-    boolean updated = false;
+    private boolean updated;
 
     public StringBuilderUpdateCalledVisitor(PsiVariable variable) {
       this.variable = variable;
@@ -255,16 +254,15 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
   }
 
-  public static boolean isStringBuilderQueried(PsiVariable variable, PsiElement context) {
+  private static boolean isStringBuilderQueried(PsiVariable variable, PsiElement context) {
     final StringBuilderQueryCalledVisitor visitor = new StringBuilderQueryCalledVisitor(variable);
     context.accept(visitor);
     return visitor.isQueried();
   }
 
-  private static class StringBuilderQueryCalledVisitor extends JavaRecursiveElementVisitor {
-
+  private static class StringBuilderQueryCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
-    private static final Set<String> queryNames = new HashSet();
+    private static final Set<String> queryNames = new HashSet<String>();
 
     static {
       queryNames.add("toString");
@@ -285,7 +283,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     private final PsiVariable variable;
-    private boolean queried = false;
+    private boolean queried;
 
     private StringBuilderQueryCalledVisitor(PsiVariable variable) {
       this.variable = variable;
@@ -356,14 +354,14 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)parent;
       return isVariableValueUsed(parenthesizedExpression);
     }
-    else if (parent instanceof PsiTypeCastExpression) {
+    if (parent instanceof PsiTypeCastExpression) {
       final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
       return isVariableValueUsed(typeCastExpression);
     }
-    else if (parent instanceof PsiReturnStatement) {
+    if (parent instanceof PsiReturnStatement) {
       return true;
     }
-    else if (parent instanceof PsiExpressionList) {
+    if (parent instanceof PsiExpressionList) {
       final PsiElement grandParent = parent.getParent();
       if (grandParent instanceof PsiMethodCallExpression) {
         return true;

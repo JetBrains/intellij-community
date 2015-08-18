@@ -49,7 +49,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
@@ -121,7 +120,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initPlatformPrefix();
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
@@ -347,10 +345,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
   }
 
-  public static void initPlatformPrefix() {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
-
   public static String getHelpersPath() {
     return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
   }
@@ -417,7 +411,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   @NotNull
-  protected PyCodeStyleSettings getPythonCodeStyle() {
+  protected PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 

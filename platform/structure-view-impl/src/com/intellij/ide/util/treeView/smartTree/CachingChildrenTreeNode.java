@@ -208,7 +208,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   protected void synchronizeChildren() {
-    if (myOldChildren != null && myChildren != null) {
+    List<CachingChildrenTreeNode> children = myChildren;
+    if (myOldChildren != null && children != null) {
       HashMap<Object, CachingChildrenTreeNode> oldValuesToChildrenMap = new HashMap<Object, CachingChildrenTreeNode>();
       for (CachingChildrenTreeNode oldChild : myOldChildren) {
         final Object oldValue = oldChild instanceof TreeElementWrapper ? oldChild.getValue() : oldChild;
@@ -217,15 +218,15 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
         }
       }
 
-      for (int i = 0; i < myChildren.size(); i++) {
-        CachingChildrenTreeNode newChild = myChildren.get(i);
+      for (int i = 0; i < children.size(); i++) {
+        CachingChildrenTreeNode newChild = children.get(i);
         final Object newValue = newChild instanceof TreeElementWrapper ? newChild.getValue() : newChild;
         if (newValue != null) {
           final CachingChildrenTreeNode oldChild = oldValuesToChildrenMap.get(newValue);
           if (oldChild != null) {
             oldChild.copyFromNewInstance(newChild);
             oldChild.setValue(newChild.getValue());
-            myChildren.set(i, oldChild);
+            children.set(i, oldChild);
           }
         }
       }

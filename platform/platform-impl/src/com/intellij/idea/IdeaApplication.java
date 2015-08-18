@@ -17,10 +17,7 @@ package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
-import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.CommandLineProcessor;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeRepaintManager;
+import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -48,6 +45,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class IdeaApplication {
@@ -85,7 +84,20 @@ public class IdeaApplication {
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
 
-    myArgs = args;
+    //Assuming that passing -Dkey=value as a program argument is just a convenient way to setup environment
+    ArrayList<String> arguments = new ArrayList<String>();
+    for (String arg : args) {
+      if (arg.startsWith("-D")) {
+        String[] keyValue = arg.substring(2).split("=");
+        if (keyValue.length == 2) {
+          System.setProperty(keyValue[0], keyValue[1]);
+          continue;
+        }
+      }
+      arguments.add(arg);
+    }
+
+    myArgs = ArrayUtil.toStringArray(arguments);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
@@ -166,8 +178,7 @@ public class IdeaApplication {
 
   public void run() {
     try {
-      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      app.load(PathManager.getOptionsPath());
+      ApplicationManagerEx.getApplicationEx().load();
       myLoaded = true;
 
       myStarter.main(myArgs);
@@ -283,6 +294,9 @@ public class IdeaApplication {
     public void main(String[] args) {
       SystemDock.updateMenu();
 
+      // if OS has dock, RecentProjectsManager will be already created, but not all OS have dock, so, we trigger creation here to ensure that RecentProjectsManager app listener will be added
+      RecentProjectsManager.getInstance();
+
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
@@ -297,7 +311,7 @@ public class IdeaApplication {
       LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
       PluginManagerCore.dumpPluginClassStatistics();
 
-      if (!willOpenProject.get()) {
+      if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow();
         lifecyclePublisher.welcomeScreenDisplayed();
       }

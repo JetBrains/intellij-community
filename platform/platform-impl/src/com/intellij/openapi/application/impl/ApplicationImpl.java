@@ -30,11 +30,9 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
-import com.intellij.openapi.components.impl.stores.IApplicationStore;
+import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -56,12 +54,11 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
@@ -71,7 +68,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongProcedure;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -128,38 +124,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
   private boolean myLoaded;
-  @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
+  private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   private volatile boolean myActive;
-  private volatile boolean myActiveDelayed;
-  public volatile boolean myCancelDeactivation;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
-
-  static {
-        OpenAPIAccessor.setApplicationImplAccessor(new OpenAPIAccessor.ApplicationImplAccessor() {
-
-          @Override
-          public boolean applyActivation(ApplicationImpl app, Window window) {
-            return app.applyActivation(window);
-          }
-
-          @Override
-          public boolean applyDeactivation(ApplicationImpl app, Window window) {
-            return app.applyDeactivation(window);
-          }
-
-          @Override
-          public boolean applyDelayedDeactivation(ApplicationImpl app, Window window) {
-            return app.applyDelayedDeactivation(window);
-          }
-        });
-  }
-
-  public boolean isActiveDelayed() {
-    return myActiveDelayed;
-  }
 
   private static class Status {
     // higher three bits are for IS_* flags
@@ -188,44 +158,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return false;
     }
 
-    @NonNls
     @Override
     public String toString() {
       return "ANY";
     }
   };
 
-  @Override
-  protected void bootstrapPicoContainer(@NotNull String name) {
-    super.bootstrapPicoContainer(name);
-    getPicoContainer().registerComponentImplementation(IComponentStore.class, ApplicationStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
-  }
-
   @NotNull
-  public IApplicationStore getStateStore() {
-    return (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
-  }
-
-  @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-    getStateStore().initComponent(component, service);
-  }
-
-  @Override
-  public void init() {
-    loadComponents();
-
-    for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
-      try {
-        listener.beforeApplicationLoaded(this);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    super.init();
+  @Deprecated
+  public IComponentStore getStateStore() {
+    return ComponentsPackage.getStateStore(this);
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -383,15 +325,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
   }
 
-  @Override
-  protected synchronized Object createComponent(@NotNull Class componentInterface) {
-    Object component = super.createComponent(componentInterface);
-    if (mySplash != null) {
-      mySplash.showProgress("", 0.65f + getPercentageOfComponentsLoaded() * 0.35f);
-    }
-    return component;
-  }
-
   @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
@@ -511,21 +444,42 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(@Nullable String optionsPath) throws IOException {
-    load(PathManager.getConfigPath(), optionsPath == null ? PathManager.getOptionsPath() : optionsPath);
+  public void load() throws IOException {
+    load(null);
   }
 
-  public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
-    IApplicationStore store = getStateStore();
-    store.setOptionsPath(optionsPath);
-    store.setConfigPath(configPath);
-
+  @Override
+  public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      store.load();
-    }
-    catch (StateStorageException e) {
-      throw new IOException(e);
+      long t = System.currentTimeMillis();
+      init(mySplash == null ? null : new EmptyProgressIndicator() {
+        @Override
+        public void setFraction(double fraction) {
+          mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
+        }
+      }, new Runnable() {
+        @Override
+        public void run() {
+          // create ServiceManagerImpl at first to force extension classes registration
+          getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
+
+          String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
+          for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+            try {
+              listener.beforeApplicationLoaded(ApplicationImpl.this, effectiveConfigPath);
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }
+
+          // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+          ComponentsPackage.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
+        }
+      });
+      t = System.currentTimeMillis() - t;
+      LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
     }
     finally {
       token.finish();
@@ -533,6 +487,33 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myLoaded = true;
 
     createLocatorFile();
+  }
+
+  @Override
+  protected void createComponents(@Nullable final ProgressIndicator indicator) {
+    // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
+    Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        ApplicationImpl.super.createComponents(indicator);
+      }
+    };
+
+    if (indicator == null) {
+      // no splash, no need to to use progress manager
+      task.run();
+    }
+    else {
+      ProgressManager.getInstance().runProcess(task, indicator);
+    }
+  }
+
+  @Override
+  @Nullable
+  protected ProgressIndicator getProgressIndicator() {
+    // could be called before full initialization
+    ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
+    return progressManager == null ? null : progressManager.getProgressIndicator();
   }
 
   private static void createLocatorFile() {
@@ -1074,7 +1055,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   }
 
-  @NonNls
   private static String describe(Thread o) {
     if (o == null) return "null";
     return o + " " + System.identityHashCode(o);
@@ -1199,56 +1179,46 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
-  public boolean isDeactivationCanceled() {
-    return myCancelDeactivation;
-  }
-
-  boolean applyActivation (Window window) {
-    if (!isActive()) {
+  /**
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   *
+   * THIS IS AN "ABSOLUTELY-GURU METHOD".
+   * NOBODY AND UNDER ANY CIRCUMSTANCES SHOULD ADD OTHER USAGES OF IT :)
+   * ONLY DENIS IS PERMITTED TO USE THIS METHOD!!!
+   *
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   *
+   * There are no legitimate usages of the method outside of IdeEventQueue.processAppActivationEvents()
+   */
+  public void tryToApplyActivationState(Window window, boolean activation) {
+    if (activation && !isActive()) {
       myActive = true;
-      myActiveDelayed = true;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
         getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
       }
     }
-    return false;
-  }
-
-  boolean applyDeactivation (Window window) {
-    if (isActive()) {
+    else if (!activation && isActive()) {
       myActive = false;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
       if (ideFrame != null) {
         getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
-        return true;
       }
     }
-    return false;
   }
 
-  boolean applyDelayedDeactivation (Window window) {
-    if (isActiveDelayed()) {
-      myActiveDelayed = false;
-      IdeFrame ideFrame = getIdeFrameFromWindow(window);
-      if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  IdeFrame getIdeFrameFromWindow (Window window) {
-    final Component frame = UIUtil.findUltimateParent(window);
-    return (frame instanceof IdeFrame) ? (IdeFrame)frame : null;
+  private static IdeFrame getIdeFrameFromWindow(Window window) {
+    Component frame = UIUtil.findUltimateParent(window);
+    return frame instanceof IdeFrame ? (IdeFrame)frame : null;
   }
 
   @Override
   public boolean isActive() {
-   if (isUnitTestMode()) return true;
-
-   return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null || myActive;
+    return isUnitTestMode() || myActive;
   }
 
   @NotNull
@@ -1483,7 +1453,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        StoreUtil.save(getStateStore(), null);
+        StoreUtil.save(ComponentsPackage.getStateStore(this), null);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);
@@ -1546,7 +1516,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDisposeInProgress = disposeInProgress;
   }
 
-  @NonNls
   @Override
   public String toString() {
     return "Application" +

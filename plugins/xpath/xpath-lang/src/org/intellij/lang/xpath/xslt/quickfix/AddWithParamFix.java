@@ -66,7 +66,7 @@ public class AddWithParamFix extends AbstractFix {
 
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
         final RunResult<SmartPsiElementPointer<XmlTag>> result = new WriteAction<SmartPsiElementPointer<XmlTag>>() {
-            protected void run(Result<SmartPsiElementPointer<XmlTag>> result) throws Throwable {
+            protected void run(@NotNull Result<SmartPsiElementPointer<XmlTag>> result) throws Throwable {
                 final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);
 
                 withParamTag.setAttribute("name", myName != null ? myName : "dummy");
@@ -102,7 +102,7 @@ public class AddWithParamFix extends AbstractFix {
 
         new WriteAction() {
             @SuppressWarnings({ "RawUseOfParameterizedType" })
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
                 final TemplateManager mgr = TemplateManager.getInstance(myTag.getProject());
                 mgr.startTemplate(editor, builder.buildInlineTemplate());

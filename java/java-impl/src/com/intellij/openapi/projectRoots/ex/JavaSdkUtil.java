@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,12 @@ package com.intellij.openapi.projectRoots.ex;
 import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class JavaSdkUtil {
   @NonNls public static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
@@ -35,24 +40,21 @@ public class JavaSdkUtil {
 
 
   public static String getJunit4JarPath() {
-    try {
-      return PathUtil.getJarPathForClass(Class.forName("org.junit.Test"));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
   }
 
   public static String getJunit3JarPath() {
-    try {
-      return PathUtil.getJarPathForClass(Class.forName("junit.runner.TestSuiteLoader")); //junit3 specific class
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    return PathUtil.getJarPathForClass(ReflectionUtil.forName("junit.runner.TestSuiteLoader")); //junit3 specific class
   }
 
   public static String getIdeaRtJarPath() {
     return PathUtil.getJarPathForClass(JavacRunner.class);
+  }
+
+  @NotNull
+  public static List<String> getJUnit4JarPaths() {
+    return Arrays.asList(getJunit4JarPath(),
+                         PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matcher")),
+                         PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matchers")));
   }
 }

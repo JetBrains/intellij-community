@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +37,7 @@ import java.util.List;
  */
 public class ProjectNode extends ExternalSystemNode<ProjectData> {
   private String myTooltipCache;
+  private boolean singleModuleProject = false;
 
   public ProjectNode(ExternalProjectsView externalProjectsView, DataNode<ProjectData> projectDataNode) {
     super(externalProjectsView, null, projectDataNode);
@@ -62,8 +64,20 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
         return node.isVisible();
       }
     });
-    //noinspection unchecked
-    return visibleChildren.size() == 1 ? children.get(0).doBuildChildren() : children;
+    if (visibleChildren.size() == 1 && visibleChildren.get(0).getName().equals(getName())) {
+      singleModuleProject = true;
+      //noinspection unchecked
+      return visibleChildren.get(0).doBuildChildren();
+    }
+    else {
+      singleModuleProject = false;
+      return visibleChildren;
+    }
+  }
+
+  public boolean isSingleModuleProject() {
+    getChildren();
+    return singleModuleProject;
   }
 
   void updateProject() {
@@ -100,30 +114,22 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   private String makeDescription() {
     StringBuilder desc = new StringBuilder();
     final ProjectData projectData = getData();
-    desc.append("<html>" +
-                "<table>" +
-                "<tr>" +
-                "<td nowrap>" +
-                "<table>" +
-                "<tr>" +
-                "<td nowrap>Project:</td>" +
-                "<td nowrap>").append(getName())
-      .append("</td>" +
-              "</tr>")
-      .append(projectData != null ?
+    desc
+      .append("<table>" +
               "<tr>" +
-              "<td nowrap>Location:</td>" +
-              "<td nowrap>" + projectData.getLinkedExternalProjectPath() : "")
-      .append("</td>" +
-              "</tr>" +
+              "<td nowrap>" +
+              "<table>" +
+              "<tr><td nowrap>Project:</td><td nowrap>").append(getName()).append("</td></tr>")
+      .append(projectData != null ?
+              "<tr><td nowrap>Location:</td><td nowrap>" + projectData.getLinkedExternalProjectPath() + "</td></tr>" : "")
+      .append(projectData != null && !StringUtil.isEmptyOrSpaces(projectData.getDescription()) ?
+              "<tr><td colspan='2' nowrap><hr align='center' width='90%' />" + projectData.getDescription() + "</td></tr>" : "")
+      .append("</td></tr>" +
               "</table>" +
               "</td>" +
               "</tr>");
-
     appendProblems(desc);
-
-    desc.append("</table></html>");
-
+    desc.append("</table>");
     return desc.toString();
   }
 

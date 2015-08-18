@@ -55,6 +55,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +78,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final List<AbstractFilePatchInProgress> myPatches;
   private final List<ShelveChangesManager.ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   private final MyChangeTreeList myChangesTreeList;
+  @Nullable private final Collection<Change> myPreselectedChanges;
 
   private JComponent myCenterPanel;
   private final Project myProject;
@@ -103,14 +105,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode,
                                         @NotNull final VirtualFile patchFile,
-                                        List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches) {
-    this(project, callback, executors, applyPatchMode, patchFile, null, null, binaryShelvedPatches);
+                                        List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches,
+                                        @Nullable Collection<Change> preselectedChanges) {
+    this(project, callback, executors, applyPatchMode, patchFile, null, null, binaryShelvedPatches, preselectedChanges);
   }
 
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
-    this(project, callback, executors, applyPatchMode, patchFile, null, null, null);
+    this(project, callback, executors, applyPatchMode, patchFile, null, null, null, null);
   }
 
   public ApplyPatchDifferentiatedDialog(final Project project,
@@ -119,7 +122,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @NotNull final ApplyPatchMode applyPatchMode,
                                         @NotNull final List<TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList) {
-    this(project, callback, executors, applyPatchMode, null, patches, defaultList, null);
+    this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null);
   }
 
   private ApplyPatchDifferentiatedDialog(final Project project,
@@ -129,7 +132,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                          @Nullable final VirtualFile patchFile,
                                          @Nullable final List<TextFilePatch> patches,
                                          @Nullable final LocalChangeList defaultList,
-                                         @Nullable List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches) {
+                                         @Nullable List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches,
+                                         @Nullable Collection<Change> preselectedChanges) {
     super(project, true);
     myCallback = callback;
     myExecutors = executors;
@@ -143,6 +147,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatches = new LinkedList<AbstractFilePatchInProgress>();
     myRecentPathFileChange = new AtomicReference<FilePresentation>();
     myBinaryShelvedPatches = binaryShelvedPatches;
+    myPreselectedChanges = preselectedChanges;
     myChangesTreeList = new MyChangeTreeList(project, Collections.<AbstractFilePatchInProgress.PatchChange>emptyList(),
                                              new Runnable() {
                                                public void run() {
@@ -287,6 +292,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  @CalledInAwt
   private void runExecutor(ApplyPatchExecutor executor) {
     final Collection<AbstractFilePatchInProgress> included = getIncluded();
     if (included.isEmpty()) return;
@@ -634,7 +640,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       for (AbstractFilePatchInProgress.PatchChange change : changes) {
         acceptChange(totalTrinity, change);
         final AbstractFilePatchInProgress abstractFilePatchInProgress = change.getPatchInProgress();
-        if (abstractFilePatchInProgress.baseExistsOrAdded()) {
+        if (abstractFilePatchInProgress.baseExistsOrAdded() && (myPreselectedChanges == null || myPreselectedChanges.contains(change))) {
           acceptChange(includedTrinity, change);
           included.add(change);
         }

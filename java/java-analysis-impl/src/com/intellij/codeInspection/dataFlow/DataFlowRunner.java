@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,8 +100,10 @@ public class DataFlowRunner {
                                           boolean ignoreAssertions,
                                           @NotNull Collection<DfaMemoryState> initialStates) {
     try {
-      final ControlFlow flow = createControlFlowAnalyzer().buildControlFlow(psiBlock, ignoreAssertions);
+      ControlFlowAnalyzer analyzer = createControlFlowAnalyzer();
+      final ControlFlow flow = analyzer.buildControlFlow(psiBlock, ignoreAssertions);
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
+      int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
@@ -143,7 +147,8 @@ public class DataFlowRunner {
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
       int count = 0;
       while (!queue.isEmpty()) {
-        for (DfaInstructionState instructionState : queue.getNextInstructionStates(joinInstructions)) {
+        List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
+        for (DfaInstructionState instructionState : states) {
           if (count++ % 1024 == 0 && measurer.isTimeOver()) {
             LOG.debug("Too complex because the analysis took too long");
             psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
@@ -168,7 +173,9 @@ public class DataFlowRunner {
               LOG.debug("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX; // Too complex :(
             }
-            processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
+            if (loopNumber[branching.getIndex()] != 0) {
+              processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
+            }
           }
 
           DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
@@ -177,13 +184,16 @@ public class DataFlowRunner {
             if (nextInstruction.getIndex() >= endOffset) {
               continue;
             }
+            handleStepOutOfLoop(instruction, nextInstruction, loopNumber, processedStates, incomingStates, states, after, queue);
             if (nextInstruction instanceof BranchingInstruction) {
               BranchingInstruction branching = (BranchingInstruction)nextInstruction;
               if (processedStates.get(branching).contains(state.getMemoryState()) || 
                   incomingStates.get(branching).contains(state.getMemoryState())) {
                 continue;
               }
-              incomingStates.putValue(branching, state.getMemoryState().createCopy());
+              if (loopNumber[branching.getIndex()] != 0) {
+                incomingStates.putValue(branching, state.getMemoryState().createCopy());
+              }
             }
             queue.offer(state);
           }
@@ -202,6 +212,61 @@ public class DataFlowRunner {
       LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  private void handleStepOutOfLoop(@NotNull final Instruction prevInstruction,
+                                   @NotNull Instruction nextInstruction,
+                                   @NotNull final int[] loopNumber,
+                                   MultiMap<BranchingInstruction, DfaMemoryState> processedStates,
+                                   MultiMap<BranchingInstruction, DfaMemoryState> incomingStates,
+                                   List<DfaInstructionState> inFlightStates,
+                                   DfaInstructionState[] afterStates, StateQueue queue) {
+    if (loopNumber[prevInstruction.getIndex()] == 0 || inSameLoop(prevInstruction, nextInstruction, loopNumber)) {
+      return;
+    }
+    // stepped out of loop. destroy all memory states from the loop, we don't need them anymore
+
+    // but do not touch yet states being handled right now
+    for (DfaInstructionState state : inFlightStates) {
+      Instruction instruction = state.getInstruction();
+      if (inSameLoop(prevInstruction, instruction, loopNumber)) {
+        return;
+      }
+    }
+    for (DfaInstructionState state : afterStates) {
+      Instruction instruction = state.getInstruction();
+      if (inSameLoop(prevInstruction, instruction, loopNumber)) {
+        return;
+      }
+    }
+    // and still in queue
+    if (!queue.processAll(new Processor<DfaInstructionState>() {
+      @Override
+      public boolean process(DfaInstructionState state) {
+        Instruction instruction = state.getInstruction();
+        if (inSameLoop(prevInstruction, instruction, loopNumber)) {
+          return false;
+        }
+        return true;
+      }
+    })) return;
+
+    // now remove obsolete memory states
+    final Set<BranchingInstruction> mayRemoveStatesFor = new THashSet<BranchingInstruction>();
+    for (Instruction instruction : myInstructions) {
+      if (inSameLoop(prevInstruction, instruction, loopNumber) && instruction instanceof BranchingInstruction) {
+        mayRemoveStatesFor.add((BranchingInstruction)instruction);
+      }
+    }
+
+    for (Instruction instruction : mayRemoveStatesFor) {
+      processedStates.remove((BranchingInstruction)instruction);
+      incomingStates.remove((BranchingInstruction)instruction);
+    }
+  }
+
+  private static boolean inSameLoop(@NotNull Instruction prevInstruction, @NotNull Instruction nextInstruction, @NotNull int[] loopNumber) {
+    return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
   }
 
   protected boolean shouldCheckTimeLimit() {

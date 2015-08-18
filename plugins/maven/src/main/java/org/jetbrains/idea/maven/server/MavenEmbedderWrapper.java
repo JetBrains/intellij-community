@@ -83,6 +83,20 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     });
   }
 
+  public void customizeForGetVersions() {
+    perform(new Retriable<Object>() {
+      @Override
+      public Object execute() throws RemoteException {
+        doCustomizeComponents();
+        return null;
+      }
+    });
+  }
+
+  private synchronized void doCustomizeComponents() throws RemoteException {
+    getOrCreateWrappee().customizeComponents();
+  }
+
   private synchronized void doCustomize() throws RemoteException {
     getOrCreateWrappee().customize(myCustomization.workspaceMap,
                                    myCustomization.failOnUnresolvedDependency,
@@ -137,6 +151,19 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
       @Override
       public List<MavenArtifact> execute() throws RemoteException, MavenServerProcessCanceledException {
         return getOrCreateWrappee().resolveTransitively(artifacts, remoteRepositories);
+      }
+    });
+  }
+
+  @NotNull
+  public List<String> retrieveVersions(@NotNull final String groupId,
+                                       @NotNull final String artifactId,
+                                       @NotNull final String remoteRepository) throws MavenProcessCanceledException {
+
+    return perform(new RetriableCancelable<List<String>>() {
+      @Override
+      public List<String> execute() throws RemoteException, MavenServerProcessCanceledException {
+        return getOrCreateWrappee().retrieveAvailableVersions(groupId, artifactId, remoteRepository);
       }
     });
   }

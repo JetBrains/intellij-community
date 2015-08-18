@@ -28,7 +28,6 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.execution.filters.ExceptionFilters;
@@ -461,8 +460,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
-  public abstract CompletionEditor createEditor(Project project, PsiElement context, @NonNls String recentsId);
-
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
     CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
@@ -886,4 +883,21 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   };
 
+  public static void disableCollection(ObjectReference reference) {
+    try {
+      reference.disableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
+  }
+
+  public static void enableCollection(ObjectReference reference) {
+    try {
+      reference.enableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
+  }
 }

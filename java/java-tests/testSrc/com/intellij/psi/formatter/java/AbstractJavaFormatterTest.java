@@ -244,7 +244,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     );
   }
 
-  private static String loadFile(String name) {
+  protected static String loadFile(String name) {
     String fullName = BASE_PATH + File.separatorChar + name;
     try {
       String text = FileUtil.loadFile(new File(fullName));

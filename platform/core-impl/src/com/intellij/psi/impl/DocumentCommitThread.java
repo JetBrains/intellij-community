@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +36,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,24 +157,30 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   }
 
   @Override
-  public void commitAsynchronously(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
-    queueCommit(project, document, reason);
+  public void commitAsynchronously(@NotNull final Project project,
+                                   @NotNull final Document document,
+                                   @NonNls @NotNull Object reason,
+                                   @NotNull ModalityState currentModalityState) {
+    queueCommit(project, document, reason, currentModalityState);
   }
 
-  public void queueCommit(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
+  void queueCommit(@NotNull final Project project,
+                   @NotNull final Document document,
+                   @NonNls @NotNull Object reason,
+                   @NotNull ModalityState currentModalityState) {
     assert !isDisposed : "already disposed";
 
     if (!project.isInitialized()) return;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     if (psiFile == null) return;
 
-    doQueue(project, document, reason);
+    doQueue(project, document, reason, currentModalityState);
   }
 
-  private void doQueue(@NotNull Project project, @NotNull Document document, @NotNull Object reason) {
+  private void doQueue(@NotNull Project project, @NotNull Document document, @NotNull Object reason, @NotNull ModalityState currentModalityState) {
     synchronized (documentsToCommit) {
       ProgressIndicator indicator = createProgressIndicator();
-      CommitTask newTask = new CommitTask(document, project, indicator, reason);
+      CommitTask newTask = new CommitTask(document, project, indicator, reason, currentModalityState);
 
       markRemovedFromDocsToCommit(newTask);
       markRemovedCurrentTask(newTask);
@@ -228,7 +234,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   // cancels all pending commits
   @TestOnly
-  public void cancelAll() {
+  private void cancelAll() {
     synchronized (documentsToCommit) {
       cancel("cancel all in tests");
       markRemovedFromDocsToCommit(null);
@@ -358,7 +364,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
       if (success) {
         assert !myApplication.isDispatchThread();
-        UIUtil.invokeLaterIfNeeded(finishRunnable);
+        myApplication.invokeLater(finishRunnable, task.myCreationModalityState);
         log("Invoked later finishRunnable", task, false, finishRunnable, indicator);
       }
     }
@@ -379,7 +385,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     synchronized (documentsToCommit) {
       if (!success && !task.removed) { // sync commit has not intervened
         // reset status for queue back successfully
-        doQueue(project, document, "re-added on failure");
+        doQueue(project, document, "re-added on failure", task.myCreationModalityState);
       }
       currentTask = null; // do not cancel, it's being invokeLatered
     }
@@ -402,7 +408,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
 
     ProgressIndicator indicator = createProgressIndicator();
-    CommitTask task = new CommitTask(document, project, indicator, "Sync commit");
+    CommitTask task = new CommitTask(document, project, indicator, "Sync commit", ModalityState.current());
     synchronized (documentsToCommit) {
       markRemovedFromDocsToCommit(task);
       markRemovedCurrentTask(task);
@@ -529,7 +535,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         }
         if (!success) {
           // add document back to the queue
-          queueCommit(project, document, "Re-added back");
+          queueCommit(project, document, "Re-added back", task.myCreationModalityState);
         }
       }
     };

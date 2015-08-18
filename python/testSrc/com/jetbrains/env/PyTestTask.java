@@ -2,6 +2,8 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -75,7 +77,20 @@ public abstract class PyTestTask {
     return myWorkingFolder;
   }
 
+  /**
+   * @return tags this task needs to exist on interpreter to run
+   */
+  @NotNull
   public Set<String> getTags() {
     return Sets.newHashSet();
+  }
+
+  /**
+   * Checks if task supports this language level
+   * @param level level to check
+   * @return true if supports
+   */
+  public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+    return true;
   }
 }

@@ -36,6 +36,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -57,7 +58,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ExecutionManagerImpl extends ExecutionManager implements Disposable {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
@@ -72,6 +75,12 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     ContainerUtil.createLockFreeCopyOnWriteList();
   private RunContentManagerImpl myContentManager;
   private volatile boolean myForceCompilationInTests;
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @NotNull
+  public static ExecutionManagerImpl getInstance(@NotNull Project project) {
+    return (ExecutionManagerImpl)ServiceManager.getService(project, ExecutionManager.class);
+  }
 
   protected ExecutionManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -366,7 +375,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
           final RunContentDescriptor descriptor = starter.execute(state, environment);
           if (descriptor != null) {
-            environment.setContentToReuse(descriptor);
             final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
               Trinity.create(descriptor, environment.getRunnerAndConfigurationSettings(), executor);
             myRunningConfigurations.add(trinity);
@@ -386,6 +394,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
               started = true;
               processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
             }
+            environment.setContentToReuse(descriptor);
           }
         }
         catch (ProcessCanceledException e) {
@@ -527,15 +536,24 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   }
 
   @NotNull
-  private List<RunContentDescriptor> getRunningDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
+  public List<RunContentDescriptor> getRunningDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
     List<RunContentDescriptor> result = new SmartList<RunContentDescriptor>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (condition.value(trinity.getSecond())) {
         ProcessHandler processHandler = trinity.getFirst().getProcessHandler();
-        if (processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated()) {
+        if (processHandler != null /*&& !processHandler.isProcessTerminating()*/ && !processHandler.isProcessTerminated()) {
           result.add(trinity.getFirst());
         }
       }
+    }
+    return result;
+  }
+
+  @NotNull
+  public Set<Executor> getExecutors(RunContentDescriptor descriptor) {
+    Set<Executor> result = new HashSet<Executor>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (descriptor == trinity.first) result.add(trinity.third);
     }
     return result;
   }
@@ -557,7 +575,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
 
-      SaveAndSyncHandler.getInstance().scheduleRefresh();
+      SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
+      if (saveAndSyncHandler != null) {
+        saveAndSyncHandler.scheduleRefresh();
+      }
     }
 
     @Override

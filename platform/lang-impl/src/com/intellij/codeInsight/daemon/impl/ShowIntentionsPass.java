@@ -258,9 +258,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     else if (result == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
       myHasToRecreate = true;
     }
-    else {
-      myShowBulb = false;  // nothing to apply
-    }
   }
 
   public static void getActionsToShow(@NotNull final Editor hostEditor,
@@ -271,7 +268,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
 
     int offset = hostEditor.getCaretModel().getOffset();
-    Project project = hostFile.getProject();
+    final Project project = hostFile.getProject();
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
@@ -318,7 +315,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                   hostDocument.getLineEndOffset(line), new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
-          GutterIntentionAction.addActions(highlighter, intentions.guttersToShow);
+          GutterIntentionAction.addActions(project, hostEditor, hostFile, highlighter, intentions.guttersToShow);
           return true;
         }
       });

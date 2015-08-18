@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,18 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
 
@@ -48,7 +47,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   @Override
   protected ModifiableArtifactModel doGetArtifactModel() {
     return new ReadAction<ModifiableArtifactModel>() {
-      protected void run(final Result<ModifiableArtifactModel> result) {
+      protected void run(@NotNull final Result<ModifiableArtifactModel> result) {
         result.setResult(ArtifactManager.getInstance(myProject).createModifiableModel());
       }
     }.execute().getResultObject();
@@ -68,7 +67,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   @Override
   protected ModifiableRootModel doGetRootModel(@NotNull final Module module) {
     return new ReadAction<ModifiableRootModel>() {
-      protected void run(Result<ModifiableRootModel> result) throws Throwable {
+      protected void run(@NotNull Result<ModifiableRootModel> result) throws Throwable {
         result.setResult(ModuleRootManager.getInstance(module).getModifiableModel());
       }
     }.execute().getResultObject();

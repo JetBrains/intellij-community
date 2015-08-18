@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,12 +48,10 @@ import java.util.List;
  */
 public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements HighPriorityAction {
 
-  private final PsiReference myReference;
-
-  private final List<ImportCandidateHolder> myImports; // from where and what to import
-  private final String myInitialName;
-
-  boolean myUseQualifiedImport;
+  protected final PsiReference myReference;
+  protected final List<ImportCandidateHolder> myImports; // from where and what to import
+  protected final String myInitialName;
+  protected final boolean myUseQualifiedImport;
   private boolean myExpended;
 
   /**
@@ -61,10 +60,15 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
    * @param name name to import
    * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name"
    */
-  public AutoImportQuickFix(PsiElement node, PsiReference reference, String name, boolean qualify) {
+  public AutoImportQuickFix(@NotNull PsiElement node, @NotNull PsiReference reference, @NotNull String name, boolean qualify) {
+    this(node, reference, name, qualify, Collections.<ImportCandidateHolder>emptyList());
+  }
+
+  protected AutoImportQuickFix(@NotNull PsiElement node, @NotNull PsiReference reference, @NotNull String name, boolean qualify,
+                               @NotNull Collection<ImportCandidateHolder> candidates) {
     super(node);
     myReference = reference;
-    myImports = new ArrayList<ImportCandidateHolder>();
+    myImports = new ArrayList<ImportCandidateHolder>(candidates);
     myInitialName = name;
     myUseQualifiedImport = qualify;
     myExpended = false;
@@ -98,16 +102,16 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   public String getText() {
     if (myUseQualifiedImport) return PyBundle.message("ACT.qualify.with.module");
     else if (myImports.size() == 1) {
-      return "Import '" + myImports.get(0).getPresentableText(myInitialName) + "'";
+      return PyBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText(myInitialName));
     }
     else {
-      return PyBundle.message("ACT.NAME.use.import");
+      return PyBundle.message("QFIX.auto.import.import.this.name");
     }
   }
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("ACT.FAMILY.import");
+    return PyBundle.message("QFIX.auto.import.family");
   }
 
   public boolean showHint(Editor editor) {
@@ -199,12 +203,17 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
 
   @NotNull
   public AutoImportQuickFix forLocalImport() {
-    return new AutoImportQuickFix(getStartElement(), myReference, myInitialName, myUseQualifiedImport) {
-
+    return new AutoImportQuickFix(getStartElement(), myReference, myInitialName, myUseQualifiedImport, myImports) {
       @NotNull
       @Override
       public String getFamilyName() {
-        return "import locally";
+        return PyBundle.message("QFIX.local.auto.import.family");
+      }
+
+      @NotNull
+      @Override
+      public String getText() {
+        return PyBundle.message("QFIX.local.auto.import.import.locally", super.getText());
       }
 
       @NotNull

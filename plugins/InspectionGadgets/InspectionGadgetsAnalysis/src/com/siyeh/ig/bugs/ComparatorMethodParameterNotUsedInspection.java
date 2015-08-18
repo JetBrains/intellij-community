@@ -81,12 +81,12 @@ public class ComparatorMethodParameterNotUsedInspection
     }
 
     private static class ParameterAccessVisitor
-      extends JavaRecursiveElementVisitor {
+      extends JavaRecursiveElementWalkingVisitor {
 
       private final Set<PsiParameter> parameters;
 
-      ParameterAccessVisitor(@NotNull PsiParameter[] parameters) {
-        this.parameters = new HashSet(Arrays.asList(parameters));
+      private ParameterAccessVisitor(@NotNull PsiParameter[] parameters) {
+        this.parameters = new HashSet<PsiParameter>(Arrays.asList(parameters));
       }
 
       @Override
@@ -109,7 +109,7 @@ public class ComparatorMethodParameterNotUsedInspection
         parameters.remove(parameter);
       }
 
-      public Collection<PsiParameter> getUnusedParameters() {
+      private Collection<PsiParameter> getUnusedParameters() {
         return Collections.unmodifiableSet(parameters);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -133,7 +134,7 @@ public class FindUsagesTest extends PsiTestCase{
     try {
       new WriteCommandAction(getProject()) {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
           moduleModel.newModule("independent/independent.iml", StdModuleTypes.JAVA.getId());
           moduleModel.commit();

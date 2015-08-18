@@ -23,7 +23,10 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -394,15 +397,20 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (PsiElement element : myElements) {
-        for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
-          if (delegate.handlesElement(element)) {
-            delegate.prepareForDeletion(element);
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+        @Override
+        public void run() {
+          for (PsiElement element : myElements) {
+            for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+              if (delegate.handlesElement(element)) {
+                delegate.prepareForDeletion(element);
+              }
+            }
+
+            element.delete();
           }
         }
-
-        element.delete();
-      }
+      });
     } catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }

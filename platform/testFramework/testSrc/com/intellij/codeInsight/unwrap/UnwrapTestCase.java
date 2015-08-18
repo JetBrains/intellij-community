@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,10 +12,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
-  public UnwrapTestCase() {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
-
   protected void assertUnwrapped(String codeBefore, String expectedCodeAfter) throws Exception {
     assertUnwrapped(codeBefore, expectedCodeAfter, 0);
   }

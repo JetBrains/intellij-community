@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.psi.impl.compiled;
 
@@ -31,19 +27,21 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
 import java.util.List;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+/**
+ * @author max
+ */
 public class SignatureParsing {
   private SignatureParsing() { }
 
   public static PsiTypeParameterListStub parseTypeParametersDeclaration(CharacterIterator iterator, StubElement parentStub) throws ClsFormatException {
     PsiTypeParameterListStub list = new PsiTypeParameterListStubImpl(parentStub);
+
     if (iterator.current() == '<') {
       iterator.next();
       while (iterator.current() != '>') {
@@ -122,8 +120,9 @@ public class SignatureParsing {
   private static String parseParameterizedClassRefSignature(CharacterIterator signature) throws ClsFormatException {
     assert signature.current() == 'L';
 
+    StringBuilder canonicalText = new StringBuilder();
+
     signature.next();
-    StringBuffer canonicalText = new StringBuffer();
     while (signature.current() != ';' && signature.current() != CharacterIterator.DONE) {
       switch (signature.current()) {
         case '$':
@@ -131,14 +130,15 @@ public class SignatureParsing {
             char previous = signature.previous();
             signature.next();
             boolean standAlone$ = !StringUtil.isJavaIdentifierPart(previous); // /$
-            if(standAlone$) {
+            if (standAlone$) {
               canonicalText.append('$');
               break;
-            } else if (signature.getIndex() + 1 < signature.getEndIndex()) {
+            }
+            else if (signature.getIndex() + 1 < signature.getEndIndex()) {
               char next = signature.next();
               signature.previous();
               standAlone$ = !StringUtil.isJavaIdentifierPart(next); // $;
-              if(standAlone$) {
+              if (standAlone$) {
                 canonicalText.append('$');
                 break;
               }
@@ -183,7 +183,7 @@ public class SignatureParsing {
     return canonicalText.toString();
   }
 
-  private static void processTypeArgument(CharacterIterator signature, StringBuffer canonicalText) throws ClsFormatException {
+  private static void processTypeArgument(CharacterIterator signature, StringBuilder canonicalText) throws ClsFormatException {
     String typeArgument = parseClassOrTypeVariableElement(signature);
     canonicalText.append(typeArgument);
     if (signature.current() != '>') {
@@ -221,8 +221,8 @@ public class SignatureParsing {
   private static final char VARIANCE_EXTENDS = '+';
   private static final char VARIANCE_SUPER = '-';
   private static final char VARIANCE_INVARIANT = '*';
-  @NonNls private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
-  @NonNls private static final String VARIANCE_SUPER_PREFIX = "? super ";
+  private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
+  private static final String VARIANCE_SUPER_PREFIX = "? super ";
 
   private static String decorateTypeText(final String canonical, final char variance) {
     switch (variance) {
@@ -269,10 +269,13 @@ public class SignatureParsing {
     }
 
     char variance = parseVariance(signature);
-    @NonNls String text = parseTypeWithoutVariance(signature);
+
+    String text = parseTypeWithoutVariance(signature);
     if (text == null) throw new ClsFormatException();
 
-    for (int i = 0; i < arrayDimensions; i++) text += "[]";
+    for (int i = 0; i < arrayDimensions; i++) {
+      text += "[]";
+    }
     if (variance != '\0') {
       text = variance + text;
     }

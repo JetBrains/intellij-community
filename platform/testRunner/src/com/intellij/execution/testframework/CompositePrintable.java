@@ -70,6 +70,17 @@ public class CompositePrintable implements Printable, Disposable {
     }
     myWrapper.printOn(printer, printables);
   }
+  
+  public void printOwnPrintablesOn(final Printer printer) {
+    final ArrayList<Printable> printables = new ArrayList<Printable>();
+    synchronized (myNestedPrintables) {
+      for (Printable printable : myNestedPrintables) {
+        if (printable instanceof AbstractTestProxy) continue;
+        printables.add(printable);
+      }
+    }
+    myWrapper.printOn(printer, printables);
+  }
 
   public void addLast(@NotNull final Printable printable) {
     synchronized (myNestedPrintables) {

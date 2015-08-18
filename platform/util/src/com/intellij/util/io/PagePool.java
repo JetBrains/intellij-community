@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ public class PagePool {
   private PoolPageKey lastFinalizedKey = null;
 
   public PagePool(final int protectedPagesLimit, final int probationalPagesLimit) {
-    myProbationalQueue = new LinkedHashMap<PoolPageKey,Page>(probationalPagesLimit * 2, 0.6f, true) {
+    myProbationalQueue = new LinkedHashMap<PoolPageKey,Page>(probationalPagesLimit * 2, 1, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
         if (size() > probationalPagesLimit) {
@@ -56,7 +57,7 @@ public class PagePool {
       }
     };
 
-    myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>(protectedPagesLimit, 0.6f, true) {
+    myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>(protectedPagesLimit, 1, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
         if (size() > protectedPagesLimit) {
@@ -75,7 +76,10 @@ public class PagePool {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int probational_queue_hits = 0;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int finalization_queue_hits = 0;
 
-  public static final PagePool SHARED = new PagePool(500, 500);
+  public static final PagePool SHARED = new PagePool(
+    SystemProperties.getIntProperty("idea.io.protected.pool.size", 256), // 256 * 8 = 2M
+    SystemProperties.getIntProperty("idea.io.probatonal.pool.size", 256)
+  );
 
   private RandomAccessDataFile lastOwner = null;
   private long lastOffset = 0;
@@ -136,7 +140,7 @@ public class PagePool {
   }
 
   //private long lastFlushTime = 0;
-  
+
   private static double percent(int part, int whole) {
     return ((double)part * 1000 / whole) / 10;
   }

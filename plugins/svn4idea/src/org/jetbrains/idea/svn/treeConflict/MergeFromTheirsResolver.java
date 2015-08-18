@@ -256,7 +256,7 @@ public class MergeFromTheirsResolver {
 
       final PatchApplier<BinaryFilePatch> patchApplier =
         new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null, null);
-      patchApplier.scheduleSelf(false, myInner, true);  // 3
+      patchApplier.execute(false, true);  // 3
       boolean thereAreCreations = false;
       for (FilePatch patch : patches) {
         if (patch.isNewFile() || ! Comparing.equal(patch.getAfterName(), patch.getBeforeName())) {

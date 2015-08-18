@@ -24,13 +24,14 @@ package com.intellij.psi.util.proximity;
 
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingComparable;
 import com.intellij.psi.WeighingService;
+import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.util.ProcessingContext;
@@ -43,18 +44,22 @@ import java.util.Comparator;
 public class PsiProximityComparator implements Comparator<Object> {
   public static final Key<ProximityStatistician> STATISTICS_KEY = Key.create("proximity");
   public static final Key<ProximityWeigher> WEIGHER_KEY = Key.create("proximity");
-  private static final Weigher<PsiElement, ProximityLocation>[] PROXIMITY_WEIGHERS = ContainerUtil.toArray(WeighingService.getWeighers(WEIGHER_KEY), new Weigher[0]);
-  private final PsiElement myContext;
-  private final FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>> myProximities = new FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>>() {
+  @SuppressWarnings("unchecked") private static final Weigher<PsiElement, ProximityLocation>[] PROXIMITY_WEIGHERS = ContainerUtil.toArray(WeighingService.getWeighers(WEIGHER_KEY), new Weigher[0]);
+  private static final Key<Module> MODULE_BY_LOCATION = Key.create("ModuleByLocation");
+
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>> myProximities = new FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>>() {
     @Override
     protected WeighingComparable<PsiElement, ProximityLocation> create(final PsiElement key) {
       return getProximity(key, myContext);
     }
   };
-  private static final Key<Module> MODULE_BY_LOCATION = Key.create("ModuleByLocation");
+
+  private final PsiElement myContext;
+  private final Module myContextModule;
 
   public PsiProximityComparator(@Nullable PsiElement context) {
     myContext = context;
+    myContextModule = context == null ? null : ModuleUtilCore.findModuleForPsiElement(context);
   }
 
   @Override
@@ -64,24 +69,26 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (element1 == null) return element2 == null ? 0 : 1;
     if (element2 == null) return -1;
 
+    if (myContext != null && myContextModule != null) {
+      final ProximityLocation location = new ProximityLocation(myContext, myContextModule);
+      StatisticsInfo info1 = StatisticsManager.serialize(STATISTICS_KEY, element1, location);
+      StatisticsInfo info2 = StatisticsManager.serialize(STATISTICS_KEY, element2, location);
+      if (info1 != null && info2 != null) {
+        StatisticsManager statisticsManager = StatisticsManager.getInstance();
+        int count1 = statisticsManager.getLastUseRecency(info1);
+        int count2 = statisticsManager.getLastUseRecency(info2);
+        if (count1 != count2) {
+          return count1 < count2 ? -1 : 1;
+        }
+      }
+    }
+
     final WeighingComparable<PsiElement, ProximityLocation> proximity1 = myProximities.get(element1);
     final WeighingComparable<PsiElement, ProximityLocation> proximity2 = myProximities.get(element2);
     if (proximity1 == null || proximity2 == null) {
       return 0;
     }
-    if (!proximity1.equals(proximity2)) {
-      return - proximity1.compareTo(proximity2);
-    }
-
-    if (myContext == null) return 0;
-    Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
-    if (contextModule == null) return 0;
-
-    StatisticsManager statisticsManager = StatisticsManager.getInstance();
-    final ProximityLocation location = new ProximityLocation(myContext, contextModule);
-    int count1 = statisticsManager.getUseCount(STATISTICS_KEY, element1, location);
-    int count2 = statisticsManager.getUseCount(STATISTICS_KEY, element1, location);
-    return count2 - count1;
+    return -proximity1.compareTo(proximity2);
   }
 
 
@@ -89,13 +96,8 @@ public class PsiProximityComparator implements Comparator<Object> {
   public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final PsiElement element, final PsiElement context) {
     if (element == null) return null;
     if (element instanceof MetadataPsiElementBase) return null;
-    final Module contextModule = context != null ? ModuleUtil.findModuleForPsiElement(context) : null;
+    final Module contextModule = context != null ? ModuleUtilCore.findModuleForPsiElement(context) : null;
     return WeighingService.weigh(WEIGHER_KEY, element, new ProximityLocation(context, contextModule));
-  }
-
-  @Nullable
-  public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final PsiElement element, final PsiElement context, ProcessingContext processingContext) {
-    return getProximity(new Computable.PredefinedValueComputable<PsiElement>(element), context, processingContext);
   }
 
   @Nullable
@@ -106,7 +108,7 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (context == null) return null;
     Module contextModule = processingContext.get(MODULE_BY_LOCATION);
     if (contextModule == null) {
-      contextModule = ModuleUtil.findModuleForPsiElement(context);
+      contextModule = ModuleUtilCore.findModuleForPsiElement(context);
       processingContext.put(MODULE_BY_LOCATION, contextModule);
     }
 

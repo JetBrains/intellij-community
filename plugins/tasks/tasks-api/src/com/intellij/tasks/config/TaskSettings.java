@@ -25,12 +25,11 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
   name = "TaskSettings",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/tasks.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class TaskSettings implements PersistentStateComponent<TaskSettings> {
-
   public boolean ALWAYS_DISPLAY_COMBO = false;
   public int CONNECTION_TIMEOUT = 5000;
 

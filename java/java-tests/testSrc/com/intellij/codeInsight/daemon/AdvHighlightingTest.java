@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -329,7 +329,6 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testUnusedPublicMethodReferencedViaSubclass() throws Exception {
     UnusedDeclarationInspectionBase deadCodeInspection = new UnusedDeclarationInspectionBase(true);
     enableInspectionTool(deadCodeInspection);
-    //String ref = getTestDataPath() + BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/X.java";
     allowTreeAccessForAllFiles();
 
     doTest(BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/I.java", BASE_PATH + "/unusedPublicMethodRefViaSubclass", true, false);

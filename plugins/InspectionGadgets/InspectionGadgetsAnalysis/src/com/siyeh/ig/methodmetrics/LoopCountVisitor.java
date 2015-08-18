@@ -18,8 +18,8 @@ package com.siyeh.ig.methodmetrics;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class LoopCountVisitor extends JavaRecursiveElementVisitor {
-  private int m_count = 0;
+class LoopCountVisitor extends JavaRecursiveElementWalkingVisitor {
+  private int m_count;
 
 
   @Override

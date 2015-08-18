@@ -20,15 +20,13 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
-
-  private boolean appendedTo = false;
+class StringVariableIsAppendedToVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean appendedTo;
   private final PsiVariable variable;
   private final boolean onlyWarnOnLoop;
 
   StringVariableIsAppendedToVisitor(PsiVariable variable,
                                     boolean onlyWarnOnLoop) {
-    super();
     this.variable = variable;
     this.onlyWarnOnLoop = onlyWarnOnLoop;
   }
@@ -94,7 +92,7 @@ class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
     return false;
   }
 
-  public boolean isAppendedTo() {
+  boolean isAppendedTo() {
     return appendedTo;
   }
 }

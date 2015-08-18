@@ -19,6 +19,7 @@ import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -64,7 +65,7 @@ public class DialogAppender extends AppenderSkeleton {
           Application application = ApplicationManager.getApplication();
           if (application != null) {
             if (application.isHeadlessEnvironment() || application.isDisposed()) return;
-            ContainerUtil.addAll(loggers, application.getComponents(ErrorLogger.class));
+            ContainerUtil.addAll(loggers, ComponentsPackage.getComponents(application, ErrorLogger.class));
           }
 
           appendToLoggers(event, loggers.toArray(new ErrorLogger[loggers.size()]));

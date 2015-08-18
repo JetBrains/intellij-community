@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -114,11 +115,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
-  public void init() {
-  }
-
-  @Override
-  public void loadModuleComponents() {
+  public void init(@NotNull String path, @Nullable final Runnable beforeComponentCreation) {
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -114,9 +117,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return false;
     }
     if (PsiUtil.isLanguageLevel6OrHigher(targetClass)) return true;
-    if (targetClass.isInterface()) return true;
     PsiClass superClass = superMethod.getContainingClass();
-    return !superClass.isInterface();
+    return superClass != null && !superClass.isInterface();
   }
 
   public static List<PsiMethod> overrideOrImplementMethod(PsiClass aClass,
@@ -458,7 +460,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     LOG.assertTrue(aClass.isValid());
     new WriteCommandAction(project, aClass.getContainingFile()) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
     }.execute();

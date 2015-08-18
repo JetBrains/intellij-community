@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -47,10 +44,11 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener, Dumpable {
+public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   
   private static final Key<LogicalPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
+  private static final Key<Boolean> MARK_FOR_UPDATE = Key.create("marked.for.position.update");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -321,7 +319,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
         FoldRegion[] allCollapsed = myFoldTree.fetchCollapsedAt(savedOffset);
         if (allCollapsed.length == 1 && allCollapsed[0] == region) {
-          caret.moveToLogicalPosition(savedPosition);
+          caret.putUserData(MARK_FOR_UPDATE, Boolean.TRUE);
         }
       }
     }
@@ -390,6 +388,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
       FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
       LogicalPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
+      boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
+      
       if (savedPosition != null) {
         int savedOffset = myEditor.logicalPositionToOffset(savedPosition);
         FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
@@ -405,7 +405,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
         positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
       }
 
-      if (moveCaretFromCollapsedRegion && caret.isUpToDate()) {
+      if ((markedForUpdate || moveCaretFromCollapsedRegion) && caret.isUpToDate()) {
         if (offsetToUse >= 0) {
           caret.moveToOffset(offsetToUse);
         }
@@ -418,6 +418,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       }
 
       caret.putUserData(SAVED_CARET_POSITION, savedPosition);
+      caret.putUserData(MARK_FOR_UPDATE, null);
 
       if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
         caret.removeSelection();
@@ -517,6 +518,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
     finally {
       myDocumentChangeProcessed = true;
+    }
+  }
+
+  @Override
+  public void moveTextHappened(int start, int end, int base) {
+    if (!myEditor.getDocument().isInBulkUpdate()) {
+      myFoldTree.rebuild();
     }
   }
 

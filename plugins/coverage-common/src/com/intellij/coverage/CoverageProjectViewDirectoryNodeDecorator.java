@@ -31,11 +31,15 @@ public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageP
       return;
     }
 
+    String informationString = null;
     if (element instanceof PsiDirectory) {
-      final String informationString = coverageAnnotator.getDirCoverageInformationString((PsiDirectory) element, currentSuite, manager);
-      if (informationString != null) {
-        appendCoverageInfo(cellRenderer, informationString);
-      }
+      informationString = coverageAnnotator.getDirCoverageInformationString((PsiDirectory) element, currentSuite, manager);
+    }
+    else if (element instanceof PsiFile) {
+      informationString = coverageAnnotator.getFileCoverageInformationString((PsiFile)element, currentSuite, manager);
+    }
+    if (informationString != null) {
+      appendCoverageInfo(cellRenderer, informationString);
     }
   }
 

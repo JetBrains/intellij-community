@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 
 package com.intellij.uiDesigner.clientProperties;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -51,9 +49,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private final MyTableModel myTableModel = new MyTableModel();
   private final Project myProject;
   private final ClientPropertiesManager myManager;
-  private Splitter mySplitter;
-  final private PropertiesComponent myPropertiesComponent = PropertiesComponent.getInstance();
-  final private static String SPLITTER_PROPORTION_PROPERTY = "ConfigureClientPropertiesDialog.splitterProportion";
+  private JBSplitter mySplitter;
 
   public ConfigureClientPropertiesDialog(final Project project) {
     super(project, true);
@@ -65,12 +61,6 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
   public void save() {
     ClientPropertiesManager.getInstance(myProject).saveFrom(myManager);
-  }
-
-  @Override
-  public void dispose() {
-    myPropertiesComponent.setValue(SPLITTER_PROPORTION_PROPERTY, String.valueOf(mySplitter.getProportion()));
-    super.dispose();
   }
 
   private void updateSelectedProperties() {
@@ -115,7 +105,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     myPropertiesTable.setModel(myTableModel);
 
 
-    mySplitter = new Splitter(false, Float.valueOf(myPropertiesComponent.getValue(SPLITTER_PROPORTION_PROPERTY, "0.5f")));
+    mySplitter = new JBSplitter("ConfigureClientPropertiesDialog.splitterProportion", 0.5f);
     mySplitter.setFirstComponent(
       ToolbarDecorator.createDecorator(myClassTree)
         .setAddAction(new AnActionButtonRunnable() {

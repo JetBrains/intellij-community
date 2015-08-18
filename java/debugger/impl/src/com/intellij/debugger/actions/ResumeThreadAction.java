@@ -17,7 +17,9 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SuspendManagerUtil;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -37,15 +39,21 @@ public class ResumeThreadAction extends DebuggerAction{
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
 
+    if (debugProcess == null) return;
+
     //noinspection ConstantConditions
     for (final DebuggerTreeNodeImpl debuggerTreeNode : selectedNode) {
       final ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
 
       if (threadDescriptor.isSuspended()) {
         final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
-        debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
-          public void contextAction() throws Exception {
-            debugProcess.createResumeThreadCommand(getSuspendContext(), thread).run();
+        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(debugProcess.getSuspendManager(), thread);
+            if (suspendingContext != null) {
+              debugProcess.createResumeThreadCommand(suspendingContext, thread).run();
+            }
             debuggerTreeNode.calcValue();
           }
         });

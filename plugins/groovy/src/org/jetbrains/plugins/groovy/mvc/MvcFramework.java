@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,8 @@ public abstract class MvcFramework {
     return modules;
   }
 
+  @NonNls
+  @NotNull
   public abstract String getApplicationDirectoryName();
 
   public void syncSdkAndLibrariesInPluginsModule(@NotNull Module module) {
@@ -341,10 +343,14 @@ public abstract class MvcFramework {
     RunManagerEx.disableTasks(module.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
   }
 
+  @NonNls
+  @NotNull
   public abstract String getFrameworkName();
+
   public String getDisplayName() {
     return getFrameworkName();
   }
+
   public abstract Icon getIcon(); // 16*16
 
   public abstract Icon getToolWindowIcon(); // 13*13

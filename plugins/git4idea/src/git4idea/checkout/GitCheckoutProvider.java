@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Checkout provider for the Git
  */
-public class GitCheckoutProvider implements CheckoutProvider {
+public class GitCheckoutProvider extends CheckoutProviderEx {
 
   private final Git myGit;
 
@@ -54,9 +54,9 @@ public class GitCheckoutProvider implements CheckoutProvider {
     return "_Git";
   }
 
-  public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
+  public void doCheckout(@NotNull final Project project, @Nullable final Listener listener, @Nullable String predefinedRepositoryUrl) {
     BasicAction.saveAll();
-    GitCloneDialog dialog = new GitCloneDialog(project);
+    GitCloneDialog dialog = new GitCloneDialog(project, predefinedRepositoryUrl);
     if (!dialog.showAndGet()) {
       return;
     }
@@ -118,5 +118,17 @@ public class GitCheckoutProvider implements CheckoutProvider {
     }
     VcsNotifier.getInstance(project).notifyError("Clone failed", result.getErrorOutputAsHtmlString());
     return false;
+  }
+
+  @Override
+  @NotNull
+  public String getVcsId() {
+    return GitVcs.ID;
+  }
+
+  @Override
+  public void doCheckout(@NotNull Project project,
+                         @Nullable Listener listener) {
+    doCheckout(project, listener, null);
   }
 }

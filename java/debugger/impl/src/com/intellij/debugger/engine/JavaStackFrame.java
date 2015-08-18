@@ -30,7 +30,6 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.FrameVariablesTree;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +37,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -209,25 +209,8 @@ public class JavaStackFrame extends XStackFrame {
         }
       }
 
-      final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-      if (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-        if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute())  {
-          final ReferenceType thisRefType = thisObjectReference.referenceType();
-          if (thisRefType instanceof ClassType && location != null
-              && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
-            final ClassType clsType = (ClassType)thisRefType;
-            for (Field field : clsType.fields()) {
-              if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
-                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
-                children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
-              }
-            }
-          }
-        }
-      }
-
       try {
-        buildVariables(debuggerContext, evaluationContext, children, node);
+        buildVariables(debuggerContext, evaluationContext, debugProcess, children, thisObjectReference, location);
         //if (classRenderer.SORT_ASCENDING) {
         //  Collections.sort(myChildren, NodeManagerImpl.getNodeComparator());
         //}
@@ -255,7 +238,29 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   // copied from FrameVariablesTree
-  private void buildVariables(DebuggerContextImpl debuggerContext, EvaluationContextImpl evaluationContext, XValueChildrenList children, XCompositeNode node) throws EvaluateException {
+  private void buildVariables(DebuggerContextImpl debuggerContext,
+                              EvaluationContextImpl evaluationContext,
+                              @NotNull DebugProcessImpl debugProcess,
+                              XValueChildrenList children,
+                              ObjectReference thisObjectReference,
+                              Location location) throws EvaluateException {
+    final Set<String> visibleLocals = new HashSet<String>();
+    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
+      if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute()) {
+        final ReferenceType thisRefType = thisObjectReference.referenceType();
+        if (thisRefType instanceof ClassType && location != null
+            && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
+          for (Field field : thisRefType.fields()) {
+            if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+              final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
+              children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
+              visibleLocals.add(fieldDescriptor.getName());
+            }
+          }
+        }
+      }
+    }
+
     boolean myAutoWatchMode = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     if (evaluationContext == null) {
       return;
@@ -277,14 +282,16 @@ public class JavaStackFrame extends XStackFrame {
           ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
             @Override
             public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return FrameVariablesTree.findReferencedVars(visibleVariables.keySet(), sourcePosition, evalContext);
+              return FrameVariablesTree.findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition, evalContext);
             }
           });
         // add locals
         if (myAutoWatchMode) {
           for (String var : usedVars.first) {
-            final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, visibleVariables.get(var));
-            children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
+            LocalVariableProxyImpl local = visibleVariables.get(var);
+            if (local != null) {
+              children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, local), evaluationContext, myNodeManager));
+            }
           }
         }
         else {

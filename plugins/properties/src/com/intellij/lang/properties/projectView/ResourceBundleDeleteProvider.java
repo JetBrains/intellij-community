@@ -21,6 +21,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -28,29 +29,39 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
  * @author cdr
  */
-class ResourceBundleDeleteProvider implements DeleteProvider {
-  private static final Function<PropertiesFile,PsiElement> MAPPER = new Function<PropertiesFile, PsiElement>() {
+public class ResourceBundleDeleteProvider implements DeleteProvider {
+  private static final Logger LOG = Logger.getInstance(ResourceBundleDeleteProvider.class);
+
+  private static final Function<ResourceBundle, List<PropertiesFile>> MAPPER_RES_BUNDLE_TO_FILES = new Function<ResourceBundle, List<PropertiesFile>>() {
+    @Override
+    public List<PropertiesFile> fun(ResourceBundle resourceBundle) {
+      return resourceBundle.getPropertiesFiles();
+    }
+  };
+
+  private static final Function<PropertiesFile,PsiElement> MAPPER_FILE_AS_PSI_ELEMENT = new Function<PropertiesFile, PsiElement>() {
     @Override
     public PsiElement fun(PropertiesFile propertiesFile) {
       return propertiesFile.getContainingFile();
     }
   };
-  private final ResourceBundle myResourceBundle;
-
-  public ResourceBundleDeleteProvider(ResourceBundle resourceBundle) {
-    myResourceBundle = resourceBundle;
-  }
 
   public void deleteElement(@NotNull DataContext dataContext) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
-    assert project != null;
-    new SafeDeleteHandler().invoke(project, ContainerUtil.map2Array(propertiesFiles, PsiElement.class, MAPPER), dataContext);
+    final ResourceBundle[] resourceBundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
+    if (resourceBundles != null && resourceBundles.length != 0) {
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      LOG.assertTrue(project != null);
+      new SafeDeleteHandler()
+        .invoke(project, map2Array(flatten(map(resourceBundles, MAPPER_RES_BUNDLE_TO_FILES)), PsiElement.class, MAPPER_FILE_AS_PSI_ELEMENT), dataContext);
+    }
   }
 
   public boolean canDeleteElement(@NotNull DataContext dataContext) {

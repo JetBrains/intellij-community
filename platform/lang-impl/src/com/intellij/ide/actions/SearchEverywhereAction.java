@@ -433,8 +433,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (more < newIndex) {
         more = myList.getItemsCount() - 1;
       }
-      ListScrollingUtil.ensureIndexIsVisible(myList, more, forward ? 1 : -1);
-      ListScrollingUtil.ensureIndexIsVisible(myList, newIndex, forward ? 1 : -1);
+      ScrollingUtil.ensureIndexIsVisible(myList, more, forward ? 1 : -1);
+      ScrollingUtil.ensureIndexIsVisible(myList, newIndex, forward ? 1 : -1);
     }
   }
 
@@ -657,7 +657,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myFile = e.getData(CommonDataKeys.PSI_FILE);
     }
     if (e == null && myFocusOwner != null) {
-      e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
+      e = AnActionEvent.createFromAnAction(this, me, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext(myFocusOwner));
     }
     if (e == null) return;
     final Project project = e.getProject();
@@ -769,7 +769,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       @Override
       public void exitDumbMode() {
-        rebuildList(myPopupField.getText());
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            rebuildList(myPopupField.getText());
+          }
+        });
       }
     });
 
@@ -950,6 +955,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         jumpNextGroup(false);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
+    final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -960,7 +966,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myPopup.cancel();
         }
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), editor, balloon);
+    }.registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), editor, balloon);
     new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -1518,7 +1524,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildFiles(final String pattern) {
-      final SearchResult files = getFiles(pattern, MAX_FILES, myFileChooseByName);
+      final SearchResult files = getFiles(pattern, showAll.get(), MAX_FILES, myFileChooseByName);
 
       check();
 
@@ -1704,6 +1710,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             return !symbols.needMore;
           }
         });
+
+      if (!includeLibs && symbols.isEmpty()) {
+        return getSymbols(pattern, max, true, chooseByNamePopup);
+      }
+
       return symbols;
     }
 
@@ -1752,7 +1763,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return classes;
     }
 
-    private SearchResult getFiles(final String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
+    private SearchResult getFiles(final String pattern, final boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult files = new SearchResult();
       if (chooseByNamePopup == null || !Registry.is("search.everywhere.files")) {
         return files;
@@ -1772,7 +1783,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
             if (file != null
                 && !(pattern.indexOf(' ') != -1 && file.getName().indexOf(' ') == -1)
-                && (showAll.get() || scope.accept(file)
+                && (includeLibs || scope.accept(file)
                 && !myListModel.contains(file)
                 && !myAlreadyAddedFiles.contains(file))
                 && !files.contains(file)) {
@@ -1785,6 +1796,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             return true;
           }
         });
+      if (!includeLibs && files.isEmpty()) {
+        return getFiles(pattern, true, max, chooseByNamePopup);
+      }
+
       return files;
     }
 
@@ -1957,7 +1972,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
                                                 myActionEvent.getDataContext(),
                                                 myActionEvent.getPlace(),
-                                                action.getTemplatePresentation(),
+                                                action.getTemplatePresentation().clone(),
                                                 myActionEvent.getActionManager(),
                                                 myActionEvent.getModifiers());
 
@@ -2031,7 +2046,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             return;
           }
           if (myPopup == null || !myPopup.isVisible()) {
-            final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
+            ScrollingUtil.installActions(myList, getField().getTextEditor());
             JBScrollPane content = new JBScrollPane(myList) {
               {
                 if (UIUtil.isUnderDarcula()) {
@@ -2075,7 +2090,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               public void dispose() {
                 ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
                   public void run() {
-                    callback.setDone();
                     resetFields();
                     myNonProjectCheckBox.setSelected(false);
                     //noinspection SSBasedInspection
@@ -2122,7 +2136,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myList.revalidate();
             myList.repaint();
           }
-          ListScrollingUtil.ensureSelectionExists(myList);
+          ScrollingUtil.ensureSelectionExists(myList);
           if (myList.getModel().getSize() > 0) {
             updatePopupBounds();
           }
@@ -2145,7 +2159,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               try {
                 final SearchResult result
                   = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
-                  : id == WidgetID.FILES ? getFiles(pattern, DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
+                  : id == WidgetID.FILES ? getFiles(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
                   : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
                   : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, showAll.get(), mySymbolsChooseByName)
                   : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
@@ -2179,7 +2193,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                           case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
                         }
                       }
-                      ListScrollingUtil.selectItem(myList, index);
+                      ScrollingUtil.selectItem(myList, index);
                       myDone.setDone();
                     }
                     catch (Exception e) {

@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
@@ -26,12 +25,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
+public abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
   private SkipDefaultsSerializationFilter serializationFilter;
 
   @SuppressWarnings("deprecation")
   @Override
-  public final void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
+  public final void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
     Element element;
     try {
       if (state instanceof Element) {

@@ -300,6 +300,10 @@ public class InputVariables {
     }
   }
 
+  public ParametersFolder getFolding() {
+    return myFolding;
+  }
+
   public void setFoldingAvailable(boolean foldingAvailable) {
     myFoldingAvailable = foldingAvailable;
 

@@ -18,18 +18,21 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -43,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
 
 /**
@@ -51,6 +55,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
  */
 @State(name = "ExternalProjectsManager", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class ExternalProjectsManager implements PersistentStateComponent<ExternalProjectsState>, Disposable {
+  private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   @NotNull
@@ -211,10 +216,22 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
       }
 
       @Override
-      public  Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull final ProjectSystemId systemId) {
-          return myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation();
+      public Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull final ProjectSystemId systemId) {
+        return myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation();
       }
     };
+  }
+
+  public boolean isIgnored(@NotNull ProjectSystemId systemId, @NotNull String projectPath) {
+    final ExternalProjectInfo projectInfo = ExternalSystemUtil.getExternalProjectInfo(myProject, systemId, projectPath);
+    if (projectInfo == null) return true;
+
+    return ExternalProjectsDataStorage.getInstance(myProject).isIgnored(projectInfo.getExternalProjectPath(), projectPath, MODULE);
+  }
+
+  public void setIgnored(@NotNull DataNode<?> dataNode, boolean isIgnored) {
+    ExternalProjectsDataStorage.getInstance(myProject).setIgnored(dataNode, isIgnored);
+    ExternalSystemKeymapExtension.updateActions(myProject, ExternalSystemApiUtil.findAllRecursively(dataNode, TASK));
   }
 
   @Override

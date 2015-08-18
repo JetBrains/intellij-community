@@ -61,7 +61,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
   public static final String JDOM_LABEL = "wildcard_breakpoint";
 
-  public WildcardMethodBreakpoint(Project project, XBreakpoint breakpoint) {
+  public WildcardMethodBreakpoint(Project project, XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     super(project, breakpoint);
   }
 
@@ -69,7 +69,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return MethodBreakpoint.CATEGORY;
   }
 
-  protected WildcardMethodBreakpoint(Project project, @NotNull String classPattern, @NotNull String methodName, XBreakpoint breakpoint) {
+  protected WildcardMethodBreakpoint(Project project, @NotNull String classPattern, @NotNull String methodName, XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     super(project, breakpoint);
     setClassPattern(classPattern);
     setMethodName(methodName);
@@ -253,7 +253,10 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return method != null && getMethodName().equals(method.name());
   }
 
-  public static WildcardMethodBreakpoint create(Project project, final String classPattern, final String methodName, XBreakpoint xBreakpoint) {
+  public static WildcardMethodBreakpoint create(Project project,
+                                                final String classPattern,
+                                                final String methodName,
+                                                XBreakpoint<JavaMethodBreakpointProperties> xBreakpoint) {
     return new WildcardMethodBreakpoint(project, classPattern, methodName, xBreakpoint);
   }
 

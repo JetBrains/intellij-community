@@ -29,10 +29,6 @@ import com.intellij.testFramework.IdeaTestCase;
 public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
   private boolean myShowAnonymousByDefault;
   
-  protected JavaFileStructureTestCase() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   protected abstract String getTestDataFolderName();
 
   @Override

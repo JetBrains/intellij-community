@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -193,7 +194,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue(MOVE_FILES_OPEN_IN_EDITOR, String.valueOf(myOpenInEditorCb.isSelected()));
+    PropertiesComponent.getInstance().setValue(MOVE_FILES_OPEN_IN_EDITOR, myOpenInEditorCb.isSelected(), true);
     //myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, myTargetDirectoryField.getChildComponent().getText());
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
@@ -219,13 +220,18 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
           }
         };
 
-        ApplicationManager.getApplication().runWriteAction(action);
-        if (myTargetDirectory == null) {
-          CommonRefactoringUtil.showErrorMessage(getTitle(),
-                                                 RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
-          return;
-        }
-        myCallback.run(MoveFilesOrDirectoriesDialog.this);
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(action);
+            if (myTargetDirectory == null) {
+              CommonRefactoringUtil.showErrorMessage(getTitle(),
+                                                     RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
+              return;
+            }
+            myCallback.run(MoveFilesOrDirectoriesDialog.this);
+          }
+        });
       }
     }, RefactoringBundle.message("move.title"), null);
   }

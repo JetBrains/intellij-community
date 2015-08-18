@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public class FormatChangedTextUtil {
   public static boolean hasChanges(@NotNull final Project project) {
     final ModifiableModuleModel moduleModel = new ReadAction<ModifiableModuleModel>() {
       @Override
-      protected void run(Result<ModifiableModuleModel> result) throws Throwable {
+      protected void run(@NotNull Result<ModifiableModuleModel> result) throws Throwable {
         result.setResult(ModuleManager.getInstance(project).getModifiableModel());
       }
     }.execute().getResultObject();

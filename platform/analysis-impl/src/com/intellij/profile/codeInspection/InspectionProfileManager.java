@@ -17,7 +17,6 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
@@ -38,7 +37,6 @@ import java.util.List;
  */
 public abstract class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider {
   @NonNls public static final String INSPECTION_DIR = "inspection";
-  @NonNls public static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + '/' + INSPECTION_DIR;
 
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
 

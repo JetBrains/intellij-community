@@ -16,13 +16,19 @@
 package com.intellij.lang.properties.editor;
 
 
-import com.intellij.psi.PsiElement;
+import com.intellij.lang.properties.IProperty;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
  */
 public interface ResourceBundleEditorViewElement {
 
-  PsiElement[] getPsiElements();
+  @Nullable
+  IProperty[] getProperties();
+
+  @Nullable
+  PsiFile[] getFiles();
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
         public PsiElement[] fun(final PsiElement[] elements) {
           return new WriteCommandAction<PsiElement[]>(project, "Regrouping ...") {
             @Override
-            protected void run(Result<PsiElement[]> result) throws Throwable {
+            protected void run(@NotNull Result<PsiElement[]> result) throws Throwable {
               final List<PsiElement> adjustedElements = new ArrayList<PsiElement>();
               for (int i = 0, length = elements.length; i < length; i++) {
                 PsiElement element = elements[i];

@@ -125,7 +125,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
   private static void addAdditionalClassPath(Collection<URL> classpath) {
     try {
-      StringTokenizer tokenizer = new StringTokenizer(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH, ""), File.pathSeparator, false);
+      StringTokenizer tokenizer = new StringTokenizer(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH, ""), File.pathSeparator + ",", false);
       while (tokenizer.hasMoreTokens()) {
         String pathItem = tokenizer.nextToken();
         classpath.add(new File(pathItem).toURI().toURL());

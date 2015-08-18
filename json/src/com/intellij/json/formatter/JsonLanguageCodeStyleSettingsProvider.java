@@ -42,6 +42,7 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
+                                   "WRAP_ON_TYPING",
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES");
 

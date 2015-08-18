@@ -39,6 +39,8 @@ public class LoginDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     AuthDataHolder authData = myLoginPanel.getAuthData();
+    StudySettings.getInstance().setLogin(authData.email);
+    StudySettings.getInstance().setPassword(authData.password);
     final boolean success = EduStepicConnector.login(authData.email, authData.password);
     if (!success) {
       setErrorText("Log in failed");

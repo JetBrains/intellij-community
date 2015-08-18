@@ -16,9 +16,19 @@
 
 package com.intellij.history.integration.ui;
 
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 
 @SkipInHeadlessEnvironment
 public abstract class LocalHistoryUITestCase extends IntegrationTestCase {
+  protected void assertContent(String expected, DiffContent actual) {
+    actual.onAssigned(true);
+    try {
+      assertEquals(expected, ((DocumentContent)actual).getDocument().getText());
+    } finally {
+      actual.onAssigned(false);
+    }
+  }
 }

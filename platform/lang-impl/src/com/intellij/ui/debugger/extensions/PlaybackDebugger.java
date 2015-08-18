@@ -495,7 +495,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   @State(
     name = "PlaybackDebugger",
-    storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/playbackDebugger.xml", roamingType = RoamingType.PER_PLATFORM)
+    storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/playbackDebugger.xml", roamingType = RoamingType.PER_OS)
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
     @Attribute

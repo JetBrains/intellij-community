@@ -180,46 +180,63 @@ public class JobLauncherImpl extends JobLauncher {
   @Override
   public Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, onDoneCallback);
-    pool.submit(task);
+    task.submit();
     return task;
   }
 
-  private static class VoidForkJoinTask extends ForkJoinTask<Void> implements Job<Void> {
+  private static class VoidForkJoinTask implements Job<Void> {
     private final Runnable myAction;
     private final Consumer<Future> myOnDoneCallback;
+    private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
+    private volatile Status myStatus;
+    private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<Void>() {
+      @Override
+      public Void getRawResult() {
+        return null;
+      }
+
+      @Override
+      protected void setRawResult(Void value) {
+      }
+
+      @Override
+      protected boolean exec() {
+        myStatus = Status.STARTED;
+        try {
+          myAction.run();
+          complete(null); // complete manually before calling callback
+        }
+        catch (Throwable throwable) {
+          completeExceptionally(throwable);
+        }
+        finally {
+          myStatus = Status.EXECUTED;
+          if (myOnDoneCallback != null) {
+            myOnDoneCallback.consume(this);
+          }
+        }
+        return true;
+      }
+    };
 
     private VoidForkJoinTask(@NotNull Runnable action, @Nullable Consumer<Future> onDoneCallback) {
       myAction = action;
       myOnDoneCallback = onDoneCallback;
     }
 
-    @Override
-    public Void getRawResult() {
-      return null;
+    private void submit() {
+      pool.submit(myForkJoinTask);
     }
-
-    @Override
-    protected void setRawResult(Void value) {
-    }
-
-    @Override
-    protected boolean exec() {
-      try {
-        myAction.run();
-        complete(null); // complete manually before calling callback
-      }
-      catch (Throwable throwable) {
-        completeExceptionally(throwable);
-      }
-      finally {
-        if (myOnDoneCallback != null) {
-          myOnDoneCallback.consume(this);
-        }
-      }
-      return true;
-    }
-
     //////////////// Job
+
+    // when canceled in the middle of the execution returns false until finished
+    @Override
+    public boolean isDone() {
+      boolean wasCancelled = myForkJoinTask.isCancelled(); // must be before status check
+      Status status = myStatus;
+      return status == Status.EXECUTED || status == null && wasCancelled;
+    }
+
     @Override
     public String getTitle() {
       throw new IncorrectOperationException();
@@ -227,7 +244,7 @@ public class JobLauncherImpl extends JobLauncher {
 
     @Override
     public boolean isCanceled() {
-      return isCancelled();
+      return myForkJoinTask.isCancelled();
     }
 
     @Override
@@ -252,7 +269,7 @@ public class JobLauncherImpl extends JobLauncher {
 
     @Override
     public void cancel() {
-      cancel(true);
+      myForkJoinTask.cancel(true);
     }
 
     @Override
@@ -260,9 +277,20 @@ public class JobLauncherImpl extends JobLauncher {
       throw new IncorrectOperationException();
     }
 
+    // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException, CancellationException {
-      get(millis, TimeUnit.MILLISECONDS);
+    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
+      while (!isDone()) {
+        try {
+          myForkJoinTask.get(millis, TimeUnit.MILLISECONDS);
+          break;
+        }
+        catch (CancellationException e) {
+          // was canceled in the middle of execution
+          // can't do anything but wait. help other tasks in the meantime
+          pool.awaitQuiescence(millis, TimeUnit.MILLISECONDS);
+        }
+      }
     }
   }
 
@@ -334,9 +362,6 @@ public class JobLauncherImpl extends JobLauncher {
         return new MyTask(0).call();
       }
       catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Error e) {
         throw e;
       }
       catch (Exception e) {

@@ -55,7 +55,7 @@ public final class Responses {
 
   public static void setDate(@NotNull HttpResponse response) {
     if (!response.headers().contains(HttpHeaderNames.DATE)) {
-      HttpHeaders.setDateHeader(response, HttpHeaderNames.DATE, Calendar.getInstance().getTime());
+      response.headers().set(HttpHeaderNames.DATE, Calendar.getInstance().getTime());
     }
   }
 

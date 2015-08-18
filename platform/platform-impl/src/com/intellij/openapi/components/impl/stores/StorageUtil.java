@@ -19,36 +19,33 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
@@ -61,14 +58,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public class StorageUtil {
+  public static final String DEFAULT_EXT = ".xml";
+
   static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   @TestOnly
-  public static String DEBUG_LOG = "";
+  public static String DEBUG_LOG = null;
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
@@ -76,19 +74,33 @@ public class StorageUtil {
 
   private StorageUtil() { }
 
-  public static boolean isChangedByStorageOrSaveSession(@NotNull VirtualFileEvent event) {
-    return event.getRequestor() instanceof StateStorage.SaveSession || event.getRequestor() instanceof StateStorage;
+  public static void checkUnknownMacros(@NotNull final ComponentManager componentManager, @NotNull final Project project) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
+      return;
+    }
+
+    // should be invoked last
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        notifyUnknownMacros(ComponentsPackage.getStateStore(componentManager), project, null);
+      }
+    });
   }
 
-  public static void notifyUnknownMacros(@NotNull TrackingPathMacroSubstitutor substitutor,
-                                         @NotNull final Project project,
-                                         @Nullable final String componentName) {
+  public static void notifyUnknownMacros(@NotNull final IComponentStore store, @NotNull final Project project, @Nullable final String componentName) {
+    TrackingPathMacroSubstitutor substitutor = store.getStateStorageManager().getMacroSubstitutor();
+    if (substitutor == null) {
+      return;
+    }
+
     final LinkedHashSet<String> macros = new LinkedHashSet<String>(substitutor.getUnknownMacros(componentName));
     if (macros.isEmpty()) {
       return;
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
         List<String> notified = null;
@@ -103,26 +115,82 @@ public class StorageUtil {
           macros.removeAll(notified);
         }
 
-        if (!macros.isEmpty()) {
-          LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
-          String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
-          String productName = ApplicationNamesInfo.getInstance().getProductName();
-          String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +
-                           "<br>Path variables are used to substitute absolute paths " +
-                           "in " + productName + " project files " +
-                           "and allow project file sharing in version control systems.<br>" +
-                           "Some of the files describing the current project settings contain unknown path variables " +
-                           "and " + productName + " cannot restore those paths.";
-          new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
-                                       new NotificationListener() {
-                                         @Override
-                                         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                                           ((ProjectEx)project).checkUnknownMacros(true);
-                                         }
-                                       }, macros).notify(project);
+        if (macros.isEmpty()) {
+          return;
+        }
+
+        LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
+        String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
+        String productName = ApplicationNamesInfo.getInstance().getProductName();
+        String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +
+                         "<br>Path variables are used to substitute absolute paths " +
+                         "in " + productName + " project files " +
+                         "and allow project file sharing in version control systems.<br>" +
+                         "Some of the files describing the current project settings contain unknown path variables " +
+                         "and " + productName + " cannot restore those paths.";
+        new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
+                                     new NotificationListener() {
+                                       @Override
+                                       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                                         checkUnknownMacros(store, project, true);
+                                       }
+                                     }, macros).notify(project);
+      }
+    }, project.getDisposed());
+  }
+
+  public static void checkUnknownMacros(@NotNull IComponentStore store, @NotNull Project project, boolean showDialog) {
+    // default project doesn't have it
+    List<TrackingPathMacroSubstitutor> substitutors;
+    if (store instanceof IProjectStore) {
+      substitutors = ((IProjectStore)store).getSubstitutors();
+    }
+    else {
+      substitutors = Collections.emptyList();
+    }
+    Set<String> unknownMacros = new THashSet<String>();
+    for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+      unknownMacros.addAll(substitutor.getUnknownMacros(null));
+    }
+
+    if (unknownMacros.isEmpty() || showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<String>(unknownMacros))) {
+      return;
+    }
+
+    final PathMacros pathMacros = PathMacros.getInstance();
+    final Set<String> macrosToInvalidate = new THashSet<String>(unknownMacros);
+    for (Iterator<String> it = macrosToInvalidate.iterator(); it.hasNext(); ) {
+      String macro = it.next();
+      if (StringUtil.isEmptyOrSpaces(pathMacros.getValue(macro)) && !pathMacros.isIgnoredMacroName(macro)) {
+        it.remove();
+      }
+    }
+
+    if (macrosToInvalidate.isEmpty()) {
+      return;
+    }
+
+    Set<String> components = new THashSet<String>();
+    for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+      components.addAll(substitutor.getComponents(macrosToInvalidate));
+    }
+
+    if (store.isReloadPossible(components)) {
+      for (TrackingPathMacroSubstitutor substitutor : substitutors) {
+        substitutor.invalidateUnknownMacros(macrosToInvalidate);
+      }
+
+      for (UnknownMacroNotification notification : NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, project)) {
+        if (macrosToInvalidate.containsAll(notification.getMacros())) {
+          notification.expire();
         }
       }
-    });
+
+      store.reloadStates(components);
+    }
+    else if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration Changed", Messages.getQuestionIcon()) == Messages.YES) {
+      ProjectManagerEx.getInstanceEx().reloadProject(project);
+    }
   }
 
   @NotNull
@@ -130,7 +198,8 @@ public class StorageUtil {
                                       @NotNull Object requestor,
                                       @Nullable VirtualFile virtualFile,
                                       @NotNull Element element,
-                                      @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+                                      @NotNull LineSeparator lineSeparator,
+                                      boolean prependXmlProlog) throws IOException {
     final VirtualFile result;
     if (file != null && (virtualFile == null || !virtualFile.isValid())) {
       result = getOrCreateVirtualFile(requestor, file);
@@ -141,44 +210,37 @@ public class StorageUtil {
     }
 
     if (LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
-      BufferExposingByteArrayOutputStream content =
-        writeToBytes(element, (lineSeparatorIfPrependXmlProlog == null ? LineSeparator.LF : lineSeparatorIfPrependXmlProlog).getSeparatorString());
-      if (isEqualContent(result, lineSeparatorIfPrependXmlProlog, content)) {
-        if (result.getName().equals("project.default.xml")) {
-          LOG.warn("todo fix project.default.xml");
-          return result;
-        }
-        else {
-          throw new IllegalStateException("Content equals, but it must be handled not on this level: " + result.getName());
-        }
+      BufferExposingByteArrayOutputStream content = writeToBytes(element, lineSeparator.getSeparatorString());
+      if (isEqualContent(result, lineSeparator, content)) {
+        throw new IllegalStateException("Content equals, but it must be handled not on this level: " + result.getName());
       }
       else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
         DEBUG_LOG = result.getPath() + ":\n" + content + "\nOld Content:\n" + LoadTextUtil.loadText(result) + "\n---------";
       }
     }
 
-    doWrite(requestor, result, element, lineSeparatorIfPrependXmlProlog);
+    doWrite(requestor, result, element, lineSeparator, prependXmlProlog);
     return result;
   }
 
   private static void doWrite(@NotNull final Object requestor,
                               @NotNull final VirtualFile file,
                               @NotNull Object content,
-                              @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+                              @NotNull final LineSeparator lineSeparator,
+                              final boolean prependXmlProlog) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Save " + file.getPresentableUrl());
     }
-    String lineSeparator = (lineSeparatorIfPrependXmlProlog == null ? LineSeparator.LF : lineSeparatorIfPrependXmlProlog).getSeparatorString();
     AccessToken token = WriteAction.start();
     try {
       OutputStream out = file.getOutputStream(requestor);
       try {
-        if (lineSeparatorIfPrependXmlProlog != null) {
+        if (prependXmlProlog) {
           out.write(XML_PROLOG);
-          out.write(lineSeparatorIfPrependXmlProlog.getSeparatorBytes());
+          out.write(lineSeparator.getSeparatorBytes());
         }
         if (content instanceof Element) {
-          JDOMUtil.writeParent((Element)content, out, lineSeparator);
+          JDOMUtil.writeParent((Element)content, out, lineSeparator.getSeparatorString());
         }
         else {
           ((BufferExposingByteArrayOutputStream)content).writeTo(out);
@@ -190,11 +252,11 @@ public class StorageUtil {
     }
     catch (FileNotFoundException e) {
       // may be element is not long-lived, so, we must write it to byte array
-      final BufferExposingByteArrayOutputStream byteArray = content instanceof Element ? writeToBytes((Element)content, lineSeparator) : ((BufferExposingByteArrayOutputStream)content);
+      final BufferExposingByteArrayOutputStream byteArray = content instanceof Element ? writeToBytes((Element)content, lineSeparator.getSeparatorString()) : ((BufferExposingByteArrayOutputStream)content);
       throw new ReadOnlyModificationException(file, e, new StateStorage.SaveSession() {
         @Override
         public void save() throws IOException {
-          doWrite(requestor, file, byteArray, lineSeparatorIfPrependXmlProlog);
+          doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog);
         }
       });
     }
@@ -287,12 +349,26 @@ public class StorageUtil {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       return parentVirtualFile.createChildData(requestor, file.getName());
     }
-    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        return parentVirtualFile.createChildData(requestor, file.getName());
-      }
-    });
+
+    AccessToken token = WriteAction.start();
+    try {
+      return parentVirtualFile.createChildData(requestor, file.getName());
+    }
+    finally {
+      token.finish();
+    }
+  }
+
+  @NotNull
+  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) throws IOException {
+    //noinspection ResultOfMethodCallIgnored
+    ioDir.mkdirs();
+    String parentFile = ioDir.getParent();
+    VirtualFile parentVirtualFile = parentFile == null ? null : VfsUtil.createDirectoryIfMissing(parentFile);
+    if (parentVirtualFile == null) {
+      throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
+    }
+    return getFile(ioDir.getName(), parentVirtualFile, requestor);
   }
 
   /**
@@ -333,16 +409,23 @@ public class StorageUtil {
     }
   }
 
-  /**
-   * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
-   */
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type) throws IOException {
-    // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
-    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type);
-  }
-
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
     return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals(StoragePathMacros.MODULE_FILE);
+  }
+
+  @NotNull
+  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parent, @NotNull Object requestor) throws IOException {
+    VirtualFile file = parent.findChild(fileName);
+    if (file != null) {
+      return file;
+    }
+
+    AccessToken token = WriteAction.start();
+    try {
+      return parent.createChildData(requestor, fileName);
+    }
+    finally {
+      token.finish();
+    }
   }
 }

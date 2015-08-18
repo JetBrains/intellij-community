@@ -41,7 +41,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -67,8 +67,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -93,7 +92,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
   private SMTRunnerTreeBuilder myTreeBuilder;
-  private final TestConsoleProperties myConsoleProperties;
 
   private final List<EventsListener> myEventListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -129,8 +127,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                  @Nullable String splitterPropertyName) {
     super(console, consoleActions, consoleProperties,
           StringUtil.notNullize(splitterPropertyName, DEFAULT_SM_RUNNER_SPLITTER_PROPERTY), 0.2f);
-    myConsoleProperties = consoleProperties;
-
     myProject = consoleProperties.getProject();
 
     //Create tests common suite root
@@ -166,7 +162,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   protected ToolbarPanel createToolbarPanel() {
-    return new SMTRunnerToolbarPanel(myConsoleProperties, this, this);
+    return new SMTRunnerToolbarPanel(myProperties, this, this);
   }
 
   protected JComponent createTestTreeView() {
@@ -194,7 +190,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
 
-    TrackRunningTestUtil.installStopListeners(myTreeView, myConsoleProperties, new Pass<AbstractTestProxy>() {
+    TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, new Pass<AbstractTestProxy>() {
       @Override
       public void pass(AbstractTestProxy testProxy) {
         if (testProxy == null) return;
@@ -270,8 +266,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     myStartTime = System.currentTimeMillis();
     boolean printTestingStartedTime = true;
-    if (myConsoleProperties instanceof SMTRunnerConsoleProperties) {
-      printTestingStartedTime = ((SMTRunnerConsoleProperties)myConsoleProperties).isPrintTestingStartedTime();
+    if (myProperties instanceof SMTRunnerConsoleProperties) {
+      printTestingStartedTime = ((SMTRunnerConsoleProperties)myProperties).isPrintTestingStartedTime();
     }
     if (printTestingStartedTime) {
       myTestsRootNode.addSystemOutput("Testing started at " + DateFormatUtil.formatTime(myStartTime) + " ...\n");
@@ -326,14 +322,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     if (testsRoot.isEmptySuite() &&
         testsRoot.isTestsReporterAttached() &&
-        myConsoleProperties instanceof SMTRunnerConsoleProperties &&
-        ((SMTRunnerConsoleProperties)myConsoleProperties).fixEmptySuite()) {
+        myProperties instanceof SMTRunnerConsoleProperties &&
+        ((SMTRunnerConsoleProperties)myProperties).fixEmptySuite()) {
       return;
     }
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount, myTotalTestCount - myFinishedTestCount, myIgnoredTestCount);
-    TestsUIUtil.notifyByBalloon(myConsoleProperties.getProject(), testsRoot, myConsoleProperties, presentation);
-    addToHistory(testsRoot, myConsoleProperties, this);
+    TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
+    addToHistory(testsRoot, myProperties, this);
   }
 
   private static void addToHistory(final SMTestProxy.SMRootTestProxy root,
@@ -351,7 +347,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         }
       });
       Disposer.register(parentDisposable, processIndicator);
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
+
+      CompositePrintable.invokeInAlarm(new Runnable() {
+        public void run() {
+          ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
+        }
+      });
     }
   }
 
@@ -389,6 +390,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myFinishedTestCount++;
     }
     updateIconProgress(false);
+
+    //still expand failure when user selected another test
+    if (myLastSelected != null && 
+        TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties) &&
+        TestConsoleProperties.HIDE_PASSED_TESTS.value(myProperties)) {
+      myTreeBuilder.expand(test, null);
+    }
   }
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
@@ -440,7 +448,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   public TestConsoleProperties getProperties() {
-    return myConsoleProperties;
+    return myProperties;
   }
 
   public void setFilter(final Filter filter) {
@@ -596,7 +604,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
 
-    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
+    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
       if (myLastSelected == null || myLastSelected == newTestOrSuite) {
         myLastSelected = null;
         selectAndNotify(newTestOrSuite);
@@ -780,7 +788,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     private final TestConsoleProperties myConsoleProperties;
     private SMTestProxy.SMRootTestProxy myRoot;
     private RunConfiguration myConfiguration;
-    private String myOutput;
+    private File myOutputFile;
 
     public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
       super(consoleProperties.getProject(), "Save Test Results", true);
@@ -797,14 +805,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
-        StringWriter w = new StringWriter();
-        handler.setResult(new StreamResult(w));
+        final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
+                                                     new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
+
+        myOutputFile = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
+        FileUtilRt.createParentDirs(myOutputFile);
+        handler.setResult(new StreamResult(new FileWriter(myOutputFile)));
         final SMTestProxy.SMRootTestProxy root = myRoot;
         final RunConfiguration configuration = myConfiguration;
         if (root != null && configuration != null) {
           TestResultsXmlFormatter.execute(root, configuration, myConsoleProperties, handler);
         }
-        myOutput = w.toString();
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -816,27 +827,18 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     @Override
     public void onSuccess() {
-      if (myOutput != null) {
-        try {
-          AbstractImportTestsAction.adjustHistory(myProject);
-          final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
-                                                       new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
-          final File file = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
-          FileUtil.writeToFile(file, myOutput);
-          TestHistoryConfiguration.getInstance(myProject).registerHistoryItem(file.getName(), 
-                                                                              myConfiguration.getName(),
-                                                                              myConfiguration.getType().getId());
-        }
-        catch (IOException e) {
-          LOG.info("Fail to write test history", e);
-        }
+      if (myOutputFile != null && myOutputFile.exists()) {
+        AbstractImportTestsAction.adjustHistory(myProject);
+        TestHistoryConfiguration.getInstance(myProject).registerHistoryItem(myOutputFile.getName(),
+                                                                            myConfiguration.getName(),
+                                                                            myConfiguration.getType().getId());
       }
     }
     
     public void dispose() {
       myConfiguration = null;
       myRoot = null;
-      myOutput = null;
+      myOutputFile = null;
     }
   }
 }

@@ -202,7 +202,8 @@ public class TextRange implements Segment, Serializable {
     return startOffset == myStartOffset && endOffset == myEndOffset;
   }
 
-  public static TextRange allOf(String s) {
+  @NotNull
+  public static TextRange allOf(@NotNull String s) {
     return new TextRange(0, s.length());
   }
 
@@ -210,11 +211,11 @@ public class TextRange implements Segment, Serializable {
     assertProperRange(range, "");
   }
 
-  public static void assertProperRange(@NotNull Segment range, Object message) throws AssertionError {
+  public static void assertProperRange(@NotNull Segment range, @NotNull Object message) throws AssertionError {
     assertProperRange(range.getStartOffset(), range.getEndOffset(), message);
   }
 
-  public static void assertProperRange(int startOffset, int endOffset, Object message) {
+  public static void assertProperRange(int startOffset, int endOffset, @NotNull Object message) {
     if (startOffset > endOffset) {
       LOG.error("Invalid range specified: (" + startOffset + "," + endOffset + "); " + message);
     }

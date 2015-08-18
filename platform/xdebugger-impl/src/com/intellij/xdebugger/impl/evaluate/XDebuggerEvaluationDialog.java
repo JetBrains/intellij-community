@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -70,7 +71,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
                                    @NotNull XDebuggerEvaluator evaluator,
                                    @NotNull XExpression text,
                                    @Nullable XSourcePosition sourcePosition) {
-    super(session.getProject(), true);
+    super(WindowManager.getInstance().getFrame(session.getProject()), true);
     mySession = session;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
@@ -180,7 +181,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         XDebugSessionTab tab = ((XDebugSessionImpl)mySession).getSessionTab();
         if (tab != null) {
           tab.getWatchesView().addWatchExpression(expression, -1, true);
-          requestFocusInEditor();
+          getInputEditor().requestFocusInEditor();
         }
       }
     }
@@ -238,14 +239,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     setTitle(myInputComponent.getTitle());
     mySwitchModeAction.putValue(Action.NAME, getSwitchButtonText(mode));
-    requestFocusInEditor();
-  }
-
-  private void requestFocusInEditor() {
-    JComponent preferredFocusedComponent = getInputEditor().getPreferredFocusedComponent();
-    if (preferredFocusedComponent != null) {
-      IdeFocusManager.getInstance(mySession.getProject()).requestFocus(preferredFocusedComponent, true);
-    }
+    getInputEditor().requestFocusInEditor();
   }
 
   private XDebuggerEditorBase getInputEditor() {

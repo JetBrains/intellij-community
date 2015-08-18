@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.testFramework.exceptionCases.AssertionErrorCase;
-import com.intellij.util.SystemProperties;
 
 /**
  * @author Roman Chernyatchik
@@ -28,7 +27,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myTestSuiteStack = new TestSuiteStack();
+    myTestSuiteStack = new TestSuiteStack("from tests");
   }
 
   @Override

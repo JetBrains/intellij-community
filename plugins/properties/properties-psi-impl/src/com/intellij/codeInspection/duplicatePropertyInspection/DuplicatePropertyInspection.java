@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -212,38 +213,37 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                                                    final List<ProblemDescriptor> problemDescriptors,
                                                    final PsiFile psiFile,
                                                    final ProgressIndicator progress) {
-    for (String value : valueToFiles.keySet()) {
+    for (final String value : valueToFiles.keySet()) {
       if (progress != null){
         progress.setText2(InspectionsBundle.message("duplicate.property.value.progress.indicator.text", value));
         progress.checkCanceled();
       }
       if (value.length() == 0) continue;
       StringSearcher searcher = new StringSearcher(value, true, true);
-      StringBuffer message = new StringBuffer();
-      int duplicatesCount = 0;
+      final StringBuffer message = new StringBuffer();
+      final int[] duplicatesCount = {0};
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
-      for (PsiFile file : psiFilesWithDuplicates) {
+      for (final PsiFile file : psiFilesWithDuplicates) {
         CharSequence text = file.getViewProvider().getContents();
-        final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
-
-        for (int offset = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress);
-             offset >= 0;
-             offset = LowLevelSearchUtil.searchWord(text, textArray, offset + searcher.getPattern().length(), text.length(), searcher, progress)
-          ) {
-          PsiElement element = file.findElementAt(offset);
-          if (element != null && element.getParent() instanceof Property) {
-            final Property property = (Property)element.getParent();
-            if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
-              if (duplicatesCount == 0){
-                message.append(InspectionsBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
+        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, progress, new TIntProcedure() {
+          @Override
+          public boolean execute(int offset) {
+            PsiElement element = file.findElementAt(offset);
+            if (element != null && element.getParent() instanceof Property) {
+              final Property property = (Property)element.getParent();
+              if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
+                if (duplicatesCount[0] == 0){
+                  message.append(InspectionsBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
+                }
+                surroundWithHref(message, element, true);
+                duplicatesCount[0]++;
               }
-              surroundWithHref(message, element, true);
-              duplicatesCount ++;
             }
+            return true;
           }
-        }
+        });
       }
-      if (duplicatesCount > 1) {
+      if (duplicatesCount[0] > 1) {
         problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }

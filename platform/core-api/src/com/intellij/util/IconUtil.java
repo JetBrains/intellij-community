@@ -474,9 +474,14 @@ public class IconUtil {
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        GraphicsUtil.setupAntialiasing(g);
-        g.setFont(font);
-        UIUtil.drawStringWithHighlighting(g, text, x + JBUI.scale(2), y + height - JBUI.scale(1), JBColor.foreground(), JBColor.background());
+        g = g.create();
+        try {
+          GraphicsUtil.setupAntialiasing(g);
+          g.setFont(font);
+          UIUtil.drawStringWithHighlighting(g, text, x + JBUI.scale(2), y + height - JBUI.scale(1), JBColor.foreground(), JBColor.background());
+        } finally {
+          g.dispose();
+        }
       }
 
       @Override
@@ -489,5 +494,12 @@ public class IconUtil {
         return height;
       }
     };
+  }
+
+  public static Icon addText(@NotNull Icon base, @NotNull String text) {
+    LayeredIcon icon = new LayeredIcon(2);
+    icon.setIcon(base, 0);
+    icon.setIcon(textToIcon(text, new JLabel(), JBUI.scale(6f)), 1, SwingConstants.SOUTH_EAST);
+    return icon;
   }
 }

@@ -60,6 +60,10 @@
     <stacktrace.fold substring="at junit.framework.TestResult"/>
 
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
+    <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
+    <configurationType implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
   </extensions>
 
   <extensionPoints>
@@ -74,7 +78,7 @@
     </group>
     <group>
       <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to pattern suite"/>
-      <add-to-group anchor="first" group-id="RunContextGroup"/>
+      <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>
 </idea-plugin>

@@ -57,13 +57,13 @@ public class BasicExpressionCompletionContributor {
                                             final Consumer<LookupElement> result,
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
-    if (JavaCompletionData.isAfterTypeDot(element)) {
+    if (JavaKeywordCompletion.isAfterTypeDot(element)) {
       addKeyword(result, element, PsiKeyword.CLASS);
       addKeyword(result, element, PsiKeyword.THIS);
 
     }
 
-    if (!JavaCompletionData.AFTER_DOT.accepts(element)) {
+    if (!JavaKeywordCompletion.AFTER_DOT.accepts(element)) {
       if (parameters.getParameters().getInvocationCount() <= 1) {
         new CollectionsUtilityMethodsProvider(parameters.getPosition(),
                                               parameters.getExpectedType(),

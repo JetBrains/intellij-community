@@ -80,9 +80,6 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
 
   @Override
   protected void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project) {
-    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
-      return;
-    }
     DataNode<JavaProjectData> javaProjectNode = ExternalSystemApiUtil.find(dataNode, JavaProjectData.KEY);
     if (javaProjectNode == null) {
       return;

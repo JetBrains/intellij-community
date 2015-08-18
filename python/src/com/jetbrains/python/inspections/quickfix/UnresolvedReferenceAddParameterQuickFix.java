@@ -20,8 +20,12 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
@@ -37,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to add parameter to unresolved reference
  */
 public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
-  private String myName;
+  private final String myName;
   public UnresolvedReferenceAddParameterQuickFix(String name) {
     myName = name;
   }
@@ -54,8 +58,8 @@ public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyNamedParameter parameter = elementGenerator.createParameter(element.getText() + "=None");
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    final PyNamedParameter parameter = elementGenerator.createParameter(element.getText() + "=None");
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (function != null) {
       final PyParameterList parameterList = function.getParameterList();
@@ -63,7 +67,11 @@ public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
       CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(parameterList);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
       builder.replaceRange(TextRange.create(parameter.getTextLength() - 4, parameter.getTextLength()), "None");
-      builder.run();
+      final VirtualFile virtualFile = function.getContainingFile().getVirtualFile();
+      if (virtualFile == null) return;
+      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), true);
+      if (editor == null) return;
+      builder.run(editor, false);
     }
   }
 }

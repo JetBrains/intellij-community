@@ -162,7 +162,9 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   @Nullable
   @Override
   protected OpenFileDescriptor getOpenFileDescriptor() {
-    return getCurrentSide().select(getRequest().getContents()).getOpenFileDescriptor();
+    OpenFileDescriptor descriptor1 = getCurrentSide().select(getRequest().getContents()).getOpenFileDescriptor();
+    if (descriptor1 != null) return descriptor1;
+    return getCurrentSide().other().select(getRequest().getContents()).getOpenFileDescriptor();
   }
 
   public static <T extends EditorHolder> boolean canShowRequest(@NotNull DiffContext context,

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Can be implemented by {@link com.intellij.util.xml.Converter} instance, or used with
- * {@link @com.intellij.util.xml.Referencing} annotation.
+ * {@link com.intellij.util.xml.Referencing} annotation.
  *
  * @author peter
  */

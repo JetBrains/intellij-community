@@ -110,5 +110,6 @@
     <orderEntry type="module" module-name="json-tests" scope="TEST" />
     <orderEntry type="module" module-name="typeMigration" />
     <orderEntry type="module" module-name="platform-tests" />
+    <orderEntry type="module" module-name="android" />
   </component>
 </module>

@@ -199,6 +199,14 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testControlFlowAnalysisFailedValueCompatibilityUnchanged() throws Exception {
+    doTest();
+  }
+
+  public void testNonAccessibleFunctionalInterfaceTypeArguments() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -30,6 +29,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
@@ -50,7 +50,8 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   protected void setUpJdk() {
     super.setUpJdk();
     new WriteAction() {
-      protected void run(final Result result) {
+      @Override
+      protected void run(@NotNull final Result result) {
         ProjectJdkTable table = ProjectJdkTable.getInstance();
         myPluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(IdeaJdk.class));
         SdkModificator modificator = myPluginSdk.getSdkModificator();
@@ -70,7 +71,8 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   @Override
   protected void tearDown() throws Exception {
     new WriteAction() {
-      protected void run(final Result result) {
+      @Override
+      protected void run(@NotNull final Result result) {
         ProjectJdkTable.getInstance().removeJdk(myPluginSdk);
       }
     }.execute();
@@ -83,7 +85,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
     make(module);
     assertOutput(module, fs().dir("xxx").file("MyAction.class"));
 
-    File sandbox = new File(FileUtil.toSystemDependentName(getSandboxPath()));
+    File sandbox = new File(FileUtilRt.toSystemDependentName(getSandboxPath()));
     assertTrue(sandbox.exists());
     fs().dir("plugins")
           .dir("pluginProject")
@@ -136,7 +138,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   }
 
   @Override
-  protected void readJdomExternalizables(ModuleImpl module) {
+  protected void readJdomExternalizables(@NotNull Module module) {
     super.readJdomExternalizables(module);
     PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration != null) {
@@ -153,17 +155,17 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   private Module setupSimplePluginProject() {
     copyToProject("plugins/devkit/testData/build/simple");
     Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
-    readJdomExternalizables((ModuleImpl)module);
+    readJdomExternalizables(module);
     return module;
   }
 
   private Module setupPluginProjectWithJpsModule() {
     copyToProject("plugins/devkit/testData/build/withJpsModule");
     Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
-    readJdomExternalizables((ModuleImpl)module);
+    readJdomExternalizables(module);
     loadModuleComponentState(module, PluginBuildConfiguration.getInstance(module));
     Module jpsModule = loadModule(getProjectBasePath() + "/jps-plugin/jps-plugin.iml");
-    readJdomExternalizables((ModuleImpl)jpsModule);
+    readJdomExternalizables(jpsModule);
     ModuleRootModificationUtil.setModuleSdk(jpsModule, getTestProjectJdk());
     return module;
   }

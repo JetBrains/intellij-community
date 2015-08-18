@@ -117,6 +117,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myCbModifiedTabsMarkedWithAsterisk.setSelected(uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     myShowTabsTooltipsCheckBox.setSelected(uiSettings.SHOW_TABS_TOOLTIPS);
     myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
+    myHideTabsCheckbox.setEnabled(myScrollTabLayoutInEditorCheckBox.isSelected());
     myHideTabsCheckbox.setSelected(uiSettings.HIDE_TABS_IF_NEED);
     myEditorTabPlacement.setSelectedItem(uiSettings.EDITOR_TAB_PLACEMENT);
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);

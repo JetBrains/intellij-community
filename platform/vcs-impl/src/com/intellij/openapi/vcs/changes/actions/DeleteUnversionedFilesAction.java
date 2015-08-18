@@ -26,6 +26,8 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.util.IconUtil;
 
 public class DeleteUnversionedFilesAction extends DumbAwareAction {
@@ -33,10 +35,15 @@ public class DeleteUnversionedFilesAction extends DumbAwareAction {
     super("Delete", "Delete", IconUtil.getRemoveIcon());
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    DeleteProvider deleteProvider = e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER);
-    if (deleteProvider == null) return;
-    deleteProvider.deleteElement(e.getDataContext());
+  public void actionPerformed(final AnActionEvent e) {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        DeleteProvider deleteProvider = e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER);
+        if (deleteProvider == null) return;
+        deleteProvider.deleteElement(e.getDataContext());
+      }
+    });
   }
 
   @Override

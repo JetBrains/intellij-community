@@ -21,7 +21,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.lang.Language;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,6 +41,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,7 +78,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<BreadcrumbsXmlWrapper>("BREADCRUMBS_KEY");
 
-  public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
+  public BreadcrumbsXmlWrapper(@NotNull final Editor editor, @NotNull WebEditorOptions webEditorOptions) {
     myEditor = editor;
     myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, this);
 
@@ -110,7 +110,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }, this);
 
 
-    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
+    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject), webEditorOptions);
 
     final CaretListener caretListener = new CaretAdapter() {
       @Override
@@ -354,14 +354,11 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider, @NotNull WebEditorOptions webEditorOptions) {
     BreadcrumbsInfoProvider provider = null;
-    if (viewProvider != null) {
-      final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
+    if (webEditorOptions.isBreadcrumbsEnabled() && viewProvider != null) {
       final Language baseLang = viewProvider.getBaseLanguage();
       provider = getInfoProvider(baseLang);
-      if (!webEditorOptions.isBreadcrumbsEnabledInXml() && baseLang == XMLLanguage.INSTANCE) return null;
-      if (!webEditorOptions.isBreadcrumbsEnabled() && baseLang != XMLLanguage.INSTANCE) return null;
       if (provider == null) {
         for (final Language language : viewProvider.getLanguages()) {
           provider = getInfoProvider(language);
@@ -391,6 +388,10 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   @Override
   public void itemHovered(@Nullable BreadcrumbsPsiItem item) {
+    if (!Registry.is("editor.breadcrumbs.highlight.on.hover")) {
+      return;
+    }
+
     HighlightManager hm = HighlightManager.getInstance(myProject);
     if (myHighlighed != null) {
       for (RangeHighlighter highlighter : myHighlighed) {
@@ -418,7 +419,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   @Override
   public void dispose() {
-    myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
+    if (myEditor != null) {
+      myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
+    }
     myEditor = null;
   }
 

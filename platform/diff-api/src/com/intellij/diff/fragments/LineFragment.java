@@ -28,7 +28,10 @@ public interface LineFragment extends DiffFragment {
 
   int getEndLine2();
 
-  /*
+  /**
+   * High-granularity changes inside line fragment (ex: detected by ByWord)
+   * Offsets of inner changes are relative to the start of LineFragment.
+   *
    * null - no inner similarities was found
    */
   @Nullable

@@ -84,9 +84,9 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
   }
 
   private static class CalledMethodsVisitor
-    extends JavaRecursiveElementVisitor {
+    extends JavaRecursiveElementWalkingVisitor {
 
-    private boolean noSuchElementExceptionThrown = false;
+    private boolean noSuchElementExceptionThrown;
 
     @Override
     public void visitMethodCallExpression(
@@ -110,7 +110,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
       }
     }
 
-    public boolean isNoSuchElementExceptionThrown() {
+    boolean isNoSuchElementExceptionThrown() {
       return noSuchElementExceptionThrown;
     }
   }

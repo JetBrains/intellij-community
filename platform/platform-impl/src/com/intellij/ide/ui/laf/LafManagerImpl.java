@@ -87,7 +87,7 @@ import java.util.List;
 @State(
   name = "LafManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_OS),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", deprecated = true)
   }
 )
@@ -102,8 +102,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
     "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font",
     "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font", "Table.font", "TableHeader.font",
-    "TextField.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font", "TitledBorder.font", "ToolBar.font",
-    "ToolTip.font", "Tree.font"};
+    "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font",
+    "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
 
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
@@ -748,6 +748,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
+      JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
       initFontDefaults(uiDefaults, uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
     else {
@@ -763,6 +764,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
+    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/12f);
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {

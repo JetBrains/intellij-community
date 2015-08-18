@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
@@ -64,7 +65,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myFactory = valueFactory;
   }
 
+  @Nullable
   public ControlFlow buildControlFlow(@NotNull PsiElement codeFragment, boolean ignoreAssertions) {
+    if (PsiTreeUtil.findChildOfType(codeFragment, OuterLanguageElement.class) != null) {
+      return null;
+    }
+
     myIgnoreAssertions = ignoreAssertions;
     final PsiManager manager = codeFragment.getManager();
     GlobalSearchScope scope = codeFragment.getResolveScope();
@@ -73,7 +79,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myNpe = createClassType(manager, scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
     myAssertionError = createClassType(manager, scope, JAVA_LANG_ASSERTION_ERROR);
     myString = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
-    
+
     myExceptionHolders = new FactoryMap<PsiTryStatement, DfaVariableValue>() {
       @Nullable
       @Override
@@ -96,7 +102,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiElement parent = codeFragment.getParent();
     if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
-      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment, 
+      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment,
                                            LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
       addInstruction(new CheckReturnValueInstruction(codeFragment));
     }
@@ -109,6 +115,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     return myCurrentFlow;
   }
+
 
   private static PsiClassType createClassType(PsiManager manager, GlobalSearchScope scope, String fqn) {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, scope);
@@ -344,8 +351,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else if (parent instanceof PsiTryStatement) {
       PsiResourceList list = ((PsiTryStatement)parent).getResourceList();
       if (list != null) {
-        for (PsiResourceVariable variable : list.getResourceVariables()) {
-          myCurrentFlow.removeVariable(variable);
+        for (PsiResourceListElement resource : list) {
+          if (resource instanceof PsiResourceVariable) {
+            myCurrentFlow.removeVariable((PsiVariable)resource);
+          }
         }
       }
     }
@@ -1023,12 +1032,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitResourceList(PsiResourceList resourceList) {
-    for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) {
-        initializeVariable(variable, initializer);
+    for (PsiResourceListElement resource : resourceList) {
+      if (resource instanceof PsiResourceVariable) {
+        PsiResourceVariable variable = (PsiResourceVariable)resource;
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null) {
+          initializeVariable(variable, initializer);
+        }
       }
-      PsiMethod closer = PsiUtil.getResourceCloserMethod(variable);
+      else if (resource instanceof PsiResourceExpression) {
+        ((PsiResourceExpression)resource).getExpression().accept(this);
+      }
+
+      PsiMethod closer = PsiUtil.getResourceCloserMethod(resource);
       if (closer != null) {
         addMethodThrows(closer, null);
       }
@@ -1347,7 +1363,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       PsiType type = expression.getType();
-      addInstruction(new ConditionalGotoInstruction(elseOffset, true, condition));
+      addInstruction(new ConditionalGotoInstruction(elseOffset, true, PsiUtil.skipParenthesizedExprDown(condition)));
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 
@@ -1501,7 +1517,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
-    final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {
       return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
         @Nullable
@@ -1510,6 +1525,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
           if (text != null) {
             try {
+              final int paramCount = method.getParameterList().getParametersCount();
               List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text), new Condition<MethodContract>() {
                 @Override
                 public boolean value(MethodContract contract) {

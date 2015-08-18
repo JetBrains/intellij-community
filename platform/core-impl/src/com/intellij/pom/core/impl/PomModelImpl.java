@@ -283,7 +283,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     TextRange changedPsiRange = DocumentCommitProcessor.getChangedPsiRange(file, treeElement, newText);
     if (changedPsiRange == null) return;
 
-    final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, changedPsiRange, newText, new EmptyProgressIndicator());
+    final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, changedPsiRange, newText, new EmptyProgressIndicator(),
+                                                                         treeElement.getText());
     synchronizer.setIgnorePsiEvents(true);
     try {
       CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {

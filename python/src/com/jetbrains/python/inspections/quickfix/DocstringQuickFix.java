@@ -122,7 +122,7 @@ public class DocstringQuickFix implements LocalQuickFix {
         .generateDocstringForFunction(project, getEditor(project, docStringOwner.getContainingFile()), (PyFunction)docStringOwner);
     }
     if (docStringOwner instanceof PyClass) {
-      PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false);
+      PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false, null);
       if (init == null) return;
       PythonDocumentationProvider.insertDocStub(init, ((PyClass)docStringOwner).getStatementList(),
                                                 project, getEditor(project, docStringOwner.getContainingFile()));

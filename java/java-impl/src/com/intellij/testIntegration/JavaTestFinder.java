@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -82,7 +83,9 @@ public class JavaTestFinder implements TestFinder {
   }
 
   private static boolean isTestSubjectClass(PsiClass klass) {
-    if (klass.isAnnotationType() || TestFrameworks.getInstance().isTestClass(klass)) {
+    if (klass.isAnnotationType() || 
+        TestFrameworks.getInstance().isTestClass(klass) ||
+        !klass.isPhysical()) {
       return false;
     }
     return true;
@@ -107,7 +110,7 @@ public class JavaTestFinder implements TestFinder {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
     String klassName = klass.getName();
-    Pattern pattern = Pattern.compile(".*" + klassName + ".*", Pattern.CASE_INSENSITIVE);
+    Pattern pattern = Pattern.compile(".*" + StringUtil.escapeToRegexp(klassName) + ".*", Pattern.CASE_INSENSITIVE);
 
     HashSet<String> names = new HashSet<String>();
     cache.getAllClassNames(names);
@@ -115,7 +118,7 @@ public class JavaTestFinder implements TestFinder {
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass)) {
+          if (eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass))) {
             if (!processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
               return true;
             }

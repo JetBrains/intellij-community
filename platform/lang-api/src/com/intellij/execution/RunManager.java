@@ -115,7 +115,7 @@ public abstract class RunManager {
    * Returns the list of all temporary run configurations.
    *
    * @return the list of all temporary run configurations.
-   * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
+   * @see RunnerAndConfigurationSettings#isTemporary()
    */
   @NotNull
   @Deprecated
@@ -125,7 +125,7 @@ public abstract class RunManager {
    * Returns the list of all temporary run configurations settings.
    *
    * @return the list of all temporary run configurations settings.
-   * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
+   * @see RunnerAndConfigurationSettings#isTemporary()
    */
   @NotNull
   public abstract List<RunnerAndConfigurationSettings> getTempConfigurationsList();
@@ -134,7 +134,7 @@ public abstract class RunManager {
    * Checks if the specified run configuration is temporary and will be deleted when the temporary configurations limit is exceeded.
    *
    * @return true if the configuration is temporary, false otherwise.
-   * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
+   * @see RunnerAndConfigurationSettings#isTemporary()
    */
   @Deprecated
   public abstract boolean isTemporary(@NotNull RunConfiguration configuration);
@@ -176,7 +176,7 @@ public abstract class RunManager {
    * @param name the name of the configuration to create (should be unique and not equal to any other existing configuration)
    * @param type the type of the configuration to create.
    * @return the configuration settings object.
-   * @see RunManager#suggestUniqueName(String, java.util.ArrayList)
+   * @see RunManager#suggestUniqueName(String, Collection)
    */
   @NotNull
   public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type);

@@ -17,7 +17,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
     if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
-      if (file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage) {
+      if (XmlGtTypedHandler.fileContainsXmlLanguage(file)) {
         TypedHandler.commitDocumentIfCurrentCaretIsNotTheFirstOne(editor, project);
         
         PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);

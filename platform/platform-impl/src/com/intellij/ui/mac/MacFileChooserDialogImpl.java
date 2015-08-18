@@ -15,12 +15,16 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,6 +63,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
   private final FileChooserDescriptor myChooserDescriptor;
   private final Project myProject;
+  private ModalityState myModalityState;
   private Consumer<List<VirtualFile>> myCallback;
 
   private static final Callback SHOULD_ENABLE_CALLBACK = new Callback() {
@@ -143,25 +148,28 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
         final List<String> resultPaths = processResult(returnCode, openPanelDidEnd);
         if (resultPaths.size() > 0) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              final List<VirtualFile> files = getChosenFiles(resultPaths);
-              if (files.size() > 0) {
-                FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
-                impl.myCallback.consume(files);
-              }
+              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+                @Override
+                public void run() {
+                  final List<VirtualFile> files = getChosenFiles(resultPaths);
+                  if (files.size() > 0) {
+                    FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
+                    impl.myCallback.consume(files);
+                  }
+                }
+              });
             }
-          });
+          }, impl.myModalityState);
         } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
             }
-          });
+          }, impl.myModalityState);
         }
       }
       finally {
@@ -318,6 +326,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     ExtensionsInitializer.initialize();
 
     myCallback = callback;
+    myModalityState = ModalityState.current();
 
     final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
     final VirtualFile selectFile = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);

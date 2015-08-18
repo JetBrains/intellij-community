@@ -68,15 +68,11 @@ public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocumen
   }
 
   @Nullable
-   public XmlFile getDescriptorFile() {
+  public XmlFile getDescriptorFile() {
      return myFile;
    }
- 
-   public boolean isHierarhyEnabled() {
-     return false;
-   }
- 
-   public PsiElement getDeclaration() {
+
+  public PsiElement getDeclaration() {
      return myFile;
    }
 

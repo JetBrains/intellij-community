@@ -100,4 +100,8 @@ public final class DocumentUtil {
   public static TextRange getLineTextRange(@NotNull Document document, int line) {
     return TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
   }
+
+  public static boolean isAtLineStart(int offset, @NotNull Document document) {
+    return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineStartOffset(document.getLineNumber(offset));
+  }
 }

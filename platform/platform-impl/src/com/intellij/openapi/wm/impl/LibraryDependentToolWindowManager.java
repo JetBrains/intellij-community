@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
@@ -12,7 +13,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,12 +51,16 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
 
     DumbService.getInstance(project).smartInvokeLater(new Runnable() {
       public void run() {
-        final PsiManager psiManager = PsiManager.getInstance(myProject);
-        if (psiManager.isDisposed()) {
-          return;
-        }
         for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
-          if (libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project)) {
+          boolean exists;
+          try {
+            exists = libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project);
+          }
+          catch (ProcessCanceledException e) {
+            exists = false;
+            DumbService.getInstance(project).smartInvokeLater(this);
+          }
+          if (exists) {
             ensureToolWindowExists(libraryToolWindow);
           }
           else {

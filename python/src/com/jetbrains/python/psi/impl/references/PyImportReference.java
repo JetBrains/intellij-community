@@ -26,12 +26,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -222,10 +223,10 @@ public class PyImportReference extends PyReferenceImpl {
         }
       }
       else { // in "import _" or "from _ import"
-        ASTNode n = myElement.getNode().getTreePrev();
-        while (n != null && n.getElementType() == PyTokenTypes.DOT) {
+        PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(myElement);
+        while (prevElem != null && prevElem.getNode().getElementType() == PyTokenTypes.DOT) {
           relativeLevel += 1;
-          n = n.getTreePrev();
+          prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(prevElem);
         }
         if (fromImport != null) {
           addImportedNames(fromImport.getImportElements());

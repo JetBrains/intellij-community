@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,9 @@ package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class ToolManager extends BaseToolManager<Tool> {
   public ToolManager(ActionManagerEx actionManagerEx,
                      SchemesManagerFactory factory) {
@@ -33,7 +28,7 @@ public class ToolManager extends BaseToolManager<Tool> {
 
   @Override
   protected String getSchemesPath() {
-    return StoragePathMacros.ROOT_CONFIG + "/tools";
+    return "tools";
   }
 
   @Override
@@ -59,11 +54,5 @@ public class ToolManager extends BaseToolManager<Tool> {
 
   public static ToolManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ToolManager.class);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ToolManager";
   }
 }

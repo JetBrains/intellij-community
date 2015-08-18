@@ -17,8 +17,8 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +83,7 @@ public interface StatusBarWidget extends Disposable {
   }
 
   abstract class WidgetBorder implements Border {
-    public static final Border INSTANCE = IdeBorderFactory.createEmptyBorder(0, 2, 0, 2);
-    public static final Border WIDE = IdeBorderFactory.createEmptyBorder(0, 4, 0, 4);
+    public static final Border INSTANCE = JBUI.Borders.empty(0, 2);
+    public static final Border WIDE = JBUI.Borders.empty(0, 4);
   }
 }

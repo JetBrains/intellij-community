@@ -72,7 +72,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private void checkPsiModificationAllowed(@NotNull final PsiTreeChangeEvent event) {
     if (!toProcessPsiEvent()) return;
     final PsiFile psiFile = event.getFile();
-    if (psiFile == null || psiFile.getNode() == null) return;
+    if (!(psiFile instanceof PsiFileEx) || !((PsiFileEx)psiFile).isContentsLoaded()) return;
 
     final Document document = myPsiDocumentManager.getCachedDocument(psiFile);
     if (document != null && myPsiDocumentManager.isUncommited(document)) {
@@ -91,7 +91,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private void doSync(@NotNull final PsiTreeChangeEvent event, boolean force, @NotNull final DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
     final PsiFile psiFile = event.getFile();
-    if (psiFile == null || psiFile.getNode() == null) return;
+    if (!(psiFile instanceof PsiFileEx) || !((PsiFileEx)psiFile).isContentsLoaded()) return;
 
     final DocumentEx document = getCachedDocument(psiFile, force);
     if (document == null) return;

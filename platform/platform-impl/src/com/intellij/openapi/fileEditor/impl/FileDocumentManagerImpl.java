@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.extensions.Extensions;
@@ -384,18 +383,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   @Override
   public void saveDocumentAsIs(@NotNull Document document) {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-
-    String trailer = editorSettings.getStripTrailingSpaces();
-    boolean ensureEOLonEOF = editorSettings.isEnsureNewLineAtEOF();
-    editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    editorSettings.setEnsureNewLineAtEOF(false);
+    VirtualFile file = getFile(document);
+    boolean spaceStrippingEnabled = true;
+    if (file != null) {
+      spaceStrippingEnabled = TrailingSpacesStripper.isEnabled(file);
+      TrailingSpacesStripper.setEnabled(file, false);
+    }
     try {
       saveDocument(document);
     }
     finally {
-      editorSettings.setStripTrailingSpaces(trailer);
-      editorSettings.setEnsureNewLineAtEOF(ensureEOLonEOF);
+      if (file != null) {
+        TrailingSpacesStripper.setEnabled(file, spaceStrippingEnabled);
+      }
     }
   }
 

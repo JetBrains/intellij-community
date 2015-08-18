@@ -47,10 +47,12 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return myDomManager.getDomHandler(parentTag);
   }
 
+  @Nullable
   public static XmlTag getParentTag(final XmlElement xmlElement) {
     return (XmlTag)getParentTagCandidate(xmlElement);
   }
 
+  @Nullable
   public static PsiElement getParentTagCandidate(final XmlElement xmlElement) {
     final PsiElement parent = xmlElement.getParent();
     return parent instanceof XmlEntityRef ? parent.getParent() : parent;

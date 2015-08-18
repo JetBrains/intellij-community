@@ -195,7 +195,7 @@ public class GenerationNode extends UserDataHolderBase {
 
     TemplateImpl parentTemplate;
     Map<String, String> predefinedValues;
-    if (myTemplateToken instanceof TemplateToken && generator instanceof XmlZenCodingGenerator) {
+    if (generator instanceof XmlZenCodingGenerator) {
       TemplateToken xmlTemplateToken = myTemplateToken;
       parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, generator, hasChildren);
       predefinedValues = buildPredefinedValues(xmlTemplateToken.getAttributes(), (XmlZenCodingGenerator)generator, hasChildren);
@@ -256,7 +256,7 @@ public class GenerationNode extends UserDataHolderBase {
     return builder.buildTemplate();
   }
 
-  private static TemplateImpl invokeTemplate(TemplateToken token,
+  private static TemplateImpl invokeTemplate(@NotNull TemplateToken token,
                                              boolean hasChildren,
                                              final CustomTemplateCallback callback,
                                              @Nullable ZenCodingGenerator generator) {
@@ -285,12 +285,7 @@ public class GenerationNode extends UserDataHolderBase {
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    String text = xmlFile.getText();
-    final PsiElement context = callback.getFile().getContext();
-    if (context != null && context.getText().startsWith("\"")) {
-      text = text.replace('"', '\'');
-    }
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, text, false, true);
+    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, xmlFile.getText(), false, true);
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
 

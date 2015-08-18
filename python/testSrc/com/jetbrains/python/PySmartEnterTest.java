@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class PySmartEnterTest extends PyTestCase {
     final List<SmartEnterProcessor> processors = getSmartProcessors(PythonLanguage.getInstance());
     new WriteCommandAction(myFixture.getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         final Editor editor = myFixture.getEditor();
         for (SmartEnterProcessor processor : processors) {
           processor.process(myFixture.getProject(), editor, myFixture.getFile());

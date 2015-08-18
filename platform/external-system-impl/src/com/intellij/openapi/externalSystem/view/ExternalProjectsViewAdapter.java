@@ -88,6 +88,11 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   }
 
   @Override
+  public boolean useTasksNode() {
+    return delegate.useTasksNode();
+  }
+
+  @Override
   public ProjectSystemId getSystemId() {
     return delegate.getSystemId();
   }
@@ -100,5 +105,10 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   @Override
   public void addListener(@NotNull Listener listener) {
     delegate.addListener(listener);
+  }
+
+  @Override
+  public boolean getShowIgnored() {
+    return delegate.getShowIgnored();
   }
 }

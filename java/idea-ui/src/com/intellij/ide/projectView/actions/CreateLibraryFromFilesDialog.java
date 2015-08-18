@@ -19,6 +19,8 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -131,6 +133,16 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        addLibrary();
+      }
+    });
+    super.doOKAction();
+  }
+
+  private void addLibrary() {
     final LibrariesContainer.LibraryLevel level = myNameAndLevelPanel.getLibraryLevel();
     AccessToken token = WriteAction.start();
     try {
@@ -151,7 +163,6 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     finally {
       token.finish();
     }
-    super.doOKAction();
   }
 
   @Override

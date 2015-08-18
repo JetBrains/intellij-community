@@ -20,9 +20,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
 public abstract class GroovyShellActionBase extends AnAction {
@@ -35,6 +41,9 @@ public abstract class GroovyShellActionBase extends AnAction {
       return myConfig.isSuitableModule(module);
     }
   };
+
+  // non-static to distinguish different module acceptability conditions
+  private final Key<CachedValue<Boolean>> APPLICABLE_MODULE_CACHE = Key.create("APPLICABLE_MODULE_CACHE");
 
   private final Function<Module, String> VERSION_PROVIDER = new Function<Module, String>() {
     @Override
@@ -57,11 +66,21 @@ public abstract class GroovyShellActionBase extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-
-    boolean enabled = project != null && !ModuleChooserUtil.getGroovyCompatibleModules(project, APPLICABLE_MODULE).isEmpty();
+    boolean enabled = project != null && hasGroovyCompatibleModule(project);
 
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);
+  }
+
+  private boolean hasGroovyCompatibleModule(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, APPLICABLE_MODULE_CACHE, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        return Result.create(ModuleChooserUtil.hasGroovyCompatibleModules(project, APPLICABLE_MODULE),
+                             ProjectRootModificationTracker.getInstance(project));
+      }
+    }, false);
   }
 
   @Override

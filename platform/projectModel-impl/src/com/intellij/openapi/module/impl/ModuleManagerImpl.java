@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,7 +33,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -101,7 +100,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myCachedModuleComparator = null;
     myCachedSortedModules = null;
   }
-
 
   @Override
   @NotNull
@@ -272,16 +270,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
         myFailedModulePaths.remove(modulePath);
       }
-      catch (final IOException e) {
+      catch (IOException e) {
         errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
                                                      modulePath, this));
       }
-      catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+      catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
         errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
-      }
-      catch (StateStorageException e) {
-        errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                     modulePath, this));
       }
     }
 
@@ -448,7 +442,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   public void writeExternal(@NotNull Element element) {
-    final Element modules = new Element(ELEMENT_MODULES);
     final Module[] collection = getModules();
 
     List<SaveItem> sorted = new ArrayList<SaveItem>(collection.length + myFailedModulePaths.size());
@@ -458,17 +451,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     for (ModulePath modulePath : myFailedModulePaths) {
       sorted.add(new ModulePathSaveItem(modulePath));
     }
-    Collections.sort(sorted, new Comparator<SaveItem>() {
-      @Override
-      public int compare(SaveItem item1, SaveItem item2) {
-        return item1.getModuleName().compareTo(item2.getModuleName());
-      }
-    });
-    for (SaveItem saveItem : sorted) {
-      saveItem.writeExternal(modules);
-    }
 
-    element.addContent(modules);
+    if (!sorted.isEmpty()) {
+      Collections.sort(sorted, new Comparator<SaveItem>() {
+        @Override
+        public int compare(SaveItem item1, SaveItem item2) {
+          return item1.getModuleName().compareTo(item2.getModuleName());
+        }
+      });
+
+      Element modules = new Element(ELEMENT_MODULES);
+      for (SaveItem saveItem : sorted) {
+        saveItem.writeExternal(modules);
+      }
+      element.addContent(modules);
+    }
   }
 
   @Override
@@ -483,7 +480,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @Override
   @NotNull
-  public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists {
+  public Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists {
     incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);
@@ -700,22 +697,25 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     @NotNull
-    public Module newModule(@NotNull String filePath,
-                            final String moduleTypeId,
-                            @Nullable Map<String, String> options) {
+    public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId, @Nullable final Map<String, String> options) {
       assertWritable();
-      filePath = resolveShortWindowsName(filePath);
+      filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
 
       ModuleEx module = getModuleByFilePath(filePath);
       if (module == null) {
         module = createModule(filePath);
-        module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
-        if (options != null) {
-          for ( Map.Entry<String,String> option : options.entrySet()) {
-            module.setOption(option.getKey(),option.getValue());
+        final ModuleEx newModule = module;
+        initModule(module, filePath, new Runnable() {
+          @Override
+          public void run() {
+            newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+            if (options != null) {
+              for (Map.Entry<String, String> option : options.entrySet()) {
+                newModule.setOption(option.getKey(), option.getValue());
+              }
+            }
           }
-        }
-        initModule(module);
+        });
       }
       return module;
     }
@@ -737,13 +737,16 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     @NotNull
-    public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, ModuleWithNameAlreadyExists {
+    public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
       assertWritable();
       try {
         return loadModuleInternal(filePath);
       }
-      catch (StateStorageException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
+      catch (FileNotFoundException e) {
+        throw e;
+      }
+      catch (IOException e) {
+        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()), e);
       }
     }
 
@@ -752,7 +755,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       filePath = resolveShortWindowsName(filePath);
       final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {
-        throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
+        throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
       }
 
       final String name = moduleFile.getName();
@@ -766,7 +769,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
       }
 
-      ModuleEx module = getModuleByFilePath(moduleFile.getPath());
+      String path = moduleFile.getPath();
+      ModuleEx module = getModuleByFilePath(path);
       if (module == null) {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
@@ -774,15 +778,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
             moduleFile.refresh(false, false);
           }
         }, ModalityState.any());
-        module = createAndLoadModule(moduleFile.getPath());
-        initModule(module);
+        module = createAndLoadModule(path);
+        initModule(module, path, null);
       }
       return module;
     }
 
-    private void initModule(@NotNull ModuleEx module) {
-      String path = module.getModuleFilePath();
-      module.init();
+    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
+      module.init(path, beforeComponentCreation);
       myModulesCache = null;
       myPathToModule.put(path, module);
     }
@@ -1011,7 +1014,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }, false, true);
   }
 
-  void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
+  public void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
       @Override
       public void run() {

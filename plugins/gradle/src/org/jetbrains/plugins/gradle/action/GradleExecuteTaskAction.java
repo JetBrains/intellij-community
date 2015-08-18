@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -61,7 +62,8 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
   @Override
   protected boolean isVisible(AnActionEvent e) {
     if (!super.isVisible(e)) return false;
-    return GradleConstants.SYSTEM_ID.equals(getSystemId(e));
+    final ExternalProjectsView projectsView = ExternalSystemDataKeys.VIEW.getData(e.getDataContext());
+    return projectsView == null || GradleConstants.SYSTEM_ID.equals(getSystemId(e));
   }
 
   protected boolean isEnabled(AnActionEvent e) {

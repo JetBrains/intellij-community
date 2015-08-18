@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.ClassFilter;
@@ -33,6 +32,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ClassBrowser extends BrowseModuleValueActionListener {
@@ -96,7 +96,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
       private PsiMethod findMainMethod(final PsiClass aClass) {
         return new ReadAction<PsiMethod>() {
           @Override
-          protected void run(Result<PsiMethod> result) throws Throwable {
+          protected void run(@NotNull Result<PsiMethod> result) throws Throwable {
             result.setResult(PsiMethodUtil.findMainMethod(aClass));
           }
         }.execute().getResultObject();

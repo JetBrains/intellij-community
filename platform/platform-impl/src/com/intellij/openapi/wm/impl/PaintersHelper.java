@@ -79,26 +79,30 @@ final class PaintersHelper implements Painter.Listener {
 
   public void paint(Graphics g, JComponent current) {
     if (myPainters.isEmpty()) return;
+    Graphics2D g2d = (Graphics2D)g;
     Rectangle clip = ObjectUtils.notNull(g.getClipBounds(), current.getBounds());
 
-    Graphics2D g2d = (Graphics2D)g;
+    Component component = null;
+    Rectangle componentBounds = null;
+    boolean clipMatched = false;
     for (Painter painter : myPainters) {
-      Component component = myPainter2Component.get(painter);
-      if (component.getParent() == null) continue;
-      Rectangle componentBounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), current);
+      if (!painter.needsRepaint()) continue;
 
-      if (!painter.needsRepaint()) {
-        continue;
+      Component cur = myPainter2Component.get(painter);
+      if (cur != component || componentBounds == null) {
+        Container parent = (component = cur).getParent();
+        if (parent == null) continue;
+        componentBounds = SwingUtilities.convertRectangle(parent, component.getBounds(), current);
+        clipMatched = clip.contains(componentBounds) || clip.intersects(componentBounds);
       }
+      if (!clipMatched) continue;
 
-      if (clip.contains(componentBounds) || clip.intersects(componentBounds)) {
-        Point targetPoint = SwingUtilities.convertPoint(current, 0, 0, component);
-        Rectangle targetRect = new Rectangle(targetPoint, component.getSize());
-        g2d.setClip(clip.intersection(componentBounds));
-        g2d.translate(-targetRect.x, -targetRect.y);
-        painter.paint(component, g2d);
-        g2d.translate(targetRect.x, targetRect.y);
-      }
+      Point targetPoint = SwingUtilities.convertPoint(current, 0, 0, component);
+      Rectangle targetRect = new Rectangle(targetPoint, component.getSize());
+      g2d.setClip(clip.intersection(componentBounds));
+      g2d.translate(-targetRect.x, -targetRect.y);
+      painter.paint(component, g2d);
+      g2d.translate(targetRect.x, targetRect.y);
     }
 
   }

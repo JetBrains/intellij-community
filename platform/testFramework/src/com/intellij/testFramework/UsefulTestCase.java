@@ -82,8 +82,8 @@ import java.util.regex.Pattern;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
-
-  public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
+  @Deprecated
+  public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.roots.IdeaModifiableModelsProvider";
   public static final String TEMP_DIR_MARKER = "unitTest_";
 
   protected static boolean OVERWRITE_TESTDATA = false;
@@ -107,6 +107,7 @@ public abstract class UsefulTestCase extends TestCase {
   };
 
   protected static String ourPathToKeep = null;
+  private List<String> myPathsToKeep = new ArrayList<String>();
 
   private CodeStyleSettings myOldCodeStyleSettings;
   private String myTempDir;
@@ -156,11 +157,11 @@ public abstract class UsefulTestCase extends TestCase {
     finally {
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-        if (ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false)) {
+        if (hasTmpFilesToKeep()) {
           File[] files = new File(myTempDir).listFiles();
           if (files != null) {
             for (File file : files) {
-              if (!FileUtil.pathsEqual(file.getPath(), ourPathToKeep)) {
+              if (!shouldKeepTmpFile(file)) {
                 FileUtil.delete(file);
               }
             }
@@ -174,6 +175,23 @@ public abstract class UsefulTestCase extends TestCase {
 
     UIUtil.removeLeakingAppleListeners();
     super.tearDown();
+  }
+
+  protected void addTmpFileToKeep(File file) {
+    myPathsToKeep.add(file.getPath());
+  }
+
+  private boolean hasTmpFilesToKeep() {
+    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false) || !myPathsToKeep.isEmpty();
+  }
+
+  private boolean shouldKeepTmpFile(File file) {
+    String path = file.getPath();
+    if (FileUtil.pathsEqual(path, ourPathToKeep)) return true;
+    for (String pathToKeep : myPathsToKeep) {
+      if (FileUtil.pathsEqual(path, pathToKeep)) return true;
+    }
+    return false;
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
@@ -216,21 +234,26 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  protected CompositeException checkForSettingsDamage() throws Exception {
+  @NotNull
+  protected List<Throwable> checkForSettingsDamage() throws Exception {
     Application app = ApplicationManager.getApplication();
     if (isPerformanceTest() || app == null || app instanceof MockApplication) {
-      return new CompositeException();
+      return Collections.emptyList();
     }
 
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
+    if (oldCodeStyleSettings == null) {
+      return Collections.emptyList();
+    }
+
     myOldCodeStyleSettings = null;
 
     return doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
   }
 
-  public static CompositeException doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                                            @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
-    CompositeException result = new CompositeException();
+  @NotNull
+  public static List<Throwable> doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
+    List<Throwable> result = new SmartList<Throwable>();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     try {
       Element newS = new Element("temp");
@@ -542,21 +565,21 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
+  public static <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
 
-  public <T> void assertContainsOrdered(Collection<? extends T> collection, Collection<T> expected) {
+  public static <T> void assertContainsOrdered(Collection<? extends T> collection, Collection<T> expected) {
     ArrayList<T> copy = new ArrayList<T>(collection);
     copy.retainAll(expected);
     assertOrderedEquals(toString(collection), copy, expected);
   }
 
-  public <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
+  public static <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
     assertContainsElements(collection, Arrays.asList(expected));
   }
 
-  public <T> void assertContainsElements(Collection<? extends T> collection, Collection<T> expected) {
+  public static <T> void assertContainsElements(Collection<? extends T> collection, Collection<T> expected) {
     ArrayList<T> copy = new ArrayList<T>(collection);
     copy.retainAll(expected);
     assertSameElements(toString(collection), copy, expected);
@@ -566,11 +589,11 @@ public abstract class UsefulTestCase extends TestCase {
     return toString(Arrays.asList(collection), separator);
   }
 
-  public <T> void assertDoesntContain(Collection<? extends T> collection, T... notExpected) {
+  public static <T> void assertDoesntContain(Collection<? extends T> collection, T... notExpected) {
     assertDoesntContain(collection, Arrays.asList(notExpected));
   }
 
-  public <T> void assertDoesntContain(Collection<? extends T> collection, Collection<T> notExpected) {
+  public static <T> void assertDoesntContain(Collection<? extends T> collection, Collection<T> notExpected) {
     ArrayList<T> expected = new ArrayList<T>(collection);
     expected.removeAll(notExpected);
     assertSameElements(collection, expected);
@@ -681,6 +704,7 @@ public abstract class UsefulTestCase extends TestCase {
     return ts[0];
   }
 
+  @Contract("null, _ -> fail")
   public static <T> void assertOneOf(T value, T... values) {
     boolean found = false;
     for (T v : values) {

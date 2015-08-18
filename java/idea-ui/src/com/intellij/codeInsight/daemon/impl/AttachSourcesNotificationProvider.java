@@ -254,7 +254,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         model.addRoot(root, OrderRootType.SOURCES);
         modelsToCommit.add(model);
       }
-      if (modelsToCommit.isEmpty()) return new ActionCallback.Rejected();
+      if (modelsToCommit.isEmpty()) return ActionCallback.REJECTED;
       new WriteAction() {
         @Override
         protected void run(@NotNull final Result result) {
@@ -264,7 +264,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         }
       }.execute();
 
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     @Nullable
@@ -307,7 +307,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       VirtualFile[] candidates = FileChooser.chooseFiles(descriptor, myProject, roots.length == 0 ? null : PathUtil.getLocalFile(roots[0]));
       final VirtualFile[] files = PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
       if (files.length == 0) {
-        return new ActionCallback.Rejected();
+        return ActionCallback.REJECTED;
       }
 
       final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<Library, LibraryOrderEntry>();
@@ -350,7 +350,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         }).showCenteredInCurrentWindow(myProject);
       }
 
-      return new ActionCallback.Done();
+      return ActionCallback.DONE;
     }
 
     private static void appendSources(final Library library, final VirtualFile[] files) {

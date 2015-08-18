@@ -18,6 +18,8 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -206,6 +208,19 @@ public class PyCustomMember {
     return myFunction;
   }
 
+  /**
+   * Checks if some reference points to this element
+   * @param reference reference to check
+   * @return true if reference points to it
+   */
+  public final boolean isReferenceToMe(@NotNull final PsiReference reference) {
+    final PsiElement element = reference.resolve();
+    if (!(element instanceof MyInstanceElement)) {
+      return false;
+    }
+    return ((MyInstanceElement)element).getThis().equals(this);
+  }
+
   private class MyInstanceElement extends ASTWrapperPsiElement implements PyTypedElement {
     private final PyClass myClass;
     private final PsiElement myContext;
@@ -214,6 +229,10 @@ public class PyCustomMember {
       super(resolveTarget != null ? resolveTarget.getNode() : clazz.getNode());
       myClass = clazz;
       myContext = context;
+    }
+
+    private PyCustomMember getThis() {
+      return PyCustomMember.this;
     }
 
     public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {

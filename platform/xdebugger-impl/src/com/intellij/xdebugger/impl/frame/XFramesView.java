@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class XFramesView extends XDebugView {
   private final Set<XExecutionStack> myExecutionStacks = ContainerUtil.newHashSet();
   private XExecutionStack mySelectedStack;
   private int mySelectedFrameIndex;
+  private Rectangle myVisibleRect;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
   private final ActionToolbarImpl myToolbar;
@@ -223,6 +224,10 @@ public class XFramesView extends XDebugView {
     if (event != SessionEvent.SETTINGS_CHANGED) {
       mySelectedFrameIndex = 0;
       mySelectedStack = null;
+      myVisibleRect = null;
+    }
+    else {
+      myVisibleRect = myFramesList.getVisibleRect();
     }
 
     myListenersEnabled = false;
@@ -339,6 +344,9 @@ public class XFramesView extends XDebugView {
           myNextFrameIndex += stackFrames.size();
           myAllFramesLoaded = last;
           if (last) {
+            if (myVisibleRect != null) {
+              myFramesList.scrollRectToVisible(myVisibleRect);
+            }
             myRunning = false;
             myListenersEnabled = true;
           }

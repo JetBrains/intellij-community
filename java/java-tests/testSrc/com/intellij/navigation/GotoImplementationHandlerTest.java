@@ -215,4 +215,22 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertNotNull(aClass);
     assertEquals(aClass.getName(), "PsiPackageBase");
   }
+  
+  public void testMethodReferences() throws Throwable {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "interface I {void f();}\n" +
+                                                          "class A implements I { public void f(){}}\n" +
+                                                          "class B implements I { public void f(){}}\n" +
+                                                          "class C {\n" +
+                                                          "  void foo(java.util.List<I> l) {l.stream().forEach(I::<caret>f);}" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    assertEquals(2, impls.length);
+    final PsiElement meth = impls[0];
+    assertTrue(meth instanceof PsiMethod);
+    final PsiClass aClass = ((PsiMethod)meth).getContainingClass();
+    assertNotNull(aClass);
+    assertEquals(aClass.getName(), "A");
+  }
 }

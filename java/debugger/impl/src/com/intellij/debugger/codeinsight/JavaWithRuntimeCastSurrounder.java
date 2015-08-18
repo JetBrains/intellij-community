@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -89,7 +90,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
       DebuggerInvocationUtil.invokeLater(project, new Runnable() {
         public void run() {
           new WriteCommandAction(project, CodeInsightBundle.message("command.name.surround.with.runtime.cast")) {
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               try {
                 PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
                 PsiParenthesizedExpression parenth =

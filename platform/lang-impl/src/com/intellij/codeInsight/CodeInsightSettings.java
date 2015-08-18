@@ -86,6 +86,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
 
+  public boolean SHOW_SOURCE_INFERRED_ANNOTATIONS = true;
+
   @OptionTag
   private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
   

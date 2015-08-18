@@ -22,6 +22,9 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,11 +34,27 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 public abstract class JavaTestFramework implements TestFramework {
   public boolean isLibraryAttached(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     PsiClass c = JavaPsiFacade.getInstance(module.getProject()).findClass(getMarkerClassFQName(), scope);
     return c != null;
+  }
+
+  @Nullable
+  @Override
+  public String getLibraryPath() {
+    ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
+    if (descriptor != null) {
+      return descriptor.getLibraryClassesRoots().get(0);
+    }
+    return null;
+  }
+
+  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+    return null;
   }
 
   protected abstract String getMarkerClassFQName();
@@ -122,7 +141,16 @@ public abstract class JavaTestFramework implements TestFramework {
   }
   
   public void setupLibrary(Module module) {
-    OrderEntryFix.addJarToRoots(getLibraryPath(), module, null);
+    ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
+    if (descriptor != null) {
+      ProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
+    }
+    else {
+      String path = getLibraryPath();
+      if (path != null) {
+        OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
+      }
+    }
   }
 
   public boolean isSingleConfig() {

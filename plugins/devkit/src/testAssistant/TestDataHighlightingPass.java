@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.PlatformColors;
@@ -86,7 +87,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static class MyGutterIconRenderer extends GutterIconRenderer {
+  private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     @NotNull
     @Override
     public Icon getIcon() {

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
@@ -24,14 +23,7 @@ public class CodeInsightTestCaseUtil {
   public static void doAction(CodeInsightTestCase testCase, AnAction action, String testName, String ext) throws Exception {
     testCase.configureByFile(testName + "." + ext);
 
-    action.actionPerformed(new AnActionEvent(
-      null,
-      DataManager.getInstance().getDataContext(),
-      "",
-      action.getTemplatePresentation(),
-      ActionManager.getInstance(),
-      0)
-    );
+    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
 
     testCase.checkResultByFile(testName + "_after." + ext);
   }

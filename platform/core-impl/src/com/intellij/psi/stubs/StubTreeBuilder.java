@@ -16,10 +16,8 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
@@ -29,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -37,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
-import com.intellij.util.indexing.SubstitutedFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,35 +61,23 @@ public class StubTreeBuilder {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       if (builder != null) {
         data = builder.buildStubTree(inputData);
+        if (data instanceof PsiFileStubImpl && !((PsiFileStubImpl)data).rootsAreSet()) {
+          ((PsiFileStubImpl)data).setStubRoots(new PsiFileStub[]{(PsiFileStubImpl)data});
+        }
       }
       else {
-        final LanguageFileType languageFileType = (LanguageFileType)fileType;
-
         CharSequence contentAsText = inputData.getContentAsText();
         FileContentImpl fileContent = (FileContentImpl)inputData;
         PsiFile psi = fileContent.getPsiFileForPsiDependentIndex();
         final FileViewProvider viewProvider = psi.getViewProvider();
         psi = viewProvider.getStubBindingRoot();
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
-        final IStubFileElementType type = ((PsiFileImpl)psi).getElementTypeForStubBuilder();
 
         // if we load AST, it should be easily gc-able. See PsiFileImpl.createTreeElementPointer()
         psi.getManager().startBatchFilesProcessingMode();
 
         try {
-          IStubFileElementType stubFileElementType;
-          if (type != null) {
-            stubFileElementType = type;
-          }
-          else if (languageFileType instanceof SubstitutedFileType) {
-            SubstitutedFileType substituted = (SubstitutedFileType)languageFileType;
-            LanguageFileType original = (LanguageFileType)substituted.getOriginalFileType();
-            final IFileElementType originalType = LanguageParserDefinitions.INSTANCE.forLanguage(original.getLanguage()).getFileNodeType();
-            stubFileElementType = originalType instanceof IStubFileElementType ? (IStubFileElementType)originalType : null;
-          }
-          else {
-            stubFileElementType = null;
-          }
+          IStubFileElementType stubFileElementType = ((PsiFileImpl)psi).getElementTypeForStubBuilder();
           if (stubFileElementType != null) {
             final StubBuilder stubBuilder = stubFileElementType.getBuilder();
             if (stubBuilder instanceof LightStubBuilder) {
@@ -102,27 +86,25 @@ public class StubTreeBuilder {
             data = stubBuilder.buildStubTree(psi);
 
             final List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
-            if (stubbedRoots.size() > 1) {
-              final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubbedRoots.size());
-              stubs.add((PsiFileStub)data);
+            final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubbedRoots.size());
+            stubs.add((PsiFileStub)data);
 
-              for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
-                final PsiFile secondaryPsi = stubbedRoot.second;
-                if (psi == secondaryPsi) continue;
-                final StubBuilder stubbedRootBuilder = stubbedRoot.first.getBuilder();
-                if (stubbedRootBuilder instanceof LightStubBuilder) {
-                  LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(secondaryPsi.getNode()));
-                }
-                final StubElement element = stubbedRootBuilder.buildStubTree(secondaryPsi);
-                if (element instanceof PsiFileStub) {
-                  stubs.add((PsiFileStub)element);
-                }
+            for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
+              final PsiFile secondaryPsi = stubbedRoot.second;
+              if (psi == secondaryPsi) continue;
+              final StubBuilder stubbedRootBuilder = stubbedRoot.first.getBuilder();
+              if (stubbedRootBuilder instanceof LightStubBuilder) {
+                LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(secondaryPsi.getNode()));
               }
-              final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
-              for (PsiFileStub stub : stubsArray) {
-                if (stub instanceof PsiFileStubImpl) {
-                  ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
-                }
+              final StubElement element = stubbedRootBuilder.buildStubTree(secondaryPsi);
+              if (element instanceof PsiFileStub) {
+                stubs.add((PsiFileStub)element);
+              }
+            }
+            final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+            for (PsiFileStub stub : stubsArray) {
+              if (stub instanceof PsiFileStubImpl) {
+                ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
               }
             }
           }

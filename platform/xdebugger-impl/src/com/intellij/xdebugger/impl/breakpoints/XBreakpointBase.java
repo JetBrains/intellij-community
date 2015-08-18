@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -483,7 +484,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myType.getBreakpointComparator().compare((Self)this, self);
   }
 
-  protected class BreakpointGutterIconRenderer extends GutterIconRenderer {
+  protected class BreakpointGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     @Override
     @NotNull
     public Icon getIcon() {

@@ -16,10 +16,10 @@
 
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
@@ -29,7 +29,6 @@ import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -43,10 +42,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -99,8 +95,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   protected Project myProject;
   protected DnDAwareTree myTree;
 
-  private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
-  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   private final IdeView myIdeView = new MyIdeView();
@@ -205,11 +199,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     addActionButton.getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.ADD.getIcon());
     addActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
 
-    AnActionButton editActionButton = AnActionButton.fromAction(new EditFavoritesAction());
+    AnActionButton editActionButton = AnActionButton.fromAction(ActionManager.getInstance().getAction("EditFavorites"));
     editActionButton.setShortcut(CommonShortcuts.CTRL_ENTER);
 
     AnActionButton deleteActionButton = new DeleteFromFavoritesAction();
-    deleteActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
+    deleteActionButton.setShortcut(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"));
 
     //final AnAction exportToTextFileAction = CommonActionsManager.getInstance().createExportToTextFileAction(createTextExporter());
     //AnActionButton exportActionButton = AnActionButton.fromAction(exportToTextFileAction);
@@ -462,13 +456,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
       return getSelectedModules();
     }
-
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      final Object[] elements = getSelectedNodeElements();
-      return elements != null && elements.length >= 1 && elements[0] instanceof Module
-             ? myDeleteModuleProvider
-             : myDeletePSIElementProvider;
-    }
     if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
       final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
@@ -662,59 +649,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
         mgr.addRoots(node.getValue(), nodes);
       }
       myBuilder.select(nodes.toArray(), null);
-    }
-  }
-
-  private final class MyDeletePSIElementProvider implements DeleteProvider {
-    @Override
-    public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      final PsiElement[] elements = getElementsToDelete();
-      return DeleteHandler.shouldEnableDeleteAction(elements);
-    }
-
-    @Override
-    public void deleteElement(@NotNull DataContext dataContext) {
-      List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
-      List<PsiElement> validElements = new ArrayList<PsiElement>();
-      for (PsiElement psiElement : allElements) {
-        if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
-      }
-      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);
-
-      LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
-      try {
-        DeleteHandler.deletePsiElement(elements, myProject);
-      }
-      finally {
-        a.finish();
-      }
-    }
-
-    private PsiElement[] getElementsToDelete() {
-      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-      Object[] elements = getSelectedNodeElements();
-      for (int idx = 0; elements != null && idx < elements.length; idx++) {
-        if (elements[idx] instanceof PsiElement) {
-          final PsiElement element = (PsiElement)elements[idx];
-          result.add(element);
-          if (element instanceof PsiDirectory) {
-            final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
-            final String path = virtualFile.getPath();
-            if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) { // if is jar-file root
-              final VirtualFile vFile =
-                LocalFileSystem.getInstance().findFileByPath(path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()));
-              if (vFile != null) {
-                final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vFile);
-                if (psiFile != null) {
-                  elements[idx] = psiFile;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return PsiUtilCore.toPsiElementArray(result);
     }
   }
 

@@ -23,8 +23,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.*;
+import git4idea.GitCommit;
+import git4idea.GitExecutionException;
+import git4idea.GitVcs;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRemote;
@@ -50,7 +55,7 @@ import static java.util.Collections.singleton;
 @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class GitImpl implements Git {
 
-  private final Logger LOG = Logger.getInstance(Git.class);
+  private static final Logger LOG = Logger.getInstance(Git.class);
 
   public GitImpl() {
   }
@@ -173,13 +178,25 @@ public class GitImpl implements Git {
 
   @NotNull
   @Override
-  public GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,
+  public GitCommandResult checkAttr(@NotNull final GitRepository repository,
+                                    @NotNull final Collection<String> attributes,
                                     @NotNull Collection<VirtualFile> files) {
-    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
-    h.addParameters(new ArrayList<String>(attributes));
-    h.endOptions();
-    h.addRelativeFiles(files);
-    return run(h);
+    List<List<String>> listOfPaths = VcsFileUtil.chunkFiles(repository.getRoot(), files);
+    return runAll(ContainerUtil.map(listOfPaths, new Function<List<String>, Computable<GitCommandResult>>() {
+      @Override
+      public Computable<GitCommandResult> fun(final List<String> relativePaths) {
+        return new Computable<GitCommandResult>() {
+          @Override
+          public GitCommandResult compute() {
+            final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
+            h.addParameters(new ArrayList<String>(attributes));
+            h.endOptions();
+            h.addParameters(relativePaths);
+            return run(h);
+          }
+        };
+      }
+    }));
   }
 
   @NotNull
@@ -636,6 +653,19 @@ public class GitImpl implements Git {
         return handler;
       }
     });
+  }
+
+  @NotNull
+  private static GitCommandResult runAll(@NotNull List<Computable<GitCommandResult>> commands) {
+    if (commands.isEmpty()) {
+      LOG.error("List of commands should not be empty", new Exception());
+      return GitCommandResult.error("Internal error");
+    }
+    GitCommandResult compoundResult = null;
+    for (Computable<GitCommandResult> command : commands) {
+      compoundResult = GitCommandResult.merge(compoundResult, command.compute());
+    }
+    return ObjectUtils.assertNotNull(compoundResult);
   }
 
   /**

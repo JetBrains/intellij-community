@@ -4,7 +4,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class ToggleInCommentsAction extends EditorHeaderToggleAction implements SecondaryHeaderAction {
+public class ToggleInCommentsAction extends EditorHeaderToggleAction {
   private static final String TEXT = "In &Comments Only";
 
   public ToggleInCommentsAction(EditorSearchComponent editorSearchComponent) {
@@ -13,11 +13,11 @@ public class ToggleInCommentsAction extends EditorHeaderToggleAction implements 
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return getEditorSearchComponent().getFindModel().isInCommentsOnly();
+    return myEditorSearchComponent.getFindModel().isInCommentsOnly();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.IN_COMMENTS : FindModel.SearchContext.ANY);
+    myEditorSearchComponent.getFindModel().setSearchContext(state ? FindModel.SearchContext.IN_COMMENTS : FindModel.SearchContext.ANY);
   }
 }

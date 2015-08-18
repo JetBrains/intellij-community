@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,13 +32,12 @@ public class IOResourceInspectionBase extends ResourceInspection {
       "java.io.InputStream", "java.io.OutputStream", "java.io.Reader", "java.io.Writer",
       "java.io.RandomAccessFile", "java.util.zip.ZipFile"
     };
-  final List<String> ignoredTypes = new ArrayList();
+  final List<String> ignoredTypes = new ArrayList<String>();
 
   public IOResourceInspectionBase() {
     parseString(ignoredTypesString, ignoredTypes);
   }
 
-  @NonNls
   @SuppressWarnings({"PublicField"})
   public String ignoredTypesString = "java.io.ByteArrayOutputStream" +
                                      ',' + "java.io.ByteArrayInputStream" +
@@ -81,7 +79,7 @@ public class IOResourceInspectionBase extends ResourceInspection {
     else if (expression instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final String methodName = methodExpression.getReferenceName();
       if (!"getResourceAsStream".equals(methodName)) {
         return false;
       }

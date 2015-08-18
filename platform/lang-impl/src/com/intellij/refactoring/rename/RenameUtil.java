@@ -154,7 +154,7 @@ public class RenameUtil {
       return newName;
     }
     else {
-      LOG.error("Unknown element type");
+      LOG.error("Unknown element type : " + element);
       return null;
     }
   }

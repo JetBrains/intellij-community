@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
@@ -33,8 +34,9 @@ import java.util.Map.Entry;
  *
  * @author Sergey.Malenkov
  */
-public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent {
+public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent implements Disposable {
   private final IdentityHashMap<K, V> myContent = new IdentityHashMap<K, V>();
+  private volatile boolean myDisposed;
   private K myKey;
 
   /**
@@ -57,6 +59,14 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
   protected abstract V create(UI ui);
 
   protected void dispose(K key) {
+  }
+
+  @Override
+  public void dispose() {
+    if (!myDisposed) {
+      myDisposed = true;
+      removeAll();
+    }
   }
 
   public K getKey() {
@@ -112,13 +122,19 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final UI ui = prepare(key);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            select(callback, key, ui);
-          }
-        }, ModalityState.any());
+        if (!myDisposed) {
+          final UI ui = prepare(key);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!myDisposed) {
+                select(callback, key, ui);
+              }
+              else callback.setRejected();
+            }
+          }, ModalityState.any());
+        }
+        else callback.setRejected();
       }
     });
   }

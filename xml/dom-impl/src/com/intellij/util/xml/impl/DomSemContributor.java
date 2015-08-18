@@ -208,7 +208,7 @@ public class DomSemContributor extends SemContributor {
       @Override
       public AttributeChildInvocationHandler fun(final XmlAttribute attribute) {
         final XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
-        final DomInvocationHandler handler = getParentDom(tag);
+        final DomInvocationHandler handler = tag == null ? null : getParentDom(tag);
         if (handler == null) return null;
 
         final String localName = attribute.getLocalName();

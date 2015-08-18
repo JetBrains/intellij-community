@@ -1,1 +1,1 @@
-aaa = <selection>bbb</selection> && ccc
+aaa = <selection>bbb</selection> and ccc

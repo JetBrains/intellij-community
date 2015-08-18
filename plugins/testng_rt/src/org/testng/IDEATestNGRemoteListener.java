@@ -13,7 +13,7 @@ import java.util.*;
  * User: anna
  * Date: 5/22/13
  */
-public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener, IInvokedMethodListener {
+public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener {
 
   private final PrintStream myPrintStream;
   private final List<String> myCurrentSuites = new ArrayList<String>();
@@ -44,26 +44,42 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public synchronized void onFinish(ISuite suite) {
+    if (suite != null && suite.getAllInvokedMethods().size() < suite.getAllMethods().size()) {
+      for (ITestNGMethod method : suite.getAllMethods()) {
+        if (method.isTest()) {
+          boolean found = false;
+          for (IInvokedMethod invokedMethod : suite.getAllInvokedMethods()) {
+            if (invokedMethod.getTestMethod() == method) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "." + method.getMethodName());
+            myPrintStream.println("##teamcity[testStarted name=\'" + fullEscapedMethodName + "\']");
+            myPrintStream.println("##teamcity[testIgnored name=\'" + fullEscapedMethodName + "\']");
+            myPrintStream.println("##teamcity[testFinished name=\'" + fullEscapedMethodName + "\']");
+            break;
+          }
+        }
+      }
+    }
     for (int i = myCurrentSuites.size() - 1; i >= 0; i--) {
       onSuiteFinish(myCurrentSuites.remove(i));
     }
     myCurrentSuites.clear();
   }
 
-  public synchronized void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-    if (!testResult.getMethod().isTest()) {
-      onConfigurationStart(new DelegatedResult(testResult));
-    }
-  }
-  //should be covered by test listeners
-  public void afterInvocation(IInvokedMethod method, ITestResult testResult) {}
-
   public synchronized void onConfigurationSuccess(ITestResult result) {
-    onConfigurationSuccess(new DelegatedResult(result));
+    final DelegatedResult delegatedResult = new DelegatedResult(result);
+    onConfigurationStart(delegatedResult);
+    onConfigurationSuccess(delegatedResult);
   }
 
   public synchronized void onConfigurationFailure(ITestResult result) {
-    onConfigurationFailure(new DelegatedResult(result));
+    final DelegatedResult delegatedResult = new DelegatedResult(result);
+    onConfigurationStart(delegatedResult);
+    onConfigurationFailure(delegatedResult);
   }
 
   public synchronized void onConfigurationSkip(ITestResult itr) {}
@@ -270,7 +286,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     Throwable getThrowable();
   }
 
-  private static class DelegatedResult implements ExposedTestResult {
+  protected static class DelegatedResult implements ExposedTestResult {
     private final ITestResult myResult;
 
     public DelegatedResult(ITestResult result) {

@@ -40,7 +40,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.FrameState;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -301,7 +300,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected void loadFrameState() {
     final Window frame = getFrame();
-    if (!WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
+    if (myDimensionKey != null && !WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
       final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
       if (ideFrame != null) {
         frame.setBounds(ideFrame.suggestChildFrameBounds());

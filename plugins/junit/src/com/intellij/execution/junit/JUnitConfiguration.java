@@ -51,8 +51,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+public class JUnitConfiguration extends JavaTestConfigurationBase {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -455,6 +454,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @Override
   public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
     return new JUnitConsoleProperties(this, executor);
+  }
+
+  @NotNull
+  @Override
+  public String getFrameworkPrefix() {
+    return "j";
   }
 
   public static class Data implements Cloneable {

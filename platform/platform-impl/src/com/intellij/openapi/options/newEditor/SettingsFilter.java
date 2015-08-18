@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
 
   private ActionCallback update(DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
     if (myUpdateRejected) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
     String text = getFilterText();
     if (text.isEmpty()) {

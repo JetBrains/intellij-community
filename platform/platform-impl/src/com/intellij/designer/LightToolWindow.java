@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 
 /**
  * @author Alexander Lobas
@@ -185,7 +184,12 @@ public class LightToolWindow extends JPanel {
       @Override
       public void doLayout() {
         Dimension size = myMinimizeButton.getPreferredSize();
-        myMinimizeButton.setBounds(0, 0, getWidth(), size.height);
+        if (myAnchor == ToolWindowAnchor.BOTTOM) {
+          myMinimizeButton.setBounds(0, 1, size.width, MINIMIZE_WIDTH);
+        }
+        else {
+          myMinimizeButton.setBounds(0, 0, getWidth(), size.height);
+        }
       }
     };
     myMinimizeComponent.add(myMinimizeButton);
@@ -196,13 +200,26 @@ public class LightToolWindow extends JPanel {
   }
 
   private void configureBorder() {
-    int borderStyle = isLeft() ? SideBorder.RIGHT : SideBorder.LEFT;
+    int borderStyle;
+    if (myAnchor == ToolWindowAnchor.LEFT) {
+      borderStyle = SideBorder.RIGHT;
+    }
+    else if (myAnchor == ToolWindowAnchor.RIGHT) {
+      borderStyle = SideBorder.LEFT;
+    }
+    else if (myAnchor == ToolWindowAnchor.BOTTOM) {
+      borderStyle = SideBorder.TOP;
+    }
+    else {
+      return;
+    }
+
     setBorder(IdeBorderFactory.createBorder(borderStyle));
     myMinimizeComponent.setBorder(IdeBorderFactory.createBorder(borderStyle));
   }
 
   private void configureWidth(int defaultWidth) {
-    myCurrentWidth = myPropertiesComponent.getOrInitInt(myWidthKey, defaultWidth);
+    myCurrentWidth = myPropertiesComponent.getInt(myWidthKey, defaultWidth);
     updateWidth();
     myContentSplitter.getInnerComponent().addComponentListener(myWidthListener);
   }
@@ -381,13 +398,17 @@ public class LightToolWindow extends JPanel {
     public HideAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setText(UIBundle.message("tool.window.hide.action.name"));
-      if (isLeft()) {
+      if (myAnchor == ToolWindowAnchor.LEFT) {
         presentation.setIcon(AllIcons.General.HideLeftPart);
         presentation.setHoveredIcon(AllIcons.General.HideLeftPartHover);
       }
-      else {
+      else if (myAnchor == ToolWindowAnchor.RIGHT) {
         presentation.setIcon(AllIcons.General.HideRightPart);
         presentation.setHoveredIcon(AllIcons.General.HideRightPartHover);
+      }
+      else if (myAnchor == ToolWindowAnchor.BOTTOM) {
+        presentation.setIcon(AllIcons.General.HideDownPart);
+        presentation.setHoveredIcon(AllIcons.General.HideDownPartHover);
       }
     }
 
@@ -523,10 +544,7 @@ public class LightToolWindow extends JPanel {
     }
   }
 
-  private class HeaderPanel extends JPanel {
-    private BufferedImage myActiveImage;
-    private BufferedImage myImage;
-
+  private static class HeaderPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
@@ -538,44 +556,5 @@ public class LightToolWindow extends JPanel {
       Dimension size = super.getMinimumSize();
       return new Dimension(size.width, TabsUtil.getTabsHeight());
     }
-
-    protected void _paintComponent(Graphics g) { // XXX: visual artifacts on linux
-      Rectangle r = getBounds();
-
-      Image image;
-      if (isActive()) {
-        if (myActiveImage == null || myActiveImage.getHeight() != r.height) {
-          myActiveImage = drawToBuffer(true, r.height);
-        }
-        image = myActiveImage;
-      }
-      else {
-        if (myImage == null || myImage.getHeight() != r.height) {
-          myImage = drawToBuffer(false, r.height);
-        }
-        image = myImage;
-      }
-
-      Graphics2D g2d = (Graphics2D)g;
-      Rectangle clipBounds = g2d.getClip().getBounds();
-      for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x += 150) {
-        g2d.drawImage(image, x, 0, null);
-      }
-    }
-
-    protected boolean isActive() {
-      return LightToolWindow.this.isActive();
-    }
-  }
-
-  private static BufferedImage drawToBuffer(boolean active, int height) {
-    final int width = 150;
-
-    BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g = image.createGraphics();
-    UIUtil.drawHeader(g, 0, width, height, active, true, false, false);
-    g.dispose();
-
-    return image;
   }
 }

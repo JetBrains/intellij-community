@@ -61,9 +61,6 @@ public class ScriptFileUtil {
       File tmpFile = copyToTempFile(scriptPath);
       return tmpFile.getAbsolutePath();
     }
-    if (SystemInfo.isWindows) {
-      return PathUtil.driveLetterToLowerCase(scriptPath);
-    }
     return scriptPath;
   }
 

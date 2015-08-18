@@ -29,10 +29,7 @@ import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -43,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -60,6 +58,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
@@ -76,6 +75,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
@@ -89,7 +89,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  * @author and me too (Chinee?)
  */
-public class IntentionHintComponent extends JPanel implements Disposable, ScrollAwareHint {
+public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
   private static final Icon ourInactiveArrowIcon = new EmptyIcon(AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
@@ -112,6 +112,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
   }
 
+  public boolean isVisible() {
+    return myPanel.isVisible();
+  }
+
   private final Editor myEditor;
 
   private static final Alarm myAlarm = new Alarm();
@@ -127,6 +131,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private boolean myDisposed;
   private volatile ListPopup myPopup;
   private final PsiFile myFile;
+  private final JPanel myPanel = new JPanel();
 
   private PopupMenuListener myOuterComboboxPopupListener;
 
@@ -177,7 +182,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     ApplicationManager.getApplication().assertIsDispatchThread();
     myDisposed = true;
     myComponentHint.hide();
-    super.hide();
+    myPanel.hide();
 
     if (myOuterComboboxPopupListener != null) {
       final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, myEditor.getContentComponent());
@@ -214,7 +219,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       return PopupUpdateResult.HIDE_AND_RECREATE;
     }
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
-    if (!step.updateActions(intentions)) {
+    if (!step.wrapAndUpdateActions(intentions, true)) {
       return PopupUpdateResult.NOTHING_CHANGED;
     }
     if (!myPopupShown) {
@@ -336,8 +341,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myFile = file;
     myEditor = editor;
 
-    setLayout(new BorderLayout());
-    setOpaque(false);
+    myPanel.setLayout(new BorderLayout());
+    myPanel.setOpaque(false);
 
     boolean showRefactoringsBulb = ContainerUtil.exists(intentions.inspectionFixesToShow, new Condition<HighlightInfo.IntentionActionDescriptor>() {
       @Override
@@ -354,20 +359,15 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     Icon smartTagIcon = showRefactoringsBulb ? AllIcons.Actions.RefactoringBulb : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
 
-    myHighlightedIcon = new RowIcon(2);
-    myHighlightedIcon.setIcon(smartTagIcon, 0);
-    myHighlightedIcon.setIcon(AllIcons.General.ArrowDown, 1);
-
-    myInactiveIcon = new RowIcon(2);
-    myInactiveIcon.setIcon(smartTagIcon, 0);
-    myInactiveIcon.setIcon(ourInactiveArrowIcon, 1);
+    myHighlightedIcon = new RowIcon(smartTagIcon, AllIcons.General.ArrowDown);
+    myInactiveIcon = new RowIcon(smartTagIcon, ourInactiveArrowIcon);
 
     myIconLabel = new JLabel(myInactiveIcon);
     myIconLabel.setOpaque(false);
 
-    add(myIconLabel, BorderLayout.CENTER);
+    myPanel.add(myIconLabel, BorderLayout.CENTER);
 
-    setBorder(editor.isOneLineMode() ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
+    myPanel.setBorder(editor.isOneLineMode() ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
 
     myIconLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -388,7 +388,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
     });
 
-    myComponentHint = new MyComponentHint(this);
+    myComponentHint = new MyComponentHint(myPanel);
     ListPopupStep step = new IntentionListStep(this, intentions, myEditor, myFile, project);
     recreateMyPopup(step);
     // dispose myself when editor closed
@@ -402,7 +402,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }, this);
   }
 
-  @Override
   public void hide() {
     Disposer.dispose(this);
   }
@@ -411,13 +410,13 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     Window ancestor = SwingUtilities.getWindowAncestor(myPopup.getContent());
     if (ancestor == null) {
       myIconLabel.setIcon(myInactiveIcon);
-      setBorder(small ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
+      myPanel.setBorder(small ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
     }
   }
 
   private void onMouseEnter(final boolean small) {
     myIconLabel.setIcon(myHighlightedIcon);
-    setBorder(small ? createActiveBorderSmall() : createActiveBorder());
+    myPanel.setBorder(small ? createActiveBorderSmall() : createActiveBorder());
 
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
@@ -441,8 +440,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup == null || myPopup.isDisposed()) return;
 
-    if (mouseClick && isShowing()) {
-      final RelativePoint swCorner = RelativePoint.getSouthWestOf(this);
+    if (mouseClick && myPanel.isShowing()) {
+      final RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
       final int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 : myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
       myPopup.show(new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset)));
     }
@@ -459,6 +458,22 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       Disposer.dispose(myPopup);
     }
     myPopup = JBPopupFactory.getInstance().createListPopup(step);
+    if (myPopup instanceof WizardPopup) {
+      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+      for (Shortcut shortcut : shortcuts) {
+        if (shortcut instanceof KeyboardShortcut) {
+          KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+          if (keyboardShortcut.getSecondKeyStroke() == null) {
+            ((WizardPopup)myPopup).registerAction("activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                myPopup.handleSelect(true);
+              }
+            });
+          }
+        }
+      }
+    }
 
     boolean committed = PsiDocumentManager.getInstance(myFile.getProject()).isCommitted(myEditor.getDocument());
     final PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(myFile, myEditor.getCaretModel().getOffset()) : null;

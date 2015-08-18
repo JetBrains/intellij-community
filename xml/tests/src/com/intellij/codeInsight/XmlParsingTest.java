@@ -44,6 +44,7 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -259,7 +260,7 @@ public class XmlParsingTest extends ParsingTestCase {
 
     new WriteCommandAction(getProject(), file) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", 2500, new ThrowableRunnable() {
           @Override
           public void run() throws Exception {
@@ -665,6 +666,10 @@ public class XmlParsingTest extends ParsingTestCase {
 
   public void testNotation2() throws Exception {
     doTestXml("<!DOCTYPE x3 [<!NOTATION data-sources SYSTEM \"x3\">]>");
+  }
+
+  public void testWhitespaceBeforeName() throws Exception {
+    doTestXml("<a>< a</a>");
   }
 
   public void testCustomMimeType() throws Exception {

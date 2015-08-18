@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -46,7 +47,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -546,11 +546,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
         // clear external system API options
         // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
-        m.clearOption("external.system.id");
-        m.clearOption("external.linked.project.path");
-        m.clearOption("external.root.project.path");
-        m.clearOption("external.system.module.group");
-        m.clearOption("external.system.module.version");
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+        m.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+        m.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
       }
       else {
         m.clearOption(getMavenizedModuleOptionName());
@@ -1101,15 +1101,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void updateProjectTargetFolders() {
-    updateProjectFolders(true);
-  }
-
-  private void updateProjectFolders(final boolean targetFoldersOnly) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
 
-        MavenFoldersImporter.updateProjectFolders(myProject, targetFoldersOnly);
+        MavenFoldersImporter.updateProjectFolders(myProject, true);
         VirtualFileManager.getInstance().asyncRefresh(null);
       }
     });
@@ -1180,7 +1176,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return projectImporter.getCreatedModules();
   }
 
-  private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
+  private static Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new THashMap<VirtualFile, Module>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);

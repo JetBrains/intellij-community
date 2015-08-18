@@ -161,10 +161,10 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   @NotNull
   public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting, final boolean computePresentableNames) {
     @SuppressWarnings("deprecation")
-    ExportableApplicationComponent[] components1 = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
+    List<ExportableApplicationComponent> components1 = ComponentsPackage.getComponents(ApplicationManager.getApplication(), ExportableApplicationComponent.class);
     List<ExportableComponent> components2 = ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
     final MultiMap<File, ExportableComponent> result = MultiMap.createLinkedSet();
-    for (ExportableComponent component : ContainerUtil.concat(Arrays.asList(components1), components2)) {
+    for (ExportableComponent component : ContainerUtil.concat(components1, components2)) {
       for (File exportFile : component.getExportFiles()) {
         result.putValue(exportFile, component);
       }
@@ -179,7 +179,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    final StateStorageManager storageManager = application.getStateStore().getStateStorageManager();
+    final StateStorageManager storageManager = ComponentsPackage.getStateStore(application).getStateStorageManager();
     ServiceManagerImpl.processAllImplementationClasses(application, new PairProcessor<Class<?>, PluginDescriptor>() {
       @Override
       public boolean process(@NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
@@ -191,7 +191,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
           int storageIndex;
           Storage[] storages = stateAnnotation.storages();
-          if (storages.length == 1 || (storages.length > 1 && stateAnnotation.storageChooser() == StateStorageChooser.class)) {
+          if (storages.length == 1) {
             storageIndex = 0;
           }
           else {
@@ -204,16 +204,22 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               storage.scheme() == StorageScheme.DEFAULT &&
               !StringUtil.isEmpty(storage.file()) &&
               storage.file().startsWith(StoragePathMacros.APP_CONFIG)) {
-            File file = new File(storageManager.expandMacros(storage.file()));
 
             File additionalExportFile = null;
             if (!StringUtil.isEmpty(stateAnnotation.additionalExportFile())) {
-              additionalExportFile = new File(storageManager.expandMacros(stateAnnotation.additionalExportFile()));
+              String expandedPath = storageManager.expandMacros(stateAnnotation.additionalExportFile());
+              additionalExportFile = new File(expandedPath);
+              if (!additionalExportFile.exists()) {
+                //noinspection deprecation
+                additionalExportFile = new File(storageManager.expandMacros(StoragePathMacros.ROOT_CONFIG) + '/' + expandedPath);
+              }
+
               if (onlyExisting && !additionalExportFile.exists()) {
                 additionalExportFile = null;
               }
             }
 
+            File file = new File(storageManager.expandMacros(storage.file()));
             boolean fileExists = !onlyExisting || file.exists();
             if (fileExists || additionalExportFile != null) {
               File[] files;

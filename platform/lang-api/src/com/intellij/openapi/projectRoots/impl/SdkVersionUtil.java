@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
@@ -42,17 +43,17 @@ public class SdkVersionUtil {
 
   @Deprecated
   @Nullable
-  public static String readVersionFromProcessOutput(String homePath, @NonNls String[] command, @NonNls String versionLineMarker) {
+  public static String readVersionFromProcessOutput(@NotNull String homePath, @NonNls @NotNull String[] command, @NonNls String versionLineMarker) {
     return JdkVersionDetector.getInstance().readVersionFromProcessOutput(homePath, command, versionLineMarker, ACTION_RUNNER);
   }
 
   @Nullable
-  public static String detectJdkVersion(String homePath) {
+  public static String detectJdkVersion(@NotNull String homePath) {
     return JdkVersionDetector.getInstance().detectJdkVersion(homePath, ACTION_RUNNER);
   }
 
   @Nullable
-  public static JdkVersionDetector.JdkVersionInfo getJdkVersionInfo(String homePath) {
+  public static JdkVersionDetector.JdkVersionInfo getJdkVersionInfo(@NotNull String homePath) {
     return JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath, ACTION_RUNNER);
   }
 }

@@ -416,8 +416,4 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     buildAll();
     assertOutput(a, fs().archive("a.jar").file("a.txt"));
   }
-
-  private static void createFileInArtifactOutput(JpsArtifact a, final String fileName) throws IOException {
-    assertTrue(new File(a.getOutputPath(), fileName).createNewFile());
-  }
 }

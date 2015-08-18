@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
@@ -236,16 +237,7 @@ public class LibrariesContainerFactory {
       if (myRootModel != null) {
         return myRootModel.getModuleLibraryTable().getLibraries();
       }
-      OrderEntry[] orderEntries = ModuleRootManager.getInstance(myModule).getOrderEntries();
-      List<Library> libraries = new ArrayList<Library>();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;
-          if (entry.isModuleLevel()) {
-            libraries.add(entry.getLibrary());
-          }
-        }
-      }
+      List<Library> libraries = OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(myModule));
       return libraries.toArray(new Library[libraries.size()]);
     }
 

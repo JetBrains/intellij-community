@@ -23,8 +23,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
-import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
@@ -996,13 +994,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myNullness != null &&
         PsiUtil.resolveClassInType(newMethod.getReturnType()) != null &&
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
+      final NullableNotNullManager notNullManager = NullableNotNullManager.getInstance(myProject);
       AddNullableNotNullAnnotationFix annotationFix;
       switch (myNullness) {
         case NOT_NULL:
-          annotationFix = new AddNotNullAnnotationFix(newMethod);
+          annotationFix = new AddNullableNotNullAnnotationFix(notNullManager.getDefaultNotNull(), newMethod);
           break;
         case NULLABLE:
-          annotationFix = new AddNullableAnnotationFix(newMethod);
+          annotationFix = new AddNullableNotNullAnnotationFix(notNullManager.getDefaultNullable(), newMethod);
           break;
         default:
           annotationFix = null;
@@ -1721,7 +1720,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     if (myExtractedMethod != null) {
       final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
-      duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall);
+      duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall, myInputVariables.getFolding());
       if (duplicates != null && !duplicates.isEmpty()) {
         myDuplicates      = duplicates;
         myExtractedMethod = suggester.getExtractedMethod();

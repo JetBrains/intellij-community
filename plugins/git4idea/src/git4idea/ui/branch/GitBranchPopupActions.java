@@ -24,8 +24,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
@@ -284,31 +282,25 @@ class GitBranchPopupActions {
                                         @NotNull String remoteBranchName) {
         super("Checkout as new local branch");
         myProject = project;
+        myRepositories = repositories;
         myRemoteBranchName = remoteBranchName;
-        myRepositories = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
-          @Override
-          public boolean value(GitRepository repository) {
-            return !guessBranchName(myRemoteBranchName).equals(repository.getCurrentBranchName());
-          }
-        });
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
-                                                     guessBranchName(myRemoteBranchName),
-                                                     GitNewBranchNameValidator.newInstance(myRepositories));
+                                               guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
           brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
         }
       }
 
-      private static String guessBranchName(@NotNull String remoteBranchName) {
+      private String guessBranchName() {
         // TODO: check if we already have a branch with that name; check if that branch tracks this remote branch. Show different messages
-        int slashPosition = remoteBranchName.indexOf("/");
+        int slashPosition = myRemoteBranchName.indexOf("/");
         // if no slash is found (for example, in the case of git-svn remote branches), propose the whole name.
-        return remoteBranchName.substring(slashPosition + 1);
+        return myRemoteBranchName.substring(slashPosition+1);
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
+
   @NotNull
   @Override
+  @SuppressWarnings("InstanceofCatchParameter")
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
@@ -34,40 +34,24 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       return result;
     }
 
-    try {
-      if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
-        LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-      }
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              result.run();
-            }
-          });
-        }
-      };
-      if (application.isDispatchThread()) {
-        runnable.run();
-      }
-      else if (application.isReadAccessAllowed()) {
-        LOG.error("Calling write action from read-action leads to deadlock.");
-      }
-      else {
-        SwingUtilities.invokeAndWait(runnable);
-      }
+    boolean dispatchThread = application.isDispatchThread();
+    if (!dispatchThread && application.isReadAccessAllowed()) {
+      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
-    catch (Exception e) {
-      if (isSilentExecution()) {
-        result.setThrowable(e);
+
+    application.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        application.runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            result.run();
+          }
+        });
       }
-      else {
-        if (e instanceof RuntimeException) throw (RuntimeException)e;
-        throw new Error(e);
-      }
-    }
+    }, ModalityState.defaultModalityState());
+
+    result.throwException();
     return result;
   }
 

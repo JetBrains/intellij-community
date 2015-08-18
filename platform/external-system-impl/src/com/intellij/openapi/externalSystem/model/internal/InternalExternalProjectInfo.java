@@ -88,4 +88,27 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
   public void setLastImportTimestamp(long lastImportTimestamp) {
     this.lastImportTimestamp = lastImportTimestamp;
   }
+
+  @Override
+  public ExternalProjectInfo copy() {
+    InternalExternalProjectInfo copy = new InternalExternalProjectInfo(
+      myProjectSystemId,
+      myExternalProjectPath,
+      myExternalProjectStructure != null ? myExternalProjectStructure.graphCopy() : null
+    );
+    copy.setLastImportTimestamp(lastImportTimestamp);
+    copy.setLastSuccessfulImportTimestamp(lastSuccessfulImportTimestamp);
+    return copy;
+  }
+
+  @Override
+  public String toString() {
+    return "InternalExternalProjectInfo{" +
+           "myProjectSystemId=" + myProjectSystemId +
+           ", myExternalProjectPath='" + myExternalProjectPath + '\'' +
+           ", myExternalProjectStructure=" + myExternalProjectStructure +
+           ", lastSuccessfulImportTimestamp=" + lastSuccessfulImportTimestamp +
+           ", lastImportTimestamp=" + lastImportTimestamp +
+           '}';
+  }
 }

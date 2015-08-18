@@ -132,7 +132,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return PathManagerEx.getTestDataPath();
   }
 
-  protected VirtualFile getVirtualFile(@NonNls String filePath) {
+  @NotNull
+  protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
     String fullPath = getTestDataPath() + filePath;
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
@@ -200,6 +201,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }.execute().getResultObject();
   }
 
+  @NotNull
   protected static Editor createEditor(@NotNull VirtualFile file) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
@@ -400,7 +402,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  private static String getMessage(@NonNls String engineMessage, String userMessage) {
+  @NotNull
+  private static String getMessage(@NonNls @NotNull String engineMessage, String userMessage) {
     if (userMessage == null) return engineMessage;
     return userMessage + " [" + engineMessage + "]";
   }
@@ -436,7 +439,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void caretRight() {
     caretRight(getEditor());
   }
-  public static void caretRight(Editor editor) {
+  public static void caretRight(@NotNull Editor editor) {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor);
   }
 
@@ -444,14 +447,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     caretUp(getEditor());
   }
 
-  public static void caretUp(Editor editor) {
+  public static void caretUp(@NotNull Editor editor) {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, editor);
   }
 
   protected void deleteLine() {
     deleteLine(getEditor(),getProject());
   }
-  public static void deleteLine(Editor editor, Project project) {
+  public static void deleteLine(@NotNull Editor editor, Project project) {
     executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, editor,project);
   }
 
@@ -625,6 +628,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }, "", null, editor.getDocument());
   }
 
+  @NotNull
   protected static DataContext getCurrentEditorDataContext() {
     final DataContext defaultContext = DataManager.getInstance().getDataContext();
     return new DataContext() {
@@ -677,7 +681,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
-  public static List<Object[]> params(Class<?> klass) throws Throwable{
+  public static List<Object[]> params(@NotNull Class<?> klass) throws Throwable{
     final LightPlatformCodeInsightTestCase testCase = (LightPlatformCodeInsightTestCase)klass.newInstance();
     if (!(testCase instanceof FileBasedTestCaseHelper)) {
       fail("Parameterized test should implement FileBasedTestCaseHelper");
@@ -774,7 +778,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  protected void runSingleTest(final Runnable testRunnable) throws Throwable {
+  protected void runSingleTest(@NotNull final Runnable testRunnable) throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
     Runnable runnable = new Runnable() {
@@ -794,7 +798,5 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     if (throwables[0] != null) {
       throw throwables[0];
     }
-
   }
-
 }

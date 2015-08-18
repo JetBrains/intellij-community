@@ -628,7 +628,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         final String localName = psiVar.getName();
         PsiClass variableClass = getContainingClass(psiVar);
         if (getContextPsiClass() == null || getContextPsiClass().equals(variableClass)) {
-          final LocalVariableEvaluator localVarEvaluator = new LocalVariableEvaluator(localName, ContextUtil.isJspImplicit(element));
+          PsiElement method = PsiTreeUtil.getContextOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+          boolean canScanFrames = method instanceof PsiLambdaExpression || ContextUtil.isJspImplicit(element);
+          LocalVariableEvaluator localVarEvaluator = new LocalVariableEvaluator(localName, canScanFrames);
           if (psiVar instanceof PsiParameter) {
             final PsiParameter param = (PsiParameter)psiVar;
             final PsiParameterList paramList = PsiTreeUtil.getParentOfType(param, PsiParameterList.class, true);
@@ -1080,15 +1082,17 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       final boolean performCastToWrapperClass = shouldPerformBoxingConversion && !castingToPrimitive;
 
-      String castTypeName = castType.getCanonicalText();
-      if (performCastToWrapperClass) {
-        final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(castType);
-        if (unboxedType != null) {
-          castTypeName = unboxedType.getCanonicalText();
+      if (!(PsiUtil.resolveClassInClassTypeOnly(castType) instanceof PsiTypeParameter)) {
+        String castTypeName = castType.getCanonicalText();
+        if (performCastToWrapperClass) {
+          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(castType);
+          if (unboxedType != null) {
+            castTypeName = unboxedType.getCanonicalText();
+          }
         }
-      }
 
-      myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
+        myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
+      }
 
       if (performCastToWrapperClass) {
         myResult = new BoxingEvaluator(myResult);

@@ -73,13 +73,13 @@ public class JavaCompletionSorting {
     }
 
     List<LookupElementWeigher> afterPrefix = ContainerUtil.newArrayList();
+    afterPrefix.add(new PreferByKindWeigher(type, position));
     if (!smart) {
       ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
+      if (!afterNew) {
+        afterPrefix.add(new PreferExpected(false, expectedTypes));
+      }
     }
-    if (!smart && !afterNew) {
-      afterPrefix.add(new PreferExpected(false, expectedTypes));
-    }
-    afterPrefix.add(new PreferByKindWeigher(type, position));
     ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
     Collections.addAll(afterPrefix, new PreferSimilarlyEnding(expectedTypes),
                        new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple());

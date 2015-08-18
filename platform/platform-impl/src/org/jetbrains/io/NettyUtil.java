@@ -235,7 +235,8 @@ public final class NettyUtil {
 
   public static void addHttpServerCodec(@NotNull ChannelPipeline pipeline) {
     pipeline.addLast("httpRequestEncoder", new HttpResponseEncoder());
-    pipeline.addLast("httpRequestDecoder", new HttpRequestDecoder());
+    // https://jetbrains.zendesk.com/agent/tickets/68315
+    pipeline.addLast("httpRequestDecoder", new HttpRequestDecoder(16 * 1024, 16 * 1024, 8192));
     pipeline.addLast("httpObjectAggregator", new HttpObjectAggregator(MAX_CONTENT_LENGTH));
     // could be added earlier if HTTPS
     if (pipeline.get(ChunkedWriteHandler.class) == null) {

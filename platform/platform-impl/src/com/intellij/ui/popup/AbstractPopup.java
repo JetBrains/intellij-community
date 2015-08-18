@@ -416,10 +416,14 @@ public class AbstractPopup implements JBPopup {
   public static Point getCenterOf(final Component aContainer, final JComponent content) {
     final JComponent component = getTargetComponent(aContainer);
 
-    Point containerScreenPoint = component.getVisibleRect().getLocation();
-    SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
+    Rectangle visibleBounds = component != null
+                              ? component.getVisibleRect()
+                              : new Rectangle(aContainer.getSize());
 
-    return UIUtil.getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), content.getPreferredSize());
+    Point containerScreenPoint = visibleBounds.getLocation();
+    SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
+    visibleBounds.setLocation(containerScreenPoint);
+    return UIUtil.getCenterPoint(visibleBounds, content.getPreferredSize());
   }
 
   @Override
@@ -927,7 +931,7 @@ public class AbstractPopup implements JBPopup {
         public ActionCallback run() {
           if (isDisposed()) {
             removeActivity();
-            return new ActionCallback.Done();
+            return ActionCallback.DONE;
           }
 
           _requestFocus();
@@ -957,14 +961,14 @@ public class AbstractPopup implements JBPopup {
                   @Override
                   public ActionCallback run() {
                     if (isDisposed()) {
-                      return new ActionCallback.Rejected();
+                      return ActionCallback.REJECTED;
                     }
 
                     _requestFocus();
 
                     afterShowRunnable.run();
 
-                    return new ActionCallback.Done();
+                    return ActionCallback.DONE;
                   }
                 }, true).notify(result).doWhenProcessed(new Runnable() {
                   @Override
@@ -1128,6 +1132,8 @@ public class AbstractPopup implements JBPopup {
   private Window updateMaskAndAlpha(Window window) {
     if (window == null) return null;
 
+    if (window.isDisplayable() && window.isShowing()) return window;
+
     final WindowManagerEx wndManager = getWndManager();
     if (wndManager == null) return window;
 
@@ -1177,7 +1183,7 @@ public class AbstractPopup implements JBPopup {
       @Override
       public ActionCallback run() {
         _requestFocus();
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       }
     }, true);
 
@@ -1790,7 +1796,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myWindow != null) {
-      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myWindow.getLocationOnScreen());
+      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myWindow.getLocation());
       int width = Math.min(screenRectangle.width, myMinSize.width);
       int height = Math.min(screenRectangle.height, myMinSize.height);
       myWindow.setMinimumSize(new Dimension(width, height));

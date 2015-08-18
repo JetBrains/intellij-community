@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -430,6 +432,23 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertEquals(2, topDir.getChildren().length);
   }
 
+  public void testCaseInsensitiveRename() throws IOException {
+    File file = createTempFile("file.txt", "");
+    File home = file.getParentFile();
+    assertOrderedEquals(Collections.singletonList("file.txt"), home.list());
+
+    final VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    new WriteAction<Void>() {
+      @Override
+      protected void run(@NotNull Result<Void> result) throws Throwable {
+        vFile.rename(LocalFileSystemTest.class, "FILE.txt");
+      }
+    }.execute();
+    assertEquals("FILE.txt", vFile.getName());
+    assertOrderedEquals(Collections.singletonList("FILE.txt"), home.list());
+  }
+
   public void testFileCaseChange() throws Exception {
     if (SystemInfo.isFileSystemCaseSensitive) {
       System.err.println("Ignored: case-insensitive FS required");
@@ -438,7 +457,6 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     File top = createTempDirectory(false);
     File file = IoTestUtil.createTestFile(top, "file.txt", "test");
-    File intermediate = new File(top, "_intermediate_");
 
     VirtualFile topDir = myFS.refreshAndFindFileByIoFile(top);
     assertNotNull(topDir);
@@ -446,8 +464,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNotNull(sourceFile);
 
     String newName = StringUtil.capitalize(file.getName());
-    FileUtil.rename(file, intermediate);
-    FileUtil.rename(intermediate, new File(top, newName));
+    FileUtil.rename(file, newName);
     topDir.refresh(false, true);
     assertFalse(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
     assertTrue(sourceFile.isValid());
@@ -455,8 +472,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     topDir.getChildren();
     newName = newName.toLowerCase(Locale.ENGLISH);
-    FileUtil.rename(file, intermediate);
-    FileUtil.rename(intermediate, new File(top, newName));
+    FileUtil.rename(file, newName);
     topDir.refresh(false, true);
     assertTrue(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
     assertTrue(sourceFile.isValid());
@@ -622,5 +638,32 @@ public class LocalFileSystemTest extends PlatformTestCase {
         }
       }
     }.execute();
+  }
+
+  public void testBrokenSymlinkMove() throws IOException, InterruptedException {
+    if (!SystemInfo.areSymLinksSupported) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
+
+    final File srcDir = IoTestUtil.createTestDir("src");
+    final File link = IoTestUtil.createSymLink(srcDir.getPath() + "/missing", srcDir.getPath() + "/link", false);
+    final File dstDir = IoTestUtil.createTestDir("dst");
+
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        VirtualFile file = myFS.refreshAndFindFileByIoFile(link);
+        assertNotNull(file);
+
+        VirtualFile target = myFS.refreshAndFindFileByIoFile(dstDir);
+        assertNotNull(target);
+
+        myFS.moveFile(this, file, target);
+      }
+    }.execute();
+
+    assertOrderedEquals(ArrayUtil.EMPTY_STRING_ARRAY, srcDir.list());
+    assertOrderedEquals(new String[]{link.getName()}, dstDir.list());
   }
 }

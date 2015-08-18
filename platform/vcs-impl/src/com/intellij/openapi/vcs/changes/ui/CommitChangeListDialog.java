@@ -28,6 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
@@ -673,7 +675,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
               new Runnable() {
                 @Override
                 public void run() {
-                  session.execute(getIncludedChanges(), getCommitMessage());
+                  DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+                    @Override
+                    public void run() {
+                      session.execute(getIncludedChanges(), getCommitMessage());
+                    }
+                  });
                 }
               }, commitExecutor.getActionText(), true, getProject());
 

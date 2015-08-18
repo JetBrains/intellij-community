@@ -31,6 +31,7 @@ import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.SingleConnectionNetService;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.io.ChannelExceptionHandler;
 import org.jetbrains.io.MessageDecoder;
 import org.jetbrains.io.NettyUtil;
@@ -115,7 +116,7 @@ public abstract class FastCgiService extends SingleConnectionNetService {
           .rejected(new Consumer<Throwable>() {
             @Override
             public void consume(Throwable error) {
-              LOG.error(error);
+              Promise.logError(LOG, error);
               handleError(fastCgiRequest, notEmptyContent);
             }
           });

@@ -17,6 +17,7 @@
     <fileset dir="${project.home}/build/lib/jps">
       <include name="*.jar"/>
     </fileset>
+    <pathelement path="${project.home}/build/groovy"/>
     <fileset file="${project.home}/jps/lib/optimizedFileManager.jar"/>
     <fileset dir="${project.home}/build/kotlinc/jps" erroronmissingdir="false">
       <include name="*.jar"/>

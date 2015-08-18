@@ -368,6 +368,28 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     ).run();
     checkResultByFile(basePath + "_after.java");
   }
+  
+  public void testPropagateParameterWithOverrider() {
+    String basePath = getRelativePath() + getTestName(false);
+    configureByFile(basePath + ".java");
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
+    PsiMethod method = (PsiMethod)targetElement;
+    final PsiClass containingClass = method.getContainingClass();
+    assertTrue(containingClass != null);
+    final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
+    assertTrue(callers.length > 0);
+    final PsiMethod caller = callers[0];
+    final HashSet<PsiMethod> propagateParametersMethods = new HashSet<>();
+    propagateParametersMethods.add(caller);
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
+                                 CanonicalTypes.createTypeWrapper(PsiType.VOID), new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, parameters[0].getName(), parameters[0].getType()),
+      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true")}, null, propagateParametersMethods, null
+    ).run();
+    checkResultByFile(basePath + "_after.java");
+  }
 
   public void testTypeAnnotationsAllAround() {
     //String[] ps = {"@TA(1) int @TA(2) []", "java.util.@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};

@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
@@ -150,5 +153,13 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
 
   public void testEndTagEnd() {
     doTest("<div></div><caret></div>", "\b\b\b\b\b\b", "<div></div>");
+  }
+
+  public void testMultipleEditors() {
+    myFixture.configureByText(XmlFileType.INSTANCE, "<div<caret>></div>");
+    final Editor editor = EditorFactory.getInstance().createEditor(myFixture.getEditor().getDocument());
+    EditorFactory.getInstance().releaseEditor(editor);
+    type("v");
+    myFixture.checkResult("<divv></divv>");
   }
 }

@@ -80,8 +80,12 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
   public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
   }
 
-  public void setSchemes(@NotNull List<T> schemes) {
-    setSchemes(schemes, null, null);
+  public final void setSchemes(@NotNull List<T> newSchemes) {
+    setSchemes(newSchemes, null, null);
+  }
+
+  public final void setSchemes(@NotNull List<T> newSchemes, @Nullable T newCurrentScheme) {
+    setSchemes(newSchemes, newCurrentScheme, null);
   }
 
   public void setSchemes(@NotNull List<T> newSchemes, @Nullable T newCurrentScheme, @Nullable Condition<T> removeCondition) {

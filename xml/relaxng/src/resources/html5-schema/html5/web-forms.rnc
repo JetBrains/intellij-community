@@ -13,7 +13,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		
 	common-form.attrs.name = 
 		attribute name {
-			string #REVISIT should this be restricted somehow? No & and = perhaps?
+			form.data.nonemptystring
 		}
 
 	common-form.attrs.disabled = 

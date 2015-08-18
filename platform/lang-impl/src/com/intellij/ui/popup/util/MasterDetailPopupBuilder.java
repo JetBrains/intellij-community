@@ -27,6 +27,7 @@ import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,7 +215,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         g.drawLine(0, 0, getWidth(), 0);
       }
     };
-    footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    footerPanel.setBorder(JBUI.Borders.empty(4, 4, 4, SystemInfo.isMac ? 20 : 4));
     footerPanel.add(myPathLabel);
 
     Runnable itemCallback = new Runnable() {
@@ -235,6 +236,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       actionToolbar.setReservePlaceAutoPopupIcon(false);
       actionToolbar.setMinimumButtonSize(new Dimension(20, 20));
       toolBar = actionToolbar.getComponent();
+      toolBar.setBorder(JBUI.Borders.merge(toolBar.getBorder(), JBUI.Borders.emptyLeft(12), true));
       toolBar.setOpaque(false);
     }
 

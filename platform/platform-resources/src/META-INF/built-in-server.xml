@@ -29,6 +29,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.DiffHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.OpenFileHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.JetBrainsProtocolHandlerHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">

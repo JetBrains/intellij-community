@@ -26,7 +26,7 @@ public class TestActionEvent extends AnActionEvent {
 
   public TestActionEvent(@NotNull DataContext dataContext,
                          @NotNull AnAction action) {
-    super(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    super(null, dataContext, "", action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0);
   }
 
   public TestActionEvent(@NotNull AnAction action) {

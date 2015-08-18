@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
@@ -29,26 +27,11 @@ import org.jetbrains.annotations.NotNull;
 /**
 * User: cdr
 */
-public class ClsElementInfo implements SmartPointerElementInfo {
+public class ClsElementInfo extends SmartPointerElementInfo {
   private final PsiAnchor.StubIndexReference myStubIndexReference;
 
   public ClsElementInfo(@NotNull PsiAnchor.StubIndexReference stubReference) {
     myStubIndexReference = stubReference;
-  }
-
-  @Override
-  public Document getDocumentToSynchronize() {
-    return null;
-  }
-
-  // before change
-  @Override
-  public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
-  }
-
-  // after change
-  @Override
-  public void unfastenBelt(int offset) {
   }
 
   @Override
@@ -83,11 +66,6 @@ public class ClsElementInfo implements SmartPointerElementInfo {
   @Override
   public Project getProject() {
     return myStubIndexReference.getProject();
-  }
-
-  @Override
-  public void cleanup() {
-
   }
 
   @Override

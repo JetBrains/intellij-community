@@ -106,6 +106,11 @@ public class FormBuilder {
     return addLabeledComponent((JLabel)null, component, topInset, false);
   }
 
+  @NotNull
+  public FormBuilder addComponentFillVertically(@NotNull JComponent component, int topInset) {
+    return addLabeledComponent(null, component, topInset, false, true);
+  }
+
   public FormBuilder addSeparator(final int topInset) {
     return addComponent(new JSeparator(), topInset);
   }
@@ -212,10 +217,9 @@ public class FormBuilder {
   }
 
   protected int getFill(JComponent component) {
-    if (component instanceof JComboBox || component instanceof JSpinner) {
-      return NONE;
-    }
-    else if (component instanceof JTextField && ((JTextField)component).getColumns() != 0) {
+    if (component instanceof JComboBox ||
+        component instanceof JSpinner ||
+        component instanceof JTextField && ((JTextField)component).getColumns() != 0) {
       return NONE;
     }
     return HORIZONTAL;

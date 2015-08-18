@@ -324,7 +324,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public ActionCallback select(Class<? extends Configurable> configurableClass) {
     final Configurable configurable = findConfigurable(configurableClass);
     if (configurable == null) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
     return select(configurable);
   }
@@ -379,7 +379,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private ActionCallback processSelected(final Configurable configurable, final Configurable oldConfigurable) {
-    if (isShowing(configurable)) return new ActionCallback.Done();
+    if (isShowing(configurable)) return ActionCallback.DONE;
 
     final ActionCallback result = new ActionCallback();
 
@@ -452,7 +452,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     assertIsDispatchThread();
 
     if (myDisposed) {
-      return new ActionCallback.Rejected();
+      return ActionCallback.REJECTED;
     }
 
     final ActionCallback result = new ActionCallback();
@@ -931,9 +931,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         updateDetails();
         final ConfigurableContent content = myConfigurable2Content.get(configurable);
         content.updateBannerActions();
-        return new ActionCallback.Done();
+        return ActionCallback.DONE;
       } else {
-        return new ActionCallback.Rejected();
+        return ActionCallback.REJECTED;
       }
     }
   }

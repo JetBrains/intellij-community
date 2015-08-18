@@ -32,7 +32,7 @@ import java.util.Locale;
 @State(
   name = "ExportableFileTemplateSettings",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/" + ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE),
-  additionalExportFile = StoragePathMacros.ROOT_CONFIG + "/" + FileTemplatesLoader.TEMPLATES_DIR
+  additionalExportFile = FileTemplatesLoader.TEMPLATES_DIR
 )
 public class ExportableFileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
   public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";

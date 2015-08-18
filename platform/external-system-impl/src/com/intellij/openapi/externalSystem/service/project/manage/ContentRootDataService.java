@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -25,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData.SourceRoot;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -46,7 +46,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -65,7 +67,7 @@ import java.util.Map;
  * @since 2/7/12 3:20 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ContentRootDataService implements ProjectDataServiceEx<ContentRootData, ContentEntry> {
+public class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
 
   private static final Logger LOG = Logger.getInstance("#" + ContentRootDataService.class.getName());
 
@@ -75,15 +77,9 @@ public class ContentRootDataService implements ProjectDataServiceEx<ContentRootD
     return ProjectKeys.CONTENT_ROOT;
   }
 
-  public void importData(@NotNull final Collection<DataNode<ContentRootData>> toImport,
-                         @NotNull final Project project,
-                         final boolean synchronous) {
-    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    importData(toImport, project, platformFacade, synchronous);
-  }
-
   @Override
   public void importData(@NotNull final Collection<DataNode<ContentRootData>> toImport,
+                         @Nullable ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous) {
@@ -91,8 +87,8 @@ public class ContentRootDataService implements ProjectDataServiceEx<ContentRootD
       return;
     }
 
-    Map<DataNode<ModuleData>, List<DataNode<ContentRootData>>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
-    for (Map.Entry<DataNode<ModuleData>, List<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
+    MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
+    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
         LOG.warn(String.format(
@@ -139,7 +135,7 @@ public class ContentRootDataService implements ProjectDataServiceEx<ContentRootD
               final ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
               contentEntry.clearExcludeFolders();
               contentEntry.clearSourceFolders();
-              LOG.info(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
+              LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
               for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
               }
@@ -201,7 +197,7 @@ public class ContentRootDataService implements ProjectDataServiceEx<ContentRootD
         return;
       }
     }
-    LOG.info(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
+    LOG.debug(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
     SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(root.getPath()), sourceRootType);
     if (!StringUtil.isEmpty(root.getPackagePrefix())) {
       sourceFolder.setPackagePrefix(root.getPackagePrefix());
@@ -229,23 +225,13 @@ public class ContentRootDataService implements ProjectDataServiceEx<ContentRootD
         return;
       }
     }
-    LOG.info(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
+    LOG.debug(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
     entry.addExcludeFolder(toVfsUrl(rootPath));
     if (!Registry.is("ide.hide.excluded.files")) {
       ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(rootPath);
     }
   }
 
-  @Override
-  public void removeData(@NotNull Collection<? extends ContentEntry> toRemove, @NotNull Project project, boolean synchronous) {
-  }
-
-  @Override
-  public void removeData(@NotNull Collection<? extends ContentEntry> toRemove,
-                         @NotNull Project project,
-                         @NotNull PlatformFacade platformFacade,
-                         boolean synchronous) {
-  }
 
   private static String toVfsUrl(@NotNull String path) {
     return LocalFileSystem.PROTOCOL_PREFIX + path;

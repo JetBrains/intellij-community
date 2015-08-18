@@ -31,6 +31,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -550,7 +551,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVirtualMachine.setDebugTraceMode(i);
   }
 
-  public ThreadReferenceProxyImpl getThreadReferenceProxy(ThreadReference thread) {
+  @Nullable
+  public ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(thread == null) {
       return null;

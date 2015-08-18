@@ -89,8 +89,8 @@ public class ExtractMethodSignatureSuggester {
     myVariableData = variableDatum;
   }
 
-  public List<Match> getDuplicates(final PsiMethod method, final PsiMethodCallExpression methodCall) {
-    final List<Match> duplicates = findDuplicatesSignature(method);
+  public List<Match> getDuplicates(final PsiMethod method, final PsiMethodCallExpression methodCall, ParametersFolder folder) {
+    final List<Match> duplicates = findDuplicatesSignature(method, folder);
     if (duplicates != null && !duplicates.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() || 
           new PreviewDialog(method, myExtractedMethod, methodCall, myMethodCall, duplicates.size()).showAndGet()) {
@@ -127,7 +127,7 @@ public class ExtractMethodSignatureSuggester {
   }
 
   @Nullable
-  public List<Match> findDuplicatesSignature(final PsiMethod method) {
+  public List<Match> findDuplicatesSignature(final PsiMethod method, ParametersFolder folder) {
     final List<PsiExpression> copies = new ArrayList<PsiExpression>();
     final InputVariables variables = detectTopLevelExpressionsToReplaceWithParameters(copies);
     if (variables == null) {
@@ -148,7 +148,7 @@ public class ExtractMethodSignatureSuggester {
     List<Match> duplicates = finder.findDuplicates(method.getContainingClass());
 
     if (duplicates != null && !duplicates.isEmpty()) {
-      restoreRenamedParams(copies);
+      restoreRenamedParams(copies, folder);
       if (!myMethodCall.isValid()) {
         return null;
       }
@@ -255,17 +255,18 @@ public class ExtractMethodSignatureSuggester {
     return true;
   }
 
-  private void restoreRenamedParams(List<PsiExpression> copies) {
-    final Map<String, PsiVariable> renameMap = new HashMap<String, PsiVariable>();
+  private void restoreRenamedParams(List<PsiExpression> copies, ParametersFolder folder) {
+    final Map<String, String> renameMap = new HashMap<String, String>();
     for (VariableData data : myVariableData) {
-      if (!data.name.equals(data.variable.getName())) {
-        renameMap.put(data.name, data.variable);
+      final String replacement = folder.getGeneratedCallArgument(data);
+      if (!data.name.equals(replacement)) {
+        renameMap.put(data.name, replacement);
       }
     }
 
     if (!renameMap.isEmpty()) {
       for (PsiExpression currentExpression : copies) {
-        final Map<PsiReferenceExpression, PsiVariable> params = new HashMap<PsiReferenceExpression, PsiVariable>();
+        final Map<PsiReferenceExpression, String> params = new HashMap<PsiReferenceExpression, String>();
         currentExpression.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -273,7 +274,7 @@ public class ExtractMethodSignatureSuggester {
             final PsiElement resolve = expression.resolve();
             if (resolve instanceof PsiParameter && myExtractedMethod.equals(((PsiParameter)resolve).getDeclarationScope())) {
               final String name = ((PsiParameter)resolve).getName();
-              final PsiVariable variable = renameMap.get(name);
+              final String variable = renameMap.get(name);
               if (renameMap.containsKey(name)) {
                 params.put(expression, variable);
               }
@@ -281,8 +282,8 @@ public class ExtractMethodSignatureSuggester {
           }
         });
         for (PsiReferenceExpression expression : params.keySet()) {
-          final PsiVariable var = params.get(expression);
-          expression.replace(myElementFactory.createExpressionFromText(var.getName(), expression));
+          final String var = params.get(expression);
+          expression.replace(myElementFactory.createExpressionFromText(var, expression));
         }
       }
     }
@@ -380,6 +381,7 @@ public class ExtractMethodSignatureSuggester {
       myDuplicatesNumber = duplicatesNumber;
       setTitle("Extract Parameters to Replace Duplicates");
       setOKButtonText("Accept Signature Change");
+      setCancelButtonText("Keep Original Signature");
       init();
     }
 

@@ -341,9 +341,8 @@ public class HighlightControlFlowUtil {
               PsiMethod redirectedConstructor = redirectedConstructors.get(j);
               // variable must be initialized before its usage
               if (offset < redirectedConstructor.getTextRange().getStartOffset()) continue;
-              PsiCodeBlock redirBody = redirectedConstructor.getBody();
-              if (redirBody != null
-                  && variableDefinitelyAssignedIn(variable, redirBody)) {
+              PsiCodeBlock redirectedBody = redirectedConstructor.getBody();
+              if (redirectedBody != null && variableDefinitelyAssignedIn(variable, redirectedBody)) {
                 return null;
               }
             }
@@ -682,10 +681,8 @@ public class HighlightControlFlowUtil {
         return null;
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
-        final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(context)
-          .descriptionAndTooltip("Variable used in lambda expression should be effectively final")
-          .create();
+        String text = JavaErrorMessages.message("lambda.variable.must.be.final");
+        HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text).create();
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
         return highlightInfo;
       }

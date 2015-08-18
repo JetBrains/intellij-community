@@ -18,11 +18,8 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class ThisPassedAsArgumentVisitor extends JavaRecursiveElementVisitor {
-
-  private boolean passed = false;
-
-  public ThisPassedAsArgumentVisitor() {}
+class ThisPassedAsArgumentVisitor extends JavaRecursiveElementWalkingVisitor {
+  private boolean passed;
 
   @Override
   public void visitElement(@NotNull PsiElement element) {

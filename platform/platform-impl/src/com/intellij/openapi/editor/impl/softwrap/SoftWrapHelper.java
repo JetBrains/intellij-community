@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.SoftWrapModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.CaretImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 
@@ -60,6 +61,13 @@ public class SoftWrapHelper {
       return false;
     }
 
-    return editor.offsetToVisualLine(offset) == caret.getVisualPosition().line;
+    if (editor.myUseNewRendering) {
+      VisualPosition afterWrapPosition = editor.offsetToVisualPosition(offset, false, false);
+      VisualPosition caretPosition = caret.getVisualPosition();
+      return caretPosition.line == afterWrapPosition.line && caretPosition.column <= afterWrapPosition.column;
+    }
+    else {
+      return editor.offsetToVisualLine(offset) == caret.getVisualPosition().line;
+    }
   }
 }

@@ -76,40 +76,46 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     if (text == null) {
       XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
       if (value != null) {
-        final EvaluationMode evalMode = mode;
-        value.calculateEvaluationExpression().done(new Consumer<String>() {
+        value.calculateEvaluationExpression().done(new Consumer<XExpression>() {
           @Override
-          public void consume(final String text) {
-            AppUIUtil.invokeOnEdt(new Runnable() {
-              @Override
-              public void run() {
-                showDialog(session, file, editorsProvider, stackFrame, evaluator, evalMode, text);
-              }
-            });
+          public void consume(final XExpression expression) {
+            if (expression != null) {
+              AppUIUtil.invokeOnEdt(new Runnable() {
+                @Override
+                public void run() {
+                  showDialog(session, file, editorsProvider, stackFrame, evaluator, expression);
+                }
+              });
+            }
           }
         });
         return;
       }
     }
 
-    showDialog(session, file, editorsProvider, stackFrame, evaluator, mode, text);
+    XExpression expression = XExpressionImpl.fromText(StringUtil.notNullize(text), mode);
+    showDialog(session, file, editorsProvider, stackFrame, evaluator, expression);
   }
 
   private static void showDialog(@NotNull XDebugSession session,
                                  VirtualFile file,
                                  XDebuggerEditorsProvider editorsProvider,
-                                 XStackFrame stackFrame, XDebuggerEvaluator evaluator, EvaluationMode mode, String text) {
-    Language language = null;
-    if (stackFrame != null) {
-      XSourcePosition position = stackFrame.getSourcePosition();
-      if (position != null) {
-        language = XDebuggerEditorBase.getFileTypeLanguage(position.getFile().getFileType());
+                                 XStackFrame stackFrame,
+                                 XDebuggerEvaluator evaluator,
+                                 @NotNull XExpression expression) {
+    if (expression.getLanguage() == null) {
+      Language language = null;
+      if (stackFrame != null) {
+        XSourcePosition position = stackFrame.getSourcePosition();
+        if (position != null) {
+          language = XDebuggerEditorBase.getFileTypeLanguage(position.getFile().getFileType());
+        }
       }
+      if (language == null && file != null) {
+        language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
+      }
+      expression = new XExpressionImpl(expression.getExpression(), language, expression.getCustomInfo(), expression.getMode());
     }
-    if (language == null && file != null) {
-      language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
-    }
-    XExpression expression = new XExpressionImpl(StringUtil.notNullize(text), language, null, mode);
     new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, stackFrame == null ? null : stackFrame.getSourcePosition()).show();
   }
 

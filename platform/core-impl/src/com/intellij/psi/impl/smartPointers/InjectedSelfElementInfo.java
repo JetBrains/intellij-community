@@ -20,7 +20,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
@@ -39,7 +38,7 @@ import java.util.List;
 /**
 * User: cdr
 */
-class InjectedSelfElementInfo implements SmartPointerElementInfo {
+class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final SmartPsiFileRange myInjectedFileRangeInHostFile;
   private final Class<? extends PsiElement> anchorClass;
   private final Language anchorLanguage;
@@ -191,16 +190,6 @@ class InjectedSelfElementInfo implements SmartPointerElementInfo {
   @Override
   public Document getDocumentToSynchronize() {
     return ((SmartPsiElementPointerImpl)myHostContext).getElementInfo().getDocumentToSynchronize();
-  }
-
-  @Override
-  public void fastenBelt(int offset, RangeMarker[] cachedRangeMarkers) {
-
-  }
-
-  @Override
-  public void unfastenBelt(int offset) {
-
   }
 
   @Override

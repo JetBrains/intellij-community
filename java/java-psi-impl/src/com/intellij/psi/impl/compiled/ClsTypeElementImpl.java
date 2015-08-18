@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,13 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
-  @NonNls static final char VARIANCE_NONE = '\0';
-  @NonNls static final char VARIANCE_EXTENDS = '+';
-  @NonNls static final char VARIANCE_SUPER = '-';
-  @NonNls static final char VARIANCE_INVARIANT = '*';
-  @NonNls static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
-  @NonNls static final String VARIANCE_SUPER_PREFIX = "? super ";
+  static final char VARIANCE_NONE = '\0';
+  static final char VARIANCE_EXTENDS = '+';
+  static final char VARIANCE_SUPER = '-';
+  static final char VARIANCE_INVARIANT = '*';
 
   private final PsiElement myParent;
   private final String myTypeText;
@@ -85,9 +82,9 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
       case VARIANCE_NONE:
         return shortClassName;
       case VARIANCE_EXTENDS:
-        return VARIANCE_EXTENDS_PREFIX + shortClassName;
+        return PsiWildcardType.EXTENDS_PREFIX + shortClassName;
       case VARIANCE_SUPER:
-        return VARIANCE_SUPER_PREFIX + shortClassName;
+        return PsiWildcardType.SUPER_PREFIX + shortClassName;
       case VARIANCE_INVARIANT:
         return "?";
       default:
@@ -211,14 +208,14 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   @Override
-  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+  public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
   @Override
   @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new UnsupportedOperationException();//todo
+  public PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

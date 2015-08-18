@@ -60,6 +60,10 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
     return new Key<T>(dataClass.getName(), processingWeight);
   }
 
+  public String getDataType() {
+    return myDataClass;
+  }
+
   /**
    * There is a possible case that when a {@link DataNode} object has children of more than on type (children with more than
    * one different {@link Key} we might want to process one type of children before another. That's why we need a way to define
@@ -91,6 +95,7 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
 
   @Override
   public int compareTo(@NotNull Key<?> that) {
+    if(myProcessingWeight == that.myProcessingWeight) return myDataClass.compareTo(that.myDataClass);
     return myProcessingWeight - that.myProcessingWeight;
   }
 

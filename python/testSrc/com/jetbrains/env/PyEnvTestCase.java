@@ -5,11 +5,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import org.hamcrest.Matchers;
@@ -48,6 +49,10 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   private final String[] myRequiredTags;
 
   /**
+   * TODO: Move to {@link EnvTestTagsRequired} as well?
+   */
+
+  /**
    * @param requiredTags tags that should exist on some interpreter for this test to run.
    *                     if some of these tags do not exist on any interpreter, all test methods would be skipped using
    *                     {@link org.junit.Assume}.
@@ -57,13 +62,15 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected PyEnvTestCase(@NotNull final String... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
-
-    PyTestCase.initPlatformPrefix();
   }
 
   @Nullable
   public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
     return PyPackageManager.getInstance(sdk).findPackage("django", false);
+  }
+
+  public static String norm(String testDataPath) {
+    return FileUtil.toSystemIndependentName(testDataPath);
   }
 
   @Override
@@ -156,10 +163,18 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     if (RUN_LOCAL) {
       PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
 
-      taskRunner.runTask(testTask, testName);
+      final EnvTestTagsRequired tagsRequiredAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
+      final String[] requiredTags;
+      if (tagsRequiredAnnotation != null) {
+        requiredTags = tagsRequiredAnnotation.tags();
+      }
+      else {
+        requiredTags = ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+
+      taskRunner.runTask(testTask, testName, requiredTags);
     }
   }
-
 
   public static boolean notEnvConfiguration() {
     return UsefulTestCase.IS_UNDER_TEAMCITY && !IS_ENV_CONFIGURATION;

@@ -77,6 +77,10 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
       if (tryStatement == null) {
         return;
       }
+      final PsiResourceList resources = tryStatement.getResourceList();
+      if (resources != null) {
+        return;
+      }
       final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) {
         return;
@@ -84,15 +88,6 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
       final PsiElement parent = tryStatement.getParent();
       if (parent == null) {
         return;
-      }
-
-      final PsiResourceList resources = tryStatement.getResourceList();
-      if (resources != null) {
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        for (PsiResourceVariable resource : resources.getResourceVariables()) {
-          final PsiStatement statement = factory.createStatementFromText(resource.getText() + ";", parent);
-          parent.addBefore(statement, tryStatement);
-        }
       }
 
       final PsiElement first = tryBlock.getFirstBodyElement();

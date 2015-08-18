@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -1358,11 +1373,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           myMatchingVisitor.setResult(false);
           return;
         }
-        final List<PsiResourceVariable> resourceVariables1 = resourceList1.getResourceVariables();
-        final List<PsiResourceVariable> resourceVariables2 = resourceList2.getResourceVariables();
+        final List<PsiResourceListElement> resources1 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList1, PsiResourceListElement.class);
+        final List<PsiResourceListElement> resources2 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList2, PsiResourceListElement.class);
         myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(
-          resourceVariables1.toArray(new PsiResourceVariable[resourceVariables1.size()]),
-          resourceVariables2.toArray(new PsiResourceVariable[resourceVariables2.size()])));
+          resources1.toArray(new PsiResourceListElement[resources1.size()]),
+          resources2.toArray(new PsiResourceListElement[resources2.size()])));
         if (!myMatchingVisitor.getResult()) return;
       }
       else if (resourceList2 != null){

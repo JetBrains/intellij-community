@@ -23,6 +23,7 @@
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <visitorFilter language="Python" implementationClass="com.jetbrains.edu.learning.highlighting.PyStudyVisitorFilter"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.edu.learning.PyStudyReferenceResolveProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
@@ -44,4 +45,11 @@
       <interface-class>com.jetbrains.edu.learning.PyStudyShowTutorial</interface-class>
     </component>
   </project-components>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.edu.learning.PyStudyInitialConfigurator</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </application-components>
 </idea-plugin>

@@ -52,13 +52,13 @@ public class GotoPropertyDeclarationsProvider extends GotoRelatedProvider {
     if (elements.size() != 1) {
       return Collections.emptyList();
     }
-    final PsiElement[] psiElements = ContainerUtil.getFirstItem(elements).getPsiElements();
-    if (psiElements.length != 1 || !(psiElements[0] instanceof Property)) {
+    final IProperty[] properties = ContainerUtil.getFirstItem(elements).getProperties();
+    if (properties == null || properties.length != 1 || !(properties[0] instanceof Property)) {
       return Collections.emptyList();
     }
-    final Property property = (Property) psiElements[0];
+    final IProperty property = properties[0];
     final String propertyKey = property.getKey();
-    final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(property.getContainingFile());
+    final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(property.getPsiElement().getContainingFile());
     assert file != null;
     final ResourceBundle resourceBundle = file.getResourceBundle();
     return ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), new NullableFunction<PropertiesFile, GotoRelatedItem>() {

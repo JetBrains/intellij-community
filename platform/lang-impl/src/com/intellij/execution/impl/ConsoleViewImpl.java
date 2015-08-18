@@ -1635,7 +1635,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     String textToUse = StringUtil.convertLineSeparators(s);
     synchronized (consoleView.LOCK) {
-      if (consoleView.myTokens.isEmpty()) return;
+      if (consoleView.myTokens.isEmpty()) {
+        addToken(0, null, ConsoleViewContentType.SYSTEM_OUTPUT);
+      }
       final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
       if (info.contentType != ConsoleViewContentType.USER_INPUT && !StringUtil.containsChar(textToUse, '\n')) {
         consoleView.print(textToUse, ConsoleViewContentType.USER_INPUT);

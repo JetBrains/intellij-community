@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,15 +157,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   protected Icon getAdjustedBaseIcon(Icon icon, @Iconable.IconFlags int flags) {
-    Icon result = icon;
     if ((flags & ICON_FLAG_VISIBILITY) > 0) {
-      RowIcon rowIcon = new RowIcon(2);
-      rowIcon.setIcon(icon, 0);
-      rowIcon.setIcon(VISIBILITY_ICON_PLACEHOLDER.getValue(), 1);
-      result = rowIcon;
+      return new RowIcon(icon, VISIBILITY_ICON_PLACEHOLDER.getValue());
     }
-
-    return result;
+    return icon;
   }
 
   protected boolean isVisibilitySupported() {

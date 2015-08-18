@@ -47,4 +47,9 @@ public final class VcsKey {
   public int hashCode() {
     return myName.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return myName;
+  }
 }

@@ -93,7 +93,7 @@ public class JUnitUtil {
     return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true);
   }
 
-  private static boolean isTestCaseInheritor(final PsiClass aClass) {
+  public static boolean isTestCaseInheritor(final PsiClass aClass) {
     if (!aClass.isValid()) return false;
     Location<PsiClass> location = PsiLocation.fromPsiElement(aClass);
     PsiClass testCaseClass = getTestCaseClassOrNull(location);

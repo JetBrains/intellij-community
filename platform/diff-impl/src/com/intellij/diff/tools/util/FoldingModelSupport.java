@@ -634,9 +634,9 @@ public class FoldingModelSupport {
       for (int i = 0; i < myCount; i++) {
         FoldRegion region = myRegions[i];
         if (region == null || !region.isValid()) continue;
-        myHighlighters.add(DiffDrawUtil.createLineSeparatorHighlighter(myEditors[i],
-                                                                       region.getStartOffset(), region.getEndOffset(),
-                                                                       getHighlighterCondition(block, i)));
+        myHighlighters.addAll(DiffDrawUtil.createLineSeparatorHighlighter(myEditors[i],
+                                                                          region.getStartOffset(), region.getEndOffset(),
+                                                                          getHighlighterCondition(block, i)));
       }
     }
 

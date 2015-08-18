@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.MyLookupExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       if (astNode != null) {
         new WriteCommandAction<Object>(project, "Normalize declaration") {
           @Override
-          protected void run(Result<Object> result) throws Throwable {
+          protected void run(@NotNull Result<Object> result) throws Throwable {
             node.getTreeParent().addChild(astNode, node);
           }
         }.execute();

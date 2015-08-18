@@ -83,7 +83,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
         super.runForClass(aClass, psiMethod, context, performRunnable);
       }
     };
-    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, (PsiClass)fromContext.getSourceElement())) return;
+    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, (PsiClass)fromContext.getSourceElement(), getConditionToSearchForInheritors())) return;
     super.onFirstRun(fromContext, context, performRunnable);
   }
 }

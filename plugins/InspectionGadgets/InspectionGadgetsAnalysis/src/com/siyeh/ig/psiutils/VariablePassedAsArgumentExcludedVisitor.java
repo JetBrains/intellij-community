@@ -19,17 +19,17 @@ import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementVisitor {
+class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @NotNull
   private final PsiVariable variable;
   private final Processor<PsiCall> myCallProcessor;
   private final boolean myBuilderPattern;
 
-  private boolean passed = false;
+  private boolean passed;
 
-  public VariablePassedAsArgumentExcludedVisitor(@NotNull PsiVariable variable, boolean builderPattern,
-                                                 @NotNull Processor<PsiCall> callProcessor) {
+  VariablePassedAsArgumentExcludedVisitor(@NotNull PsiVariable variable, boolean builderPattern,
+                                          @NotNull Processor<PsiCall> callProcessor) {
     this.variable = variable;
     myCallProcessor = callProcessor;
     myBuilderPattern = builderPattern;

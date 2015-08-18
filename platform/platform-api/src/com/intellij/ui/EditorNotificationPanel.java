@@ -99,9 +99,8 @@ public class EditorNotificationPanel extends JPanel {
 
   protected void executeAction(final String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    final AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(this), ActionPlaces.UNKNOWN,
-                                                  action.getTemplatePresentation(), ActionManager.getInstance(),
-                                                  0);
+    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN,
+                                                                 DataManager.getInstance().getDataContext(this));
     action.beforeActionPerformedUpdate(event);
     action.update(event);
 

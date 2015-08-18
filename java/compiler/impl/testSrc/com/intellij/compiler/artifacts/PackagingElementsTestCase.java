@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.PathManager;
@@ -17,6 +32,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -105,7 +121,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
                                    final VirtualFile[] jars) {
     return new WriteAction<Library>() {
       @Override
-      protected void run(final Result<Library> result) {
+      protected void run(@NotNull final Result<Library> result) {
         final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name);
         final Library.ModifiableModel libraryModel = library.getModifiableModel();
         for (VirtualFile jar : jars) {

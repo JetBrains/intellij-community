@@ -116,7 +116,7 @@ public abstract class HgUtil {
       public void run() {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
-    } );
+    });
     runWriteActionAndWait(new Runnable() {
       public void run() {
         file.refresh(true, false);
@@ -544,8 +544,10 @@ public abstract class HgUtil {
 
   @Nullable
   public static HgRepository getCurrentRepository(@NotNull Project project) {
-    VirtualFile file = DvcsUtil.getSelectedFile(project);
-    return getRepositoryForFile(project, file);
+    if (project.isDisposed()) return null;
+    return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project), HgVcs.getInstance(project),
+                                           DvcsUtil.getSelectedFile(project),
+                                           HgProjectSettings.getInstance(project).getRecentRootPath());
   }
 
   @Nullable

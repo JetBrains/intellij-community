@@ -21,8 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
+import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,6 +31,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,27 +75,27 @@ public class CompilerTestUtil {
 
   private static void doSaveComponent(Object appComponent) {
     //noinspection TestOnlyProblems
-    ((ComponentStoreImpl)((ApplicationImpl)ApplicationManager.getApplication()).getStateStore()).saveApplicationComponent(appComponent);
+    ComponentsPackage.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(appComponent);
   }
 
   public static void enableExternalCompiler() {
+    ApplicationManagerEx.getApplicationEx().doNotSave(false);
+    final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
-        ApplicationManagerEx.getApplicationEx().doNotSave(false);
-        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+      protected void run(@NotNull final Result result) {
         table.addJdk(table.getInternalJdk());
       }
     }.execute();
   }
 
   public static void disableExternalCompiler(final Project project) {
+    ApplicationManagerEx.getApplicationEx().doNotSave(true);
+    final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
-        ApplicationManagerEx.getApplicationEx().doNotSave(true);
+      protected void run(@NotNull final Result result) {
         Module[] modules = ModuleManager.getInstance(project).getModules();
-        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         Sdk internalJdk = table.getInternalJdk();
         List<Module> modulesToRestore = new ArrayList<Module>();
         for (Module module : modules) {

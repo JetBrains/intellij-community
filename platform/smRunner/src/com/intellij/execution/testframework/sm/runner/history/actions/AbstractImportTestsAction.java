@@ -128,7 +128,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     int historySize = getHistorySize();
 
     final File[] files = getTestHistoryRoot(project).listFiles();
-    if (files != null && files.length >= historySize) {
+    if (files != null && files.length >= historySize + 1) {
       Arrays.sort(files, new Comparator<File>() {
         @Override
         public int compare(File o1, File o2) {

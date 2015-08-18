@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
@@ -49,6 +50,7 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
     return IdeaTestUtil.getMockJdk17();
   }
 
+  @NotNull
   @Override
   protected ModuleType getModuleType() {
     return StdModuleTypes.JAVA;

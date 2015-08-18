@@ -56,7 +56,7 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
       if (aClass == null || aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      method.accept(new JavaRecursiveElementVisitor() {
+      method.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override
         public void visitNewExpression(

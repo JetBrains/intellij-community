@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -40,7 +41,7 @@ public class FragmentContent extends DiffContent {
   private final DiffContent myOriginal;
   private final FileType myType;
   private final MyDocumentsSynchronizer mySynchonizer;
-  public static final Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
+  public static final Key<Document> ORIGINAL_DOCUMENT = UndoManager.ORIGINAL_DOCUMENT;
   private final boolean myForceReadOnly;
 
   public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, VirtualFile file) {

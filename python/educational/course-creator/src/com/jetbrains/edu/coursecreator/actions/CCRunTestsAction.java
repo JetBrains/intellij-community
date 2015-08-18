@@ -77,6 +77,7 @@ public abstract class CCRunTestsAction extends AnAction {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     final PsiDirectory taskDir = psiFile.getContainingDirectory();
+    if (taskDir == null) return;
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
     if (course == null) return;
@@ -201,7 +202,7 @@ public abstract class CCRunTestsAction extends AnAction {
       }
       VirtualFile[] taskDirChildren = taskDir.getChildren();
       for (VirtualFile file : taskDirChildren) {
-        if (file.getName().contains("_windows")) {
+        if (file.getName().contains(EduNames.WINDOWS_POSTFIX)) {
           file.delete(project);
         }
         if (CCProjectService.getInstance(project).isTaskFile(file)) {

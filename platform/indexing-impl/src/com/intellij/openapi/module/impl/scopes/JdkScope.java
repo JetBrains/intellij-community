@@ -19,6 +19,7 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author max
@@ -26,21 +27,28 @@ import com.intellij.openapi.roots.OrderRootType;
 public class JdkScope extends LibraryScopeBase {
   private final String myJdkName;
 
-  public JdkScope(Project project, JdkOrderEntry jdk) {
-    super(project, jdk.getRootFiles(OrderRootType.CLASSES), jdk.getRootFiles(OrderRootType.SOURCES));
-    myJdkName = jdk.getJdkName();
+  public JdkScope(Project project, JdkOrderEntry entry) {
+    this(project, entry.getRootFiles(OrderRootType.CLASSES), entry.getRootFiles(OrderRootType.SOURCES), entry.getJdkName());
   }
 
+  public JdkScope(Project project,
+                  VirtualFile[] classes,
+                  VirtualFile[] sources,
+                  String jdkName) {
+    super(project, classes, sources);
+    myJdkName = jdkName;
+  }
+
+  @Override
   public int hashCode() {
-    return myJdkName.hashCode();
+    return 31 * super.hashCode() + myJdkName.hashCode();
   }
 
+  @Override
   public boolean equals(Object object) {
     if (object == this) return true;
-    if (object == null) return false;
-    if (object.getClass() != JdkScope.class) return false;
+    if (object.getClass() != getClass()) return false;
 
-    final JdkScope that = (JdkScope)object;
-    return that.myJdkName.equals(myJdkName);
+    return myJdkName.equals(((JdkScope)object).myJdkName) && super.equals(object);
   }
 }

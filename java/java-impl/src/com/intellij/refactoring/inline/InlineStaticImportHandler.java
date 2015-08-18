@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -59,7 +60,7 @@ public class InlineStaticImportHandler extends JavaInlineActionHandler {
 
     new WriteCommandAction(project, REFACTORING_NAME){
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         replaceAllAndDeleteImport(referenceElements, null, staticStatement);
       }
     }.execute();

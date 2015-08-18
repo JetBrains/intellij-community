@@ -82,7 +82,7 @@ public class CreatePatchConfigurationPanel {
         final FileSaverDialog dialog =
           FileChooserFactory.getInstance().createSaveFileDialog(
             new FileSaverDescriptor("Save patch to", ""), myMainPanel);
-        final String path = FileUtil.toSystemIndependentName(myFileNameField.getText().trim());
+        final String path = FileUtil.toSystemIndependentName(getFileName());
         final int idx = path.lastIndexOf("/");
         VirtualFile baseDir = idx == -1 ? project.getBaseDir() :
                               (LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path.substring(0, idx))));
@@ -204,7 +204,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   private void checkName() {
-    final PatchNameChecker patchNameChecker = new PatchNameChecker(myFileNameField.getText());
+    final PatchNameChecker patchNameChecker = new PatchNameChecker(getFileName());
     if (patchNameChecker.nameOk()) {
       myErrorLabel.setText("");
     }
@@ -241,7 +241,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   public String getFileName() {
-    return myFileNameField.getText();
+    return FileUtil.expandUserHome(myFileNameField.getText().trim());
   }
 
   public void setFileName(final File file) {

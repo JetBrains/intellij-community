@@ -219,23 +219,29 @@ public class TestsPresentationUtil {
     final SMTestProxy parent = testProxy.getParent();
     final String name = testProxy.getName();
 
+    if (name == null) {
+      return NO_NAME_TEST;
+    }
+
     String presentationCandidate = name;
     if (parent != null) {
       String parentName = parent.getName();
-      boolean parentStartsWith = name.startsWith(parentName);
-      if (!parentStartsWith && parent instanceof SMTestProxy.SMRootTestProxy) {
-        final String presentation = ((SMTestProxy.SMRootTestProxy)parent).getPresentation();
-        if (presentation != null) {
-          parentName = presentation;
-          parentStartsWith = name.startsWith(parentName);
+      if (parentName != null) {
+        boolean parentStartsWith = name.startsWith(parentName);
+        if (!parentStartsWith && parent instanceof SMTestProxy.SMRootTestProxy) {
+          final String presentation = ((SMTestProxy.SMRootTestProxy)parent).getPresentation();
+          if (presentation != null) {
+            parentName = presentation;
+            parentStartsWith = name.startsWith(parentName);
+          }
         }
-      }
-      if (parentStartsWith) {
-        presentationCandidate = name.substring(parentName.length());
-
-        // remove "." separator
-        if (presentationCandidate.startsWith(".")) {
-          presentationCandidate = presentationCandidate.substring(1);
+        if (parentStartsWith) {
+          presentationCandidate = name.substring(parentName.length());
+  
+          // remove "." separator
+          if (presentationCandidate.startsWith(".")) {
+            presentationCandidate = presentationCandidate.substring(1);
+          }
         }
       }
     }

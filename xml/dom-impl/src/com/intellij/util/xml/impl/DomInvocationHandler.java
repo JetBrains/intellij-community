@@ -875,8 +875,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final SemKey<? extends DomInvocationHandler> key = description instanceof CustomDomChildrenDescription ? DomManagerImpl.DOM_CUSTOM_HANDLER_KEY : DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
       final DomInvocationHandler semElement = myManager.getSemService().getSemElement(key, subTag);
       if (semElement == null) {
-        myManager.getSemService().getSemElement(key, subTag);
-        throw new AssertionError("No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() +"' using key " + key);
+        String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "' using key " + key + "; subtag count=" + subTags.size();
+        DomInvocationHandler anyDom = myManager.getDomHandler(subTag);
+        if (anyDom != null) {
+          msg += "\n sub-dom=" + anyDom + " with " + anyDom.getChildDescription();
+        }
+        throw new AssertionError(msg);
       }
       else {
         elements.add(semElement.getProxy());

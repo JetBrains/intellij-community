@@ -77,11 +77,11 @@ public abstract class AbstractVcsTestCase {
     ChangeListManagerImpl.getInstanceImpl(myProject).waitUntilRefreshed();
   }
 
-  protected static void refreshVfs() {
+  protected void refreshVfs() {
     UsefulTestCase.edt(new Runnable() {
       @Override
       public void run() {
-        LocalFileSystem.getInstance().refresh(false);
+        myWorkingCopyDir.refresh(false, true);
       }
     });
   }

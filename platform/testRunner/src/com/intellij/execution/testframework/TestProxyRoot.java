@@ -15,10 +15,14 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.process.ProcessHandler;
+
 public interface TestProxyRoot {
   String getPresentation();
 
   String getComment();
 
   String getRootLocation();
+  
+  void setHandler(ProcessHandler handler);
 }

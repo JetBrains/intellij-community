@@ -68,6 +68,7 @@ public interface PsiModificationTracker extends ModificationTracker {
   /**
    * This key can be passed as a dependency in a {@link com.intellij.psi.util.CachedValueProvider}.
    * The corresponding {@link com.intellij.psi.util.CachedValue} will then be flushed on every physical PSI change that doesn't happen inside a Java code block.
+   * This can include changes on Java class or file level, or changes in non-Java files, e.g. XML. Rarely needed.
    * @see #getOutOfCodeBlockModificationCount()
    */
   Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = Key.create("OUT_OF_CODE_BLOCK_MODIFICATION_COUNT");

@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.edu.EduNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,13 +23,14 @@ public class CreateCourseArchivePanel extends JPanel {
   private JLabel myErrorLabel;
   private CreateCourseArchiveDialog myDlg;
 
-  public CreateCourseArchivePanel(@NotNull final Project project, CreateCourseArchiveDialog dlg) {
+  public CreateCourseArchivePanel(@NotNull final Project project, CreateCourseArchiveDialog dlg, String name) {
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
     myErrorIcon.setIcon(AllIcons.Actions.Lightning);
     setState(false);
     myDlg = dlg;
-    myNameField.setText(EduNames.COURSE);
+    String sanitizedName = FileUtil.sanitizeFileName(name);
+    myNameField.setText(sanitizedName.startsWith("_") ? EduNames.COURSE : sanitizedName);
     myLocationField.setText(project.getBasePath());
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener("Choose location folder", null, project, descriptor);

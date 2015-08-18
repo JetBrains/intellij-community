@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
-public abstract class StorageDataBase {
-  @NotNull
-  public abstract Set<String> getComponentNames();
-
-  public abstract boolean hasState(@NotNull String componentName);
+public interface StorageDataBase {
+  boolean hasState(@NotNull String componentName);
 }

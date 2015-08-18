@@ -34,11 +34,6 @@ import java.util.List;
  */
 public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public XmlSmartCompletionTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   public void testCompletion() throws Exception {
     doTest(new String[]{"testCompletion.xml", "test.xsd"}, "b");
   }

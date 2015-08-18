@@ -37,10 +37,10 @@ import java.util.Set;
 public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreGetMessage = false;
+  public boolean ignoreGetMessage;
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreCantWrap = false;
+  public boolean ignoreCantWrap;
 
   @Override
   @NotNull
@@ -133,11 +133,11 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
 
   private class ReferenceFinder extends JavaRecursiveElementVisitor {
 
-    private final Set<PsiReferenceExpression> visited = new HashSet();
-    private boolean argumentsContainCatchParameter = false;
+    private final Set<PsiReferenceExpression> visited = new HashSet<PsiReferenceExpression>();
+    private boolean argumentsContainCatchParameter;
     private final PsiParameter parameter;
 
-    public ReferenceFinder(PsiParameter parameter) {
+    ReferenceFinder(PsiParameter parameter) {
       this.parameter = parameter;
     }
 
@@ -195,7 +195,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
       }
     }
 
-    public boolean usesParameter() {
+    boolean usesParameter() {
       return argumentsContainCatchParameter;
     }
   }

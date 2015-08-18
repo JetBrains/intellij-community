@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,12 +41,14 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   protected final String myText;
 
   public AddAnnotationPsiFix(@NotNull String fqn,
-                            @NotNull PsiModifierListOwner modifierListOwner,
-                            @NotNull PsiNameValuePair[] values,
-                            @NotNull String... annotationsToRemove) {
+                             @NotNull PsiModifierListOwner modifierListOwner,
+                             @NotNull PsiNameValuePair[] values,
+                             @NotNull String... annotationsToRemove) {
     super(modifierListOwner);
     myAnnotation = fqn;
+    ObjectUtils.assertAllElementsNotNull(values);
     myPairs = values;
+    ObjectUtils.assertAllElementsNotNull(annotationsToRemove);
     myAnnotationsToRemove = annotationsToRemove;
     myText = calcText(modifierListOwner, myAnnotation);
   }
@@ -155,7 +158,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   public static void removePhysicalAnnotations(PsiModifierListOwner owner, String... fqns) {
     for (String fqn : fqns) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, fqn);
-      if (annotation != null) {
+      if (annotation != null && !AnnotationUtil.isInferredAnnotation(annotation)) {
         annotation.delete();
       }
     }

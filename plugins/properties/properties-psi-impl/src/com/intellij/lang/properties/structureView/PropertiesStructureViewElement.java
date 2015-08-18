@@ -16,6 +16,7 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +39,7 @@ import java.awt.*;
  * @author max
  */
 public class PropertiesStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
-  private final Property myProperty;
+  private final IProperty myProperty;
   private String myPresentableName;
 
   private static final TextAttributesKey GROUP_KEY;
@@ -48,11 +50,11 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement,
   }
 
 
-  public PropertiesStructureViewElement(final Property element) {
+  public PropertiesStructureViewElement(final IProperty element) {
     myProperty = element;
   }
 
-  public Property getValue() {
+  public IProperty getValue() {
     return myProperty;
   }
 
@@ -73,9 +75,16 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement,
     return EMPTY_ARRAY;
   }
 
+  @Nullable
   @Override
-  public PsiElement[] getPsiElements() {
-    return new PsiElement[] {getValue()};
+  public PsiFile[] getFiles() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public IProperty[] getProperties() {
+    return new IProperty[] {getValue()};
   }
 
   @NotNull

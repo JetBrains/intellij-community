@@ -36,6 +36,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -55,6 +56,7 @@ import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.ComboBoxModelEditor;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.UIUtil;
@@ -84,7 +86,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   };
 
-  private final KeymapListModelEditor<Keymap> myEditor = new KeymapListModelEditor<Keymap>(new ListItemEditor<Keymap>() {
+  // Name editor calls "setName" to apply new name. It is scheme name, not presentable name —
+  // but only bundled scheme name could be different from presentable and bundled scheme is not editable (could not be renamed). So, it is ok.
+  private final ComboBoxModelEditor<Keymap> myEditor = new ComboBoxModelEditor<Keymap>(new ListItemEditor<Keymap>() {
     @NotNull
     @Override
     public String getName(@NotNull Keymap item) {
@@ -198,6 +202,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         showOption(option);
       }
     };
+  }
+
+  @Override
+  public void processCurrentKeymapChanged() {
+    currentKeymapChanged();
   }
 
   @Override
@@ -582,13 +591,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     Keymap keymap = createKeymapCopyIfNeeded();
 
     MouseShortcut mouseShortcut = shortcut instanceof MouseShortcut ? (MouseShortcut)shortcut : null;
-
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
     MouseShortcutDialog dialog = new MouseShortcutDialog(
       this,
       mouseShortcut,
       keymap,
       actionId,
-      myActionsTree.getMainGroup(),
+      ActionsTreeUtil.createMainGroup(project, keymap, myQuickLists, null, true, null),
       restrictions
     );
     if (!dialog.showAndGet()) {

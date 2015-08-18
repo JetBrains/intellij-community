@@ -96,4 +96,13 @@ public class CompiledClass extends UserDataHolderBase{
   public int hashCode() {
     return FileUtil.fileHashCode(myOutputFile);
   }
+
+  @Override
+  public String toString() {
+    return "CompiledClass{" +
+           "myOutputFile=" + myOutputFile +
+           ", mySourceFile=" + mySourceFile +
+           ", myIsDirty=" + myIsDirty +
+           '}';
+  }
 }

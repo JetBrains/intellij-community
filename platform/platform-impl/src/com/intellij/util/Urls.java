@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -46,12 +47,12 @@ public final class Urls {
 
   @NotNull
   public static Url newLocalFileUrl(@NotNull String path) {
-    return new LocalFileUrl(path);
+    return new LocalFileUrl(FileUtilRt.toSystemIndependentName(path));
   }
 
   @NotNull
   public static Url newLocalFileUrl(@NotNull VirtualFile file) {
-    return newLocalFileUrl(file.getPath());
+    return new LocalFileUrl(file.getPath());
   }
 
   @NotNull
@@ -89,7 +90,17 @@ public final class Urls {
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   @Nullable
   public static Url parseFromIdea(@NotNull CharSequence url) {
-    return StringUtil.contains(url, URLUtil.SCHEME_SEPARATOR) ? parseUrl(url) : newLocalFileUrl(url.toString());
+    for (int i = 0, n = url.length(); i < n; i++) {
+      char c = url.charAt(i);
+      if (c == ':') {
+        // file:// or dart:core/foo
+        return parseUrl(url);
+      }
+      else if (c == '/' || c == '\\') {
+        return newLocalFileUrl(url.toString());
+      }
+    }
+    return newLocalFileUrl(url.toString());
   }
 
   @Nullable

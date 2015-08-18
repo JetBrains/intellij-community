@@ -49,7 +49,7 @@ public class FileStructureDialogTest extends BaseProjectViewTestCase {
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     assertNotNull(document);
 
-    final Editor editor = factory.createEditor(document);
+    final Editor editor = factory.createEditor(document, myProject);
     try {
       final FileStructureDialog dialog =
         new FileStructureDialog(structureViewModel, editor, myProject, psiClass, new Disposable() {

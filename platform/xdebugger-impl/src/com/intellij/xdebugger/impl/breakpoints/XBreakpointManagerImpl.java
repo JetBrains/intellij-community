@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -405,33 +407,39 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myDefaultBreakpoints.clear();
     myBreakpointsDefaults.clear();
 
-    for (BreakpointState breakpointState : state.getDefaultBreakpoints()) {
-      loadBreakpoint(breakpointState, true);
-    }
-    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-      if (!myDefaultBreakpoints.containsKey(type)) {
-        addDefaultBreakpoint(type);
+    AccessToken token = ReadAction.start();
+    try {
+      for (BreakpointState breakpointState : state.getDefaultBreakpoints()) {
+        loadBreakpoint(breakpointState, true);
       }
-    }
-
-    for (XBreakpointBase<?,?,?> breakpoint : myBreakpoints.values()) {
-      doRemoveBreakpoint(breakpoint);
-    }
-    for (BreakpointState breakpointState : state.getBreakpoints()) {
-      loadBreakpoint(breakpointState, false);
-    }
-
-    for (BreakpointState defaults : state.getBreakpointsDefaults()) {
-      XBreakpointType<?,?> type = XBreakpointUtil.findType(defaults.getTypeId());
-      if (type != null) {
-        myBreakpointsDefaults.put(type, defaults);
+      for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
+        if (!myDefaultBreakpoints.containsKey(type)) {
+          addDefaultBreakpoint(type);
+        }
       }
-      else {
-        LOG.warn("Unknown breakpoint type " + defaults.getTypeId());
-      }
-    }
 
-    myDependentBreakpointManager.loadState();
+      for (XBreakpointBase<?, ?, ?> breakpoint : myBreakpoints.values()) {
+        doRemoveBreakpoint(breakpoint);
+      }
+      for (BreakpointState breakpointState : state.getBreakpoints()) {
+        loadBreakpoint(breakpointState, false);
+      }
+
+      for (BreakpointState defaults : state.getBreakpointsDefaults()) {
+        XBreakpointType<?, ?> type = XBreakpointUtil.findType(defaults.getTypeId());
+        if (type != null) {
+          myBreakpointsDefaults.put(type, defaults);
+        }
+        else {
+          LOG.warn("Unknown breakpoint type " + defaults.getTypeId());
+        }
+      }
+
+      myDependentBreakpointManager.loadState();
+    }
+    finally {
+      token.finish();
+    }
     myLineBreakpointManager.updateBreakpointsUI();
     myTime = state.getTime();
     myDefaultGroup = state.getDefaultGroup();

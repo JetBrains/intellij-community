@@ -103,32 +103,36 @@ public class RedundantCastUtil {
       super(true);
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      expression.acceptChildren(this);
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitElement(expression);
     }
 
-    @Override public void visitClass(PsiClass aClass) {
-      // avoid multiple visit
-    }
-
-    @Override public void visitMethod(PsiMethod method) {
-      // avoid multiple visit
-    }
-
-    @Override public void visitField(PsiField field) {
+    @Override
+    public void visitClass(PsiClass aClass) {
       // avoid multiple visit
     }
 
     @Override
-    protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
+    public void visitMethod(PsiMethod method) {
+      // avoid multiple visit
+    }
+
+    @Override
+    public void visitField(PsiField field) {
+      // avoid multiple visit
+    }
+
+    @Override
+    protected void addToResults(@NotNull PsiTypeCastExpression typeCast) {
       if (!isTypeCastSemantic(typeCast)) {
         myFoundCasts.add(typeCast);
       }
     }
   }
 
-  private static class MyIsRedundantVisitor extends JavaRecursiveElementVisitor {
-    private boolean isRedundant = false;
+  private static class MyIsRedundantVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean isRedundant;
     private final boolean myRecursive;
 
     private MyIsRedundantVisitor(final boolean recursive) {
@@ -302,7 +306,8 @@ public class RedundantCastUtil {
       super.visitEnumConstant(enumConstant);
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       //expression.acceptChildren(this);
     }
 
@@ -710,7 +715,7 @@ public class RedundantCastUtil {
     return result.get().booleanValue();
   }
 
-  public static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
+  private static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
     PsiExpression operand = typeCast.getOperand();
     if (operand == null) return false;
 

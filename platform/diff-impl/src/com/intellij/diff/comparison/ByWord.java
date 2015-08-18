@@ -21,9 +21,11 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.Range;
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,9 +50,9 @@ public class ByWord {
     List<InlineChunk> words2 = getInlineChunks(text2);
 
     FairDiffIterable wordChanges = diff(words1, words2, indicator);
-    FairDiffIterable correctedWordChanges = preferBigChunks(words1, words2, wordChanges, indicator);
+    wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges, indicator);
 
-    FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(text1, text2, words1, words2, correctedWordChanges, indicator);
+    FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(text1, text2, words1, words2, wordChanges, indicator);
     DiffIterable iterable = matchAdjustmentWhitespaces(text1, text2, delimitersIterable, policy, indicator);
 
     return convertIntoFragments(iterable);
@@ -84,9 +86,9 @@ public class ByWord {
     List<InlineChunk> words2 = getInlineChunks(text2);
 
     FairDiffIterable wordChanges = diff(words1, words2, indicator);
-    FairDiffIterable correctedWordChanges = preferBigChunks(words1, words2, wordChanges, indicator);
+    wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges, indicator);
 
-    List<WordBlock> wordBlocks = new LineFragmentSplitter(text1, text2, words1, words2, correctedWordChanges, indicator).run();
+    List<WordBlock> wordBlocks = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges, indicator).run();
 
     List<LineBlock> lineBlocks = new ArrayList<LineBlock>(wordBlocks.size());
     for (WordBlock block : wordBlocks) {
@@ -99,7 +101,7 @@ public class ByWord {
       List<InlineChunk> subwords1 = words1.subList(words.start1, words.end1);
       List<InlineChunk> subwords2 = words2.subList(words.start2, words.end2);
 
-      FairDiffIterable subiterable = fair(trim(correctedWordChanges, words.start1, words.end1, words.start2, words.end2));
+      FairDiffIterable subiterable = fair(trim(wordChanges, words.start1, words.end1, words.start2, words.end2));
 
       FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable,
                                                                       offsets.start1, offsets.start2, indicator);
@@ -121,63 +123,128 @@ public class ByWord {
   //
 
   /*
-   * Try to merge matched blocks to form a bigger ones
+   * 1. Minimise amount of chunks
+   *      good: "AX[AB]" - "[AB]"
+   *      bad: "[A]XA[B]" - "[A][B]"
    *
-   * sample: "A X A B" - "A B" should be matched as "A X [A B]" - "[A B]"
+   * 2. Minimise amount of modified 'sentences', where sentence is a sequence of words, that are not separated by whitespace
+   *      good: "[AX] [AZ]" - "[AX] AY [AZ]"
+   *      bad: "[AX A][Z]" - "[AX A]Y A[Z]"
+   *      ex: "1.0.123 1.0.155" vs "1.0.123 1.0.134 1.0.155"
    */
   @NotNull
-  private static FairDiffIterable preferBigChunks(@NotNull List<InlineChunk> words1,
-                                                  @NotNull List<InlineChunk> words2,
-                                                  @NotNull FairDiffIterable iterable,
-                                                  @NotNull ProgressIndicator indicator) {
+  private static FairDiffIterable optimizeWordChunks(@NotNull CharSequence text1,
+                                                     @NotNull CharSequence text2,
+                                                     @NotNull List<InlineChunk> words1,
+                                                     @NotNull List<InlineChunk> words2,
+                                                     @NotNull FairDiffIterable iterable,
+                                                     @NotNull ProgressIndicator indicator) {
     List<Range> newRanges = new ArrayList<Range>();
 
     for (Range range : iterable.iterateUnchanged()) {
-      if (newRanges.size() == 0) {
+      Range lastRange = ContainerUtil.getLastItem(newRanges);
+      if (lastRange == null ||
+          (lastRange.end1 != range.start1 && lastRange.end2 != range.start2)) {
+        // if changes do not touch and we still can perform one of these optimisations,
+        // it means that given DiffIterable is not LCS (because we can build a smaller one). This should not happen.
         newRanges.add(range);
         continue;
       }
 
-      Range lastRange = newRanges.get(newRanges.size() - 1);
-
-      boolean canMergeLeft = true;
       int count = range.end1 - range.start1;
-      for (int i = 0; i < count; i++) {
-        InlineChunk word1 = words1.get(lastRange.end1 + i);
-        InlineChunk word2 = words2.get(lastRange.end2 + i);
-        if (!word1.equals(word2)) {
-          canMergeLeft = false;
-          break;
-        }
-      }
+      int lastCount = lastRange.end1 - lastRange.start1;
 
-      if (canMergeLeft) {
+      // merge chunks left [A]B[B] -> [AB]B
+      int equalLeft = equalRanges(words1, words2, lastRange.end1, lastRange.end2, count, true);
+      if (equalLeft == count) {
         newRanges.remove(newRanges.size() - 1);
         newRanges.add(new Range(lastRange.start1, lastRange.end1 + count, lastRange.start2, lastRange.end2 + count));
         continue;
       }
 
-      boolean canMergeRight = true;
-      int lastCount = lastRange.end1 - lastRange.start1;
-      for (int i = 0; i < lastCount; i++) {
-        InlineChunk word1 = words1.get(range.start1 - i - 1);
-        InlineChunk word2 = words2.get(range.start2 - i - 1);
-        if (!word1.equals(word2)) {
-          canMergeRight = false;
-          break;
-        }
-      }
-
-      if (canMergeRight) {
+      // merge chunks right [A]A[B] -> A[AB]
+      int equalRight = equalRanges(words1, words2, range.start1 - lastCount, range.start2 - lastCount, lastCount, false);
+      if (equalRight == lastCount) {
         newRanges.remove(newRanges.size() - 1);
         newRanges.add(new Range(range.start1 - lastCount, range.end1, range.start2 - lastCount, range.end2));
         continue;
       }
 
+
+      Side touchSide = Side.fromLeft(lastRange.end1 == range.start1);
+      List<InlineChunk> touchWords = touchSide.select(words1, words2);
+      CharSequence touchText = touchSide.select(text1, text2);
+      int touchStart = touchSide.select(range.start1, range.start2);
+
+      // check if chunks are already separated by whitespaces
+      if (!isSeparatedWithWhitespace(touchText, touchWords.get(touchStart - 1), touchWords.get(touchStart))) {
+        // shift chunks left [X]A Y[A ZA] -> [XA] YA [ZA]
+        //                   [X][A ZA] -> [XA] [ZA]
+        int leftShift = findSequenceEdgeShift(touchText, touchWords, touchStart, equalLeft, true);
+        if (leftShift > 0) {
+          newRanges.remove(newRanges.size() - 1);
+          newRanges.add(new Range(lastRange.start1, lastRange.end1 + leftShift, lastRange.start2, lastRange.end2 + leftShift));
+          newRanges.add(new Range(range.start1 + leftShift, range.end1, range.start2 + leftShift, range.end2));
+          continue;
+        }
+
+        // shift chunks right [AX A]Y A[Z] -> [AX] AY [AZ]
+        //                    [AX A][Z] -> [AX] [AZ]
+        int rightShift = findSequenceEdgeShift(touchText, touchWords, touchStart - 1, equalRight, false);
+        if (rightShift > 0) {
+          newRanges.remove(newRanges.size() - 1);
+          newRanges.add(new Range(lastRange.start1, lastRange.end1 - rightShift, lastRange.start2, lastRange.end2 - rightShift));
+          newRanges.add(new Range(range.start1 - rightShift, range.end1, range.start2 - rightShift, range.end2));
+          continue;
+        }
+      }
+
+      // nothing to do
       newRanges.add(range);
     }
 
     return fair(createUnchanged(newRanges, words1.size(), words2.size()));
+  }
+
+  private static <T> int equalRanges(@NotNull List<T> data1, @NotNull List<T> data2, int start1, int start2, int count,
+                                     boolean leftToRight) {
+    for (int i = 0; i < count; i++) {
+      int shift = leftToRight ? i : count - i - 1;
+      T val1 = data1.get(start1 + shift);
+      T val2 = data2.get(start2 + shift);
+      if (!val1.equals(val2)) return i;
+    }
+    return count;
+  }
+
+  private static int findSequenceEdgeShift(@NotNull CharSequence text, @NotNull List<InlineChunk> words, int offset, int count,
+                                           boolean leftToRight) {
+    for (int i = 0; i < count; i++) {
+      InlineChunk word1;
+      InlineChunk word2;
+      if (leftToRight) {
+        word1 = words.get(offset + i);
+        word2 = words.get(offset + i + 1);
+      }
+      else {
+        word1 = words.get(offset - i - 1);
+        word2 = words.get(offset - i);
+      }
+      if (isSeparatedWithWhitespace(text, word1, word2)) return i + 1;
+    }
+    return -1;
+  }
+
+  private static boolean isSeparatedWithWhitespace(@NotNull CharSequence text, @NotNull InlineChunk word1, @NotNull InlineChunk word2) {
+    if (word1 instanceof NewlineChunk || word2 instanceof NewlineChunk) return true;
+
+    int offset1 = word1.getOffset2();
+    int offset2 = word2.getOffset1();
+
+    for (int i = offset1; i < offset2; i++) {
+      if (isWhiteSpace(text.charAt(i))) return true;
+    }
+    return false;
   }
 
   @NotNull

@@ -80,11 +80,11 @@ public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspe
       }
     }
 
-    class LocalVariableAccessVisitor extends JavaRecursiveElementVisitor {
+    private class LocalVariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
       private final Set<PsiLocalVariable> myVariablesInPreviousBranches;
 
-      public LocalVariableAccessVisitor(Set<PsiLocalVariable> variablesInPreviousBranches) {
+      private LocalVariableAccessVisitor(Set<PsiLocalVariable> variablesInPreviousBranches) {
         myVariablesInPreviousBranches = variablesInPreviousBranches;
       }
 

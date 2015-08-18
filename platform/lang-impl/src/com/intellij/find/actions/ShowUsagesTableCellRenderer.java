@@ -64,9 +64,6 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     Usage usage = usageNode == null ? null : usageNode.getUsage();
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
-
-    panel.setFont(list.getFont());
-
     Color fileBgColor = getBackgroundColor(isSelected, usage);
     final Color bg = UIUtil.getListSelectionBackground();
     final Color fg = UIUtil.getListSelectionForeground();

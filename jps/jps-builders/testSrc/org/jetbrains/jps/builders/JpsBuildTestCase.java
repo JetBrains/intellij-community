@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,12 +376,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     String fullTargetPath = getAbsolutePath(relativeTargetPath);
     File target = new File(fullTargetPath);
     try {
-      if (source.isDirectory()) {
-        FileUtil.copyDir(source, target);
-      }
-      else {
-        FileUtil.copy(source, target);
-      }
+      FileUtil.copyFileOrDir(source, target);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

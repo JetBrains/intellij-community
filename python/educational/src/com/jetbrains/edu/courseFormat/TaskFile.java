@@ -28,8 +28,6 @@ public class TaskFile {
   @Expose
   public String text;
   @Transient private Task myTask;
-  @Transient
-  private AnswerPlaceholder mySelectedAnswerPlaceholder = null;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
   private boolean myHighlightErrors = false;
@@ -43,21 +41,6 @@ public class TaskFile {
     Collections.sort(answerPlaceholders, new AnswerPlaceholderComparator());
     for (int i = 0; i < answerPlaceholders.size(); i++) {
       answerPlaceholders.get(i).setIndex(i);
-    }
-  }
-
-  @Nullable
-  @Transient
-  public AnswerPlaceholder getSelectedAnswerPlaceholder() {
-    return mySelectedAnswerPlaceholder;
-  }
-
-  public void setSelectedAnswerPlaceholder(@NotNull final AnswerPlaceholder selectedAnswerPlaceholder) {
-    if (selectedAnswerPlaceholder.getTaskFile() == this) {
-      mySelectedAnswerPlaceholder = selectedAnswerPlaceholder;
-    }
-    else {
-      throw new IllegalArgumentException("Window may be set as selected only in task file which it belongs to");
     }
   }
 
@@ -97,19 +80,26 @@ public class TaskFile {
    */
   @Nullable
   public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos) {
+    return getAnswerPlaceholder(document, pos, false);
+  }
+
+  @Nullable
+  public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos,
+                                                boolean useAnswerLength) {
     int line = pos.line;
     if (line >= document.getLineCount()) {
       return null;
     }
     int column = pos.column;
     int offset = document.getLineStartOffset(line) + column;
-    for (AnswerPlaceholder tw : myAnswerPlaceholders) {
-      if (tw.getLine() <= line) {
-        int twStartOffset = tw.getRealStartOffset(document);
-        final int length = tw.getLength() > 0 ? tw.getLength() : 0;
-        int twEndOffset = twStartOffset + length;
-        if (twStartOffset <= offset && offset <= twEndOffset) {
-          return tw;
+    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
+      if (placeholder.getLine() <= line) {
+        int realStartOffset = placeholder.getRealStartOffset(document);
+        int placeholderLength = useAnswerLength ? placeholder.getPossibleAnswerLength() : placeholder.getLength();
+        final int length = placeholderLength > 0 ? placeholderLength : 0;
+        int endOffset = realStartOffset + length;
+        if (realStartOffset <= offset && offset <= endOffset) {
+          return placeholder;
         }
       }
     }
@@ -130,6 +120,7 @@ public class TaskFile {
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
       answerPlaceholdersCopy.add(answerPlaceholderCopy);
     }
+    target.name = source.name;
     target.setAnswerPlaceholders(answerPlaceholdersCopy);
   }
 
@@ -162,5 +153,37 @@ public class TaskFile {
     for (int i = 0; i < myAnswerPlaceholders.size(); i++) {
       myAnswerPlaceholders.get(i).setIndex(i + 1);
     }
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TaskFile that = (TaskFile)o;
+
+    if (getIndex() != that.getIndex()) return false;
+    if (name != that.name) return false;
+
+    final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
+    final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();
+    if (answerPlaceholders.size() != thatAnswerPlaceholders.size()) return false;
+    for (int i = 0; i < answerPlaceholders.size(); i++) {
+      final AnswerPlaceholder placeholder = answerPlaceholders.get(i);
+      final AnswerPlaceholder thatPlaceholder = thatAnswerPlaceholders.get(i);
+      if (!placeholder.equals(thatPlaceholder)) return false;
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = getIndex();
+    result = 31 * result + name.hashCode();
+    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
+      result = 31 * result + placeholder.hashCode();
+    }
+    return result;
   }
 }

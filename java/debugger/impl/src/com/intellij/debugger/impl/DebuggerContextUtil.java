@@ -51,7 +51,7 @@ public class DebuggerContextUtil {
     SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), stackFrame.threadProxy());
     final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
 
-    manager.setState(newContext, session != null? session.getState() : DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_REFRESH, null);
+    manager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, DebuggerSession.Event.REFRESH, null);
   }
 
   public static void setThread(DebuggerStateManager contextManager, ThreadDescriptorImpl item) {
@@ -64,7 +64,7 @@ public class DebuggerContextUtil {
     final DebuggerSession session = context.getDebuggerSession();
     final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, item.getSuspendContext(), item.getThreadReference(), null);
 
-    contextManager.setState(newContext, session != null? session.getState() : DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_CONTEXT, null);
+    contextManager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
   }
 
   public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext){

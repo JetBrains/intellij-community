@@ -153,6 +153,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
         }
       });
       myElements.removeAll(selected);
+      myTableView.getSelectionModel().clearSelection();
       myTableView.getTableViewModel().setItems(myElements);
 
       int prev = selectedIndex - 1;

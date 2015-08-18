@@ -87,7 +87,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected void resume(SuspendContextImpl context) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOW));
+    debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
   }
 
   protected void stepInto(SuspendContextImpl context) {
@@ -108,17 +108,26 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
+    throwExceptionsIfAny();
+  }
+
+  protected void throwExceptionsIfAny() throws CompositeException {
     synchronized (myException) {
-      if (!myException.isEmpty()) throw myException;
+      myException.throwIfNotEmpty();
     }
   }
 
   protected void onBreakpoint(SuspendContextRunnable runnable) {
+    addDefaultBreakpointListener();
+    myScriptRunnables.add(runnable);
+  }
+
+  protected void addDefaultBreakpointListener() {
     if (myPauseScriptListener == null) {
       final DebugProcessImpl debugProcess = getDebugProcess();
-      
+
       assertTrue("Debug process was not started", debugProcess != null);
-      
+
       myPauseScriptListener = new DelayedEventsProcessListener(
         new DebugProcessAdapterImpl() {
           @Override
@@ -139,7 +148,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             }
             catch (AssertionError e) {
               addException(e);
-              paused(suspendContext);
+              resume(suspendContext);
             }
 
             if (myScriptRunnables.isEmpty()) {
@@ -164,7 +173,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       );
       debugProcess.addDebugProcessListener(myPauseScriptListener);
     }
-    myScriptRunnables.add(runnable);
   }
 
   protected void printFrameProxy(StackFrameProxyImpl frameProxy) throws EvaluateException {

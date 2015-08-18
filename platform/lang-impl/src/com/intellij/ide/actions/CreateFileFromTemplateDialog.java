@@ -82,6 +82,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return myKindCombo;
   }
 
+  protected JLabel getKindLabel() {
+    return myKindLabel;
+  }
+
   private String getEnteredName() {
     final JTextField nameField = getNameField();
     final String text = nameField.getText().trim();

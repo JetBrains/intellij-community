@@ -202,7 +202,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
         ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
       }
       finally {
-        System.out.println(MapSerializerUtil.asString(messageName, attrs));
+        System.out.println("\n" + MapSerializerUtil.asString(messageName, attrs));
       }
     }
 

@@ -115,7 +115,6 @@ public class InterruptThreadAction extends DebuggerAction{
     }
     final Presentation presentation = e.getPresentation();
     presentation.setText(DebuggerBundle.message("action.interrupt.thread.text"));
-    presentation.setVisible(visible);
-    presentation.setEnabled(enabled);
+    presentation.setEnabledAndVisible(visible && enabled);
   }
 }

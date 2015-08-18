@@ -32,12 +32,16 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -294,12 +298,21 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   public boolean downloadLibraries() {
-    applyLibraryOptionsForSelected();
-    List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
-    for (LibraryCompositionSettings compositionSettings : list) {
-      if (!compositionSettings.downloadFiles(myMainPanel)) return false;
-    }
-    return true;
+    final Ref<Boolean> result = Ref.create(true);
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        applyLibraryOptionsForSelected();
+        List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
+        for (LibraryCompositionSettings compositionSettings : list) {
+          if (!compositionSettings.downloadFiles(myMainPanel)) {
+            result.set(false);
+            return;
+          }
+        }
+      }
+    });
+    return result.get();
   }
 
   private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,

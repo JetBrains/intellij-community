@@ -86,7 +86,6 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control ADD",              "ExpandAll", "ExpandRegion"},
-    { "control DELETE",           "EditorDeleteToWordEnd", "RemoveFromFavorites"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
     { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Execute.Multiline"},
@@ -200,7 +199,6 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt G",              "GotoChangedFile", "GotoClass", "hg4idea.QGotoFromPatches"},
     { "shift alt P",              "ParameterInfo", "hg4idea.QPushAction"},
     { "shift control X",          "GotoPreviousError", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
-    { "shift control alt F",      "EditorCodeBlockEndWithSelection", "Console.TableResult.EditFilterCriteria"},
     });
     put("Visual Studio", new String[][] {
     { "F5",                       "Resume", "UML.ApplyCurrentLayout"},

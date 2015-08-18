@@ -36,7 +36,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
             @NotNull String prefix,
             @NotNull String suffix,
             @NotNull TextRange range) {
-    hostElementPointer = createHostSmartPointer(host, hostPsiFile);
+    hostElementPointer = SmartPointerManager.getInstance(hostPsiFile.getProject()).createSmartPsiElementPointer(host, hostPsiFile);
     this.relevantRangeInHost = relevantRangeInHost;
     this.prefix = prefix;
     this.suffix = suffix;
@@ -48,14 +48,6 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   @NotNull
   public SmartPsiElementPointer<PsiLanguageInjectionHost> getSmartPointer() {
     return hostElementPointer;
-  }
-
-  @NotNull
-  private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(@NotNull T host,
-                                                                                                       @NotNull PsiFile hostPsiFile) {
-    return hostPsiFile.isPhysical()
-           ? SmartPointerManager.getInstance(hostPsiFile.getProject()).createSmartPsiElementPointer(host, hostPsiFile)
-           : new IdentitySmartPointer<T>(host, hostPsiFile);
   }
 
   @Override

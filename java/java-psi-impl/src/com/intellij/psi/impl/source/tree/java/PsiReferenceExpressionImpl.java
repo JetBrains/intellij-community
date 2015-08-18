@@ -32,7 +32,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -489,6 +488,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
   public static boolean seemsScrambled(PsiClass aClass) {
     if (!(aClass instanceof PsiCompiledElement)) {
+      return false;
+    }
+
+    PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass != null && !seemsScrambled(containingClass)) {
       return false;
     }
 

@@ -272,7 +272,10 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         PsiClass containingClass = ((PsiMember)element).getContainingClass();
         final PsiExpression expression = ((PsiReferenceExpression)reference).getQualifierExpression();
         PsiClass psiClass;
-        if (expression != null) {
+        if (reference instanceof PsiMethodReferenceExpression) {
+          psiClass = PsiMethodReferenceUtil.getQualifierResolveResult((PsiMethodReferenceExpression)reference).getContainingClass();
+        }
+        else if (expression != null) {
           psiClass = PsiUtil.resolveClassInType(expression.getType());
         } else {
           if (element instanceof PsiClass) {

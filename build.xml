@@ -1,7 +1,31 @@
+<!--
+ This build script compiles IntelliJ IDEA. Options include:
+    -Dout=/path/to/out/dir, defaults to ${basedir}/out
+    -Dbuild=123, defaults to SNAPSHOT
+    -Dtestpatterns=com.foo.*, defaults to empty string
+    -Dproduct=foo, defaults to idea
+ -->
 <project name="IntelliJ IDEA Community Edition" default="all">
   <property name="project.home" value="${basedir}"/>
-  <property name="out.dir" value="${project.home}/out"/>
-  <property name="tmp.dir" value="${project.home}/out/tmp"/>
+
+  <condition property="out.dir" value="${out}" else="${project.home}/out">
+    <isset property="out" />
+  </condition>
+
+  <condition property="build.number" value="${build}" else="SNAPSHOT">
+    <isset property="build" />
+  </condition>
+
+  <condition property="test.patterns" value="${testpatterns}"
+             else="org.jetbrains.android.*;com.android.tools.idea.*;com.google.gct.*;com.intellij.android.*">
+    <isset property="testpatterns" />
+  </condition>
+
+  <condition property="product.name" value="${product}" else="idea">
+    <isset property="product" />
+  </condition>
+
+  <property name="tmp.dir" value="${out.dir}/tmp"/>
 
   <target name="cleanup">
     <delete dir="${out.dir}" failonerror="false"/>
@@ -18,6 +42,11 @@
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
         <jvmarg line="-Xmx612m -XX:MaxPermSize=152m"/>
+        <jvmarg value="-Djna.nosys=true" />
+        <jvmarg value="-Dout=${out.dir}" />
+        <jvmarg value="-DbuildNumber=${build.number}" />
+        <jvmarg value="-Didea.test.patterns=${test.patterns}" />
+        <jvmarg value="-Dproduct=${product.name}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <arg line="&quot;-Dgant.script=@{script}&quot;"/>
         <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
@@ -34,6 +63,17 @@
 
   <target name="test" depends="init">
     <call_gant script="${project.home}/build/scripts/tests.gant"/>
+  </target>
+
+  <!-- The build task creates an updater.jar in ${out.dir}. This task bundles the updater and its dependencies into a single jar -->
+  <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.0.jar"/>
+  <target name="fullupdater" depends="build">
+    <jarjar jarfile="${out.dir}/updater-full.jar">
+      <zipfileset src="${out.dir}/updater.jar" />
+      <zipfileset src="lib/log4j.jar" />
+      <zipfileset src="lib/jna.jar" />
+      <zipfileset src="lib/jna-utils.jar" />
+    </jarjar>
   </target>
 
   <target name="all" depends="cleanup,build"/>

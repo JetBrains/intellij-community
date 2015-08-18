@@ -73,6 +73,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
 
     boolean isDeprecatedByComment = false;
     boolean hasDeprecatedAnnotation = false;
+    boolean hasDocComment = false;
     String name = null;
     String initializer = null;
 
@@ -80,6 +81,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     for (final LighterASTNode child : tree.getChildren(node)) {
       final IElementType type = child.getTokenType();
       if (type == JavaDocElementType.DOC_COMMENT) {
+        hasDocComment = true;
         isDeprecatedByComment = RecordUtil.isDeprecatedByDocComment(tree, child);
       }
       else if (type == JavaElementType.MODIFIER_LIST) {
@@ -98,7 +100,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     }
 
     final boolean isEnumConst = node.getTokenType() == JavaElementType.ENUM_CONSTANT;
-    final byte flags = PsiFieldStubImpl.packFlags(isEnumConst, isDeprecatedByComment, hasDeprecatedAnnotation);
+    final byte flags = PsiFieldStubImpl.packFlags(isEnumConst, isDeprecatedByComment, hasDeprecatedAnnotation, hasDocComment);
 
     return new PsiFieldStubImpl(parentStub, name, typeInfo, initializer, flags);
   }

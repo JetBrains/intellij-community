@@ -97,7 +97,7 @@ class StatusPanel extends JPanel {
 
     setOpaque(false);
 
-    myTextPanel.setBorder(JBUI.Borders.empty(0, 5, 0, 0));
+    myTextPanel.setBorder(JBUI.Borders.emptyLeft(5));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {

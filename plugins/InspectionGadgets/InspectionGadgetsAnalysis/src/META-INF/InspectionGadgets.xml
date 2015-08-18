@@ -1052,7 +1052,7 @@
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.inheritance.RedundantMethodOverrideInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RefusedBequest" bundle="com.siyeh.InspectionGadgetsBundle" key="refused.bequest.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.inheritance.RefusedBequestInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticInheritance" bundle="com.siyeh.InspectionGadgetsBundle" key="static.inheritance.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="false"
@@ -1878,6 +1878,10 @@
                      key="pointless.arithmetic.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.PointlessArithmeticExpressionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousLiteralUnderscore" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="suspicious.literal.underscore.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.numeric.SuspiciousLiteralUnderscoreInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnaryPlus" bundle="com.siyeh.InspectionGadgetsBundle" key="unary.plus.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.UnaryPlusInspection"/>

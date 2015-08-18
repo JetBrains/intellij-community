@@ -19,7 +19,9 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.tree.render.CompoundNodeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.AnActionButton;
@@ -38,12 +40,12 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class UserRenderersConfigurable extends JPanel implements ConfigurableUi<NodeRendererSettings> {
+public final class UserRenderersConfigurable extends JPanel implements ConfigurableUi<NodeRendererSettings>, Disposable {
   private final JPanel myNameFieldPanel;
   private final JTextField myNameField;
   private final ElementsChooser<NodeRenderer> myRendererChooser;
   private NodeRenderer myCurrentRenderer = null;
-  private final CompoundRendererConfigurable myRendererDataConfigurable = new CompoundRendererConfigurable();
+  private final CompoundRendererConfigurable myRendererDataConfigurable = new CompoundRendererConfigurable(this);
 
   public UserRenderersConfigurable() {
     super(new BorderLayout(4, 0));
@@ -84,6 +86,10 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     splitter.setFirstComponent(decorator.createPanel());
     splitter.setSecondComponent(center);
     add(splitter, BorderLayout.CENTER);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override

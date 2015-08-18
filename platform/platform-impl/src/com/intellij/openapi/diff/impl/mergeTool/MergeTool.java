@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.mergeTool;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
@@ -29,10 +30,15 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class MergeTool implements DiffTool {
+  public static final Logger LOG = Logger.getInstance(MergeTool.class);
+
   public void show(DiffRequest data) {
     if (data instanceof MergeRequestImpl) {
       showDialog((MergeRequestImpl)data);
       return;
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(new Throwable("MergeTool - frame"));
     }
     FrameWrapper frameWrapper = new FrameWrapper(data.getProject(), data.getGroupKey());
     DiffViewer mergePanel = createMergeComponent(data, null, frameWrapper);
@@ -51,6 +57,9 @@ public class MergeTool implements DiffTool {
   }
 
   private static void showDialog(MergeRequestImpl data) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("MergeTool - dialog");
+    }
     DialogBuilder builder = new DialogBuilder(data.getProject());
     builder.setDimensionServiceKey(data.getGroupKey());
     builder.setTitle(data.getWindowTitle());
@@ -82,6 +91,9 @@ public class MergeTool implements DiffTool {
 
   @Override
   public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(new Throwable("MergeTool - component: " + request.getContents()[1].getDocument().isWritable()));
+    }
     return createMergeComponent(request, null, parentDisposable);
   }
 }

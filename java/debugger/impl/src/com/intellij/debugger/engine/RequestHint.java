@@ -253,7 +253,11 @@ public class RequestHint {
         }
 
         for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
-          if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
+          try {
+            if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
+          }
+          catch (Exception e) {LOG.error(e);}
+          catch (AssertionError e) {LOG.error(e);}
         }
       }
       // smart step feature

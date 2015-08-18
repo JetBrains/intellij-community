@@ -10,6 +10,8 @@
     <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.cloud.CloudTerminalProviderImpl"
                         overrides="true"/>
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
   </extensions>
 
   <project-components>
@@ -18,11 +20,4 @@
       <implementation-class>org.jetbrains.plugins.terminal.TerminalView</implementation-class>
     </component>
   </project-components>
-
-  <application-components>
-    <component>
-      <interface-class>org.jetbrains.plugins.terminal.TerminalOptionsProvider</interface-class>
-      <implementation-class>org.jetbrains.plugins.terminal.TerminalOptionsProvider</implementation-class>
-    </component>
-  </application-components>
 </idea-plugin>

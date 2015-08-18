@@ -97,4 +97,8 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   public String getName() {
     return "Memory PasswordSafe";
   }
+
+  public void clear() {
+    database.get().clear();
+  }
 }
