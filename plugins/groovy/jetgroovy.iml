@@ -43,5 +43,6 @@
   <component name="RuntimeResources">
     <runtime-resource name="gragent.jar" url="file://$MODULE_DIR$/hotswap/gragent.jar" />
     <runtime-resource name="conf" url="file://$MODULE_DIR$/groovy-psi/resources/conf" />
+    <runtime-resource name="standardDsls" url="file://$MODULE_DIR$/groovy-psi/resources/standardDsls" />
   </component>
 </module>

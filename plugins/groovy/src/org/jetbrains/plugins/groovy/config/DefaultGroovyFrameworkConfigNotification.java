@@ -20,6 +20,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 
@@ -50,5 +52,11 @@ public class DefaultGroovyFrameworkConfigNotification extends GroovyFrameworkCon
       }
     });
     return panel;
+  }
+
+  @Nullable
+  @Override
+  public RuntimeModuleId getStandardDslsResource() {
+    return RuntimeModuleId.moduleResource("jetgroovy", "standardDsls");
   }
 }

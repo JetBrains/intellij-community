@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import javax.swing.*;
 
@@ -39,5 +40,10 @@ public abstract class GroovyFrameworkConfigNotification {
 
   public FileType[] getFrameworkFileTypes() {
     return FileType.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public RuntimeModuleId getStandardDslsResource() {
+    return null;
   }
 }

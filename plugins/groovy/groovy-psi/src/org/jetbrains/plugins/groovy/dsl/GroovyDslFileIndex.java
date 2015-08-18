@@ -46,6 +46,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -57,6 +58,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status;
@@ -362,23 +365,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   private static Set<File> getBundledScriptFolders() {
-    final GroovyFrameworkConfigNotification[] extensions = GroovyFrameworkConfigNotification.EP_NAME.getExtensions();
-    Set<Class> classes = new HashSet<Class>(ContainerUtil.map2Set(extensions, new Function<GroovyFrameworkConfigNotification, Class>() {
-      @Override
-      public Class fun(GroovyFrameworkConfigNotification notification) {
-        return notification.getClass();
-      }
-    }));
-    classes.add(GroovyFrameworkConfigNotification.class); // for default extension
-
     // perhaps a separate extension for that?
     Set<File> scriptFolders = new LinkedHashSet<File>();
-    for (Class aClass : classes) {
-      File jarPath = new File(PathUtil.getJarPathForClass(aClass));
-      if (jarPath.isFile()) {
-        jarPath = jarPath.getParentFile();
+    for (GroovyFrameworkConfigNotification extension : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
+      RuntimeModuleId moduleId = extension.getStandardDslsResource();
+      if (moduleId != null) {
+        for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(moduleId)) {
+          scriptFolders.add(new File(path));
+        }
       }
-      scriptFolders.add(new File(jarPath, "standardDsls"));
     }
     return scriptFolders;
   }
