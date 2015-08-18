@@ -2139,6 +2139,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            myDocument.getTextLength() > 0 &&
            !mySelectionModel.hasSelection() &&
            areVisualLinesUnique(myCaretModel.getAllCarets()) &&
+           !isInplaceRenamerActive() &&
            !KEY_CHARS_TO_SKIP.contains(c);
   }
 
@@ -2152,6 +2153,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     return true;
+  }
+
+  // TODO Improve the approach - handle such cases in a more general way.
+  private boolean isInplaceRenamerActive() {
+    Key<?> key = Key.findKeyByName("EditorInplaceRenamer");
+    return key != null && key.isIn(this);
   }
 
   // Called to display a single character insertion before starting a write action and the general painting routine.
@@ -2208,6 +2215,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            !undoManager.isRedoInProgress() && // Can we optimize the subsystem to start only one write action and do a single update?
            myDocument instanceof DocumentImpl &&
            !((DocumentImpl)myDocument).isGuardsSuppressed() && // Heuristics. Can PsiToDocumentSynchronizer perform bulk document updates?
+           !isInplaceRenamerActive() &&
            !contains(e.getOldFragment(), '\n') &&
            !contains(e.getNewFragment(), '\n') &&
            !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
