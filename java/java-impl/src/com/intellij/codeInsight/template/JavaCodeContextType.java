@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public abstract class JavaCodeContextType extends TemplateContextType {
 
@@ -146,7 +147,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   private static boolean isAfterExpression(PsiElement element) {
     ProcessingContext context = new ProcessingContext();
-    if (psiElement().inside(PsiExpression.class).afterLeaf(psiElement().inside(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
+    if (psiElement().isOrParent(instanceOf(PsiExpression.class)).afterLeaf(psiElement().isOrParent(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
       PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
       if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
         return true;

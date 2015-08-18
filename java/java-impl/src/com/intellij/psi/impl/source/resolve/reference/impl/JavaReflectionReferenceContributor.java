@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiExpression;
 import static com.intellij.patterns.PsiJavaPatterns.psiLiteral;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.string;
@@ -32,11 +31,11 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
  */
 public class JavaReflectionReferenceContributor extends PsiReferenceContributor {
   public static final PsiJavaElementPattern.Capture<PsiLiteral> PATTERN =
-    psiLiteral().inside(psiExpression().methodCall(psiMethod().withName(string().oneOf("getDeclaredField",
-                                                                                       "getField",
-                                                                                       "getMethod",
-                                                                                       "getDeclaredMethod"))
-                                                     .definedInClass(JAVA_LANG_CLASS)));
+    psiLiteral().methodCallParameter(psiMethod().withName(string().oneOf("getDeclaredField",
+                                                                         "getField",
+                                                                         "getMethod",
+                                                                         "getDeclaredMethod"))
+                                                     .definedInClass(JAVA_LANG_CLASS));
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

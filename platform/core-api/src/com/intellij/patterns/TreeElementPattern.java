@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,6 +146,25 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
           element = getParent(element);
         }
         return true;
+      }
+    });
+  }
+
+  public Self isOrParent(@NotNull final ElementPattern<? extends ParentType> pattern) {
+    return isOrParentAtMost(1, pattern);
+  }
+
+  public Self isOrParentAtMost(final int levelsUp, @NotNull final ElementPattern<? extends ParentType> pattern) {
+    return with(new PatternCondition<T>("isOrParent") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        ParentType element = t;
+        for (int i=0; i<levelsUp+1;i++) {
+          if (pattern.accepts(element, context)) return true;
+          element = getParent(element);
+          if (element == null) break;
+        }
+        return false;
       }
     });
   }
