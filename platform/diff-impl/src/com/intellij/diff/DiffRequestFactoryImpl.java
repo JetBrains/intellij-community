@@ -189,7 +189,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     if (textContents.size() != 3) throw new IllegalArgumentException();
     if (titles.size() != 3) throw new IllegalArgumentException();
 
-    if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only: " + outputDocument);
+    if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only");
 
     DocumentContent outputContent = myContentFactory.create(project, outputDocument, fileType);
     CharSequence originalContent = outputDocument.getImmutableCharSequence();
@@ -233,8 +233,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
     final Document outputDocument = FileDocumentManager.getInstance().getDocument(output);
-    if (outputDocument == null) throw new InvalidDiffRequestException("Can't get output document: " + output);
-    if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only: " + output);
+    if (outputDocument == null) throw new InvalidDiffRequestException("Can't get output document: " + output.getPresentableUrl());
+    if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only: " + output.getPresentableUrl());
 
     DocumentContent outputContent = myContentFactory.create(project, outputDocument);
     CharSequence originalContent = outputDocument.getImmutableCharSequence();
@@ -317,8 +317,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
     final Document outputDocument = FileDocumentManager.getInstance().getDocument(output);
-    if (outputDocument == null) throw new InvalidDiffRequestException("Can't get output document: " + output);
-    if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only: " + output);
+    if (outputDocument == null) throw new InvalidDiffRequestException("Can't get output document: " + output.getPresentableUrl());
+    if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only: " + output.getPresentableUrl());
 
     DocumentContent outputContent = myContentFactory.create(project, outputDocument);
     CharSequence originalContent = outputDocument.getImmutableCharSequence();
@@ -326,7 +326,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     List<DocumentContent> contents = new ArrayList<DocumentContent>(3);
     for (VirtualFile file : fileContents) {
       DocumentContent document = myContentFactory.createDocument(project, file);
-      if (document == null) throw new InvalidDiffRequestException("Can't get text content: " + file);
+      if (document == null) throw new InvalidDiffRequestException("Can't get text content: " + file.getPresentableUrl());
       contents.add(document);
     }
 
@@ -346,14 +346,14 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     try {
       FileContent outputContent = myContentFactory.createFile(project, output);
-      if (outputContent == null) throw new InvalidDiffRequestException("Can't create output content: " + output);
+      if (outputContent == null) throw new InvalidDiffRequestException("Can't create output content: " + output.getPresentableUrl());
       byte[] originalContent = output.contentsToByteArray();
 
       List<DiffContent> contents = new ArrayList<DiffContent>(3);
       List<byte[]> byteContents = new ArrayList<byte[]>(3);
       for (VirtualFile file : fileContents) {
         FileContent content = myContentFactory.createFile(project, file);
-        if (content == null) throw new InvalidDiffRequestException("Can't create content: " + file);
+        if (content == null) throw new InvalidDiffRequestException("Can't create content: " + file.getPresentableUrl());
         contents.add(content);
         byteContents.add(file.contentsToByteArray()); // TODO: we can read contents from file when needed
       }
