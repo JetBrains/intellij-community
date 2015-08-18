@@ -2279,7 +2279,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeLater() with a modality state.<p/>
+   * Please use Application.invokeLater() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
@@ -2293,7 +2294,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
@@ -2318,7 +2320,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
@@ -2340,7 +2343,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread

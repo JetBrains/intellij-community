@@ -408,7 +408,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
 
     ProgressIndicator indicator = createProgressIndicator();
-    CommitTask task = new CommitTask(document, project, indicator, "Sync commit", ModalityState.any());
+    CommitTask task = new CommitTask(document, project, indicator, "Sync commit", ModalityState.current());
     synchronized (documentsToCommit) {
       markRemovedFromDocsToCommit(task);
       markRemovedCurrentTask(task);

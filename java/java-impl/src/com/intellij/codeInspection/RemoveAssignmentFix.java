@@ -16,8 +16,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +40,12 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
       parent = element;
     }
     if (!(parent instanceof PsiAssignmentExpression)) return;
-    final PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
+    final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
+    PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
+    if (JavaTokenType.EQ != operationSign && rExpression != null ) {
+      rExpression = DeclarationJoinLinesHandler.getInitializerExpression(((PsiAssignmentExpression)parent).getLExpression(), 
+                                                                         (PsiAssignmentExpression)parent);
+    }
     final PsiElement gParent = parent.getParent();
     if ((gParent instanceof PsiExpression || gParent instanceof PsiExpressionList || gParent instanceof PsiReturnStatement) && rExpression != null) {
       if (!FileModificationService.getInstance().prepareFileForWrite(gParent.getContainingFile())) return;

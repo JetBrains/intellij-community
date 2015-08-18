@@ -241,15 +241,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         debugProcess.removeDebugProcessListener(this);
       }
     });
-    DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess);
-    ExecutionResult executionResult;
-    try {
-      executionResult = session.attach(environment);
-    }
-    catch (ExecutionException e) {
-      session.dispose();
-      throw e;
-    }
+    DebuggerSession session = DebuggerSession.create(environment.getSessionName(), debugProcess, environment);
+    ExecutionResult executionResult = session.getProcess().getExecutionResult();
     if (executionResult == null) {
       return null;
     }

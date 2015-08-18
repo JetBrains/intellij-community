@@ -501,7 +501,12 @@ public class AnnotationUtil {
   }
 
   public static boolean isInsideAnnotation(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
+    for (int level = 0; level<4; level++) {
+      if (element instanceof PsiNameValuePair) return true;
+      element = element.getParent();
+      if (element == null) return false;
+    }
+    return false;
   }
 
   public static boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {

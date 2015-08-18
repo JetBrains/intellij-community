@@ -43,7 +43,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class JavaNoVariantsDelegator extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
-    final InheritorsHolder holder = new InheritorsHolder(parameters.getPosition(), result);
+    final InheritorsHolder holder = new InheritorsHolder(result);
     ResultTracker tracker = new ResultTracker(result) {
       @Override
       public void consume(CompletionResult plainResult) {

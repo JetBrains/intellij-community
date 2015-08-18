@@ -17,9 +17,9 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.ProjectRule
+import com.intellij.util.SmartList
 import junit.framework.TestCase
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
@@ -48,7 +48,7 @@ class StorageManagerTest {
     storageManager.addMacro(MACRO, "/temp/m1")
   }
 
-  public Test fun testCreateFileStateStorageMacroSubstituted() {
+  public Test fun createFileStateStorageMacroSubstituted() {
     assertThat(storageManager.getStateStorage("$MACRO/test.xml", RoamingType.PER_USER), notNullValue())
   }
 
@@ -81,5 +81,5 @@ class StorageManagerTest {
 }
 
 fun ComponentManager.saveStore() {
-  StoreUtil.save(stateStore, null)
+  stateStore.save(SmartList())
 }

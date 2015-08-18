@@ -181,7 +181,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {
-    private final EvaluationContextImpl myEvaluationContext;
+    protected final EvaluationContextImpl myEvaluationContext;
 
     public JavaFullValueEvaluator(@NotNull String linkText, EvaluationContextImpl evaluationContext) {
       super(linkText);

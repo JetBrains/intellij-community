@@ -19,19 +19,16 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.StringStartsWith.startsWith
-import org.hamcrest.io.FileMatchers.anExistingFile
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -42,25 +39,28 @@ fun createProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task)
 }
 
-fun loadProject(tempDirManager: TemporaryDirectory, directoryBased: Boolean = true, projectCreator: ((File) -> Unit)? = null, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, directoryBased, projectCreator)
+fun loadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task, projectCreator)
 }
 
-private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, directoryBased: Boolean = true, projectCreator: ((File) -> Unit)? = null) {
-  var projectFile = tempDirManager.newDirectory()
-  if (!directoryBased) {
-    projectFile = File(projectFile, "test${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-  }
-
-  projectCreator?.invoke(projectFile)
+private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null) {
   runInEdtAndWait {
-    val projectManager = ProjectManagerEx.getInstanceEx()
-    var project = if (projectCreator == null) (projectManager as ProjectManagerImpl).newProject(null, projectFile.systemIndependentPath, true, false, false)!! else projectManager.loadProject(projectFile.path)!!
+    var filePath: String
+    if (projectCreator == null) {
+      filePath = tempDirManager.newDirectory("test${ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
+    }
+    else {
+      filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
+    }
+
+    val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false, false)!! else projectManager.loadProject(filePath)!!
     try {
+      projectManager.openTestProject(project)
       task(project)
     }
     finally {
-      runWriteAction { Disposer.dispose(project) }
+      projectManager.closeProject(project, false, true, false)
     }
   }
 }
@@ -99,29 +99,43 @@ class ProjectStoreTest {
   data class TestState(var value: String = "default")
 
   public Test fun directoryBasedStorage() {
-    loadProject(tempDirManager, true, { FileUtil.writeToFile(File(it, Project.DIRECTORY_STORE_FOLDER + "/misc.xml"), iprFileContent) }) {project ->
-      test(project)
+    loadProject(tempDirManager, {
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+      it.path
+    }) { project ->
+      val testComponent = test(project)
+
+      // test reload on external change
+      val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+      file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
+
+      project.getBaseDir().refresh(false, true)
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+
+      assertThat(testComponent.getState()).isEqualTo(TestState("newValue"))
     }
   }
 
   public Test fun fileBasedStorage() {
-    loadProject(tempDirManager, false, { FileUtil.writeToFile(it, iprFileContent) }) {project ->
+    loadProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
       test(project)
     }
   }
 
-  private fun test(project: Project) {
+  private fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
     project.stateStore.initComponent(testComponent, true)
-    assertThat(testComponent.getState(), equalTo(TestState("customValue")))
+    assertThat(testComponent.getState()).isEqualTo(TestState("customValue"))
 
     testComponent.getState()!!.value = "foo"
     project.saveStore()
 
     val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
-    assertThat(file, anExistingFile())
+    assertThat(file).isFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here
-    assertThat(file.readText(), startsWith(iprFileContent.replace("customValue", "foo").replace("</project>", "")))
+    assertThat(file.readText()).startsWith(iprFileContent.replace("customValue", "foo").replace("</project>", ""))
+
+    return testComponent
   }
 }

@@ -17,12 +17,11 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.FileStorage
+import com.intellij.openapi.components.impl.stores.StateMap
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import java.io.File
@@ -51,7 +50,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
       }
     }
 
-    override fun createSaveSession(storageData: StorageData) = object : FileBasedStorage.FileSaveSession(storageData, this) {
+    override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
       override fun saveLocally(element: Element?) {
         super.saveLocally(Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(element)))
       }
@@ -67,8 +66,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun getStateStorage(storageSpec: Storage) = storage
 
     override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
-
-    override fun getCachedFileStateStorages(changed: Collection<String>, deleted: Collection<String>): Couple<Collection<FileStorage>> = Couple(emptyList<FileStorage>(), emptyList<FileStorage>())
 
     override fun startExternalization(): StateStorageManager.ExternalizationSession? {
       val externalizationSession = storage.startExternalization()
@@ -100,11 +97,11 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
-      externalizationSession.setState(component, componentName, state, null)
+      externalizationSession.setState(component, componentName, state)
     }
 
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-      externalizationSession.setState(component, componentName, state, null)
+      externalizationSession.setState(component, componentName, state)
     }
 
     override fun createSaveSessions() = ContainerUtil.createMaybeSingletonList(externalizationSession.createSaveSession())

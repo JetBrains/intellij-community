@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Lesson implements Named, StudyOrderable {
+public class Lesson implements StudyItem {
   @Transient
   public int id;
   @Transient
@@ -79,7 +79,12 @@ public class Lesson implements Named, StudyOrderable {
     if (!EduUtils.indexIsValid(index, tasks)) {
       return null;
     }
-    return tasks.get(index);
+    for (Task task : tasks) {
+      if (task.getIndex() - 1 == index) {
+        return task;
+      }
+    }
+    return null;
   }
 
 }

@@ -132,7 +132,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     getTableHeader().setReorderingAllowed(false);
 
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
-    TableScrollingUtil.installActions(this, false);
+    ScrollingUtil.installActions(this, false);
 
     setModel(new GraphTableModel(initialDataPack, myLogDataHolder, myUI));
   }
@@ -377,7 +377,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       public void stateChanged(ChangeEvent e) {
         TableModel model = getModel();
         if (model instanceof AbstractTableModel) {
-          Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
+          Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
           ((AbstractTableModel)model)
             .fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
         }
@@ -471,7 +471,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
       List<Integer> selectedRows = ContainerUtil.sorted(toList(myTable.getSelectedRows()));
-      Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(myTable);
+      Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);
       myScrollToTop = visibleRows.first - 1 == 0;
 
       VisibleGraph<Integer> graph = myTable.getVisibleGraph();
@@ -710,7 +710,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       if (value instanceof VirtualFile) {
         VirtualFile root = (VirtualFile)value;
-        int readableRow = TableScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
+        int readableRow = ScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
         if (row < readableRow) {
           text = "";
         }

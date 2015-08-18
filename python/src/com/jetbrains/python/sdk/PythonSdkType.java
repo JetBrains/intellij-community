@@ -38,6 +38,8 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -496,14 +498,20 @@ public class PythonSdkType extends SdkType {
   public void setupSdkPaths(@NotNull final Sdk sdk) {
     final Project project;
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
-    Component ownerComponent = SoftReference.dereference(ownerComponentRef);
+    final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     if (ownerComponent != null) {
       project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
     }
     else {
       project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
-    setupSdkPaths(sdk, project, ownerComponent);
+
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        setupSdkPaths(sdk, project, ownerComponent);
+      }
+    });
   }
 
   @Override

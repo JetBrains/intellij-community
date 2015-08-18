@@ -52,7 +52,7 @@ public class MagicCompletionContributor extends CompletionContributor {
     PsiElement pos = parameters.getPosition();
     MagicConstantInspection.AllowedValues allowedValues = null;
 
-    if (JavaCompletionData.AFTER_DOT.accepts(pos)) {
+    if (JavaKeywordCompletion.AFTER_DOT.accepts(pos)) {
       return;
     }
 

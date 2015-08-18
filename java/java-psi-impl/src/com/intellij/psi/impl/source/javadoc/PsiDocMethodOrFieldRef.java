@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,8 +155,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   @Nullable
   public PsiElement getNameElement() {
-    final ASTNode sharp = findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
-    return sharp != null ? SourceTreeToPsiMap.treeToPsiNotNull(sharp).getNextSibling() : null;
+    final ASTNode name = findChildByType(DOC_TAG_VALUE_TOKEN);
+    return name != null ? SourceTreeToPsiMap.treeToPsiNotNull(name) : null;
   }
 
   @Nullable
@@ -174,11 +174,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == DOC_TYPE_HOLDER) {
         final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm method(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
-        if (typeStrings != null) {
-          for (String type : typeStrings) {
-            if (!type.isEmpty()) {
-              types.add(type);
-            }
+        for (String type : typeStrings) {
+          if (!type.isEmpty()) {
+            types.add(type);
           }
         }
       }

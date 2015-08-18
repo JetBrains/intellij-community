@@ -129,5 +129,15 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     assert !myFixture.lookupElementStrings.contains('valueOf')
   }
 
+  public void "test no class keywords in expression fragment"() {
+    def ctxFile = myFixture.addClass("package foo; public class Class {{\n int a = 2; }}").containingFile
+    def context = ctxFile.findElementAt(ctxFile.text.indexOf('int'))
+
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("", context, null, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.completeBasic()
+    assert !myFixture.lookupElementStrings.contains('enum')
+    assert !myFixture.lookupElementStrings.contains('class')
+  }
 
 }

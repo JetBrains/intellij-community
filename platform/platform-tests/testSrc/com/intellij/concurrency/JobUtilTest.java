@@ -406,7 +406,8 @@ public class JobUtilTest extends PlatformTestCase {
       assertFalse(job.isDone());
       TimeoutUtil.sleep(random.nextInt(100));
       job.cancel();
-      while (!finished.get()) {
+      long start = System.currentTimeMillis();
+      while (!finished.get() && (started.get() || System.currentTimeMillis() < start + 2000)) {
         boolean wasDone = job.isDone();
         boolean wasStarted = started.get();
         boolean wasFinished = finished.get();

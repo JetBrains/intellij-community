@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Course implements Named {
+public class Course {
   @Expose
   private List<Lesson> lessons = new ArrayList<Lesson>();
 
@@ -58,7 +58,12 @@ public class Course implements Named {
     if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
       return null;
     }
-    return lessons.get(lessonIndex);
+    for (Lesson lesson : lessons) {
+      if (lesson.getIndex() - 1 == lessonIndex) {
+        return lesson;
+      }
+    }
+    return null;
   }
 
   @NotNull

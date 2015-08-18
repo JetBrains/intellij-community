@@ -161,7 +161,11 @@ public class EduStepicConnector {
     setHeaders(request, "application/json");
 
     final CloseableHttpResponse response = ourClient.execute(request);
+    final StatusLine statusLine = response.getStatusLine();
     final String responseString = EntityUtils.toString(response.getEntity());
+    if (statusLine.getStatusCode() != 200) {
+      throw new IOException("Stepic returned non 200 status code " + responseString);
+    }
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);
   }

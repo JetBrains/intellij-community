@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
@@ -73,7 +74,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
@@ -328,7 +328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Rectangle myOldArea = new Rectangle(0, 0, 0, 0);
   private Rectangle myOldTailArea = new Rectangle(0, 0, 0, 0);
-  private boolean myEventPaintedAsChar;
+  private int myEventsPaintedAsChar;
 
   static {
     ourCaretBlinkingCommand.start();
@@ -778,8 +778,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     clearSettingsCache();
 
-    reinitDocumentIndentOptions();
-
     for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
       if (scheme instanceof MyColorSchemeDelegate) {
         ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
@@ -838,17 +836,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlainFontMetrics = null;
 
     clearTextWidthCache();
-  }
-
-  private void reinitDocumentIndentOptions() {
-    if (myProject != null && !myProject.isDisposed()) {
-      PsiDocumentManager.getInstance(myProject).performForCommittedDocument(myDocument, new Runnable() {
-        @Override
-        public void run() {
-          CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
-        }
-      });
-    }
   }
 
   private void initTabPainter() {
@@ -1149,8 +1136,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     DataContext dataContext = getDataContext();
 
     if (isZeroLatencyTypingEnabled() && myDocument.isWritable() && !isViewer() && canPaintImmediately(c)) {
-      paintImmediately(myCaretModel.getOffset(), c);
-      myEventPaintedAsChar = true;
+      for (Caret caret : myCaretModel.getAllCarets()) {
+        paintImmediately(caret.getOffset(), c, myIsInsertMode);
+      }
+      myEventsPaintedAsChar = myCaretModel.getCaretCount();
     }
 
     actionManager.fireBeforeEditorTyping(c, dataContext);
@@ -1900,7 +1889,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySizeContainer.beforeChange(e);
     }
 
-    if (isZeroLatencyTypingEnabled() && !myEventPaintedAsChar && canPaintImmediately(e)) {
+    if (isZeroLatencyTypingEnabled() && myEventsPaintedAsChar == 0 && canPaintImmediately(e)) {
       int offset = e.getOffset();
       int length = e.getOldLength();
 
@@ -1918,10 +1907,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.isInBulkUpdate()) return;
 
     if (isZeroLatencyTypingEnabled()) {
-      if (!myEventPaintedAsChar && canPaintImmediately(e)) {
-        paintImmediately(e);
+      if (myEventsPaintedAsChar == 0) {
+        if (canPaintImmediately(e)) {
+          paintImmediately(e);
+        }
+      } else {
+        myEventsPaintedAsChar--;
       }
-      myEventPaintedAsChar = false;
     }
 
     if (myErrorStripeNeedsRepaint) {
@@ -2145,15 +2137,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myDocument instanceof DocumentImpl &&
            myHighlighter instanceof LexerEditorHighlighter &&
            myDocument.getTextLength() > 0 &&
-           myCaretModel.getCaretCount() == 1 &&
            !mySelectionModel.hasSelection() &&
+           areVisualLinesUnique(myCaretModel.getAllCarets()) &&
+           !isInplaceRenamerActive() &&
            !KEY_CHARS_TO_SKIP.contains(c);
+  }
+
+  private static boolean areVisualLinesUnique(List<Caret> carets) {
+    if (carets.size() > 1) {
+      TIntHashSet lines = new TIntHashSet(carets.size());
+      for (Caret caret : carets) {
+        if (!lines.add(caret.getVisualLineStart())) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // TODO Improve the approach - handle such cases in a more general way.
+  private boolean isInplaceRenamerActive() {
+    Key<?> key = Key.findKeyByName("EditorInplaceRenamer");
+    return key != null && key.isIn(this);
   }
 
   // Called to display a single character insertion before starting a write action and the general painting routine.
   // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
   // TODO Should be replaced with the generic paintImmediately(event) call when we implement typing without starting write actions.
-  private void paintImmediately(int offset, char c) {
+  private void paintImmediately(int offset, char c, boolean insert) {
     Graphics g = myEditorComponent.getGraphics();
 
     if (g == null) return; // editor component is currently not displayable
@@ -2163,7 +2174,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int fontType = attributes.getFontType();
     Font font = fontFor(fontType);
 
-    int charWidth = g.getFontMetrics(font).charWidth(c);
+    FontMetrics fontMetrics = getFontMetrics(fontType);
+
+    int charWidth = fontMetrics.charWidth(c);
+
+    int delta = charWidth;
+
+    if (!insert && offset < myDocument.getTextLength()) {
+      delta -= fontMetrics.charWidth(myDocument.getCharsSequence().charAt(offset));
+    }
 
     Rectangle tailArea = lineRectangleBetween(offset, myDocument.getLineEndOffset(offsetToLogicalLine(offset)));
     if (tailArea.isEmpty()) {
@@ -2183,13 +2202,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     EditorUIUtil.setupAntialiasing(g);
 
     // pre-compute all the arguments beforehand to minimize delays between the calls (as there's no double-buffering)
-    shift(g, tailArea, charWidth);
+    if (delta != 0) {
+      shift(g, tailArea, delta);
+    }
     fill(g, newArea, lineColor);
     print(g, newText, point, ascent, font, color);
   }
 
-  private static boolean canPaintImmediately(@NotNull DocumentEvent e) {
-    return !contains(e.getOldFragment(), '\n') &&
+  private boolean canPaintImmediately(@NotNull DocumentEvent e) {
+    UndoManager undoManager = UndoManager.getInstance(myProject);
+    return !undoManager.isUndoInProgress() && // Undo / Redo actions might start multiple write actions and make multiple document changes.
+           !undoManager.isRedoInProgress() && // Can we optimize the subsystem to start only one write action and do a single update?
+           myDocument instanceof DocumentImpl &&
+           !((DocumentImpl)myDocument).isGuardsSuppressed() && // Heuristics. Can PsiToDocumentSynchronizer perform bulk document updates?
+           !isInplaceRenamerActive() &&
+           !contains(e.getOldFragment(), '\n') &&
            !contains(e.getNewFragment(), '\n') &&
            !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
   }
@@ -2217,6 +2244,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Color lineColor = getCaretRowBackground();
 
     if (delta != 0) {
+      if (delta < 0) {
+        // Pre-paint carets at new positions, if needed, before shifting the tail area (to avoid flickering),
+        // because painting takes some time while copyArea is almost instantaneous.
+        CaretRectangle[] caretRectangles = myCaretCursor.getCaretLocations(true);
+        if (caretRectangles != null) {
+          for (CaretRectangle it : caretRectangles) {
+            Rectangle r = toRectangle(it);
+            if (myOldArea.contains(r) && !newArea.contains(r)) {
+              myCaretCursor.paintAt(g, it.myPoint.x - delta, it.myPoint.y, it.myWidth, it.myCaret);
+            }
+          }
+        }
+      }
+
       shift(g, myOldTailArea, delta);
 
       if (delta < 0) {
@@ -2246,8 +2287,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Rectangle lineRectangleBetween(int begin, int end) {
     Point p1 = offsetToXY(begin, false);
     Point p2 = offsetToXY(end, false);
-    LOG.assertTrue(p1.y == p2.y);
-    return new Rectangle(p1.x, p1.y, p2.x - p1.x, getLineHeight());
+    // When soft wrap is present, handle only the first visual line (for simplicity, yet it works reasonably well)
+    int x2 = p1.y == p2.y ? p2.x : Math.max(p1.x, myEditorComponent.getWidth() - getVerticalScrollBar().getWidth());
+    return new Rectangle(p1.x, p1.y, x2 - p1.x, getLineHeight());
+  }
+
+  @NotNull
+  private Rectangle toRectangle(@NotNull CaretRectangle caretRectangle) {
+    Point p = caretRectangle.myPoint;
+    return new Rectangle(p.x, p.y, caretRectangle.myWidth, getLineHeight());
   }
 
   @NotNull
@@ -4989,7 +5037,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Nullable
-    private CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
+    CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
       if (onlyIfShown && (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent()))) return null;
       return myLocations;
     }    
@@ -5003,7 +5051,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private void paintAt(@NotNull Graphics g, int x, int y, int width, Caret caret) {
+    void paintAt(@NotNull Graphics g, int x, int y, int width, Caret caret) {
       int lineHeight = getLineHeight();
 
       Rectangle viewRectangle = getScrollingModel().getVisibleArea();

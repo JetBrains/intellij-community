@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.openapi.components.PathMacroSubstitutor;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -24,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StringInterner;
 import org.iq80.snappy.SnappyInputStream;
 import org.iq80.snappy.SnappyOutputStream;
 import org.jdom.Element;
@@ -36,15 +40,16 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-public final class StateMap {
+public final class StateMap implements StorageDataBase {
   private static final Logger LOG = Logger.getInstance(StateMap.class);
+
+  public static final String COMPONENT = "component";
+  public static final String NAME = "name";
+  public static final String DEFAULT_EXT = ".xml";
 
   private static final Format XML_FORMAT = Format.getRawFormat().
     setTextMode(Format.TextMode.TRIM).
@@ -117,6 +122,7 @@ public final class StateMap {
     return state instanceof Element ? (Element)state : null;
   }
 
+  @Override
   public boolean hasState(@NotNull String key) {
     return states.get(key) instanceof Element;
   }
@@ -239,6 +245,45 @@ public final class StateMap {
   public void forEachEntry(@NotNull PairConsumer<String, Object> consumer) {
     for (Map.Entry<String, Object> entry : states.entrySet()) {
       consumer.consume(entry.getKey(), entry.getValue());
+    }
+  }
+
+  @Nullable
+  static String getComponentNameIfValid(@NotNull Element element) {
+    String name = element.getAttributeValue(NAME);
+    if (StringUtil.isEmpty(name)) {
+      LOG.warn("No name attribute for component in " + JDOMUtil.writeElement(element));
+      return null;
+    }
+    return name;
+  }
+
+  public static void load(@NotNull StateMap states, @NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+    if (pathMacroSubstitutor != null) {
+      pathMacroSubstitutor.expandPaths(rootElement);
+    }
+
+    StringInterner interner = intern ? new StringInterner() : null;
+    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
+      Element element = iterator.next();
+      String name = getComponentNameIfValid(element);
+      if (name == null || !(element.getAttributes().size() > 1 || !element.getChildren().isEmpty())) {
+        continue;
+      }
+
+      iterator.remove();
+      if (interner != null) {
+        JDOMUtil.internElement(element, interner);
+      }
+
+      states.put(name, element);
+
+      if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
+      }
+
+      // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
+      element.removeAttribute(NAME);
     }
   }
 }

@@ -23,6 +23,7 @@
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <visitorFilter language="Python" implementationClass="com.jetbrains.edu.learning.highlighting.PyStudyVisitorFilter"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.edu.learning.PyStudyReferenceResolveProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>

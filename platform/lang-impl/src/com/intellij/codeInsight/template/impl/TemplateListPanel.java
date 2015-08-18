@@ -598,7 +598,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .disableDownAction()
       .disableUpAction()
-      .addExtraAction(new AnActionButton("Copy", PlatformIcons.COPY_ICON) {
+      .addExtraAction(new AnActionButton("Duplicate", PlatformIcons.COPY_ICON) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();

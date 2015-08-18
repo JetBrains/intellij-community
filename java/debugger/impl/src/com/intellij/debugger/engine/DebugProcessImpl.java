@@ -26,10 +26,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -1601,7 +1598,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       applyThreadFilter(getContextThread());
       final SuspendContextImpl context = getSuspendContext();
       myRunToCursorBreakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
-      DebugProcessImpl debugProcess = context.getDebugProcess();
+      final DebugProcessImpl debugProcess = context.getDebugProcess();
       myRunToCursorBreakpoint.createRequest(debugProcess);
       DebugProcessImpl.this.myRunToCursorBreakpoint = myRunToCursorBreakpoint;
 
@@ -1609,15 +1606,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         super.contextAction();
       }
       else {
-        myDebugProcessDispatcher.getMulticaster().resumed(getSuspendContext());
         DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
           @Override
           public void run() {
-            SourcePosition position = myRunToCursorBreakpoint.getSourcePosition();
-            String name = position != null ? position.getFile().getName() : "<No File>";
             Messages.showErrorDialog(
-              DebuggerBundle.message("error.running.to.cursor.no.executable.code", name, myRunToCursorBreakpoint.getLineIndex()+1),
+              DebuggerBundle.message("error.running.to.cursor.no.executable.code",
+                                     myRunToCursorBreakpoint.getSourcePosition().getFile().getName(),
+                                     myRunToCursorBreakpoint.getLineIndex() + 1),
               UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR)));
+            DebuggerSession session = debugProcess.getSession();
+            session.getContextManager().setState(DebuggerContextUtil.createDebuggerContext(session, context),
+                                                 DebuggerSession.State.PAUSED, DebuggerSession.Event.CONTEXT, null);
           }
         });
       }

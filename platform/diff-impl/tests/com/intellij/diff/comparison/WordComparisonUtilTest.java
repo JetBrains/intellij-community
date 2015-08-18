@@ -183,10 +183,6 @@ public class WordComparisonUtilTest extends ComparisonUtilTestBase {
     // TODO
   }
 
-  public void testNonDeterministicCases() {
-    // TODO
-  }
-
   public void testAlgorithmSpecific() {
     // prefer words over punctuation
     TestData.words("...x", "x...")
@@ -199,11 +195,30 @@ public class WordComparisonUtilTest extends ComparisonUtilTestBase {
       .____Ignore_("-    ", "   ")
       .all();
 
+    TestData.words("y x x", "y x")
+      ._______Def_("   --", "   ")
+      .____Ignore_("    -", "   ")
+      .all();
+
+    TestData.words("A X A B", "A B")
+      ._______Def_("----   ", "   ")
+      .____Ignore_("---    ", "   ")
+      .all();
+
+    // prefer less modified 'sentences'
+    TestData.words("A.X A.Z", "A.X A.Y A.Z")
+      ._______Def_("       ", "   ----    ")
+      .____Ignore_("       ", "    ---    ")
+      .all();
+
+    TestData.words("X.A Z.A", "X.A Y.A Z.A")
+      ._______Def_("       ", "   ----    ")
+      .____Ignore_("       ", "    ---    ")
+      .all();
+
     // prefer punctuation over whitespaces
     TestData.words(".   ", "   .")
       ._______Def_(" ---", "--- ")
       .def();
-
-    // TODO
   }
 }

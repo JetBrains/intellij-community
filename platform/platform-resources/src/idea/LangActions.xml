@@ -346,11 +346,12 @@
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
-      <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction" />
+      <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
     </group>
-    <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.NewScratchFileAction$LanguageAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ChangeFileEncodingAction"/>
+    <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
+    <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchFileActions$LanguageAction">
+      <add-to-group group-id="EditorPopupMenu2"/>
     </action>
 
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
@@ -439,6 +440,7 @@
 
     <group id="ProjectViewPopupMenuModifyGroup">
       <reference ref="$Delete"/>
+      <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
         <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
         <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
@@ -576,15 +578,13 @@
       <reference ref="CompareTwoFiles"/>
     </group>
 
-    <group id="EditorPopupMenu1">
-      <separator/>
+    <group id="EditorPopupMenu1.FindRefactor">
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="FoldingGroup"/>
-      <separator/>
 
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="EditorToggleColumnMode" anchor="after"/>
+      <add-to-group group-id="EditorPopupMenu1"/>
     </group>
 
     <group id="EditorLangPopupMenu">

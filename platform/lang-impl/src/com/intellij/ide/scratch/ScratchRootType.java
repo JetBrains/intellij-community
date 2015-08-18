@@ -60,7 +60,17 @@ public final class ScratchRootType extends RootType {
     return LayeredIcon.create(icon, AllIcons.Actions.Scratch);
   }
 
+  @Nullable
   public VirtualFile createScratchFile(Project project, final String fileName, final Language language, final String text) {
+    return createScratchFile(project, fileName, language, text, ScratchFileService.Option.create_new_always);
+  }
+
+  @Nullable
+  public VirtualFile createScratchFile(Project project,
+                                       final String fileName,
+                                       final Language language,
+                                       final String text,
+                                       final ScratchFileService.Option option) {
     RunResult<VirtualFile> result =
       new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.file.command.name")) {
         @Override
@@ -76,11 +86,10 @@ public final class ScratchRootType extends RootType {
         @Override
         protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
           ScratchFileService fileService = ScratchFileService.getInstance();
-          VirtualFile file = fileService.findFile(ScratchRootType.this, "scratch", ScratchFileService.Option.create_new_always);
+          VirtualFile file = fileService.findFile(ScratchRootType.this, fileName, option);
           fileService.getScratchesMapping().setMapping(file, language);
           VfsUtil.saveText(file, text);
           result.setResult(file);
-
         }
       }.execute();
     if (result.hasException()) {

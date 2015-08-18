@@ -128,7 +128,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
     return (S)state;
   }
 
-  static class MyStorageData extends StorageDataBase {
+  static class MyStorageData implements StorageDataBase {
     private boolean loaded;
 
     @Override

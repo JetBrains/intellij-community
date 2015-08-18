@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
@@ -38,10 +39,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -131,9 +129,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
 
   public JavaSmartCompletionContributor() {
-    extend(CompletionType.SMART, SmartCastProvider.INSIDE_TYPECAST_TYPE, new SmartCastProvider());
+    extend(CompletionType.SMART, SmartCastProvider.TYPECAST_TYPE_CANDIDATE, new SmartCastProvider());
 
     extend(CompletionType.SMART, SameSignatureCallParametersProvider.IN_CALL_ARGUMENT, new SameSignatureCallParametersProvider());
+    
+    extend(CompletionType.SMART, MethodReturnTypeProvider.IN_METHOD_RETURN_TYPE, new MethodReturnTypeProvider());
 
     extend(CompletionType.SMART, psiElement().afterLeaf(PsiKeyword.INSTANCEOF), new CompletionProvider<CompletionParameters>() {
       @Override
@@ -172,6 +172,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        if (SmartCastProvider.shouldSuggestCast(parameters)) return;
+        
         final PsiElement element = parameters.getPosition();
         final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
         if (reference != null) {
@@ -215,6 +217,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider() {
       @Override
       protected void addCompletions(final CompletionParameters params, final CompletionResultSet result, final Collection<ExpectedTypeInfo> _infos) {
+        if (SmartCastProvider.shouldSuggestCast(params)) return;
+
         Consumer<LookupElement> noTypeCheck = decorateWithoutTypeCheck(result, _infos);
 
         THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
@@ -265,7 +269,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       @Override
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
-        final ElementPattern<? extends PsiElement> leftNeighbor = JavaCompletionData.AFTER_DOT;
+        final ElementPattern<? extends PsiElement> leftNeighbor = JavaKeywordCompletion.AFTER_DOT;
         final boolean needQualify = leftNeighbor.accepts(element);
 
         for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(element, false)) {
@@ -310,7 +314,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         final PsiCodeBlock tryBlock = context.get(tryKey).getTryBlock();
         if (tryBlock == null) return;
 
-        final InheritorsHolder holder = new InheritorsHolder(parameters.getPosition(), result);
+        final InheritorsHolder holder = new InheritorsHolder(result);
 
         for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
           PsiClass typeClass = type.resolve();
@@ -378,7 +382,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                                              boolean quick,
                                              Consumer<LookupElement> consumer) {
     PsiElement position = params.getPosition();
-    if (!JavaCompletionData.AFTER_DOT.accepts(position)) {
+    if (!JavaKeywordCompletion.AFTER_DOT.accepts(position)) {
       for (ExpectedTypeInfo info : mergedInfos) {
         new JavaMembersGetter(info.getType(), params).addMembers(!quick, consumer);
         if (!info.getDefaultType().equals(info.getType())) {
@@ -525,16 +529,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     }
 
     PsiElement lastElement = context.getFile().findElementAt(context.getStartOffset() - 1);
-    if (lastElement != null && lastElement.getText().equals("(")) {
-      final PsiElement parent = lastElement.getParent();
-      if (parent instanceof PsiTypeCastExpression) {
-        context.setDummyIdentifier("");
-        return;
-      }
-      if (parent instanceof PsiParenthesizedExpression) {
-        context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + ")" + CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + " "); // to handle type cast
-        return;
-      }
+    if (lastElement != null && lastElement.getText().equals("(") && lastElement.getParent() instanceof PsiParenthesizedExpression) {
+      // don't trim dummy identifier or we won't be able to determine the type of the expression after '(' 
+      // which is needed to insert correct cast
+      return;
     }
     context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }

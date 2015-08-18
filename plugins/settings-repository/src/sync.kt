@@ -15,16 +15,11 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.configurationStore.SchemeManagerFactoryBase
-import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.FileStorage
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -119,7 +114,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
 
             icsManager.repositoryActive = true
             if (updateResult != null) {
-              restartApplication = updateStoragesFromStreamProvider(ApplicationManager.getApplication().stateStore, updateResult!!)
+              restartApplication = updateStoragesFromStreamProvider(ApplicationManager.getApplication().stateStore as ComponentStoreImpl, updateResult!!)
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
               (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
@@ -145,11 +140,9 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult): Boolean {
+private fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
-  val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
-  val changed = stateStorages.first!!
-  val deleted = stateStorages.second!!
+  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted)
   if (changed.isEmpty() && deleted.isEmpty()) {
     return false
   }
@@ -170,7 +163,7 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
 
         val changedStorageSet = THashSet<StateStorage>(changed)
         changedStorageSet.addAll(deleted)
-        (store as ComponentStoreImpl).reinitComponents(changedComponentNames, notReloadableComponents, changedStorageSet)
+        store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
       }
       finally {
         token.finish()
@@ -179,12 +172,12 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
       if (notReloadableComponents.isEmpty()) {
         return false
       }
-      return StoreUtil.askToRestart(store, notReloadableComponents, null)
+      return askToRestart(store, notReloadableComponents, null, true)
     }
   })!!
 }
 
-private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<FileStorage>, deleted: Boolean) {
+private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
   for (stateStorage in stateStorages) {
     try {
       (stateStorage as XmlElementStorage).updatedFromStreamProvider(changedComponentNames, deleted)

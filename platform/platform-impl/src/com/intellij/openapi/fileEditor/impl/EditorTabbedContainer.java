@@ -116,10 +116,13 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
             oldEditor.deselectNotify();
           }
 
-          final FileEditor newEditor = editorManager.getSelectedEditor((VirtualFile)newSelection.getObject());
+          VirtualFile newFile = (VirtualFile)newSelection.getObject();
+          final FileEditor newEditor = editorManager.getSelectedEditor(newFile);
           if (newEditor != null) {
             newEditor.selectNotify();
           }
+          
+          newFile.refresh(true, false);
         }
       }).setAdditionalSwitchProviderWhenOriginal(new MySwitchProvider())
     .setSelectionChangeHandler(new JBTabs.SelectionChangeHandler() {

@@ -516,7 +516,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     File ioFile = convertToIOFile(file);
-    if (!ioFile.exists()) {
+    if (FileSystemUtil.getAttributes(ioFile) == null) {
       throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", ioFile.getPath()));
     }
     File ioParent = convertToIOFile(newParent);

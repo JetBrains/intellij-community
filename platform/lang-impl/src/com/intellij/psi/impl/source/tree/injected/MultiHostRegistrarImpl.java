@@ -226,7 +226,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         assert parsedNode instanceof FileElement : "Parsed to "+parsedNode+" instead of FileElement";
 
         String documentText = documentWindow.getText();
-        assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
+        assert ((FileElement)parsedNode).textMatches(outChars) : exceptionContext("Before patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
 
         viewProvider.setPatchingLeaves(true);
         try {
@@ -241,7 +241,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         finally {
           viewProvider.setPatchingLeaves(false);
         }
-        if (!parsedNode.getText().equals(documentText)) {
+        if (!((FileElement)parsedNode).textMatches(documentText)) {
           throw new AssertionError(exceptionContext("After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'" + outChars + "'"));
         }
 
@@ -354,7 +354,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
     InjectedFileViewProvider injectedFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
     assert injectedFileViewProvider.isValid() : "Invalid view provider: "+injectedFileViewProvider;
-    assert documentWindow.getText().equals(psiFile.getText()) : "Document window text mismatch";
+    assert psiFile.textMatches(documentWindow.getText()) : "Document window text mismatch";
     assert injectedFileViewProvider.getDocument() == documentWindow : "Provider document mismatch";
     assert documentManager.getCachedDocument(psiFile) == documentWindow : "Cached document mismatch";
     assert Comparing.equal(psiFile.getVirtualFile(), injectedFileViewProvider.getVirtualFile()) : "Virtual file mismatch: " +
@@ -383,9 +383,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     LeafPatcher patcher = new LeafPatcher(shreds, escapers);
     ((TreeElement)parsedNode).acceptTree(patcher);
 
-    String nodeText = parsedNode.getText();
-    assert nodeText.equals(patcher.catLeafs.toString()) : "Malformed PSI structure: leaf texts do not add up to the whole file text." +
-                                                  "\nFile text (from tree)  :'"+nodeText+"'" +
+    assert ((TreeElement)parsedNode).textMatches(patcher.catLeafs) : "Malformed PSI structure: leaf texts do not add up to the whole file text." +
+                                                  "\nFile text (from tree)  :'"+parsedNode.getText()+"'" +
                                                   "\nFile text (from PSI)   :'"+parsedNode.getPsi().getText()+"'" +
                                                   "\nLeaf texts concatenated:'"+ patcher.catLeafs +"';" +
                                                   "\nFile root: "+parsedNode+
@@ -445,9 +444,15 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         oldViewProvider.performNonPhysically(new Runnable() {
           @Override
           public void run() {
-            final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
-                                                                oldFileNode.getText());
-            DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
+            DebugUtil.startPsiModification("injected tree diff");
+            try {
+              final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+                                                                  oldFileNode.getText());
+              DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
+            }
+            finally {
+              DebugUtil.finishPsiModification();
+            }
           }
         });
         assert shreds.isValid();

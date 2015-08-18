@@ -287,8 +287,11 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   public void setRootProfile(String rootProfile) {
     Profile current = mySchemesManager.getCurrentScheme();
-    if (current != null && !Comparing.strEqual(rootProfile, current.getName())) {
+    if (current == null || !Comparing.strEqual(rootProfile, current.getName())) {
       Profile scheme = getProfile(rootProfile);
+      if (scheme == null && current == null) {
+        return;
+      }
       fireProfileChanged(current, scheme, null);
       mySchemesManager.setCurrent(scheme, false);
     }
