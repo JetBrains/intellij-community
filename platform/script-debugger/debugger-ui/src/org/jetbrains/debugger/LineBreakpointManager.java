@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
-
-import java.util.List;
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
+import org.jetbrains.concurrency.Promise
 
 public interface LineBreakpointManager {
-  void setBreakpoint(@NotNull XLineBreakpoint<?> breakpoint, boolean onlySourceMappedBreakpoints);
+  public fun setBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean)
 
-  @NotNull
-  Promise<Void> removeBreakpoint(@NotNull XLineBreakpoint<?> breakpoint, boolean temporary);
+  public fun removeBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean): Promise<Void>
 
-  void setBreakpoint(@NotNull XLineBreakpoint<?> breakpoint, @NotNull List<Location> locations);
+  public fun setBreakpoint(breakpoint: XLineBreakpoint<*>, locations: List<Location>)
 
-  void runToLocation(@NotNull XSourcePosition position);
+  public fun runToLocation(position: XSourcePosition)
 
-  void updateAllBreakpoints();
+  public fun updateAllBreakpoints()
 
-  @NotNull
-  Promise<Void> removeAllBreakpoints();
+  public fun removeAllBreakpoints(): Promise<Void>
 
-  void clearRunToLocationBreakpoints();
+  public fun clearRunToLocationBreakpoints()
 }
