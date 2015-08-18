@@ -47,7 +47,6 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.platform.loader.PlatformLoader;
@@ -56,7 +55,6 @@ import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -116,10 +114,8 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         File myWorkingDirectory = new File(configuration);
         params.setWorkingDirectory(myWorkingDirectory.isDirectory() ? myWorkingDirectory.getPath() : PathManager.getBinPath());
-        final List<String> classPath = ContainerUtilRt.newArrayList();
 
         // IDE jars.
-        classPath.addAll(PlatformLoader.getInstance().getRepository().getModuleClasspath(RuntimeModuleId.module("util")));
         RuntimeModuleId[] modules = {
           RuntimeModuleId.module("projectModel-api"),
           RuntimeModuleId.module("editor-ui-api"),
@@ -137,10 +133,10 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
           RuntimeModuleId.module("lang-impl"),
           RuntimeModuleId.module("java-psi-api")
         };
+        params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleClasspath(RuntimeModuleId.module("util")));
         for (RuntimeModuleId module : modules) {
           params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(module));
         }
-        params.getClassPath().addAll(classPath);
 
         params.setMainClass(MAIN_CLASS_NAME);
         params.getVMParametersList().addParametersString("-Djava.awt.headless=true");
