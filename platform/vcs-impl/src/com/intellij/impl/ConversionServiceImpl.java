@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.conversion.impl;
+package com.intellij.impl;
 
 import com.intellij.conversion.*;
+import com.intellij.conversion.impl.ConversionContextImpl;
+import com.intellij.conversion.impl.ConversionRunner;
+import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,7 +50,7 @@ import java.util.*;
  * @author nik
  */
 public class ConversionServiceImpl extends ConversionService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.conversion.impl.ConversionServiceImpl");
+  private static final Logger LOG = Logger.getInstance("#ConversionServiceImpl");
 
   @NotNull
   @Override
@@ -255,7 +258,8 @@ public class ConversionServiceImpl extends ConversionService {
     return runners;
   }
 
-  public static void saveConversionResult(String projectPath) {
+  @Override
+  public void saveConversionResult(@NotNull String projectPath) {
     try {
       saveConversionResult(new ConversionContextImpl(projectPath));
     }
