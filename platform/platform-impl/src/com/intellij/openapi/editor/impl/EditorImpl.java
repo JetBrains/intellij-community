@@ -328,7 +328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Rectangle myOldArea = new Rectangle(0, 0, 0, 0);
   private Rectangle myOldTailArea = new Rectangle(0, 0, 0, 0);
-  private boolean myEventPaintedAsChar;
+  private int myEventsPaintedAsChar;
 
   static {
     ourCaretBlinkingCommand.start();
@@ -1136,8 +1136,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     DataContext dataContext = getDataContext();
 
     if (isZeroLatencyTypingEnabled() && myDocument.isWritable() && !isViewer() && canPaintImmediately(c)) {
-      paintImmediately(myCaretModel.getOffset(), c, myIsInsertMode);
-      myEventPaintedAsChar = true;
+      for (Caret caret : myCaretModel.getAllCarets()) {
+        paintImmediately(caret.getOffset(), c, myIsInsertMode);
+      }
+      myEventsPaintedAsChar = myCaretModel.getCaretCount();
     }
 
     actionManager.fireBeforeEditorTyping(c, dataContext);
@@ -1887,7 +1889,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySizeContainer.beforeChange(e);
     }
 
-    if (isZeroLatencyTypingEnabled() && !myEventPaintedAsChar && canPaintImmediately(e)) {
+    if (isZeroLatencyTypingEnabled() && myEventsPaintedAsChar == 0 && canPaintImmediately(e)) {
       int offset = e.getOffset();
       int length = e.getOldLength();
 
@@ -1905,10 +1907,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.isInBulkUpdate()) return;
 
     if (isZeroLatencyTypingEnabled()) {
-      if (!myEventPaintedAsChar && canPaintImmediately(e)) {
-        paintImmediately(e);
+      if (myEventsPaintedAsChar == 0) {
+        if (canPaintImmediately(e)) {
+          paintImmediately(e);
+        }
+      } else {
+        myEventsPaintedAsChar--;
       }
-      myEventPaintedAsChar = false;
     }
 
     if (myErrorStripeNeedsRepaint) {
@@ -2132,9 +2137,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myDocument instanceof DocumentImpl &&
            myHighlighter instanceof LexerEditorHighlighter &&
            myDocument.getTextLength() > 0 &&
-           myCaretModel.getCaretCount() == 1 &&
            !mySelectionModel.hasSelection() &&
+           areVisualLinesUnique(myCaretModel.getAllCarets()) &&
            !KEY_CHARS_TO_SKIP.contains(c);
+  }
+
+  private static boolean areVisualLinesUnique(List<Caret> carets) {
+    if (carets.size() > 1) {
+      TIntHashSet lines = new TIntHashSet(carets.size());
+      for (Caret caret : carets) {
+        if (!lines.add(caret.getVisualLineStart())) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   // Called to display a single character insertion before starting a write action and the general painting routine.
