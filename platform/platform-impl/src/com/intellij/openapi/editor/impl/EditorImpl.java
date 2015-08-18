@@ -2167,7 +2167,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int fontType = attributes.getFontType();
     Font font = fontFor(fontType);
 
-    FontMetrics fontMetrics = g.getFontMetrics(font);
+    FontMetrics fontMetrics = getFontMetrics(fontType);
 
     int charWidth = fontMetrics.charWidth(c);
 
