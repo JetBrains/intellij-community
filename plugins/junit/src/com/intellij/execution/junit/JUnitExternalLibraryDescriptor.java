@@ -18,8 +18,9 @@ package com.intellij.execution.junit;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,7 +31,7 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
-      return Collections.singletonList(JavaSdkUtil.getJunit3JarPath());
+      return PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("JUnit3"));
     }
   };
   public static final ExternalLibraryDescriptor JUNIT4 = new JUnitExternalLibraryDescriptor("4") {
