@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
                                  ? CodeDocumentationUtil.getIndentInsideJavadoc(document, caretOffset)
                                  : null;
 
-    originalHandler.execute(editor, dataContext);
+    originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
 
     Project project = editor.getProject();
     if (indentInsideJavadoc != null && project != null && CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
