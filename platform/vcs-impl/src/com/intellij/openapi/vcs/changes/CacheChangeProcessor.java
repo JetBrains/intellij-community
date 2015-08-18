@@ -148,6 +148,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       return new ErrorDiffRequest(presentable, e);
     }
     catch (Exception e) {
+      LOG.warn(e);
       return new ErrorDiffRequest(presentable, e);
     }
   }

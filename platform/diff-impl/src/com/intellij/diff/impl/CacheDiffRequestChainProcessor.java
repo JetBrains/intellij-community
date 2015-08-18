@@ -126,6 +126,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
       return new ErrorDiffRequest(producer, e);
     }
     catch (Exception e) {
+      LOG.warn(e);
       return new ErrorDiffRequest(producer, e);
     }
   }
