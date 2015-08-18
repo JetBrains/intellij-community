@@ -641,6 +641,11 @@ public class LocalFileSystemTest extends PlatformTestCase {
   }
 
   public void testBrokenSymlinkMove() throws IOException, InterruptedException {
+    if (!SystemInfo.areSymLinksSupported) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
+
     final File srcDir = IoTestUtil.createTestDir("src");
     final File link = IoTestUtil.createSymLink(srcDir.getPath() + "/missing", srcDir.getPath() + "/link", false);
     final File dstDir = IoTestUtil.createTestDir("dst");
