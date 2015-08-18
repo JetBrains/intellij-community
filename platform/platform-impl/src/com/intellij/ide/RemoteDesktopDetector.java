@@ -15,6 +15,10 @@
  */
 package com.intellij.ide;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -47,8 +51,18 @@ public class RemoteDesktopDetector {
       try {
         // This might not work in all cases, but hopefully is a more reliable method than the current one (checking for font smoothing)
         // see https://msdn.microsoft.com/en-us/library/aa380798%28v=vs.85%29.aspx
-        myRemoteDesktopConnected = User32.INSTANCE.GetSystemMetrics(0x1000) != 0; // 0x1000 is SM_REMOTESESSION 
-        LOG.debug("Detected remote desktop: ", myRemoteDesktopConnected);
+        boolean newValue = User32.INSTANCE.GetSystemMetrics(0x1000) != 0; // 0x1000 is SM_REMOTESESSION
+        LOG.debug("Detected remote desktop: ", newValue);
+        if (newValue != myRemoteDesktopConnected) {
+          myRemoteDesktopConnected = newValue;
+          if (myRemoteDesktopConnected) {
+            Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                      ApplicationBundle.message("remote.desktop.detected.title"),
+                                                      ApplicationBundle
+                                                        .message("remote.desktop.detected.message"),
+                                                      NotificationType.INFORMATION));
+          }
+        }
       }
       catch (Throwable e) {
         myRemoteDesktopConnected = false;
