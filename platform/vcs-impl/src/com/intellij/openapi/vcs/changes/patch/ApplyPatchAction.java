@@ -29,6 +29,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
+import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -286,8 +288,21 @@ public class ApplyPatchAction extends DumbAwareAction {
     if (fileContent == null || content == null) {
       return ApplyPatchStatus.FAILURE;
     }
+
+    if (MergeTool.LOG.isDebugEnabled()) {
+      MergeTool.LOG.debug("ApplyPatch: project: " + project + ", document: " + document + ", file.valid: " + file.isValid() +
+                          ", fileType: " + file.getFileType() + (document != null ? ", writable: " + document.isWritable() : ""));
+    }
+
     final MergeRequest request = mergeRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
                                                                         project, reverse, leftPanelTitle, rightPanelTitle);
+
+    if (MergeTool.LOG.isDebugEnabled()) {
+      DiffContent baseContent = request.getContents()[1];
+      MergeTool.LOG.debug("ApplyPatch: base content: " + baseContent.getClass() + ", writable: " + baseContent.getDocument().isWritable());
+      MergeTool.LOG.debug("Custom DiffTools: " + DiffManagerImpl.getInstanceEx().getAdditionTools());
+    }
+
     DiffManager.getInstance().getDiffTool().show(request);
     if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
       return ApplyPatchStatus.SUCCESS;

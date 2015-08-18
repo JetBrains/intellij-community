@@ -43,14 +43,14 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
           if (!model.isEmpty()) {
             T lastItem = model.getElementAt(model.getSize() - 1);
             if (ListModelEditor.this.itemEditor.isEmpty(lastItem)) {
-              ListScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), lastItem));
+              ScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), lastItem));
               return;
             }
           }
 
           T item = createElement();
           model.add(item);
-          ListScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), item));
+          ScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), item));
         }
       })
     .setRemoveActionUpdater(new AnActionButtonUpdater() {

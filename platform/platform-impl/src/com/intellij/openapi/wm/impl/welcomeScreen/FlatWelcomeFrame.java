@@ -350,7 +350,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           @Override
           public void run() {
             final JBList list = panel.second;
-            ListScrollingUtil.ensureSelectionExists(list);
+            ScrollingUtil.ensureSelectionExists(list);
             final ListSelectionListener[] listeners =
               ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
 

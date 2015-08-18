@@ -76,6 +76,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testMethodScope3() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof"); }
   public void testMethodScope4() throws Exception { doTest(6, "final", "try", "for", "while", "return", "throw"); }
   public void testMethodScope5() throws Exception { doTest(false); }
+  public void testElseAfterSemicolon() throws Exception { doTest(1, "else"); }
+  public void testElseAfterRBrace() throws Exception { doTest(1, "else"); }
   public void testExtraBracketAfterFinally1() throws Exception { doTest(false); }
   public void testExtraBracketAfterFinally2() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
@@ -89,6 +91,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testInstanceOf2() throws Exception { doTest(false); }
   public void testInstanceOf3() throws Exception { doTest(false); }
   public void testCatchFinally() throws Exception { doTest(2, "catch", "finally"); }
+  public void testSecondCatch() throws Exception { doTest(2, "catch", "finally"); }
   public void testSuper1() throws Exception { doTest(1, "super"); }
   public void testSuper2() throws Exception { doTest(0, "super"); }
   public void testSuper3() throws Exception { doTest(true); }
@@ -98,7 +101,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testDefaultInAnno() throws Exception { doTest(false); }
   public void testNullInMethodCall() throws Exception { doTest(false); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
-  public void testNewInMethodRefs() throws Exception { doTest(1, "new"); }
+  public void testNewInMethodRefs() throws Exception { doTest(1, "new", "null", "true", "false"); }
   public void testSpaceAfterInstanceof() throws Exception { doTest(false); }
   public void testInstanceofAfterUnresolved() throws Exception { doTest(1, "instanceof"); }
   public void testInstanceofAfterStatementStart() throws Exception { doTest(1, "instanceof"); }
@@ -109,6 +112,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
   }
   
+  public void testImportStatic() throws Exception { doTest(1, "static"); }
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }

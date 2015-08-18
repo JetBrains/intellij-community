@@ -84,7 +84,6 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
         }
         catch (Exception ignored) {
         }
-        DirectoryUtil.createSubdirectories(EduNames.HINTS, projectDir, "\\/");
         PsiDirectory lessonDir = new CCCreateLesson().createItem(null, project, projectDir, course);
         if (lessonDir == null) {
           LOG.error("Failed to create lesson");

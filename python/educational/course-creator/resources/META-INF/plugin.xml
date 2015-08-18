@@ -26,6 +26,8 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <renameHandler implementation="com.jetbrains.edu.coursecreator.CCRenameHandler"/>
     <renameInputValidator implementation="com.jetbrains.edu.coursecreator.CCRenameInputValidator"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCLessonMoveHandlerDelegate" order="first"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCTaskMoveHandlerDelegate" order="first"/>
   </extensions>
 
   <application-components>

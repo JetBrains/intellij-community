@@ -56,7 +56,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   private static boolean ourEnabledOldProfiles = false;
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 21;
+  private static final int myBaseVersion = 23;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
@@ -71,14 +71,18 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   private final DataExternalizer<TIntArrayList> myValueExternalizer = new DataExternalizer<TIntArrayList>() {
     @Override
     public void save(@NotNull DataOutput out, TIntArrayList list) throws IOException {
-      if (list.size() == 1) DataInputOutputUtil.writeINT(out, list.getQuick(0));
+      if (list.size() == 2) {
+        DataInputOutputUtil.writeINT(out, list.getQuick(0));
+        DataInputOutputUtil.writeINT(out, list.getQuick(1));
+      }
       else {
         DataInputOutputUtil.writeINT(out, -list.size());
         int prev = 0;
-        for (int i = 0, len = list.size(); i < len; ++i) {
+        for (int i = 0, len = list.size(); i < len; i+=2) {
           int value = list.getQuick(i);
           DataInputOutputUtil.writeINT(out, value - prev);
           prev = value;
+          DataInputOutputUtil.writeINT(out, list.getQuick(i + 1));
         }
       }
     }
@@ -87,17 +91,20 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     public TIntArrayList read(@NotNull DataInput in) throws IOException {
       int capacityOrValue = DataInputOutputUtil.readINT(in);
       if (capacityOrValue >= 0) {
-        TIntArrayList list = new TIntArrayList(1);
+        TIntArrayList list = new TIntArrayList(2);
         list.add(capacityOrValue);
+        list.add(DataInputOutputUtil.readINT(in));
         return list;
       }
       capacityOrValue = -capacityOrValue;
       TIntArrayList list = new TIntArrayList(capacityOrValue);
       int prev = 0;
-      while(capacityOrValue-- > 0) {
+      while(capacityOrValue > 0) {
         int value = DataInputOutputUtil.readINT(in) + prev;
         list.add(value);
         prev = value;
+        list.add(DataInputOutputUtil.readINT(in));
+        capacityOrValue -= 2;
       }
       return list;
     }
@@ -121,12 +128,13 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
             @Override
-            public void process(int hash, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes) {
+            public void process(int hash, int hash2, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes) {
               TIntArrayList list = result.get(hash);
               if (list == null) {
-                result.put(hash, list = new TIntArrayList(1));
+                result.put(hash, list = new TIntArrayList(2));
               }
               list.add(nodes[0].getStartOffset());
+              list.add(hash2);
             }
           });
           return result;
@@ -217,6 +225,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       TIntArrayList list = myMap.get(hash);
       if (list == null) { myMap.put(hash, list = new TIntArrayList()); }
       list.add(frag.getStartOffset());
+      list.add(0);
     }
 
     public THashMap<Integer,TIntArrayList> getMap() {

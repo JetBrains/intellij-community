@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -162,6 +163,9 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       if (containingFile == null) return allScope;
       virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) return allScope;
+      if (virtualFile instanceof VirtualFileWindow) {
+        return GlobalSearchScope.fileScope(myProject, ((VirtualFileWindow)virtualFile).getDelegate());
+      }
       vDirectory = virtualFile.getParent();
     }
 

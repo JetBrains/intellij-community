@@ -13,10 +13,7 @@ import com.intellij.openapi.util.io.parentSystemIndependentPath
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.StringStartsWith.startsWith
-import org.hamcrest.io.FileMatchers.anExistingFile
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -56,18 +53,17 @@ import java.io.File
 
     projectRule.project.runInStoreLoadMode {
       moduleFile.loadModule().useAndDispose {
-        assertThat(getOptionValue("foo"), equalTo("bar"))
+        assertThat(getOptionValue("foo")).isEqualTo("bar")
 
         setOption("foo", "not bar")
         saveStore()
       }
 
       moduleFile.loadModule().useAndDispose {
-        assertThat(getOptionValue("foo"), equalTo("not bar"))
+        assertThat(getOptionValue("foo")).isEqualTo("not bar")
 
         setOption("foo", "not bar")
         saveStore()
-
       }
     }
   }
@@ -79,13 +75,13 @@ import java.io.File
       moduleFile.createModule().useAndDispose {
         ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
         saveStore()
-        assertThat(moduleFile, anExistingFile())
-        assertThat(moduleFile.readText(), startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">"))
+        assertThat(moduleFile).isFile()
+        assertThat(moduleFile.readText()).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">")
 
         ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
         saveStore()
-        assertThat(moduleFile.readText(), equalTo("""<?xml version="1.0" encoding="UTF-8"?>
-<module classpath="eclipse" classpath-dir="$MODULE_DIR" type="JAVA_MODULE" version="4" />"""))
+        assertThat(moduleFile).hasContent("""<?xml version="1.0" encoding="UTF-8"?>
+<module classpath="eclipse" classpath-dir="$MODULE_DIR" type="JAVA_MODULE" version="4" />""")
       }
     }
   }

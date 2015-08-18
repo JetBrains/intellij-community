@@ -1566,14 +1566,24 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Show the dialog
+   * Show the dialog.
    *
-   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   * @throws IllegalStateException if the method is invoked not on the event dispatch thread
+   * @see #showAndGet()
+   * @see #showAndGetOk()
    */
   public void show() {
     invokeShow();
   }
 
+  /**
+   * Show the modal dialog and check if it was closed with OK.
+   *
+   * @return true if the {@link #getExitCode() exit code} is {@link #OK_EXIT_CODE}.
+   * @throws IllegalStateException if the dialog is non-modal, or if the method is invoked not on the EDT.
+   * @see #show()
+   * @see #showAndGetOk()
+   */
   public boolean showAndGet() {
     if (!isModal()) {
       throw new IllegalStateException("The showAndGet() method is for modal dialogs only");

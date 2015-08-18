@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +58,14 @@ public class ManualRangeMarker {
 
   @Nullable
   private Pair<ProperTextRange, PersistentRangeMarker.LinesCols> getUpdatedState(@NotNull DocumentEvent event) {
+    if (event instanceof RetargetRangeMarkers) {
+      int start = ((RetargetRangeMarkers)event).getStartOffset();
+      if (myRange.getStartOffset() >= start && myRange.getEndOffset() <= ((RetargetRangeMarkers)event).getEndOffset()) {
+        ProperTextRange range = myRange.shiftRight(((RetargetRangeMarkers)event).getMoveDestinationOffset() - start);
+        return Pair.create(range, myLinesCols == null ? null : PersistentRangeMarker.storeLinesAndCols(range, event.getDocument()));
+      }
+    }
+
     if (myLinesCols != null) {
       return PersistentRangeMarker
         .applyChange(event, myRange, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight, myLinesCols);
@@ -82,6 +91,10 @@ public class ManualRangeMarker {
 
   public boolean isGreedyRight() {
     return myGreedyRight;
+  }
+
+  public boolean isSurviveOnExternalChange() {
+    return myLinesCols != null;
   }
 
   @Nullable

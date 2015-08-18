@@ -17,18 +17,17 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,12 +37,16 @@ import java.util.List;
 * User: cdr
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
-  private final VirtualFile myVirtualFile;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SelfElementInfo");
+  private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
+  @NotNull private final VirtualFile myVirtualFile;
   private final Class myType;
   private final Project myProject;
   private final Language myLanguage;
+  private final MarkerCache myMarkerCache;
   @Nullable private ManualRangeMarker myRangeMarker;
   @Nullable private ProperTextRange myPsiRange;
+  private final PsiDocumentManagerBase myPsiDocManager;
 
   SelfElementInfo(@NotNull Project project,
                   @NotNull ProperTextRange range,
@@ -51,14 +54,16 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                   @NotNull PsiFile containingFile,
                   @NotNull Language language) {
     myLanguage = language;
-    myVirtualFile = PsiUtilCore.getVirtualFile(containingFile);
+    myVirtualFile = containingFile.getViewProvider().getVirtualFile();
     myType = anchorClass;
     assert !PsiFile.class.isAssignableFrom(anchorClass) : "FileElementInfo must be used for files";
 
     myProject = project;
     myPsiRange = range;
+    myMarkerCache = ((SmartPointerManagerImpl)SmartPointerManager.getInstance(project)).getMarkerCache(myVirtualFile);
+    myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
 
-    Document document = getDocumentManager().getCachedDocument(containingFile);
+    Document document = myPsiDocManager.getCachedDocument(containingFile);
     if (document != null) {
       setRange(range, document);
     }
@@ -66,22 +71,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
-    FrozenDocument frozenDocument = getDocumentManager().getLastCommittedDocument(document);
-    myRangeMarker = getMarkerCache(document).obtainMarker(ProperTextRange.create(range), frozenDocument, false, false);
-  }
-
-  @NotNull
-  private MarkerCache getMarkerCache(@NotNull Document document) {
-    return ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).getMarkerCache(document);
-  }
-
-  private PsiDocumentManagerBase getDocumentManager() {
-    return (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    FrozenDocument frozenDocument = myPsiDocManager.getLastCommittedDocument(document);
+    myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, false, false, true);
   }
 
   @Override
   public Document getDocumentToSynchronize() {
-    return myVirtualFile == null ? null : FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
+    return ourFileDocManager.getCachedDocument(myVirtualFile);
   }
 
   // before change
@@ -90,8 +86,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (myRangeMarker != null) return; // already tracks changes
     if (myPsiRange == null) return; // invalid
 
-    Document document = myVirtualFile == null ? null : FileDocumentManager.getInstance().getDocument(myVirtualFile);
-    if (document == null || !getDocumentManager().isCommitted(document)) {
+    Document document = ourFileDocManager.getDocument(myVirtualFile);
+    if (document == null || !myPsiDocManager.isCommitted(document)) {
       // we only have PSI range and now they say the document is uncommitted, so this PSI range is useless
       // so, just invalidate
       myPsiRange = null;
@@ -155,16 +151,18 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   void updateValidity() {
-    assert myPsiRange == null;
+    if (myPsiRange != null) {
+      LOG.error("Non-fastened smart pointer " + this + " " + myRangeMarker);
+      myPsiRange = null;
+      myRangeMarker = null;
+    }
     if (myRangeMarker != null && !myRangeMarker.isValid()) {
       myRangeMarker = null;
     }
   }
 
   @Nullable
-  public static PsiFile restoreFileFromVirtual(final VirtualFile virtualFile, @NotNull final Project project, @Nullable final Language language) {
-    if (virtualFile == null) return null;
-
+  public static PsiFile restoreFileFromVirtual(@NotNull final VirtualFile virtualFile, @NotNull final Project project, @Nullable final Language language) {
     return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiFile>() {
       @Override
       public PsiFile compute() {
@@ -217,8 +215,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public int elementHashCode() {
-    VirtualFile virtualFile = myVirtualFile;
-    return virtualFile == null ? 0 : virtualFile.hashCode();
+    return myVirtualFile.hashCode();
   }
 
   @Override
@@ -244,6 +241,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
@@ -254,18 +252,15 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (myRangeMarker != null) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        FrozenDocument frozen = getDocumentManager().getLastCommittedDocument(document);
-        List<DocumentEvent> events = getDocumentManager().getEventsSinceCommit(document);
-        return getMarkerCache(document).getUpdatedRange(myRangeMarker, frozen, events);
+        PsiDocumentManagerBase documentManager = myPsiDocManager;
+        List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
+        if (!events.isEmpty()) {
+          return myMarkerCache.getUpdatedRange(myRangeMarker, documentManager.getLastCommittedDocument(document), events);
+        }
       }
       return myRangeMarker.getRange();
     }
     return myPsiRange;
-  }
-
-  @NotNull
-  static DocumentEventImpl withFrozen(FrozenDocument frozen, DocumentEvent e) {
-    return new DocumentEventImpl(frozen, e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp(), e.isWholeTextReplaced());
   }
 
   @NotNull

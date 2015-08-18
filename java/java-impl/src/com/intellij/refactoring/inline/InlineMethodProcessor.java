@@ -570,7 +570,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     PsiSubstitutor callSubstitutor = getCallSubstitutor(methodCall);
     BlockData blockData = prepareBlock(ref, callSubstitutor, methodCall.getArgumentList(), tailCall);
-    solveVariableNameConflicts(blockData.block, ref);
+    InlineUtil.solveVariableNameConflicts(blockData.block, ref, myMethodCopy.getBody());
     if (callSubstitutor != PsiSubstitutor.EMPTY) {
       substituteMethodTypeParams(blockData.block, callSubstitutor);
     }
@@ -849,31 +849,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     return new BlockData(block, thisVar, parmVars, resultVar);
-  }
-
-  private void solveVariableNameConflicts(PsiElement scope, final PsiElement placeToInsert) throws IncorrectOperationException {
-    if (scope instanceof PsiVariable) {
-      PsiVariable var = (PsiVariable)scope;
-      String name = var.getName();
-      String oldName = name;
-      while (true) {
-        String newName = myJavaCodeStyle.suggestUniqueVariableName(name, placeToInsert, true);
-        if (newName.equals(name)) break;
-        name = newName;
-        newName = myJavaCodeStyle.suggestUniqueVariableName(name, var, true);
-        if (newName.equals(name)) break;
-        name = newName;
-      }
-      if (!name.equals(oldName)) {
-        RefactoringUtil.renameVariableReferences(var, name, new LocalSearchScope(myMethodCopy.getBody()), true);
-        var.getNameIdentifier().replace(myFactory.createIdentifier(name));
-      }
-    }
-
-    PsiElement[] children = scope.getChildren();
-    for (PsiElement child : children) {
-      solveVariableNameConflicts(child, placeToInsert);
-    }
   }
 
   private void addParmAndThisVarInitializers(BlockData blockData, PsiMethodCallExpression methodCall) throws IncorrectOperationException {

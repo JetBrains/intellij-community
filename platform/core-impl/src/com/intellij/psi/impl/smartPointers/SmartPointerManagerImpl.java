@@ -210,9 +210,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @NotNull
-  MarkerCache getMarkerCache(@NotNull Document document) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    assert file != null;
+  MarkerCache getMarkerCache(@NotNull VirtualFile file) {
     return getNotNullPointerList(file).markerCache;
   }
 
@@ -222,6 +220,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       VirtualFile file = containingFile.getViewProvider().getVirtualFile();
       FilePointersList pointers = getPointers(file);
       return pointers == null ? 0 : pointers.size;
+    }
+  }
+
+  @TestOnly
+  public int getMarkerCount(@NotNull Document document) {
+    synchronized (lock) {
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      return file == null ? 0 : getMarkerCache(file).getMarkerCount();
     }
   }
 

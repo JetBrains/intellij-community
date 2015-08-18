@@ -28,6 +28,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
 /**
  * User: anna
@@ -35,7 +36,7 @@ import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
  */
 public class JavaFxReferencesContributor extends PsiReferenceContributor {
   public static final PsiJavaElementPattern.Capture<PsiLiteralExpression> STYLESHEET_PATTERN =
-      literalExpression().and(new FilterPattern(new ElementFilter() {
+      literalExpression().methodCallParameter(psiMethod()).and(new FilterPattern(new ElementFilter() {
         public boolean isAcceptable(Object element, PsiElement context) {
           final PsiExpression psiExpression = getParentElement((PsiLiteralExpression)context);
           if (psiExpression != null) {
@@ -84,36 +85,34 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
   }
 
   public static final PsiJavaElementPattern.Capture<PsiLiteralExpression> FXML_PATTERN =
-    literalExpression().and(new FilterPattern(new ElementFilter() {
+    literalExpression().methodCallParameter(psiMethod().withName("getResource")).and(new FilterPattern(new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiLiteralExpression literalExpression = (PsiLiteralExpression)context;
         PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(literalExpression, PsiMethodCallExpression.class);
-        if (callExpression != null && "getResource".equals(callExpression.getMethodExpression().getReferenceName())) {
-          final PsiCallExpression superCall = PsiTreeUtil.getParentOfType(callExpression, PsiCallExpression.class, true);
-          if (superCall instanceof PsiMethodCallExpression) {
-            final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)superCall).getMethodExpression();
-            if ("load".equals(methodExpression.getReferenceName())) {
-              final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-              PsiClass psiClass = null;
-              if (qualifierExpression instanceof PsiReferenceExpression) {
-                final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-                if (resolve instanceof PsiClass) {
-                  psiClass = (PsiClass)resolve;
-                }
-              } else if (qualifierExpression != null) {
-                psiClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
+        final PsiCallExpression superCall = PsiTreeUtil.getParentOfType(callExpression, PsiCallExpression.class, true);
+        if (superCall instanceof PsiMethodCallExpression) {
+          final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)superCall).getMethodExpression();
+          if ("load".equals(methodExpression.getReferenceName())) {
+            final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+            PsiClass psiClass = null;
+            if (qualifierExpression instanceof PsiReferenceExpression) {
+              final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+              if (resolve instanceof PsiClass) {
+                psiClass = (PsiClass)resolve;
               }
-              if (psiClass != null && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(psiClass.getQualifiedName())) {
-                return true;
-              }
+            } else if (qualifierExpression != null) {
+              psiClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
             }
-          } else if (superCall instanceof PsiNewExpression) {
-            final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)superCall).getClassOrAnonymousClassReference();
-            if (reference != null) {
-              final PsiElement resolve = reference.resolve();
-              if (resolve instanceof PsiClass && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(((PsiClass)resolve).getQualifiedName())) {
-                return true;
-              }
+            if (psiClass != null && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(psiClass.getQualifiedName())) {
+              return true;
+            }
+          }
+        } else if (superCall instanceof PsiNewExpression) {
+          final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)superCall).getClassOrAnonymousClassReference();
+          if (reference != null) {
+            final PsiElement resolve = reference.resolve();
+            if (resolve instanceof PsiClass && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(((PsiClass)resolve).getQualifiedName())) {
+              return true;
             }
           }
         }

@@ -110,7 +110,7 @@ public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeI
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return ApplicationManager.getApplication().isInternal() && file instanceof XmlFile;
+    return file instanceof XmlFile;
   }
 
   @NotNull

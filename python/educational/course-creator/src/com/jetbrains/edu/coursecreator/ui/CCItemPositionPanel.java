@@ -1,5 +1,6 @@
 package com.jetbrains.edu.coursecreator.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 
@@ -12,10 +13,10 @@ public class CCItemPositionPanel extends JPanel {
   private JBRadioButton myAfterButton;
   private JBLabel mySpecifyPositionLabel;
 
-  public CCItemPositionPanel(String itemName, String thresholdName, int thresholdNum) {
+  public CCItemPositionPanel(String itemName, String thresholdName) {
     this.add(myPanel, BorderLayout.CENTER);
-    mySpecifyPositionLabel.setText("Specify " + itemName + " position:");
-    String postfix = itemName + " " + thresholdNum + " '" + thresholdName + "'";
+    mySpecifyPositionLabel.setText(StringUtil.toTitleCase(itemName) + " position:");
+    String postfix = "'" + thresholdName + "'";
     ButtonGroup group = new ButtonGroup();
     group.add(myBeforeButton);
     group.add(myAfterButton);

@@ -260,7 +260,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
     PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
     assertNotNull(htmlFile);
-    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray()).trim()), 
+    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray(), "UTF-8").trim()), 
                  replaceEnvironmentDependentContent(doc));
   }
   

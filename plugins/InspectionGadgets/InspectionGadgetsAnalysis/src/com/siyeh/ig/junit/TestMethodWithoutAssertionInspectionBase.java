@@ -19,6 +19,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -112,11 +112,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
         return false;
       }
     }
-    if (pattern == null) {
-      return false;
-    }
-    final Matcher matcher = pattern.matcher(methodName);
-    return matcher.matches();
+    return pattern.matcher(methodName).matches();
   }
 
   private class TestMethodWithoutAssertionVisitor
@@ -145,11 +141,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       if (body == null) {
         return false;
       }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length <= 0) {
-        return false;
-      }
-      final PsiStatement lastStatement = statements[0];
+      final PsiStatement lastStatement = PsiTreeUtil.getPrevSiblingOfType(body.getLastChild(), PsiStatement.class);
       if (!(lastStatement instanceof PsiExpressionStatement)) {
         return false;
       }

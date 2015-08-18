@@ -20,6 +20,7 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -299,7 +300,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             return !canceled.get();
           }
         };
-        if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        if (ApplicationManager.getApplication().isWriteAccessAllowed() || ((ApplicationEx)ApplicationManager.getApplication()).isWriteActionPending()) {
           // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
           completed &= ContainerUtil.process(files, processor);
         }
