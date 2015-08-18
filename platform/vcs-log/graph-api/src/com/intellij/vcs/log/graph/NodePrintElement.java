@@ -15,19 +15,5 @@
  */
 package com.intellij.vcs.log.graph;
 
-import org.jetbrains.annotations.NotNull;
-
-/**
- */
-public interface SimplePrintElement extends PrintElement {
-
-  @NotNull
-  Type getType();
-
-  enum Type {
-    NODE,
-    UP_ARROW,
-    DOWN_ARROW
-  }
-
+public interface NodePrintElement extends PrintElement {
 }

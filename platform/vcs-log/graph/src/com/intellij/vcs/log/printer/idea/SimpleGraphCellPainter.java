@@ -17,8 +17,8 @@ package com.intellij.vcs.log.printer.idea;
 
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.graph.EdgePrintElement;
+import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.SimplePrintElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +88,6 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     int r = PrintParameters.CIRCLE_RADIUS;
     int y0 = getRowHeight() - r - 2;
     g2.setColor(color);
-    g2.drawLine(x0, getRowHeight() / 2, x0, y0 + r);
     g2.drawLine(x0, y0 + r, x0 + r, y0);
     g2.drawLine(x0, y0 + r, x0 - r, y0);
   }
@@ -98,7 +97,6 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     int r = PrintParameters.CIRCLE_RADIUS;
     int y0 = r + 2;
     g2.setColor(color);
-    g2.drawLine(x0, getRowHeight() / 2, x0, y0 - r);
     g2.drawLine(x0, y0 - r, x0 + r, y0);
     g2.drawLine(x0, y0 - r, x0 - r, y0);
   }
@@ -167,42 +165,28 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
             if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
               paintDownLine(from, to, color);
+              if (edgePrintElement.hasArrow()) {
+                paintDownArrow(from, color);
+              }
             }
             else {
               paintUpLine(from, to, color);
+              if (edgePrintElement.hasArrow()) {
+                paintUpArrow(from, color);
+              }
             }
           }
         };
       }
 
-      if (printElement instanceof SimplePrintElement) {
-        final int position = printElement.getPositionInCurrentRow();
-        switch (((SimplePrintElement)printElement).getType()) {
-          case NODE:
-            if (printElement.isSelected()) {
-              paintCircle(position, MARK_COLOR, true);
-              paintCircle(position, getColor(printElement), false);
-            }
-            else {
-              paintCircle(position, getColor(printElement), false);
-            }
-            break;
-          case UP_ARROW:
-            printer = new LitePrinter() {
-              @Override
-              public void print(Color color) {
-                paintUpArrow(position, color);
-              }
-            };
-            break;
-          case DOWN_ARROW:
-            printer = new LitePrinter() {
-              @Override
-              public void print(Color color) {
-                paintDownArrow(position, color);
-              }
-            };
-            break;
+      if (printElement instanceof NodePrintElement) {
+        int position = printElement.getPositionInCurrentRow();
+        if (printElement.isSelected()) {
+          paintCircle(position, MARK_COLOR, true);
+          paintCircle(position, getColor(printElement), false);
+        }
+        else {
+          paintCircle(position, getColor(printElement), false);
         }
       }
 
@@ -214,8 +198,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   @Override
   public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
     for (PrintElement printElement : printElements) {
-      if (printElement instanceof SimplePrintElement) {
-        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, ((SimplePrintElement)printElement).getType(), getRowHeight())) {
+      if (printElement instanceof NodePrintElement) {
+        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, getRowHeight())) {
           return printElement;
         }
       }
