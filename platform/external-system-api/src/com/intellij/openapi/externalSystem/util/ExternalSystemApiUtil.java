@@ -563,27 +563,6 @@ public class ExternalSystemApiUtil {
     }
   }
 
-  /**
-   * Configures given classpath to reference target i18n bundle file(s).
-   *
-   * @param classPath     process classpath
-   * @param bundlePath    path to the target bundle file
-   * @param contextClass  class from the same content root as the target bundle file
-   */
-  public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
-    String pathToUse = bundlePath.replace('.', '/');
-    if (!pathToUse.endsWith(".properties")) {
-      pathToUse += ".properties";
-    }
-    if (!pathToUse.startsWith("/")) {
-      pathToUse = '/' + pathToUse;
-    }
-    String root = PathManager.getResourceRoot(contextClass, pathToUse);
-    if (root != null) {
-      classPath.add(root);
-    }
-  }
-
   @SuppressWarnings("ConstantConditions")
   @Nullable
   public static String normalizePath(@Nullable String s) {

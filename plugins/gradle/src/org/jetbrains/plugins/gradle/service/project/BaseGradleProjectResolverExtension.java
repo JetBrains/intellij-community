@@ -63,8 +63,6 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
-import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -595,11 +593,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
     PathsList classPath = parameters.getClassPath();
 
-    // Gradle i18n bundle.
-    ExternalSystemApiUtil.addBundle(classPath, GradleBundle.PATH_TO_BUNDLE, GradleBundle.class);
-
     //todo[nik,runtime-modules] replace with getClasspath for 'gradle-tooling-extension-impl' module?
     RuntimeModuleId[] modules = {
+      RuntimeModuleId.module("gradle"), // Gradle i18n bundle
       RuntimeModuleId.moduleLibrary("gradle", "Gradle"),
       RuntimeModuleId.moduleLibrary("gradle", "commons-io"),
       RuntimeModuleId.moduleLibrary("gradle", "GradleGuava"),
