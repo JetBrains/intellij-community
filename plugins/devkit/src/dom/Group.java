@@ -72,7 +72,7 @@ public interface Group extends Actions {
 	 * @return the value of the class child.
 	 */
 	@NotNull
-	@com.intellij.util.xml.Attribute ("class")
+	@Attribute ("class")
         @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
             instantiatable = true, allowAbstract = false, allowInterface = false)
         @Convert(PluginPsiClassConverter.class)
