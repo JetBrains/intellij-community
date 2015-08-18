@@ -108,7 +108,9 @@ public class ScriptGenerator {
    * @deprecated use {@link #addToClasspath(RuntimeModuleId)} instead
    */
   public ScriptGenerator addResource(final Class base, @NonNls String resource) {
-    addToClasspath(Collections.singletonList(getJarForResource(base, resource)));
+    String resourceRoot = PathManager.getResourceRoot(base, resource);
+    String path = new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
+    addToClasspath(Collections.singletonList(path));
     return this;
   }
 
@@ -191,18 +193,5 @@ public class ScriptGenerator {
       line = line.replace('\\', '/');
     }
     return line;
-  }
-
-  /**
-   * Get path for resources.jar
-   *
-   * @param context a context class
-   * @param res     a resource
-   * @return a path to classpath entry
-   */
-  @SuppressWarnings({"SameParameterValue"})
-  private static String getJarForResource(Class context, String res) {
-    String resourceRoot = PathManager.getResourceRoot(context, res);
-    return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
   }
 }
