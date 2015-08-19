@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,28 +58,33 @@ import java.util.*;
 public class SSBasedInspection extends LocalInspectionTool {
   static final String SHORT_NAME = "SSBasedInspection";
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
-  private Set<String> myProblemsReported = new HashSet<String>(1);
+  private final Set<String> myProblemsReported = new HashSet<String>(1);
 
+  @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
   }
 
+  @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     myProblemsReported.clear();
     myConfigurations.clear();
     ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GENERAL_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return SSRBundle.message("SSRInspection.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
@@ -98,6 +103,7 @@ public class SSBasedInspection extends LocalInspectionTool {
       final List<Pair<MatchContext,Configuration>> contexts = compiledOptions.getMatchContexts();
       final Matcher matcher = new Matcher(holder.getManager().getProject());
       final PairProcessor<MatchResult, Configuration> processor = new PairProcessor<MatchResult, Configuration>() {
+        @Override
         public boolean process(MatchResult matchResult, Configuration configuration) {
           PsiElement element = matchResult.getMatch();
           String name = configuration.getName();
@@ -144,11 +150,13 @@ public class SSBasedInspection extends LocalInspectionTool {
     final ReplacementInfo replacementInfo = replacer.buildReplacement(matchResult);
 
     return new LocalQuickFix() {
+      @Override
       @NotNull
       public String getName() {
         return SSRBundle.message("SSRInspection.replace.with", replacementInfo.getReplacement());
       }
 
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiElement element = descriptor.getPsiElement();
         if (element != null && FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
@@ -156,6 +164,7 @@ public class SSBasedInspection extends LocalInspectionTool {
         }
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return SSRBundle.message("SSRInspection.family.name");
@@ -163,9 +172,11 @@ public class SSBasedInspection extends LocalInspectionTool {
     };
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SSBasedInspectionOptions(myConfigurations){
+      @Override
       public void configurationsChanged(final SearchContext searchContext) {
         super.configurationsChanged(searchContext);
         SSBasedInspectionCompiledPatternsCache.precompileConfigurations(searchContext.getProject(), SSBasedInspection.this);
