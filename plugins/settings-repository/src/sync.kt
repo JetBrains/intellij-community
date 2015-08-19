@@ -17,8 +17,8 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemesManagerFactory
@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
 import java.util.LinkedHashSet
@@ -114,7 +115,8 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
 
             icsManager.repositoryActive = true
             if (updateResult != null) {
-              restartApplication = updateStoragesFromStreamProvider(ApplicationManager.getApplication().stateStore as ComponentStoreImpl, updateResult!!)
+              val app = ApplicationManager.getApplication()
+              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.getMessageBus())
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
               (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
@@ -140,7 +142,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult): Boolean {
+private fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted)
   if (changed.isEmpty() && deleted.isEmpty()) {
@@ -150,23 +152,19 @@ private fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateRe
   return UIUtil.invokeAndWaitIfNeeded(object : Computable<Boolean> {
     override fun compute(): Boolean {
       val notReloadableComponents: Collection<String>
-      val token = WriteAction.start()
-      try {
-        updateStateStorage(changedComponentNames, changed, false)
-        updateStateStorage(changedComponentNames, deleted, true)
+      updateStateStorage(changedComponentNames, changed, false)
+      updateStateStorage(changedComponentNames, deleted, true)
 
-        if (changedComponentNames.isEmpty()) {
-          return false
-        }
-
-        notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-
-        val changedStorageSet = THashSet<StateStorage>(changed)
-        changedStorageSet.addAll(deleted)
-        store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
+      if (changedComponentNames.isEmpty()) {
+        return false
       }
-      finally {
-        token.finish()
+
+      notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
+
+      val changedStorageSet = THashSet<StateStorage>(changed)
+      changedStorageSet.addAll(deleted)
+      runBatchUpdate(messageBus) {
+        store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
       }
 
       if (notReloadableComponents.isEmpty()) {

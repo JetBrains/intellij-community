@@ -145,7 +145,7 @@ class AutoSyncManager(private val icsManager: IcsManager) {
         app.invokeAndWait({
           catchAndLog {
             val updateResult = updater.merge()
-            if (!onAppExit && !app.isDisposeInProgress() && updateResult != null && updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult)) {
+            if (!onAppExit && !app.isDisposeInProgress() && updateResult != null && updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.getMessageBus())) {
               // force to avoid saveAll & confirmation
               app.exit(true, true, true, true)
             }
