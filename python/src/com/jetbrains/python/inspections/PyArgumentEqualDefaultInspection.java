@@ -23,7 +23,6 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.Nls;
@@ -98,9 +97,9 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     private void checkArguments(PyCallExpression callExpr, PyExpression[] arguments) {
-      final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map(callExpr, getResolveContext());
+      final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(getResolveContext());
       Set<PyExpression> problemElements = new HashSet<PyExpression>();
-      for (Map.Entry<PyExpression, PyNamedParameter> e : mapping.entrySet()) {
+      for (Map.Entry<PyExpression, PyNamedParameter> e : mapping.getMappedParameters().entrySet()) {
         PyExpression defaultValue = e.getValue().getDefaultValue();
         if (defaultValue != null) {
           PyExpression key = e.getKey();

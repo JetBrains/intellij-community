@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
@@ -91,13 +90,13 @@ public class PyCallByClassInspection extends PyInspection {
               PyClass qual_class = qual_class_type.getPyClass();
               final PyArgumentList arglist = call.getArgumentList();
               if (arglist != null) {
-                final PyCallExpression.PyMarkedCallee markedCallee = call.resolveCallee(getResolveContext());
+                final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(getResolveContext());
+                final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
                 if (markedCallee != null  && markedCallee.getModifier() != STATICMETHOD) {
                   final List<PyParameter> params = PyUtil.getParameters(markedCallee.getCallable(), myTypeEvalContext);
                   if (params.size() > 0 && params.get(0) instanceof PyNamedParameter) {
                     PyNamedParameter first_param = (PyNamedParameter)params.get(0);
-                    final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map(call, getResolveContext());
-                    for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
+                    for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
                       // we ignore *arg and **arg which we cannot analyze
                       if (entry.getValue() == first_param) {
                         PyExpression first_arg = entry.getKey();

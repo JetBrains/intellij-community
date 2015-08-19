@@ -47,7 +47,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -229,10 +228,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       final PyCallExpression callExpr = argList.getCallExpression();
       if (callExpr != null) {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits();
-        final PyCallExpression.PyMarkedCallee markedCallee = callExpr.resolveCallee(resolveContext);
-        if (markedCallee != null) {
-          final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map(callExpr, resolveContext);
-          final PyNamedParameter namedParameter = mapping.get(expression);
+        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
+        if (mapping.getMarkedCallee() != null) {
+          final PyNamedParameter namedParameter = mapping.getMappedParameters().get(expression);
           if (namedParameter != null) {
             candidates.add(namedParameter.getName());
           }

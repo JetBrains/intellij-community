@@ -22,6 +22,8 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
  */
@@ -114,6 +116,9 @@ public interface PyCallExpression extends PyCallSiteExpression {
   @Nullable
   PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int implicitOffset);
 
+  @NotNull
+  PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext);
+
   /**
    * Checks if the unqualified name of the callee matches any of the specified names
    *
@@ -122,7 +127,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   boolean isCalleeText(@NotNull String... nameCandidates);
 
-
   /**
    * Checks if the qualified name of the callee matches any of the specified names provided by provider.
    * @see com.jetbrains.python.nameResolver
@@ -130,6 +134,26 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @return true if matches, false otherwise
    */
   boolean isCallee(@NotNull FQNamesProvider... name);
+
+  class PyArgumentsMapping {
+    @Nullable private final PyMarkedCallee myCallee;
+    @NotNull private final Map<PyExpression, PyNamedParameter> myMappedParameters;
+
+    public PyArgumentsMapping(@Nullable PyMarkedCallee markedCallee, @NotNull Map<PyExpression, PyNamedParameter> mappedParameters) {
+      myCallee = markedCallee;
+      myMappedParameters = mappedParameters;
+    }
+
+    @Nullable
+    public PyMarkedCallee getMarkedCallee() {
+      return myCallee;
+    }
+
+    @NotNull
+    public Map<PyExpression, PyNamedParameter> getMappedParameters() {
+      return myMappedParameters;
+    }
+  }
 
   /**
    * Couples function with a flag describing the way it is called.

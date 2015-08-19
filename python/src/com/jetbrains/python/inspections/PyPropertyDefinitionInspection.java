@@ -34,7 +34,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyUpdatePropertySignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNoneType;
@@ -121,8 +120,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             final PyArgumentList arglist = call.getArgumentList();
             assert arglist != null : "Property call has null arglist";
             // we assume fget, fset, fdel, doc names
-            final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map(call, getResolveContext());
-            for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
+            final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(getResolveContext());
+            for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
               final String paramName = entry.getValue().getName();
               PyExpression argument = PyUtil.peelArgument(entry.getKey());
               checkPropertyCallArgument(paramName, argument, node.getContainingFile());

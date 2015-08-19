@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -53,180 +52,6 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     myArgFlags = new HashMap<PyExpression, EnumSet<ArgFlag>>();
     myMarkedCallee = null;
     myArgumentList = arglist;
-  }
-
-  @NotNull
-  public static Map<PyExpression, PyNamedParameter> map(@NotNull PyCallExpression callExpression,
-                                                        @NotNull PyResolveContext resolveContext) {
-    return map(callExpression, 0, resolveContext);
-  }
-
-  @NotNull
-  public static Map<PyExpression, PyNamedParameter> map(@NotNull PyCallExpression callExpression,
-                                                        int implicitArgumentOffset,
-                                                        @NotNull PyResolveContext resolveContext) {
-    final Map<PyExpression, PyNamedParameter> results = new LinkedHashMap<PyExpression, PyNamedParameter>();
-    final PyArgumentList argumentList = callExpression.getArgumentList();
-    final PyCallExpression.PyMarkedCallee markedCallee = callExpression.resolveCallee(resolveContext, implicitArgumentOffset);
-    if (markedCallee != null && argumentList != null) {
-      final TypeEvalContext context = resolveContext.getTypeEvalContext();
-      final List<PyParameter> allParameters = PyUtil.getParameters(markedCallee.getCallable(), context);
-      final List<PyParameter> parameters = dropImplicitParameters(allParameters, markedCallee.getImplicitOffset());
-      final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
-
-      final List<PyExpression> positionalArguments = filterPositionalArguments(arguments);
-      final List<PyKeywordArgument> keywordArguments = filterKeywordArguments(arguments);
-      final List<PyExpression> variadicPositionalArguments = filterVariadicPositionalArguments(arguments);
-      final List<PyExpression> variadicKeywordArguments = filterVariadicKeywordArguments(arguments);
-
-      boolean seenSingleStar = false;
-      final List<PyParameter> unmappedParameters = new ArrayList<PyParameter>();
-      for (PyParameter parameter : parameters) {
-        if (parameter instanceof PyNamedParameter) {
-          final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
-          final String parameterName = namedParameter.getName();
-          if (namedParameter.isPositionalContainer()) {
-            if (variadicPositionalArguments.size() == 1) {
-              results.put(variadicPositionalArguments.remove(0), namedParameter);
-            }
-            else {
-              positionalArguments.clear();
-              variadicPositionalArguments.clear();
-            }
-          }
-          else if (namedParameter.isKeywordContainer()) {
-            if (variadicKeywordArguments.size() == 1) {
-              results.put(variadicKeywordArguments.remove(0), namedParameter);
-            }
-            else {
-              keywordArguments.clear();
-              variadicKeywordArguments.clear();
-            }
-          }
-          else if (seenSingleStar) {
-            final PyExpression keywordArgument = removeKeywordArgument(keywordArguments, parameterName);
-            if (keywordArgument != null) {
-              results.put(keywordArgument, namedParameter);
-            }
-            else if (variadicKeywordArguments.isEmpty()) {
-              unmappedParameters.add(namedParameter);
-            }
-          }
-          else {
-            if (!positionalArguments.isEmpty()) {
-              final PyExpression positionalArgument = next(positionalArguments);
-              if (positionalArgument != null) {
-                results.put(positionalArgument, namedParameter);
-              }
-              else {
-                unmappedParameters.add(namedParameter);
-              }
-            }
-            else {
-              final PyKeywordArgument keywordArgument = removeKeywordArgument(keywordArguments, parameterName);
-              if (keywordArgument != null) {
-                results.put(keywordArgument, namedParameter);
-              }
-              else if (variadicPositionalArguments.isEmpty() || variadicKeywordArguments.isEmpty()) {
-                unmappedParameters.add(namedParameter);
-              }
-            }
-          }
-        }
-        else if (parameter instanceof PyTupleParameter) {
-          unmappedParameters.add(parameter);
-        }
-        else if (parameter instanceof PySingleStarParameter) {
-          seenSingleStar = true;
-        }
-        else {
-          unmappedParameters.add(parameter);
-        }
-      }
-    }
-    return results;
-  }
-
-  @Nullable
-  private static PyKeywordArgument removeKeywordArgument(@NotNull List<PyKeywordArgument> arguments, @Nullable String name) {
-    PyKeywordArgument result = null;
-    for (PyKeywordArgument argument : arguments) {
-      final String keyword = argument.getKeyword();
-      if (keyword != null && keyword.equals(name)) {
-        result = argument;
-        break;
-      }
-    }
-    if (result != null) {
-      arguments.remove(result);
-    }
-    return result;
-  }
-
-  @NotNull
-  private static List<PyExpression> filterPositionalArguments(@NotNull List<PyExpression> arguments) {
-    final List<PyExpression> results = new ArrayList<PyExpression>();
-    for (PyExpression argument : arguments) {
-      if (isPositionalArg(argument)) {
-        results.add(argument);
-      }
-    }
-    return results;
-  }
-
-  @NotNull
-  private static List<PyKeywordArgument> filterKeywordArguments(@NotNull List<PyExpression> arguments) {
-    final List<PyKeywordArgument> results = new ArrayList<PyKeywordArgument>();
-    for (PyExpression argument : arguments) {
-      if (argument instanceof PyKeywordArgument) {
-        results.add((PyKeywordArgument)argument);
-      }
-    }
-    return results;
-  }
-
-  @NotNull
-  private static List<PyExpression> filterVariadicPositionalArguments(@NotNull List<PyExpression> arguments) {
-    final List<PyExpression> results = new ArrayList<PyExpression>();
-    for (PyExpression argument : arguments) {
-      if (argument != null && isVariadicPositionalArgument(argument)) {
-        results.add(argument);
-      }
-    }
-    return results;
-  }
-
-  @NotNull
-  private static List<PyExpression> filterVariadicKeywordArguments(@NotNull List<PyExpression> arguments) {
-    final List<PyExpression> results = new ArrayList<PyExpression>();
-    for (PyExpression argument : arguments) {
-      if (argument != null && isVariadicKeywordArgument(argument)) {
-        results.add(argument);
-      }
-    }
-    return results;
-  }
-
-  private static boolean isVariadicKeywordArgument(@NotNull PyExpression argument) {
-    return argument instanceof PyStarArgument && ((PyStarArgument)argument).isKeyword();
-  }
-
-  private static boolean isVariadicPositionalArgument(@NotNull PyExpression argument) {
-    return argument instanceof PyStarArgument && !((PyStarArgument)argument).isKeyword();
-  }
-
-  @Nullable
-  private static <T> T next(@NotNull List<T> list) {
-    return list.isEmpty() ? null : list.remove(0);
-  }
-
-  @NotNull
-  private static List<PyParameter> dropImplicitParameters(@NotNull List<PyParameter> parameters, int offset) {
-    final ArrayList<PyParameter> results = new ArrayList<PyParameter>(parameters);
-    for (int i = 0; i < offset && !results.isEmpty(); i++) {
-      results.remove(0);
-    }
-    return results;
   }
 
   /**
@@ -423,11 +248,11 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     // NOTE: ignores the structure of nested-tuple params!
     if (tuple_par != null) {
       i = 0;
-      while (i < arguments.length && mapped_args.contains(arguments[i]) && isPositionalArg(arguments[i])) {
+      while (i < arguments.length && mapped_args.contains(arguments[i]) && PyCallExpressionHelper.isPositionalArgument(arguments[i])) {
         i += 1; // skip first mapped args
       }
-      if (i < arguments.length && isPositionalArg(arguments[i])) {
-        while (i < arguments.length && !mapped_args.contains(arguments[i]) && isPositionalArg(arguments[i])) {
+      if (i < arguments.length && PyCallExpressionHelper.isPositionalArgument(arguments[i])) {
+        while (i < arguments.length && !mapped_args.contains(arguments[i]) && PyCallExpressionHelper.isPositionalArgument(arguments[i])) {
           myPlainMappedParams.put(arguments[i], tuple_par);
           mapped_args.add(arguments[i]);
           i += 1;
@@ -548,10 +373,6 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
         }
       }
     }
-  }
-
-  private static boolean isPositionalArg(PyExpression arg) {
-    return !(arg instanceof PyKeywordArgument) && !(arg instanceof PyStarArgument);
   }
 
   /**

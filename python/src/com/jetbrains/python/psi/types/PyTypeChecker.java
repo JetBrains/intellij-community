@@ -24,7 +24,6 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -458,8 +457,8 @@ public class PyTypeChecker {
     final PyArgumentList args = call.getArgumentList();
     if (args != null) {
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final Map<PyExpression, PyNamedParameter> arguments = CallArgumentsMappingImpl.map(call, resolveContext);
-      final PyCallExpression.PyMarkedCallee markedCallee = call.resolveCallee(resolveContext);
+      final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
+      final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
       if (markedCallee != null) {
         final PyCallable callable = markedCallee.getCallable();
         if (callable instanceof PyFunction) {
@@ -474,7 +473,7 @@ public class PyTypeChecker {
           else {
             receiver = null;
           }
-          return new AnalyzeCallResults(callable, receiver, arguments);
+          return new AnalyzeCallResults(callable, receiver, mapping.getMappedParameters());
         }
       }
     }
