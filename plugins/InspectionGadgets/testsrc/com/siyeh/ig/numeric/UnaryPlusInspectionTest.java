@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf.intellij;
+package com.siyeh.ig.numeric;
 
-import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicLabelUI;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Konstantin Bulenkov
+ * @author Bas Leijdekkers
  */
-public class MacIntelliJLabelUI extends BasicLabelUI {
+public class UnaryPlusInspectionTest extends LightInspectionTestCase {
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
-  public static ComponentUI createUI(JComponent c) {
-    return new MacIntelliJLabelUI();
+  public void testUnaryPlus() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final UnaryPlusInspection inspection = new UnaryPlusInspection();
+    inspection.onlyReportInsideBinaryExpression = false;
+    return inspection;
   }
 }

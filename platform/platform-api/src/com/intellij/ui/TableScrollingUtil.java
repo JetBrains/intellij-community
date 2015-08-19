@@ -17,7 +17,7 @@ package com.intellij.ui;
 
 /**
  * @author cdr
- * @deprecated
+ * @deprecated use {@link ScrollingUtil} instead (to be removed in IDEA 17)
  * @see ScrollingUtil
  */
 public class TableScrollingUtil extends ScrollingUtil {
