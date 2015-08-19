@@ -24,7 +24,6 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -657,15 +656,8 @@ public class FindDialog extends DialogWrapper {
       };
 
       final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
-      final JRootPane rootPane = getRootPane();
 
-      anAction.registerCustomShortcutSet(shortcutSet, rootPane);
-      Disposer.register(myDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          anAction.unregisterCustomShortcutSet(rootPane);
-        }
-      });
+      anAction.registerCustomShortcutSet(shortcutSet, getRootPane(), myDisposable);
 
       if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
 

@@ -154,7 +154,7 @@
       <separator/>
       <reference ref="ExternalSystemView.ActionsToolbar.RightPanel"/>
       <separator/>
-      <reference id="ExternalSystem.ShowSettings" order="last"/>
+      <reference id="ExternalSystem.ShowSettings"/>
     </group>
 
     <group id="ExternalSystemView.TaskMenu" popup="true">

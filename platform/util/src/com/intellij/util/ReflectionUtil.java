@@ -491,6 +491,12 @@ public class ReflectionUtil {
           if (constructors.length > 0) {
             try {
               Constructor<?> constructor = constructors[0];
+              try {
+                constructor.setAccessible(true);
+              }
+              catch (Throwable ignored) {
+              }
+
               //noinspection unchecked
               return (T)constructor.newInstance(new Object[constructor.getParameterTypes().length]);
             }

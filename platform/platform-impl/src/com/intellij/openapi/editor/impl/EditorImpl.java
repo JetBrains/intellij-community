@@ -27,20 +27,18 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actions.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -326,9 +324,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Characters that excluded from zero-latency painting after document update
   private static final Set<Character> DOCUMENT_CHARS_TO_SKIP = new HashSet<Character>(Arrays.asList(')', ']', '}', '"', '\''));
 
+  // Although it's possible to paint arbitrary line changes immediately,
+  // our primary interest is direct user editing actions, where visual delay is crucial.
+  // Moreover, as many subsystems (like PsiToDocumentSynchronizer, UndoManager, etc.) don't enforce bulk document updates,
+  // and can trigger multiple write actions / document changes sequentially, we need to avoid possible flickering during such an activity.
+  // There seems to be no other way to determine whether particular document change is triggered by direct user editing
+  // (raw character typing is handled separately, even before write action).
+  private static final Set<Class> IMMEDIATE_EDITING_ACTIONS = new HashSet<Class>(Arrays.asList(BackspaceAction.class,
+                                                                                               DeleteAction.class,
+                                                                                               DeleteToWordStartAction.class,
+                                                                                               DeleteToWordEndAction.class,
+                                                                                               DeleteToWordStartInDifferentHumpsModeAction.class,
+                                                                                               DeleteToWordEndInDifferentHumpsModeAction.class,
+                                                                                               DeleteToLineStartAction.class,
+                                                                                               DeleteToLineEndAction.class,
+                                                                                               CutAction.class,
+                                                                                               PasteAction.class));
+
   private Rectangle myOldArea = new Rectangle(0, 0, 0, 0);
   private Rectangle myOldTailArea = new Rectangle(0, 0, 0, 0);
-  private int myEventsPaintedAsChar;
+  private boolean myImmediateEditingInProgress;
 
   static {
     ourCaretBlinkingCommand.start();
@@ -953,6 +968,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPanel.add(myScrollPane);
     }
 
+    final AnActionListener.Adapter actionListener = new AnActionListener.Adapter() {
+      @Override
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (isZeroLatencyTypingEnabled() && IMMEDIATE_EDITING_ACTIONS.contains(action.getClass())) {
+          myImmediateEditingInProgress = true;
+        }
+      }
+
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (isZeroLatencyTypingEnabled()) {
+          myImmediateEditingInProgress = false;
+        }
+      }
+    };
+
+    ActionManager.getInstance().addAnActionListener(actionListener);
+
+    Disposer.register(myDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ActionManager.getInstance().removeAnActionListener(actionListener);
+      }
+    });
+
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
@@ -1139,7 +1179,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       for (Caret caret : myCaretModel.getAllCarets()) {
         paintImmediately(caret.getOffset(), c, myIsInsertMode);
       }
-      myEventsPaintedAsChar = myCaretModel.getCaretCount();
     }
 
     actionManager.fireBeforeEditorTyping(c, dataContext);
@@ -1889,7 +1928,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySizeContainer.beforeChange(e);
     }
 
-    if (isZeroLatencyTypingEnabled() && myEventsPaintedAsChar == 0 && canPaintImmediately(e)) {
+    if (isZeroLatencyTypingEnabled() && myImmediateEditingInProgress && canPaintImmediately(e)) {
       int offset = e.getOffset();
       int length = e.getOldLength();
 
@@ -1906,14 +1945,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocumentChangeInProgress = false;
     if (myDocument.isInBulkUpdate()) return;
 
-    if (isZeroLatencyTypingEnabled()) {
-      if (myEventsPaintedAsChar == 0) {
-        if (canPaintImmediately(e)) {
-          paintImmediately(e);
-        }
-      } else {
-        myEventsPaintedAsChar--;
-      }
+    if (isZeroLatencyTypingEnabled() && myImmediateEditingInProgress && canPaintImmediately(e)) {
+      paintImmediately(e);
     }
 
     if (myErrorStripeNeedsRepaint) {
@@ -2210,11 +2243,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean canPaintImmediately(@NotNull DocumentEvent e) {
-    UndoManager undoManager = UndoManager.getInstance(myProject);
-    return !undoManager.isUndoInProgress() && // Undo / Redo actions might start multiple write actions and make multiple document changes.
-           !undoManager.isRedoInProgress() && // Can we optimize the subsystem to start only one write action and do a single update?
-           myDocument instanceof DocumentImpl &&
-           !((DocumentImpl)myDocument).isGuardsSuppressed() && // Heuristics. Can PsiToDocumentSynchronizer perform bulk document updates?
+    return myDocument instanceof DocumentImpl &&
            !isInplaceRenamerActive() &&
            !contains(e.getOldFragment(), '\n') &&
            !contains(e.getNewFragment(), '\n') &&

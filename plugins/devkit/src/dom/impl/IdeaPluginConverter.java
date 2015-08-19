@@ -124,7 +124,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
             return ideaPluginDomFileElement.getRootElement();
           }
         });
-        return Result.create(pluginList, PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(pluginList, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }

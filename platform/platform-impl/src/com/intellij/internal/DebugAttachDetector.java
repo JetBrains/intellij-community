@@ -15,15 +15,16 @@
  */
 package com.intellij.internal;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.net.NetUtils;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.Socket;
 
 /**
  * @author egor
@@ -31,7 +32,7 @@ import java.net.Socket;
 public class DebugAttachDetector {
   private static final Logger LOG = Logger.getInstance(DebugAttachDetector.class);
 
-  private String myHost;
+  private String myHost = null;
   private int myPort = -1;
   private SingleAlarm myAlarm;
   private boolean myAttached;
@@ -48,7 +49,6 @@ public class DebugAttachDetector {
             try {
               String[] address = param.split("=")[1].split(":");
               if (address.length == 1) {
-                myHost = "127.0.0.1";
                 myPort = Integer.parseInt(address[0]);
               }
               else {
@@ -72,7 +72,7 @@ public class DebugAttachDetector {
     myAlarm = new SingleAlarm(new Runnable() {
       @Override
       public void run() {
-        boolean attached = checkAttached();
+        boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
         if (!myReady) {
           myAttached = attached;
           myReady = true;
@@ -88,16 +88,5 @@ public class DebugAttachDetector {
       }
     }, 5000, Alarm.ThreadToUse.POOLED_THREAD, null);
     myAlarm.request();
-  }
-
-  private boolean checkAttached() {
-    try {
-      Socket socket = new Socket(myHost, myPort);
-      socket.close();
-      return false;
-    }
-    catch (IOException e) {
-      return true;
-    }
   }
 }

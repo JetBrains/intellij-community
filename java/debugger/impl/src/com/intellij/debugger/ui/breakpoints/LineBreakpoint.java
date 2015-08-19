@@ -201,9 +201,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
     Method method = loc.method();
-    if (DebuggerUtils.isSynthetic(method)) {
-      return false;
-    }
+    // Some frameworks may create synthetic methods with lines mapped to user code, see IDEA-143852
+    // if (DebuggerUtils.isSynthetic(method)) { return false; }
     boolean res = !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
     if (!res) return false;
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {

@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 27-Jun-2007
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -41,7 +36,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -58,6 +53,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author anna
+ * @since 27-Jun-2007
+ */
 public class AddAnnotationFixTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myModule;
@@ -102,21 +101,18 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   }
 
   private void addLibrary(@NotNull final String... annotationsDirs) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final LibraryTable libraryTable = model.getModuleLibraryTable();
-        final Library library = libraryTable.createLibrary("test");
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+      final LibraryTable libraryTable = model.getModuleLibraryTable();
+      final Library library = libraryTable.createLibrary("test");
 
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        libraryModel.addRoot(VfsUtil.pathToUrl(myFixture.getTempDirPath() + "/lib"), OrderRootType.SOURCES);
-        for (String annotationsDir : annotationsDirs) {
-          libraryModel.addRoot(VfsUtil.pathToUrl(myFixture.getTempDirPath() + annotationsDir), AnnotationOrderRootType.getInstance());
-        }
-        libraryModel.commit();
-        model.commit();
+      final Library.ModifiableModel libraryModel = library.getModifiableModel();
+      libraryModel.addRoot(VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/lib"), OrderRootType.SOURCES);
+      for (String annotationsDir : annotationsDirs) {
+        libraryModel.addRoot(VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + annotationsDir), AnnotationOrderRootType.getInstance());
       }
+      libraryModel.commit();
+      model.commit();
     });
   }
 
@@ -145,8 +141,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     });
   }
 
-  private void startListening(@NotNull final PsiModifierListOwner expectedOwner, @NotNull final String expectedAnnotationFQName,
-                              final boolean expectedSuccessful) {
+  private void startListening(@NotNull PsiModifierListOwner expectedOwner, @NotNull String expectedAnnotationFQName, boolean expectedSuccessful) {
     startListening(Arrays.asList(Trinity.create(expectedOwner, expectedAnnotationFQName, expectedSuccessful)));
   }
 
@@ -191,8 +186,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertTrue(fix.isAvailable(myProject, editor, file));
 
     // expecting other @Nullable annotations to be removed, and default @NotNull to be added
-    List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence
-      = new ArrayList<Trinity<PsiModifierListOwner, String, Boolean>>();
+    List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence = new ArrayList<>();
     for (String notNull : NullableNotNullManager.getInstance(myProject).getNullables()) {
       expectedSequence.add(Trinity.create(getOwner(), notNull, false));
     }
@@ -267,6 +261,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertTrue(deannotateFix.isAvailable(myProject, editor, file));
 
     final PsiModifierListOwner container = DeannotateIntentionAction.getContainer(editor, file);
+    assertNotNull(container);
     startListening(container, AnnotationUtil.NOT_NULL, true);
     new WriteCommandAction(myProject){
       @Override
@@ -293,11 +288,15 @@ public class AddAnnotationFixTest extends UsefulTestCase {
                                                          String expectedValue) {
     PsiAnnotation methodAnnotation = manager.findExternalAnnotation(method, AnnotationUtil.NULLABLE);
     assertNotNull(methodAnnotation);
-    assertEquals(expectedValue, methodAnnotation.findAttributeValue("value").getText());
+    PsiAnnotationMemberValue methodValue = methodAnnotation.findAttributeValue("value");
+    assertNotNull(methodValue);
+    assertEquals(expectedValue, methodValue.getText());
 
     PsiAnnotation parameterAnnotation = manager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL);
     assertNotNull(parameterAnnotation);
-    assertEquals(expectedValue, parameterAnnotation.findAttributeValue("value").getText());
+    PsiAnnotationMemberValue parameterValue = parameterAnnotation.findAttributeValue("value");
+    assertNotNull(parameterValue);
+    assertEquals(expectedValue, parameterValue.getText());
   }
 
   public void testEditingMultiRootAnnotations() {
@@ -382,13 +381,13 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     ExternalAnnotationsManager.getInstance(myProject).findExternalAnnotation(getOwner(), AnnotationUtil.NOT_NULL); // force creating service
 
     startListeningForExternalChanges();
-    new WriteCommandAction(myProject){
+    new WriteCommandAction(myProject) {
       @Override
       protected void run(@NotNull final Result result) throws Throwable {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
         assert file != null;
-        String newText = "  " + StreamUtil.readText(file.getInputStream()) + "      "; // adding newspace to the beginning and end of file
-        FileUtil.writeToFile(VfsUtil.virtualToIoFile(file), newText); // writing using java.io.File to make this change external
+        String newText = "  " + StreamUtil.readText(file.getInputStream(), "UTF-8") + "      ";
+        FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), newText);
         file.refresh(false, false);
       }
     }.execute();

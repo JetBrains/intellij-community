@@ -44,6 +44,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private final Project myProject;
   private final Language myLanguage;
   private final MarkerCache myMarkerCache;
+  private final boolean myForInjected;
   @Nullable private ManualRangeMarker myRangeMarker;
   @Nullable private ProperTextRange myPsiRange;
   private final PsiDocumentManagerBase myPsiDocManager;
@@ -52,8 +53,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                   @NotNull ProperTextRange range,
                   @NotNull Class anchorClass,
                   @NotNull PsiFile containingFile,
-                  @NotNull Language language) {
+                  @NotNull Language language,
+                  boolean forInjected) {
     myLanguage = language;
+    myForInjected = forInjected;
     myVirtualFile = containingFile.getViewProvider().getVirtualFile();
     myType = anchorClass;
     assert !PsiFile.class.isAssignableFrom(anchorClass) : "FileElementInfo must be used for files";
@@ -72,7 +75,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   void setRange(@NotNull TextRange range, @NotNull Document document) {
     myPsiRange = null;
     FrozenDocument frozenDocument = myPsiDocManager.getLastCommittedDocument(document);
-    myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, false, false, true);
+    myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, myForInjected, myForInjected, !myForInjected);
   }
 
   @Override

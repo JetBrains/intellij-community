@@ -1182,7 +1182,7 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
-    myErrorText.myLabel.addComponentListener(new ComponentAdapter() {
+    final ComponentAdapter resizeListener = new ComponentAdapter() {
       private int myHeight;
 
       @Override
@@ -1202,6 +1202,13 @@ public abstract class DialogWrapper {
           myErrorText.revalidate();
           myResizeInProgress = false;
         }
+      }
+    };
+    myErrorText.myLabel.addComponentListener(resizeListener);
+    Disposer.register(myDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myErrorText.myLabel.removeComponentListener(resizeListener);
       }
     });
 
@@ -1224,7 +1231,7 @@ public abstract class DialogWrapper {
         expandNextOptionButton();
       }
     };
-    toggleShowOptions.registerCustomShortcutSet(sc, root);
+    toggleShowOptions.registerCustomShortcutSet(sc, root, myDisposable);
 
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {
@@ -1267,7 +1274,7 @@ public abstract class DialogWrapper {
       startTrackingValidation();
     }
     if (SystemInfo.isWindows) {
-      installEnterHook(root);
+      installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);
   }
@@ -1277,7 +1284,7 @@ public abstract class DialogWrapper {
     return new BorderLayout();
   }
 
-  private static void installEnterHook(JComponent root) {
+  private static void installEnterHook(JComponent root, Disposable disposable) {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -1292,7 +1299,7 @@ public abstract class DialogWrapper {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root, disposable);
   }
 
   private void expandNextOptionButton() {

@@ -43,15 +43,11 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   override fun getStateAndArchive(storageData: StateMap, component: Any, componentName: String) = storageData.getStateAndArchive(componentName)
 
   override fun loadData(): StateMap {
-    val states = StateMap()
     val element: Element?
     // we don't use local data if has stream provider
     if (provider != null && provider.enabled) {
       try {
         element = loadDataFromProvider()
-        if (element != null) {
-          states.loadState(element)
-        }
       }
       catch (e: Exception) {
         LOG.error(e)
@@ -61,26 +57,20 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     else {
       element = loadLocalData()
     }
-
-    if (element != null) {
-      states.loadState(element)
-    }
-    return states
+    return if (element == null) StateMap() else loadState(element)
   }
 
   throws(IOException::class, JDOMException::class)
   private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
 
-  private fun StateMap.loadState(element: Element) {
+  private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    StateMap.load(this, element, pathMacroSubstitutor, true)
+    return StateMap.load(element, pathMacroSubstitutor, true)
   }
 
   fun setDefaultState(element: Element) {
     element.setName(rootElementName)
-    val states = StateMap()
-    states.loadState(element)
-    storageDataRef.set(states)
+    storageDataRef.set(loadState(element))
   }
 
   override fun startExternalization() = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
@@ -107,7 +97,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     }
   }
 
-  private fun setStorageData(oldStorageData: StateMap, newStorageData: StateMap?) {
+  private fun setStates(oldStorageData: StateMap, newStorageData: StateMap?) {
     if (oldStorageData !== newStorageData && storageDataRef.getAndSet(newStorageData) !== oldStorageData) {
       LOG.warn("Old storage data is not equal to current, new storage data was set anyway")
     }
@@ -153,7 +143,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       else {
         saveLocally(element)
       }
-      storage.setStorageData(originalStates, states)
+      storage.setStates(originalStates, states)
     }
 
     throws(IOException::class)
@@ -187,14 +177,13 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         // if data was loaded, mark as changed all loaded components
         if (states != null) {
           changedComponentNames.addAll(states.keys())
-          setStorageData(states, null)
+          setStates(states, null)
         }
       }
       else if (states != null) {
-        val newStorageData = StateMap()
-        newStorageData.loadState(newElement)
-        changedComponentNames.addAll(states.getChangedComponentNames(newStorageData))
-        setStorageData(states, newStorageData)
+        val newStates = loadState(newElement)
+        changedComponentNames.addAll(states.getChangedComponentNames(newStates))
+        setStates(states, newStates)
       }
     }
     catch (e: Throwable) {

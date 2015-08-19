@@ -22,11 +22,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -160,6 +162,7 @@ public abstract class AbstractVcsTestCase {
   protected void tearDownProject() throws Exception {
     if (myProject != null) {
       ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
+      CommittedChangesCache.getInstance(myProject).clearCaches(EmptyRunnable.INSTANCE);
       myProject = null;
     }
     if (myProjectFixture != null) {

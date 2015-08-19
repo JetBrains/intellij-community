@@ -95,8 +95,6 @@ public class CoreProjectLoader {
 
   @NotNull
   public static StateMap loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    StateMap states = new StateMap();
-    StateMap.load(states, JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
-    return states;
+    return StateMap.load(JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
   }
 }

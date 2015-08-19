@@ -2054,6 +2054,13 @@ public class UIUtil {
     for (MouseWheelListener each : mouseWheelListeners) {
       c.removeMouseWheelListener(each);
     }
+    
+    if (c instanceof AbstractButton) {
+      final ActionListener[] listeners = ((AbstractButton)c).getActionListeners();
+      for (ActionListener listener : listeners) {
+        ((AbstractButton)c).removeActionListener(listener);
+      }
+    }
   }
 
   public static void disposeProgress(final JProgressBar progress) {
@@ -2563,7 +2570,7 @@ public class UIUtil {
    * @param parent parent component
    * @return true if parent if a top parent of child, false otherwise
    *
-   * @see javax.swing.SwingUtilities#isDescendingFrom(java.awt.Component, java.awt.Component)
+   * @see SwingUtilities#isDescendingFrom(Component, Component)
    */
   public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
     while (child != null && child != parent) {
