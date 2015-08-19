@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.versionBrowser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.text.SyncDateFormat;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   public String USER = "";
   public boolean STOP_ON_COPY = false;
 
-  public transient boolean STRICTLY_AFTER = false;
+  @Transient public boolean STRICTLY_AFTER = false;
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
