@@ -20,6 +20,7 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -101,6 +102,9 @@ public class ProjectRule() : ExternalResource() {
       sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).closeProject(it, false, false, false) } }
     }
   }
+
+  public val projectIfOpened: ProjectEx?
+    get() = if (projectOpened.get()) sharedProject else null
 
   public val project: ProjectEx
     get() {
@@ -207,13 +211,15 @@ public fun runInEdtAndWait(runnable: () -> Unit) {
   }
 }
 
+private fun <T : Annotation> Description.getOwnOrClassAnnotation(annotationClass: Class<T>) = getAnnotation(annotationClass) ?: getTestClass()?.getAnnotation(annotationClass)
+
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD, ElementType.TYPE)
 annotation public class RunsInEdt
 
 public class EdtRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if ((description.getAnnotation(javaClass<RunsInEdt>()) ?: description.getTestClass()!!.getAnnotation(javaClass<RunsInEdt>())) == null) {
+    return if (description.getOwnOrClassAnnotation(javaClass<RunsInEdt>()) == null) {
       base
     }
     else {
@@ -222,6 +228,66 @@ public class EdtRule : TestRule {
           runInEdtAndWait { base.evaluate() }
         }
       }
+    }
+  }
+}
+
+/**
+ * Do not optimise test load speed.
+ * @see ProjectEx.setOptimiseTestLoadSpeed
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD, ElementType.TYPE)
+annotation public class RunsInActiveStoreMode
+
+public class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
+  override fun apply(base: Statement, description: Description): Statement {
+    return if (description.getOwnOrClassAnnotation(javaClass<RunsInActiveStoreMode>()) == null) {
+      base
+    }
+    else {
+      object : Statement() {
+        override fun evaluate() {
+          val project = projectRule.project
+          val isModeDisabled = project.isOptimiseTestLoadSpeed()
+          if (isModeDisabled) {
+            project.setOptimiseTestLoadSpeed(false)
+          }
+          try {
+            base.evaluate()
+          }
+          finally {
+            if (isModeDisabled) {
+              project.setOptimiseTestLoadSpeed(true)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+public class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResource() {
+  override fun after() {
+    projectRule.projectIfOpened?.let {
+      var errors: MutableList<Throwable>? = null
+      val moduleManager = ModuleManager.getInstance(it)
+      for (module in moduleManager.getModules()) {
+        if (module.isDisposed()) {
+          continue
+        }
+
+        try {
+          moduleManager.disposeModule(module)
+        }
+        catch(e: Throwable) {
+          if (errors == null) {
+            errors = SmartList()
+          }
+          errors.add(e)
+        }
+      }
+      CompoundRuntimeException.doThrow(errors)
     }
   }
 }
