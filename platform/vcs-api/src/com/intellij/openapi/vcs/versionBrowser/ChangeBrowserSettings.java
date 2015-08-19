@@ -54,6 +54,8 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   public String USER = "";
   public boolean STOP_ON_COPY = false;
 
+  public transient boolean STRICTLY_AFTER = false;
+
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
