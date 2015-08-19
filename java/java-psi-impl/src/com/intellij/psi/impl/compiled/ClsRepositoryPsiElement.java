@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -45,10 +43,6 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
 
   @Override
   public PsiManager getManager() {
-    Project project = ProjectCoreUtil.theOnlyOpenProject();
-    if (project != null) {
-      return PsiManager.getInstance(project);
-    }
     final PsiFile file = getContainingFile();
     if (file == null) throw new PsiInvalidElementAccessException(this);
     return file.getManager();
