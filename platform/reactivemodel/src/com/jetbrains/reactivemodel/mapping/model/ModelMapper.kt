@@ -92,7 +92,7 @@ public object ModelMapper {
         throw RuntimeException("No getter presents for field ${it.getName()}");
       }
       sb.append(";\n")
-      if (it.getType() !in Primitives.TYPES) sb.append("if ($varName != null)\n")
+      if (it.getType() !in Primitives.JAVA_PRIMITIVES) sb.append("if ($varName != null)\n")
       sb.append("map.put(\"${it.getName()}\", ${ModelMapper::class.java.getName()}.map($varName));\n");
       sb.toString()
     }.join("")

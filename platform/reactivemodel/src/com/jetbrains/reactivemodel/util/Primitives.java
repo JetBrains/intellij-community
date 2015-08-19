@@ -32,6 +32,16 @@ public class Primitives {
             short.class, Short.class,
             String.class));
 
+  public static final List<? extends Class<?>> JAVA_PRIMITIVES = Collections.unmodifiableList(asList(
+    boolean.class,
+    byte.class,
+    char.class,
+    double.class,
+    float.class,
+    int.class,
+    long.class,
+    short.class));
+
   private Primitives() {
   }
 }
