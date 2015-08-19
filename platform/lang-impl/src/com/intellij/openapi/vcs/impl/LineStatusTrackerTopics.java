@@ -15,27 +15,12 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.messages.Topic;
 
-/**
- * @author irengrig
- */
-public interface LineStatusTrackerManagerI {
-  @Nullable
-  LineStatusTracker getLineStatusTracker(Document document);
+public interface LineStatusTrackerTopics {
+  Topic<LineStatusTrackerSettingListener> SETTINGS_CHANGED = Topic.create("line status tracker settings changed", LineStatusTrackerSettingListener.class);
 
-  class Dummy implements LineStatusTrackerManagerI {
-    private final static Dummy ourInstance = new Dummy();
-
-    public static Dummy getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public LineStatusTracker getLineStatusTracker(final Document document) {
-      return null;
-    }
+  interface LineStatusTrackerSettingListener {
+    void updateSettings();
   }
 }

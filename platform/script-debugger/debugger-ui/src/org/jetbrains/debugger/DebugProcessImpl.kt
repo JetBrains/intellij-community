@@ -27,6 +27,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
@@ -220,6 +221,8 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   public fun saveResolvedFile(url: Url, file: VirtualFile) {
     urlToFileCache.putIfAbsent(url, file)
   }
+
+  public abstract fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean): List<Location>
 }
 
 public inline fun asyncPromise(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) task: () -> Promise<Void>): AsyncFunction<Void, Void> = object : AsyncFunction<Void, Void> {

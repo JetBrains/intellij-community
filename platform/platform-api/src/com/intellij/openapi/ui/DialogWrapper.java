@@ -693,7 +693,7 @@ public abstract class DialogWrapper {
               final JBOptionButton buttonToActivate = eachInfo.getButton();
               buttonToActivate.showPopup(eachInfo.getAction(), true);
             }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), getPeer().getRootPane(), myDisposable);
+          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), getPeer().getRootPane());
         }
       }
     }
