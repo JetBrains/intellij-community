@@ -258,11 +258,13 @@ public final class StateMap implements StorageDataBase {
     return name;
   }
 
-  public static void load(@NotNull StateMap states, @NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+  @NotNull
+  public static StateMap load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
     if (pathMacroSubstitutor != null) {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
 
+    StateMap stateMap = new StateMap();
     StringInterner interner = intern ? new StringInterner() : null;
     for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
@@ -276,7 +278,7 @@ public final class StateMap implements StorageDataBase {
         JDOMUtil.internElement(element, interner);
       }
 
-      states.put(name, element);
+      stateMap.states.put(name, element);
 
       if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
         ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
@@ -285,5 +287,6 @@ public final class StateMap implements StorageDataBase {
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
       element.removeAttribute(NAME);
     }
+    return stateMap;
   }
 }

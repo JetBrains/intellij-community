@@ -40,7 +40,6 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.PrintStream
 import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
@@ -66,7 +65,7 @@ public class ProjectRule() : ExternalResource() {
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = File("${generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").path}")
+      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").toFile()
 
       val buffer = ByteArrayOutputStream()
       java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
