@@ -26,6 +26,6 @@ public class PyEduDebugExecutor extends DefaultDebugExecutor {
   @NotNull
   @Override
   public String getStartActionText() {
-    return "Step Through ";
+    return "Step Through";
   }
 }
