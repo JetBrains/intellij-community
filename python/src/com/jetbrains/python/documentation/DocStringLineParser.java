@@ -16,7 +16,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.toolbox.PyIndentUtil;
+import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

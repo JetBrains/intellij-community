@@ -58,21 +58,30 @@ public abstract class TagBasedDocStringUpdater<T extends TagBasedDocString> exte
         insertAfterLine(anchorLine, createReturnTypeLine(returnReq.type, anchorLineIndent));
       }
     }
+    for (AddException exception : myAddExceptionRequest) {
+      //TODO check existing docstring
+      insertAfterLine(anchorLine, createRaisesLine(exception.type, anchorLineIndent));
+    }
+  }
+
+  @NotNull
+  private String createRaisesLine(@NotNull String type, int indent) {
+    return ""; /*createDocStringBuilder().addException(type).buildContent(indent, true);*/
   }
 
   @NotNull
   private String createParameterNameLine(@NotNull String name, int indent) {
-    return createDocStringBuilder().addParameter(name, null).buildContent(indent, true);
+    return ""; /*createDocStringBuilder().addParameter(name, null).buildContent(indent, true);*/
   }
 
   @NotNull
   private String createParameterTypeLine(@NotNull String name, @NotNull String type, int indent) {
-    return createDocStringBuilder().addParameterType(name, type).buildContent(indent, true);
+    return ""; /*createDocStringBuilder().addParameterType(name, type).buildContent(indent, true);*/
   }
 
   @NotNull
   private String createReturnTypeLine(@NotNull String type, int indent) {
-    return createDocStringBuilder().addReturnValue(null, type).buildContent(indent, true);
+    return ""; /*createDocStringBuilder().addReturnValue(null, type).buildContent(indent, true);*/
   }
 
   private int firstLineWithTag() {

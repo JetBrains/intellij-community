@@ -75,17 +75,20 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
       return;
     }
 
-    String name = "rtype".equals(kind) ? "" : StringUtil.notNullize(problemElement.getName());
+    final boolean isReturn = "rtype".equals(kind);
 
     final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
-    PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
-    if (signature != null) {
-      docstringGenerator.withParamTypedByQualifiedName(kind, name, signature.getArgTypeQualifiedName(name), pyFunction);
+    final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
+    String name = isReturn ? "" : StringUtil.notNullize(problemElement.getName());
+    final String typeFromSignature = signature != null ? StringUtil.notNullize(signature.getArgTypeQualifiedName(name)) : "";
+    if (!isReturn) {
+      docstringGenerator.withParamTypedByName(name, typeFromSignature);
     }
     else {
-      docstringGenerator.withParam(kind, name);
+      docstringGenerator.withReturnValue(typeFromSignature);
     }
-    docstringGenerator.build();
+
+    docstringGenerator.buildAndInsert();
     docstringGenerator.startTemplate();
   }
 

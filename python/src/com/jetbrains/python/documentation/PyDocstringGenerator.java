@@ -24,31 +24,20 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.debugger.PySignature;
-import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.debugger.PySignatureUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringProvider;
+import com.jetbrains.python.documentation.docstrings.TagBasedDocStringBuilder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -59,16 +48,18 @@ public class PyDocstringGenerator {
 
   @NotNull
   private PyDocStringOwner myDocStringOwner;
-
   @Nullable
   private PyFunction myFunction;
 
-  private List<DocstringParam> myParams = Lists.newArrayList();
+  private final List<DocstringParam> myParams = Lists.newArrayList();
   private final Project myProject;
   private PyStringLiteralExpression myDocStringExpression;
 
-  private PsiFile myFile;
+  private final PsiFile myFile;
   private boolean myGenerateReturn;
+
+  private final StructuredDocString myStructuredDocString;
+  private final DocStringFormat myDocStringFormat;
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
@@ -77,50 +68,38 @@ public class PyDocstringGenerator {
     }
     myProject = myDocStringOwner.getProject();
     myFile = myDocStringOwner.getContainingFile();
+    myDocStringFormat = DocStringUtil.getDocStringFormat(docStringOwner);
+    final DocStringProvider provider = myDocStringFormat.getProvider();
+    final PyStringLiteralExpression docStringExpression = myDocStringOwner.getDocStringExpression();
+    if (docStringExpression != null) {
+      myStructuredDocString = provider.parseDocString(docStringExpression);
+    }
+    else {
+      myStructuredDocString = null;
+    }
   }
 
-  public PyDocstringGenerator withParam(@NotNull String kind, @NotNull String name) {
-    return withParamTypedByName(kind, name, null);
+  @NotNull
+  public PyDocstringGenerator withParam(@NotNull String name) {
+    return withParamTypedByName(name, null);
   }
 
-  public PyDocstringGenerator withParamTypedByQualifiedName(String kind, String name, @Nullable String type, @NotNull PsiElement anchor) {
-    String typeName = type != null ? PySignatureUtil.getShortestImportableName(anchor, type) : null;
-    return withParamTypedByName(kind, name, typeName);
-  }
-
-  public PyDocstringGenerator withParamTypedByName(String kind, String name, String type) {
-    myParams.add(new DocstringParam(kind, name, type));
+  @NotNull
+  public PyDocstringGenerator withParamTypedByName(@NotNull String name, @Nullable String type) {
+    myParams.add(new DocstringParam(name, type, false));
     return this;
   }
 
-  public PyDocstringGenerator withReturn() {
+  @NotNull
+  public PyDocstringGenerator withReturnValue(@Nullable String type) {
+    myParams.add(new DocstringParam("", type, true));
+    return this;
+  }
+
+  @NotNull
+  public PyDocstringGenerator addReturn() {
     myGenerateReturn = true;
     return this;
-  }
-
-  public PyDocstringGenerator withSignatures() {
-    if (myFunction != null) {
-      PySignature signature = PySignatureCacheManager.getInstance(myProject).findSignature(myFunction);
-      addParametersFromSignature(myFunction, signature);
-    }
-    return this;
-  }
-
-  private void addParametersFromSignature(@NotNull PyFunction function,
-                                          @Nullable PySignature signature) {
-    for (PyParameter functionParam : function.getParameterList().getParameters()) {
-      String paramName = functionParam.getName();
-      if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
-        String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
-
-        if (type != null) {
-          withParamTypedByQualifiedName("type", paramName, type, function);
-        }
-        else {
-          withParam("param", paramName);
-        }
-      }
-    }
   }
 
   public static String generateRaiseOrReturn(@NotNull PyFunction element, String offset, String prefix, boolean checkReturn) {
@@ -138,14 +117,7 @@ public class PyDocstringGenerator {
       if (visitor.myHasRaise) {
         builder.append(prefix).append("raise");
         if (visitor.myRaiseTarget != null) {
-          String raiseTarget = visitor.myRaiseTarget.getText();
-          if (visitor.myRaiseTarget instanceof PyCallExpression) {
-            final PyExpression callee = ((PyCallExpression)visitor.myRaiseTarget).getCallee();
-            if (callee != null) {
-              raiseTarget = callee.getText();
-            }
-          }
-          builder.append(" ").append(raiseTarget);
+          builder.append(" ").append(visitor.getRaiseTargetText());
         }
         builder.append(":").append(offset);
       }
@@ -179,12 +151,12 @@ public class PyDocstringGenerator {
     if (parsed == null) {
       return;
     }
-    Substring substring = null;
-    if (paramToEdit.getKind().equals("type")) {
-      substring = parsed.getParamTypeSubstring(paramName);
-    }
-    else if (paramToEdit.getKind().equals("rtype")){
+    Substring substring;
+    if (paramToEdit.isReturnValue()) {
       substring = parsed.getReturnTypeSubstring();
+    }
+    else {
+      substring = parsed.getParamTypeSubstring(paramName);
     }
     if (substring == null) {
       return;
@@ -212,173 +184,94 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
-  private String addParamToDocstring() {
-    String text = getDocstringText();
-
-    StructuredDocString structuredDocString = DocStringUtil.parse(text);
-
-    Collection<DocstringParam> paramsToAdd = filterOutExistingParameters(structuredDocString, myParams);
-
-    String[] lines = LineTokenizer.tokenize(text, true);
-    if (lines.length == 1) {
-      return createSingleLineReplacement(paramsToAdd);
+  private String buildDocString() {
+    if (myStructuredDocString != null) {
+      return updateDocString();
     }
     else {
-      return createMultiLineReplacement(lines, paramsToAdd);
+      return createDocString();
     }
+  }
+
+  @NotNull
+  private String createDocString() {
+    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
+      final TagBasedDocStringBuilder builder = new TagBasedDocStringBuilder(myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":");
+      builder.addLine("");
+      String indentation = "";
+      if (myDocStringOwner instanceof PyStatementListContainer) {
+        indentation = PyIndentUtil.getElementIndent(((PyStatementListContainer)myDocStringOwner).getStatementList());
+      }
+      boolean addedReturn = false;
+      for (DocstringParam param : myParams) {
+        if (param.isReturnValue()) {
+          if (param.getType() != null) {
+            builder.addReturnValueType(param.getType());
+          }
+          else {
+            builder.addReturnValueDescription("");
+          }
+          addedReturn = true;
+        }
+        else {
+          if (param.getType() != null) {
+            builder.addParameterType(param.getName(), param.getType());
+          }
+          else {
+            builder.addParameterDescription(param.getName(), "");
+          }
+        }
+      }
+      if (myGenerateReturn && myDocStringOwner instanceof PyFunction) {
+        final RaiseVisitor visitor = new RaiseVisitor();
+        final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
+        statementList.accept(visitor);
+        if (!addedReturn && visitor.myHasReturn) {
+          builder.addReturnValueDescription("");
+        }
+        if (visitor.myHasRaise) {
+          builder.addExceptionDescription(visitor.getRaiseTargetText(), "");
+        }
+      }
+
+      if (builder.getLines().size() > 1) {
+        return "\"\"\"\n" + builder.buildContent(indentation, true) + '\n' + indentation + "\"\"\"";
+      }
+      else {
+        return "\"\"\"" + builder.buildContent(indentation, false) + "\"\"\"";
+      }
+    }
+    else {
+      return "";
+    }
+  }
+
+  @NotNull
+  private String updateDocString() {
+    return "";
   }
 
   public boolean haveParametersToAdd() {
     return !collectParametersToAdd().isEmpty();
   }
 
-  private Collection<DocstringParam> collectParametersToAdd() {
-    String text = getDocstringText();
-
-    StructuredDocString structuredDocString = DocStringUtil.parse(text); //TODO: do we need to cache it?
-
-    return filterOutExistingParameters(structuredDocString, myParams);
-  }
-
   @NotNull
-  private static Collection<DocstringParam> filterOutExistingParameters(final @Nullable StructuredDocString structuredDocString,
-                                                                        @NotNull List<DocstringParam> params) {
-    return Collections2.filter(params, new Predicate<DocstringParam>() {
+  private Collection<DocstringParam> collectParametersToAdd() {
+    return Collections2.filter(myParams, new Predicate<DocstringParam>() {
       @Override
-      public boolean apply(DocstringParam input) {
-        Substring s = structuredDocString != null ? structuredDocString.getParamByNameAndKind(input.getName(), input.getKind()) : null;
-        return s == null;
+      public boolean apply(DocstringParam param) {
+        if (param.isReturnValue()) {
+          return myStructuredDocString.getReturnTypeSubstring() == null;
+        }
+        else {
+          return myStructuredDocString.getParamTypeSubstring(param.myName) == null;
+        }
       }
     });
   }
 
-  @NotNull
-  private String getDocstringText() {
-    final PyStringLiteralExpression docstring = myDocStringOwner.getDocStringExpression();
-
-    return docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
-  }
-
-  @NotNull
-  private String createMultiLineReplacement(String[] lines, Collection<DocstringParam> paramsToAdd) {
-    StringBuilder replacementText = new StringBuilder();
-    int ind = lines.length - 1;
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      if (isPlaceToInsertParameter(line)) {
-        ind = i;
-        break;
-      }
-      replacementText.append(line);
-    }
-    if (replacementText.length() > 0) {
-      replacementText.deleteCharAt(replacementText.length() - 1);
-    }
-    addParams(replacementText, false, paramsToAdd);
-    for (int i = ind; i < lines.length; i++) {
-      String line = lines[i];
-      replacementText.append(line);
-    }
-
-    return replacementText.toString();
-  }
-
-  private boolean isPlaceToInsertParameter(String line) {
-    return line.contains(getPrefix());    //TODO: use regexp here?
-  }
-
-  private int addParams(@NotNull StringBuilder replacementText, boolean addWS, @NotNull Collection<DocstringParam> paramsToAdd) {
-
-    final String ws = getWhitespace();
-    // if creating a new docstring, leave blank line where text will be entered
-    if (!StringUtil.containsAlphaCharacters(replacementText.toString())) {
-      replacementText.append("\n");
-    }
-    replacementText.append(ws);
-
-    final Module module = ModuleUtilCore.findModuleForPsiElement(myDocStringOwner);
-    if (module != null) {
-      PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-      if (documentationSettings.isPlain(getFile())) return replacementText.length() - 1;
-    }
-
-    final List<String> unindentedLines = new ArrayList<String>();
-    for (DocstringParam param : paramsToAdd) {
-      final StringBuilder lineBuilder = new StringBuilder();
-      lineBuilder.append(getPrefix());
-      lineBuilder.append(param.getKind());
-      lineBuilder.append(" ");
-      lineBuilder.append(param.getName());
-      lineBuilder.append(": ");
-      if (param.getType() != null) {
-        lineBuilder.append(param.getType());
-      }
-      unindentedLines.add(lineBuilder.toString());
-    }
-    StringUtil.join(unindentedLines, ws, replacementText);
-
-    if (myGenerateReturn && myDocStringOwner instanceof PyFunction) {
-      PyFunction function = (PyFunction)myDocStringOwner;
-      String returnType = generateRaiseOrReturn(function, " ", getPrefix(), true);
-      if (!returnType.isEmpty()) {
-        replacementText.append(ws).append(returnType);
-      }
-    }
-
-    int offset = replacementText.length();
-    if (addWS) {
-      replacementText.append(ws);
-    }
-    else {
-      replacementText.append("\n");
-    }
-    return offset;
-  }
-
-  private String getWhitespace() {
-    PsiWhiteSpace whitespace = null;
-    if (myDocStringOwner instanceof PyFunction) {
-      final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
-      if (document != null && myFunction != null && !PyUtil.onSameLine(statementList, myFunction) && statementList.getStatements().length != 0) {
-        whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
-      }
-    }
-    String ws = "\n";
-    if (whitespace != null) {
-      final String whitespaceText = whitespace.getText();
-      final int index = whitespaceText.lastIndexOf('\n');
-      if (index >= 0) {
-        ws += whitespaceText.substring(index + 1);
-      }
-    }
-    else {
-      ws += StringUtil.repeat(" ", calcExpectedIndentSize(myDocStringOwner));
-    }
-    return ws;
-  }
-
-  @NotNull
-  private String createSingleLineReplacement(Collection<DocstringParam> paramsToAdd) {
-    String text = getDocstringText();
-
-    StringBuilder replacementText = new StringBuilder();
-    String closingQuotes;
-    if (text.endsWith("'''") || text.endsWith("\"\"\"")) {
-      replacementText.append(text.substring(0, text.length() - 3));
-      closingQuotes = text.substring(text.length() - 3);
-    }
-    else {
-      replacementText.append(text.substring(0, text.length()));
-      closingQuotes = text.substring(text.length() - 1);
-    }
-    addParams(replacementText, true, paramsToAdd);
-    replacementText.append(closingQuotes);
-    return replacementText.toString();
-  }
-
   public String docStringAsText() {
-    return addParamToDocstring();
+    return buildDocString();
   }
 
   private DocstringParam getParamToEdit() {
@@ -388,45 +281,41 @@ public class PyDocstringGenerator {
     return myParams.get(0);
   }
 
-  public void build() {
-    myDocStringExpression = myDocStringOwner.getDocStringExpression();
-    final String replacement = addParamToDocstring();
+  public void buildAndInsert() {
+    final String replacement = buildDocString();
 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
-    if (myDocStringExpression != null) {
+    // update existing docstring
+    if (myStructuredDocString != null) {
       PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
       myDocStringExpression.replace(str);
-      if (myFunction != null) {
-        myFunction = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myFunction);
+      myDocStringOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
+      if (myDocStringOwner instanceof PyFunction) {
+        myFunction = (PyFunction)myDocStringOwner;
       }
-      PyDocStringOwner owner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
-      if (owner != null) {
-        myDocStringOwner = owner;
-      }
-
-      myDocStringExpression = myDocStringOwner.getDocStringExpression();
     }
+    // create brand new docstring
     else {
       if (myFunction == null) {
         throw new IllegalStateException("Should be a function");
       }
-      final PyStatementList list = myFunction.getStatementList();
+      final PyStatementList statements = myFunction.getStatementList();
+      final String indentation = PyIndentUtil.getExpectedElementIndent(statements);
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
 
       if (document != null) {
-        if (PyUtil.onSameLine(list, myFunction) || list.getStatements().length == 0) {
+        if (PyUtil.onSameLine(statements, myFunction) || statements.getStatements().length == 0) {
           PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(myFunction),
                                                             PyFunction.class,
-                                                            "def " + myFunction.getName() + myFunction.getParameterList().getText()
-                                                            + ":\n" + StringUtil.repeat(" ", calcExpectedIndentSize(myFunction))
-                                                            + replacement + "\n" +
-                                                            StringUtil.repeat(" ", calcExpectedIndentSize(myFunction)) + list.getText());
+                                                            "def " + myFunction.getName() + myFunction.getParameterList().getText() + ":\n" +
+                                                            indentation + replacement + "\n" +
+                                                            indentation + statements.getText());
 
           myFunction = (PyFunction)myFunction.replace(func);
         }
         else {
           PyExpressionStatement str = elementGenerator.createDocstring(replacement);
-          list.addBefore(str, list.getStatements()[0]);
+          statements.addBefore(str, statements.getStatements()[0]);
         }
       }
 
@@ -435,55 +324,29 @@ public class PyDocstringGenerator {
     }
   }
 
-  private int calcExpectedIndentSize(@NotNull PyDocStringOwner function) {
-    PyStatementList statementList = PsiTreeUtil.getParentOfType(function, PyStatementList.class);
-    int indent = 1;
-    while (statementList != null) {
-      statementList = PsiTreeUtil.getParentOfType(statementList, PyStatementList.class);
-      indent += 1;
-    }
-    return indent * getIndentSizeFromSettings();
-  }
-
-  private int getIndentSizeFromSettings() {
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-    final CodeStyleSettings.IndentOptions indentOptions = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE);
-    return indentOptions.INDENT_SIZE;
-  }
-
-  private String getPrefix() {
-    String prefix = ":";
-    final Module module = ModuleUtilCore.findModuleForPsiElement(myDocStringOwner);
-    if (module == null) return prefix;
-
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-    if (documentationSettings.isEpydocFormat(getFile())) {
-      prefix = "@";
-    }
-    return prefix;
-  }
-
   public static class DocstringParam {
-    private String myKind;
-    private String myName;
-    private String myType;
+    private final String myName;
+    private final String myType;
+    private final boolean myReturnValue;
 
-    private DocstringParam(@NotNull String kind, @NotNull String name, @Nullable String type) {
-      myKind = kind;
+    private DocstringParam(@NotNull String name, @Nullable String type, boolean isReturn) {
       myName = name;
       myType = type;
+      myReturnValue = isReturn;
     }
 
-    public String getKind() {
-      return myKind;
-    }
-
+    @NotNull
     public String getName() {
       return myName;
     }
 
+    @Nullable
     public String getType() {
       return myType;
+    }
+
+    public boolean isReturnValue() {
+      return myReturnValue;
     }
   }
 
@@ -496,12 +359,29 @@ public class PyDocstringGenerator {
     public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
       myHasRaise = true;
       final PyExpression[] expressions = node.getExpressions();
-      if (expressions.length > 0) myRaiseTarget = expressions[0];
+      if (expressions.length > 0) {
+        myRaiseTarget = expressions[0];
+      }
     }
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
       myHasReturn = true;
+    }
+
+    @NotNull
+    public String getRaiseTargetText() {
+      if (myRaiseTarget != null) {
+        String raiseTarget = myRaiseTarget.getText();
+        if (myRaiseTarget instanceof PyCallExpression) {
+          final PyExpression callee = ((PyCallExpression)myRaiseTarget).getCallee();
+          if (callee != null) {
+            raiseTarget = callee.getText();
+          }
+        }
+        return raiseTarget;
+      }
+      return "";
     }
   }
 }

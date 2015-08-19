@@ -129,6 +129,6 @@ public class DocstringQuickFix implements LocalQuickFix {
   }
 
   private String createMissingReplacement(PyDocStringOwner docStringOwner) {
-    return new PyDocstringGenerator(docStringOwner).withParam("param", myMissingText).docStringAsText();
+    return new PyDocstringGenerator(docStringOwner).withParam(myMissingText).docStringAsText();
   }
 }

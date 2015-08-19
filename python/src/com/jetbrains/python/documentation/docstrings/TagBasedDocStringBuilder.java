@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
@@ -29,26 +28,32 @@ public class TagBasedDocStringBuilder extends DocStringBuilder {
   }
 
   @NotNull
-  @Override
-  public DocStringBuilder addParameter(@NotNull String name, @Nullable String type) {
-    addLine(String.format("%sparam %s: ", myTagPrefix, name));
-    if (type != null) {
-      addParameterType(name, type);
-    }
-    return this;
-  }
-
-  @Override
-  public DocStringBuilder addParameterType(@NotNull String name, @NotNull String type) {
-    addLine(String.format("%stype %s: ", myTagPrefix, type));
-    return this;
+  public DocStringBuilder addParameterDescription(@NotNull String name, @NotNull String description) {
+    return addLine(String.format("%sparam %s: %s", myTagPrefix, name, description));
   }
 
   @NotNull
-  @Override
-  public DocStringBuilder addReturnValue(@Nullable String name, @NotNull String type) {
+  public DocStringBuilder addParameterType(@NotNull String name, @NotNull String type) {
+    return addLine(String.format("%stype %s: %s", myTagPrefix, name, type));
+  }
+
+  @NotNull
+  public DocStringBuilder addReturnValueType(@NotNull String type) {
     // named return values are not supported in Sphinx and Epydoc
-    addLine(String.format("%srtype: %s", myTagPrefix, type));
-    return this;
+    return addLine(String.format("%srtype: %s", myTagPrefix, type));
+  }
+
+  public DocStringBuilder addReturnValueDescription(@NotNull String description) {
+    return addLine(String.format("%sreturn: %s", myTagPrefix, description));
+  }
+
+  @NotNull
+  public DocStringBuilder addExceptionDescription(@NotNull String type, @NotNull String description) {
+    return addLine(String.format("%sraise %s: %s", myTagPrefix, type, description));
+  }
+
+  @NotNull
+  public DocStringBuilder addSummary(@NotNull String summary) {
+    return addLine(summary).addLine("");
   }
 }

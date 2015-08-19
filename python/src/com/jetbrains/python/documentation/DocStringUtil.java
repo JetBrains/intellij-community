@@ -176,27 +176,38 @@ public class DocStringUtil {
    * in module settings. If none of them applies, show standard choose dialog, asking user to pick one and updates module settings
    * accordingly.
    *
-   * @param element PSI element that will be used to locate containing file and project module
+   * @param anchor PSI element that will be used to locate containing file and project module
    * @return false if no structured docstring format was specified initially and user didn't select any, true otherwise
    */
-  public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement element) {
+  public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement anchor) {
+    return ensureNotPlainDocstringFormatForFile(anchor.getContainingFile(), getModuleForElement(anchor));
+  }
+
+  @NotNull
+  private static Module getModuleForElement(@NotNull PsiElement element) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module == null) {
       module = ModuleManager.getInstance(element.getProject()).getModules()[0];
     }
-    return ensureNotPlainDocstringFormatForFile(element.getContainingFile(), module);
+    return module;
   }
 
   private static boolean ensureNotPlainDocstringFormatForFile(@NotNull PsiFile file, @NotNull Module module) {
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-    if (documentationSettings.isPlain(file)) {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
+    if (settings.isPlain(file)) {
       final List<String> values = DocStringFormat.ALL_NAMES_BUT_PLAIN;
       final int i = Messages.showChooseDialog("Docstring format:", "Select Docstring Type", ArrayUtil.toStringArray(values), values.get(0), null);
       if (i < 0) {
         return false;
       }
-      documentationSettings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
+      settings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
     }
     return true;
+  }
+
+  @NotNull
+  public static DocStringFormat getDocStringFormat(@NotNull PsiElement anchor) {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(getModuleForElement(anchor));
+    return settings.getFormatForFile(anchor.getContainingFile());
   }
 }

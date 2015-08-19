@@ -19,10 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.documentation.docstrings.DocStringBuilder;
-import com.jetbrains.python.documentation.docstrings.DocStringProvider;
-import com.jetbrains.python.documentation.docstrings.DocStringUpdater;
-import com.jetbrains.python.documentation.docstrings.SphinxDocstringProvider;
+import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +36,17 @@ public enum DocStringFormat {
    * @see DocStringUtil#ensureNotPlainDocstringFormat(PsiElement)
    */
   PLAIN("Plain"),
-  EPYTEXT("Epytext"),
+  EPYTEXT("Epytext") {
+    @NotNull
+    @Override
+    public EpydocDocStringProvider getProvider() {
+      return new EpydocDocStringProvider();
+    }
+  },
   REST("reStructuredText") {
     @NotNull
     @Override
-    public DocStringProvider<? extends StructuredDocString> getProvider() {
+    public SphinxDocstringProvider getProvider() {
       return new SphinxDocstringProvider();
     }
   },
@@ -101,26 +104,26 @@ public enum DocStringFormat {
   }
 
   @NotNull
-  public DocStringProvider<? extends StructuredDocString> getProvider() {
+  public DocStringProvider getProvider() {
     return new StubDocStringProvider();
   }
 
   private static class StubDocStringProvider extends DocStringProvider<StructuredDocString> {
     @Override
     public StructuredDocString parseDocString(@NotNull Substring content) {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Parsing is not available for docstring format " + this);
     }
 
     @NotNull
     @Override
     public DocStringUpdater updateDocString(@NotNull StructuredDocString docstring) {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Updating is not available for docstring format " + this);
     }
 
     @NotNull
     @Override
     public DocStringBuilder createDocString() {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Creating new docstring is not available for docstring format " + this);
     }
   }
 }

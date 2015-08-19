@@ -368,7 +368,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       if (docstring != null && oldIndex < 0) {
-        final String replacement = new PyDocstringGenerator(baseMethod).withParam("param", info.getName()).docStringAsText();
+        final String replacement = new PyDocstringGenerator(baseMethod).withParam(info.getName()).docStringAsText();
         final PyExpression newDocstring = generator.createDocstring(replacement).getExpression();
         docstring.replace(newDocstring);
       }

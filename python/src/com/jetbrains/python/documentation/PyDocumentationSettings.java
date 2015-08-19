@@ -72,20 +72,22 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   }
 
   private boolean isFormat(@Nullable PsiFile file, @NotNull DocStringFormat format) {
-    return file instanceof PyFile ? getFormatForFile(((PyFile)file)) == format : myDocStringFormat == format;
+    return file instanceof PyFile ? getFormatForFile(file) == format : myDocStringFormat == format;
   }
 
   @NotNull
-  public DocStringFormat getFormatForFile(@NotNull PyFile pyFile) {
-    final PyTargetExpression expr = pyFile.findTopLevelAttribute(PyNames.DOCFORMAT);
-    if (expr != null) {
-      final String docformat = PyPsiUtils.strValue(expr.findAssignedValue());
-      if (docformat != null) {
-        final List<String> words = StringUtil.split(docformat, " ");
-        if (words.size() > 0) {
-          final DocStringFormat fileFormat = DocStringFormat.fromName(words.get(0));
-          if (fileFormat != null) {
-            return fileFormat;
+  public DocStringFormat getFormatForFile(@NotNull PsiFile file) {
+    if (file instanceof PyFile) {
+      final PyTargetExpression expr = ((PyFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
+      if (expr != null) {
+        final String docformat = PyPsiUtils.strValue(expr.findAssignedValue());
+        if (docformat != null) {
+          final List<String> words = StringUtil.split(docformat, " ");
+          if (words.size() > 0) {
+            final DocStringFormat fileFormat = DocStringFormat.fromName(words.get(0));
+            if (fileFormat != null) {
+              return fileFormat;
+            }
           }
         }
       }

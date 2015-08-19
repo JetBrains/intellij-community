@@ -16,11 +16,10 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.intellij.lang.annotations.PrintFormat;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,48 +32,36 @@ public abstract class DocStringBuilder {
   }
 
   @NotNull
-  public DocStringBuilder addSummary(@NotNull String summary) {
-    addLine(summary);
-    addLine("");
-    return this;
-  }
-
-  @NotNull
-  public DocStringBuilder startParameterSection() {
-    return this;
-  }
-  @NotNull
-  public abstract DocStringBuilder addParameter(@NotNull String name, @Nullable String type);
-
-  public abstract DocStringBuilder addParameterType(@NotNull String name, @NotNull String type);
-
-  @NotNull
-  public DocStringBuilder startReturnValueSection() {
-    return this;
-  }
-  @NotNull
-  public abstract DocStringBuilder addReturnValue(@Nullable String name, @NotNull String type);
-
-  @NotNull
-  protected DocStringBuilder addLine(@NotNull String line) {
+  public DocStringBuilder addLine(@NotNull String line) {
     myLines.add(line);
     return this;
   }
 
   @NotNull
-  protected DocStringBuilder addLine(@NotNull @PrintFormat String format, @NotNull Object... args) {
-    myLines.add(String.format(format, args));
-    return this;
+  public DocStringBuilder addEmptyLine() {
+    return addLine("");
+  }
+
+  @NotNull
+  public List<String> getLines() {
+    return Collections.unmodifiableList(myLines);
   }
 
   @NotNull
   public String buildContent(int indent, boolean indentFirst) {
+    return buildContent(StringUtil.repeat(" ", indent), indentFirst);
+  }
+
+  @NotNull
+  public String buildContent(@NotNull String indentation, boolean indentFirst) {
     final StringBuilder result = new StringBuilder();
     if (!indentFirst && !myLines.isEmpty()) {
-      result.append(myLines.get(0)).append('\n');
+      if (!StringUtil.isEmptyOrSpaces(myLines.get(0))) {
+        result.append(myLines.get(0));
+      }
+      result.append('\n');
     }
     boolean first = true;
-    String indentation = StringUtil.repeat(" ", indent);
     for (int i = indentFirst ? 0 : 1; i < myLines.size(); i++) {
       if (first) {
         first = false;
@@ -82,7 +69,10 @@ public abstract class DocStringBuilder {
       else {
         result.append('\n');
       }
-      result.append(indentation).append(myLines.get(i));
+      final String line = myLines.get(i);
+      if (!StringUtil.isEmptyOrSpaces(line)) {
+        result.append(indentation).append(line);
+      }
     }
     return result.toString();
   }

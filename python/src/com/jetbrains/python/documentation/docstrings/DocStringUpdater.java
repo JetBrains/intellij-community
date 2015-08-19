@@ -33,6 +33,7 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   private final StringBuilder myBuilder;
   private final List<UpdateOperation> myUpdates = new ArrayList<UpdateOperation>();
   protected final List<AddParameter> myAddParameterRequests = new ArrayList<AddParameter>();
+  protected final List<AddException> myAddExceptionRequest = new ArrayList<AddException>();
   protected final List<AddReturnType> myAddReturnTypeRequests = new ArrayList<AddReturnType>();
 
   public DocStringUpdater(@NotNull T docString) {
@@ -46,6 +47,10 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
 
   public final void addReturnType(@Nullable String name, @NotNull String type) {
     myAddReturnTypeRequests.add(new AddReturnType(name, type));
+  }
+
+  public final void addException(@NotNull String type) {
+    myAddExceptionRequest.add(new AddException(type));
   }
 
   protected void insert(int offset, @NotNull String text) {
@@ -86,6 +91,11 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     return myBuilder.toString();
   }
 
+  @NotNull
+  public T getOriginalDocString() {
+    return myOriginalDocString;
+  }
+
   protected static class AddParameter {
     @NotNull final String name;
     @Nullable final String type;
@@ -102,6 +112,14 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
 
     public AddReturnType(@Nullable String name, @NotNull String type) {
       this.name = name;
+      this.type = type;
+    }
+  }
+
+  protected static class AddException {
+    @NotNull final String type;
+
+    public AddException(@NotNull String type) {
       this.type = type;
     }
   }
