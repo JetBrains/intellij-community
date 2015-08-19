@@ -15,48 +15,54 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySupport.Members;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
 
-import java.util.Collection;
+public abstract class BuilderAnnotationContributor extends AstTransformContributor {
 
-public class BuilderAnnotationContributor extends AstTransformContributor {
+  public static final String BUILDER_PACKAGE = "groovy.transform.builder";
+  public static final String BUILDER_FQN = BUILDER_PACKAGE + ".Builder";
+  public static final String ORIGIN_INFO = "via @Builder";
+  public static final String STRATEGY_ATTRIBUTE = "builderStrategy";
 
-  @Override
-  public void collectMethods(@NotNull GrTypeDefinition clazz, final Collection<PsiMethod> collector) {
-    collector.addAll(collectAll(clazz).methods);
-  }
-
-  @Override
-  public void collectClasses(@NotNull GrTypeDefinition clazz, Collection<PsiClass> collector) {
-    collector.addAll(collectAll(clazz).classes);
-  }
-
-  @Override
-  public void collectFields(@NotNull GrTypeDefinition clazz, Collection<GrField> collector) {
-    collector.addAll(collectAll(clazz).fields);
-  }
-
-  private static Members collectAll(final GrTypeDefinition clazz) {
-    return CachedValuesManager.getCachedValue(clazz, new CachedValueProvider<Members>() {
-      @Nullable
-      @Override
-      public Result<Members> compute() {
-        final Members result = new Members();
-        for (GrBuilderStrategySupport strategySupport : GrBuilderStrategySupport.EP.getExtensions()) {
-          result.addFrom(strategySupport.process(clazz));
-        }
-        return Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+  @Nullable
+  @Contract("null,_ -> null")
+  public static PsiClass getClassAttributeValue(@Nullable PsiAnnotation annotation, @NotNull String attributeName) {
+    if (annotation == null) return null;
+    final PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof GrReferenceExpression) {
+      final PsiElement element = ((GrReferenceExpression)value).resolve();
+      return element instanceof PsiClass ? (PsiClass)element : null;
+    }
+    else if (value instanceof PsiClassObjectAccessExpression) {
+      PsiType type = ((PsiClassObjectAccessExpression)value).getOperand().getType();
+      if (type instanceof PsiClassType) {
+        return ((PsiClassType)type).resolve();
       }
-    });
+    }
+    return null;
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isApplicable(@Nullable PsiAnnotation annotation, @NotNull String strategy) {
+    if (annotation == null) return false;
+    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue(STRATEGY_ATTRIBUTE);
+    if (attributeValue == null) {
+      return strategy == DefaultBuilderStrategySupport.DEFAULT_STRATEGY_NAME;
+    }
+    else {
+      final String value = attributeValue.getText();
+      return strategy.equals(value) || StringUtil.getQualifiedName(BUILDER_PACKAGE, strategy).equals(value);
+    }
+  }
+
+  public static PsiType createType(PsiClass clazz) {
+    return JavaPsiFacade.getElementFactory(clazz.getProject()).createType(clazz);
   }
 }
