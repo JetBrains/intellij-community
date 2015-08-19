@@ -277,6 +277,20 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     useJava7();
     verifyJavaDoc(getTestClass());
   }
+  
+  public void testMatchingParameterNameFromParent() throws Exception {
+    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    PsiClass psiClass = ((PsiJavaFile)myFile).getClasses()[1];
+    PsiMethod method = psiClass.getMethods()[0];
+    verifyJavaDoc(method);
+  }
+
+  public void testMatchingTypeParameterNameFromParent() throws Exception {
+    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    PsiClass psiClass = ((PsiJavaFile)myFile).getClasses()[1];
+    PsiMethod method = psiClass.getMethods()[0];
+    verifyJavaDoc(method);
+  }
 
   @Override
   protected String getTestDataPath() {

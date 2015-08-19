@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
@@ -24,24 +25,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 
 public class BuilderHelperLightPsiClass extends LightPsiClassBuilder {
 
-  private final @NotNull GrTypeDefinition myContainingClass;
-
   public BuilderHelperLightPsiClass(@NotNull GrTypeDefinition containingClass, @NotNull String name) {
     super(containingClass, name);
-    myContainingClass = containingClass;
-    setScope(myContainingClass);
-    setOriginInfo(GrBuilderStrategySupport.ORIGIN_INFO);
+    setScope(containingClass);
+    setContainingClass(containingClass);
+    setOriginInfo(BuilderAnnotationContributor.ORIGIN_INFO);
     getModifierList().addModifier(PsiModifier.STATIC);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getContainingClass();
   }
 
   @NotNull
   @Override
   public PsiClass getContainingClass() {
-    return myContainingClass;
+    //noinspection ConstantConditions
+    return super.getContainingClass();
   }
 
   @Override
   public PsiFile getContainingFile() {
-    return myContainingClass.getContainingFile();
+    return getContainingClass().getContainingFile();
   }
 }

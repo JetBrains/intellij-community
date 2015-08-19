@@ -1182,7 +1182,7 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
-    myErrorText.myLabel.addComponentListener(new ComponentAdapter() {
+    final ComponentAdapter resizeListener = new ComponentAdapter() {
       private int myHeight;
 
       @Override
@@ -1202,6 +1202,13 @@ public abstract class DialogWrapper {
           myErrorText.revalidate();
           myResizeInProgress = false;
         }
+      }
+    };
+    myErrorText.myLabel.addComponentListener(resizeListener);
+    Disposer.register(myDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myErrorText.myLabel.removeComponentListener(resizeListener);
       }
     });
 
