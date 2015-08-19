@@ -30,17 +30,17 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
   }
 
   protected abstract static class MyLexer extends LexerBase {
-    private final int myIndent;
-    private final Lexer myDelegate;
+    protected final int myIndent;
+    protected final Lexer myDelegate;
 
-    private int myStartOffset;
-    private int myEndOffset;
+    protected int myStartOffset;
+    protected int myEndOffset;
     protected CharSequence myBuffer;
 
-    private int myState;
-    private IElementType myTokenType;
+    protected int myState;
+    protected IElementType myTokenType;
     protected int myTokenStart;
-    private int myTokenEnd;
+    protected int myTokenEnd;
 
     public MyLexer(int indent, Lexer delegateLexer) {
       myIndent = indent;
@@ -169,7 +169,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
       }
     }
 
-    private int findEndByIndent(int offset) {
+    protected int findEndByIndent(int offset) {
       while (offset < myEndOffset) {
         if (offset > myStartOffset
             && !StringUtil.isWhiteSpace(myBuffer.charAt(offset))
@@ -189,7 +189,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
       return offset;
     }
 
-    private int calcIndent(int offset) {
+    protected int calcIndent(int offset) {
       if (offset == myStartOffset) {
         return myIndent;
       }
@@ -212,7 +212,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
       return answer + myIndent;
     }
 
-    private int findNonWhitespace(int offset) {
+    protected int findNonWhitespace(int offset) {
       while (offset < myEndOffset) {
         if (!StringUtil.isWhiteSpace(myBuffer.charAt(offset))) {
           return offset;
@@ -233,7 +233,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
       return myEndOffset;
     }
 
-    private int findEol(int offset) {
+    protected int findEol(int offset) {
       while (offset < myEndOffset) {
         if (myBuffer.charAt(offset) == '\n') {
           return offset;
