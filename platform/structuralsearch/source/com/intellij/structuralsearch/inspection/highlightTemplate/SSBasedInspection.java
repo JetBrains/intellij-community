@@ -56,6 +56,8 @@ import java.util.*;
  * @author cdr
  */
 public class SSBasedInspection extends LocalInspectionTool {
+  private static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
+
   static final String SHORT_NAME = "SSBasedInspection";
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
   private final Set<String> myProblemsReported = new HashSet<String>(1);
@@ -117,26 +119,28 @@ public class SSBasedInspection extends LocalInspectionTool {
 
       @Override
       public void visitElement(PsiElement element) {
-        if (LexicalNodesFilter.getInstance().accepts(element)) return;
-        final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
-        for (Pair<MatchContext, Configuration> pair : contexts) {
-          Configuration configuration = pair.second;
-          MatchContext context = pair.first;
+        synchronized (LOCK) {
+          if (LexicalNodesFilter.getInstance().accepts(element)) return;
+          final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
+          for (Pair<MatchContext, Configuration> pair : contexts) {
+            Configuration configuration = pair.second;
+            MatchContext context = pair.first;
 
-          if (MatcherImpl.checkIfShouldAttemptToMatch(context, matchedNodes)) {
-            final int nodeCount = context.getPattern().getNodeCount();
-            try {
-              matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
-            }
-            catch (StructuralSearchException e) {
-              if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
-                Notifications.Bus.notify(new Notification(SSRBundle.message("structural.search.title"),
-                                                          SSRBundle.message("template.problem", configuration.getName()),
-                                                          e.getMessage(),
-                                                          NotificationType.ERROR), element.getProject());
+            if (MatcherImpl.checkIfShouldAttemptToMatch(context, matchedNodes)) {
+              final int nodeCount = context.getPattern().getNodeCount();
+              try {
+                matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
               }
+              catch (StructuralSearchException e) {
+                if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
+                  Notifications.Bus.notify(new Notification(SSRBundle.message("structural.search.title"),
+                                                            SSRBundle.message("template.problem", configuration.getName()),
+                                                            e.getMessage(),
+                                                            NotificationType.ERROR), element.getProject());
+                }
+              }
+              matchedNodes.reset();
             }
-            matchedNodes.reset();
           }
         }
       }
