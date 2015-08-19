@@ -55,24 +55,19 @@ public abstract class DocStringBuilder {
   @NotNull
   public String buildContent(@NotNull String indentation, boolean indentFirst) {
     final StringBuilder result = new StringBuilder();
-    if (!indentFirst && !myLines.isEmpty()) {
-      if (!StringUtil.isEmptyOrSpaces(myLines.get(0))) {
-        result.append(myLines.get(0));
-      }
-      result.append('\n');
-    }
     boolean first = true;
-    for (int i = indentFirst ? 0 : 1; i < myLines.size(); i++) {
-      if (first) {
-        first = false;
-      }
-      else {
+    for (String line : myLines) {
+      if (!first) {
         result.append('\n');
       }
-      final String line = myLines.get(i);
+      // Do not add indentation for empty lines
       if (!StringUtil.isEmptyOrSpaces(line)) {
-        result.append(indentation).append(line);
+        if (!first || indentFirst) {
+          result.append(indentation);
+        }
+        result.append(line);
       }
+      first = false;
     }
     return result.toString();
   }
