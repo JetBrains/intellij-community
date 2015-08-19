@@ -2,7 +2,6 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.PathMappingSettings;
-import com.intellij.util.PathMapper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -12,7 +11,7 @@ import java.util.List;
  */
 public interface RemoteProcessHandlerBase {
   @NotNull
-  PathMapper getPathMapper();
+  PathMappingSettings getMappingSettings();
 
   Pair<String, Integer> obtainRemoteSocket() throws RemoteSdkException;
 

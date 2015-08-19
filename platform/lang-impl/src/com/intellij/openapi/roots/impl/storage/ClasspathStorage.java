@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -129,14 +128,8 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
     return (S)state;
   }
 
-  static class MyStorageData extends StorageDataBase {
+  static class MyStorageData implements StorageDataBase {
     private boolean loaded;
-
-    @NotNull
-    @Override
-    public Set<String> getComponentNames() {
-      return Collections.emptySet();
-    }
 
     @Override
     public boolean hasState(@NotNull String componentName) {

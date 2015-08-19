@@ -1,7 +1,6 @@
 package com.jetbrains.edu;
 
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,18 +8,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 
 public class EduUtils {
@@ -35,39 +29,12 @@ public class EduUtils {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
-  public static void commitAndSaveModel(final ModifiableRootModel model) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-        model.getProject().save();
-      }
-    });
-  }
-
-  @Nullable
-  public static ModifiableRootModel getModel(@NotNull VirtualFile dir, @NotNull Project project) {
-    final Module module = ModuleUtilCore.findModuleForFile(dir, project);
-    if (module == null) {
-      LOG.info("Module for " + dir.getPath() + " was not found");
-      return null;
+  public static Comparator<StudyItem> INDEX_COMPARATOR = new Comparator<StudyItem>() {
+    @Override
+    public int compare(StudyItem o1, StudyItem o2) {
+      return o1.getIndex() - o2.getIndex();
     }
-    return ModuleRootManager.getInstance(module).getModifiableModel();
-  }
-
-  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
-    final ModifiableRootModel model = getModel(dir, project);
-    if (model == null) {
-      return;
-    }
-    final ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
-    if (entry == null) {
-      LOG.info("Content entry for " + dir.getPath() + " was not found");
-      return;
-    }
-    entry.addSourceFolder(dir, false);
-    commitAndSaveModel(model);
-  }
+  };
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
     final Presentation presentation = event.getPresentation();
@@ -83,10 +50,14 @@ public class EduUtils {
    * @return index of object
    */
   public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
-    if (!fullName.contains(logicalName)) {
+    if (!fullName.startsWith(logicalName)) {
       return -1;
     }
-    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+    try {
+      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+    } catch(NumberFormatException e) {
+      return -1;
+    }
   }
 
   public static boolean indexIsValid(int index, Collection collection) {
@@ -200,6 +171,10 @@ public class EduUtils {
     taskFile.sortAnswerPlaceholders();
     for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
+      if (answerPlaceholder.getRealStartOffset(document) > document.getTextLength() || answerPlaceholder.getRealStartOffset(document) + answerPlaceholder.getPossibleAnswerLength() > document.getTextLength()) {
+        LOG.error("Wrong startOffset: " + answerPlaceholder.getRealStartOffset(document) + "; document: " + file.getPath());
+        return;
+      }
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -262,5 +237,18 @@ public class EduUtils {
         }
       });
     }
+  }
+
+  @Nullable
+  public static Task getTask(@NotNull final PsiDirectory directory, @NotNull final Course course) {
+    PsiDirectory lessonDir = directory.getParent();
+    if (lessonDir == null) {
+      return null;
+    }
+    Lesson lesson = course.getLesson(lessonDir.getName());
+    if (lesson == null) {
+      return null;
+    }
+    return lesson.getTask(directory.getName());
   }
 }

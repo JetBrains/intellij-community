@@ -393,10 +393,15 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
     @Override
     public void editingStopped(ChangeEvent e) {
-      int editingRow = getEditingRow();
-      String oldName = getModel().getPatchName(editingRow);
+      final int editingRow = getEditingRow();
+      final String oldName = getModel().getPatchName(editingRow);
       super.editingStopped(e);
-      HgQRenameCommand.performPatchRename(myRepository, oldName, getModel().getPatchName(editingRow));
+      updatePatchSeriesInBackground(new Runnable() {
+        @Override
+        public void run() {
+          HgQRenameCommand.performPatchRename(myRepository, oldName, getModel().getPatchName(editingRow));
+        }
+      });
     }
   }
 }

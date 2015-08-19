@@ -804,6 +804,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText;
   }
 
+  // Breaks encapsulation, yet required for current zero-latency typing implementation.
+  // TODO Should be removed when we implement typing without starting write actions.
+  @NotNull
+  public ImmutableText getImmutableText() {
+    return myText;
+  }
 
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {

@@ -374,6 +374,7 @@ public class FindDialog extends DialogWrapper {
         if(myResultsPreviewTable != null &&
           myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
           newAction.run();
+          return;
         }
 
         if (previousAction != null) {
@@ -646,7 +647,7 @@ public class FindDialog extends DialogWrapper {
       pane.insertTab("Options", null, optionsPanel, null, 0);
       pane.insertTab(PREVIEW_TITLE, null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
-      AnAction anAction = new AnAction() {
+      final AnAction anAction = new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
           int selectedIndex = myContent.getSelectedIndex();
@@ -655,7 +656,9 @@ public class FindDialog extends DialogWrapper {
       };
 
       final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
-      anAction.registerCustomShortcutSet(shortcutSet, getRootPane());
+
+      anAction.registerCustomShortcutSet(shortcutSet, getRootPane(), myDisposable);
+
       if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
 
       return pane.getComponent();

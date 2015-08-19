@@ -719,16 +719,12 @@ print map.cla<caret>ss''')
   }
 
   public void testResolveInsideWith0() {
-    def resolved = resolve('a.groovy')
-
-    assertInstanceOf(resolved, GrAccessorMethod)
+    def resolved = resolve('a.groovy', GrAccessorMethod)
     assertEquals(resolved.containingClass.name, 'A')
   }
 
   public void testResolveInsideWith1() {
-    def resolved = resolve('a.groovy')
-
-    assertInstanceOf(resolved, GrField)
+    def resolved = resolve('a.groovy', GrField)
     assertEquals(resolved.containingClass.name, 'B')
   }
 
@@ -934,9 +930,7 @@ def tw = new Twin(one: new Person(name:'Tom'),
 assert tw*.nam<caret>e == ['Tom', 'Tim']
 ''')
 
-    final resolved = ref.resolve()
-
-    assertInstanceOf(resolved, PsiMember)
+    final resolved = assertInstanceOf(ref.resolve(), PsiMember)
     assertNotNull(resolved.containingClass)
     assertEquals('Person', resolved.containingClass.name)
   }

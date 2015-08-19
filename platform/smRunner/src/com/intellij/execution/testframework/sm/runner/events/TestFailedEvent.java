@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,16 @@ public class TestFailedEvent extends TreeNodeEvent {
   private final String myComparisonFailureActualText;
   private final String myComparisonFailureExpectedText;
   private final String myFilePath;
+  private final String myActualFilePath;
   private final long myDurationMillis;
 
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);
   }
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError, String filePath) {
+    this(testFailed, testError, filePath, null);
+  }  
+  public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError, String filePath, String actualFilePath) {
     super(testFailed.getTestName(), TreeNodeEvent.getNodeId(testFailed));
     if (testFailed.getFailureMessage() == null) throw new NullPointerException();
     myLocalizedFailureMessage = testFailed.getFailureMessage();
@@ -42,6 +46,7 @@ public class TestFailedEvent extends TreeNodeEvent {
     myComparisonFailureActualText = testFailed.getActual();
     myComparisonFailureExpectedText = testFailed.getExpected();
     myFilePath = filePath;
+    myActualFilePath = actualFilePath;
     myDurationMillis = parseDuration(testFailed.getAttributes().get("duration"));
   }
 
@@ -89,6 +94,7 @@ public class TestFailedEvent extends TreeNodeEvent {
     myComparisonFailureActualText = comparisonFailureActualText;
     myComparisonFailureExpectedText = comparisonFailureExpectedText;
     myFilePath = expectedTextFilePath;
+    myActualFilePath = null;
     myDurationMillis = durationMillis;
   }
 
@@ -129,6 +135,10 @@ public class TestFailedEvent extends TreeNodeEvent {
     return myFilePath;
   }
 
+  public String getActualFilePath() {
+    return myActualFilePath;
+  }
+  
   /**
    * @return the test duration in milliseconds, or -1 if undefined
    */

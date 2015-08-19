@@ -789,7 +789,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
                                                          final Boolean pin,
                                                          final int index) {
     assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed() : "must not open files under read action since we are doing a lot of invokeAndWaits here";
-    file.refresh(true, false);
 
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<EditorWithProviderComposite>();
 

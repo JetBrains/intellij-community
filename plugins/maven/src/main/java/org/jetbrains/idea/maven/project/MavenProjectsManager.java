@@ -27,6 +27,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -545,11 +546,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
         // clear external system API options
         // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
-        m.clearOption("external.system.id");
-        m.clearOption("external.linked.project.path");
-        m.clearOption("external.root.project.path");
-        m.clearOption("external.system.module.group");
-        m.clearOption("external.system.module.version");
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+        m.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+        m.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
+        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
       }
       else {
         m.clearOption(getMavenizedModuleOptionName());

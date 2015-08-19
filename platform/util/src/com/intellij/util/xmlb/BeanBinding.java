@@ -24,6 +24,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
 import org.jdom.Comment;
@@ -263,17 +264,41 @@ class BeanBinding extends Binding implements MainBinding {
 
     accessors = ContainerUtil.newArrayList();
 
+    Map<String, Couple<Method>> nameToAccessors;
     if (aClass != Rectangle.class) {   // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
-      collectPropertyAccessors(aClass, accessors);
+      nameToAccessors = collectPropertyAccessors(aClass, accessors);
     }
+    else {
+      nameToAccessors = Collections.emptyMap();
+    }
+
+    int propertyAccessorCount  = accessors.size();
     collectFieldAccessors(aClass, accessors);
+
+    // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
+    // so, we must remove duplicated accessor
+    for (int j = propertyAccessorCount; j < accessors.size(); j++) {
+      String name = accessors.get(j).getName();
+      if (nameToAccessors.containsKey(name)) {
+        for (int i = 0; i < propertyAccessorCount; i++) {
+          if (accessors.get(i).getName().equals(name)) {
+            accessors.remove(i);
+            propertyAccessorCount--;
+            //noinspection AssignmentToForLoopParameter
+            j--;
+            break;
+          }
+        }
+      }
+    }
 
     ourAccessorCache.put(aClass, accessors);
 
     return accessors;
   }
 
-  private static void collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
+  @NotNull
+  private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
     final Map<String, Couple<Method>> candidates = ContainerUtilRt.newTreeMap(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
@@ -296,7 +321,8 @@ class BeanBinding extends Binding implements MainBinding {
       candidate = Couple.of(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
       candidates.put(propertyData.first, candidate);
     }
-    for (Map.Entry<String, Couple<Method>> candidate: candidates.entrySet()) {
+    for (Iterator<Map.Entry<String, Couple<Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<String, Couple<Method>> candidate = iterator.next();
       Couple<Method> methods = candidate.getValue(); // (getter,setter)
       if (methods.first != null && methods.second != null &&
           methods.first.getReturnType().equals(methods.second.getParameterTypes()[0]) &&
@@ -304,7 +330,11 @@ class BeanBinding extends Binding implements MainBinding {
           methods.second.getAnnotation(Transient.class) == null) {
         accessors.add(new PropertyAccessor(candidate.getKey(), methods.first.getReturnType(), methods.first, methods.second));
       }
+      else {
+        iterator.remove();
+      }
     }
+    return candidates;
   }
 
   private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
@@ -320,6 +350,8 @@ class BeanBinding extends Binding implements MainBinding {
              field.getAnnotation(Property.class) != null ||
              field.getAnnotation(Text.class) != null ||
              field.getAnnotation(CollectionBean.class) != null ||
+             field.getAnnotation(MapAnnotation.class) != null ||
+             field.getAnnotation(AbstractCollection.class) != null ||
              (Modifier.isPublic(modifiers) &&
               // we don't want to allow final fields of all types, but only supported
               (!Modifier.isFinal(modifiers) || Collection.class.isAssignableFrom(field.getType())) &&

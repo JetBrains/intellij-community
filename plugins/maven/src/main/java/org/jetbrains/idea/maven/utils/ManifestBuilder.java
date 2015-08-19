@@ -67,18 +67,7 @@ public class ManifestBuilder {
   @NotNull
   public java.util.jar.Manifest build() throws ManifestBuilderException {
     try {
-      Element mavenPackagingPluginConfiguration = null;
-      final String packaging = myMavenProject.getPackaging();
-      if (StringUtil.isEmpty(packaging)) {
-        mavenPackagingPluginConfiguration = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-jar-plugin");
-      }
-      else {
-        final String pluginArtifactId = PACKAGING_PLUGINS.get(StringUtil.toLowerCase(packaging));
-        if (pluginArtifactId != null) {
-          mavenPackagingPluginConfiguration = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", pluginArtifactId);
-        }
-      }
-
+      Element mavenPackagingPluginConfiguration = getMavenPackagingPluginConfiguration(myMavenProject);
       final Element mavenArchiveConfiguration =
         mavenPackagingPluginConfiguration != null ? mavenPackagingPluginConfiguration.getChild("archive") : null;
 
@@ -111,12 +100,38 @@ public class ManifestBuilder {
   }
 
   @NotNull
+  public static String getClasspath(@NotNull MavenProject mavenProject) {
+    Element mavenPackagingPluginConfiguration = getMavenPackagingPluginConfiguration(mavenProject);
+    final Element mavenArchiveConfiguration =
+      mavenPackagingPluginConfiguration != null ? mavenPackagingPluginConfiguration.getChild("archive") : null;
+    final Element manifestConfiguration = mavenArchiveConfiguration != null ? mavenArchiveConfiguration.getChild("manifest") : null;
+    final ManifestImporter manifestImporter = ManifestImporter.getManifestImporter(mavenProject.getPackaging());
+    return manifestImporter.getClasspath(mavenProject, manifestConfiguration);
+  }
+
+  @NotNull
   public static String getClasspathPrefix(@Nullable Element manifestConfiguration) {
     String classpathPrefix = MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "classpathPrefix", "").replaceAll("\\\\", "/");
     if (classpathPrefix.length() != 0 && !classpathPrefix.endsWith("/")) {
       classpathPrefix += "/";
     }
     return classpathPrefix;
+  }
+
+  @Nullable
+  private static Element getMavenPackagingPluginConfiguration(@NotNull MavenProject mavenProject) {
+    Element mavenPackagingPluginConfiguration = null;
+    final String packaging = mavenProject.getPackaging();
+    if (StringUtil.isEmpty(packaging)) {
+      mavenPackagingPluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-jar-plugin");
+    }
+    else {
+      final String pluginArtifactId = PACKAGING_PLUGINS.get(StringUtil.toLowerCase(packaging));
+      if (pluginArtifactId != null) {
+        mavenPackagingPluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", pluginArtifactId);
+      }
+    }
+    return mavenPackagingPluginConfiguration;
   }
 
 

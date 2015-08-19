@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -24,25 +23,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ShredImpl implements PsiLanguageInjectionHost.Shred {
-  private final RangeMarker relevantRangeInHost;
+  private final SmartPsiFileRange relevantRangeInHost;
   private final SmartPsiElementPointer<PsiLanguageInjectionHost> hostElementPointer;
   private final TextRange range; // range in (decoded) PSI
   private final String prefix;
   private final String suffix;
 
-  ShredImpl(@NotNull PsiLanguageInjectionHost host,
-            @NotNull PsiFile hostPsiFile,
-            @NotNull final RangeMarker relevantRangeInHost,
+  ShredImpl(@NotNull SmartPsiFileRange relevantRangeInHost,
+            @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> hostElementPointer,
             @NotNull String prefix,
             @NotNull String suffix,
             @NotNull TextRange range) {
-    hostElementPointer = createHostSmartPointer(host, hostPsiFile);
+    this.hostElementPointer = hostElementPointer;
     this.relevantRangeInHost = relevantRangeInHost;
     this.prefix = prefix;
     this.suffix = suffix;
     this.range = range;
     assert isValid();
-    assert relevantRangeInHost.isValid();
   }
 
   @NotNull
@@ -50,26 +47,18 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
     return hostElementPointer;
   }
 
-  @NotNull
-  private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(@NotNull T host,
-                                                                                                       @NotNull PsiFile hostPsiFile) {
-    return hostPsiFile.isPhysical()
-           ? SmartPointerManager.getInstance(hostPsiFile.getProject()).createSmartPsiElementPointer(host, hostPsiFile)
-           : new IdentitySmartPointer<T>(host, hostPsiFile);
-  }
-
   @Override
   @Nullable("returns null when the host document marker is invalid")
   public Segment getHostRangeMarker() {
-    RangeMarker marker = relevantRangeInHost;
-    return marker.isValid() ? marker : null;
+    return relevantRangeInHost.getRange();
   }
 
   @Override
   @NotNull
   public TextRange getRangeInsideHost() {
     PsiLanguageInjectionHost host = getHost();
-    ProperTextRange textRange = relevantRangeInHost.isValid() ? ProperTextRange.create(relevantRangeInHost) : null;
+    Segment psiRange = relevantRangeInHost.getRange();
+    TextRange textRange = psiRange == null ? null : TextRange.create(psiRange);
     if (host == null) {
       if (textRange != null) return textRange;
       Segment fromSP = hostElementPointer.getRange();
@@ -86,16 +75,16 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     PsiLanguageInjectionHost host = getHost();
+    Segment hostRange = getHostRangeMarker();
     return "Shred " + (host == null ? null : host.getTextRange()) + ": " + host +
-           " In host range: " + (relevantRangeInHost.isValid() ? "" : "!") +
-           "(" + relevantRangeInHost.getStartOffset() + "," + relevantRangeInHost.getEndOffset() + ");" +
-           " PSI range: " + range;
+           " In host range: " + (hostRange != null ? "(" + hostRange.getStartOffset() + "," + hostRange.getEndOffset() + ");" : "invalid;") +
+           " PSI range: " + this.range;
   }
 
   @Override
   public boolean isValid() {
     PsiLanguageInjectionHost host = getHost();
-    return relevantRangeInHost.isValid() && host != null && host.isValid();
+    return getHostRangeMarker() != null && host != null && host.isValid();
   }
 
   @Override
@@ -106,14 +95,16 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
     PsiLanguageInjectionHost.Shred shred = (PsiLanguageInjectionHost.Shred)o;
 
     PsiLanguageInjectionHost host = getHost();
-    Segment hostRangeMarker = shred.getHostRangeMarker();
+    Segment hostRangeMarker = getHostRangeMarker();
+    Segment hostRangeMarker2 = shred.getHostRangeMarker();
     return host != null &&
            host.equals(shred.getHost()) &&
            prefix.equals(shred.getPrefix()) &&
            suffix.equals(shred.getSuffix()) &&
            range.equals(shred.getRange()) &&
            hostRangeMarker != null &&
-           TextRange.create(relevantRangeInHost).equals(TextRange.create(hostRangeMarker));
+           hostRangeMarker2 != null &&
+           TextRange.create(hostRangeMarker).equals(TextRange.create(hostRangeMarker2));
   }
 
   @Override
@@ -123,7 +114,6 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
 
   @Override
   public void dispose() {
-    relevantRangeInHost.dispose();
   }
 
   @Override

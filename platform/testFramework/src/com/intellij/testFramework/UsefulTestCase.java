@@ -107,6 +107,7 @@ public abstract class UsefulTestCase extends TestCase {
   };
 
   protected static String ourPathToKeep = null;
+  private List<String> myPathsToKeep = new ArrayList<String>();
 
   private CodeStyleSettings myOldCodeStyleSettings;
   private String myTempDir;
@@ -156,11 +157,11 @@ public abstract class UsefulTestCase extends TestCase {
     finally {
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-        if (ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false)) {
+        if (hasTmpFilesToKeep()) {
           File[] files = new File(myTempDir).listFiles();
           if (files != null) {
             for (File file : files) {
-              if (!FileUtil.pathsEqual(file.getPath(), ourPathToKeep)) {
+              if (!shouldKeepTmpFile(file)) {
                 FileUtil.delete(file);
               }
             }
@@ -174,6 +175,23 @@ public abstract class UsefulTestCase extends TestCase {
 
     UIUtil.removeLeakingAppleListeners();
     super.tearDown();
+  }
+
+  protected void addTmpFileToKeep(File file) {
+    myPathsToKeep.add(file.getPath());
+  }
+
+  private boolean hasTmpFilesToKeep() {
+    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false) || !myPathsToKeep.isEmpty();
+  }
+
+  private boolean shouldKeepTmpFile(File file) {
+    String path = file.getPath();
+    if (FileUtil.pathsEqual(path, ourPathToKeep)) return true;
+    for (String pathToKeep : myPathsToKeep) {
+      if (FileUtil.pathsEqual(path, pathToKeep)) return true;
+    }
+    return false;
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;

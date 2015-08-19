@@ -58,7 +58,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -185,7 +185,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             ((AbstractPopup)hint).focusPreferredComponent();
             return;
           }
-          if (action instanceof ListScrollingUtil.ListScrollAction) return;
+          if (action instanceof ScrollingUtil.ListScrollAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
@@ -712,6 +712,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
+        LOG.debug("Started fetching documentation...");
         final Throwable[] ex = new Throwable[1];
         String text = null;
         try {
@@ -736,6 +737,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           });
           return;
         }
+        
+        LOG.debug("Documentation fetched successfully:\n", text);
 
         final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
           @Override
@@ -745,6 +748,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         });
         if (element == null) {
+          LOG.debug("Element for which documentation was requested is not available anymore");
           return;
         }
         final String documentationText = text;
@@ -755,6 +759,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
             if (!element.isValid()) {
+              LOG.debug("Element for which documentation was requested is not valid");
               callback.setDone();
               return;
             }
@@ -1127,6 +1132,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
           }
       );
+      LOG.debug("Using provider ", provider);
 
       if (provider instanceof ExternalDocumentationProvider) {
         final List<String> urls = ApplicationManager.getApplication().runReadAction(
@@ -1142,10 +1148,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               }
             }
         );
+        LOG.debug("External documentation URLs: ", urls);
         if (urls != null) {
           for (String url : urls) {
             final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(myProject, myElement, Collections.singletonList(url));
             if (doc != null) {
+              LOG.debug("Fetched documentation from ", url);
               myEffectiveUrl = url;
               return doc;
             }

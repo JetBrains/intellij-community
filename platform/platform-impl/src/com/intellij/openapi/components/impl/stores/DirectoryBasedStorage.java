@@ -177,7 +177,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
 
     private void saveStates(@NotNull final VirtualFile dir) {
-      final Element storeElement = new Element(StorageDataBase.COMPONENT);
+      final Element storeElement = new Element(StateMap.COMPONENT);
 
       for (final String componentName : copiedStorageData.getComponentNames()) {
         copiedStorageData.processComponent(componentName, new PairConsumer<String, Object>() {
@@ -194,7 +194,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
                 storage.myPathMacroSubstitutor.collapsePaths(element);
               }
 
-              storeElement.setAttribute(StorageDataBase.NAME, componentName);
+              storeElement.setAttribute(StateMap.NAME, componentName);
               storeElement.addContent(element);
 
               VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);

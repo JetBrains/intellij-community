@@ -193,6 +193,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
       runTestOn(sdk);
     }
 
+    @NotNull
     @Override
     public Set<String> getTags() {
       return TAGS;

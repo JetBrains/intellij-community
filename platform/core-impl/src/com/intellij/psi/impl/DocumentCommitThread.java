@@ -157,24 +157,30 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   }
 
   @Override
-  public void commitAsynchronously(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
-    queueCommit(project, document, reason);
+  public void commitAsynchronously(@NotNull final Project project,
+                                   @NotNull final Document document,
+                                   @NonNls @NotNull Object reason,
+                                   @NotNull ModalityState currentModalityState) {
+    queueCommit(project, document, reason, currentModalityState);
   }
 
-  void queueCommit(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
+  void queueCommit(@NotNull final Project project,
+                   @NotNull final Document document,
+                   @NonNls @NotNull Object reason,
+                   @NotNull ModalityState currentModalityState) {
     assert !isDisposed : "already disposed";
 
     if (!project.isInitialized()) return;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     if (psiFile == null) return;
 
-    doQueue(project, document, reason);
+    doQueue(project, document, reason, currentModalityState);
   }
 
-  private void doQueue(@NotNull Project project, @NotNull Document document, @NotNull Object reason) {
+  private void doQueue(@NotNull Project project, @NotNull Document document, @NotNull Object reason, @NotNull ModalityState currentModalityState) {
     synchronized (documentsToCommit) {
       ProgressIndicator indicator = createProgressIndicator();
-      CommitTask newTask = new CommitTask(document, project, indicator, reason);
+      CommitTask newTask = new CommitTask(document, project, indicator, reason, currentModalityState);
 
       markRemovedFromDocsToCommit(newTask);
       markRemovedCurrentTask(newTask);
@@ -358,7 +364,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
       if (success) {
         assert !myApplication.isDispatchThread();
-        myApplication.invokeLater(finishRunnable, ModalityState.NON_MODAL);
+        myApplication.invokeLater(finishRunnable, task.myCreationModalityState);
         log("Invoked later finishRunnable", task, false, finishRunnable, indicator);
       }
     }
@@ -379,7 +385,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     synchronized (documentsToCommit) {
       if (!success && !task.removed) { // sync commit has not intervened
         // reset status for queue back successfully
-        doQueue(project, document, "re-added on failure");
+        doQueue(project, document, "re-added on failure", task.myCreationModalityState);
       }
       currentTask = null; // do not cancel, it's being invokeLatered
     }
@@ -402,7 +408,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
 
     ProgressIndicator indicator = createProgressIndicator();
-    CommitTask task = new CommitTask(document, project, indicator, "Sync commit");
+    CommitTask task = new CommitTask(document, project, indicator, "Sync commit", ModalityState.current());
     synchronized (documentsToCommit) {
       markRemovedFromDocsToCommit(task);
       markRemovedCurrentTask(task);
@@ -529,7 +535,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         }
         if (!success) {
           // add document back to the queue
-          queueCommit(project, document, "Re-added back");
+          queueCommit(project, document, "Re-added back", task.myCreationModalityState);
         }
       }
     };

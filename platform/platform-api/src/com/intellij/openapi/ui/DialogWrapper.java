@@ -1224,7 +1224,7 @@ public abstract class DialogWrapper {
         expandNextOptionButton();
       }
     };
-    toggleShowOptions.registerCustomShortcutSet(sc, root);
+    toggleShowOptions.registerCustomShortcutSet(sc, root, myDisposable);
 
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {
@@ -1267,7 +1267,7 @@ public abstract class DialogWrapper {
       startTrackingValidation();
     }
     if (SystemInfo.isWindows) {
-      installEnterHook(root);
+      installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);
   }
@@ -1277,7 +1277,7 @@ public abstract class DialogWrapper {
     return new BorderLayout();
   }
 
-  private static void installEnterHook(JComponent root) {
+  private static void installEnterHook(JComponent root, Disposable disposable) {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -1292,7 +1292,7 @@ public abstract class DialogWrapper {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root, disposable);
   }
 
   private void expandNextOptionButton() {
@@ -1566,14 +1566,24 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Show the dialog
+   * Show the dialog.
    *
-   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   * @throws IllegalStateException if the method is invoked not on the event dispatch thread
+   * @see #showAndGet()
+   * @see #showAndGetOk()
    */
   public void show() {
     invokeShow();
   }
 
+  /**
+   * Show the modal dialog and check if it was closed with OK.
+   *
+   * @return true if the {@link #getExitCode() exit code} is {@link #OK_EXIT_CODE}.
+   * @throws IllegalStateException if the dialog is non-modal, or if the method is invoked not on the EDT.
+   * @see #show()
+   * @see #showAndGetOk()
+   */
   public boolean showAndGet() {
     if (!isModal()) {
       throw new IllegalStateException("The showAndGet() method is for modal dialogs only");

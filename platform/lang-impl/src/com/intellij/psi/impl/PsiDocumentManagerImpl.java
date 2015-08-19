@@ -30,7 +30,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
@@ -79,7 +81,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
       public void updateFinished(@NotNull Document doc) {
-        documentCommitThread.queueCommit(project, doc, "Bulk update finished");
+        documentCommitThread.queueCommit(project, doc, "Bulk update finished", ApplicationManager.getApplication().getCurrentModalityState());
       }
     });
   }
@@ -110,9 +112,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
       if (myUnitTestMode) {
         myStopTrackingDocuments = true;
         try {
-          LOG.error("Too many uncommitted documents for " + myProject + ":\n" + myUncommittedDocuments);
+          LOG.error("Too many uncommitted documents for " + myProject + ":\n" + StringUtil.join(myUncommittedDocuments, "\n") + 
+                    "\n\n Project creation trace: " + myProject.getUserData(ProjectImpl.CREATION_TRACE));
         }
         finally {
+          //noinspection TestOnlyProblems
           clearUncommittedDocuments();
         }
       }

@@ -2,13 +2,11 @@ package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.Function;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.actions.CCRunTestsAction;
 import org.jetbrains.annotations.NotNull;
@@ -50,12 +48,12 @@ class CCFileDeletedListener extends VirtualFileAdapter {
       return;
     }
     VirtualFile courseDir = myProject.getBaseDir();
-    CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyOrderable>() {
+    CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyItem>() {
       @Override
-      public StudyOrderable fun(VirtualFile file) {
+      public StudyItem fun(VirtualFile file) {
         return course.getLesson(file.getName());
       }
-    }, removedLesson, EduNames.LESSON);
+    }, removedLesson.getIndex(), EduNames.LESSON, -1);
     course.getLessons().remove(removedLesson);
   }
 
@@ -72,17 +70,12 @@ class CCFileDeletedListener extends VirtualFileAdapter {
     if (task == null) {
       return;
     }
-    CCUtils.updateHigherElements(lessonDir.getChildren(), new Function<VirtualFile, StudyOrderable>() {
+    CCUtils.updateHigherElements(lessonDir.getChildren(), new Function<VirtualFile, StudyItem>() {
       @Override
-      public StudyOrderable fun(VirtualFile file) {
+      public StudyItem fun(VirtualFile file) {
         return lesson.getTask(file.getName());
       }
-    }, task, EduNames.TASK);
-    ModifiableRootModel model = EduUtils.getModel(lessonDir, project);
-    if (model == null) {
-      return;
-    }
-    EduUtils.commitAndSaveModel(model);
+    }, task.getIndex(), EduNames.TASK, -1);
     lesson.getTaskList().remove(task);
   }
 

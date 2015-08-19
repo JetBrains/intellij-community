@@ -16,15 +16,14 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.PairFunction;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author gregsh
@@ -40,12 +39,38 @@ public class TreeTraverserTest extends TestCase {
       build();
   }
 
+  private static Map<Integer, Collection<Integer>> numbers2() {
+    return ContainerUtil.<Integer, Collection<Integer>>immutableMapBuilder().
+      put(1, Arrays.asList(2, 3, 4)).
+      put(2, Arrays.asList(5, 6, 7)).
+      put(3, Arrays.asList(8, 9, 10)).
+      put(4, Arrays.asList(11, 12, 13)).
+      put(5, Arrays.asList(14, 15, 16)).
+      put(6, Arrays.asList(17, 18, 19)).
+      put(7, Arrays.asList(20, 21, 22)).
+      put(8, Arrays.asList(23, 24, 25)).
+      put(9, Arrays.asList(26, 27, 28)).
+      put(10, Arrays.asList(29, 30, 31)).
+      put(11, Arrays.asList(32, 33, 34)).
+      put(12, Arrays.asList(35, 36, 37)).
+      build();
+  }
+
   private static final Condition<Integer> IS_ODD = new Condition<Integer>() {
     @Override
     public boolean value(Integer integer) {
       return integer.intValue() % 2 == 1;
     }
   };
+
+  private static Condition<Integer> inRange(final int s, final int e) {
+    return new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        return s <= integer && integer <= e;
+      }
+    };
+  }
 
   private static final Function<Integer, Integer> INCREMENT = new Function<Integer, Integer>() {
     @Override
@@ -65,6 +90,16 @@ public class TreeTraverserTest extends TestCase {
     @Override
     public Integer fun(Integer k1, Integer k2) {
       return k2 + k1;
+    }
+  };
+
+  private static final Function<Integer, Integer> FIBONACCI2 = new JBIterable.StatefulTransform<Integer, Integer>() {
+    int k0;
+    @Override
+    public Integer fun(Integer k) {
+      int t = k0;
+      k0 = k;
+      return t + k;
     }
   };
 
@@ -89,6 +124,13 @@ public class TreeTraverserTest extends TestCase {
   }
 
   // JBIterable ----------------------------------------------
+
+  public void testAppend() {
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3).append(JBIterable.of(4, 5, 6)).append(7);
+    assertEquals(7, it.size());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7), it.toList());
+    assertTrue(it.contains(5));
+  }
 
   public void testGenerateRepeat() {
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(3).repeat(3);
@@ -137,26 +179,60 @@ public class TreeTraverserTest extends TestCase {
     }
   }
 
-  // TreeTraverser ----------------------------------------------
+  public void testStatefulFilter() {
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(5).filter(new JBIterable.StatefulFilter<Integer>() {
+      int prev;
+      @Override
+      public boolean value(Integer integer) {
+        boolean b = integer > prev;
+        if (b) prev = integer;
+        return b;
+      }
+    });
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), it.toList());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), it.toList());
+  }
+
+  public void testStatefulGenerator() {
+    JBIterable<Integer> it = JBIterable.generate(1, FIBONACCI2).take(8);
+    assertEquals(Arrays.asList(1, 1, 2, 3, 5, 8, 13, 21), it.toList());
+    assertEquals(Arrays.asList(1, 1, 2, 3, 5, 8, 13, 21), it.toList());
+  }
+
+  // TreeTraversal ----------------------------------------------
 
   @NotNull
-  private static TreeTraverser<Integer> traverser() {
-    return new TreeTraverser<Integer>(Functions.fromMap(numbers()));
+  private static Function<Integer, JBIterable<Integer>> numTraverser(TreeTraversal t) {
+    return t.traversal(Functions.fromMap(numbers()));
+  }
+  @NotNull
+  private static Function<Integer, JBIterable<Integer>> numTraverser2(TreeTraversal t) {
+    return t.traversal(Functions.fromMap(numbers2()));
   }
 
   public void testSimplePreOrderDfs() {
-    TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), t.preOrderDfsTraversal(1).toList());
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), numTraverser(TreeTraversal.PRE_ORDER_DFS).fun(1).toList());
+  }
+
+  public void testSimplePreOrderDfsBacktrace() {
+    List<Integer> backDfs = Collections.emptyList();
+    for (TreeTraversal.TracingIt<Integer> it = numTraverser2(TreeTraversal.PRE_ORDER_DFS).fun(1).typedIterator(); it.hasNext(); ) {
+      if (it.next().equals(37)) backDfs = it.backtrace().toList();
+    }
+    List<Integer> backBfs = Collections.emptyList();
+    for (TreeTraversal.TracingIt<Integer> it = numTraverser2(TreeTraversal.TRACING_BFS).fun(1).typedIterator(); it.hasNext(); ) {
+      if (it.next().equals(37)) backBfs = it.backtrace().toList();
+    }
+    assertEquals(Arrays.asList(37, 12, 4, 1), backDfs);
+    assertEquals(Arrays.asList(37, 12, 4, 1), backBfs);
   }
 
   public void testSimplePostOrderDfs() {
-    TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(5, 6, 7, 2, 8, 9, 10, 3, 11, 12, 13, 4, 1), t.postOrderDfsTraversal(1).toList());
+    assertEquals(Arrays.asList(5, 6, 7, 2, 8, 9, 10, 3, 11, 12, 13, 4, 1), numTraverser(TreeTraversal.POST_ORDER_DFS).fun(1).toList());
   }
 
   public void testSimpleBfs() {
-    TreeTraverser<Integer> t = traverser();
-    assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13), t.bfsTraversal(1).toList());
+    assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS).fun(1).toList());
   }
 
   // FilteredTraverser ----------------------------------------------
@@ -183,18 +259,43 @@ public class TreeTraverserTest extends TestCase {
 
   public void testSkipExpandedDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).leavesOnly(true).leavesOnlyDfsTraversal().toList());
+    assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).leavesOnlyDfsTraversal().toList());
+  }
+
+  public void testRangeChildrenLeavesDfs() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesOnlyDfsTraversal().toList());
+  }
+
+  public void testRangeChildrenLeavesBfs() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesOnlyDfsTraversal().toList());
   }
 
   public void testSkipExpandedBfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).leavesOnly(true).leavesOnlyBfsTraversal().toList());
+    assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).leavesOnlyBfsTraversal().toList());
   }
 
   public void testExpandSkipFilterReset() {
     FilteredTraverser<Integer> t = filteredTraverser();
     assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), t.withRoot(1).expand(IS_ODD).
-      leavesOnly(true).reset().filter(IS_ODD).toList());
+      withTraversal(TreeTraversal.LEAVES_ONLY_DFS).reset().filter(IS_ODD).toList());
+  }
+
+  public void testForceExlcudeReset() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(1, 2, 6, 4, 12), t.withRoot(1).forceExclude(IS_ODD).reset().toList());
+  }
+
+  public void testForceSkipReset() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(1, 2, 6, 8, 10, 4, 12), t.withRoot(1).forceExpandAndSkip(IS_ODD).reset().toList());
+  }
+
+  public void testForceSkipLeavesDfs() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(6, 8, 10, 12), t.withRoot(1).forceExpandAndSkip(IS_ODD).leavesOnlyDfsTraversal().toList());
   }
 
   public void testFilterChildren() {
@@ -219,11 +320,11 @@ public class TreeTraverserTest extends TestCase {
         return JBIterable.generate(1, k, FIBONACCI).skip(2).take(3);
       }
     });
-    TreeTraverser.TracingIt<Integer> it = t.withRoot(1).preOrderDfsTraversal().skip(20).typedIterator();
-    TreeTraverser.TracingIt<Integer> cursor = JBIterator.cursor(it).first();
+    TreeTraversal.TracingIt<Integer> it = t.withRoot(1).preOrderDfsTraversal().skip(20).typedIterator();
+    TreeTraversal.TracingIt<Integer> cursor = JBIterator.cursor(it).first();
     assertNotNull(cursor);
     assertSame(cursor, it);
-    assertEquals(Arrays.asList(20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1), cursor.backtrace().toList());
+    assertEquals(Arrays.asList(21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1), cursor.backtrace().toList());
   }
 
 }

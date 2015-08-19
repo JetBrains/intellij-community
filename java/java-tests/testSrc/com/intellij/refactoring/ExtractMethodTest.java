@@ -225,6 +225,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testDuplicatesFromAnonymous() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testCodeDuplicatesWithContinueNoReturn() throws Exception {
     doDuplicatesTest();
   }
@@ -665,6 +669,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testSuggestChangeSignatureInitialParameterUnused() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSuggestChangeSignatureWithFolding() throws Exception {
     doDuplicatesTest();
   }
 

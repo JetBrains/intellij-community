@@ -231,4 +231,13 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     assert false : aClass;
     return null;
   }
+
+  @Nullable
+  public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
+    RunConfiguration configuration = myConfigurationFactory.createTemplateConfiguration(context.getProject());
+    if (!setupConfigurationFromContext((T)configuration, context, new Ref<PsiElement>(context.getPsiLocation()))) {
+      return null;
+    }
+    return configuration;
+  }
 }

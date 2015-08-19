@@ -20,19 +20,18 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
@@ -100,6 +99,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
         myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
           @Override
           public void after(@NotNull List<? extends VFileEvent> events) {
+            boolean pushedSomething = false;
             List<Runnable> delayedTasks = ContainerUtil.newArrayList();
             for (VFileEvent event : events) {
               final VirtualFile file = event.getFile();
@@ -113,8 +113,9 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
                   // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
                   // avoid dumb mode for just one file
                   doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
+                  pushedSomething = true;
                 }
-                else {
+                else if (!ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
                   ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(file, pushers));
                 }
               } else if (event instanceof VFileMoveEvent) {
@@ -123,10 +124,25 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
                 }
                 // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
                 doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
+                pushedSomething = true;
               }
             }
             if (!delayedTasks.isEmpty()) {
               queueTasks(delayedTasks);
+            }
+            if (pushedSomething) {
+              Application application = ApplicationManager.getApplication();
+              Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                  scheduleDumbModeReindexingIfNeeded();
+                }
+              };
+              if (application.isUnitTestMode()) {
+                runnable.run();
+              } else {
+                application.invokeLater(runnable);
+              }
             }
           }
         });
@@ -206,15 +222,26 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       if (task == null) {
         break;
       }
-      hadTasks = true;
-      task.run();
+      try {
+        task.run();
+        hadTasks = true;
+      }
+      catch (ProcessCanceledException e) {
+        queueTasks(Collections.singletonList(task)); // reschedule dumb mode and ensure the canceled task is enqueued again
+      }
     }
 
-    if (hadTasks && !myProject.isDisposed()) {
-      DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
-      if (task != null) {
-        DumbService.getInstance(myProject).queueTask(task);
-      }
+    if (hadTasks) {
+      scheduleDumbModeReindexingIfNeeded();
+    }
+  }
+
+  private void scheduleDumbModeReindexingIfNeeded() {
+    if (myProject.isDisposed()) return;
+    
+    DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
+    if (task != null) {
+      DumbService.getInstance(myProject).queueTask(task);
     }
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StateMap;
-import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -80,7 +79,7 @@ public class CoreProjectLoader {
     if (projectRootManagerState == null) {
       throw new JDOMException("cannot find ProjectRootManager state in misc.xml");
     }
-    ((ProjectRootManagerImpl) ProjectRootManager.getInstance(project)).readExternal(projectRootManagerState);
+    ((ProjectRootManagerImpl) ProjectRootManager.getInstance(project)).loadState(projectRootManagerState);
 
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
@@ -96,8 +95,6 @@ public class CoreProjectLoader {
 
   @NotNull
   public static StateMap loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    StateMap states = new StateMap();
-    StorageDataBase.load(states, JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
-    return states;
+    return StateMap.load(JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
   }
 }

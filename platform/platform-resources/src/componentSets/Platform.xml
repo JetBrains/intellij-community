@@ -2,7 +2,7 @@
   <application-components>
     <component>
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
-      <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
+      <implementation-class>com.intellij.configurationStore.StoreAwareProjectManager</implementation-class>
     </component>
 
     <component>
@@ -125,6 +125,10 @@
     <component>
       <implementation-class>com.intellij.ide.SystemHealthMonitor</implementation-class>
       <headless-implementation-class/>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.internal.DebugAttachDetector</implementation-class>
     </component>
 
     <component>

@@ -29,9 +29,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,9 +75,16 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     return getValue().getRepresentative();
   }
 
+  @NotNull
   @Override
-  public PsiElement[] getPsiElements() {
-    return new PsiElement[] {getProperty().getPsiElement()};
+  public IProperty[] getProperties() {
+    return new IProperty[] {getProperty()};
+  }
+
+  @Nullable
+  @Override
+  public PsiFile[] getFiles() {
+    return null;
   }
 
   public void setPresentableName(final String presentableName) {

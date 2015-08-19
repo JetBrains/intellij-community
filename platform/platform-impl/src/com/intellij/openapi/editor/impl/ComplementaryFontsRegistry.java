@@ -145,7 +145,7 @@ public class ComplementaryFontsRegistry {
   }
 
   @JdkConstants.FontStyle
-  private static int getFontStyle(String fontName) {
+  static int getFontStyle(String fontName) {
     fontName = fontName.toLowerCase(Locale.getDefault());
     for (String name : BOLD_ITALIC_NAMES) {
       if (fontName.contains(name)) return Font.BOLD | Font.ITALIC;

@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
@@ -29,7 +30,6 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
@@ -271,8 +271,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public void readExternal(Element parentNode) {
-    String blindness = Registry.stringValue("color.blindness"); // TODO: get blindness
-    myValueReader.setAttribute(blindness);
+    UISettings settings = UISettings.getInstance();
+    ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
+    myValueReader.setAttribute(blindness == null ? null : blindness.name());
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);
     }
@@ -351,6 +352,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom14(name, attr);
     }
+    setMissingUndefinedAttributesForVersion142();
   }
 
   private void migrateErrorStripeColorFrom14(@NotNull TextAttributesKey name, @NotNull TextAttributes attr) {
@@ -363,24 +365,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   /**
-   * The method is called for the scheme when it is fully loaded including additional text attributes from providers.
-   */
-  public void upgradeSchemeFromPreviousVersion() {
-    setUndefinedAttributesAsInheritedForVersion142();
-  }
-
-
-  /**
    * Defines empty attributes with fallback (inheritance) enabled for all the attributes explicitly defined in the parent scheme since
    * previously undefined attributes were treated as inherited, not taken from the parent scheme.
    */
-  private void setUndefinedAttributesAsInheritedForVersion142() {
+  private void setMissingUndefinedAttributesForVersion142() {
     if (myOriginalVersion >= 142 || myParentScheme == null) return;
     if (myParentScheme instanceof AbstractColorsScheme) {
       for (TextAttributesKey key : ((AbstractColorsScheme)myParentScheme).myAttributesMap.keySet()) {
         TextAttributes parentAttributes = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
-        if (key.getFallbackAttributeKey() != null &&
-            parentAttributes != null &&
+        if (parentAttributes != null &&
             !parentAttributes.isFallbackEnabled() &&
             !myAttributesMap.containsKey(key)) {
           myAttributesMap.put(key, new TextAttributes());
@@ -597,7 +590,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         }
       }
       else {
-        if (!value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
+        if (value.containsValue() && !value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
           Element valueElement = new Element(VALUE_ELEMENT);
           value.writeExternal(valueElement);
           element.addContent(valueElement);
@@ -723,5 +716,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       return attributes;
     }
     return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
+  }
+
+
+  protected static boolean containsValue(@Nullable TextAttributes attributes) {
+    return attributes != null && attributes.containsValue();
   }
 }

@@ -61,6 +61,10 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     doTestChar(System.currentTimeMillis(), 30, 30);
   }
 
+  public void testWord() throws Exception {
+    doTestWord(System.currentTimeMillis(), 300000, 300);
+  }
+
   public void testLine() throws Exception {
     doTestLine(System.currentTimeMillis(), 30, 300);
   }
@@ -147,13 +151,30 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     });
   }
 
+  private void doTestWord(long seed, int runs, int maxLength) throws Exception {
+    ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
+
+    doTest(seed, runs, maxLength, policies, new TestTask() {
+      @Override
+      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
+        CharSequence sequence1 = text1.getCharsSequence();
+        CharSequence sequence2 = text2.getCharsSequence();
+
+        List<DiffFragment> fragments = myComparisonManager.compareWords(sequence1, sequence2, policy, INDICATOR);
+        debugData.set(fragments);
+
+        checkResultWord(sequence1, sequence2, fragments, policy);
+      }
+    });
+  }
+
   private void doTest(long seed, int runs, int maxLength, @NotNull ComparisonPolicy[] policies, @NotNull TestTask test) throws Exception {
     myRng.setSeed(seed);
 
     ComparisonPolicy policy = null;
     Ref<Object> debugData = new Ref<Object>();
 
-    for (int i = 0; i < runs; i++) {
+    for (int i = 1; i <= runs; i++) {
       if (i % 1000 == 0) System.out.println(i);
       Document text1 = null;
       Document text2 = null;

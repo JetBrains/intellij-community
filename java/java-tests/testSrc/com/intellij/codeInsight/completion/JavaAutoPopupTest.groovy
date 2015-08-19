@@ -1260,9 +1260,9 @@ public class Test {
   }
 
   public void testNoLiveTemplatesAfterDot() {
-    myFixture.configureByText "a.java", "class Foo {{ Iterable t; t.<caret> }}"
-    type 'iter'
-    assert myFixture.lookupElementStrings == ['iterator']
+    myFixture.configureByText "a.java", "import java.util.List; class Foo {{ List t; t.<caret> }}"
+    type 'toar'
+    assert myFixture.lookupElementStrings == ['toArray', 'toArray']
   }
 
   public void testTypingFirstVarargDot() {

@@ -61,10 +61,6 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
     VirtualFileManager.getInstance().addVirtualFileListener(listener, myProject);
   }
 
-  private static boolean isEnabled(@NotNull WebEditorOptions options) {
-    return options.isBreadcrumbsEnabled() || options.isBreadcrumbsEnabledInXml();
-  }
-
   private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
@@ -109,7 +105,7 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
   private static void reinitBreadcrumbsComponent(@NotNull final FileEditorManager fileEditorManager,
                                                  @NotNull VirtualFile file,
                                                  @NotNull WebEditorOptions webEditorOptions) {
-    if (isEnabled(webEditorOptions) && isSuitable(fileEditorManager.getProject(), file, webEditorOptions)) {
+    if (webEditorOptions.isBreadcrumbsEnabled() && isSuitable(fileEditorManager.getProject(), file, webEditorOptions)) {
       FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
       for (final FileEditor fileEditor : fileEditors) {
         if (fileEditor instanceof TextEditor) {

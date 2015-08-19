@@ -16,13 +16,15 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A range marker that has to be manually updated with {@link #applyEvent(DocumentEvent)}. Can hold PSI-based range and be updated when the document is committed.
+ * A range marker that has to be manually updated with {@link #getUpdatedRange(DocumentEvent)} and {@link #applyState(ManualRangeMarker)}.
+ * Can hold PSI-based range and be updated when the document is committed.
  */
 public class ManualRangeMarker {
   private static int ourCount = 0;
@@ -56,6 +58,14 @@ public class ManualRangeMarker {
 
   @Nullable
   private Pair<ProperTextRange, PersistentRangeMarker.LinesCols> getUpdatedState(@NotNull DocumentEvent event) {
+    if (event instanceof RetargetRangeMarkers) {
+      int start = ((RetargetRangeMarkers)event).getStartOffset();
+      if (myRange.getStartOffset() >= start && myRange.getEndOffset() <= ((RetargetRangeMarkers)event).getEndOffset()) {
+        ProperTextRange range = myRange.shiftRight(((RetargetRangeMarkers)event).getMoveDestinationOffset() - start);
+        return Pair.create(range, myLinesCols == null ? null : PersistentRangeMarker.storeLinesAndCols(range, event.getDocument()));
+      }
+    }
+
     if (myLinesCols != null) {
       return PersistentRangeMarker
         .applyChange(event, myRange, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight, myLinesCols);
@@ -65,16 +75,26 @@ public class ManualRangeMarker {
     return range == null ? null : new Pair<ProperTextRange, PersistentRangeMarker.LinesCols>(range, null);
   }
 
-  public void applyEvent(@NotNull DocumentEvent event) {
-    if (!myValid) return;
-
-    Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(event);
-    if (pair != null) {
-      myRange = pair.first;
-      myLinesCols = pair.second;
-    } else {
+  public void applyState(@Nullable ManualRangeMarker updated) {
+    if (updated == null || !updated.myValid) {
       myValid = false;
     }
+    if (!myValid) return;
+
+    myRange = updated.myRange;
+    myLinesCols = updated.myLinesCols;
+  }
+
+  public boolean isGreedyLeft() {
+    return myGreedyLeft;
+  }
+
+  public boolean isGreedyRight() {
+    return myGreedyRight;
+  }
+
+  public boolean isSurviveOnExternalChange() {
+    return myLinesCols != null;
   }
 
   @Nullable

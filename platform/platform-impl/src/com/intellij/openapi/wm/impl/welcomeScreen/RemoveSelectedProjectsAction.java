@@ -20,7 +20,7 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 
 import javax.swing.*;
 
@@ -47,7 +47,7 @@ public class RemoveSelectedProjectsAction extends RecentProjectsWelcomeScreenAct
 
       JList list = getList(e);
       if (list != null) {
-        ListScrollingUtil.ensureSelectionExists(list);
+        ScrollingUtil.ensureSelectionExists(list);
       }
     }
 

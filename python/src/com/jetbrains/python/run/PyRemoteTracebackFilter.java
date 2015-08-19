@@ -41,7 +41,7 @@ public class PyRemoteTracebackFilter extends PythonTracebackFilter {
     if (vFile != null) {
       return vFile;
     }
-    String localFile = myHandler.getPathMapper().convertToLocal(fileName);
+    String localFile = myHandler.getMappingSettings().convertToLocal(fileName);
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(localFile);
     if (file != null && file.exists()) {
       return file;

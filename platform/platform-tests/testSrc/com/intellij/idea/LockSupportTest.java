@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -22,11 +23,31 @@ import org.junit.Test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 public class LockSupportTest {
+  @Test(timeout = 30000)
+  public void testUseCanonicalPathLock() throws Exception {
+    if (SystemInfo.isFileSystemCaseSensitive) return;
+    File temp = FileUtil.createTempDirectory("c", null);
+    SocketLock lock = new SocketLock(temp.getPath() + "/c", temp.getPath() + "/s");
+    final String tempPathUpperCased = temp.getPath().toUpperCase(Locale.ENGLISH);
+    SocketLock lock2 = new SocketLock(tempPathUpperCased + "/c", tempPathUpperCased + "/s");
+    try {
+      lock.lock();
+      assertThat(lock2.lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
+    }
+    finally {
+      lock.dispose();
+      lock2.dispose();
+
+      FileUtil.delete(temp);
+    }
+  }
+
   @Test(timeout = 30000)
   public void testLock() throws Exception {
     File temp = FileUtil.createTempDirectory("c", null);

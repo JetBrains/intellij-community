@@ -59,37 +59,36 @@ public class ExtractClassHandler implements ElementsHandler {
       containingClass = (PsiClass)selectedMember;
     }
 
-    if (containingClass == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.caret.should.be.positioned.within.a.class.to.be.refactored"),
+    final String cannotRefactorMessage = getCannotRefactorMessage(containingClass);
+    if (cannotRefactorMessage != null)  {
+      CommonRefactoringUtil.showErrorHint(project, editor, 
+                                          RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage, 
                                           null, getHelpID());
-      return;
-    }
-    if (containingClass.isInterface()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.is.an.interface"), null,
-                                          getHelpID());
-      return;
-    }
-    if (containingClass.isEnum()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.is.an.enumeration"), null,
-                                          getHelpID());
-      return;
-    }
-    if (containingClass.isAnnotationType()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.is.an.annotation.type"), null,
-                                          getHelpID());
-      return;
-    }
-    if (classIsInner(containingClass) && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.refactoring.is.not.supported.on.non.static.inner.classes"),
-                                          null, getHelpID());
-      return;
-    }
-    if (classIsTrivial(containingClass)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.has.no.members.to.extract"), null,
-                                          getHelpID());
       return;
     }
     new ExtractClassDialog(containingClass, selectedMember).show();
+  }
+
+  private static String getCannotRefactorMessage(PsiClass containingClass) {
+    if (containingClass == null) {
+      return RefactorJBundle.message("the.caret.should.be.positioned.within.a.class.to.be.refactored");
+    }
+    if (containingClass.isInterface()) {
+      return RefactorJBundle.message("the.selected.class.is.an.interface");
+    }
+    if (containingClass.isEnum()) {
+      return RefactorJBundle.message("the.selected.class.is.an.enumeration");
+    }
+    if (containingClass.isAnnotationType()) {
+      return RefactorJBundle.message("the.selected.class.is.an.annotation.type");
+    }
+    if (classIsInner(containingClass) && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return RefactorJBundle.message("the.refactoring.is.not.supported.on.non.static.inner.classes");
+    }
+    if (classIsTrivial(containingClass)) {
+      return RefactorJBundle.message("the.selected.class.has.no.members.to.extract");
+    }
+    return null;
   }
 
   private static boolean classIsInner(PsiClass aClass) {

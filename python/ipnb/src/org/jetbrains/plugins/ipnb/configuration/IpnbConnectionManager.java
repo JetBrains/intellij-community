@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ipnb.configuration;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
@@ -28,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.HttpRequests;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -263,7 +261,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (ExecutionException ignored) {
     }
-    final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
 
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
@@ -271,8 +268,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
                   new IpnbSettingsAdapter());
       return false;
     }
-    final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
-    final ArrayList<String> parameters = Lists.newArrayList(sdk.getHomePath(), ipython, "notebook", "--no-browser");
+    final String homePath = sdk.getHomePath();
+    if (homePath == null) return false;
+    final String ipython = PythonSdkType.getExecutablePath(homePath, "ipython");
+    final ArrayList<String> parameters = Lists.newArrayList(homePath, ipython, "notebook", "--no-browser");
     if (hostPort.getFirst() != null) {
       parameters.add("--ip");
       parameters.add(hostPort.getFirst());
@@ -281,8 +280,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath()).
-      withEnvironment(env);
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath());
 
     try {
       final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {

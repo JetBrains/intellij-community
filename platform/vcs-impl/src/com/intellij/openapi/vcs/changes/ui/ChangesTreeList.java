@@ -201,6 +201,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        if (!myList.isEnabled()) return false;
         final int idx = myList.locationToIndex(e.getPoint());
         if (idx >= 0) {
           if (myShowCheckboxes) {
@@ -775,7 +776,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         @SuppressWarnings("unchecked")
         CheckboxTree.NodeState state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
-        myCheckBox.setEnabled(state != CheckboxTree.NodeState.PARTIAL);
+        myCheckBox.setEnabled(state != CheckboxTree.NodeState.PARTIAL && tree.isEnabled());
         revalidate();
 
         return this;
@@ -879,6 +880,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       if (myShowCheckboxes) {
         //noinspection SuspiciousMethodCalls
         myCheckbox.setSelected(myIncludedChanges.contains(value));
+        myCheckbox.setEnabled(list.isEnabled());
         return this;
       }
       else {
@@ -980,6 +982,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
   public void enableSelection(final boolean value) {
     myTree.setEnabled(value);
+    myList.setEnabled(value);
   }
 
   public void setAlwaysExpandList(boolean alwaysExpandList) {

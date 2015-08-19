@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -34,8 +37,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -199,6 +200,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.NAVIGATE_TO_PREVIEW != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
     settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isSelected();
 
+    ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
+    if (settings.COLOR_BLINDNESS != blindness) {
+      settings.COLOR_BLINDNESS = blindness;
+      update = true;
+      ComponentsPackage.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
+      shouldUpdateUI = true;
+    }
+
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
 
@@ -308,6 +317,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myRightLayoutCheckBox.setSelected(settings.RIGHT_HORIZONTAL_SPLIT);
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.NAVIGATE_TO_PREVIEW);
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
+    myComponent.myColorBlindnessPanel.setColorBlindness(settings.COLOR_BLINDNESS);
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -355,6 +365,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.LEFT_HORIZONTAL_SPLIT;
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.RIGHT_HORIZONTAL_SPLIT;
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.NAVIGATE_TO_PREVIEW;
+    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.COLOR_BLINDNESS;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
@@ -429,9 +440,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JSlider myInitialTooltipDelaySlider;
     private ComboBox myPresentationModeFontSize;
     private JCheckBox myNavigateToPreviewCheckBox;
-    private JCheckBox myAllowStatusBar;
-    private JCheckBox myAllowLineNumbers;
-    private JCheckBox myAllowAnnotations;
+    private ColorBlindnessPanel myColorBlindnessPanel;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {

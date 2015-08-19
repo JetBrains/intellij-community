@@ -21,8 +21,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
-import com.intellij.openapi.components.impl.stores.*
-import com.intellij.openapi.util.Couple
+import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -153,24 +154,27 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  override final fun getCachedFileStateStorages(changed: MutableCollection<String>, deleted: MutableCollection<String>) = storageLock.withLock { Couple.of(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
 
-  fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileStorage> {
+  fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>) = storageLock.withLock { Pair(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
+
+  fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<StateStorage> {
     if (fileSpecs.isEmpty()) {
       return emptyList()
     }
 
-    var result: MutableList<FileBasedStorage>? = null
-    for (fileSpec in fileSpecs) {
-      val storage = storages.get(fileSpec)
-      if (storage is FileBasedStorage) {
-        if (result == null) {
-          result = SmartList<FileBasedStorage>()
+    storageLock.withLock {
+      var result: MutableList<FileBasedStorage>? = null
+      for (fileSpec in fileSpecs) {
+        val storage = storages.get(fileSpec)
+        if (storage is FileBasedStorage) {
+          if (result == null) {
+            result = SmartList<FileBasedStorage>()
+          }
+          result.add(storage)
         }
-        result.add(storage)
       }
+      return result ?: emptyList<FileBasedStorage>()
     }
-    return result ?: emptyList<FileBasedStorage>()
   }
 
   // overridden in upsource
@@ -219,13 +223,27 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     override val isUseXmlProlog: Boolean
       get() = storageManager.isUseXmlProlog
 
-    override fun createStorageData() = storageManager.createStorageData(fileSpec)
+    override fun beforeElementSaved(element: Element) {
+      storageManager.beforeElementSaved(element)
+      super<FileBasedStorage>.beforeElementSaved(element)
+    }
+
+    override fun beforeElementLoaded(element: Element) {
+      storageManager.beforeElementLoaded(element)
+      super<FileBasedStorage>.beforeElementLoaded(element)
+    }
   }
 
   private fun String.normalizePath(): String {
     val path = FileUtilRt.toSystemIndependentName(this)
     // fileSpec for directory based storage could be erroneously specified as "name/"
     return if (path.endsWith('/')) path.substring(0, path.length() - 1) else path
+  }
+
+  protected open fun beforeElementSaved(element: Element) {
+  }
+
+  protected open fun beforeElementLoaded(element: Element) {
   }
 
   override final fun rename(path: String, newName: String) {
@@ -269,8 +287,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = pathMacroSubstitutor
 
-  protected open fun createStorageData(fileSpec: String): StorageData = StorageData()
-
   override final fun expandMacros(path: String): String {
     // replacement can contains $ (php tests), so, this check must be performed before expand
     val matcher = MACRO_PATTERN.matcher(path)
@@ -302,7 +318,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   override fun startExternalization() = StateStorageManagerExternalizationSession(this)
 
-  open class StateStorageManagerExternalizationSession(protected val storageManager: StateStorageManagerImpl) : StateStorageManager.ExternalizationSession {
+  class StateStorageManagerExternalizationSession(protected val storageManager: StateStorageManagerImpl) : StateStorageManager.ExternalizationSession {
     private val mySessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
@@ -313,14 +329,14 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           continue
         }
 
-        getExternalizationSession(storageManager.getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state, storageSpec)
+        getExternalizationSession(storageManager.getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state)
       }
     }
 
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
       val stateStorage = storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)
       if (stateStorage != null) {
-        getExternalizationSession(stateStorage)?.setState(component, componentName, state, null)
+        getExternalizationSession(stateStorage)?.setState(component, componentName, state)
       }
     }
 

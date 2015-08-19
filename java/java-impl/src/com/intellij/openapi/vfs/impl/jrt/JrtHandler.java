@@ -43,6 +43,7 @@ class JrtHandler extends ArchiveHandler {
 
   private static final URI ROOT_URI = URI.create("jrt:/");
   private static final Map<String, Object> EMPTY_ENV = Collections.emptyMap();
+  private static final String PREFIX = "/modules";
 
   private static class JrtEntryInfo extends EntryInfo {
     private final String myModule;
@@ -78,10 +79,10 @@ class JrtHandler extends ArchiveHandler {
     map.put("", createRootEntry());
 
     //FileSystem fs = (FileSystem)getFileSystem();
-    //Path root = fs.getPath("/");
+    //Path root = fs.getPath("/modules");
     //Files.walk(root).forEachOrdered((p) -> {
     Object fs = getFileSystem();
-    Object root = call(getPath, fs, "/", ArrayUtil.EMPTY_STRING_ARRAY);
+    Object root = call(getPath, fs, PREFIX, ArrayUtil.EMPTY_STRING_ARRAY);
     Object stream = call(walk, root, Array.newInstance(cls("java.nio.file.FileVisitOption"), 0));
     call(forEachOrdered, stream, Proxy.newProxyInstance(
       getClass().getClassLoader(), new Class[]{cls("java.util.function.Consumer")}, new InvocationHandler() {
@@ -90,7 +91,7 @@ class JrtHandler extends ArchiveHandler {
           //String path = p.toString();
           String path = args[0].toString();
 
-          int p = path.indexOf('/', 1);
+          int p = path.indexOf('/', PREFIX.length() + 1);
           if (p < 0) return null;
           String module = path.substring(1, p);
           path = path.substring(p + 1);
