@@ -34,10 +34,10 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
     if (elements.isEmpty()) {
       return;
     }
-    PsiElement element = elements.get(0);
+    PsiElement element = elements.get(0).getContainingFile();
     final RunContextAction runAction = new RunContextAction(DefaultRunExecutor.getRunExecutorInstance());
     final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
-      element, element.getTextRange(), AllIcons.Actions.Execute, Pass.UPDATE_OVERRIDEN_MARKERS,
+      element, 0, AllIcons.Actions.Execute, Pass.UPDATE_OVERRIDEN_MARKERS,
       new Function<PsiElement, String>() {
         @Override
         public String fun(PsiElement e) {
