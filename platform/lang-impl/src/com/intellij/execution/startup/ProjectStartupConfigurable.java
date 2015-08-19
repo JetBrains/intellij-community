@@ -22,8 +22,10 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.impl.EditConfigurationsDialog;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
@@ -31,6 +33,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -44,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,19 +108,58 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          //todo
+          RunnerAndConfigurationSettings selected = getSelectedSettings();
+          if (selected == null) return;
+
+          final RunManager runManager = RunManagerImpl.getInstance(myProject);
+          final RunnerAndConfigurationSettings was = runManager.getSelectedConfiguration();
+          try {
+            runManager.setSelectedConfiguration(selected);
+            new EditConfigurationsDialog(myProject).showAndGet();
+          } finally {
+            runManager.setSelectedConfiguration(was);
+          }
+        }
+      })
+      .setEditActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          return getSelectedSettings() != null;
         }
       })
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          //todo
+          RunnerAndConfigurationSettings selected = getSelectedSettings();
+          if (selected == null) return;
+          final ProjectStartupTasksTreeModel oldModel = (ProjectStartupTasksTreeModel)myTree.getModel();
+          final List<RunnerAndConfigurationSettings> configurations = oldModel.getConfigurations();
+          if (!configurations.contains(selected)) {
+            return;
+          }
+          configurations.remove(selected);
+          Collections.sort(configurations, new Comparator<RunnerAndConfigurationSettings>() {
+            @Override
+            public int compare(RunnerAndConfigurationSettings o1, RunnerAndConfigurationSettings o2) {
+              return o1.getName().compareToIgnoreCase(o2.getName());
+            }
+          });
+          setModel(new ProjectStartupTasksTreeModel(configurations));
         }
       });
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     final JPanel tasksPanel = myDecorator.createPanel();
     return FormBuilder.createFormBuilder() // todo bundle
       .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
       .getPanel();
+  }
+
+  @Nullable
+  private RunnerAndConfigurationSettings getSelectedSettings() {
+    final TreePath path = myTree.getSelectionPath();
+    if (path == null) return null;
+    if (! (path.getLastPathComponent() instanceof RunnerAndConfigurationSettings)) return null;
+    return (RunnerAndConfigurationSettings)path.getLastPathComponent();
   }
 
   private ChooseRunConfigurationPopup.ItemWrapper<Void> createEditWrapper() {
@@ -219,12 +263,14 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    return false;
+    final List<RunnerAndConfigurationSettings> recorded = myConfiguration.getStartupConfigurations();
+    final List<RunnerAndConfigurationSettings> current = ((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations();
+    return ! Comparing.equal(recorded, current);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-
+    myConfiguration.setStartupConfigurations(((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations(), false);
   }
 
   @Override
