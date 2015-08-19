@@ -13,6 +13,8 @@ import com.intellij.xdebugger.frame.XValueGroup;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
+import icons.PythonEducationalIcons;
+import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +48,7 @@ public class PyEduStackFrame extends PyStackFrame {
     }
     final VirtualFile file = myPosition.getFile();
     String frameName = myFrameInfo.getName();
-    //TODO: get icons from designers
-    component.setIcon(MODULE.equals(frameName) ? AllIcons.FileTypes.Text : AllIcons.Nodes.Field);
+    component.setIcon(MODULE.equals(frameName) ? PythonPsiApiIcons.PythonFile : PythonEducationalIcons.Field);
     if (MODULE.equals(frameName)) {
       component.append(GLOBAL_FRAME, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.append(" (" + file.getName() + ")", getGrayAttributes(SimpleTextAttributes.REGULAR_ATTRIBUTES));
