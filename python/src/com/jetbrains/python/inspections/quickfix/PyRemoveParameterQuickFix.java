@@ -27,6 +27,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.editor.PythonDocCommentUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -63,8 +64,9 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
           if (callExpression instanceof PyCallExpression) {
             final PyArgumentList argumentList = ((PyCallExpression)callExpression).getArgumentList();
             if (argumentList != null) {
-              final CallArgumentsMapping mapping = argumentList.analyzeCall(PyResolveContext.noImplicits());
-              for (Map.Entry<PyExpression, PyNamedParameter> parameterEntry : mapping.getPlainMappedParams().entrySet()) {
+              final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map((PyCallExpression)callExpression,
+                                                                                               PyResolveContext.noImplicits());
+              for (Map.Entry<PyExpression, PyNamedParameter> parameterEntry : mapping.entrySet()) {
                 if (parameterEntry.getValue().equals(element)) {
                   parameterEntry.getKey().delete();
                 }

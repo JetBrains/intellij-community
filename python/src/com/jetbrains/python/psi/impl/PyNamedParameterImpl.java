@@ -269,8 +269,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
               final PyArgumentList argumentList = call.getArgumentList();
               if (argumentList != null) {
-                final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
-                for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+                final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map(call, resolveContext);
+                for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
                   if (entry.getValue() == PyNamedParameterImpl.this) {
                     final PyExpression argument = entry.getKey();
                     if (argument != null) {
@@ -393,8 +393,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+        final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map(callExpression, resolveContext);
+        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
           if (entry.getKey() == element) {
             return entry.getValue();
           }

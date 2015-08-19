@@ -23,6 +23,7 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.Nls;
@@ -77,8 +78,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       if (func != null && hasSpecialCasedDefaults(func, node)) {
         return;
       }
-      CallArgumentsMapping result = list.analyzeCall(getResolveContext());
-      checkArguments(result, node.getArguments());
+      checkArguments(node, node.getArguments());
     }
 
     private static boolean hasSpecialCasedDefaults(PyCallable callable, PsiElement anchor) {
@@ -97,8 +97,8 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       return false;
     }
 
-    private void checkArguments(CallArgumentsMapping result, PyExpression[] arguments) {
-      Map<PyExpression, PyNamedParameter> mapping = result.getPlainMappedParams();
+    private void checkArguments(PyCallExpression callExpr, PyExpression[] arguments) {
+      final Map<PyExpression, PyNamedParameter> mapping = CallArgumentsMappingImpl.map(callExpr, getResolveContext());
       Set<PyExpression> problemElements = new HashSet<PyExpression>();
       for (Map.Entry<PyExpression, PyNamedParameter> e : mapping.entrySet()) {
         PyExpression defaultValue = e.getValue().getDefaultValue();
