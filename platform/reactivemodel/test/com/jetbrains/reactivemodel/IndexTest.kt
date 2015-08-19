@@ -35,7 +35,7 @@ class IndexTest {
     val originalPath = Path("a", "b", "c")
     val editor1Path = originalPath / "edt1"
     val lifetime = Lifetime.Eternal
-    val editorSignal = model.subscribe(lifetime, editorsTag)
+    val editorSignal = model.subscribe(lifetime, editorTag)
 
     val counter = AtomicInteger()
 
@@ -53,7 +53,7 @@ class IndexTest {
 
     model.transaction { m ->
       val model1 = editor1Path.getIn(m) as MapModel
-      assertTrue(editorsTag.getIn(m).contains(model1))
+      assertTrue(editorTag.getIn(m).contains(model1))
       m
     }
 
@@ -69,8 +69,8 @@ class IndexTest {
     model.transaction { m ->
       val model1 = editor1Path.getIn(m) as MapModel
       val model2 = editor2Path.getIn(m) as MapModel
-      assertTrue(editorsTag.getIn(m).contains(model1))
-      assertTrue(editorsTag.getIn(m).contains(model2))
+      assertTrue(editorTag.getIn(m).contains(model1))
+      assertTrue(editorTag.getIn(m).contains(model2))
       m
     }
 
@@ -80,7 +80,7 @@ class IndexTest {
     }
     model.transaction { m ->
       val model2 = editor2Path.getIn(m) as MapModel
-      assertTrue(editorsTag.getIn(m).contains(model2))
+      assertTrue(editorTag.getIn(m).contains(model2))
       m
     }
 
@@ -89,7 +89,7 @@ class IndexTest {
       Path("a").putIn(it, AbsentModel())
     }
     model.transaction { m ->
-      assertTrue(editorsTag.getIn(m).count() == 0)
+      assertTrue(editorTag.getIn(m).count() == 0)
       m
     }
 

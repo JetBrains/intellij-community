@@ -47,7 +47,7 @@ public class ServerEditorTracker(project: Project,
   private val activeEditors: Signal<List<Editor>> =
       reaction(true, "filter active", reaction(true, "flatmap", flatten(reaction(true, "editors", modelsManager.modelsForProject(project)) { models ->
         unlist(models.map {
-          it.subscribe(it.lifetime, com.jetbrains.reactivemodel.editorsTag)
+          it.subscribe(it.lifetime, com.jetbrains.reactivemodel.editorTag)
         })
       })) {
         it?.flatten()
