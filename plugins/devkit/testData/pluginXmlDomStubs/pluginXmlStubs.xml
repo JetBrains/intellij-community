@@ -13,4 +13,6 @@
     <extensionPoint qualifiedName="qualifiedName" beanClass="BeanClass"/>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="defaultExtensionNs" xmlns="extensionXmlNs"/>
+
 </idea-plugin>

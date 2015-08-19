@@ -85,7 +85,6 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
         parent.put(child, element);
       }
       parent.put(children.get(0), element);
-      ast.disposeChildren(children);
       return children.get(0);
     }
 
