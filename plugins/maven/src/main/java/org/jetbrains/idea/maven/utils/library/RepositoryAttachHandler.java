@@ -352,12 +352,13 @@ public class RepositoryAttachHandler {
   public static List<String> retrieveVersions(@NotNull final Project project,
                                               @NotNull final String groupId,
                                               @NotNull final String artifactId,
-                                              @NotNull final String remoteRepository) {
+                                              @NotNull final List<MavenRepositoryInfo> repositories) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_GET_VERSIONS);
     embedder.customizeForGetVersions();
     try {
-      List<String> versions = embedder.retrieveVersions(groupId, artifactId, remoteRepository);
+      List<MavenRemoteRepository> remoteRepositories = convertRepositories(repositories);
+      List<String> versions = embedder.retrieveVersions(groupId, artifactId, remoteRepositories);
       Collections.sort(versions, new Comparator<String>() {
         @Override
         public int compare(String o1, String o2) {

@@ -16,9 +16,7 @@
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,23 +29,13 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
-  private static final PersistentLibraryKind<RepositoryLibraryProperties> LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository") {
-    @NotNull
-    @Override
-    public RepositoryLibraryProperties createDefaultProperties() {
-      return new RepositoryLibraryProperties();
-    }
-  };
-
+public class RepositoryLibraryType extends RepositoryLibraryTypeBase {
   public static RepositoryLibraryType getInstance() {
     return EP_NAME.findExtension(RepositoryLibraryType.class);
   }
 
-  public RepositoryLibraryType() {
-    super(LIBRARY_KIND);
-  }
 
+  @Nullable
   @Override
   public String getCreateActionName() {
     return "From Maven...";
@@ -66,13 +54,13 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   }
 
   @Override
-  public String getDescription(@NotNull RepositoryLibraryProperties properties) {
-    final String mavenIdKey = properties.getMavenId();
-    return "Library " + (mavenIdKey != null ? mavenIdKey + " " : "") + "from Maven repository";
-  }
-
-  @Override
   public Icon getIcon() {
     return MavenIcons.MavenLogo;
+  }
+
+  @NotNull
+  @Override
+  public String getDescription(@NotNull RepositoryLibraryProperties properties) {
+    return properties.getGroupId() + ":" + properties.getArtifactId();
   }
 }

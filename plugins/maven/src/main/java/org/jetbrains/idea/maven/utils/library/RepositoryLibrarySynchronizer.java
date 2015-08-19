@@ -65,30 +65,8 @@ import java.util.Map;
  * @author gregsh
  */
 public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware{
-  @Override
-  public void runActivity(@NotNull final Project project) {
-    StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            final MultiMap<Library, Module> libraries = collectLibraries(project);
-            if (libraries.isEmpty()) return;
-            Task task = new Task.Backgroundable(project, "Maven", false) {
-              public void run(@NotNull ProgressIndicator indicator) {
-                ensureLibrariesAreDownloaded(project, libraries, indicator);
-              }
-            };
-            ProgressManager.getInstance().run(task);
-          }
-        }, project.getDisposed());
-      }
-    });
-  }
-
   private static MultiMap<Library, Module> collectLibraries(final Project project) {
-    final PersistentLibraryKind<RepositoryLibraryProperties> libraryKind = RepositoryLibraryType.getInstance().getKind();
+    final PersistentLibraryKind<RepositoryLibraryProperties> libraryKind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND;
     final MultiMap<Library, Module> result = new MultiMap<Library, Module>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
@@ -114,7 +92,9 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
     return result;
   }
 
-  private static void ensureLibrariesAreDownloaded(final Project project, final MultiMap<Library, Module> libraries, ProgressIndicator indicator) {
+  private static void ensureLibrariesAreDownloaded(final Project project,
+                                                   final MultiMap<Library, Module> libraries,
+                                                   ProgressIndicator indicator) {
     THashMap<Library, Pair<Integer, String>> libsToSync = new THashMap<Library, Pair<Integer, String>>();
 
     String localRepositoryPath = FileUtil.toSystemIndependentName(MavenProjectsManager.getInstance(project).getLocalRepository().getPath());
@@ -207,5 +187,27 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
         }, indicator);
     }
     RepositoryAttachHandler.notifyArtifactsDownloaded(project, dowloaded);
+  }
+
+  @Override
+  public void runActivity(@NotNull final Project project) {
+    StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+          @Override
+          public void run() {
+            final MultiMap<Library, Module> libraries = collectLibraries(project);
+            if (libraries.isEmpty()) return;
+            Task task = new Task.Backgroundable(project, "Maven", false) {
+              public void run(@NotNull ProgressIndicator indicator) {
+                ensureLibrariesAreDownloaded(project, libraries, indicator);
+              }
+            };
+            ProgressManager.getInstance().run(task);
+          }
+        }, project.getDisposed());
+      }
+    });
   }
 }
