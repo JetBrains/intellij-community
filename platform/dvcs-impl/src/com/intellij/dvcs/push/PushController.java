@@ -23,7 +23,6 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
@@ -62,7 +62,7 @@ public class PushController implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final List<? extends Repository> myPreselectedRepositories;
   @NotNull private final VcsRepositoryManager myGlobalRepositoryManager;
-  @NotNull private final List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> myPushSupports;
+  @NotNull private final List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
   @NotNull private final PushSettings myPushSettings;
@@ -83,7 +83,7 @@ public class PushController implements Disposable {
     myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
-    myPushSupports = getAffectedSupports(myProject);
+    myPushSupports = getAffectedSupports();
     mySingleRepoProject = isSingleRepoProject();
     myDialog = dialog;
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
@@ -106,13 +106,12 @@ public class PushController implements Disposable {
 
   private boolean isSyncStrategiesAllowed() {
     return !mySingleRepoProject &&
-           ContainerUtil.and(getAffectedSupports(myProject),
-                             new Condition<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>>() {
-                               @Override
-                               public boolean value(PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support) {
-                                 return support.mayChangeTargetsSync();
-                               }
-                             });
+           ContainerUtil.and(getAffectedSupports(), new Condition<PushSupport<Repository, PushSource, PushTarget>>() {
+             @Override
+             public boolean value(PushSupport<Repository, PushSource, PushTarget> support) {
+               return support.mayChangeTargetsSync();
+             }
+           });
   }
 
   private boolean isSingleRepoProject() {
@@ -120,17 +119,19 @@ public class PushController implements Disposable {
   }
 
   @NotNull
-  private List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> getAffectedSupports(@NotNull Project project) {
-    final Collection<Repository> repositories = myGlobalRepositoryManager.getRepositories();
-    return ContainerUtil.filter(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, project), new Condition<PushSupport>() {
+  private <R extends Repository, S extends PushSource, T extends PushTarget> List<PushSupport<R, S, T>> getAffectedSupports() {
+    Collection<Repository> repositories = myGlobalRepositoryManager.getRepositories();
+    Collection<AbstractVcs> vcss = ContainerUtil.map2Set(repositories, new Function<Repository, AbstractVcs>() {
       @Override
-      public boolean value(final PushSupport support) {
-        return ContainerUtil.exists(repositories, new Condition<Repository>() {
-          @Override
-          public boolean value(Repository repository) {
-            return support.getVcs().equals(repository.getVcs());
-          }
-        });
+      public AbstractVcs fun(@NotNull Repository repository) {
+        return repository.getVcs();
+      }
+    });
+    return ContainerUtil.map(vcss, new Function<AbstractVcs, PushSupport<R, S, T>>() {
+      @Override
+      public PushSupport<R, S, T> fun(AbstractVcs vcs) {
+        //noinspection unchecked
+        return DvcsUtil.getPushSupport(vcs);
       }
     });
   }
@@ -308,13 +309,12 @@ public class PushController implements Disposable {
   public boolean isPushAllowed(final boolean force) {
     JTree tree = myPushLog.getTree();
     return !tree.isEditing() &&
-           ContainerUtil
-             .exists(myPushSupports, new Condition<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>>() {
-               @Override
-               public boolean value(PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support) {
-                 return isPushAllowed(support, force);
-               }
-             });
+           ContainerUtil.exists(myPushSupports, new Condition<PushSupport<Repository, PushSource, PushTarget>>() {
+             @Override
+             public boolean value(PushSupport<Repository, PushSource, PushTarget> support) {
+               return isPushAllowed(support, force);
+             }
+           });
   }
 
   private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport, boolean force) {
