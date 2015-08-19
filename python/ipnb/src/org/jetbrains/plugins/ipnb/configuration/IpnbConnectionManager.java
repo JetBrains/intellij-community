@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
@@ -53,6 +54,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
+
   public IpnbConnectionManager(final Project project) {
     myProject = project;
   }
@@ -189,7 +191,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
           }
           catch (URISyntaxException e) {
             if (showNotification) {
-              showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+              showWarning(codePanel.getFileEditor(),
+                          "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
                           new IpnbSettingsAdapter());
               LOG.warn("IPython Notebook connection refused: " + e.getMessage());
             }
@@ -270,7 +273,11 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     final String homePath = sdk.getHomePath();
     if (homePath == null) return false;
-    final String ipython = PythonSdkType.getExecutablePath(homePath, "ipython");
+    final String ipython = PythonSdkType.getExecutablePath(homePath, SystemInfo.isWindows ? "ipython.exe" : "ipython");
+    if (ipython == null) {
+      showWarning(fileEditor, "IPython executable is not found, please check your IPython installation", null);
+      return false;
+    }
     final ArrayList<String> parameters = Lists.newArrayList(homePath, ipython, "notebook", "--no-browser");
     if (hostPort.getFirst() != null) {
       parameters.add("--ip");
@@ -341,7 +348,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  public void projectOpened() {}
+  public void projectOpened() {
+  }
 
 
   public void projectClosed() {
