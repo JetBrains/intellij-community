@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -119,6 +120,9 @@ public interface PyCallExpression extends PyCallSiteExpression {
   @NotNull
   PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext);
 
+  @NotNull
+  PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset);
+
   /**
    * Checks if the unqualified name of the callee matches any of the specified names
    *
@@ -138,10 +142,15 @@ public interface PyCallExpression extends PyCallSiteExpression {
   class PyArgumentsMapping {
     @Nullable private final PyMarkedCallee myCallee;
     @NotNull private final Map<PyExpression, PyNamedParameter> myMappedParameters;
+    @NotNull private final List<PyParameter> myUnmappedParameters;
+    @NotNull private final List<PyExpression> myUnmappedArguments;
 
-    public PyArgumentsMapping(@Nullable PyMarkedCallee markedCallee, @NotNull Map<PyExpression, PyNamedParameter> mappedParameters) {
+    public PyArgumentsMapping(@Nullable PyMarkedCallee markedCallee, @NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
+                              @NotNull List<PyParameter> unmappedParameters, @NotNull List<PyExpression> unmappedArguments) {
       myCallee = markedCallee;
       myMappedParameters = mappedParameters;
+      myUnmappedParameters = unmappedParameters;
+      myUnmappedArguments = unmappedArguments;
     }
 
     @Nullable
@@ -152,6 +161,16 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @NotNull
     public Map<PyExpression, PyNamedParameter> getMappedParameters() {
       return myMappedParameters;
+    }
+
+    @NotNull
+    public List<PyParameter> getUnmappedParameters() {
+      return myUnmappedParameters;
+    }
+
+    @NotNull
+    public List<PyExpression> getUnmappedArguments() {
+      return myUnmappedArguments;
     }
   }
 

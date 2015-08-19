@@ -108,8 +108,14 @@ public class PyArgumentListInspection extends PyInspection {
 
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context, int implicitOffset) {
     if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
-    CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context), implicitOffset);
-    final PyCallExpression.PyMarkedCallee callee = result.getMarkedCallee();
+    final PyCallExpression callExpr = node.getCallExpression();
+    if (callExpr == null) {
+      return;
+    }
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext, implicitOffset);
+    CallArgumentsMapping result = node.analyzeCall(resolveContext, implicitOffset);
+    final PyCallExpression.PyMarkedCallee callee = mapping.getMarkedCallee();
     if (callee != null) {
       final PyCallable callable = callee.getCallable();
       // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
@@ -118,7 +124,7 @@ public class PyArgumentListInspection extends PyInspection {
       }
     }
     highlightIncorrectArguments(holder, result, context);
-    highlightMissingArguments(node, holder, result);
+    highlightMissingArguments(node, holder, mapping);
     highlightStarArgumentTypeMismatch(node, holder, context);
   }
 
@@ -197,13 +203,14 @@ public class PyArgumentListInspection extends PyInspection {
     }
   }
 
-  private static void highlightMissingArguments(PyArgumentList node, ProblemsHolder holder, CallArgumentsMapping result) {
+  private static void highlightMissingArguments(@NotNull PyArgumentList node, @NotNull ProblemsHolder holder,
+                                                @NotNull PyCallExpression.PyArgumentsMapping mapping) {
     ASTNode our_node = node.getNode();
     if (our_node != null) {
       ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);
       if (close_paren != null) {
-        for (PyNamedParameter param : result.getUnmappedParams()) {
-          holder.registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", param.getName()));
+        for (PyParameter parameter : mapping.getUnmappedParameters()) {
+          holder.registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", parameter.getName()));
         }
       }
     }
