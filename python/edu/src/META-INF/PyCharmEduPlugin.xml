@@ -35,10 +35,6 @@
       <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
   </extensions>
 
-  <extensions defaultExtensionNs="Pythonid">
-    <debugValueTransformer implementation="com.jetbrains.python.edu.debugger.PyEduDebugTransformer"/>
-  </extensions>
-
   <actions>
     <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="ToolsMenu"/>
 
