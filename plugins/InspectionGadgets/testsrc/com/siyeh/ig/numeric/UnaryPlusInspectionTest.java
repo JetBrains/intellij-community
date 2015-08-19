@@ -31,6 +31,8 @@ public class UnaryPlusInspectionTest extends LightInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new UnaryPlusInspection();
+    final UnaryPlusInspection inspection = new UnaryPlusInspection();
+    inspection.onlyReportInsideBinaryExpression = false;
+    return inspection;
   }
 }

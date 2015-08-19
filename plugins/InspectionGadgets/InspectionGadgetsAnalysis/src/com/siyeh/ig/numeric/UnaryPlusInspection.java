@@ -17,7 +17,9 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,11 +27,17 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class UnaryPlusInspection extends BaseInspection {
+
+  public boolean onlyReportInsideBinaryExpression = true;
 
   @Override
   @NotNull
@@ -42,6 +50,20 @@ public class UnaryPlusInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unary.plus.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Only report in confusing binary or unary expression context", this,
+                                          "onlyReportInsideBinaryExpression");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (!onlyReportInsideBinaryExpression) {
+      node.addContent(new Element("option").setAttribute("name", "onlyReportInsideBinaryExpression").setAttribute("value", "false"));
+    }
   }
 
   @Nullable
@@ -87,7 +109,7 @@ public class UnaryPlusInspection extends BaseInspection {
     return new UnaryPlusVisitor();
   }
 
-  private static class UnaryPlusVisitor extends BaseInspectionVisitor {
+  private class UnaryPlusVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPrefixExpression(PsiPrefixExpression prefixExpression) {
@@ -102,7 +124,14 @@ public class UnaryPlusInspection extends BaseInspection {
         return;
       }
       final PsiType type = operand.getType();
-      if (PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type)) {
+      if (onlyReportInsideBinaryExpression) {
+        final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(prefixExpression);
+        if (!(operand instanceof PsiParenthesizedExpression) && !(operand instanceof PsiPrefixExpression) &&
+            !(parent instanceof PsiPolyadicExpression) && !(parent instanceof PsiPrefixExpression)) {
+          return;
+        }
+      }
+      else if (PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type)) {
         PsiExpression expression = prefixExpression;
         PsiElement parent = expression.getParent();
         while (parent instanceof PsiParenthesizedExpression) {
