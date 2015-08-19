@@ -79,12 +79,18 @@ public abstract class IndentationParser implements PsiParser {
       advanceLexer(builder);
     }
 
-    final Stack<BlockInfo> stack = new Stack<BlockInfo>();
-    stack.push(new BlockInfo(0, builder.mark(), builder.getTokenType()));
-
-    PsiBuilder.Marker startLineMarker = null;
     int currentIndent = 0;
     boolean eolSeen = false;
+
+    if (builder.getTokenType() == myIndentTokenType) {
+      currentIndent = builder.getTokenText().length();
+      advanceLexer(builder);
+    }
+
+    final Stack<BlockInfo> stack = new Stack<BlockInfo>();
+    stack.push(new BlockInfo(currentIndent, builder.mark(), builder.getTokenType()));
+
+    PsiBuilder.Marker startLineMarker = null;
 
     while (!builder.eof()) {
       final IElementType type = builder.getTokenType();
