@@ -1,7 +1,5 @@
-package com.intel
+package com.intellij.configurationStore
 
-import com.intellij.configurationStore.StoreAwareProjectManager
-import com.intellij.configurationStore.saveStore
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
