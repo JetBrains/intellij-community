@@ -26,10 +26,7 @@ import gnu.trove.THashMap
 import org.iq80.snappy.SnappyInputStream
 import org.iq80.snappy.SnappyOutputStream
 import org.jdom.Element
-import org.jdom.JDOMException
 import org.jdom.output.Format
-import org.jdom.output.XMLOutputter
-
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
