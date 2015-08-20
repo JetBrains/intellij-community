@@ -34,89 +34,6 @@ import java.util.Arrays
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any>) {
-  public fun toMutableMap(): MutableMap<String, Any> {
-    val map = THashMap<String, Any>(names.size())
-    for (i in names.indices) {
-      map.put(names[i], states.get(i))
-    }
-    return map
-  }
-
-  /**
-   * Sorted by name.
-   */
-  fun keys(): Array<String> {
-    return names
-  }
-
-  public fun get(key: String): Any? {
-    val index = Arrays.binarySearch(names, key)
-    return if (index < 0) null else states.get(index)
-  }
-
-  throws(IOException::class)
-  public fun getElement(key: String, newLiveStates: Map<String, Element>): Element {
-    return stateToElement(key, get(key), newLiveStates)
-  }
-
-  public fun isEmpty(): Boolean {
-    return names.size() == 0
-  }
-
-  public fun getState(key: String): Element? {
-    val state = get(key)
-    return if (state is Element) state else null
-  }
-
-  public fun hasState(key: String): Boolean {
-    return get(key) is Element
-  }
-
-  public fun hasStates(): Boolean {
-    if (isEmpty()) {
-      return false
-    }
-
-    for (i in names.indices) {
-      if (states.get(i) is Element) {
-        return true
-      }
-    }
-    return false
-  }
-
-  public fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
-    val oldState = get(key)
-    val newState = newStates.get(key)
-    if (oldState is Element) {
-      if (!JDOMUtil.areElementsEqual(oldState as Element?, newState as Element?)) {
-        diffs.add(key)
-      }
-    }
-    else if (getNewByteIfDiffers(key, newState!!, oldState as ByteArray) != null) {
-      diffs.add(key)
-    }
-  }
-
-  public fun getStateAndArchive(key: String): Element? {
-    val index = Arrays.binarySearch(names, key)
-    if (index < 0) {
-      return null
-    }
-
-    val state = states.get(index)
-    if (state !is Element) {
-      return null
-    }
-
-    if (states.compareAndSet(index, state, archiveState(state))) {
-      return state
-    }
-    else {
-      return getStateAndArchive(key)
-    }
-  }
-
   companion object {
     private val LOG = Logger.getInstance(javaClass<StateMap>())
 
@@ -205,6 +122,88 @@ class StateMap private constructor(private val names: Array<String>, private val
         }
       }
       return JDOMUtil.writeParent(element, "\n")
+    }
+  }
+
+  public fun toMutableMap(): MutableMap<String, Any> {
+    val map = THashMap<String, Any>(names.size())
+    for (i in names.indices) {
+      map.put(names[i], states.get(i))
+    }
+    return map
+  }
+
+  /**
+   * Sorted by name.
+   */
+  fun keys(): Array<String> {
+    return names
+  }
+
+  public fun get(key: String): Any? {
+    val index = Arrays.binarySearch(names, key)
+    return if (index < 0) null else states.get(index)
+  }
+
+  public fun getElement(key: String, newLiveStates: Map<String, Element>): Element {
+    return stateToElement(key, get(key), newLiveStates)
+  }
+
+  public fun isEmpty(): Boolean {
+    return names.size() == 0
+  }
+
+  public fun getState(key: String): Element? {
+    val state = get(key)
+    return if (state is Element) state else null
+  }
+
+  public fun hasState(key: String): Boolean {
+    return get(key) is Element
+  }
+
+  public fun hasStates(): Boolean {
+    if (isEmpty()) {
+      return false
+    }
+
+    for (i in names.indices) {
+      if (states.get(i) is Element) {
+        return true
+      }
+    }
+    return false
+  }
+
+  public fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
+    val oldState = get(key)
+    val newState = newStates.get(key)
+    if (oldState is Element) {
+      if (!JDOMUtil.areElementsEqual(oldState as Element?, newState as Element?)) {
+        diffs.add(key)
+      }
+    }
+    else if (getNewByteIfDiffers(key, newState!!, oldState as ByteArray) != null) {
+      diffs.add(key)
+    }
+  }
+
+  public fun getStateAndArchive(key: String): Element? {
+    val index = Arrays.binarySearch(names, key)
+    if (index < 0) {
+      return null
+    }
+
+    val state = states.get(index)
+    if (state !is Element) {
+      return null
+    }
+
+    if (states.compareAndSet(index, state, archiveState(state))) {
+      return state
+    }
+    else {
+      return getStateAndArchive(key)
     }
   }
 }
