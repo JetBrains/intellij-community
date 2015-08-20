@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +63,9 @@ public class GrTraitUtil {
 
   @Contract("null -> false")
   public static boolean isTrait(@Nullable PsiClass containingClass) {
-    return containingClass instanceof GrTypeDefinition && ((GrTypeDefinition)containingClass).isTrait();
+    return containingClass instanceof GrTypeDefinition && ((GrTypeDefinition)containingClass).isTrait()
+           || containingClass instanceof ClsClassImpl
+              && containingClass.isInterface()
+              && AnnotationUtil.isAnnotated(containingClass, "groovy.transform.Trait", false);
   }
 }
