@@ -37,7 +37,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
 
-open class FileBasedStorage(private volatile var file: File,
+open class FileBasedStorage(file: File,
                             fileSpec: String,
                             rootElementName: String,
                             pathMacroManager: TrackingPathMacroSubstitutor? = null,
@@ -46,6 +46,9 @@ open class FileBasedStorage(private volatile var file: File,
   private volatile var cachedVirtualFile: VirtualFile? = null
   private var lineSeparator: LineSeparator? = null
   private var blockSavingTheContent = false
+
+  volatile var file = file
+    private set
 
   init {
     if (ApplicationManager.getApplication().isUnitTestMode() && file.getPath().startsWith('$')) {
@@ -96,8 +99,6 @@ open class FileBasedStorage(private volatile var file: File,
     }
     return cachedVirtualFile
   }
-
-  override fun getFile() = file
 
   override fun loadLocalData(): Element? {
     blockSavingTheContent = false

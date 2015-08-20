@@ -81,7 +81,7 @@ class ModuleStoreRenameTest {
   public Test fun `rename module using model`() {
     runInEdtAndWait { module.saveStore() }
     val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
-    val oldFile = storage.getFile()
+    val oldFile = storage.file
     assertThat(oldFile).isFile()
 
     val oldName = module.getName()
@@ -95,7 +95,7 @@ class ModuleStoreRenameTest {
   public Test fun `rename module using rename virtual file`() {
     runInEdtAndWait { module.saveStore() }
     var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
-    val oldFile = storage.getFile()
+    val oldFile = storage.file
     assertThat(oldFile).isFile()
 
     val oldName = module.getName()
@@ -109,7 +109,7 @@ class ModuleStoreRenameTest {
 
   private fun assertRename(newName: String, oldFile: File) {
     val storageManager = moduleFixture.getModule().stateStore.getStateStorageManager()
-    val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage).getFile()
+    val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage).file
     assertThat(newFile.getName()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     assertThat(oldFile)
       .doesNotExist()
@@ -125,7 +125,7 @@ class ModuleStoreRenameTest {
     val storageManager = module.stateStore.getStateStorageManager()
     val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
 
-    val oldFile = storage.getFile()
+    val oldFile = storage.file
     val parentVirtualDir = storage.getVirtualFile()!!.getParent()
     runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
 

@@ -47,6 +47,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     if (provider != null && provider.enabled) {
       try {
         element = loadDataFromProvider()
+        dataLoadedFromProvider(element)
       }
       catch (e: Exception) {
         LOG.error(e)
@@ -57,6 +58,9 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       element = loadLocalData()
     }
     return if (element == null) StateMap.EMPTY else loadState(element)
+  }
+
+  protected open fun dataLoadedFromProvider(element: Element?) {
   }
 
   private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
