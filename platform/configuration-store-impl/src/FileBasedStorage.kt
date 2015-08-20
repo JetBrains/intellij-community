@@ -23,7 +23,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorage
-import com.intellij.openapi.components.impl.stores.StateMap
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.JDOMUtil

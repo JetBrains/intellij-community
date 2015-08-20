@@ -15,13 +15,13 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.StateMap.getNewByteIfDiffers
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.*
-import com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers
 import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -80,7 +80,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
   }
 
   private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: Map<String, StateMap>) : SaveSessionBase() {
-    private var copiedStorageData: Map<String, Map<String, Any>>? = null
+    private var copiedStorageData: MutableMap<String, MutableMap<String, Any>>? = null
 
     private val dirtyFileNames = SmartHashSet<String>()
     private val removedFileNames = SmartHashSet<String>()
@@ -116,7 +116,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
           dirtyFileNames.add(fileName)
         }
       }
-      else if (DirectoryStorageUtil.setState(copiedStorageData!!, componentName, fileName, subState) != null && fileName != null) {
+      else if (DirectoryBasedStorage.setState(copiedStorageData!!, componentName, fileName, subState) != null && fileName != null) {
         dirtyFileNames.add(fileName)
       }
     }
@@ -215,6 +215,46 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
   override fun hasState(storageData: Map<String, StateMap>, componentName: String) = storageData.get(componentName)?.hasStates() ?: false
 
   companion object {
+    fun setState(states: MutableMap<String, MutableMap<String, Any>>, componentName: String, fileName: String?, newState: Element?): Any? {
+      var fileToState = states.get(componentName)
+      if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
+        if (fileToState == null) {
+          return null
+        }
+        else if (fileName == null) {
+          return states.remove(componentName)
+        }
+        else {
+          val oldState = fileToState.remove(fileName)
+          if (fileToState.isEmpty()) {
+            states.remove(componentName)
+          }
+          return oldState
+        }
+      }
+
+      if (fileToState == null) {
+        fileToState = THashMap<String, Any>()
+        fileToState.put(fileName, newState)
+        states.put(componentName, fileToState)
+      }
+      else {
+        val oldState = fileToState.get(fileName)
+        var newBytes: ByteArray? = null
+        if (oldState is Element) {
+          if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
+            return null
+          }
+        }
+        else if (oldState != null) {
+          newBytes = StateMap.getNewByteIfDiffers(fileName, newState, oldState as ByteArray) ?: return null
+        }
+
+        fileToState.put(fileName, newBytes ?: newState)
+      }
+      return newState
+    }
+
     public fun Map<String, StateMap>.toMutableMap(): MutableMap<String, MutableMap<String, Any>> {
       val map = THashMap<String, MutableMap<String, Any>>(size())
       for (entry in entrySet()) {
@@ -258,7 +298,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
       return state
     }
 
-    public fun setStateAndCloneIfNeed(componentName: String, fileName: String?, newState: Element?, oldStates: Map<String, StateMap>): Map<String, Map<String, Any>>? {
+    public fun setStateAndCloneIfNeed(componentName: String, fileName: String?, newState: Element?, oldStates: Map<String, StateMap>): MutableMap<String, MutableMap<String, Any>>? {
       val fileToState = oldStates.get(componentName)
       val oldState: Any? = if (fileToState == null || fileName == null) null else fileToState.get(fileName)
       if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {

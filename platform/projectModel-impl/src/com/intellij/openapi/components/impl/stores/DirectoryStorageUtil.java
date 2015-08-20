@@ -32,8 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
-
 public class DirectoryStorageUtil {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageUtil.class);
 
@@ -44,7 +42,7 @@ public class DirectoryStorageUtil {
     }
 
     StringInterner interner = new StringInterner();
-    Map map = new THashMap<String, Map<String, Element>>();
+    Map<String, Map<String, Element>> map = new THashMap<String, Map<String, Element>>();
     for (VirtualFile file : dir.getChildren()) {
       // ignore system files like .DS_Store on Mac
       if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), FileStorageCoreUtil.DEFAULT_EXT)) {
@@ -74,24 +72,35 @@ public class DirectoryStorageUtil {
         }
 
         Element state = (Element)elementChildren.get(0).detach();
+        if (JDOMUtil.isEmpty(state)) {
+          continue;
+        }
+
         JDOMUtil.internElement(state, interner);
         if (pathMacroSubstitutor != null) {
           pathMacroSubstitutor.expandPaths(state);
           pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(state));
         }
-        //noinspection unchecked
-        setState(map, name, file.getName(), state);
+
+        Map<String, Element> fileToState = map.get(name);
+        if (fileToState == null) {
+          fileToState = new THashMap<String, Element>();
+          fileToState.put(file.getName(), state);
+          map.put(name, fileToState);
+        }
+        else {
+          fileToState.put(file.getName(), state);
+        }
       }
       catch (Throwable e) {
         LOG.warn("Unable to load state", e);
       }
     }
-    //noinspection unchecked
     return map;
   }
 
   @Nullable
-  public static Element getCompositeStateAndArchive(@NotNull Map<String, Map<String, Element>> states, @NotNull String componentName, @NotNull StateSplitterEx splitter) {
+  public static Element getCompositeState(@NotNull Map<String, Map<String, Element>> states, @NotNull String componentName, @NotNull StateSplitterEx splitter) {
     Map<String, Element> fileToState = states.get(componentName);
     Element state = new Element(FileStorageCoreUtil.COMPONENT);
     if (fileToState == null || fileToState.isEmpty()) {
@@ -106,50 +115,5 @@ public class DirectoryStorageUtil {
       splitter.mergeStateInto(state, subState);
     }
     return state;
-  }
-
-  @Nullable
-  public static Object setState(@NotNull Map<String, Map<String, Object>> states, @NotNull String componentName, @Nullable String fileName, @Nullable Element newState) {
-    Map<String, Object> fileToState = states.get(componentName);
-    if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
-      if (fileToState == null) {
-        return null;
-      }
-      else if (fileName == null) {
-        return states.remove(componentName);
-      }
-      else {
-        Object oldState = fileToState.remove(fileName);
-        if (fileToState.isEmpty()) {
-          states.remove(componentName);
-        }
-        return oldState;
-      }
-    }
-
-    if (fileToState == null) {
-      fileToState = new THashMap<String, Object>();
-      fileToState.put(fileName, newState);
-      states.put(componentName, fileToState);
-    }
-    else {
-      Object oldState = fileToState.get(fileName);
-
-      byte[] newBytes = null;
-      if (oldState instanceof Element) {
-        if (JDOMUtil.areElementsEqual((Element)oldState, newState)) {
-          return null;
-        }
-      }
-      else if (oldState != null) {
-        newBytes = getNewByteIfDiffers(fileName, newState, (byte[])oldState);
-        if (newBytes == null) {
-          return null;
-        }
-      }
-
-      fileToState.put(fileName, newBytes == null ? newState : newBytes);
-    }
-    return newState;
   }
 }
