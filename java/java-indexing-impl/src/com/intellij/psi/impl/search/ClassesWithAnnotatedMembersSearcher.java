@@ -41,7 +41,7 @@ public class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiCl
     SearchScope scope = queryParameters.getScope();
     for (QueryExecutor executor : Extensions.getExtensions(ClassesWithAnnotatedMembersSearch.EP_NAME)) {
       if (executor instanceof ScopedQueryExecutor) {
-        scope = scope.intersectWith(GlobalSearchScope.notScope(((ScopedQueryExecutor) executor).getScope()));
+        scope = scope.intersectWith(GlobalSearchScope.notScope(((ScopedQueryExecutor) executor).getScope(queryParameters)));
       }
     }
 

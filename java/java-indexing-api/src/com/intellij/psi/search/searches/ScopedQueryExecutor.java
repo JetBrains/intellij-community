@@ -30,5 +30,5 @@ public interface ScopedQueryExecutor<Result, Param> extends QueryExecutor<Result
    * Returns the scope handled by this executor.
    */
   @NotNull
-  GlobalSearchScope getScope();
+  GlobalSearchScope getScope(Param param);
 }
