@@ -9,8 +9,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -24,6 +27,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -145,6 +149,34 @@ public class PyEduDebugRunner extends PyDebugRunner {
 
     PyDebugProcess process = (PyDebugProcess)session.getDebugProcess();
     PyDebugRunner.initDebugConsoleView(project, process, view, processHandler, session);
+
+    patchLeftToolbar(session, ui);
+  }
+
+  private static void patchLeftToolbar(@NotNull XDebugSession session, @NotNull RunnerLayoutUi ui) {
+    DefaultActionGroup newLeftToolbar = new DefaultActionGroup();
+
+    DefaultActionGroup firstGroup = new DefaultActionGroup();
+    addActionToGroup(firstGroup, XDebuggerActions.RESUME);
+    addActionToGroup(firstGroup, IdeActions.ACTION_STOP_PROGRAM);
+    newLeftToolbar.addAll(firstGroup);
+
+    newLeftToolbar.addSeparator();
+
+    Executor executor = PyEduDebugExecutor.getInstance();
+    newLeftToolbar.add(new CloseAction(executor, session.getRunContentDescriptor(), session.getProject()));
+    //TODO: return proper helpID
+    newLeftToolbar.add(new ContextHelpAction(executor.getHelpId()));
+
+    ui.getOptions().setLeftToolbar(newLeftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
+  }
+
+  private static void addActionToGroup(DefaultActionGroup group, String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action != null) {
+      action.getTemplatePresentation().setEnabled(true);
+      group.add(action, Constraints.LAST);
+    }
   }
 
   @Nullable
