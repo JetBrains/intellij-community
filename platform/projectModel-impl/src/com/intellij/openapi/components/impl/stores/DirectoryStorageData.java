@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
@@ -40,7 +39,7 @@ import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfD
 public class DirectoryStorageData implements StorageDataBase {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
 
-  final Map<String, StateMap> states;
+  public final Map<String, StateMap> states;
 
   public DirectoryStorageData() {
     this.states = new THashMap<String, StateMap>();
@@ -215,11 +214,5 @@ public class DirectoryStorageData implements StorageDataBase {
       }
     }
     return state;
-  }
-
-  @NotNull
-  String[] getFileNames(@NotNull String componentName) {
-    StateMap fileToState = states.get(componentName);
-    return fileToState == null || fileToState.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : fileToState.keys();
   }
 }

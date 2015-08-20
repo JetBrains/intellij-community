@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -115,9 +117,15 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       originalStorageData = storageData;
     }
 
+    @NotNull
+    private static String[] getFileNames(@NotNull DirectoryStorageData directoryStorageData, @NotNull String componentName) {
+      StateMap fileToState = directoryStorageData.states.get(componentName);
+      return fileToState == null || fileToState.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : fileToState.keys();
+    }
+
     @Override
     protected void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element) {
-      ContainerUtil.addAll(removedFileNames, originalStorageData.getFileNames(componentName));
+      ContainerUtil.addAll(removedFileNames, getFileNames(originalStorageData, componentName));
       if (JDOMUtil.isEmpty(element)) {
         doSetState(componentName, null, null);
       }

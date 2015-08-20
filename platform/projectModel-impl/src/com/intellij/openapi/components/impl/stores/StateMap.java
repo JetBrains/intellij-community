@@ -107,7 +107,7 @@ public final class StateMap implements StorageDataBase {
   }
 
   @NotNull
-  static Element stateToElement(@NotNull String key, @Nullable Object state, @NotNull Map<String, Element> newLiveStates) throws IOException {
+  public static Element stateToElement(@NotNull String key, @Nullable Object state, @NotNull Map<String, Element> newLiveStates) throws IOException {
     if (state instanceof Element) {
       return ((Element)state).clone();
     }
