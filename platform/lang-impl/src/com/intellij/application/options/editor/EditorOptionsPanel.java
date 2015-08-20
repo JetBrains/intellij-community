@@ -360,7 +360,7 @@ public class EditorOptionsPanel {
       updateVcsSettings = true;
     }
     if (updateVcsSettings) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(LineStatusTrackerTopics.SETTINGS_CHANGED).updateSettings();
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(LineStatusTrackerTopics.SETTINGS_CHANGED).settingsUpdated();
     }
 
     reinitAllEditors();

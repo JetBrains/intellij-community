@@ -21,6 +21,6 @@ public interface LineStatusTrackerTopics {
   Topic<LineStatusTrackerSettingListener> SETTINGS_CHANGED = Topic.create("line status tracker settings changed", LineStatusTrackerSettingListener.class);
 
   interface LineStatusTrackerSettingListener {
-    void updateSettings();
+    void settingsUpdated();
   }
 }

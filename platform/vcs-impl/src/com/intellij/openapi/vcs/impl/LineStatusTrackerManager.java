@@ -126,7 +126,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     });
     busConnection.subscribe(LineStatusTrackerTopics.SETTINGS_CHANGED, new LineStatusTrackerTopics.LineStatusTrackerSettingListener() {
       @Override
-      public void updateSettings() {
+      public void settingsUpdated() {
         synchronized (myLock) {
           LineStatusTracker.Mode mode = getMode();
           for (LineStatusTracker tracker : myLineStatusTrackers.values()) {
