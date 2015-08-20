@@ -1688,7 +1688,7 @@ public class PyUtil {
   }
 
   /**
-   * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
+   * Filters out {@link PyMemberInfo}
    * that should not be displayed in this refactoring (like object)
    *
    * @param pyMemberInfos collection to sort
@@ -1756,10 +1756,10 @@ public class PyUtil {
 
   /**
    * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
-   * special {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   * special {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
    *
    * @param cls    Python class to check
-   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyBuiltinCache
    * @see PyNames#FAKE_OLD_BASE
    */
   public static boolean isObjectClass(@NotNull PyClass cls) {
@@ -1769,11 +1769,11 @@ public class PyUtil {
 
   /**
    * Checks that given type is the root of type hierarchy, i.e. it's type of either {@code object} or special
-   * {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   * {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
    *
    * @param type   Python class to check
    * @param anchor arbitrary PSI element to find appropriate SDK
-   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyBuiltinCache
    * @see PyNames#FAKE_OLD_BASE
    */
   public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
