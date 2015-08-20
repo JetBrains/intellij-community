@@ -704,4 +704,8 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'MainClass1', 'MainClass2', 'Maa'
   }
 
+  public void testNaturalSorting() {
+    checkPreferredItems 0, 'fun1', 'fun2', 'fun10'
+  }
+
 }
