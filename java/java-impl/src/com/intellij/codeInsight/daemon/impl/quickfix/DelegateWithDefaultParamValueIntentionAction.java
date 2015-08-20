@@ -58,7 +58,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
       if (declarationScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declarationScope;
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel7OrHigher(method))) {
+        if (containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(method))) {
           if (containingClass.findMethodBySignature(generateMethodPrototype(method, parameter), false) != null) {
             return false;
           }
