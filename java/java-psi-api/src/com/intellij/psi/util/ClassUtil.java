@@ -85,18 +85,12 @@ public class ClassUtil {
         @Override
         public Result<TObjectIntHashMap<PsiClass>> compute() {
           final TObjectIntHashMap<PsiClass> map = new TObjectIntHashMap<PsiClass>();
-          containingClass.accept(new JavaRecursiveElementWalkingVisitor() {
-            private int myCurrentIdx = 0;
-
-            @Override
-            public void visitClass(PsiClass aClass) {
-              super.visitClass(aClass);
-              if (aClass.getQualifiedName() == null) {
-                myCurrentIdx++;
-                map.put(aClass, myCurrentIdx);
-              }
+          int index = 0;
+          for (PsiClass aClass : SyntaxTraverser.psiTraverser().withRoot(containingClass).postOrderDfsTraversal().filter(PsiClass.class)) {
+            if (aClass.getQualifiedName() == null) {
+              map.put(aClass, ++index);
             }
-          });
+          }
           return Result.create(map, containingClass);
         }
       });
