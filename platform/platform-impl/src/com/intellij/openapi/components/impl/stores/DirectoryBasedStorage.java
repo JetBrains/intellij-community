@@ -28,6 +28,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
 
 public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData> {
   private final File myDir;
@@ -134,7 +137,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
 
     private void doSetState(@NotNull String componentName, @Nullable String fileName, @Nullable Element subState) {
       if (copiedStorageData == null) {
-        copiedStorageData = DirectoryStorageData.setStateAndCloneIfNeed(componentName, fileName, subState, originalStorageData);
+        copiedStorageData = setStateAndCloneIfNeed(componentName, fileName, subState, originalStorageData);
         if (copiedStorageData != null && fileName != null) {
           dirtyFileNames.add(fileName);
         }
@@ -233,5 +236,68 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
         token.finish();
       }
     }
+  }
+
+  @Nullable
+  public static Map<String, Map<String, Object>> setStateAndCloneIfNeed(@NotNull String componentName,
+                                                                        @Nullable String fileName,
+                                                                        @Nullable Element newState,
+                                                                        @NotNull DirectoryStorageData storageData) {
+    StateMap fileToState = storageData.states.get(componentName);
+    Object oldState = fileToState == null || fileName == null ? null : fileToState.get(fileName);
+    if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
+      if (fileName == null) {
+        if (fileToState == null) {
+          return null;
+        }
+      }
+      else if (oldState == null) {
+        return null;
+      }
+
+      Map<String, Map<String, Object>> newStorageData = storageData.toMap();
+      if (fileName == null) {
+        newStorageData.remove(componentName);
+      }
+      else {
+        Map<String, Object> clonedFileToState = newStorageData.get(componentName);
+        if (clonedFileToState.size() == 1) {
+          newStorageData.remove(componentName);
+        }
+        else {
+          clonedFileToState.remove(fileName);
+          if (clonedFileToState.isEmpty()) {
+            newStorageData.remove(componentName);
+          }
+        }
+      }
+      return newStorageData;
+    }
+
+    byte[] newBytes = null;
+    if (oldState instanceof Element) {
+      if (JDOMUtil.areElementsEqual((Element)oldState, newState)) {
+        return null;
+      }
+    }
+    else if (oldState != null) {
+      newBytes = getNewByteIfDiffers(componentName, newState, (byte[])oldState);
+      if (newBytes == null) {
+        return null;
+      }
+    }
+
+    Map<String, Map<String, Object>> newStorageData = storageData.toMap();
+    put(newStorageData, componentName, fileName, newBytes == null ? newState : newBytes);
+    return newStorageData;
+  }
+
+  private static void put(@NotNull Map<String, Map<String, Object>> states, @NotNull String componentName, @NotNull String fileName, @NotNull Object state) {
+    Map<String, Object> fileToState = states.get(componentName);
+    if (fileToState == null) {
+      fileToState = new THashMap<String, Object>();
+      states.put(componentName, fileToState);
+    }
+    fileToState.put(fileName, state);
   }
 }
