@@ -32,6 +32,14 @@ public enum ThreeSide {
     myIndex = index;
   }
 
+  @NotNull
+  public static ThreeSide fromIndex(int index) {
+    if (index == 0) return LEFT;
+    if (index == 1) return BASE;
+    if (index == 2) return RIGHT;
+    throw new IndexOutOfBoundsException("index: " + index);
+  }
+
   public int getIndex() {
     return myIndex;
   }

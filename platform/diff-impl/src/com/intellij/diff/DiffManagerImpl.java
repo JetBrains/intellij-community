@@ -19,15 +19,18 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.impl.DiffRequestPanelImpl;
 import com.intellij.diff.impl.DiffWindow;
+import com.intellij.diff.merge.*;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.binary.BinaryDiffTool;
 import com.intellij.diff.tools.dir.DirDiffTool;
 import com.intellij.diff.tools.external.ExternalDiffTool;
+import com.intellij.diff.tools.external.ExternalMergeTool;
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,5 +95,30 @@ public class DiffManagerImpl extends DiffManagerEx {
     result.add(DirDiffTool.INSTANCE);
     Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<MergeTool> getMergeTools() {
+    List<MergeTool> result = new ArrayList<MergeTool>();
+    Collections.addAll(result, MergeTool.EP_NAME.getExtensions());
+    result.add(TextMergeTool.INSTANCE);
+    result.add(BinaryMergeTool.INSTANCE);
+    return result;
+  }
+
+  @CalledInAwt
+  public void showMerge(@Nullable Project project, @NotNull MergeRequest request) {
+    if (ExternalMergeTool.isDefault()) {
+      ExternalMergeTool.show(project, request);
+      return;
+    }
+
+    showMergeBuiltin(project, request);
+  }
+
+  @CalledInAwt
+  public void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request) {
+    new MergeWindow(project, request).show();
   }
 }

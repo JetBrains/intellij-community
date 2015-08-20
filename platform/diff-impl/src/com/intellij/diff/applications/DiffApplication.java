@@ -21,7 +21,6 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,8 +46,6 @@ public class DiffApplication extends ApplicationStarterBase {
   }
 
   public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    // TODO: try to guess 'right' project ?
-
     final String path1 = args[1];
     final String path2 = args[2];
 
@@ -59,9 +56,10 @@ public class DiffApplication extends ApplicationStarterBase {
     if (file2 == null) throw new Exception("Can't find file " + path2);
 
     VfsUtil.markDirtyAndRefresh(false, false, false, file1, file2);
-    DiffRequest request = DiffRequestFactory.getInstance().createFromFiles(null, file1, file2);
 
-    Project project = DefaultProjectFactory.getInstance().getDefaultProject();
+    Project project = getProject();
+
+    DiffRequest request = DiffRequestFactory.getInstance().createFromFiles(project, file1, file2);
     DiffManagerEx.getInstance().showDiffBuiltin(project, request, DiffDialogHints.MODAL);
   }
 }

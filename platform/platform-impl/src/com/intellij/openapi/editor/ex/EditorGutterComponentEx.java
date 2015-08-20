@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -63,6 +64,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
+
+  public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
   
   public abstract void setPaintBackground(boolean value);
 }

@@ -22,7 +22,7 @@ import java.util.List;
 
 public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDifferenceIterable {
   @NotNull
-  protected abstract List<T> getChanges();
+  protected abstract List<? extends T> getChanges();
 
   @NotNull
   protected abstract EditorEx getEditor();
@@ -35,7 +35,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public boolean canGoNext() {
-    List<T> changes = getChanges();
+    List<? extends T> changes = getChanges();
     if (changes.isEmpty()) return false;
 
     EditorEx editor = getEditor();
@@ -50,7 +50,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public void goNext() {
-    List<T> changes = getChanges();
+    List<? extends T> changes = getChanges();
     int line = getEditor().getCaretModel().getLogicalPosition().line;
 
     T next = null;
@@ -68,7 +68,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public boolean canGoPrev() {
-    List<T> changes = getChanges();
+    List<? extends T> changes = getChanges();
     if (changes.isEmpty()) return false;
 
     int line = getEditor().getCaretModel().getLogicalPosition().line;
@@ -83,7 +83,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public void goPrev() {
-    List<T> changes = getChanges();
+    List<? extends T> changes = getChanges();
     int line = getEditor().getCaretModel().getLogicalPosition().line;
 
     T prev = null;
