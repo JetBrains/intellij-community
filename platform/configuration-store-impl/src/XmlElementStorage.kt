@@ -25,7 +25,6 @@ import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
-import org.jdom.JDOMException
 import java.io.IOException
 
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
@@ -60,7 +59,6 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     return if (element == null) StateMap.EMPTY else loadState(element)
   }
 
-  throws(IOException::class, JDOMException::class)
   private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
 
   private fun loadState(element: Element): StateMap {
