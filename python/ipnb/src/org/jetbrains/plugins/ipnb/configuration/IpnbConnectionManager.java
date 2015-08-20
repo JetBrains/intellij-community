@@ -273,7 +273,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     final String homePath = sdk.getHomePath();
     if (homePath == null) return false;
-    final String ipython = PythonSdkType.getExecutablePath(homePath, SystemInfo.isWindows ? "ipython.exe" : "ipython");
+    final String ipython = PythonSdkType.getExecutablePath(homePath, SystemInfo.isWindows ? "ipython-script.py" : "ipython");
     if (ipython == null) {
       showWarning(fileEditor, "IPython executable is not found, please check your IPython installation", null);
       return false;
