@@ -76,6 +76,4 @@ class ApplicationStoreImpl(private val application: ApplicationImpl, pathMacroMa
       }
     }
   }
-
-  override fun getMessageBus() = application.getMessageBus()
 }

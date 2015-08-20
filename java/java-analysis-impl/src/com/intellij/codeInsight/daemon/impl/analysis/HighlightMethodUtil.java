@@ -41,6 +41,8 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -400,6 +402,7 @@ public class HighlightMethodUtil {
             .description(description).escapedToolTip(toolTip).navigationShift(navigationShift).create();
           if (highlightInfo != null) {
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
+            registerMethodReturnFixAction(highlightInfo, candidateInfo, methodCall, resolveHelper);
           }
         }
         else {
@@ -433,6 +436,50 @@ public class HighlightMethodUtil {
                                                                                      javaSdkVersion);
     }
     return highlightInfo;
+  }
+
+  private static void registerMethodReturnFixAction(HighlightInfo highlightInfo,
+                                                    MethodCandidateInfo candidate,
+                                                    PsiMethodCallExpression methodCall,
+                                                    PsiResolveHelper resolveHelper) {
+    if (methodCall.getParent() instanceof PsiReturnStatement) {
+      final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiLambdaExpression.class);
+      if (containerMethod != null) {
+        final PsiMethod method = candidate.getElement();
+        final PsiType[] expressionTypes = methodCall.getArgumentList().getExpressionTypes();
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        final int max = Math.max(parameters.length, expressionTypes.length);
+        PsiType[] leftTypes = PsiType.createArray(max);
+        PsiType[] rightTypes = PsiType.createArray(max);
+        for (int i = 0; i < max; i++) {
+          if (i < parameters.length) {
+            leftTypes[i] = parameters[i].getType();
+            rightTypes[i] = i < expressionTypes.length ? expressionTypes[i] : null;
+
+            if (leftTypes[i] instanceof PsiEllipsisType &&
+                !(max == expressionTypes.length && 
+                  expressionTypes[i] instanceof PsiArrayType && 
+                  expressionTypes[i].getArrayDimensions() == leftTypes[i].getArrayDimensions())) {
+              leftTypes[i] = ((PsiEllipsisType)leftTypes[i]).getComponentType();
+            }
+          }
+          else {
+            leftTypes[i] = null;
+            rightTypes[i] = i < expressionTypes.length ? expressionTypes[i] : null;
+          }
+        }
+        final PsiSubstitutor substitutor = resolveHelper
+          .inferTypeArguments(method.getTypeParameters(), leftTypes, rightTypes,
+                              PsiUtil.getLanguageLevel(methodCall));
+        PsiType methodCallTypeByArgs = substitutor.substitute(methodCall.getType());
+        //ensure type params are not included
+        methodCallTypeByArgs = JavaPsiFacade.getElementFactory(method.getProject())
+          .createRawSubstitutor(method).substitute(methodCallTypeByArgs);
+        QuickFixAction.registerQuickFixAction(highlightInfo, 
+                                              getFixRange(methodCall),
+                                              QUICK_FIX_FACTORY.createMethodReturnFix(containerMethod, methodCallTypeByArgs, true));
+      }
+    }
   }
 
   private static String buildOneLineMismatchDescription(@NotNull PsiExpressionList list,

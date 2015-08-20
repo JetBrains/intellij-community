@@ -32,6 +32,8 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -172,37 +174,41 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     final Font editorFont = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
     myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
 
+    final EditorGutterComponentEx gutterComponent = ((EditorImpl)editor).getGutterComponentEx();
     final ComponentAdapter resizeListener = new ComponentAdapter() {
       @Override
       public void componentResized(final ComponentEvent e) {
+        myComponent.setOffset(gutterComponent.getWhitespaceSeparatorOffset());
         queueUpdate(editor);
       }
     };
 
     myComponent.addComponentListener(resizeListener);
+    gutterComponent.addComponentListener(resizeListener);
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
         myComponent.removeComponentListener(resizeListener);
+        gutterComponent.removeComponentListener(resizeListener);
       }
     });
 
     myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, myComponent);
-    myQueue.queue(new MyUpdate(this, editor));
 
     Disposer.register(this, new UiNotifyConnector(myComponent, myQueue));
     Disposer.register(this, myQueue);
 
     myWrapperPanel = new JPanel();
     myWrapperPanel.setLayout(new BorderLayout());
-    myWrapperPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 1, 2));
+    myWrapperPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 1, 2));
     myWrapperPanel.setOpaque(false);
 
     myWrapperPanel.add(myComponent, BorderLayout.CENTER);
+    queueUpdate(editor);
   }
 
   private void updateCrumbs() {
-    if (myComponent != null && myEditor != null) {
+    if (myComponent != null && myEditor != null && !myEditor.isDisposed()) {
       final Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
       myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
       updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
@@ -344,11 +350,10 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   private void updateCrumbs(final LogicalPosition position) {
-    if (myFile != null && myEditor != null && !myProject.isDisposed()) {
+    if (myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
       if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         return;
       }
-
       myComponent.setItems(getPresentableLineElements(position, myFile, myEditor, myProject, myInfoProvider));
     }
   }

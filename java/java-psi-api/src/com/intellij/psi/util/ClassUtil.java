@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,11 +65,11 @@ public class ClassUtil {
       buf.append(qName);
     }
     else {
-      final PsiClass parentClass = getContainingClass(aClass);
+      final PsiClass parentClass = PsiTreeUtil.getContextOfType(aClass, PsiClass.class, true);
       if (parentClass != null) {
         formatClassName(parentClass, buf);
         buf.append("$");
-        buf.append(getNonQualifiedClassIdx(aClass));
+        buf.append(getNonQualifiedClassIdx(aClass, parentClass));
         final String name = aClass.getName();
         if (name != null) {
           buf.append(name);
@@ -77,42 +78,30 @@ public class ClassUtil {
     }
   }
 
-  @Nullable
-  private static PsiClass getContainingClass(@NotNull PsiClass aClass) {
-    PsiElement parent = aClass.getContext();
-    while (parent != null && !(parent instanceof PsiClass)) {
-      parent = parent.getContext();
-    }
-    return (PsiClass)parent;
-  }
-
-  public static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass) {
-    final int[] result = {-1};
-    final PsiClass containingClass = getContainingClass(psiClass);
-    if (containingClass != null) {
-      containingClass.accept(new JavaRecursiveElementVisitor() {
-        private int myCurrentIdx = 0;
-
+  private static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass, @NotNull final PsiClass containingClass) {
+    TObjectIntHashMap<PsiClass> indices =
+      CachedValuesManager.getCachedValue(containingClass, new CachedValueProvider<TObjectIntHashMap<PsiClass>>() {
+        @Nullable
         @Override
-        public void visitElement(PsiElement element) {
-          if (result[0] == -1) {
-            super.visitElement(element);
-          }
-        }
+        public Result<TObjectIntHashMap<PsiClass>> compute() {
+          final TObjectIntHashMap<PsiClass> map = new TObjectIntHashMap<PsiClass>();
+          containingClass.accept(new JavaRecursiveElementWalkingVisitor() {
+            private int myCurrentIdx = 0;
 
-        @Override
-        public void visitClass(PsiClass aClass) {
-          super.visitClass(aClass);
-          if (aClass.getQualifiedName() == null) {
-            myCurrentIdx++;
-            if (psiClass == aClass) {
-              result[0] = myCurrentIdx;
+            @Override
+            public void visitClass(PsiClass aClass) {
+              super.visitClass(aClass);
+              if (aClass.getQualifiedName() == null) {
+                myCurrentIdx++;
+                map.put(aClass, myCurrentIdx);
+              }
             }
-          }
+          });
+          return Result.create(map, containingClass);
         }
       });
-    }
-    return result[0];
+
+    return indices.get(psiClass);
   }
 
   @SuppressWarnings("unused")

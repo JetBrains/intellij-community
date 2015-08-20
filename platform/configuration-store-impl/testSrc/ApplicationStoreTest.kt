@@ -16,7 +16,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StreamProvider
@@ -149,8 +148,6 @@ class ApplicationStoreTest {
     override fun setPath(path: String) {
       storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
     }
-
-    override fun getMessageBus() = ApplicationManager.getApplication().getMessageBus()
   }
 
   abstract class Foo {

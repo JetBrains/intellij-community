@@ -677,7 +677,7 @@ interface TxANotAnno {}
   public void testLiveTemplateOrdering() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
     checkPreferredItems(0, 'return')
-    assert lookup.items[-1].lookupString == 'ritar'
+    assert lookup.items.find { it.lookupString == 'ritar'} != null
   }
 
   public void testPreferLocalToExpectedTypedMethod() {

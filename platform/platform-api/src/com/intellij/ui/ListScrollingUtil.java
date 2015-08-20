@@ -16,7 +16,7 @@
 package com.intellij.ui;
 
 /**
- * @deprecated
+ * @deprecated use {@link ScrollingUtil} instead (to be removed in IDEA 17)
  * @see ScrollingUtil
  */
 public class ListScrollingUtil extends ScrollingUtil {
