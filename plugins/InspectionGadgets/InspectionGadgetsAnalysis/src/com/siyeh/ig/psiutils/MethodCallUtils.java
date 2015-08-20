@@ -228,4 +228,62 @@ public class MethodCallUtils {
     arguments[index].replace(replacement);
     return copy.resolveMethod();
   }
+
+  public static boolean isSuperMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull String methodName) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    @NonNls final String name = methodExpression.getReferenceName();
+    if (!methodName.equals(name)) {
+      return false;
+    }
+    final PsiExpression target = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+    return target instanceof PsiSuperExpression;
+  }
+
+  public static boolean containsSuperMethodCall(@NotNull String methodName, @NotNull PsiElement context) {
+    final SuperCallVisitor visitor = new SuperCallVisitor(methodName);
+    context.accept(visitor);
+    return visitor.isSuperCallFound();
+  }
+
+  private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {
+
+    private final String myMethodName;
+    private boolean mySuperCallFound;
+
+    public SuperCallVisitor(@NotNull String methodName) {
+      this.myMethodName = methodName;
+    }
+
+    @Override
+    public void visitElement(@NotNull PsiElement element) {
+      if (!mySuperCallFound) {
+        super.visitElement(element);
+      }
+    }
+
+    @Override
+    public void visitIfStatement(PsiIfStatement statement) {
+      final PsiExpression condition = statement.getCondition();
+      final Object result = ExpressionUtils.computeConstantExpression(condition);
+      if (result != null && result.equals(Boolean.FALSE)) {
+        return;
+      }
+      super.visitIfStatement(statement);
+    }
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      if (mySuperCallFound) {
+        return;
+      }
+      super.visitMethodCallExpression(expression);
+      if (isSuperMethodCall(expression, myMethodName)) {
+        mySuperCallFound = true;
+      }
+    }
+
+    boolean isSuperCallFound() {
+      return mySuperCallFound;
+    }
+  }
 }
