@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,6 +88,9 @@ public class ProjectStartupRunner implements StartupActivity {
         @Override
         public void run() {
           ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+          ProjectStartupConfiguration.NOTIFICATION_GROUP
+            .createNotification(ProjectStartupConfiguration.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
+            .notify(project);
         }
       }, ModalityState.any());
     }

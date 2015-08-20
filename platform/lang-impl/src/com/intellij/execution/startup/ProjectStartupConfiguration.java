@@ -18,10 +18,13 @@ package com.intellij.execution.startup;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,6 +35,8 @@ import java.util.List;
  * @author Irina.Chernushina on 8/19/2015.
  */
 public class ProjectStartupConfiguration {
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Project Startup Tasks Messages");
+  @NonNls public static final String PREFIX = "Project Startup Tasks: ";
   private final Project myProject;
   private final ProjectStartupSharedConfiguration myShared;
   private final ProjectStartupLocalConfiguration myLocal;
@@ -113,6 +118,8 @@ public class ProjectStartupConfiguration {
         }
       } else {
         changed = true;
+        NOTIFICATION_GROUP.createNotification(PREFIX + " Run Configuration '" + descriptor.getName() + "' not found, removed from list.",
+                                              MessageType.WARNING).notify(myProject);
       }
     }
     if (changed) {
@@ -155,7 +162,7 @@ public class ProjectStartupConfiguration {
   }
 
   public boolean isShared() {
-    return ! myShared.isEmpty() || myLocal.isShared();
+    return myLocal.isShared();
   }
 
   public boolean isEmpty() {
@@ -166,6 +173,8 @@ public class ProjectStartupConfiguration {
     if (! isShared()) return;
     if (! myRunManager.isConfigurationShared(settings)) {
       myLocal.local();
+      NOTIFICATION_GROUP.createNotification(PREFIX + " configuration was made \"not shared\", since included Run Configuration '" +
+        settings.getName() + "' is not shared.", MessageType.WARNING).notify(myProject);
     }
   }
 }
