@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -933,11 +933,11 @@ public class PyUtil {
   /**
    * If directory is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
    * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
-   * Unlike {@link #turnDirIntoInit(com.intellij.psi.PsiElement)} this function handles namespace packages and
+   * Unlike {@link #turnDirIntoInit(PsiElement)} this function handles namespace packages and
    * accepts only PsiDirectories as target.
    *
    * @param directory directory to check
-   * @param anchor optional PSI element to determine language level as for {@link #isPackage(com.intellij.psi.PsiDirectory, com.intellij.psi.PsiElement)}
+   * @param anchor optional PSI element to determine language level as for {@link #isPackage(PsiDirectory, PsiElement)}
    * @return PsiFile or PsiDirectory, if target is a Python package and {@code null} null otherwise
    */
   @Nullable
@@ -1782,13 +1782,7 @@ public class PyUtil {
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
-    final ScratchFileService service = ScratchFileService.getInstance();
-    final PsiFile file = element.getContainingFile();
-    if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      return service != null && virtualFile != null && service.getRootType(virtualFile) != null;
-    }
-    return false;
+    return ScratchRootType.getInstance().isScratchFile(element.getContainingFile().getVirtualFile());
   }
 
   /**
