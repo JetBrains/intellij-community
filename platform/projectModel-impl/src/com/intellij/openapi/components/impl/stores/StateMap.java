@@ -24,10 +24,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
+import gnu.trove.THashMap;
 import org.iq80.snappy.SnappyInputStream;
 import org.iq80.snappy.SnappyOutputStream;
 import org.jdom.Element;
@@ -41,7 +40,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public final class StateMap implements StorageDataBase {
@@ -56,36 +55,55 @@ public final class StateMap implements StorageDataBase {
     setOmitEncoding(true).
     setOmitDeclaration(true);
 
-  private final ConcurrentMap<String, Object> states;
+  private final String[] names;
+  private final AtomicReferenceArray<Object> states;
 
   public StateMap() {
-    states = ContainerUtil.newConcurrentMap();
-  }
-
-  public StateMap(StateMap stateMap) {
-    states = ContainerUtil.newConcurrentMap(stateMap.states.size());
-    states.putAll(stateMap.states);
+    this(new String[]{}, new AtomicReferenceArray<Object>(0));
   }
 
   @NotNull
-  public Set<String> keys() {
-    return states.keySet();
+  public static StateMap fromMap(@NotNull Map<String, ?> map) {
+    String[] names = ArrayUtil.toStringArray(map.keySet());
+    Arrays.sort(names);
+    AtomicReferenceArray<Object> states = new AtomicReferenceArray<Object>(names.length);
+    for (int i = 0, n = names.length; i < n; i++) {
+      states.set(i, map.get(names[i]));
+    }
+    return new StateMap(names, states);
   }
 
   @NotNull
-  public Collection<Object> values() {
-    return states.values();
+  public Map<String, Object> toMap() {
+    THashMap<String, Object> map = new THashMap<String, Object>(names.length);
+    for (int i = 0; i < names.length; i++) {
+      map.put(names[i], states.get(i));
+    }
+    return map;
+  }
+
+  private StateMap(@NotNull String[] names, @NotNull AtomicReferenceArray<Object> states) {
+    this.names = names;
+    this.states = states;
+  }
+
+  @NotNull
+  /**
+   * Sorted by name.
+   */
+  public String[] keys() {
+    return names;
   }
 
   @Nullable
   public Object get(@NotNull String key) {
-    return states.get(key);
+    int index = Arrays.binarySearch(names, key);
+    return index < 0 ? null : states.get(index);
   }
 
   @NotNull
   public Element getElement(@NotNull String key, @NotNull Map<String, Element> newLiveStates) throws IOException {
-    Object state = states.get(key);
-    return stateToElement(key, state, newLiveStates);
+    return stateToElement(key, get(key), newLiveStates);
   }
 
   @NotNull
@@ -108,32 +126,28 @@ public final class StateMap implements StorageDataBase {
     }
   }
 
-  public void put(@NotNull String key, @NotNull Object value) {
-    states.put(key, value);
-  }
-
   public boolean isEmpty() {
-    return states.isEmpty();
+    return names.length == 0;
   }
 
   @Nullable
   public Element getState(@NotNull String key) {
-    Object state = states.get(key);
+    Object state = get(key);
     return state instanceof Element ? (Element)state : null;
   }
 
   @Override
   public boolean hasState(@NotNull String key) {
-    return states.get(key) instanceof Element;
+    return get(key) instanceof Element;
   }
 
   public boolean hasStates() {
-    if (states.isEmpty()) {
+    if (isEmpty()) {
       return false;
     }
 
-    for (Object value : states.values()) {
-      if (value instanceof Element) {
+    for (int i = 0; i < names.length; i++) {
+      if (states.get(i) instanceof Element) {
         return true;
       }
     }
@@ -141,7 +155,7 @@ public final class StateMap implements StorageDataBase {
   }
 
   public void compare(@NotNull String key, @NotNull StateMap newStates, @NotNull Set<String> diffs) {
-    Object oldState = states.get(key);
+    Object oldState = get(key);
     Object newState = newStates.get(key);
     if (oldState instanceof Element) {
       if (!JDOMUtil.areElementsEqual((Element)oldState, (Element)newState)) {
@@ -150,6 +164,7 @@ public final class StateMap implements StorageDataBase {
     }
     else {
       assert newState != null;
+      assert oldState != null;
       if (getNewByteIfDiffers(key, newState, (byte[])oldState) != null) {
         diffs.add(key);
       }
@@ -197,12 +212,17 @@ public final class StateMap implements StorageDataBase {
 
   @Nullable
   public Element getStateAndArchive(@NotNull String key) {
-    Object state = states.get(key);
+    int index = Arrays.binarySearch(names, key);
+    if (index < 0) {
+      return null;
+    }
+
+    Object state = states.get(index);
     if (!(state instanceof Element)) {
       return null;
     }
 
-    if (states.replace(key, state, archiveState((Element)state))) {
+    if (states.compareAndSet(index, state, archiveState((Element)state))) {
       return (Element)state;
     }
     else {
@@ -211,7 +231,7 @@ public final class StateMap implements StorageDataBase {
   }
 
   @NotNull
-  public static Element unarchiveState(@NotNull byte[] state) throws IOException, JDOMException {
+  private static Element unarchiveState(@NotNull byte[] state) throws IOException, JDOMException {
     return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
   }
 
@@ -234,21 +254,6 @@ public final class StateMap implements StorageDataBase {
   }
 
   @Nullable
-  public Object remove(@NotNull String key) {
-    return states.remove(key);
-  }
-
-  public int size() {
-    return states.size();
-  }
-
-  public void forEachEntry(@NotNull PairConsumer<String, Object> consumer) {
-    for (Map.Entry<String, Object> entry : states.entrySet()) {
-      consumer.consume(entry.getKey(), entry.getValue());
-    }
-  }
-
-  @Nullable
   static String getComponentNameIfValid(@NotNull Element element) {
     String name = element.getAttributeValue(NAME);
     if (StringUtil.isEmpty(name)) {
@@ -264,21 +269,20 @@ public final class StateMap implements StorageDataBase {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
 
-    StateMap stateMap = new StateMap();
     StringInterner interner = intern ? new StringInterner() : null;
-    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
-      Element element = iterator.next();
+    List<Element> children = rootElement.getChildren(COMPONENT);
+    TreeMap<String, Element> map = new TreeMap<String, Element>();
+    for (Element element : children) {
       String name = getComponentNameIfValid(element);
       if (name == null || !(element.getAttributes().size() > 1 || !element.getChildren().isEmpty())) {
         continue;
       }
 
-      iterator.remove();
       if (interner != null) {
         JDOMUtil.internElement(element, interner);
       }
 
-      stateMap.states.put(name, element);
+      map.put(name, element);
 
       if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
         ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
@@ -287,6 +291,6 @@ public final class StateMap implements StorageDataBase {
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
       element.removeAttribute(NAME);
     }
-    return stateMap;
+    return fromMap(map);
   }
 }

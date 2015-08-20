@@ -25,8 +25,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData> {
@@ -79,9 +81,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   @NotNull
   @Override
   protected DirectoryStorageData loadData() {
-    DirectoryStorageData storageData = new DirectoryStorageData();
-    storageData.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
-    return storageData;
+    return DirectoryStorageData.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
   }
 
   @Nullable
@@ -102,7 +102,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   private static class MySaveSession extends SaveSessionBase {
     private final DirectoryBasedStorage storage;
     private final DirectoryStorageData originalStorageData;
-    private DirectoryStorageData copiedStorageData;
+    private Map<String, Map<String, Object>> copiedStorageData;
 
     private final Set<String> dirtyFileNames = new SmartHashSet<String>();
     private final Set<String> removedFileNames = new SmartHashSet<String>();
@@ -114,7 +114,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
 
     @Override
     protected void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element) {
-      removedFileNames.addAll(originalStorageData.getFileNames(componentName));
+      ContainerUtil.addAll(removedFileNames, originalStorageData.getFileNames(componentName));
       if (JDOMUtil.isEmpty(element)) {
         doSetState(componentName, null, null);
       }
@@ -139,7 +139,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
           dirtyFileNames.add(fileName);
         }
       }
-      else if (copiedStorageData.setState(componentName, fileName, subState) != null && fileName != null) {
+      else if (DirectoryStorageData.setState(copiedStorageData, componentName, fileName, subState) != null && fileName != null) {
         dirtyFileNames.add(fileName);
       }
     }
@@ -157,7 +157,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
         if (dir != null && dir.exists()) {
           StorageUtil.deleteFile(this, dir);
         }
-        storage.storageDataRef.set(copiedStorageData);
+        storage.storageDataRef.set(DirectoryStorageData.fromMap(copiedStorageData));
         return;
       }
 
@@ -173,45 +173,45 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
 
       storage.myVirtualFile = dir;
-      storage.storageDataRef.set(copiedStorageData);
+      storage.storageDataRef.set(DirectoryStorageData.fromMap(copiedStorageData));
     }
 
     private void saveStates(@NotNull final VirtualFile dir) {
       final Element storeElement = new Element(StateMap.COMPONENT);
 
-      for (final String componentName : copiedStorageData.getComponentNames()) {
-        copiedStorageData.processComponent(componentName, new PairConsumer<String, Object>() {
-          @Override
-          public void consume(String fileName, Object state) {
-            if (!dirtyFileNames.contains(fileName)) {
-              return;
+      for (Map.Entry<String, Map<String, Object>> componentNameToFileNameToStates : copiedStorageData.entrySet()) {
+        for (Map.Entry<String, Object> entry : componentNameToFileNameToStates.getValue().entrySet()) {
+          String fileName = entry.getKey();
+          Object state = entry.getValue();
+
+          if (!dirtyFileNames.contains(fileName)) {
+            return;
+          }
+
+          Element element = null;
+          try {
+            element = StateMap.stateToElement(fileName, state, Collections.<String, Element>emptyMap());
+            if (storage.myPathMacroSubstitutor != null) {
+              storage.myPathMacroSubstitutor.collapsePaths(element);
             }
 
-            Element element = null;
-            try {
-              element = copiedStorageData.stateToElement(fileName, state);
-              if (storage.myPathMacroSubstitutor != null) {
-                storage.myPathMacroSubstitutor.collapsePaths(element);
-              }
+            storeElement.setAttribute(StateMap.NAME, componentNameToFileNameToStates.getKey());
+            storeElement.addContent(element);
 
-              storeElement.setAttribute(StateMap.NAME, componentName);
-              storeElement.addContent(element);
-
-              VirtualFile file = StorageUtil.getFile(fileName, dir, MySaveSession.this);
-              // we don't write xml prolog due to historical reasons (and should not in any case)
-              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement,
-                                    LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-            finally {
-              if (element != null) {
-                element.detach();
-              }
+            VirtualFile file = StorageUtil.getFile(fileName, dir, this);
+            // we don't write xml prolog due to historical reasons (and should not in any case)
+            StorageUtil.writeFile(null, this, file, storeElement,
+                                  LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+          finally {
+            if (element != null) {
+              element.detach();
             }
           }
-        });
+        }
       }
     }
 

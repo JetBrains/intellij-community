@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
@@ -31,8 +31,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,31 +40,51 @@ import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfD
 public class DirectoryStorageData implements StorageDataBase {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
 
-  private final Map<String, StateMap> myStates;
+  final Map<String, StateMap> states;
 
   public DirectoryStorageData() {
-    this(new THashMap<String, StateMap>());
+    this.states = new THashMap<String, StateMap>();
   }
 
   private DirectoryStorageData(@NotNull Map<String, StateMap> states) {
-    myStates = states;
+    this.states = states;
+  }
+
+  @NotNull
+  public Map<String, Map<String, Object>> toMap() {
+    THashMap<String, Map<String, Object>> map = new THashMap<String, Map<String, Object>>(states.size());
+    for (Map.Entry<String, StateMap> entry : states.entrySet()) {
+      map.put(entry.getKey(), entry.getValue().toMap());
+    }
+    return map;
+  }
+
+  @NotNull
+  public static DirectoryStorageData fromMap(@NotNull Map<String, Map<String, Object>> map) {
+    Map<String, StateMap> states = new THashMap<String, StateMap>(map.size());
+    for (Map.Entry<String, Map<String, Object>> entry : map.entrySet()) {
+      states.put(entry.getKey(), StateMap.fromMap(entry.getValue()));
+    }
+    return new DirectoryStorageData(states);
   }
 
   @NotNull
   public Set<String> getComponentNames() {
-    return myStates.keySet();
+    return states.keySet();
   }
 
   boolean isEmpty() {
-    return myStates.isEmpty();
+    return states.isEmpty();
   }
 
-  public void loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+  @NotNull
+  public static DirectoryStorageData loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
     if (dir == null || !dir.exists()) {
-      return;
+      return new DirectoryStorageData();
     }
 
     StringInterner interner = new StringInterner();
+    Map<String, Map<String, Object>> map = new THashMap<String, Map<String, Object>>();
     for (VirtualFile file : dir.getChildren()) {
       // ignore system files like .DS_Store on Mac
       if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), StateMap.DEFAULT_EXT)) {
@@ -101,20 +119,21 @@ public class DirectoryStorageData implements StorageDataBase {
           pathMacroSubstitutor.expandPaths(state);
           pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(state));
         }
-        setState(name, file.getName(), state);
+        setState(map, name, file.getName(), state);
       }
       catch (Throwable e) {
         LOG.warn("Unable to load state", e);
       }
     }
+    return fromMap(map);
   }
 
   @Nullable
-  public static DirectoryStorageData setStateAndCloneIfNeed(@NotNull String componentName,
-                                                            @Nullable String fileName,
-                                                            @Nullable Element newState,
-                                                            @NotNull DirectoryStorageData storageData) {
-    StateMap fileToState = storageData.myStates.get(componentName);
+  public static Map<String, Map<String, Object>> setStateAndCloneIfNeed(@NotNull String componentName,
+                                                                        @Nullable String fileName,
+                                                                        @Nullable Element newState,
+                                                                        @NotNull DirectoryStorageData storageData) {
+    StateMap fileToState = storageData.states.get(componentName);
     Object oldState = fileToState == null || fileName == null ? null : fileToState.get(fileName);
     if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
       if (fileName == null) {
@@ -126,19 +145,19 @@ public class DirectoryStorageData implements StorageDataBase {
         return null;
       }
 
-      DirectoryStorageData newStorageData = storageData.clone();
+      Map<String, Map<String, Object>> newStorageData = storageData.toMap();
       if (fileName == null) {
-        newStorageData.myStates.remove(componentName);
+        newStorageData.remove(componentName);
       }
       else {
-        StateMap clonedFileToState = newStorageData.myStates.get(componentName);
+        Map<String, Object> clonedFileToState = newStorageData.get(componentName);
         if (clonedFileToState.size() == 1) {
-          newStorageData.myStates.remove(componentName);
+          newStorageData.remove(componentName);
         }
         else {
           clonedFileToState.remove(fileName);
           if (clonedFileToState.isEmpty()) {
-            newStorageData.myStates.remove(componentName);
+            newStorageData.remove(componentName);
           }
         }
       }
@@ -158,34 +177,34 @@ public class DirectoryStorageData implements StorageDataBase {
       }
     }
 
-    DirectoryStorageData newStorageData = storageData.clone();
-    newStorageData.put(componentName, fileName, newBytes == null ? newState : newBytes);
+    Map<String, Map<String, Object>> newStorageData = storageData.toMap();
+    put(newStorageData, componentName, fileName, newBytes == null ? newState : newBytes);
     return newStorageData;
   }
 
   @Nullable
-  public Object setState(@NotNull String componentName, @Nullable String fileName, @Nullable Element newState) {
-    StateMap fileToState = myStates.get(componentName);
+  public static Object setState(@NotNull Map<String, Map<String, Object>> states, @NotNull String componentName, @Nullable String fileName, @Nullable Element newState) {
+    Map<String, Object> fileToState = states.get(componentName);
     if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
       if (fileToState == null) {
         return null;
       }
       else if (fileName == null) {
-        return myStates.remove(componentName);
+        return states.remove(componentName);
       }
       else {
         Object oldState = fileToState.remove(fileName);
         if (fileToState.isEmpty()) {
-          myStates.remove(componentName);
+          states.remove(componentName);
         }
         return oldState;
       }
     }
 
     if (fileToState == null) {
-      fileToState = new StateMap();
+      fileToState = new THashMap<String, Object>();
       fileToState.put(fileName, newState);
-      myStates.put(componentName, fileToState);
+      states.put(componentName, fileToState);
     }
     else {
       Object oldState = fileToState.get(fileName);
@@ -208,40 +227,28 @@ public class DirectoryStorageData implements StorageDataBase {
     return newState;
   }
 
-  private void put(@NotNull String componentName, @NotNull String fileName, @NotNull Object state) {
-    StateMap fileToState = myStates.get(componentName);
+  private static void put(@NotNull Map<String, Map<String, Object>> states, @NotNull String componentName, @NotNull String fileName, @NotNull Object state) {
+    Map<String, Object> fileToState = states.get(componentName);
     if (fileToState == null) {
-      fileToState = new StateMap();
-      myStates.put(componentName, fileToState);
+      fileToState = new THashMap<String, Object>();
+      states.put(componentName, fileToState);
     }
     fileToState.put(fileName, state);
   }
 
-  void processComponent(@NotNull String componentName, @NotNull PairConsumer<String, Object> consumer) {
-    StateMap map = myStates.get(componentName);
-    if (map != null) {
-      map.forEachEntry(consumer);
-    }
-  }
-
-  @Override
-  protected DirectoryStorageData clone() {
-    return new DirectoryStorageData(new THashMap<String, StateMap>(myStates));
-  }
-
   public void clear() {
-    myStates.clear();
+    states.clear();
   }
 
   @Override
   public boolean hasState(@NotNull String componentName) {
-    StateMap fileToState = myStates.get(componentName);
+    StateMap fileToState = states.get(componentName);
     return fileToState != null && fileToState.hasStates();
   }
 
   @Nullable
   public Element getCompositeStateAndArchive(@NotNull String componentName, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
-    StateMap fileToState = myStates.get(componentName);
+    StateMap fileToState = states.get(componentName);
     Element state = new Element(StateMap.COMPONENT);
     if (fileToState == null || fileToState.isEmpty()) {
       return state;
@@ -274,13 +281,8 @@ public class DirectoryStorageData implements StorageDataBase {
   }
 
   @NotNull
-  public Element stateToElement(@NotNull String key, @Nullable Object state) throws IOException {
-    return StateMap.stateToElement(key, state, Collections.<String, Element>emptyMap());
-  }
-
-  @NotNull
-  public Set<String> getFileNames(@NotNull String componentName) {
-    StateMap fileToState = myStates.get(componentName);
-    return fileToState == null || fileToState.isEmpty() ? Collections.<String>emptySet() : fileToState.keys();
+  String[] getFileNames(@NotNull String componentName) {
+    StateMap fileToState = states.get(componentName);
+    return fileToState == null || fileToState.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : fileToState.keys();
   }
 }
