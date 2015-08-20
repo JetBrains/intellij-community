@@ -18,6 +18,7 @@ package com.intellij.configurationStore;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateSplitter;
+import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -39,6 +41,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,13 +83,49 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   @Nullable
   @Override
   protected Element getStateAndArchive(@NotNull DirectoryStorageData storageData, Object component, @NotNull String componentName) {
-    return storageData.getCompositeStateAndArchive(componentName, mySplitter);
+    return getCompositeStateAndArchive(storageData, componentName, mySplitter);
+  }
+
+  @Nullable
+  private static Element getCompositeStateAndArchive(@NotNull DirectoryStorageData storageData, @NotNull String componentName, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
+    StateMap fileToState = storageData.states.get(componentName);
+    Element state = new Element(StateMap.COMPONENT);
+    if (fileToState == null || fileToState.isEmpty()) {
+      return state;
+    }
+
+    if (splitter instanceof StateSplitterEx) {
+      for (String fileName : fileToState.keys()) {
+        Element subState = fileToState.getStateAndArchive(fileName);
+        if (subState == null) {
+          return null;
+        }
+        ((StateSplitterEx)splitter).mergeStateInto(state, subState);
+      }
+    }
+    else {
+      List<Element> subElements = new SmartList<Element>();
+      for (String fileName : fileToState.keys()) {
+        Element subState = fileToState.getStateAndArchive(fileName);
+        if (subState == null) {
+          return null;
+        }
+        subElements.add(subState);
+      }
+
+      if (!subElements.isEmpty()) {
+        splitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
+      }
+    }
+    return state;
   }
 
   @NotNull
   @Override
   protected DirectoryStorageData loadData() {
-    return DirectoryStorageData.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
+    Map map = DirectoryStorageUtil.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
+    //noinspection unchecked
+    return DirectoryStorageData.fromMap(map);
   }
 
   @Nullable
@@ -150,7 +189,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
           dirtyFileNames.add(fileName);
         }
       }
-      else if (DirectoryStorageData.setState(copiedStorageData, componentName, fileName, subState) != null && fileName != null) {
+      else if (DirectoryStorageUtil.setState(copiedStorageData, componentName, fileName, subState) != null && fileName != null) {
         dirtyFileNames.add(fileName);
       }
     }
@@ -168,7 +207,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
         if (dir != null && dir.exists()) {
           StorageUtil.deleteFile(this, dir);
         }
-        storage.storageDataRef.set(DirectoryStorageData.fromMap(copiedStorageData));
+        setStorageData();
         return;
       }
 
@@ -184,7 +223,13 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
 
       storage.myVirtualFile = dir;
-      storage.storageDataRef.set(DirectoryStorageData.fromMap(copiedStorageData));
+      setStorageData();
+    }
+
+    private void setStorageData() {
+      Map data = copiedStorageData;
+      //noinspection unchecked
+      storage.storageDataRef.set(DirectoryStorageData.fromMap(data));
     }
 
     private void saveStates(@NotNull final VirtualFile dir) {

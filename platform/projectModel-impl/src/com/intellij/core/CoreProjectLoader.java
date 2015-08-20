@@ -19,7 +19,7 @@ import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
-import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
+import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil;
 import com.intellij.openapi.components.impl.stores.StateMap;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author yole
@@ -83,8 +84,8 @@ public class CoreProjectLoader {
 
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
-      DirectoryStorageData data = DirectoryStorageData.loadFrom(libraries, PathMacroManager.getInstance(project).createTrackingSubstitutor());
-      final Element libraryTable = DefaultStateSerializer.deserializeState(data.getCompositeStateAndArchive("libraryTable", new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
+      Map<String, Map<String, Element>> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project).createTrackingSubstitutor());
+      Element libraryTable = DefaultStateSerializer.deserializeState(DirectoryStorageUtil.getCompositeStateAndArchive(data, "libraryTable", new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }
 
