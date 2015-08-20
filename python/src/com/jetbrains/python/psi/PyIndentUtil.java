@@ -69,6 +69,16 @@ public class PyIndentUtil {
     }
   }
 
+  @NotNull
+  public static String getExpectedElementIndent(@NotNull PsiElement anchor) {
+    final String indentStep = getIndentFromSettings(anchor.getProject());
+    final PyStatementList parentBlock = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, true);
+    if (parentBlock != null) {
+      return getElementIndent(parentBlock) + indentStep;
+    }
+    return anchor instanceof PyStatementList ? indentStep : "";
+  }
+
   public static int getExpectedElementIndentSize(@NotNull PsiElement anchor) {
     int depth = 0;
     PyStatementList block = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, false);
@@ -85,7 +95,8 @@ public class PyIndentUtil {
     return indentOptions.INDENT_SIZE;
   }
 
-  public static String getExpectedElementIndent(@NotNull PsiElement anchor) {
-    return StringUtil.repeat(" ", getExpectedElementIndentSize(anchor));
+  @NotNull
+  public static String getIndentFromSettings(@NotNull Project project) {
+    return StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(project));
   }
 }
