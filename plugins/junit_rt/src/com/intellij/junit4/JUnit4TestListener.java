@@ -366,6 +366,7 @@ public class JUnit4TestListener extends RunListener {
   public void sendTree(Description description) {
     myRootName = JUnit4ReflectionUtil.getClassName((Description)description);
     sendTree(description, null, new ArrayList());
+    myPrintStream.println("##teamcity[treeEnded]");
   }
 
   private static String getShortName(String fqName) {
