@@ -35,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
@@ -271,6 +273,24 @@ public class GrTypeDefinitionMembersCache {
               for (PsiMethod method : trait.getMethods()) {
                 if (AnnotationUtil.isAnnotated(method, IMPLEMENTED_FQN, false)) {
                   addCandidate(method, substitutor);
+                }
+              }
+              final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(trait.getProject());
+              final String helperFQN = trait.getQualifiedName();
+              final PsiClass traitHelper = javaPsiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
+              if (traitHelper != null) {
+                final PsiElementFactory psiElementFactory = javaPsiFacade.getElementFactory();
+                final PsiType classType = TypesUtil.createJavaLangClassType(
+                  psiElementFactory.createType(trait), trait.getProject(), trait.getResolveScope()
+                );
+                for (PsiMethod method : traitHelper.getMethods()) {
+                  if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
+                  final PsiParameter[] parameters = method.getParameterList().getParameters();
+                  if (parameters.length <= 0) continue;
+                  final PsiParameter self = parameters[0];
+                  if (self.getType().equals(classType)) {
+                    addCandidate(GrGdkMethodImpl.createGdkMethod(method, true, "via @Trait"), substitutor);
+                  }
                 }
               }
             }
