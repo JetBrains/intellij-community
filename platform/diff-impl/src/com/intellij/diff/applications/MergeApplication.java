@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +50,6 @@ public class MergeApplication extends ApplicationStarterBase {
   }
 
   public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    // TODO: try to guess 'right' project ?
-
     final String path1 = args[1];
     final String path2 = args[2];
     final String path3 = args[3];
@@ -66,10 +65,7 @@ public class MergeApplication extends ApplicationStarterBase {
     if (file3 == null) throw new Exception("Can't find file " + path3);
     if (file4 == null) throw new Exception("Can't find file " + path4);
 
-    file1.refresh(false, true);
-    file2.refresh(false, true);
-    file3.refresh(false, true);
-    file4.refresh(false, true);
+    VfsUtil.markDirtyAndRefresh(false, false, false, file1, file2, file3, file4);
 
     Project project = getProject();
 
