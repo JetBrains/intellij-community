@@ -96,11 +96,6 @@ public class PyDocstringGenerator {
     return myDocStringOwner.getDocStringExpression();
   }
 
-  @Nullable
-  private PyFunction getOwnerFunction() {
-    return PyUtil.as(myDocStringOwner, PyFunction.class);
-  }
-
   public static String generateRaiseOrReturn(@NotNull PyFunction element, String offset, String prefix, boolean checkReturn) {
     final StringBuilder builder = new StringBuilder();
     if (checkReturn) {
@@ -296,39 +291,42 @@ public class PyDocstringGenerator {
 
   @NotNull
   public PyDocStringOwner buildAndInsert() {
-    final String replacement = buildDocString();
+    final String replacementText = buildDocString();
 
     final Project project = myDocStringOwner.getProject();
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    // update existing docstring
+    final PyExpressionStatement replacement = elementGenerator.createDocstring(replacementText);
+
     final PyStringLiteralExpression docStringExpression = getDocStringExpression();
     if (docStringExpression != null) {
-      PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
-      docStringExpression.replace(str);
+      docStringExpression.replace(replacement.getExpression());
     }
-    // create brand new docstring
     else {
-      PyFunction function = PyUtil.as(myDocStringOwner, PyFunction.class);
-      if (function == null) {
-        throw new IllegalStateException("Should be a function");
+      PyStatementListContainer container = PyUtil.as(myDocStringOwner, PyStatementListContainer.class);
+      if (container == null) {
+        throw new IllegalStateException("Should be a function or class");
       }
-      final PyStatementList statements = function.getStatementList();
+      final PyStatementList statements = container.getStatementList();
       final String indentation = PyIndentUtil.getExpectedElementIndent(statements);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(myDocStringOwner.getContainingFile());
 
       if (document != null) {
-        if (PyUtil.onSameLine(statements, function) || statements.getStatements().length == 0) {
-          PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(function),
-                                                            PyFunction.class,
-                                                            "def " + function.getName() + function.getParameterList().getText() + ":\n" +
-                                                            indentation + replacement + "\n" +
-                                                            indentation + statements.getText());
-
-          myDocStringOwner = (PyFunction)function.replace(func);
+        if (PyUtil.onSameLine(statements, myDocStringOwner) || statements.getStatements().length == 0) {
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+          String replacementWithLineBreaks = "\n" + indentation + replacementText;
+          if (statements.getStatements().length > 0) {
+            replacementWithLineBreaks += "\n" + indentation;
+          }
+          documentManager.doPostponedOperationsAndUnblockDocument(document);
+          try {
+            document.insertString(statements.getTextOffset(), replacementWithLineBreaks);
+          }
+          finally {
+            documentManager.commitDocument(document);
+          }
         }
         else {
-          PyExpressionStatement str = elementGenerator.createDocstring(replacement);
-          statements.addBefore(str, statements.getStatements()[0]);
+          statements.addBefore(replacement, statements.getStatements()[0]);
         }
       }
     }
