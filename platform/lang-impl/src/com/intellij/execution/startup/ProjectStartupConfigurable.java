@@ -120,6 +120,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
             runManager.setSelectedConfiguration(was);
           }
           setModel(new ProjectStartupTasksTreeModel(((ProjectStartupTasksTreeModel) myTree.getModel()).getConfigurations()));
+          selectPathOrFirst(selected);
         }
       })
       .setEditActionUpdater(new AnActionButtonUpdater() {
@@ -146,6 +147,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
             }
           });
           setModel(new ProjectStartupTasksTreeModel(configurations));
+          selectPathOrFirst(null);
         }
       });
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -153,6 +155,22 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     return FormBuilder.createFormBuilder() // todo bundle
       .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
       .getPanel();
+  }
+
+  private void selectPathOrFirst(RunnerAndConfigurationSettings settings) {
+    if (myTree.isEmpty()) return;
+    myTree.clearSelection();
+    if (settings != null) {
+      final List<RunnerAndConfigurationSettings> configurations = ((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations();
+      for (int i = 0; i < configurations.size(); i++) {
+        final RunnerAndConfigurationSettings configuration = configurations.get(i);
+        if (configuration == settings) {
+          myTree.setSelectionRow(i);
+          return;
+        }
+      }
+    }
+    myTree.addSelectionRow(0);
   }
 
   @Nullable
@@ -184,6 +202,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
               RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
               if (configuration != null) {
                 addConfigurationToList(configuration);
+                selectPathOrFirst(configuration);
               }
             }
           }, project.getDisposed());
@@ -235,7 +254,9 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           if (index < 0) return;
           final ChooseRunConfigurationPopup.ItemWrapper at = (ChooseRunConfigurationPopup.ItemWrapper)list.getModel().getElementAt(index);
           if (at.getValue() instanceof RunnerAndConfigurationSettings) {
-            addConfigurationToList((RunnerAndConfigurationSettings)at.getValue());
+            final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
+            addConfigurationToList(added);
+            selectPathOrFirst(added);
           } else {
             at.perform(myProject, executor, button.getDataContext());
           }
