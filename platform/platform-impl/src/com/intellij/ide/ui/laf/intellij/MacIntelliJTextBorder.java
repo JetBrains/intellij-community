@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 
 import java.awt.*;
@@ -26,7 +27,7 @@ import java.awt.*;
 public class MacIntelliJTextBorder extends DarculaTextBorder {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(2).asUIResource();
+    return JBUI.insets(3, 6).asUIResource();
   }
 
   @Override
@@ -35,7 +36,12 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
   }
 
   @Override
-  public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
-
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    if (c.hasFocus()) {
+      MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
+    } else {
+      g.setColor(Gray.xB1);
+      g.drawRect(2, 2, c.getWidth() - 4, c.getHeight() - 4);
+    }
   }
 }

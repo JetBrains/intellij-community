@@ -147,7 +147,7 @@ public class RefreshWorker {
       boolean currentWritable = persistence.isWritable(file);
       boolean upToDateWritable = attributes.isWritable();
       if (LOG_ATTRIBUTES.isDebugEnabled()) {
-        LOG_ATTRIBUTES.debug("file=%s writable vfs=% persistence=%b real=%b", file, file.isWritable(), currentWritable, upToDateWritable);
+        LOG_ATTRIBUTES.debug("file=%s writable vfs=%b persistence=%b real=%b", file, file.isWritable(), currentWritable, upToDateWritable);
       }
       if (currentWritable != upToDateWritable) {
         scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
