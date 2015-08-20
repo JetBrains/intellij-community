@@ -187,8 +187,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   @Nullable
   @Override
   public IElementType getTokenType() {
-    if (allIsEmpty()) {
-      return TokenType.DUMMY_HOLDER;
+    if (eof()) {
+      return null;
     }
     skipWhitespace();
 
@@ -198,8 +198,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   @Nullable
   @Override
   public String getTokenText() {
-    if (allIsEmpty()) {
-      return getDelegate().getOriginalText().toString();
+    if (eof()) {
+      return null;
     }
     skipWhitespace();
 
