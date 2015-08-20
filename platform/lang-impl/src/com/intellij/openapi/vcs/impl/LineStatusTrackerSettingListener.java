@@ -17,10 +17,8 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.util.messages.Topic;
 
-public interface LineStatusTrackerTopics {
-  Topic<LineStatusTrackerSettingListener> SETTINGS_CHANGED = Topic.create("line status tracker settings changed", LineStatusTrackerSettingListener.class);
+public interface LineStatusTrackerSettingListener {
+  Topic<LineStatusTrackerSettingListener> TOPIC = Topic.create("line status tracker settings changed", LineStatusTrackerSettingListener.class);
 
-  interface LineStatusTrackerSettingListener {
-    void settingsUpdated();
-  }
+  void settingsUpdated();
 }
