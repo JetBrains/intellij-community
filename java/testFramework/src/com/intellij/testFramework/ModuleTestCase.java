@@ -16,9 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.module.Module;
@@ -160,15 +158,13 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected final void loadModuleComponentState(@NotNull Module module, @NotNull Object component) {
-    AccessToken token = WriteAction.start();
+    ProjectEx project = (ProjectEx)myProject;
+    project.setOptimiseTestLoadSpeed(false);
     try {
-      ProjectEx project = (ProjectEx)myProject;
-      project.setOptimiseTestLoadSpeed(false);
       ComponentsPackage.getStateStore(module).initComponent(component, false);
-      project.setOptimiseTestLoadSpeed(true);
     }
     finally {
-      token.finish();
+      project.setOptimiseTestLoadSpeed(true);
     }
   }
 

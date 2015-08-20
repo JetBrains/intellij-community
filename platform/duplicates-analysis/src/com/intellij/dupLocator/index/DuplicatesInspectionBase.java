@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
@@ -164,11 +165,20 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final SmartList<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
 
     if (processor != null) {
+      final VirtualFile baseDir = psiFile.getProject().getBaseDir();
       for(Map.Entry<Integer, TextRange> entry:processor.reportedRanges.entrySet()) {
         final Integer offset = entry.getKey();
         if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
         final VirtualFile file = processor.reportedFiles.get(offset);
-        String message = "Found duplicated code in " + file.getPath();
+        String path;
+
+        if (file.equals(virtualFile)) path = "this file";
+        else if (baseDir != null) {
+          path = VfsUtilCore.getRelativePath(file, baseDir);
+        } else {
+          path = file.getPath();
+        }
+        String message = "Found duplicated code in " + path;
 
         PsiElement targetElement = processor.reportedPsi.get(offset);
         TextRange rangeInElement = entry.getValue();

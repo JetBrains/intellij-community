@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated
 public class MergeApplication extends ApplicationStarterBase {
   public MergeApplication() {
     super("merge", 3 ,4);

@@ -16,7 +16,6 @@
 package com.intellij.tasks;
 
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.Collections;
@@ -43,8 +42,8 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
     }
     finally {
       myTaskManager = null;
+      super.tearDown();
     }
-    super.tearDown();
   }
 
   private void removeAllTasks() {

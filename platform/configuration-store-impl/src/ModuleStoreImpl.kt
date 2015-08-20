@@ -18,22 +18,18 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 
-class ModuleStoreImpl(private val module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
-  override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
+class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  override val project = module.getProject()
 
-  override val project: Project?
-    get() = module.getProject()
+  override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
 
   override fun setPath(path: String) {
     storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
   }
 
-  override fun optimizeTestLoading() = (module.getProject() as ProjectEx).isOptimiseTestLoadSpeed()
-
-  override fun getMessageBus() = module.getMessageBus()
+  override fun optimizeTestLoading() = (project as ProjectEx).isOptimiseTestLoadSpeed()
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 }

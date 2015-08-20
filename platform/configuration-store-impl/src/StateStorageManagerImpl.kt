@@ -46,6 +46,8 @@ import kotlin.reflect.jvm.java
 
 /**
  * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
+ * <p/>
+ * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
  */
 open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,

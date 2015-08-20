@@ -227,7 +227,7 @@ public class JavaKeywordCompletion {
 
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(prevLeaf) ||
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(prevLeaf)) {
-      variant.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.ELSE), TailTypes.SYNCHRONIZED_LPARENTH));
+      variant.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.ELSE), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
 
     if (psiElement().withText("}").withParent(psiElement(PsiCodeBlock.class).withParent(or(psiElement(PsiTryStatement.class), psiElement(PsiCatchSection.class)))).accepts(prevLeaf)) {
