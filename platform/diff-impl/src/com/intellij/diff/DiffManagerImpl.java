@@ -89,11 +89,11 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   public List<DiffTool> getDiffTools() {
     List<DiffTool> result = new ArrayList<DiffTool>();
+    Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
     result.add(SimpleDiffTool.INSTANCE);
     result.add(UnifiedDiffTool.INSTANCE);
     result.add(BinaryDiffTool.INSTANCE);
     result.add(DirDiffTool.INSTANCE);
-    Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
     return result;
   }
 
