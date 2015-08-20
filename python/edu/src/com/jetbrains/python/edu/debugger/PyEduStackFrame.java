@@ -1,6 +1,5 @@
 package com.jetbrains.python.edu.debugger;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
@@ -98,8 +97,7 @@ public class PyEduStackFrame extends PyStackFrame {
       @Nullable
       @Override
       public Icon getIcon() {
-        //TODO: get icon from designers
-        return AllIcons.Nodes.Artifact;
+        return PythonEducationalIcons.SpecialVar;
       }
 
       @Override
