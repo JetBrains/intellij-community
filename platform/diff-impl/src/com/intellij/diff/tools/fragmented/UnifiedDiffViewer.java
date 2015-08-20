@@ -191,6 +191,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
+    group.add(Separator.getInstance());
+    group.addAll(super.createToolbarActions());
+
     return group;
   }
 
@@ -206,6 +209,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     group.add(Separator.getInstance());
     group.add(new MyToggleExpandByDefaultAction());
 
+    group.add(Separator.getInstance());
+    group.addAll(super.createPopupActions());
+
     return group;
   }
 
@@ -219,8 +225,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
     group.add(new RevertSelectedChangesAction(Side.LEFT));
     group.add(new RevertSelectedChangesAction(Side.RIGHT));
-    group.add(Separator.getInstance());
 
+    group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
 
     return group;

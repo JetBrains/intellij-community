@@ -33,6 +33,8 @@ public class FocusOppositePaneAction extends AnAction implements DumbAware {
   public FocusOppositePaneAction(boolean scrollToPosition) {
     myScrollToPosition = scrollToPosition;
     setEnabledInModalContext(true);
+
+    EmptyAction.setupAction(this, getActionId(), null);
   }
 
   @Override
@@ -41,7 +43,11 @@ public class FocusOppositePaneAction extends AnAction implements DumbAware {
   }
 
   public void setupAction(@NotNull JComponent component) {
-    String action = myScrollToPosition ? "Diff.FocusOppositePaneAndScroll" : "Diff.FocusOppositePane";
-    EmptyAction.setupAction(this, action, component);
+    registerCustomShortcutSet(getShortcutSet(), component);
+  }
+
+  @NotNull
+  private String getActionId() {
+    return myScrollToPosition ? "Diff.FocusOppositePaneAndScroll" : "Diff.FocusOppositePane";
   }
 }
