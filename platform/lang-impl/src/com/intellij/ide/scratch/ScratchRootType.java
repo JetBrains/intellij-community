@@ -37,7 +37,6 @@ import javax.swing.*;
  * @author gregsh
  */
 public final class ScratchRootType extends RootType {
-
   @NotNull
   public static ScratchRootType getInstance() {
     return findByClass(ScratchRootType.class);
@@ -45,6 +44,12 @@ public final class ScratchRootType extends RootType {
 
   ScratchRootType() {
     super("scratches", "Scratches");
+  }
+
+  public boolean isScratchFile(@Nullable VirtualFile file) {
+    if (file == null) return false;
+    ScratchFileService service = ScratchFileService.getInstance();
+    return service != null && service.getRootType(file) == this;
   }
 
   @Override

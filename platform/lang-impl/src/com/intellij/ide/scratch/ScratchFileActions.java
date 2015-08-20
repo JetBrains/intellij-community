@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static com.intellij.openapi.util.Conditions.*;
+import static com.intellij.openapi.util.Conditions.not;
+import static com.intellij.openapi.util.Conditions.notNull;
 
 /**
  * @author ignatov
@@ -144,16 +145,6 @@ public class ScratchFileActions {
   }
 
   @NotNull
-  private static Function<VirtualFile, RootType> ROOT_TYPE(final ScratchFileService service) {
-    return new Function<VirtualFile, RootType>() {
-      @Override
-      public RootType fun(VirtualFile virtualFile) {
-        return service.getRootType(virtualFile);
-      }
-    };
-  }
-
-  @NotNull
   private static Function<VirtualFile, Language> SCRATCH_LANG(final ScratchFileService service, final Project project) {
     return new Function<VirtualFile, Language>() {
       @Override
@@ -163,6 +154,16 @@ public class ScratchFileActions {
           lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
         }
         return lang;
+      }
+    };
+  }
+
+  @NotNull
+  private static Condition<VirtualFile> isScratch() {
+    return new Condition<VirtualFile>() {
+      @Override
+      public boolean value(@NotNull VirtualFile file) {
+        return ScratchRootType.getInstance().isScratchFile(file);
       }
     };
   }
@@ -178,7 +179,7 @@ public class ScratchFileActions {
       }
 
       ScratchFileService fileService = ScratchFileService.getInstance();
-      Condition<VirtualFile> isScratch = compose(ROOT_TYPE(fileService), instanceOf(ScratchRootType.class));
+      Condition<VirtualFile> isScratch = isScratch();
       if (!files.filter(not(isScratch)).isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -194,12 +195,10 @@ public class ScratchFileActions {
     public void actionPerformed(AnActionEvent e) {
       Project project = e.getProject();
       ScratchFileService fileService = ScratchFileService.getInstance();
-      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
-        filter(compose(ROOT_TYPE(fileService), instanceOf(ScratchRootType.class)));
+      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).filter(isScratch());
       if (project == null || files.isEmpty()) return;
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();
       LRUPopupBuilder.forFileLanguages(project, files, mapping).showInBestPositionFor(e.getDataContext());
     }
   }
-
 }
