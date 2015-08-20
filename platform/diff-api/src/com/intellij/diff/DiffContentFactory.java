@@ -18,6 +18,7 @@ package com.intellij.diff;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -63,6 +64,9 @@ public abstract class DiffContentFactory {
 
   @Nullable
   public abstract DocumentContent createDocument(@Nullable Project project, @NotNull VirtualFile file);
+
+  @Nullable
+  public abstract FileContent createFile(@Nullable Project project, @NotNull VirtualFile file);
 
   @NotNull
   public abstract DiffContent createClipboardContent();

@@ -110,7 +110,9 @@ public class PyCharmEduInitialConfigurator {
                                                                              "SelectIn", "GotoTypeDeclaration", "QuickChangeScheme",
                                                                              "GotoTest", "GotoRelated", "Hierarchy Actions", "Bookmarks",
                                                                              "Goto Error/Bookmark Actions", "GoToEditPointGroup",
-                                                                             "Change Navigation Actions", "Method Navigation Actions");
+                                                                             "Change Navigation Actions", "Method Navigation Actions",
+                                                                             "EvaluateExpression", "Pause", "ViewBreakpoints",
+                                                                             "XDebugger.MuteBreakpoints");
 
   public static class First {
 

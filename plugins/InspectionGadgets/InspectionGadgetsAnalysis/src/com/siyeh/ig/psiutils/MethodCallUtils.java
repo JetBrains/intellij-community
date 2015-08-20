@@ -18,7 +18,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,75 +129,6 @@ public class MethodCallUtils {
     return MethodUtils.methodMatches(method, calledOnClassName, returnType, methodName, parameterTypes);
   }
 
-  public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiType[] types) {
-    final PsiParameterList parameterList = method.getParameterList();
-    if (method.isVarArgs()) {
-      if (types.length < parameterList.getParametersCount() - 1) {
-        return false;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiParameter lastParameter = parameters[parameters.length - 1];
-      PsiType lastParameterType = lastParameter.getType();
-      if (!(lastParameterType instanceof PsiArrayType)) {
-        return false;
-      }
-      lastParameterType = substitutorForMethod.substitute(lastParameterType);
-      if (lastParameter.isVarArgs()) {
-        for (int i = 0; i < parameters.length - 1; i++) {
-          final PsiParameter parameter = parameters[i];
-          if (parameter.isVarArgs()) {
-            return false;
-          }
-          final PsiType argumentType = types[i];
-          if (argumentType == null) {
-            return false;
-          }
-          final PsiType parameterType = parameters[i].getType();
-          final PsiType substitutedParameterType = substitutorForMethod.substitute(parameterType);
-          if (!TypeConversionUtil.isAssignable(substitutedParameterType, argumentType)) {
-            return false;
-          }
-        }
-        if (types.length == parameters.length) {
-          //call with array as vararg parameter
-          final PsiType lastArgType = types[types.length - 1];
-          if (lastArgType != null && TypeConversionUtil.isAssignable(lastParameterType, lastArgType)) {
-            return true;
-          }
-        }
-        final PsiArrayType arrayType = (PsiArrayType)lastParameterType;
-        final PsiType componentType = arrayType.getComponentType();
-        for (int i = parameters.length - 1; i < types.length; i++) {
-          final PsiType argType = types[i];
-          if (argType == null || !TypeConversionUtil.isAssignable(componentType, argType)) {
-            return false;
-          }
-        }
-      }
-      else {
-        return false;
-      }
-    }
-    else {
-      if (types.length != parameterList.getParametersCount()) {
-        return false;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      for (int i = 0; i < types.length; i++) {
-        final PsiType type = types[i];
-        if (type == null) {
-          return false; //?
-        }
-        final PsiType parameterType = parameters[i].getType();
-        final PsiType substitutedParameterType = substitutorForMethod.substitute(parameterType);
-        if (!TypeConversionUtil.isAssignable(substitutedParameterType, type)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   public static boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final String name = methodExpression.getReferenceName();
@@ -276,5 +206,26 @@ public class MethodCallUtils {
     final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
     final PsiElement element = referenceExpression.resolve();
     return variable.equals(element);
+  }
+
+  public static PsiMethod findMethodWithReplacedArgument(@NotNull PsiCall call, @NotNull PsiExpression target,
+                                                         @NotNull PsiExpression replacement) {
+    final PsiExpressionList argumentList = call.getArgumentList();
+    assert argumentList != null;
+    final PsiExpression[] expressions = argumentList.getExpressions();
+    int index = -1;
+    for (int i = 0; i < expressions.length; i++) {
+      final PsiExpression expression = expressions[i];
+      if (expression == target) {
+        index = i;
+      }
+    }
+    assert index >= 0;
+    final PsiCall copy = (PsiCall)call.copy();
+    final PsiExpressionList copyArgumentList = copy.getArgumentList();
+    assert copyArgumentList != null;
+    final PsiExpression[] arguments = copyArgumentList.getExpressions();
+    arguments[index].replace(replacement);
+    return copy.resolveMethod();
   }
 }

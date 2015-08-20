@@ -62,7 +62,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
   }
 
   public void testWord() throws Exception {
-    doTestWord(System.currentTimeMillis(), 300000, 300);
+    doTestWord(System.currentTimeMillis(), 30, 300);
   }
 
   public void testLine() throws Exception {

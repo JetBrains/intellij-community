@@ -159,6 +159,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   @CalledInAwt
+  protected void reloadRequest() {
+    updateRequest(true);
+  }
+
+  @CalledInAwt
   public void updateRequest() {
     updateRequest(false);
   }
@@ -445,13 +450,13 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbarPanel.setContent(toolbar.getComponent());
     for (AnAction action : group.getChildren(null)) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
+      DiffUtil.registerAction(action, myMainPanel);
     }
   }
 
   protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
     ShowActionGroupPopupAction action = new ShowActionGroupPopupAction();
-    action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
+    DiffUtil.registerAction(action, myMainPanel);
 
     myPopupActionGroup = collectPopupActions(viewerActions);
   }
@@ -902,8 +907,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void reloadDiffRequest() {
+    public void reopenDiffRequest() {
       updateRequest(true);
+    }
+
+    @Override
+    public void reloadDiffRequest() {
+      reloadRequest();
     }
 
     @Nullable

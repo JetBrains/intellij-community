@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -124,5 +125,10 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   @Override
   public boolean canProcessExternalCommandLine() {
     return true;
+  }
+
+  @Nullable
+  protected Project getProject() {
+    return null; // TODO: try to guess project
   }
 }

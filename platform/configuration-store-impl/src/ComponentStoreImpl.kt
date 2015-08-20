@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
+import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -53,6 +54,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 private val LOG = Logger.getInstance(javaClass<ComponentStoreImpl>())
 
+/**
+ * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
+ */
 public abstract class ComponentStoreImpl : IComponentStore {
   private val myComponents = Collections.synchronizedMap(THashMap<String, Any>())
   private val mySettingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
@@ -346,8 +350,10 @@ public abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet<String>()
   }
 
-  override final fun reloadStates(componentNames: MutableSet<String>) {
-    reinitComponents(componentNames)
+  override final fun reloadStates(componentNames: MutableSet<String>, messageBus: MessageBus) {
+    runBatchUpdate(messageBus) {
+      reinitComponents(componentNames)
+    }
   }
 
   override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
@@ -369,8 +375,6 @@ public abstract class ComponentStoreImpl : IComponentStore {
       return true
     }
   }
-
-  protected abstract fun getMessageBus(): MessageBus
 
   /**
    * null if reloaded
@@ -404,18 +408,14 @@ public abstract class ComponentStoreImpl : IComponentStore {
   }
 
   // used in settings repository plugin
+  /**
+   * You must call it in batch mode (use runBatchUpdate)
+   */
   public fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage> = emptySet(), notReloadableComponents: Collection<String> = emptySet()) {
-    val messageBus = getMessageBus()
-    messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted()
-    try {
-      for (componentName in componentNames) {
-        if (!notReloadableComponents.contains(componentName)) {
-          reloadState(componentName, changedStorages)
-        }
+    for (componentName in componentNames) {
+      if (!notReloadableComponents.contains(componentName)) {
+        reloadState(componentName, changedStorages)
       }
-    }
-    finally {
-      messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished()
     }
   }
 

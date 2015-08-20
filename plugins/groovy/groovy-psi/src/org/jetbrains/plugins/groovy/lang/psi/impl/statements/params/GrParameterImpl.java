@@ -184,6 +184,11 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Override
   public boolean isOptional() {
+    final GrParameterStub stub = getStub();
+    if (stub != null) {
+      return GrParameterStub.hasInitializer(stub.getFlags());
+    }
+    
     return getInitializerGroovy() != null;
   }
 
@@ -242,6 +247,11 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Override
   public boolean isVarArgs() {
+    GrParameterStub stub = getStub();
+    if (stub != null) {
+      return GrParameterStub.isVarRags(stub.getFlags());
+    }
+
     PsiElement dots = getEllipsisDots();
     return dots != null;
   }

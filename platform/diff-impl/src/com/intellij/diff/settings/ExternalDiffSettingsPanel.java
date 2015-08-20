@@ -50,6 +50,7 @@ public class ExternalDiffSettingsPanel {
   private TextFieldWithBrowseButton myMergePath;
   private JTextField myMergeParameters;
   private JLabel myDescriptionLabel;
+  private JCheckBox myRespectExitCodeCheckbox;
 
   public ExternalDiffSettingsPanel() {
     myDescriptionLabel.setText(DESCRIPTION_TEXT);
@@ -87,6 +88,7 @@ public class ExternalDiffSettingsPanel {
     if (mySettings.isMergeEnabled() != myMergeEnabled.isSelected()) return true;
     if (!mySettings.getMergeExePath().equals(myMergePath.getText())) return true;
     if (!mySettings.getMergeParameters().equals(myMergeParameters.getText())) return true;
+    if (mySettings.isMergeTrustExitCode() != myRespectExitCodeCheckbox.isSelected()) return true;
 
     return false;
   }
@@ -100,6 +102,7 @@ public class ExternalDiffSettingsPanel {
     mySettings.setMergeEnabled(myMergeEnabled.isSelected());
     mySettings.setMergeExePath(myMergePath.getText());
     mySettings.setMergeParameters(myMergeParameters.getText());
+    mySettings.setMergeTrustExitCode(myRespectExitCodeCheckbox.isSelected());
   }
 
   public void reset() {
@@ -111,6 +114,7 @@ public class ExternalDiffSettingsPanel {
     myMergePath.setText(mySettings.getMergeExePath());
     myMergeEnabled.setSelected(mySettings.isMergeEnabled());
     myMergeParameters.setText(mySettings.getMergeParameters());
+    myRespectExitCodeCheckbox.setSelected(mySettings.isMergeTrustExitCode());
 
     updateEnabledEffect();
   }
@@ -122,6 +126,7 @@ public class ExternalDiffSettingsPanel {
 
     UIUtil.setEnabled(myMergePath, myMergeEnabled.isSelected(), true);
     UIUtil.setEnabled(myMergeParameters, myMergeEnabled.isSelected(), true);
+    UIUtil.setEnabled(myRespectExitCodeCheckbox, myMergeEnabled.isSelected(), true);
   }
 
   private void createUIComponents() {

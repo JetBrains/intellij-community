@@ -687,13 +687,16 @@ public abstract class DialogWrapper {
       for (final JBOptionButton.OptionInfo eachInfo : infos) {
         if (eachInfo.getMnemonic() >= 0) {
           final char mnemonic = (char)eachInfo.getMnemonic();
-          new AnAction() {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              final JBOptionButton buttonToActivate = eachInfo.getButton();
-              buttonToActivate.showPopup(eachInfo.getAction(), true);
-            }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), getPeer().getRootPane());
+          JRootPane rootPane = getPeer().getRootPane();
+          if (rootPane != null) {
+            new AnAction() {
+              @Override
+              public void actionPerformed(AnActionEvent e) {
+                final JBOptionButton buttonToActivate = eachInfo.getButton();
+                buttonToActivate.showPopup(eachInfo.getAction(), true);
+              }
+            }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
+          }
         }
       }
     }

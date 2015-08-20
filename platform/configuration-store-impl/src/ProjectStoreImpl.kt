@@ -247,8 +247,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
   protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
   }
 
-  override fun getMessageBus() = project.getMessageBus()
-
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.

@@ -140,4 +140,13 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     assert !myFixture.lookupElementStrings.contains('class')
   }
 
+  public void "test annotation context"() {
+    def ctxFile = myFixture.addClass("class Class { void foo(int context) { @Anno int a; } }").containingFile
+    def context = ctxFile.findElementAt(ctxFile.text.indexOf('Anno'))
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("c<caret>", context, null, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings.contains('context')
+  }
+
 }

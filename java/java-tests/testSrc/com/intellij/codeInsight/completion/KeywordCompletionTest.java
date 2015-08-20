@@ -76,8 +76,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testMethodScope3() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof"); }
   public void testMethodScope4() throws Exception { doTest(6, "final", "try", "for", "while", "return", "throw"); }
   public void testMethodScope5() throws Exception { doTest(false); }
-  public void testElseAfterSemicolon() throws Exception { doTest(1, "else"); }
-  public void testElseAfterRBrace() throws Exception { doTest(1, "else"); }
+  public void testElseAfterSemicolon() { doTest(1, "else"); }
+  public void testElseAfterRBrace() { doTest(false); }
   public void testExtraBracketAfterFinally1() throws Exception { doTest(false); }
   public void testExtraBracketAfterFinally2() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
@@ -137,7 +137,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertEquals("this", myItems[1].getLookupString());
   }
 
-  private void doTest(boolean select) throws Exception {
+  private void doTest(boolean select) {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
     if (select) {
       selectItem(myItems[0]);

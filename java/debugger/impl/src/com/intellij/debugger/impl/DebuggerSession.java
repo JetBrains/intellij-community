@@ -273,8 +273,15 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void stepOut(int stepSize) {
-    final SuspendContextImpl suspendContext = getSuspendContext();
-    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOutCommand(suspendContext, stepSize);
+    SuspendContextImpl suspendContext = getSuspendContext();
+    DebugProcessImpl.ResumeCommand cmd = null;
+    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensions()) {
+      cmd = handler.getStepOutCommand(suspendContext, stepSize);
+      if (cmd != null) break;
+    }
+    if (cmd == null) {
+      cmd = myDebugProcess.createStepOutCommand(suspendContext, stepSize);
+    }
     setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, Event.STEP);
   }
@@ -284,8 +291,15 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void stepOver(boolean ignoreBreakpoints, int stepSize) {
-    final SuspendContextImpl suspendContext = getSuspendContext();
-    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
+    SuspendContextImpl suspendContext = getSuspendContext();
+    DebugProcessImpl.ResumeCommand cmd = null;
+    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensions()) {
+      cmd = handler.getStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
+      if (cmd != null) break;
+    }
+    if (cmd == null) {
+      cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
+    }
     setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, Event.STEP);
   }
@@ -296,7 +310,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
-    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
+    DebugProcessImpl.ResumeCommand cmd = null;
+    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensions()) {
+      cmd = handler.getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
+      if (cmd != null) break;
+    }
+    if (cmd == null) {
+      cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
+    }
     setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, Event.STEP);
   }

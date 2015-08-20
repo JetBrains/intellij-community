@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
-    <appStarter implementation="com.intellij.openapi.diff.MergeApplication"/>
+    <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
 
@@ -411,5 +411,10 @@
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
+
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+    </intentionAction>
+    
   </extensions>
 </idea-plugin>

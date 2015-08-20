@@ -26,6 +26,12 @@ public interface DiffRequestProducer {
   @NotNull
   String getName();
 
+  /*
+   * Should be called either in EDT or without ReadLock.
+   * Some implementors might need WriteLock, so usage of Application.invokeAndWait() is possible.
+   *
+   * Valid ModalityState should be passed with ProgressIndicator.getModalityState().
+   */
   @CalledInBackground
   @NotNull
   DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)

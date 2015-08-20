@@ -63,6 +63,8 @@ public abstract class DiffWindowBase {
           myProcessor.requestFocus(); // TODO: not needed for modal dialogs. Make a flag in WindowWrapperBuilder ?
         }
       })
+      .setOkAction(myHints.getOkAction())
+      .setCancelAction(myHints.getCancelAction())
       .build();
     myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     Disposer.register(myWrapper, myProcessor);
@@ -71,7 +73,7 @@ public abstract class DiffWindowBase {
       public void actionPerformed(final AnActionEvent e) {
         myWrapper.close();
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getCloseActiveWindow(), myProcessor.getComponent());
+    }.registerCustomShortcutSet(CommonShortcuts.getCloseActiveWindow(), myProcessor.getComponent(), myWrapper);
   }
 
   public void show() {

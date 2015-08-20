@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application
 
+import com.intellij.openapi.components.impl.stores.BatchUpdateListener
+import com.intellij.util.messages.MessageBus
 import javax.swing.SwingUtilities
 
 public inline fun <T> runWriteAction(runnable: () -> T): T {
@@ -34,6 +36,17 @@ public inline fun runReadAction(runnable: () -> Unit) {
   }
   finally {
     token.finish()
+  }
+}
+
+public inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
+  val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
+  publisher.onBatchUpdateStarted()
+  try {
+    return runnable()
+  }
+  finally {
+    publisher.onBatchUpdateFinished()
   }
 }
 
