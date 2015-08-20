@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.configuration;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.HttpRequests;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -275,11 +277,13 @@ public final class IpnbConnectionManager implements ProjectComponent {
       showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
       return false;
     }
-    final String ipython = findIPythonRunner(homePath);
+    String ipython = findIPythonRunner(homePath);
+    Map<String, String> env = null;
     if (ipython == null) {
-      showWarning(fileEditor, "IPython executable is not found, please check your IPython installation", null);
-      return false;
+      ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+      env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     }
+
     final ArrayList<String> parameters = Lists.newArrayList(homePath, ipython, "notebook", "--no-browser");
     if (hostPort.getFirst() != null) {
       parameters.add("--ip");
@@ -290,6 +294,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add(hostPort.getSecond());
     }
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath());
+    if (env != null) {
+      commandLine.withEnvironment(env);
+    }
 
     try {
       final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
