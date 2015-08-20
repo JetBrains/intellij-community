@@ -25,13 +25,12 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.intentions.PyGenerateDocstringIntention;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.editor.PythonDocCommentUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +68,8 @@ public class DocstringQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  private static Editor getEditor(Project project, PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+  private static Editor getEditor(@NotNull PsiElement element) {
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
     if (document != null) {
       final EditorFactory instance = EditorFactory.getInstance();
       if (instance == null) return null;
@@ -87,7 +86,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     if (docStringOwner == null) return;
     PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
     if (docStringExpression == null && myMissingText == null && myUnexpected == null) {
-      addEmptyDocstring(project, docStringOwner);
+      addEmptyDocstring(docStringOwner);
       return;
     }
     if (docStringExpression != null) {
@@ -104,7 +103,7 @@ public class DocstringQuickFix implements LocalQuickFix {
 
       String replacement = docStringExpression.getText();
       if (myMissingText != null) {
-        replacement = createMissingReplacement(docStringOwner);
+        replacement = new PyDocstringGenerator(docStringOwner).withParam(myMissingText).buildDocString();
       }
       if (myUnexpected != null) {
         replacement = PythonDocCommentUtil.removeParamFromDocstring(replacement, myPrefix, myUnexpected);
@@ -116,19 +115,10 @@ public class DocstringQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void addEmptyDocstring(Project project, PyDocStringOwner docStringOwner) {
-    if (docStringOwner instanceof PyFunction) {
-      PyGenerateDocstringIntention.generateDocstringForFunction((PyFunction)docStringOwner);
+  private static void addEmptyDocstring(@NotNull PyDocStringOwner docStringOwner) {
+    if (docStringOwner instanceof PyFunction ||
+        docStringOwner instanceof PyClass && ((PyClass)docStringOwner).findInitOrNew(false, null) != null) {
+      PyGenerateDocstringIntention.generateDocstring(docStringOwner, getEditor(docStringOwner));
     }
-    if (docStringOwner instanceof PyClass) {
-      PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false, null);
-      if (init == null) return;
-      PythonDocumentationProvider.insertDocStub(init, ((PyClass)docStringOwner).getStatementList(),
-                                                project, getEditor(project, docStringOwner.getContainingFile()));
-    }
-  }
-
-  private String createMissingReplacement(PyDocStringOwner docStringOwner) {
-    return new PyDocstringGenerator(docStringOwner).withParam(myMissingText).docStringAsText();
   }
 }

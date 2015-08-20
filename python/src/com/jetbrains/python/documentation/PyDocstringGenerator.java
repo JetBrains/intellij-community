@@ -181,7 +181,7 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
-  private String buildDocString() {
+  public String buildDocString() {
     if (myOriginalDocString != null) {
       return updateDocString();
     }
@@ -194,7 +194,7 @@ public class PyDocstringGenerator {
   private String createDocString() {
     if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
       final TagBasedDocStringBuilder builder = new TagBasedDocStringBuilder(myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":");
-      builder.addLine("");
+      builder.addEmptyLine();
       String indentation = getDocStringIndentation();
       boolean addedReturn = false;
       for (DocstringParam param : myParams) {
@@ -287,10 +287,6 @@ public class PyDocstringGenerator {
     });
   }
 
-  public String docStringAsText() {
-    return buildDocString();
-  }
-
   private DocstringParam getParamToEdit() {
     if (myParams.size() == 0) {
       throw new IllegalStateException("We should have at least one param to edit");
@@ -298,7 +294,8 @@ public class PyDocstringGenerator {
     return myParams.get(0);
   }
 
-  public void buildAndInsert() {
+  @NotNull
+  public PyDocStringOwner buildAndInsert() {
     final String replacement = buildDocString();
 
     final Project project = myDocStringOwner.getProject();
@@ -336,6 +333,7 @@ public class PyDocstringGenerator {
       }
     }
     myDocStringOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
+    return myDocStringOwner;
   }
 
   public static class DocstringParam {

@@ -32,6 +32,7 @@ import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
@@ -98,20 +99,26 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       return;
     }
 
-    generateDocstringForFunction(function);
+    generateDocstring(function, editor);
   }
 
-  public static void generateDocstringForFunction(@NotNull PyFunction function) {
-    if (!DocStringUtil.ensureNotPlainDocstringFormat(function)) {
+  public static void generateDocstring(@NotNull PyDocStringOwner docStringOwner, @Nullable Editor editor) {
+    if (!DocStringUtil.ensureNotPlainDocstringFormat(docStringOwner)) {
       return;
     }
-
-    final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
-    setParametersWithTypesFromDebuggerSignature(docstringGenerator, function);
-    if (function.getDocStringValue() == null) {
-      docstringGenerator.addReturn();
+    final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(docStringOwner);
+    if (docStringOwner instanceof PyFunction) {
+      setParametersWithTypesFromDebuggerSignature(docstringGenerator, (PyFunction)docStringOwner);
+      if (docStringOwner.getDocStringValue() == null) {
+        docstringGenerator.addReturn();
+      }
     }
-    docstringGenerator.buildAndInsert();
+    final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
+    if (updated != null && editor != null) {
+      final int offset = updated.getTextOffset();
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
+    }
   }
 
   private static void setParametersWithTypesFromDebuggerSignature(@NotNull PyDocstringGenerator generator, @NotNull PyFunction myFunction) {
