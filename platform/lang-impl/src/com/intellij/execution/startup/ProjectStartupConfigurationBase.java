@@ -31,12 +31,12 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
   private final static String TOP_ELEMENT = "startup-tasks";
   private final static String TASK = "task";
   private final static String NAME = "name";
-  private final static String TYPE = "type";
+  private final static String ID = "id";
 
-  private final List<String> myList;
+  private final List<ConfigurationDescriptor> myList;
 
   protected ProjectStartupConfigurationBase() {
-    myList = new ArrayList<String>();
+    myList = new ArrayList<ConfigurationDescriptor>();
   }
 
   @Nullable
@@ -44,9 +44,10 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
   public Element getState() {
     if (myList.isEmpty()) return null;
     final Element element = new Element(TOP_ELEMENT);
-    for (String name : myList) {
+    for (ConfigurationDescriptor descriptor : myList) {
       final Element child = new Element(TASK);
-      child.setAttribute(NAME, name);
+      child.setAttribute(NAME, descriptor.getName());
+      child.setAttribute(ID, descriptor.getId());
 
       element.addContent(child);
     }
@@ -60,8 +61,9 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     for (Element child : children) {
       if (TASK.equals(child.getName())) {
         final String name = child.getAttributeValue(NAME);
-        if (! StringUtil.isEmptyOrSpaces(name)) {
-          myList.add(name);
+        final String id = child.getAttributeValue(ID);
+        if (! StringUtil.isEmptyOrSpaces(name) && ! StringUtil.isEmptyOrSpaces(id)) {
+          myList.add(new ConfigurationDescriptor(id, name));
         }
       }
     }
@@ -71,11 +73,11 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     myList.clear();
   }
 
-  public List<String> getList() {
+  public List<ConfigurationDescriptor> getList() {
     return myList;
   }
 
-  public void setList(@NotNull final List<String> list) {
+  public void setList(@NotNull final List<ConfigurationDescriptor> list) {
     myList.clear();
     myList.addAll(list);
   }
@@ -85,22 +87,42 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
   }
 
   public static class ConfigurationDescriptor {
-    private final @NotNull String myTypeId;
+    private final @NotNull String myId;
     private final @NotNull String myName;
 
-    public ConfigurationDescriptor(@NotNull String typeId, @NotNull String name) {
-      myTypeId = typeId;
+    public ConfigurationDescriptor(@NotNull String id, @NotNull String name) {
+      myId = id;
       myName = name;
     }
 
     @NotNull
-    public String getTypeId() {
-      return myTypeId;
+    public String getId() {
+      return myId;
     }
 
     @NotNull
     public String getName() {
       return myName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ConfigurationDescriptor that = (ConfigurationDescriptor)o;
+
+      if (!myId.equals(that.myId)) return false;
+      if (!myName.equals(that.myName)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myId.hashCode();
+      result = 31 * result + myName.hashCode();
+      return result;
     }
   }
 }

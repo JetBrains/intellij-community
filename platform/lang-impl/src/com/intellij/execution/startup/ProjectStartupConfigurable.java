@@ -119,6 +119,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           } finally {
             runManager.setSelectedConfiguration(was);
           }
+          setModel(new ProjectStartupTasksTreeModel(((ProjectStartupTasksTreeModel) myTree.getModel()).getConfigurations()));
         }
       })
       .setEditActionUpdater(new AnActionButtonUpdater() {

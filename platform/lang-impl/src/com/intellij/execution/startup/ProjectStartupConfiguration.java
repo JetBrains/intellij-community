@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -52,26 +53,80 @@ public class ProjectStartupConfiguration {
     final List<RunnerAndConfigurationSettings> result = new ArrayList<RunnerAndConfigurationSettings>();
     if (! myShared.isEmpty()) {
       myLocal.clear();
-      return fillResult(result, myShared.getList());
+      return fillResult(result, myShared.getList(), true);
     }
-    return fillResult(result, myLocal.getList());
+    return fillResult(result, myLocal.getList(), false);
   }
 
-  private List<RunnerAndConfigurationSettings> fillResult(List<RunnerAndConfigurationSettings> result, List<String> list) {
-    for (String s : list) {
-      final RunnerAndConfigurationSettings settings = myRunManager.findConfigurationByName(s);
+  public void rename(final String oldId, RunnerAndConfigurationSettings settings) {
+    if (! myShared.isEmpty()) {
+      renameInStorage(oldId, settings, myShared);
+    } else {
+      renameInStorage(oldId, settings, myLocal);
+    }
+  }
+
+  private static void renameInStorage(String oldId, RunnerAndConfigurationSettings settings, ProjectStartupConfigurationBase configuration) {
+    final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
+    for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
+      if (descriptor.getId().equals(oldId)) {
+        final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> newList =
+          new ArrayList<ProjectStartupConfigurationBase.ConfigurationDescriptor>(list);
+        newList.remove(descriptor);
+        newList.add(new ProjectStartupConfigurationBase.ConfigurationDescriptor(settings.getUniqueID(), settings.getName()));
+        configuration.setList(newList);
+        return;
+      }
+    }
+  }
+
+  public void delete(final String name) {
+    if (! myShared.isEmpty()) {
+      deleteInStorage(name, myShared);
+    } else {
+      deleteInStorage(name, myLocal);
+    }
+  }
+
+  private static void deleteInStorage(String name, ProjectStartupConfigurationBase configuration) {
+    final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
+    final Iterator<ProjectStartupConfigurationBase.ConfigurationDescriptor> iterator = list.iterator();
+    while (iterator.hasNext()) {
+      final ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor = iterator.next();
+      if (descriptor.getName().equals(name)) {
+        iterator.remove();
+        return;
+      }
+    }
+  }
+
+  private List<RunnerAndConfigurationSettings> fillResult(List<RunnerAndConfigurationSettings> result,
+                                                          List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list,
+                                                          boolean shared) {
+    boolean changed = false;
+    for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
+      final RunnerAndConfigurationSettings settings = myRunManager.findConfigurationByName(descriptor.getName());
       if (settings != null) {
         result.add(settings);
+        if (! settings.getUniqueID().equals(descriptor.getId())) {
+          changed = true;
+        }
+      } else {
+        changed = true;
       }
+    }
+    if (changed) {
+      setStartupConfigurations(result, shared);
     }
     return result;
   }
 
   public void setStartupConfigurations(final @NotNull List<RunnerAndConfigurationSettings> list, final boolean shared) {
-    final List<String> names = ContainerUtil.map(list, new Function<RunnerAndConfigurationSettings, String>() {
+    final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> names =
+      ContainerUtil.map(list, new Function<RunnerAndConfigurationSettings, ProjectStartupConfigurationBase.ConfigurationDescriptor>() {
       @Override
-      public String fun(RunnerAndConfigurationSettings settings) {
-        return settings.getName();
+      public ProjectStartupConfigurationBase.ConfigurationDescriptor fun(RunnerAndConfigurationSettings settings) {
+        return new ProjectStartupConfigurationBase.ConfigurationDescriptor(settings.getUniqueID(), settings.getName());
       }
     });
     if (shared) {
@@ -87,9 +142,9 @@ public class ProjectStartupConfiguration {
     if (isShared()) return true;
     if (isEmpty()) return true;
 
-    final List<String> list = myLocal.getList();
-    for (String s : list) {
-      final RunnerAndConfigurationSettings settings = myRunManager.findConfigurationByName(s);
+    final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = myLocal.getList();
+    for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
+      final RunnerAndConfigurationSettings settings = myRunManager.findConfigurationByName(descriptor.getName());
       if (settings != null) {
         if (! myRunManager.isConfigurationShared(settings)) return false;
       }
