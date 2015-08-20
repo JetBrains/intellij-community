@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore;
 
+import com.intellij.openapi.components.impl.stores.StateMap;
+import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
