@@ -118,4 +118,12 @@ public class YAMLParserTest extends ParsingTestCase {
            "  - a\n" +
            "  - b");
   }
+
+  public void testMultiline_ruby16796() throws Throwable {
+    doCodeTest("code:\n" +
+               "  src=\"keys/{{item}}\"\n" +
+               "  mode=0600\n" +
+               "with_items:\n" +
+               "  - \"id_rsa.pub\"\n");
+  }
 }

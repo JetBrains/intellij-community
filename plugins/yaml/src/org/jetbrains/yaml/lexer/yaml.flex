@@ -110,22 +110,6 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                     }
                                     return EOL;
                                 }
-"{"                             {   braceCount++;
-                                    if (braceCount != 0 && yystate() != BRACES) {
-                                      previousState = yystate();
-                                    }
-                                    yyBegin(braceCount == 0 ? previousState: BRACES);
-                                    return LBRACE;
-                                }
-"}"                             {   if (braceCount == 0) {
-                                      return TEXT;
-                                    }
-                                    braceCount--;
-                                    if (yystate() == BRACES && braceCount == 0){
-                                      yyBegin(previousState);
-                                    }
-                                    return RBRACE;
-                                }
 "["                             {   braceCount++;
                                     if (braceCount != 0 && yystate() != BRACES) {
                                       previousState = yystate();
@@ -134,6 +118,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                     return LBRACKET;
                                 }
 "]"                             {   if (braceCount == 0) {
+                                      yyBegin(VALUE);
                                       return TEXT;
                                     }
                                     braceCount--;
@@ -147,6 +132,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                       yyBegin(BRACES);
                                       return COMMA;
                                     }
+                                    yyBegin(VALUE);
                                     return TEXT;
                                 }
 ":" / ({WHITE_SPACE} | {EOL})   {   return COLON; }
@@ -171,6 +157,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 {KEY}                           {   if (zzMarkedPos == zzEndRead){
                                       return SCALAR_KEY;
                                     }
+                                    yyBegin(VALUE);
                                     return TEXT;
                                 }
 }
@@ -190,7 +177,10 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 "-" / ({WHITE_SPACE} | {EOL})   {   yyBegin(VALUE_OR_KEY);
                                     return SEQUENCE_MARKER; }
 
-.                               {   return TEXT; }
+. {
+  yyBegin(VALUE);
+  return TEXT;
+}
 }
 
 
@@ -231,6 +221,29 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                       }
                                     }
                                     return TEXT; }
+}
+
+<YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
+"{"                             {   braceCount++;
+                                    if (braceCount != 0 && yystate() != BRACES) {
+                                      previousState = yystate();
+                                    }
+                                    yyBegin(braceCount == 0 ? previousState: BRACES);
+                                    return LBRACE;
+                                }
+"}"                             {   if (braceCount == 0) {
+                                      yyBegin(VALUE);
+                                      return TEXT;
+                                    }
+                                    braceCount--;
+                                    if (yystate() == BRACES && braceCount == 0){
+                                      yyBegin(previousState);
+                                    }
+                                    return RBRACE;
+                                }
+}
+
+<VALUE, VALUE_OR_KEY>{
 .                               {   return TEXT; }
 }
 
@@ -255,6 +268,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                                 afterEOL = false;
                                                 if (valueIndent < 0) {
                                                     //System.out.println("Matched TEXT:" + yytext());
+                                                    yyBegin(VALUE);
                                                     return TEXT;
                                                 }
                                                 //System.out.println("Matched ValueContext:" + yytext());

@@ -131,7 +131,11 @@ public class YAMLLexerTest extends LexerTestCase {
   }
 
   public void testTyped_scalar_list() {
-    doFileTest("yml");
+    doTest();
+  }
+
+  public void testMultiline_ruby_16796() {
+    doTest();
   }
 
   private void doTest() {

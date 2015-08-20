@@ -21,9 +21,7 @@ YAML file
       PsiWhiteSpace(' ')
       YAML array
         PsiElement([)('[')
-        PsiElement(text)('Mark')
-        PsiWhiteSpace(' ')
-        PsiElement(text)('McGwire')
+        PsiElement(text)('Mark McGwire')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
         PsiElement(text)('65')
@@ -37,9 +35,7 @@ YAML file
       PsiWhiteSpace(' ')
       YAML array
         PsiElement([)('[')
-        PsiElement(text)('Sammy')
-        PsiWhiteSpace(' ')
-        PsiElement(text)('Sosa')
+        PsiElement(text)('Sammy Sosa')
         PsiWhiteSpace('  ')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
