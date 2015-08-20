@@ -22,9 +22,13 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -89,7 +93,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   }
 
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
-    return INSTANCE.createUniqueResultsQuery(parameters);
+    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.<SmartPsiElementPointer<PsiClass>>canonicalStrategy(), new Function<PsiClass, SmartPsiElementPointer<PsiClass>>() {
+      @Override
+      public SmartPsiElementPointer<PsiClass> fun(PsiClass psiClass) {
+        return SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
+      }
+    });
   }
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
