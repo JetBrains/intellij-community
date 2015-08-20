@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,5 +203,14 @@ public class TypeUtils {
       return true;
     }
     return false;
+  }
+
+  public static boolean isTypeParameter(PsiType type) {
+    if (!(type instanceof PsiClassType)) {
+      return false;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    return aClass != null && aClass instanceof PsiTypeParameter;
   }
 }
