@@ -198,7 +198,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       for (PsiDirectory directory : myDirectories) {
         final TargetDirectoryWrapper wrapper = myNestedDirsToMove.get(directory);
         final PsiDirectory targetDirectory = wrapper.getTargetDirectory();
-        if (targetDirectory == null || !PsiTreeUtil.isAncestor(directory, targetDirectory, false)) {
+        if (targetDirectory == null || !PsiTreeUtil.isAncestor(directory, targetDirectory, false) && !isNestedTarget(directory)) {
           directory.delete();
         }
       }
@@ -207,6 +207,15 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       myNonCodeUsages = new NonCodeUsageInfo[0];
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
+  }
+
+  private boolean isNestedTarget(PsiDirectory directory) {
+    for (TargetDirectoryWrapper wrapper : myNestedDirsToMove.values()) {
+      if (directory == wrapper.getTargetDirectory()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
