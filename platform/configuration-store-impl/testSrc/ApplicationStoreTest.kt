@@ -16,12 +16,9 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StreamProvider
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -34,6 +31,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.InputStream
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.properties.Delegates
 
@@ -48,12 +46,12 @@ class ApplicationStoreTest {
   private val edtRule = EdtRule()
   public Rule fun _edtRule(): EdtRule = edtRule
 
-  private var testAppConfig: VirtualFile by Delegates.notNull()
+  private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
   public Before fun setUp() {
-    testAppConfig = tempDirManager.newVirtualDirectory()
-    componentStore = MyComponentStore(FileUtilRt.toSystemIndependentName(testAppConfig.getPath()))
+    testAppConfig = tempDirManager.newPath(refreshVfs = false)
+    componentStore = MyComponentStore(testAppConfig.systemIndependentPath)
   }
 
   @Test fun `stream provider save if several storages configured`() {
@@ -85,11 +83,11 @@ class ApplicationStoreTest {
     assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).exists()
   }
 
-  @Test @RunsInEdt fun `remove deprecated storage on write`() {
+  @Test fun `remove deprecated storage on write`() {
     doRemoveDeprecatedStorageOnWrite(SeveralStoragesConfigured())
   }
 
-  @Test @RunsInEdt fun `remove deprecated storage on write 2`() {
+  @Test fun `remove deprecated storage on write 2`() {
     doRemoveDeprecatedStorageOnWrite(ActualStorageLast())
   }
 
@@ -97,16 +95,18 @@ class ApplicationStoreTest {
     val oldFile = writeConfig("other.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"old\" /></component></application>")
     writeConfig("proxy.settings.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"new\" /></component></application>")
 
+    testAppConfig.refreshVfs()
+
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("new")
 
     component.foo = "new2"
-    componentStore.save(SmartList())
+    runInEdtAndWait { componentStore.save(SmartList()) }
 
     assertThat(oldFile.exists()).isFalse()
   }
 
-  private fun writeConfig(fileName: String, Language("XML") data: String) = runWriteAction { testAppConfig.writeChild(fileName, data) }
+  private fun writeConfig(fileName: String, Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
     public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
