@@ -971,13 +971,16 @@ public class JavaDocInfoGenerator {
 
     if (method instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)method;
-      final PsiDocComment docComment = getDocComment(psiMethod);
-      final PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
-      int parameterIndex = psiMethod.getParameterList().getParameterIndex(parameter);
-      final ParamInfo tagInfoProvider = findDocTag(localTags, parameterName, psiMethod, parameterLocator(parameterIndex));
+      PsiParameterList parameterList = psiMethod.getParameterList();
+      if (parameter.getParent() == parameterList) { // this can also be a parameter in foreach statement or in catch clause
+        final PsiDocComment docComment = getDocComment(psiMethod);
+        final PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
+        int parameterIndex = parameterList.getParameterIndex(parameter);
+        final ParamInfo tagInfoProvider = findDocTag(localTags, parameterName, psiMethod, parameterLocator(parameterIndex));
 
-      if (tagInfoProvider != null) {
-        generateOneParameter(buffer, tagInfoProvider);
+        if (tagInfoProvider != null) {
+          generateOneParameter(buffer, tagInfoProvider);
+        }
       }
     }
 
