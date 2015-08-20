@@ -172,7 +172,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @TestOnly
   public boolean stripTrailingSpaces(Project project) {
-    return stripTrailingSpaces(project, false, false, new int[0]);
+    return stripTrailingSpaces(project, false);
+  }
+
+  @TestOnly
+  public boolean stripTrailingSpaces(Project project, boolean inChangedLinesOnly) {
+    return stripTrailingSpaces(project, inChangedLinesOnly, false, new int[0]);
   }
 
   /**
@@ -637,6 +642,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void clearLineModificationFlags() {
     myLineSet = getLineSet().clearModificationFlags();
+    myFrozen = null;
+  }
+
+  public void clearLineModificationFlags(int startLine, int endLine) {
+    myLineSet = getLineSet().clearModificationFlags(startLine, endLine);
     myFrozen = null;
   }
 
