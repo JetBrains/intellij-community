@@ -41,6 +41,7 @@ public class ProjectStartupConfiguration {
   private final ProjectStartupSharedConfiguration myShared;
   private final ProjectStartupLocalConfiguration myLocal;
   private final RunManagerEx myRunManager;
+  private boolean myInitialized;
 
   public static ProjectStartupConfiguration getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, ProjectStartupConfiguration.class);
@@ -57,6 +58,10 @@ public class ProjectStartupConfiguration {
   public List<RunnerAndConfigurationSettings> getStartupConfigurations() {
     final List<RunnerAndConfigurationSettings> result = new ArrayList<RunnerAndConfigurationSettings>();
     if (! myShared.isEmpty()) {
+      if (! myInitialized) {
+        myLocal.shared();
+        myInitialized = true;
+      }
       myLocal.clear();
       return fillResult(result, myShared.getList(), true);
     }
