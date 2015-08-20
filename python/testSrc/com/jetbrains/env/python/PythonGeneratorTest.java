@@ -16,7 +16,7 @@ public class PythonGeneratorTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-        return new PyUnitTestProcessRunner(PythonHelpersLocator.getPythonCommunityPath() + "/helpers", "test_generator.py");
+        return new PyUnitTestProcessRunner(PythonHelpersLocator.getPythonCommunityPath() + "/helpers", "test_generator.py", 0);
       }
 
       @Override

@@ -67,7 +67,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-        return new PyUnitTestProcessRunner(getTestDataPath(), script);
+        return new PyUnitTestProcessRunner(getTestDataPath(), script, 0);
       }
 
       @NotNull

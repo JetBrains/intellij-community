@@ -40,9 +40,14 @@ import org.junit.Assert;
 import javax.swing.*;
 import java.io.IOException;
 
+
 /**
  * Runner to run python configurations. You only need to provide factory.
- * Some methods are overridible to allow customization
+ * Some methods are overridible to allow customization.
+ * <p/>
+ * This class allows configuration to <strong>rerun</strong> (using {@link #shouldRunAgain()},
+ * you need to implement {@link #getEnvironmentToRerun(RunContentDescriptor)}, accept last run descriptor and return
+ * {@link ExecutionEnvironment} to rerun (probably obtained from descriptor)
  *
  * @param <CONF_T> configuration class this runner supports
  * @author Ilya.Kazakevich
@@ -55,6 +60,16 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   private final ConfigurationFactory myConfigurationFactory;
   @NotNull
   private final Class<CONF_T> myExpectedConfigurationType;
+
+  /**
+   * Environment to be used to run instead of factory. Used to rerun
+   */
+  private ExecutionEnvironment myRerunExecutionEnvironment;
+
+  /**
+   * Process descriptor of last run
+   */
+  private RunContentDescriptor myLastProcessDescriptor;
 
   /**
    * @param configurationFactory      factory tp create configurations
@@ -71,6 +86,43 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
 
   @Override
   final void runProcess(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final ProcessListener processListener)
+    throws ExecutionException {
+    // Do not create new environment from factory, if child provided environment to rerun
+    final ExecutionEnvironment executionEnvironment =
+      (myRerunExecutionEnvironment != null ? myRerunExecutionEnvironment : createExecutionEnvironment(sdkPath, project));
+
+    // Engine to be run after process end to post process console
+    final ProcessListener consolePostprocessor = new ProcessAdapter() {
+      @Override
+      public void processTerminated(final ProcessEvent event) {
+        super.processTerminated(event);
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            prepareConsoleAfterProcessEnd();
+          }
+        }, ModalityState.NON_MODAL);
+      }
+    };
+    executionEnvironment.getRunner().execute(executionEnvironment, new ProgramRunner.Callback() {
+      @Override
+      public void processStarted(final RunContentDescriptor descriptor) {
+        final ProcessHandler handler = descriptor.getProcessHandler();
+        assert handler != null : "No process handler";
+        handler.addProcessListener(consolePostprocessor);
+        handler.addProcessListener(processListener);
+        myConsole = null;
+        fetchConsoleAndSetToField(descriptor);
+        assert myConsole != null : "fetchConsoleAndSetToField did not set console!";
+        final JComponent component = myConsole.getComponent(); // Console does not work with out of this method
+        assert component != null;
+        myLastProcessDescriptor = descriptor;
+      }
+    });
+  }
+
+  @NotNull
+  private ExecutionEnvironment createExecutionEnvironment(@NotNull String sdkPath, @NotNull final Project project)
     throws ExecutionException {
     final RunnerAndConfigurationSettings settings =
       RunManager.getInstance(project).createRunConfiguration("test", myConfigurationFactory);
@@ -98,35 +150,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
 
     // Execute
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final ExecutionEnvironment executionEnvironment = ExecutionEnvironmentBuilder.create(executor, settings).build();
-
-    // Engine to be run after process end to post process console
-    final ProcessListener consolePostprocessor = new ProcessAdapter() {
-      @Override
-      public void processTerminated(final ProcessEvent event) {
-        super.processTerminated(event);
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            prepareConsoleAfterProcessEnd();
-          }
-        }, ModalityState.NON_MODAL);
-      }
-    };
-    executionEnvironment.getRunner().execute(executionEnvironment, new ProgramRunner.Callback() {
-      @Override
-      public void processStarted(final RunContentDescriptor descriptor) {
-        final ProcessHandler handler = descriptor.getProcessHandler();
-        assert handler != null : "No process handler";
-        handler.addProcessListener(consolePostprocessor);
-        handler.addProcessListener(processListener);
-        myConsole = null;
-        fetchConsoleAndSetToField(descriptor);
-        assert myConsole != null : "fetchConsoleAndSetToField did not set console!";
-        final JComponent component = myConsole.getComponent(); // Console does not work with out of this method
-        assert component != null;
-      }
-    });
+    return ExecutionEnvironmentBuilder.create(executor, settings).build();
   }
 
   /**
@@ -154,5 +178,26 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
    */
   protected void configurationCreatedAndWillLaunch(@NotNull final CONF_T configuration) throws IOException {
     configuration.setWorkingDirectory(myWorkingFolder);
+  }
+
+  @Override
+  protected final boolean shouldRunAgain() {
+    final ExecutionEnvironment rerunEnvironment = getEnvironmentToRerun(myLastProcessDescriptor);
+    if (rerunEnvironment == null) {
+      return false;
+    }
+    myRerunExecutionEnvironment = rerunEnvironment;
+    return true;
+  }
+
+  /**
+   * Fetches rerun environment from descriptor if any
+   *
+   * @param lastRunDescriptor descriptor of last process run
+   * @return environment to rerun or null if no rerun needed
+   */
+  @Nullable
+  protected ExecutionEnvironment getEnvironmentToRerun(@NotNull final RunContentDescriptor lastRunDescriptor) {
+    return null;
   }
 }

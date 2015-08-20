@@ -15,7 +15,7 @@ public class PythonDocTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py");
+        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py", 0);
       }
 
       @Override
@@ -35,7 +35,7 @@ public class PythonDocTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::FirstGoodTest");
+        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::FirstGoodTest", 0);
       }
 
       @Override
@@ -54,7 +54,7 @@ public class PythonDocTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::SecondGoodTest::test_passes");
+        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::SecondGoodTest::test_passes", 0);
       }
 
       @Override
@@ -73,7 +73,7 @@ public class PythonDocTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::factorial");
+        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::factorial", 0);
       }
 
       @Override
@@ -92,7 +92,7 @@ public class PythonDocTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test2.py");
+        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test2.py", 0);
       }
 
       @Override
