@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.configurationStore.StateMap.getNewByteIfDiffers
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
@@ -164,8 +163,8 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
 
           var element: Element? = null
           try {
-            element = StateMap.stateToElement(fileName, state, emptyMap<String, Element>())
-            storage.myPathMacroSubstitutor?.collapsePaths(element!!)
+            element = StateMap.stateToElement(fileName, state)
+            storage.myPathMacroSubstitutor?.collapsePaths(element)
 
             storeElement.setAttribute(FileStorageCoreUtil.NAME, componentNameToFileNameToStates.getKey())
             storeElement.addContent(element)
@@ -258,7 +257,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
     public fun Map<String, StateMap>.toMutableMap(): MutableMap<String, MutableMap<String, Any>> {
       val map = THashMap<String, MutableMap<String, Any>>(size())
       for (entry in entrySet()) {
-        map.put(entry.getKey(), entry.getValue().toMap())
+        map.put(entry.getKey(), entry.getValue().toMutableMap())
       }
       return map
     }
@@ -337,7 +336,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
         }
       }
       else if (oldState != null) {
-        newBytes = getNewByteIfDiffers(componentName, newState, oldState as ByteArray)
+        newBytes = StateMap.getNewByteIfDiffers(componentName, newState, oldState as ByteArray)
         if (newBytes == null) {
           return null
         }

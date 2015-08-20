@@ -13,237 +13,201 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.configurationStore;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
-import gnu.trove.THashMap;
-import org.iq80.snappy.SnappyInputStream;
-import org.iq80.snappy.SnappyOutputStream;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.util.ArrayUtil
+import com.intellij.util.SystemProperties
+import gnu.trove.THashMap
+import org.iq80.snappy.SnappyInputStream
+import org.iq80.snappy.SnappyOutputStream
+import org.jdom.Element
+import org.jdom.JDOMException
+import org.jdom.output.Format
+import org.jdom.output.XMLOutputter
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.io.OutputStreamWriter
+import java.util.Arrays
+import java.util.concurrent.atomic.AtomicReferenceArray
 
-@SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-public final class StateMap {
-  private static final Logger LOG = Logger.getInstance(StateMap.class);
-
-  private static final Format XML_FORMAT = Format.getRawFormat().
-    setTextMode(Format.TextMode.TRIM).
-    setOmitEncoding(true).
-    setOmitDeclaration(true);
-
-  private final String[] names;
-  private final AtomicReferenceArray<Object> states;
-
-  public StateMap() {
-    this(new String[]{}, new AtomicReferenceArray<Object>(0));
-  }
-
-  @NotNull
-  public static StateMap fromMap(@NotNull Map<String, ?> map) {
-    String[] names = ArrayUtil.toStringArray(map.keySet());
-    Arrays.sort(names);
-    AtomicReferenceArray<Object> states = new AtomicReferenceArray<Object>(names.length);
-    for (int i = 0, n = names.length; i < n; i++) {
-      states.set(i, map.get(names[i]));
+class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any>) {
+  public fun toMutableMap(): MutableMap<String, Any> {
+    val map = THashMap<String, Any>(names.size())
+    for (i in names.indices) {
+      map.put(names[i], states.get(i))
     }
-    return new StateMap(names, states);
+    return map
   }
 
-  @NotNull
-  public Map<String, Object> toMap() {
-    THashMap<String, Object> map = new THashMap<String, Object>(names.length);
-    for (int i = 0; i < names.length; i++) {
-      map.put(names[i], states.get(i));
-    }
-    return map;
-  }
-
-  private StateMap(@NotNull String[] names, @NotNull AtomicReferenceArray<Object> states) {
-    this.names = names;
-    this.states = states;
-  }
-
-  @NotNull
   /**
    * Sorted by name.
    */
-  public String[] keys() {
-    return names;
+  fun keys(): Array<String> {
+    return names
   }
 
-  @Nullable
-  public Object get(@NotNull String key) {
-    int index = Arrays.binarySearch(names, key);
-    return index < 0 ? null : states.get(index);
+  public fun get(key: String): Any? {
+    val index = Arrays.binarySearch(names, key)
+    return if (index < 0) null else states.get(index)
   }
 
-  @NotNull
-  public Element getElement(@NotNull String key, @NotNull Map<String, Element> newLiveStates) throws IOException {
-    return stateToElement(key, get(key), newLiveStates);
+  throws(IOException::class)
+  public fun getElement(key: String, newLiveStates: Map<String, Element>): Element {
+    return stateToElement(key, get(key), newLiveStates)
   }
 
-  @NotNull
-  public static Element stateToElement(@NotNull String key, @Nullable Object state, @NotNull Map<String, Element> newLiveStates) throws IOException {
-    if (state instanceof Element) {
-      return ((Element)state).clone();
-    }
-    else {
-      Element element = newLiveStates.get(key);
-      if (element == null) {
-        assert state != null;
-        try {
-          element = unarchiveState((byte[])state);
-        }
-        catch (JDOMException e) {
-          throw new IOException(e);
-        }
-      }
-      return element;
-    }
+  public fun isEmpty(): Boolean {
+    return names.size() == 0
   }
 
-  public boolean isEmpty() {
-    return names.length == 0;
+  public fun getState(key: String): Element? {
+    val state = get(key)
+    return if (state is Element) state else null
   }
 
-  @Nullable
-  public Element getState(@NotNull String key) {
-    Object state = get(key);
-    return state instanceof Element ? (Element)state : null;
+  public fun hasState(key: String): Boolean {
+    return get(key) is Element
   }
 
-  public boolean hasState(@NotNull String key) {
-    return get(key) instanceof Element;
-  }
-
-  public boolean hasStates() {
+  public fun hasStates(): Boolean {
     if (isEmpty()) {
-      return false;
+      return false
     }
 
-    for (int i = 0; i < names.length; i++) {
-      if (states.get(i) instanceof Element) {
-        return true;
+    for (i in names.indices) {
+      if (states.get(i) is Element) {
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  public void compare(@NotNull String key, @NotNull StateMap newStates, @NotNull Set<String> diffs) {
-    Object oldState = get(key);
-    Object newState = newStates.get(key);
-    if (oldState instanceof Element) {
-      if (!JDOMUtil.areElementsEqual((Element)oldState, (Element)newState)) {
-        diffs.add(key);
+  public fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
+    val oldState = get(key)
+    val newState = newStates.get(key)
+    if (oldState is Element) {
+      if (!JDOMUtil.areElementsEqual(oldState as Element?, newState as Element?)) {
+        diffs.add(key)
       }
+    }
+    else if (getNewByteIfDiffers(key, newState!!, oldState as ByteArray) != null) {
+      diffs.add(key)
+    }
+  }
+
+  public fun getStateAndArchive(key: String): Element? {
+    val index = Arrays.binarySearch(names, key)
+    if (index < 0) {
+      return null
+    }
+
+    val state = states.get(index)
+    if (state !is Element) {
+      return null
+    }
+
+    if (states.compareAndSet(index, state, archiveState(state))) {
+      return state
     }
     else {
-      assert newState != null;
-      assert oldState != null;
-      if (getNewByteIfDiffers(key, newState, (byte[])oldState) != null) {
-        diffs.add(key);
-      }
+      return getStateAndArchive(key)
     }
   }
 
-  @Nullable
-  public static byte[] getNewByteIfDiffers(@NotNull String key, @NotNull Object newState, @NotNull byte[] oldState) {
-    byte[] newBytes = newState instanceof Element ? archiveState((Element)newState) : (byte[])newState;
-    if (Arrays.equals(newBytes, oldState)) {
-      return null;
+  companion object {
+    private val LOG = Logger.getInstance(javaClass<StateMap>())
+
+    private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
+
+    val EMPTY = StateMap(emptyArray(), AtomicReferenceArray(0))
+
+    public fun fromMap(map: Map<String, Any>): StateMap {
+      if (map.isEmpty()) {
+        return EMPTY
+      }
+
+      val names = map.keySet().toTypedArray()
+      Arrays.sort(names)
+      val states = AtomicReferenceArray<Any>(names.size())
+      var i = 0
+      val n = names.size()
+      while (i < n) {
+        states.set(i, map.get(names[i]))
+        i++
+      }
+      return StateMap(names, states)
     }
-    else if (LOG.isDebugEnabled() && SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
-      String before = stateToString(oldState);
-      String after = stateToString(newState);
-      if (before.equals(after)) {
-        LOG.debug("Serialization error: serialized are different, but unserialized are equal");
+
+    public fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element> = emptyMap<String, Element>()): Element {
+      if (state is Element) {
+        return state.clone()
       }
       else {
-        LOG.debug(key + " " + StringUtil.repeat("=", 80 - key.length()) + "\nBefore:\n" + before + "\nAfter:\n" + after);
+        return newLiveStates.get(key) ?: unarchiveState(state as ByteArray)
       }
     }
-    return newBytes;
-  }
 
-  @NotNull
-  private static byte[] archiveState(@NotNull Element state) {
-    BufferExposingByteArrayOutputStream byteOut = new BufferExposingByteArrayOutputStream();
-    try {
-      OutputStreamWriter writer = new OutputStreamWriter(new SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET);
+    public fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
+      val newBytes = if (newState is Element) archiveState(newState) else newState as ByteArray
+      if (Arrays.equals(newBytes, oldState)) {
+        return null
+      }
+      else if (LOG.isDebugEnabled() && SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
+        val before = stateToString(oldState)
+        val after = stateToString(newState)
+        if (before == after) {
+          LOG.debug("Serialization error: serialized are different, but unserialized are equal")
+        }
+        else {
+          LOG.debug(key + " " + StringUtil.repeat("=", 80 - key.length()) + "\nBefore:\n" + before + "\nAfter:\n" + after)
+        }
+      }
+      return newBytes
+    }
+
+    private fun archiveState(state: Element): ByteArray {
+      val byteOut = BufferExposingByteArrayOutputStream()
       try {
-        XMLOutputter xmlOutputter = new JDOMUtil.MyXMLOutputter();
-        xmlOutputter.setFormat(XML_FORMAT);
-        xmlOutputter.output(state, writer);
+        val writer = OutputStreamWriter(SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET)
+        try {
+          val xmlOutputter = JDOMUtil.MyXMLOutputter()
+          xmlOutputter.setFormat(XML_FORMAT)
+          xmlOutputter.output(state, writer)
+        }
+        finally {
+          writer.close()
+        }
       }
-      finally {
-        writer.close();
+      catch (e: IOException) {
+        throw RuntimeException(e)
       }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return ArrayUtil.realloc(byteOut.getInternalBuffer(), byteOut.size());
-  }
 
-  @Nullable
-  public Element getStateAndArchive(@NotNull String key) {
-    int index = Arrays.binarySearch(names, key);
-    if (index < 0) {
-      return null;
+      return ArrayUtil.realloc(byteOut.getInternalBuffer(), byteOut.size())
     }
 
-    Object state = states.get(index);
-    if (!(state instanceof Element)) {
-      return null;
-    }
+    private fun unarchiveState(state: ByteArray) = JDOMUtil.load(SnappyInputStream(ByteArrayInputStream(state)))
 
-    if (states.compareAndSet(index, state, archiveState((Element)state))) {
-      return (Element)state;
-    }
-    else {
-      return getStateAndArchive(key);
-    }
-  }
-
-  @NotNull
-  private static Element unarchiveState(@NotNull byte[] state) throws IOException, JDOMException {
-    return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
-  }
-
-  @NotNull
-  public static String stateToString(@NotNull Object state) {
-    Element element;
-    if (state instanceof Element) {
-      element = (Element)state;
-    }
-    else {
-      try {
-        element = unarchiveState((byte[])state);
+    fun stateToString(state: Any): String {
+      val element: Element
+      if (state is Element) {
+        element = state
       }
-      catch (Throwable e) {
-        LOG.error(e);
-        return "internal error";
+      else {
+        try {
+          element = unarchiveState(state as ByteArray)
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          return "internal error"
+        }
       }
+      return JDOMUtil.writeParent(element, "\n")
     }
-    return JDOMUtil.writeParent(element, "\n");
   }
-
 }

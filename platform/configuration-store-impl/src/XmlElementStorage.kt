@@ -57,7 +57,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     else {
       element = loadLocalData()
     }
-    return if (element == null) StateMap() else loadState(element)
+    return if (element == null) StateMap.EMPTY else loadState(element)
   }
 
   throws(IOException::class, JDOMException::class)
@@ -232,7 +232,7 @@ fun setStateAndCloneIfNeed(componentName: String, newState: Element?, oldStates:
       return null
     }
 
-    val newStates = oldStates.toMap()
+    val newStates = oldStates.toMutableMap()
     newStates.remove(componentName)
     return newStates
   }
@@ -254,7 +254,7 @@ fun setStateAndCloneIfNeed(componentName: String, newState: Element?, oldStates:
     }
   }
 
-  val newStates = oldStates.toMap()
+  val newStates = oldStates.toMutableMap()
   newStates.put(componentName, newBytes ?: newState)
   return newStates
 }
