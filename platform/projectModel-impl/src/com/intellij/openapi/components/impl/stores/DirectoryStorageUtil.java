@@ -47,7 +47,7 @@ public class DirectoryStorageUtil {
     Map map = new THashMap<String, Map<String, Element>>();
     for (VirtualFile file : dir.getChildren()) {
       // ignore system files like .DS_Store on Mac
-      if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), StateMap.DEFAULT_EXT)) {
+      if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), FileStorageCoreUtil.DEFAULT_EXT)) {
         continue;
       }
 
@@ -58,12 +58,12 @@ public class DirectoryStorageUtil {
         }
 
         Element element = JDOMUtil.load(file.getInputStream());
-        String name = StateMap.getComponentNameIfValid(element);
+        String name = FileStorageCoreUtil.getComponentNameIfValid(element);
         if (name == null) {
           continue;
         }
 
-        if (!element.getName().equals(StateMap.COMPONENT)) {
+        if (!element.getName().equals(FileStorageCoreUtil.COMPONENT)) {
           LOG.error("Incorrect root tag name (" + element.getName() + ") in " + file.getPresentableUrl());
           continue;
         }
@@ -79,6 +79,7 @@ public class DirectoryStorageUtil {
           pathMacroSubstitutor.expandPaths(state);
           pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(state));
         }
+        //noinspection unchecked
         setState(map, name, file.getName(), state);
       }
       catch (Throwable e) {
@@ -92,7 +93,7 @@ public class DirectoryStorageUtil {
   @Nullable
   public static Element getCompositeStateAndArchive(@NotNull Map<String, Map<String, Element>> states, @NotNull String componentName, @NotNull StateSplitterEx splitter) {
     Map<String, Element> fileToState = states.get(componentName);
-    Element state = new Element(StateMap.COMPONENT);
+    Element state = new Element(FileStorageCoreUtil.COMPONENT);
     if (fileToState == null || fileToState.isEmpty()) {
       return state;
     }

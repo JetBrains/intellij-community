@@ -151,7 +151,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
     }
 
     private fun saveStates(dir: VirtualFile) {
-      val storeElement = Element(StateMap.COMPONENT)
+      val storeElement = Element(FileStorageCoreUtil.COMPONENT)
 
       for (componentNameToFileNameToStates in copiedStorageData!!.entrySet()) {
         for (entry in componentNameToFileNameToStates.getValue().entrySet()) {
@@ -167,7 +167,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
             element = StateMap.stateToElement(fileName, state, emptyMap<String, Element>())
             storage.myPathMacroSubstitutor?.collapsePaths(element!!)
 
-            storeElement.setAttribute(StateMap.NAME, componentNameToFileNameToStates.getKey())
+            storeElement.setAttribute(FileStorageCoreUtil.NAME, componentNameToFileNameToStates.getKey())
             storeElement.addContent(element)
 
             val file = StorageUtil.getFile(fileName, dir, this)
@@ -233,7 +233,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
 
     private fun getCompositeStateAndArchive(states: Map<String, StateMap>, componentName: String, SuppressWarnings("deprecation") splitter: StateSplitter): Element? {
       val fileToState = states.get(componentName)
-      val state = Element(StateMap.COMPONENT)
+      val state = Element(FileStorageCoreUtil.COMPONENT)
       if (fileToState == null || fileToState.isEmpty()) {
         return state
       }

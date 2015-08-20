@@ -65,7 +65,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.load(element, pathMacroSubstitutor, true)
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
   }
 
   fun setDefaultState(element: Element) {
@@ -203,12 +203,12 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>, rootElem
     // name attribute should be first
     val elementAttributes = element.getAttributes()
     if (elementAttributes.isEmpty()) {
-      element.setAttribute(StateMap.NAME, componentName)
+      element.setAttribute(FileStorageCoreUtil.NAME, componentName)
     }
     else {
-      var nameAttribute: Attribute? = element.getAttribute(StateMap.NAME)
+      var nameAttribute: Attribute? = element.getAttribute(FileStorageCoreUtil.NAME)
       if (nameAttribute == null) {
-        nameAttribute = Attribute(StateMap.NAME, componentName)
+        nameAttribute = Attribute(FileStorageCoreUtil.NAME, componentName)
         elementAttributes.add(0, nameAttribute)
       }
       else {
@@ -264,7 +264,7 @@ fun prepareElement(state: Element) {
     LOG.warn("State element must not have parent ${JDOMUtil.writeElement(state)}")
     state.detach()
   }
-  state.setName(StateMap.COMPONENT)
+  state.setName(FileStorageCoreUtil.COMPONENT)
 }
 
 private fun updateState(states: MutableMap<String, Any>, componentName: String, newState: Element?, newLiveStates: MutableMap<String, Element>) {
