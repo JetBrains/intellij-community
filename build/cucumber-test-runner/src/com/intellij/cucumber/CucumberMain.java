@@ -38,7 +38,13 @@ public class CucumberMain {
   }
 
   public static void main(String[] args) throws IOException {
-    int exitStatus = run(args, Thread.currentThread().getContextClassLoader());
+    int exitStatus;
+    try {
+      exitStatus = run(args, Thread.currentThread().getContextClassLoader());
+    }
+    catch (Throwable e) {
+      exitStatus = 1;
+    }
     System.exit(exitStatus);
 
   }
