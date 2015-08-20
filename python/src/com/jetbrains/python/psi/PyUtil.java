@@ -1782,7 +1782,8 @@ public class PyUtil {
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
-    return ScratchRootType.getInstance().isScratchFile(element.getContainingFile().getVirtualFile());
+    PsiFile file = element.getContainingFile();
+    return file != null && ScratchRootType.getInstance().isScratchFile(file.getVirtualFile());
   }
 
   /**
