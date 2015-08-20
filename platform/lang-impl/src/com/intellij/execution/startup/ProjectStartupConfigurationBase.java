@@ -28,7 +28,7 @@ import java.util.List;
  * @author Irina.Chernushina on 8/19/2015.
  */
 public class ProjectStartupConfigurationBase implements PersistentStateComponent<Element> {
-  private final static String TOP_ELEMENT = "startup-tasks";
+  protected final static String TOP_ELEMENT = "startup-tasks";
   private final static String TASK = "task";
   private final static String NAME = "name";
   private final static String ID = "id";

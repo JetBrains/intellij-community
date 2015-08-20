@@ -131,10 +131,12 @@ public class ProjectStartupConfiguration {
     });
     if (shared) {
       myLocal.clear();
+      myLocal.shared();
       myShared.setList(names);
     } else {
       myShared.clear();
       myLocal.setList(names);
+      myLocal.local();
     }
   }
 
@@ -153,10 +155,17 @@ public class ProjectStartupConfiguration {
   }
 
   public boolean isShared() {
-    return ! myShared.isEmpty();
+    return ! myShared.isEmpty() || myLocal.isShared();
   }
 
   public boolean isEmpty() {
     return myShared.isEmpty() && myLocal.isEmpty();
+  }
+
+  public void checkOnChange(RunnerAndConfigurationSettings settings) {
+    if (! isShared()) return;
+    if (! myRunManager.isConfigurationShared(settings)) {
+      myLocal.local();
+    }
   }
 }

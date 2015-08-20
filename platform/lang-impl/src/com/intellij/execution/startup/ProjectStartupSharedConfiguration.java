@@ -27,7 +27,7 @@ import com.intellij.openapi.components.StorageScheme;
   name = "ProjectStartupSharedConfiguration",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/startup.xml", scheme = StorageScheme.DEFAULT)
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/startup.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class ProjectStartupSharedConfiguration extends ProjectStartupConfigurationBase {

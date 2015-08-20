@@ -51,7 +51,15 @@ public class ProjectStartupRunner implements StartupActivity {
 
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId) {
-        projectStartupConfiguration.rename(existingId, settings);
+        if (existingId != null) {
+          projectStartupConfiguration.rename(existingId, settings);
+        }
+        projectStartupConfiguration.checkOnChange(settings);
+      }
+
+      @Override
+      public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+        projectStartupConfiguration.checkOnChange(settings);
       }
     });
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.treeStructure.Tree;
@@ -63,6 +64,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   private Tree myTree;
   private ProjectStartupConfiguration myConfiguration;
   private ToolbarDecorator myDecorator;
+  private JBCheckBox mySharedCheckBox;
 
   public ProjectStartupConfigurable(Project project) {
     myProject = project;
@@ -152,8 +154,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       });
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     final JPanel tasksPanel = myDecorator.createPanel();
+    mySharedCheckBox = new JBCheckBox("Share");
+    mySharedCheckBox.setMnemonic('s');
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(mySharedCheckBox, BorderLayout.EAST);
     return FormBuilder.createFormBuilder() // todo bundle
-      .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
+      .addLabeledComponent(new JLabel("Tasks to be executed right after opening the project."), panel)
+      .addComponentFillVertically(tasksPanel, 2)
       .getPanel();
   }
 
@@ -285,6 +292,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
+    if (mySharedCheckBox.isSelected() != myConfiguration.isShared()) return true;
     final List<RunnerAndConfigurationSettings> recorded = myConfiguration.getStartupConfigurations();
     final List<RunnerAndConfigurationSettings> current = ((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations();
     return ! Comparing.equal(recorded, current);
@@ -292,13 +300,17 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void apply() throws ConfigurationException {
-    myConfiguration.setStartupConfigurations(((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations(), false);
+    myConfiguration.setStartupConfigurations(((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations(), mySharedCheckBox.isSelected());
   }
 
   @Override
   public void reset() {
     final ProjectStartupTasksTreeModel model = new ProjectStartupTasksTreeModel(myConfiguration.getStartupConfigurations());
     setModel(model);
+    mySharedCheckBox.setSelected(myConfiguration.isShared());
+    mySharedCheckBox.setEnabled(myConfiguration.isShared() || myConfiguration.canBeShared());
+    canBeSharedCheck(model);
+
     selectPathOrFirst(null);
   }
 
@@ -306,6 +318,24 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     myTree.setModel(model);
     myTree.setShowsRootHandles(false);
     myTree.setRootVisible(false);
+
+    canBeSharedCheck(model);
+  }
+
+  private void canBeSharedCheck(ProjectStartupTasksTreeModel model) {
+    boolean canBeShared = true;
+    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+    final List<RunnerAndConfigurationSettings> configurations = model.getConfigurations();
+    for (RunnerAndConfigurationSettings configuration : configurations) {
+      if (! runManager.isConfigurationShared(configuration)) {
+        canBeShared = false;
+        break;
+      }
+    }
+    mySharedCheckBox.setEnabled(canBeShared);
+    if (! canBeShared) {
+      mySharedCheckBox.setSelected(false);
+    }
   }
 
   @Override
