@@ -54,6 +54,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 private val LOG = Logger.getInstance(javaClass<ComponentStoreImpl>())
 
+/**
+ * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
+ */
 public abstract class ComponentStoreImpl : IComponentStore {
   private val myComponents = Collections.synchronizedMap(THashMap<String, Any>())
   private val mySettingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
