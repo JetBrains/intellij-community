@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
@@ -272,8 +271,11 @@ public final class IpnbConnectionManager implements ProjectComponent {
       return false;
     }
     final String homePath = sdk.getHomePath();
-    if (homePath == null) return false;
-    final String ipython = PythonSdkType.getExecutablePath(homePath, SystemInfo.isWindows ? "ipython-script.py" : "ipython");
+    if (homePath == null) {
+      showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
+      return false;
+    }
+    final String ipython = findIPythonRunner(homePath);
     if (ipython == null) {
       showWarning(fileEditor, "IPython executable is not found, please check your IPython installation", null);
       return false;
@@ -334,6 +336,18 @@ public final class IpnbConnectionManager implements ProjectComponent {
     catch (ExecutionException e) {
       return false;
     }
+  }
+
+  @Nullable
+  private static String findIPythonRunner(String homePath) {
+    for (String name : Lists.newArrayList("ipython", "ipython-script.py")) {
+      String runnerPath = PythonSdkType.getExecutablePath(homePath, name);
+      if (runnerPath != null) {
+        return runnerPath;
+      }
+    }
+
+    return null;
   }
 
   @Nullable
