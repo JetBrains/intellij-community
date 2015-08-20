@@ -123,7 +123,8 @@ class AnchorElementInfo extends SelfElementInfo {
       // switch to tree
       myStubElementTypeAndId = pack(-1, null);
       PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
-      setRange((anchor == null ? element : anchor).getTextRange(), document);
+      TextRange range = (anchor == null ? element : anchor).getTextRange();
+      setRange(ProperTextRange.create(range));
     }
   }
 

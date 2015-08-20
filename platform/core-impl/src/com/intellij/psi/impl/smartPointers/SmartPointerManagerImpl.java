@@ -230,14 +230,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
-  @TestOnly
-  public int getMarkerCount(@NotNull Document document) {
-    synchronized (lock) {
-      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      return file == null ? 0 : getMarkerCache(file).getMarkerCount();
-    }
-  }
-
   @Override
   public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
@@ -248,7 +240,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     FilePointersList list = file == null ? null : getPointers(file);
     if (list == null) return;
 
-    list.markerCache.updateMarkers(frozen, events, list.getAlivePointers());
+    list.markerCache.updateMarkers(frozen, events);
   }
 
   private static class PointerReference extends WeakReference<SmartPointerEx> {
@@ -265,11 +257,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
-  private static class FilePointersList {
+  static class FilePointersList {
     private int nextAvailableIndex;
     private int size;
     private PointerReference[] references = new PointerReference[10];
-    private final MarkerCache markerCache = new MarkerCache();
+    private final MarkerCache markerCache = new MarkerCache(this);
 
     private void add(@NotNull PointerReference reference) {
       if (nextAvailableIndex >= references.length || nextAvailableIndex > size*2) {  // overflow or too many dead refs
@@ -316,7 +308,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
 
     @NotNull
-    private List<SmartPsiElementPointerImpl> getAlivePointers() {
+    List<SmartPsiElementPointerImpl> getAlivePointers() {
       return ContainerUtil.mapNotNull(references, new Function<PointerReference, SmartPsiElementPointerImpl>() {
         @Override
         public SmartPsiElementPointerImpl fun(PointerReference reference) {
