@@ -35,6 +35,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import com.intellij.util.SmartList
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
@@ -94,7 +95,7 @@ public class ProjectRule() : ExternalResource() {
 
   override final fun before() {
     IdeaTestApplication.getInstance()
-    UsefulTestCase.replaceIdeEventQueueSafely()
+    TestRunnerUtil.replaceIdeEventQueueSafely()
   }
 
   override fun after() {
@@ -146,7 +147,7 @@ public open class FixtureRule() : ExternalResource() {
       _projectFixture = builder.getFixture()
     }
 
-    UsefulTestCase.replaceIdeEventQueueSafely()
+    TestRunnerUtil.replaceIdeEventQueueSafely()
     runInEdtAndWait { projectFixture.setUp() }
   }
 
@@ -192,6 +193,10 @@ public class RuleChain(vararg val rules: TestRule) : TestRule {
     CompoundRuntimeException.doThrow(errors)
     return statement
   }
+}
+
+public fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
+  runInEdtAndWait({ runnable.run() })
 }
 
 // Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
