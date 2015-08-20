@@ -13,344 +13,318 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.configurationStore;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.StateSplitter;
-import com.intellij.openapi.components.StateSplitterEx;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.*;
-import com.intellij.openapi.components.store.ReadOnlyModificationException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.LineSeparator;
-import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashMap;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.StateSplitter
+import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
+import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers
+import com.intellij.openapi.components.store.ReadOnlyModificationException
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ArrayUtil
+import com.intellij.util.LineSeparator
+import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.SmartHashSet
+import gnu.trove.THashMap
+import org.jdom.Element
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPathMacroSubstitutor?, private val myDir: File, private val mySplitter: StateSplitter) : StateStorageBase<DirectoryStorageData>() {
+  private volatile var virtualFile: VirtualFile? = null
 
-import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
-
-public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData> {
-  private final File myDir;
-  private volatile VirtualFile myVirtualFile;
-  @SuppressWarnings("deprecation")
-  private final StateSplitter mySplitter;
-
-  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-
-  public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor, @NotNull File dir, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
-    myPathMacroSubstitutor = pathMacroSubstitutor;
-    myDir = dir;
-    mySplitter = splitter;
+  public fun setVirtualDir(dir: VirtualFile?) {
+    virtualFile = dir
   }
 
-  public void setVirtualDir(@Nullable VirtualFile dir) {
-    myVirtualFile = dir;
-  }
-
-  @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
+  override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
     // todo reload only changed file, compute diff
-    DirectoryStorageData oldData = storageDataRef.get();
-    DirectoryStorageData newData = loadData();
-    storageDataRef.set(newData);
+    val oldData = storageDataRef.get()
+    val newData = loadData()
+    storageDataRef.set(newData)
     if (oldData == null) {
-      componentNames.addAll(newData.getComponentNames());
+      componentNames.addAll(newData.getComponentNames())
     }
     else {
-      componentNames.addAll(oldData.getComponentNames());
-      componentNames.addAll(newData.getComponentNames());
+      componentNames.addAll(oldData.getComponentNames())
+      componentNames.addAll(newData.getComponentNames())
     }
   }
 
-  @Nullable
-  @Override
-  protected Element getStateAndArchive(@NotNull DirectoryStorageData storageData, Object component, @NotNull String componentName) {
-    return getCompositeStateAndArchive(storageData, componentName, mySplitter);
+  override fun getStateAndArchive(storageData: DirectoryStorageData, component: Any, componentName: String): Element? {
+    return getCompositeStateAndArchive(storageData, componentName, mySplitter)
   }
 
-  @Nullable
-  private static Element getCompositeStateAndArchive(@NotNull DirectoryStorageData storageData, @NotNull String componentName, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
-    StateMap fileToState = storageData.states.get(componentName);
-    Element state = new Element(StateMap.COMPONENT);
-    if (fileToState == null || fileToState.isEmpty()) {
-      return state;
-    }
-
-    if (splitter instanceof StateSplitterEx) {
-      for (String fileName : fileToState.keys()) {
-        Element subState = fileToState.getStateAndArchive(fileName);
-        if (subState == null) {
-          return null;
-        }
-        ((StateSplitterEx)splitter).mergeStateInto(state, subState);
-      }
-    }
-    else {
-      List<Element> subElements = new SmartList<Element>();
-      for (String fileName : fileToState.keys()) {
-        Element subState = fileToState.getStateAndArchive(fileName);
-        if (subState == null) {
-          return null;
-        }
-        subElements.add(subState);
-      }
-
-      if (!subElements.isEmpty()) {
-        splitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
-      }
-    }
-    return state;
+  override fun loadData(): DirectoryStorageData {
+    return fromMap(DirectoryStorageUtil.loadFrom(getVirtualFile(), myPathMacroSubstitutor))
   }
 
-  @NotNull
-  @Override
-  protected DirectoryStorageData loadData() {
-    Map map = DirectoryStorageUtil.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
-    //noinspection unchecked
-    return DirectoryStorageData.fromMap(map);
-  }
-
-  @Nullable
-  private VirtualFile getVirtualFile() {
-    VirtualFile virtualFile = myVirtualFile;
+  private fun getVirtualFile(): VirtualFile? {
+    var virtualFile = virtualFile
     if (virtualFile == null) {
-      myVirtualFile = virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myDir);
+      virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myDir)
+      virtualFile = virtualFile
     }
-    return virtualFile;
+    return virtualFile
   }
 
-  @Override
-  @Nullable
-  public ExternalizationSession startExternalization() {
-    return checkIsSavingDisabled() ? null : new MySaveSession(this, getStorageData());
+  override fun startExternalization(): StateStorage.ExternalizationSession? {
+    return if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
   }
 
-  private static class MySaveSession extends SaveSessionBase {
-    private final DirectoryBasedStorage storage;
-    private final DirectoryStorageData originalStorageData;
-    private Map<String, Map<String, Object>> copiedStorageData;
+  private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStorageData: DirectoryStorageData) : SaveSessionBase() {
+    private var copiedStorageData: Map<String, Map<String, Any>>? = null
 
-    private final Set<String> dirtyFileNames = new SmartHashSet<String>();
-    private final Set<String> removedFileNames = new SmartHashSet<String>();
+    private val dirtyFileNames = SmartHashSet<String>()
+    private val removedFileNames = SmartHashSet<String>()
 
-    private MySaveSession(@NotNull DirectoryBasedStorage storage, @NotNull DirectoryStorageData storageData) {
-      this.storage = storage;
-      originalStorageData = storageData;
+    private fun getFileNames(directoryStorageData: DirectoryStorageData, componentName: String): Array<String> {
+      val fileToState = directoryStorageData.states.get(componentName)
+      return if (fileToState == null || fileToState.isEmpty()) ArrayUtil.EMPTY_STRING_ARRAY else fileToState.keys()
     }
 
-    @NotNull
-    private static String[] getFileNames(@NotNull DirectoryStorageData directoryStorageData, @NotNull String componentName) {
-      StateMap fileToState = directoryStorageData.states.get(componentName);
-      return fileToState == null || fileToState.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : fileToState.keys();
-    }
-
-    @Override
-    protected void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element) {
-      ContainerUtil.addAll(removedFileNames, getFileNames(originalStorageData, componentName));
+    override fun setSerializedState(component: Any, componentName: String, element: Element?) {
+      ContainerUtil.addAll<String, String, Set<String>>(removedFileNames, *getFileNames(originalStorageData, componentName))
       if (JDOMUtil.isEmpty(element)) {
-        doSetState(componentName, null, null);
+        doSetState(componentName, null, null)
       }
       else {
-        for (Pair<Element, String> pair : storage.mySplitter.splitState(element)) {
-          removedFileNames.remove(pair.second);
-          doSetState(componentName, pair.second, pair.first);
+        for (pair in storage.mySplitter.splitState(element)) {
+          removedFileNames.remove(pair.second)
+          doSetState(componentName, pair.second, pair.first)
         }
 
         if (!removedFileNames.isEmpty()) {
-          for (String fileName : removedFileNames) {
-            doSetState(componentName, fileName, null);
+          for (fileName in removedFileNames) {
+            doSetState(componentName, fileName, null)
           }
         }
       }
     }
 
-    private void doSetState(@NotNull String componentName, @Nullable String fileName, @Nullable Element subState) {
+    private fun doSetState(componentName: String, fileName: String?, subState: Element?) {
       if (copiedStorageData == null) {
-        copiedStorageData = setStateAndCloneIfNeed(componentName, fileName, subState, originalStorageData);
+        copiedStorageData = setStateAndCloneIfNeed(componentName, fileName, subState, originalStorageData)
         if (copiedStorageData != null && fileName != null) {
-          dirtyFileNames.add(fileName);
+          dirtyFileNames.add(fileName)
         }
       }
-      else if (DirectoryStorageUtil.setState(copiedStorageData, componentName, fileName, subState) != null && fileName != null) {
-        dirtyFileNames.add(fileName);
+      else if (DirectoryStorageUtil.setState(copiedStorageData!!, componentName, fileName, subState) != null && fileName != null) {
+        dirtyFileNames.add(fileName)
       }
     }
 
-    @Override
-    @Nullable
-    public SaveSession createSaveSession() {
-      return storage.checkIsSavingDisabled() || copiedStorageData == null ? null : this;
+    override fun createSaveSession(): StateStorage.SaveSession? {
+      return if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
     }
 
-    @Override
-    public void save() throws IOException {
-      VirtualFile dir = storage.getVirtualFile();
-      if (copiedStorageData.isEmpty()) {
+    override fun save() {
+      var dir = storage.getVirtualFile()
+      if (copiedStorageData!!.isEmpty()) {
         if (dir != null && dir.exists()) {
-          StorageUtil.deleteFile(this, dir);
+          StorageUtil.deleteFile(this, dir)
         }
-        setStorageData();
-        return;
+        storage.setStorageData(copiedStorageData!!)
+        return
       }
 
       if (dir == null || !dir.isValid()) {
-        dir = StorageUtil.createDir(storage.myDir, this);
+        dir = StorageUtil.createDir(storage.myDir, this)
+        storage.virtualFile = dir
       }
 
       if (!dirtyFileNames.isEmpty()) {
-        saveStates(dir);
+        saveStates(dir!!)
       }
-      if (dir.exists() && !removedFileNames.isEmpty()) {
-        deleteFiles(dir);
+      if (dir!!.exists() && !removedFileNames.isEmpty()) {
+        deleteFiles(dir)
       }
 
-      storage.myVirtualFile = dir;
-      setStorageData();
+      storage.setStorageData(copiedStorageData!!)
     }
 
-    private void setStorageData() {
-      Map data = copiedStorageData;
-      //noinspection unchecked
-      storage.storageDataRef.set(DirectoryStorageData.fromMap(data));
-    }
+    private fun saveStates(dir: VirtualFile) {
+      val storeElement = Element(StateMap.COMPONENT)
 
-    private void saveStates(@NotNull final VirtualFile dir) {
-      final Element storeElement = new Element(StateMap.COMPONENT);
-
-      for (Map.Entry<String, Map<String, Object>> componentNameToFileNameToStates : copiedStorageData.entrySet()) {
-        for (Map.Entry<String, Object> entry : componentNameToFileNameToStates.getValue().entrySet()) {
-          String fileName = entry.getKey();
-          Object state = entry.getValue();
+      for (componentNameToFileNameToStates in copiedStorageData!!.entrySet()) {
+        for (entry in componentNameToFileNameToStates.getValue().entrySet()) {
+          val fileName = entry.getKey()
+          val state = entry.getValue()
 
           if (!dirtyFileNames.contains(fileName)) {
-            return;
+            return
           }
 
-          Element element = null;
+          var element: Element? = null
           try {
-            element = StateMap.stateToElement(fileName, state, Collections.<String, Element>emptyMap());
-            if (storage.myPathMacroSubstitutor != null) {
-              storage.myPathMacroSubstitutor.collapsePaths(element);
-            }
+            element = StateMap.stateToElement(fileName, state, emptyMap<String, Element>())
+            storage.myPathMacroSubstitutor?.collapsePaths(element!!)
 
-            storeElement.setAttribute(StateMap.NAME, componentNameToFileNameToStates.getKey());
-            storeElement.addContent(element);
+            storeElement.setAttribute(StateMap.NAME, componentNameToFileNameToStates.getKey())
+            storeElement.addContent(element)
 
-            VirtualFile file = StorageUtil.getFile(fileName, dir, this);
+            val file = StorageUtil.getFile(fileName, dir, this)
             // we don't write xml prolog due to historical reasons (and should not in any case)
-            StorageUtil.writeFile(null, this, file, storeElement,
-                                  LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()), false);
+            StorageUtil.writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) StorageUtil.loadFile(file).second else SystemProperties.getLineSeparator()), false)
           }
-          catch (IOException e) {
-            LOG.error(e);
+          catch (e: IOException) {
+            StateStorageBase.LOG.error(e)
           }
           finally {
             if (element != null) {
-              element.detach();
+              element.detach()
             }
           }
         }
       }
     }
 
-    private void deleteFiles(@NotNull VirtualFile dir) throws IOException {
-      AccessToken token = WriteAction.start();
+    throws(IOException::class)
+    private fun deleteFiles(dir: VirtualFile) {
+      val token = WriteAction.start()
       try {
-        for (VirtualFile file : dir.getChildren()) {
+        for (file in dir.getChildren()) {
           if (removedFileNames.contains(file.getName())) {
             try {
-              file.delete(this);
+              file.delete(this)
             }
-            catch (FileNotFoundException e) {
-              throw new ReadOnlyModificationException(file, e, null);
+            catch (e: FileNotFoundException) {
+              throw ReadOnlyModificationException(file, e, null)
             }
+
           }
         }
       }
       finally {
-        token.finish();
+        token.finish()
       }
     }
   }
 
-  @Nullable
-  public static Map<String, Map<String, Object>> setStateAndCloneIfNeed(@NotNull String componentName,
-                                                                        @Nullable String fileName,
-                                                                        @Nullable Element newState,
-                                                                        @NotNull DirectoryStorageData storageData) {
-    StateMap fileToState = storageData.states.get(componentName);
-    Object oldState = fileToState == null || fileName == null ? null : fileToState.get(fileName);
-    if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
-      if (fileName == null) {
-        if (fileToState == null) {
-          return null;
-        }
+  private fun setStorageData(newStates: Map<String, Map<String, Any>>) {
+    storageDataRef.set(fromMap(newStates))
+  }
+
+  companion object {
+    fun fromMap(map: Map<String, Map<String, Any>>): DirectoryStorageData {
+      val states = THashMap<String, StateMap>(map.size())
+      for (entry in map.entrySet()) {
+        states.put(entry.getKey(), StateMap.fromMap(entry.getValue()))
       }
-      else if (oldState == null) {
-        return null;
+      return DirectoryStorageData(states)
+    }
+
+    private fun getCompositeStateAndArchive(storageData: DirectoryStorageData, componentName: String, SuppressWarnings("deprecation") splitter: StateSplitter): Element? {
+      val fileToState = storageData.states.get(componentName)
+      val state = Element(StateMap.COMPONENT)
+      if (fileToState == null || fileToState.isEmpty()) {
+        return state
       }
 
-      Map<String, Map<String, Object>> newStorageData = storageData.toMap();
-      if (fileName == null) {
-        newStorageData.remove(componentName);
+      if (splitter is StateSplitterEx) {
+        for (fileName in fileToState.keys()) {
+          val subState = fileToState.getStateAndArchive(fileName) ?: return null
+          splitter.mergeStateInto(state, subState)
+        }
       }
       else {
-        Map<String, Object> clonedFileToState = newStorageData.get(componentName);
-        if (clonedFileToState.size() == 1) {
-          newStorageData.remove(componentName);
+        val subElements = SmartList<Element>()
+        for (fileName in fileToState.keys()) {
+          val subState = fileToState.getStateAndArchive(fileName) ?: return null
+          subElements.add(subState)
         }
-        else {
-          clonedFileToState.remove(fileName);
-          if (clonedFileToState.isEmpty()) {
-            newStorageData.remove(componentName);
+
+        if (!subElements.isEmpty()) {
+          splitter.mergeStatesInto(state, subElements.toArray<Element>(arrayOfNulls<Element>(subElements.size())))
+        }
+      }
+      return state
+    }
+
+    public fun setStateAndCloneIfNeed(componentName: String, fileName: String?, newState: Element?, storageData: DirectoryStorageData): Map<String, Map<String, Any>>? {
+      val fileToState = storageData.states.get(componentName)
+      val oldState: Any? = if (fileToState == null || fileName == null) null else fileToState.get(fileName)
+      if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
+        if (fileName == null) {
+          if (fileToState == null) {
+            return null
           }
         }
+        else if (oldState == null) {
+          return null
+        }
+
+        val newStorageData = storageData.toMap()
+        if (fileName == null) {
+          newStorageData.remove(componentName)
+        }
+        else {
+          val clonedFileToState = newStorageData.get(componentName)
+          if (clonedFileToState!!.size() == 1) {
+            newStorageData.remove(componentName)
+          }
+          else {
+            clonedFileToState.remove(fileName)
+            if (clonedFileToState.isEmpty()) {
+              newStorageData.remove(componentName)
+            }
+          }
+        }
+        return newStorageData
       }
-      return newStorageData;
+
+      var newBytes: ByteArray? = null
+      if (oldState is Element) {
+        if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
+          return null
+        }
+      }
+      else if (oldState != null) {
+        newBytes = getNewByteIfDiffers(componentName, newState, oldState as ByteArray)
+        if (newBytes == null) {
+          return null
+        }
+      }
+
+      val newStorageData = storageData.toMap()
+      put(newStorageData, componentName, fileName, newBytes ?: newState)
+      return newStorageData
     }
 
-    byte[] newBytes = null;
-    if (oldState instanceof Element) {
-      if (JDOMUtil.areElementsEqual((Element)oldState, newState)) {
-        return null;
+    private fun put(states: MutableMap<String, MutableMap<String, Any>>, componentName: String, fileName: String, state: Any) {
+      var fileToState: MutableMap<String, Any>? = states.get(componentName)
+      if (fileToState == null) {
+        fileToState = THashMap<String, Any>()
+        states.put(componentName, fileToState)
       }
+      fileToState.put(fileName, state)
     }
-    else if (oldState != null) {
-      newBytes = getNewByteIfDiffers(componentName, newState, (byte[])oldState);
-      if (newBytes == null) {
-        return null;
-      }
-    }
+  }
+}
 
-    Map<String, Map<String, Object>> newStorageData = storageData.toMap();
-    put(newStorageData, componentName, fileName, newBytes == null ? newState : newBytes);
-    return newStorageData;
+private class DirectoryStorageData(val states: MutableMap<String, StateMap>) : StorageDataBase {
+  public fun toMap(): MutableMap<String, MutableMap<String, Any>> {
+    val map = THashMap<String, MutableMap<String, Any>>(states.size())
+    for (entry in states.entrySet()) {
+      map.put(entry.getKey(), entry.getValue().toMap())
+    }
+    return map
   }
 
-  private static void put(@NotNull Map<String, Map<String, Object>> states, @NotNull String componentName, @NotNull String fileName, @NotNull Object state) {
-    Map<String, Object> fileToState = states.get(componentName);
-    if (fileToState == null) {
-      fileToState = new THashMap<String, Object>();
-      states.put(componentName, fileToState);
-    }
-    fileToState.put(fileName, state);
+  public fun getComponentNames(): Set<String> {
+    return states.keySet()
+  }
+
+  override fun hasState(componentName: String): Boolean {
+    val fileToState = states.get(componentName)
+    return fileToState != null && fileToState.hasStates()
   }
 }
