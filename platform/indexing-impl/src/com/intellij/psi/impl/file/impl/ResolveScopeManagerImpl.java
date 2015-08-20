@@ -31,6 +31,7 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -60,6 +61,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return scope;
     }
   };
+  private AdditionalIndexableFileSet myAdditionalIndexableFileSet = new AdditionalIndexableFileSet();
 
   public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
     myProject = project;
@@ -173,7 +175,12 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     final ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     final Module module = projectFileIndex.getModuleForFile(vDirectory);
     if (module == null) {
-      final List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(virtualFile != null ? virtualFile : vDirectory);
+      VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
+      final List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
+      if (entries.isEmpty() && myAdditionalIndexableFileSet.isInSet(notNullVFile)) {
+        return allScope;
+      }
+
       GlobalSearchScope result = LibraryScopeCache.getInstance(myProject).getLibraryUseScope(entries);
       return containingFile == null || virtualFile.isDirectory() || result.contains(virtualFile)
              ? result : GlobalSearchScope.fileScope(containingFile).uniteWith(result);
