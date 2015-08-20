@@ -601,7 +601,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       StringBuilder info = new StringBuilder();
       Document document1 = getDocument(Side.LEFT);
       Document document2 = getDocument(Side.RIGHT);
-      info.append("==== OnesideDiffViewer Debug Info ====");
+      info.append("==== UnifiedDiffViewer Debug Info ====");
       info.append("myMasterSide - ").append(myMasterSide).append('\n');
       info.append("myLeftDocument.length() - ").append(document1.getTextLength()).append('\n');
       info.append("myRightDocument.length() - ").append(document2.getTextLength()).append('\n');
@@ -619,7 +619,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         .append(":").append(pair1.second).append('\n');
       info.append("non-strict transferEndLine - ").append(pair2.first[0]).append("-").append(pair2.first[1])
         .append(":").append(pair2.second).append('\n');
-      info.append("---- OnesideDiffViewer Debug Info ----");
+      info.append("---- UnifiedDiffViewer Debug Info ----");
 
       LOG.warn(info.toString());
     }

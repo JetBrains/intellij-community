@@ -20,10 +20,8 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
@@ -71,16 +69,17 @@ public class PatchDiffRequestFactory {
     ApplyPatchForBaseRevisionTexts texts = textsRef.get();
 
     if (texts.getBase() == null) {
-      return ApplyPatchAction.createBadDiffRequest(file, texts);
+      return ApplyPatchAction.createBadDiffRequest(project, file, texts);
     }
     else {
-      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
       String path = FileUtil.toSystemDependentName(file.getPresentableUrl());
       FileType type = file.getFileType();
 
       String windowTitle = VcsBundle.message("patch.apply.conflict.title", path);
 
-      DocumentContent localContent = contentFactory.create(texts.getLocal().toString(), type);
+      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+      DocumentContent localContent = contentFactory.createDocument(project, file);
+      if (localContent == null) localContent = contentFactory.create(texts.getLocal().toString(), type);
       DocumentContent baseContent = contentFactory.create(texts.getBase().toString(), type);
       DocumentContent patchedContent = contentFactory.create(texts.getPatched(), type);
 

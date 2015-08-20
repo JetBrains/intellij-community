@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.psi
-
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
-
 /**
  * Created by Max Medvedev on 12/4/13
  */
@@ -218,6 +216,20 @@ class X {
     assert !file.contentsLoaded
     assert annotation.findAttributeValue('foo') != null
     assert file.contentsLoaded
+  }
+
+  public void "test do not load content for findMethodsByName"() {
+    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
+class X {
+  void foo(int a, int b = 2) {}
+}
+''') as GroovyFileImpl
+    assert !file.contentsLoaded
+    PsiClass clazz = file.classes[0]
+    assert !file.contentsLoaded
+    
+    assert clazz.findMethodsByName('foo', false).size() == 2
+    assert !file.contentsLoaded
   }
 
 }

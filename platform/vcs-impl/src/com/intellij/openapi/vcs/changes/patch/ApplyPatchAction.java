@@ -47,7 +47,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
@@ -306,7 +305,8 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   @NotNull
-  public static DiffRequest createBadDiffRequest(@NotNull final VirtualFile file,
+  public static DiffRequest createBadDiffRequest(@Nullable Project project,
+                                                 @NotNull final VirtualFile file,
                                                  @NotNull final ApplyPatchForBaseRevisionTexts texts) throws DiffRequestProducerException {
     if (texts.getLocal() == null) {
       throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
@@ -317,10 +317,11 @@ public class ApplyPatchAction extends DumbAwareAction {
     final List<String> titles = ContainerUtil.list(VcsBundle.message("diff.title.local"), "Patched (with problems)");
 
     final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    final DocumentContent originalContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
+    DocumentContent localContent = contentFactory.createDocument(project, file);
+    if (localContent == null) localContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
     final DiffContent mergedContent = contentFactory.create(texts.getPatched(), file.getFileType());
 
-    final List<DiffContent> contents = ContainerUtil.list(originalContent, mergedContent);
+    final List<DiffContent> contents = ContainerUtil.list(localContent, mergedContent);
 
     final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
     DiffUtil.addNotification(new DiffIsApproximateNotification(), request);

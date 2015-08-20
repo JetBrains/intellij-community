@@ -27,10 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -242,13 +239,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       else if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
-        final PsiType castType = castExpression.getType();
-        if (castType instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)castType;
-          final PsiClass aClass = classType.resolve();
-          if (aClass instanceof PsiTypeParameter) {
-            return false;
-          }
+        if (TypeUtils.isTypeParameter(castExpression.getType())) {
+          return false;
         }
       }
       else if (parent instanceof PsiConditionalExpression) {

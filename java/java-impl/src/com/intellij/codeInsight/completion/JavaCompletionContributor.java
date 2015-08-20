@@ -114,7 +114,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaKeywordCompletion.DECLARATION_START.getValue().accepts(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
-        psiElement().inside(psiElement(PsiJavaCodeReferenceElement.class).withParent(psiAnnotation())).accepts(position)) {
+        isInsideAnnotationName(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
     }
 
@@ -164,6 +164,11 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return TrueFilter.INSTANCE;
+  }
+
+  private static boolean isInsideAnnotationName(PsiElement position) {
+    PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class, true, PsiMember.class);
+    return anno != null && PsiTreeUtil.isAncestor(anno.getNameReferenceElement(), position, true);
   }
 
   private static ElementFilter createAnnotationFilter(PsiElement position) {

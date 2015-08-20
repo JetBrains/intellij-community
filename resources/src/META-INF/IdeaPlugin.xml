@@ -135,6 +135,8 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
+    <extensionPoint name="debugger.jvmSteppingCommandProvider"
+                    interface="com.intellij.debugger.impl.JvmSteppingCommandProvider"/>
 
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>

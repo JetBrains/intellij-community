@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +125,9 @@ public class UnaryPlusInspection extends BaseInspection {
         return;
       }
       final PsiType type = operand.getType();
+      if (type == null) {
+        return;
+      }
       if (onlyReportInsideBinaryExpression) {
         final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(prefixExpression);
         if (!(operand instanceof PsiParenthesizedExpression) && !(operand instanceof PsiPrefixExpression) &&
@@ -131,7 +135,7 @@ public class UnaryPlusInspection extends BaseInspection {
           return;
         }
       }
-      else if (PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type)) {
+      else if (TypeUtils.unaryNumericPromotion(type) != type) {
         PsiExpression expression = prefixExpression;
         PsiElement parent = expression.getParent();
         while (parent instanceof PsiParenthesizedExpression) {
