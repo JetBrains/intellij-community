@@ -213,4 +213,28 @@ public class TypeUtils {
     final PsiClass aClass = classType.resolve();
     return aClass != null && aClass instanceof PsiTypeParameter;
   }
+
+  /**
+   * JLS 5.6.1 Unary Numeric Promotion
+   */
+  public static PsiType unaryNumericPromotion(PsiType type) {
+    if (type == null) {
+      return null;
+    }
+    if (type.equalsToText("java.lang.Byte") || type.equalsToText("java.lang.Short") ||
+        type.equalsToText("java.lang.Character") || type.equalsToText("java.lang.Integer") ||
+        type.equals(PsiType.BYTE) || type.equals(PsiType.SHORT) || type.equals(PsiType.CHAR)) {
+      return PsiType.INT;
+    }
+    else if (type.equalsToText("java.lang.Long")) {
+      return PsiType.LONG;
+    }
+    else if (type.equalsToText("java.lang.Float")) {
+      return PsiType.FLOAT;
+    }
+    else if (type.equalsToText("java.lang.Double")) {
+      return PsiType.DOUBLE;
+    }
+    return type;
+  }
 }
