@@ -277,19 +277,21 @@ public class DisposeModulesRule(private val projectRule: ProjectRule) : External
     projectRule.projectIfOpened?.let {
       var errors: MutableList<Throwable>? = null
       val moduleManager = ModuleManager.getInstance(it)
-      for (module in moduleManager.getModules()) {
-        if (module.isDisposed()) {
-          continue
-        }
-
-        try {
-          moduleManager.disposeModule(module)
-        }
-        catch(e: Throwable) {
-          if (errors == null) {
-            errors = SmartList()
+      runInEdtAndWait {
+        for (module in moduleManager.getModules()) {
+          if (module.isDisposed()) {
+            continue
           }
-          errors.add(e)
+
+          try {
+            moduleManager.disposeModule(module)
+          }
+          catch(e: Throwable) {
+            if (errors == null) {
+              errors = SmartList()
+            }
+            errors!!.add(e)
+          }
         }
       }
       CompoundRuntimeException.doThrow(errors)

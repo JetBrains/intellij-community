@@ -41,7 +41,7 @@ class ModuleStoreTest {
 
     private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(getPath()) }
 
-    private fun Path.createModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).newModule(systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+    fun Path.createModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).newModule(systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
   }
 
   private val tempDirManager = TemporaryDirectory()
