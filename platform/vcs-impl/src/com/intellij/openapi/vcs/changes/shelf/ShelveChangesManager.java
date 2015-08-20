@@ -122,6 +122,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @NotNull
+  public File getShelfResourcesDirectory() {
+    return myFileProcessor.getBaseDir();
+  }
+
+  @NotNull
   private ShelvedChangeList readOneShelvedChangeList(@NotNull Element element) throws InvalidDataException {
     ShelvedChangeList data = new ShelvedChangeList();
     myPathMacroSubstitutor.expandPaths(element);
