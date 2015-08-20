@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.printer.idea;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.util.Collection;
 
 /**
@@ -33,6 +35,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private static final Color MARK_COLOR = JBColor.BLACK;
   private static final int ROW_HEIGHT = 24;
+  private static final double ARROW_ANGLE_COS2 = 0.7;
+  private static final double ARROW_LENGTH = 0.3;
 
   private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   private final Stroke hide =
@@ -54,33 +58,65 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void paintUpLine(int from, int to, Color color, boolean hasArrow) {
-    int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
-    int y1 = getRowHeight() / 2;
-    int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
-    int y2 = -getRowHeight() / 2;
-    g2.setColor(color);
-    g2.drawLine(x2, y2, x1, y1);
-    if (hasArrow) {
-      int r = PrintParameters.CIRCLE_RADIUS;
-      int y = r + 2;
-      g2.drawLine(x1, y - r, x1 + r, y);
-      g2.drawLine(x1, y - r, x1 - r, y);
+    // paint vertical lines normal size
+    // paint non-vertical lines twice the size to make them dock with each other well
+    if (from == to) {
+      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int y1 = getRowHeight() / 2 - 1;
+      int y2 = 0;
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+    }
+    else {
+      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int y1 = getRowHeight() / 2;
+      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int y2 = -getRowHeight() / 2;
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
     }
   }
 
   private void paintDownLine(int from, int to, Color color, boolean hasArrow) {
-    int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
-    int y1 = getRowHeight() / 2;
-    int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
-    int y2 = getRowHeight() + getRowHeight() / 2;
+    if (from == to) {
+      int y2 = getRowHeight() - 1;
+      int y1 = getRowHeight() / 2;
+      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+    }
+    else {
+      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int y1 = getRowHeight() / 2;
+      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int y2 = getRowHeight() + getRowHeight() / 2;
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
+    }
+  }
+
+  private void paintLine(Color color, boolean hasArrow, int x1, int y1, int x2, int y2, int startArrowX, int startArrowY) {
     g2.setColor(color);
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
-      int r = PrintParameters.CIRCLE_RADIUS;
-      int y = getRowHeight() - r - 2;
-      g2.drawLine(x1, y + r, x1 + r, y);
-      g2.drawLine(x1, y + r, x1 - r, y);
+      Pair<Integer, Integer> rotate1 =
+        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2), ARROW_LENGTH * getRowHeight());
+      Pair<Integer, Integer> rotate2 =
+        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2), ARROW_LENGTH * getRowHeight());
+      g2.drawLine(startArrowX, startArrowY, rotate1.first, rotate1.second);
+      g2.drawLine(startArrowX, startArrowY, rotate2.first, rotate2.second);
     }
+  }
+
+  @NotNull
+  private static Pair<Integer, Integer> rotate(double x, double y, double centerX, double centerY, double cos, double sin, double arrowLength) {
+    double translateX = (x - centerX);
+    double translateY = (y - centerY);
+
+    double d = Math.sqrt(translateX * translateX + translateY * translateY);
+    double scaleX = arrowLength * translateX / d;
+    double scaleY = arrowLength * translateY / d;
+
+    double rotateX = scaleX * cos - scaleY * sin;
+    double rotateY = scaleX * sin + scaleY * cos;
+
+    return Pair.create((int)Math.round(rotateX + centerX), (int)Math.round(rotateY + centerY));
   }
 
   private void paintCircle(int position, Color color, boolean select) {
