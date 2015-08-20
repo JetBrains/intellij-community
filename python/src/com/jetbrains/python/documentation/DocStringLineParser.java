@@ -36,8 +36,13 @@ public abstract class DocStringLineParser {
     myLines = Collections.unmodifiableList(content.splitLines());
   }
 
-  protected static int getIndent(@NotNull CharSequence line) {
-    return PyIndentUtil.getLineIndentSize(line);
+  public int getLineIndentSize(int lineNum) {
+    return PyIndentUtil.getLineIndentSize(getLine(lineNum));
+  }
+
+  @NotNull
+  public String getLineIndent(int lineNum) {
+    return PyIndentUtil.getLineIndent(getLine(lineNum)).toString();
   }
 
   public boolean isEmptyOrDoesNotExist(int lineNum) {
@@ -51,10 +56,6 @@ public abstract class DocStringLineParser {
   @NotNull
   public Substring getLine(int lineNum) {
     return myLines.get(lineNum);
-  }
-
-  public int getLineIndent(int lineNum) {
-    return getIndent(myLines.get(lineNum));
   }
 
   public int getLineByOffset(int offset) {

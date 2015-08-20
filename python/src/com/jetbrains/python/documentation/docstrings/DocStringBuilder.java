@@ -49,7 +49,7 @@ public abstract class DocStringBuilder {
 
   @NotNull
   public String buildContent(int indent, boolean indentFirst) {
-    return buildContent(StringUtil.repeat(" ", indent), indentFirst);
+    return buildContent(StringUtil.repeatSymbol(' ', indent), indentFirst);
   }
 
   @NotNull

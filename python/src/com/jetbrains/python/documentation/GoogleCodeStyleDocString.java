@@ -99,7 +99,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     }
     description = colonSeparatedParts.get(1);
     // parse line with indentation at least one space greater than indentation of the field
-    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getIndent(line), sectionIndent);
+    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum), sectionIndent);
     final List<Substring> nestedBlock = pair.getFirst();
     if (!nestedBlock.isEmpty()) {
       //noinspection ConstantConditions

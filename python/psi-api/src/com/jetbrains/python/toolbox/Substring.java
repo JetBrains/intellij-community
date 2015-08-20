@@ -174,7 +174,7 @@ public class Substring implements CharSequence {
   }
 
   public boolean endsWith(@NotNull String prefix) {
-    return myString.lastIndexOf(prefix) == length();
+    return myString.lastIndexOf(prefix) == length() - prefix.length();
   }
 
   public int indexOf(@NotNull String s) {

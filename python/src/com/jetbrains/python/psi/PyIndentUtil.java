@@ -42,7 +42,7 @@ public class PyIndentUtil {
     int stop;
     for (stop = 0; stop < line.length(); stop++) {
       final char c = line.charAt(stop);
-      if (c == ' ' || c == '\t') {
+      if (!(c == ' ' || c == '\t')) {
         break;
       }
     }

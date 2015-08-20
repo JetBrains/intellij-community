@@ -17,9 +17,9 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.documentation.DocStringLineParser;
+import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,43 +31,35 @@ import java.util.List;
 public abstract class DocStringUpdater<T extends DocStringLineParser> {
   protected final T myOriginalDocString;
   private final StringBuilder myBuilder;
-  private final List<UpdateOperation> myUpdates = new ArrayList<UpdateOperation>();
-  protected final List<AddParameter> myAddParameterRequests = new ArrayList<AddParameter>();
-  protected final List<AddException> myAddExceptionRequest = new ArrayList<AddException>();
-  protected final List<AddReturnType> myAddReturnTypeRequests = new ArrayList<AddReturnType>();
+  private final List<Modification> myUpdates = new ArrayList<Modification>();
+  private final String myMinContentIndent;
 
-  public DocStringUpdater(@NotNull T docString) {
+  public DocStringUpdater(@NotNull T docString, @NotNull String minContentIndent) {
     myBuilder = new StringBuilder(docString.getDocStringContent().getSuperString());
     myOriginalDocString = docString;
+    myMinContentIndent = minContentIndent;
   }
 
-  public final void addParameter(@NotNull String name, @Nullable String type) {
-    myAddParameterRequests.add(new AddParameter(name, type));
-  }
-
-  public final void addReturnType(@Nullable String name, @NotNull String type) {
-    myAddReturnTypeRequests.add(new AddReturnType(name, type));
-  }
-
-  public final void addException(@NotNull String type) {
-    myAddExceptionRequest.add(new AddException(type));
-  }
-
-  protected void insert(int offset, @NotNull String text) {
-    myUpdates.add(new UpdateOperation(TextRange.from(offset, 0), text));
-  }
-
-  protected final void insertAfterLine(int lineNumber, @NotNull String text) {
-    final Substring line = myOriginalDocString.getLines().get(lineNumber);
-    insert(line.getEndOffset(), "\n" + text);
+  protected final void replace(@NotNull TextRange range, @NotNull String text) {
+    myUpdates.add(new Modification(range, text));
   }
 
   protected final void replace(int startOffset, int endOffset, @NotNull String text) {
     replace(new TextRange(startOffset, endOffset), text);
   }
 
-  protected final void replace(@NotNull TextRange range, @NotNull String text) {
-    myUpdates.add(new UpdateOperation(range, text));
+  protected final void insert(int offset, @NotNull String text) {
+    replace(offset, offset, text);
+  }
+
+  protected final void insertAfterLine(int lineNumber, @NotNull String text) {
+    final Substring line = myOriginalDocString.getLines().get(lineNumber);
+    insert(line.getEndOffset(), '\n' + text);
+  }
+
+  protected final void insertBeforeLine(int lineNumber, @NotNull String text) {
+    final Substring line = myOriginalDocString.getLines().get(lineNumber);
+    insert(line.getStartOffset(), text + '\n');
   }
 
   protected abstract void scheduleUpdates();
@@ -75,11 +67,15 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   @NotNull
   public final String getDocStringText() {
     scheduleUpdates();
-    // if several updates insert in one place (e.g. new field), insert them in backward order
+    // Move closing quotes to the next line, if new lines are going to be inserted
+    if (myOriginalDocString.getLineCount() == 1 && !myUpdates.isEmpty()) {
+      insertAfterLine(0, myMinContentIndent);
+    }
+    // If several updates insert in one place (e.g. new field), insert them in backward order,
+    // so the first added is placed above
     Collections.reverse(myUpdates);
-    Collections.sort(myUpdates);
-    for (int i = myUpdates.size() - 1; i >= 0; i--) {
-      final UpdateOperation update = myUpdates.get(i);
+    Collections.sort(myUpdates, Collections.reverseOrder());
+    for (final Modification update : myUpdates) {
       final TextRange updateRange = update.range;
       if (updateRange.getStartOffset() == updateRange.getEndOffset()) {
         myBuilder.insert(updateRange.getStartOffset(), update.text);
@@ -96,45 +92,26 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     return myOriginalDocString;
   }
 
-  protected static class AddParameter {
-    @NotNull final String name;
-    @Nullable final String type;
-
-    public AddParameter(@NotNull String name, @Nullable String type) {
-      this.name = name;
-      this.type = type;
+  @NotNull
+  protected String getLineIndent(int lastNonEmptyLine) {
+    final String indent = myOriginalDocString.getLineIndent(lastNonEmptyLine);
+    if (PyIndentUtil.getLineIndentSize(indent) < PyIndentUtil.getLineIndentSize(myMinContentIndent)) {
+      return myMinContentIndent;
     }
+    return indent;
   }
 
-  protected static class AddReturnType {
-    @Nullable final String name;
-    @NotNull final String type;
-
-    public AddReturnType(@Nullable String name, @NotNull String type) {
-      this.name = name;
-      this.type = type;
-    }
-  }
-
-  protected static class AddException {
-    @NotNull final String type;
-
-    public AddException(@NotNull String type) {
-      this.type = type;
-    }
-  }
-
-  private static class UpdateOperation implements Comparable<UpdateOperation> {
+  private static class Modification implements Comparable<Modification> {
     @NotNull final TextRange range;
     @NotNull final String text;
 
-    public UpdateOperation(@NotNull TextRange range, @NotNull String newText) {
+    public Modification(@NotNull TextRange range, @NotNull String newText) {
       this.range = range;
       this.text = newText;
     }
 
     @Override
-    public int compareTo(UpdateOperation o) {
+    public int compareTo(Modification o) {
       return range.getStartOffset() - o.range.getStartOffset();
     }
   }

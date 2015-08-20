@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
@@ -146,7 +147,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     }
     int lineNum = skipEmptyLines(pair.getSecond());
     final List<SectionField> fields = new ArrayList<SectionField>();
-    final int sectionIndent = getIndent(getLine(sectionStartLine));
+    final int sectionIndent = getLineIndentSize(sectionStartLine);
     while (!isSectionBreak(lineNum, sectionIndent)) {
       if (!isEmpty(lineNum)) {
         final Pair<SectionField, Integer> result = parseSectionField(lineNum, title, sectionIndent);
@@ -217,7 +218,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
     return lineNum >= getLineCount() ||
            isSectionStart(lineNum) ||
-           (!isEmpty(lineNum) && getIndent(getLine(lineNum)) <= curSectionIndent);
+           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= curSectionIndent);
   }
 
   /**
@@ -231,7 +232,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     final List<Substring> result = new ArrayList<Substring>();
     int lastNonEmpty = lineNum - 1;
     while (!isSectionBreak(lineNum, sectionIndent)) {
-      if (getIndent(getLine(lineNum)) > blockIndent) {
+      if (getLineIndentSize(lineNum) > blockIndent) {
         // copy all lines after the last non empty including the current one
         for (int i = lastNonEmpty + 1; i <= lineNum; i++) {
           result.add(getLine(i));
@@ -302,7 +303,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       if (StringUtil.isEmptyOrSpaces(line)) {
         continue;
       }
-      curMinIndent = Math.min(curMinIndent, getIndent(line));
+      curMinIndent = Math.min(curMinIndent, PyIndentUtil.getLineIndentSize(line));
     }
     final int minIndent = curMinIndent;
     final List<String> dedentedLines = ContainerUtil.map(workList, new Function<Substring, String>() {

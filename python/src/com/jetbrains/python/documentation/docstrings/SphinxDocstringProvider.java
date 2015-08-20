@@ -34,8 +34,7 @@ public class SphinxDocstringProvider extends DocStringProvider<SphinxDocString>{
   @NotNull
   @Override
   public DocStringUpdater updateDocString(@NotNull SphinxDocString docstring) {
-    return new TagBasedDocStringUpdater<SphinxDocString>(docstring, TAG_PREFIX) {
-      @Override
+    return new TagBasedDocStringUpdater<SphinxDocString>(docstring, TAG_PREFIX, "") {
       public DocStringBuilder createDocStringBuilder() {
         return createDocString();
       }

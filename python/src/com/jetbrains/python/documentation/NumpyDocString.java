@@ -78,7 +78,7 @@ public class NumpyDocString extends SectionBasedDocString {
       type = name;
       name = null;
     }
-    final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getIndent(line), sectionIndent);
+    final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum), sectionIndent);
     final List<Substring> descriptionLines = parsedDescription.getFirst();
     if (!descriptionLines.isEmpty()) {
       description = mergeSubstrings(descriptionLines.get(0), descriptionLines.get(descriptionLines.size() - 1));

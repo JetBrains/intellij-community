@@ -34,8 +34,7 @@ public class EpydocDocStringProvider extends DocStringProvider<EpydocString> {
   @NotNull
   @Override
   public DocStringUpdater updateDocString(@NotNull EpydocString docstring) {
-    return new TagBasedDocStringUpdater<EpydocString>(docstring, TAG_PREFIX) {
-      @Override
+    return new TagBasedDocStringUpdater<EpydocString>(docstring, TAG_PREFIX, "") {
       public DocStringBuilder createDocStringBuilder() {
         return createDocString();
       }

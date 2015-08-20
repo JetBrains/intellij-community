@@ -15,84 +15,79 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.documentation.TagBasedDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public abstract class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocStringUpdater<T>{
+public class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocStringUpdater<T>{
 
   private final String myTagPrefix;
 
-  public TagBasedDocStringUpdater(@NotNull T docString, @NotNull String prefix) {
-    super(docString);
-    myTagPrefix = prefix;
+  public TagBasedDocStringUpdater(@NotNull T docString, @NotNull String tagPrefix, @NotNull String minContentIndent) {
+    super(docString, minContentIndent);
+    myTagPrefix = tagPrefix;
+  }
+
+  @NotNull
+  private TagBasedDocStringBuilder createBuilder() {
+    return new TagBasedDocStringBuilder(myTagPrefix);
   }
 
   @Override
   protected void scheduleUpdates() {
-    final int anchorLine = firstLineWithTag();
-    final int anchorLineIndent = myOriginalDocString.getLineIndent(anchorLine);
-    for (AddParameter paramReq : myAddParameterRequests) {
-      if (!myOriginalDocString.getParameters().contains(paramReq.name)) {
-        insertAfterLine(anchorLine, createParameterNameLine(paramReq.name, anchorLineIndent));
-      }
-      if (paramReq.type != null) {
-        final Substring typeSub = myOriginalDocString.getParamTypeSubstring(paramReq.name);
-        if (typeSub != null) {
-          replace(typeSub.getTextRange(), paramReq.type);
-        }
-        else {
-          insertAfterLine(anchorLine, createParameterTypeLine(paramReq.name, paramReq.type, anchorLineIndent));
-        }
-      }
+  }
+
+  public final void addParameter(@NotNull String name, @Nullable String type) {
+    if (type != null) {
+      insertTagLine(createBuilder().addParameterType(name, type));
     }
-    for (AddReturnType returnReq : myAddReturnTypeRequests) {
-      final Substring typeSub = myOriginalDocString.getReturnTypeSubstring();
-      if (typeSub != null) {
-        replace(typeSub.getTextRange(), returnReq.type);
-      }
-      else {
-        insertAfterLine(anchorLine, createReturnTypeLine(returnReq.type, anchorLineIndent));
-      }
-    }
-    for (AddException exception : myAddExceptionRequest) {
-      //TODO check existing docstring
-      insertAfterLine(anchorLine, createRaisesLine(exception.type, anchorLineIndent));
+    else {
+      insertTagLine(createBuilder().addParameterDescription(name, ""));
     }
   }
 
-  @NotNull
-  private String createRaisesLine(@NotNull String type, int indent) {
-    return ""; /*createDocStringBuilder().addException(type).buildContent(indent, true);*/
+  public final void addReturnValue(@Nullable String type) {
+    if (type != null) {
+      insertTagLine(createBuilder().addReturnValueType(type));
+    }
+    else {
+      insertTagLine(createBuilder().addReturnValueDescription(""));
+    }
   }
 
-  @NotNull
-  private String createParameterNameLine(@NotNull String name, int indent) {
-    return ""; /*createDocStringBuilder().addParameter(name, null).buildContent(indent, true);*/
+  private void insertTagLine(@NotNull DocStringBuilder lineBuilder) {
+    final int firstLineWithTag = findFirstLineWithTag();
+    if (firstLineWithTag >= 0) {
+      final String indent = getLineIndent(firstLineWithTag);
+      insertBeforeLine(firstLineWithTag, lineBuilder.buildContent(indent, true));
+      return;
+    }
+    final int lastNonEmptyLine = findLastNonEmptyLine();
+    final String indent = getLineIndent(lastNonEmptyLine);
+    insertAfterLine(lastNonEmptyLine, lineBuilder.buildContent(indent, true));
   }
 
-  @NotNull
-  private String createParameterTypeLine(@NotNull String name, @NotNull String type, int indent) {
-    return ""; /*createDocStringBuilder().addParameterType(name, type).buildContent(indent, true);*/
-  }
-
-  @NotNull
-  private String createReturnTypeLine(@NotNull String type, int indent) {
-    return ""; /*createDocStringBuilder().addReturnValue(null, type).buildContent(indent, true);*/
-  }
-
-  private int firstLineWithTag() {
-    for (int i = 0; i < myOriginalDocString.getLineCount(); i++) {
-      final Substring line = myOriginalDocString.getLine(i);
-      if (line.contains(myTagPrefix)) {
+  private int findLastNonEmptyLine() {
+    for (int i = myOriginalDocString.getLineCount() - 1; i >= 0; i--) {
+      if (StringUtil.isEmptyOrSpaces(myOriginalDocString.getLine(i))) {
         return i;
       }
     }
-    return myOriginalDocString.getLineCount() - 1;
+    return 0;
   }
 
-  public abstract DocStringBuilder createDocStringBuilder();
+  private int findFirstLineWithTag() {
+    for (int i = 0; i < myOriginalDocString.getLineCount(); i++) {
+      final Substring line = myOriginalDocString.getLine(i);
+      if (line.trimLeft().startsWith(myTagPrefix)) {
+        return i;
+      }
+    }
+    return -1;
+  }
 }
