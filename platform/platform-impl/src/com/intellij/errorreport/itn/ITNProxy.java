@@ -49,14 +49,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.*;
+import java.util.*;
 
 /**
  * @author stathik
@@ -228,7 +224,7 @@ public class ITNProxy {
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
     if (!NetUtils.isSniEnabled()) {
-      connection.setHostnameVerifier(new EaHostnameVerifier(url.getHost(), "ftp.intellij.net"));
+      connection.setHostnameVerifier(new EaHostnameVerifier());
     }
 
     connection.setRequestMethod("POST");
@@ -267,25 +263,35 @@ public class ITNProxy {
   }
 
   private static class EaHostnameVerifier implements HostnameVerifier {
-    private final Set<String> myAllowedHosts;
-
-    public EaHostnameVerifier(@NotNull String... allowedHosts) {
-      myAllowedHosts = ContainerUtil.newHashSet(allowedHosts);
-    }
-
     @Override
     public boolean verify(String hostname, SSLSession session) {
       try {
         Certificate[] certificates = session.getPeerCertificates();
-        if (certificates.length > 0) {
+        if (certificates.length > 1) {
           Certificate certificate = certificates[0];
           if (certificate instanceof X509Certificate) {
             String cn = CertificateUtil.getCommonName((X509Certificate)certificate);
-            return myAllowedHosts.contains(cn);
+            if (cn.endsWith(".jetbrains.com") || cn.endsWith(".intellij.net")) {
+              return true;
+            }
+          }
+
+          Certificate ca = certificates[certificates.length - 1];
+          if (ca instanceof X509Certificate) {
+            String cn = CertificateUtil.getCommonName((X509Certificate)ca);
+            byte[] digest = MessageDigest.getInstance("SHA-1").digest(ca.getEncoded());
+            StringBuilder fp = new StringBuilder(2 * digest.length);
+            for (byte b : digest) fp.append(Integer.toHexString(b & 0xFF));
+            if (JB_CA_CN.equals(cn) && JB_CA_FP.equals(fp.toString())) {
+              return true;
+            }
           }
         }
       }
       catch (SSLPeerUnverifiedException ignored) { }
+      catch (NoSuchAlgorithmException ignored) { }
+      catch (CertificateEncodingException ignored) { }
+
       return false;
     }
   }
@@ -364,4 +370,7 @@ public class ITNProxy {
     "wg13S9Hjy3VYq8y0krRYLEGLctd4vnxWGzJzUNSnqezwHZRl4v4Ejp3dQUZP+5sY\n" +
     "1F81Vj1G264YnZAcWp5x3GTI4K6+k9Xx3pwUPcKOYdlpZQ==\n" +
     "-----END CERTIFICATE-----\n";
+
+  private static final String JB_CA_CN = "JetBrains Enterprise CA";
+  private static final String JB_CA_FP = "604d3c703a13a3be2d452f14442be11b37e186f";
 }
