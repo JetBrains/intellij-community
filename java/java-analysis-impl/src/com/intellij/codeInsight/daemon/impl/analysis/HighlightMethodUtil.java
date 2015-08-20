@@ -446,16 +446,30 @@ public class HighlightMethodUtil {
       final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiLambdaExpression.class);
       if (containerMethod != null) {
         final PsiMethod method = candidate.getElement();
-        final List<PsiType> list = ContainerUtil.map(method.getParameterList().getParameters(),
-                                                     new Function<PsiParameter, PsiType>() {
-                                                       @Override
-                                                       public PsiType fun(PsiParameter parameter) {
-                                                         return parameter.getType();
-                                                       }
-                                                     });
-        PsiType[] leftTypes = list.toArray(new PsiType[list.size()]);
+        final PsiType[] expressionTypes = methodCall.getArgumentList().getExpressionTypes();
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        final int max = Math.max(parameters.length, expressionTypes.length);
+        PsiType[] leftTypes = PsiType.createArray(max);
+        PsiType[] rightTypes = PsiType.createArray(max);
+        for (int i = 0; i < max; i++) {
+          if (i < parameters.length) {
+            leftTypes[i] = parameters[i].getType();
+            rightTypes[i] = i < expressionTypes.length ? expressionTypes[i] : null;
+
+            if (leftTypes[i] instanceof PsiEllipsisType &&
+                !(max == expressionTypes.length && 
+                  expressionTypes[i] instanceof PsiArrayType && 
+                  expressionTypes[i].getArrayDimensions() == leftTypes[i].getArrayDimensions())) {
+              leftTypes[i] = ((PsiEllipsisType)leftTypes[i]).getComponentType();
+            }
+          }
+          else {
+            leftTypes[i] = null;
+            rightTypes[i] = i < expressionTypes.length ? expressionTypes[i] : null;
+          }
+        }
         final PsiSubstitutor substitutor = resolveHelper
-          .inferTypeArguments(method.getTypeParameters(), leftTypes, methodCall.getArgumentList().getExpressionTypes(),
+          .inferTypeArguments(method.getTypeParameters(), leftTypes, rightTypes,
                               PsiUtil.getLanguageLevel(methodCall));
         PsiType methodCallTypeByArgs = substitutor.substitute(methodCall.getType());
         //ensure type params are not included
