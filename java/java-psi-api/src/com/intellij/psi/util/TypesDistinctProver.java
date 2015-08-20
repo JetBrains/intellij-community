@@ -171,7 +171,7 @@ public class TypesDistinctProver {
       final PsiClass boundClass1 = PsiUtil.resolveClassInType(extendsBound1);
       final PsiClass boundClass2 = PsiUtil.resolveClassInType(extendsBound2);
       if (boundClass1 != null && boundClass2 != null) {
-        if (rejectInconsistentRaw &&
+        if (rejectInconsistentRaw && level > 0 &&
             extendsBound1 instanceof PsiClassType && extendsBound2 instanceof PsiClassType && 
             (((PsiClassType)extendsBound1).isRaw() ^ ((PsiClassType)extendsBound2).isRaw())) return true;
         return proveExtendsBoundsDistinct(type1, type2, boundClass1, boundClass2);
