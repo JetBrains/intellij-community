@@ -299,6 +299,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   public void reset() {
     final ProjectStartupTasksTreeModel model = new ProjectStartupTasksTreeModel(myConfiguration.getStartupConfigurations());
     setModel(model);
+    selectPathOrFirst(null);
   }
 
   private void setModel(ProjectStartupTasksTreeModel model) {
