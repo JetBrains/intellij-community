@@ -40,6 +40,8 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
   override fun getStateAndArchive(storageData: StateMap, component: Any, componentName: String) = storageData.getStateAndArchive(componentName)
 
+  override fun hasState(storageData: StateMap, componentName: String) = storageData.hasState(componentName)
+
   override fun loadData(): StateMap {
     val element: Element?
     // we don't use local data if has stream provider

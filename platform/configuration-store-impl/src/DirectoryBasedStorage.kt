@@ -30,7 +30,6 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -38,7 +37,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
-open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPathMacroSubstitutor?, private val myDir: File, private val mySplitter: StateSplitter) : StateStorageBase<DirectoryStorageData>() {
+open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPathMacroSubstitutor?, private val myDir: File, private val mySplitter: StateSplitter) : StateStorageBase<Map<String, StateMap>>() {
   private volatile var virtualFile: VirtualFile? = null
 
   public fun setVirtualDir(dir: VirtualFile?) {
@@ -51,19 +50,19 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
     val newData = loadData()
     storageDataRef.set(newData)
     if (oldData == null) {
-      componentNames.addAll(newData.getComponentNames())
+      componentNames.addAll(newData.keySet())
     }
     else {
-      componentNames.addAll(oldData.getComponentNames())
-      componentNames.addAll(newData.getComponentNames())
+      componentNames.addAll(oldData.keySet())
+      componentNames.addAll(newData.keySet())
     }
   }
 
-  override fun getStateAndArchive(storageData: DirectoryStorageData, component: Any, componentName: String): Element? {
+  override fun getStateAndArchive(storageData: Map<String, StateMap>, component: Any, componentName: String): Element? {
     return getCompositeStateAndArchive(storageData, componentName, mySplitter)
   }
 
-  override fun loadData(): DirectoryStorageData {
+  override fun loadData(): MutableMap<String, StateMap> {
     return fromMap(DirectoryStorageUtil.loadFrom(getVirtualFile(), myPathMacroSubstitutor))
   }
 
@@ -80,19 +79,19 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
     return if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
   }
 
-  private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStorageData: DirectoryStorageData) : SaveSessionBase() {
+  private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: Map<String, StateMap>) : SaveSessionBase() {
     private var copiedStorageData: Map<String, Map<String, Any>>? = null
 
     private val dirtyFileNames = SmartHashSet<String>()
     private val removedFileNames = SmartHashSet<String>()
 
-    private fun getFileNames(directoryStorageData: DirectoryStorageData, componentName: String): Array<String> {
-      val fileToState = directoryStorageData.states.get(componentName)
+    private fun getFileNames(states: Map<String, StateMap>, componentName: String): Array<String> {
+      val fileToState = states.get(componentName)
       return if (fileToState == null || fileToState.isEmpty()) ArrayUtil.EMPTY_STRING_ARRAY else fileToState.keys()
     }
 
     override fun setSerializedState(component: Any, componentName: String, element: Element?) {
-      ContainerUtil.addAll<String, String, Set<String>>(removedFileNames, *getFileNames(originalStorageData, componentName))
+      removedFileNames.addAll(getFileNames(originalStates, componentName))
       if (JDOMUtil.isEmpty(element)) {
         doSetState(componentName, null, null)
       }
@@ -112,7 +111,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
 
     private fun doSetState(componentName: String, fileName: String?, subState: Element?) {
       if (copiedStorageData == null) {
-        copiedStorageData = setStateAndCloneIfNeed(componentName, fileName, subState, originalStorageData)
+        copiedStorageData = setStateAndCloneIfNeed(componentName, fileName, subState, originalStates)
         if (copiedStorageData != null && fileName != null) {
           dirtyFileNames.add(fileName)
         }
@@ -213,17 +212,27 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
     storageDataRef.set(fromMap(newStates))
   }
 
+  override fun hasState(storageData: Map<String, StateMap>, componentName: String) = storageData.get(componentName)?.hasStates() ?: false
+
   companion object {
-    fun fromMap(map: Map<String, Map<String, Any>>): DirectoryStorageData {
+    public fun Map<String, StateMap>.toMutableMap(): MutableMap<String, MutableMap<String, Any>> {
+      val map = THashMap<String, MutableMap<String, Any>>(size())
+      for (entry in entrySet()) {
+        map.put(entry.getKey(), entry.getValue().toMap())
+      }
+      return map
+    }
+
+    fun fromMap(map: Map<String, Map<String, Any>>): MutableMap<String, StateMap> {
       val states = THashMap<String, StateMap>(map.size())
       for (entry in map.entrySet()) {
         states.put(entry.getKey(), StateMap.fromMap(entry.getValue()))
       }
-      return DirectoryStorageData(states)
+      return states
     }
 
-    private fun getCompositeStateAndArchive(storageData: DirectoryStorageData, componentName: String, SuppressWarnings("deprecation") splitter: StateSplitter): Element? {
-      val fileToState = storageData.states.get(componentName)
+    private fun getCompositeStateAndArchive(states: Map<String, StateMap>, componentName: String, SuppressWarnings("deprecation") splitter: StateSplitter): Element? {
+      val fileToState = states.get(componentName)
       val state = Element(StateMap.COMPONENT)
       if (fileToState == null || fileToState.isEmpty()) {
         return state
@@ -249,8 +258,8 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
       return state
     }
 
-    public fun setStateAndCloneIfNeed(componentName: String, fileName: String?, newState: Element?, storageData: DirectoryStorageData): Map<String, Map<String, Any>>? {
-      val fileToState = storageData.states.get(componentName)
+    public fun setStateAndCloneIfNeed(componentName: String, fileName: String?, newState: Element?, oldStates: Map<String, StateMap>): Map<String, Map<String, Any>>? {
+      val fileToState = oldStates.get(componentName)
       val oldState: Any? = if (fileToState == null || fileName == null) null else fileToState.get(fileName)
       if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
         if (fileName == null) {
@@ -262,7 +271,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
           return null
         }
 
-        val newStorageData = storageData.toMap()
+        val newStorageData = oldStates.toMutableMap()
         if (fileName == null) {
           newStorageData.remove(componentName)
         }
@@ -294,7 +303,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
         }
       }
 
-      val newStorageData = storageData.toMap()
+      val newStorageData = oldStates.toMutableMap()
       put(newStorageData, componentName, fileName, newBytes ?: newState)
       return newStorageData
     }
@@ -307,24 +316,5 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
       }
       fileToState.put(fileName, state)
     }
-  }
-}
-
-private class DirectoryStorageData(val states: MutableMap<String, StateMap>) : StorageDataBase {
-  public fun toMap(): MutableMap<String, MutableMap<String, Any>> {
-    val map = THashMap<String, MutableMap<String, Any>>(states.size())
-    for (entry in states.entrySet()) {
-      map.put(entry.getKey(), entry.getValue().toMap())
-    }
-    return map
-  }
-
-  public fun getComponentNames(): Set<String> {
-    return states.keySet()
-  }
-
-  override fun hasState(componentName: String): Boolean {
-    val fileToState = states.get(componentName)
-    return fileToState != null && fileToState.hasStates()
   }
 }

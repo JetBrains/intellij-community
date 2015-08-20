@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-public final class StateMap implements StorageDataBase {
+public final class StateMap {
   private static final Logger LOG = Logger.getInstance(StateMap.class);
 
   public static final String COMPONENT = "component";
@@ -136,7 +136,6 @@ public final class StateMap implements StorageDataBase {
     return state instanceof Element ? (Element)state : null;
   }
 
-  @Override
   public boolean hasState(@NotNull String key) {
     return get(key) instanceof Element;
   }
