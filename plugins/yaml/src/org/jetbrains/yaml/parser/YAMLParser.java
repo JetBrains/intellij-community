@@ -19,7 +19,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private PsiBuilder.Marker myAfterLastEolMarker;
 
   @NotNull
-  public ASTNode parse(final IElementType root, final PsiBuilder builder) {
+  public ASTNode parse(@NotNull final IElementType root, @NotNull final PsiBuilder builder) {
     myBuilder = builder;
     final PsiBuilder.Marker fileMarker = mark();
     parseFile();
