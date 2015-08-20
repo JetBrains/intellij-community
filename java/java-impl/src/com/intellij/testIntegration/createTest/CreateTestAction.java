@@ -25,10 +25,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -160,7 +158,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   @Nullable
-  private static PsiClass getContainingClass(PsiElement element) {
+  protected static PsiClass getContainingClass(PsiElement element) {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (psiClass == null) {
       final PsiFile containingFile = element.getContainingFile();
