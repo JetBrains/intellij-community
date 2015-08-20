@@ -230,7 +230,7 @@ public class MatchPatchPaths {
     return new GenericPatchApplier(text, patch.getPatch().getHunks()).weightContextMatch(100, 5);
   }
 
-  private static class PatchAndVariants {
+  private class PatchAndVariants {
     @NotNull private final List<AbstractFilePatchInProgress> myVariants;
 
     private PatchAndVariants(@NotNull List<AbstractFilePatchInProgress> variants) {
@@ -261,8 +261,15 @@ public class MatchPatchPaths {
       else {
         int stripCounter = Integer.MAX_VALUE;
         for (AbstractFilePatchInProgress variant : myVariants) {
-          if (variant.getCurrentStrip() < stripCounter) {
+          int currentStrip = variant.getCurrentStrip();
+          //the best variant if several match should be project based variant
+          if (currentStrip == 0 && myProject.getBaseDir().equals(variant.getBase())) {
             best = variant;
+            break;
+          }
+          else if (currentStrip < stripCounter) {
+            best = variant;
+            stripCounter = currentStrip;
           }
         }
         putSelected(result, myVariants, best);
