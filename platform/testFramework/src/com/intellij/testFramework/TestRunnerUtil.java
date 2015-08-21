@@ -18,7 +18,6 @@ package com.intellij.testFramework;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,7 +25,6 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -72,25 +70,6 @@ public class TestRunnerUtil {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  // Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
-  // The problem is - Application logs errors, but not throws. But in tests must be thrown.
-  // In any case name "runInEdtAndWait" is better than "invokeAndWait".
-  public static void runInEdtAndWait(@NotNull Runnable runnable) throws Throwable {
-    replaceIdeEventQueueSafely();
-    if (SwingUtilities.isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      try {
-        SwingUtilities.invokeAndWait(runnable);
-      }
-      catch (InvocationTargetException e) {
-        Throwable cause = e.getCause();
-        throw cause == null ? e : cause;
-      }
     }
   }
 }

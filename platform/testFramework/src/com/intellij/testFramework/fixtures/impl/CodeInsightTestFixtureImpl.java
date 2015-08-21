@@ -1372,7 +1372,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.setUp();
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    TestFrameworkPackage.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
         myProjectFixture.setUp();
@@ -1536,7 +1536,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
 
-    TestFrameworkPackage.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() {
         if (!copy.getFileType().isBinary()) {

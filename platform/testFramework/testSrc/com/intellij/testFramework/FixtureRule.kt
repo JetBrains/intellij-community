@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.SmartList
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
@@ -48,9 +47,7 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
-import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.SwingUtilities
 
 /**
  * Project created on request, so, could be used as a bare (only application).
@@ -147,6 +144,10 @@ public class ProjectRule() : ExternalResource() {
     }
 }
 
+public fun runInEdtAndWait(runnable: () -> Unit) {
+  EdtTestUtil.runInEdtAndWait(runnable)
+}
+
 public open class FixtureRule() : ExternalResource() {
   companion object {
     init {
@@ -194,27 +195,6 @@ public class RuleChain(vararg val rules: TestRule) : TestRule {
 
     CompoundRuntimeException.doThrow(errors)
     return statement
-  }
-}
-
-public fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
-  runInEdtAndWait({ runnable.run() })
-}
-
-// Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
-// The problem is - Application logs errors, but not throws. But in tests must be thrown.
-// In any case name "runInEdtAndWait" is better than "invokeAndWait".
-public fun runInEdtAndWait(runnable: () -> Unit) {
-  if (SwingUtilities.isEventDispatchThread()) {
-    runnable()
-  }
-  else {
-    try {
-      SwingUtilities.invokeAndWait(runnable)
-    }
-    catch (e: InvocationTargetException) {
-      throw e.getCause() ?: e
-    }
   }
 }
 

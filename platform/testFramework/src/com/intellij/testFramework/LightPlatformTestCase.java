@@ -592,7 +592,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    TestFrameworkPackage.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
         try {
