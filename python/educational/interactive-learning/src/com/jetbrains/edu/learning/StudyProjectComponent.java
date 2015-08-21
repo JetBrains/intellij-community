@@ -32,7 +32,7 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
-import com.jetbrains.edu.learning.ui.ProgressToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +88,7 @@ public class StudyProjectComponent implements ProjectComponent {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       registerToolWindows(toolWindowManager);
       final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      final ToolWindow progressToolWindow = toolWindowManager.getToolWindow(ProgressToolWindowFactory.ID);
+      final ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
       if (studyToolWindow != null) {
         studyToolWindow.show(null);
       }
@@ -140,9 +140,9 @@ public class StudyProjectComponent implements ProjectComponent {
     if (toolWindow == null) {
       toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
     }
-    ToolWindow progressToolWindow = toolWindowManager.getToolWindow(ProgressToolWindowFactory.ID);
+    ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
     if (progressToolWindow == null) {
-      toolWindowManager.registerToolWindow(ProgressToolWindowFactory.ID, true, ToolWindowAnchor.LEFT, myProject, true, true);
+      toolWindowManager.registerToolWindow(StudyProgressToolWindowFactory.ID, true, ToolWindowAnchor.LEFT, myProject, true, true);
     }
   }
 
@@ -220,7 +220,7 @@ public class StudyProjectComponent implements ProjectComponent {
       if (toolWindow != null) {
         toolWindow.getContentManager().removeAllContents(false);
       }
-      final ToolWindow progressToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ProgressToolWindowFactory.ID);
+      final ToolWindow progressToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyProgressToolWindowFactory.ID);
       if (progressToolWindow != null) {
         progressToolWindow.getContentManager().removeAllContents(false);
       }
