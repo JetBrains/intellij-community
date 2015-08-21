@@ -19,14 +19,11 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.debugger.PySignature;
-import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
@@ -70,10 +67,8 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
   private boolean isAvailableForFunction(PyFunction function) {
     if (function.getDocStringValue() != null) {
-      final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
-      setParametersWithTypesFromDebuggerSignature(docstringGenerator, function);
-
-      if (docstringGenerator.haveParametersToAdd()) {
+      final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function).withDefaultParameters();
+      if (docstringGenerator.hasParametersToAdd()) {
         myText = PyBundle.message("INTN.add.parameters.to.docstring");
         return true;
       }
@@ -108,7 +103,8 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     }
     final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(docStringOwner);
     if (docStringOwner instanceof PyFunction) {
-      setParametersWithTypesFromDebuggerSignature(docstringGenerator, (PyFunction)docStringOwner);
+      docstringGenerator.useTypesFromDebuggerSignature(true);
+      docstringGenerator.withDefaultParameters();
       if (docStringOwner.getDocStringValue() == null) {
         docstringGenerator.addReturn();
       }
@@ -118,20 +114,6 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       final int offset = updated.getTextOffset();
       editor.getCaretModel().moveToOffset(offset);
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
-    }
-  }
-
-  private static void setParametersWithTypesFromDebuggerSignature(@NotNull PyDocstringGenerator generator, @NotNull PyFunction myFunction) {
-    PySignature signature = PySignatureCacheManager.getInstance(myFunction.getProject()).findSignature(myFunction);
-    for (PyParameter functionParam : myFunction.getParameterList().getParameters()) {
-      String paramName = functionParam.getName();
-      if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
-        String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
-        generator.withParam(paramName);
-        if (type != null) {
-          generator.withParamTypedByName(paramName, type);
-        }
-      }
     }
   }
 }

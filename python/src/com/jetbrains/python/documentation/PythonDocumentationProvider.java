@@ -22,7 +22,6 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -559,26 +558,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       result += offset;
     }
     return result;
-  }
-
-  public static void insertDocStub(@NotNull PyFunction function,
-                                   @NotNull PyStatementList insertPlace,
-                                   @NotNull Project project,
-                                   @Nullable Editor editor) {
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    final String ws = "\n" + getStatementListIndent(insertPlace);
-    final String docContent = ws + generateDocumentationContentStub(function, ws, true);
-    final PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
-    final PyStatement[] statements = insertPlace.getStatements();
-    if (statements.length != 0) {
-      insertPlace.addBefore(string, statements[0]);
-    }
-    final PyStringLiteralExpression docstring = function.getDocStringExpression();
-    if (editor != null && docstring != null) {
-      final int offset = docstring.getTextOffset();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
-    }
   }
 
   @NotNull

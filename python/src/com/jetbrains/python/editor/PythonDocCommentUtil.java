@@ -21,6 +21,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 
 /**
  * User : catherine
@@ -40,6 +41,8 @@ public class PythonDocCommentUtil {
         if (docStringOwner == func) {
           PyStringLiteralExpression str = docStringOwner.getDocStringExpression();
           String text = element.getText();
+          final int prefix = PyStringLiteralExpressionImpl.getPrefixLength(text);
+          text = text.substring(prefix);
           if (str != null && text.equals(str.getText()) &&
                       (text.startsWith("\"\"\"") || text.startsWith("'''"))) {
             if (offset == str.getTextRange().getStartOffset()) {

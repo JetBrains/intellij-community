@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
@@ -30,6 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.docstrings.DocStringProvider;
 import com.jetbrains.python.documentation.docstrings.TagBasedDocStringBuilder;
 import com.jetbrains.python.documentation.docstrings.TagBasedDocStringUpdater;
@@ -38,7 +38,6 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -46,7 +45,7 @@ import java.util.List;
  */
 public class PyDocstringGenerator {
 
-  private final List<DocstringParam> myParams = Lists.newArrayList();
+  private List<DocstringParam> myParams = Lists.newArrayList();
   private boolean myGenerateReturn;
 
   // Updated after buildAndInsert
@@ -54,6 +53,10 @@ public class PyDocstringGenerator {
   private PyDocStringOwner myDocStringOwner;
   private final StructuredDocString myOriginalDocString;
   private final DocStringFormat myDocStringFormat;
+  private String myQuotes = "\"\"\"";
+  private boolean myUseTypesFromDebuggerSignature = false;
+  private boolean myNewMode = false;
+  private boolean addFirstEmptyLine = false;
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
@@ -86,9 +89,57 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
+  public PyDocstringGenerator withQuotes(@NotNull String quotes) {
+    myQuotes = quotes;
+    return this;
+  }
+
+  @NotNull
+  public PyDocstringGenerator useTypesFromDebuggerSignature(boolean use) {
+    myUseTypesFromDebuggerSignature = use;
+    return this;
+  }
+
+  @NotNull
   public PyDocstringGenerator addReturn() {
     myGenerateReturn = true;
     return this;
+  }
+
+  @NotNull
+  public PyDocstringGenerator forceNewMode() {
+    myNewMode = true;
+    return this;
+  }
+
+  @NotNull
+  public PyDocstringGenerator withDefaultParameters() {
+    // Populate parameters lift if no one was specified explicitly
+    if (myParams.isEmpty()) {
+      if (myDocStringOwner instanceof PyFunction) {
+        PySignature signature = null;
+        if (myUseTypesFromDebuggerSignature) {
+          signature = PySignatureCacheManager.getInstance(myDocStringOwner.getProject()).findSignature((PyFunction)myDocStringOwner);
+        }
+        for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
+          String paramName = param.getName();
+          if (StringUtil.isEmpty(paramName) || param.isSelf() ||
+               myOriginalDocString != null && myOriginalDocString.getParamTypeSubstring(paramName) != null) {
+            continue;
+          }
+          String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
+          withParam(paramName);
+          if (type != null) {
+            withParamTypedByName(paramName, type);
+          }
+        }
+      }
+    }
+    return this;
+  }
+
+  public boolean hasParametersToAdd() {
+    return !myParams.isEmpty();
   }
 
   @Nullable
@@ -165,6 +216,7 @@ public class PyDocstringGenerator {
     }
   }
 
+  @NotNull
   private String getDefaultType() {
     DocstringParam param = getParamToEdit();
     if (StringUtil.isEmpty(param.getType())) {
@@ -177,12 +229,16 @@ public class PyDocstringGenerator {
 
   @NotNull
   public String buildDocString() {
-    if (myOriginalDocString != null) {
-      return updateDocString();
-    }
-    else {
+    if (isNewMode()) {
       return createDocString();
     }
+    else {
+      return updateDocString();
+    }
+  }
+
+  private boolean isNewMode() {
+    return myNewMode || myOriginalDocString == null;
   }
 
   @NotNull
@@ -224,10 +280,10 @@ public class PyDocstringGenerator {
       }
 
       if (builder.getLines().size() > 1) {
-        return "\"\"\"\n" + builder.buildContent(indentation, true) + '\n' + indentation + "\"\"\"";
+        return myQuotes + '\n' + builder.buildContent(indentation, true) + '\n' + indentation + myQuotes;
       }
       else {
-        return "\"\"\"" + builder.buildContent(indentation, false) + "\"\"\"";
+        return myQuotes + builder.buildContent(indentation, false) + myQuotes;
       }
     }
     else {
@@ -260,26 +316,7 @@ public class PyDocstringGenerator {
       }
       return updater.getDocStringText();
     }
-    return "\"\"\"\"\"\"";
-  }
-
-  public boolean haveParametersToAdd() {
-    return !collectParametersToAdd().isEmpty();
-  }
-
-  @NotNull
-  private Collection<DocstringParam> collectParametersToAdd() {
-    return Collections2.filter(myParams, new Predicate<DocstringParam>() {
-      @Override
-      public boolean apply(DocstringParam param) {
-        if (param.isReturnValue()) {
-          return myOriginalDocString.getReturnTypeSubstring() == null;
-        }
-        else {
-          return myOriginalDocString.getParamTypeSubstring(param.myName) == null;
-        }
-      }
-    });
+    return myQuotes + myQuotes;
   }
 
   private DocstringParam getParamToEdit() {

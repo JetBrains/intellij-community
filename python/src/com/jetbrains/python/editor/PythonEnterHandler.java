@@ -35,7 +35,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -257,20 +257,17 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   private static void insertDocStringStub(Editor editor, PsiElement element) {
-    PythonDocumentationProvider provider = new PythonDocumentationProvider();
-    PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    if (fun != null) {
-      String docStub = provider.generateDocumentationContentStub(fun, false);
-      docStub += element.getParent().getText().substring(0,3);
-      if (docStub.length() != 0) {
-        editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
-        return;
-      }
-    }
-    PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
-    if (klass != null && element != null) {
-      editor.getDocument().insertString(editor.getCaretModel().getOffset(),
-                      PythonDocCommentUtil.generateDocForClass(klass, element.getParent().getText().substring(0, 3)));
+    PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class);
+    if (docOwner != null) {
+      final int caretOffset = editor.getCaretModel().getOffset();
+      final String quotes = editor.getDocument().getText(TextRange.from(caretOffset - 3, 3));
+      final String docString = new PyDocstringGenerator(docOwner)
+        .withDefaultParameters()
+        .addReturn()
+        .withQuotes(quotes)
+        .forceNewMode()
+        .buildDocString();
+      editor.getDocument().replaceString(caretOffset - 3, caretOffset, docString);
     }
   }
 
