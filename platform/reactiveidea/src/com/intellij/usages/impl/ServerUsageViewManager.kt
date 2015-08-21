@@ -21,6 +21,15 @@ import com.intellij.openapi.util.Factory
 import com.intellij.usages.*
 
 public class ServerUsageViewManager(val project: Project) : UsageViewManagerImpl(project) {
+  override fun showUsages(searchedFor: Array<UsageTarget>,
+                          foundUsages: Array<Usage>,
+                          presentation: UsageViewPresentation,
+                          factory: Factory<UsageSearcher>): UsageView {
+    val usageView = createUsageView(searchedFor, foundUsages, presentation, factory)
+
+    return usageView
+  }
+
   override fun createUsageView(targets: Array<UsageTarget>,
                                usages: Array<Usage>,
                                presentation: UsageViewPresentation,
