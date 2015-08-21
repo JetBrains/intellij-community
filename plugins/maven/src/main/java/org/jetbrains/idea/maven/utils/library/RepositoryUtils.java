@@ -26,8 +26,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.util.Processor;
@@ -42,23 +40,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class RepositoryLibraryTypeBase extends LibraryType<RepositoryLibraryProperties> {
+public class RepositoryUtils {
   @NotNull static public final String LatestVersionId = "LATEST";
   @NotNull static public final String ReleaseVersionId = "RELEASE";
   @NotNull static public final String SnapshotVersionSuffix = "-SNAPSHOT";
-
-  public static final PersistentLibraryKind<RepositoryLibraryProperties>
-    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository") {
-    @NotNull
-    @Override
-    public RepositoryLibraryProperties createDefaultProperties() {
-      return new RepositoryLibraryProperties();
-    }
-  };
-
-  public RepositoryLibraryTypeBase() {
-    super(REPOSITORY_LIBRARY_KIND);
-  }
 
   public static List<OrderRoot> download(Project project, @NotNull RepositoryLibraryProperties properties) {
     String coordinates = properties.getGroupId() + ":" +

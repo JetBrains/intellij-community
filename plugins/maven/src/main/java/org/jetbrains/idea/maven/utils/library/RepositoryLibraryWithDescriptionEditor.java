@@ -5,11 +5,11 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryProperti
 import org.jetbrains.annotations.NotNull;
 
 public class RepositoryLibraryWithDescriptionEditor
-  extends LibraryPropertiesEditorBase<RepositoryLibraryProperties, RepositoryLibraryTypeBase> {
-  private final RepositoryLibraryTypeBase libraryType;
+  extends LibraryPropertiesEditorBase<RepositoryLibraryProperties, RepositoryLibraryType> {
+  private final RepositoryLibraryType libraryType;
 
   public RepositoryLibraryWithDescriptionEditor(LibraryEditorComponent<RepositoryLibraryProperties> editorComponent,
-                                                RepositoryLibraryTypeBase libraryType) {
+                                                RepositoryLibraryType libraryType) {
     super(editorComponent, libraryType, null);
     this.libraryType = libraryType;
   }
@@ -26,7 +26,6 @@ public class RepositoryLibraryWithDescriptionEditor
     boolean wasGeneratedName = libraryType.getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
     RepositoryLibraryPropertiesEditor editor = new RepositoryLibraryPropertiesEditor(
       myEditorComponent.getProject(),
-      libraryType,
       properties);
     editor.init();
     editor.setTitle(libraryType.getDescription(properties));
@@ -38,6 +37,6 @@ public class RepositoryLibraryWithDescriptionEditor
       myEditorComponent.renameLibrary(libraryType.getDescription(properties));
     }
     myEditorComponent.getLibraryEditor().removeAllRoots();
-    myEditorComponent.getLibraryEditor().addRoots(libraryType.download(myEditorComponent.getProject(), properties));
+    myEditorComponent.getLibraryEditor().addRoots(RepositoryUtils.download(myEditorComponent.getProject(), properties));
   }
 }

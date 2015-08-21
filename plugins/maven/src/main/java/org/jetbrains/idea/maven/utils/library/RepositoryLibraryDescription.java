@@ -45,9 +45,8 @@ public abstract class RepositoryLibraryDescription {
         String id = description.getGroupId() + ":" + description.getArtifactId();
         RepositoryLibraryDescription existDescription = registeredLibraries.get(id);
         if (existDescription == null || existDescription.getWeight() >= description.getWeight()) {
-          continue;
+          registeredLibraries.put(id, description);
         }
-        registeredLibraries.put(id, description);
       }
     }
     String id = properties.getGroupId() + ":" + properties.getArtifactId();
@@ -108,5 +107,9 @@ public abstract class RepositoryLibraryDescription {
   // In this case heaviest description will be used
   public int getWeight() {
     return 1000;
+  }
+
+  public RepositoryLibraryProperties createDefaultProperties() {
+    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), RepositoryUtils.LatestVersionId);
   }
 }

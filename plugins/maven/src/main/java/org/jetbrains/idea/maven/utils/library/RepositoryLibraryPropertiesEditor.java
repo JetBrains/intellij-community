@@ -22,7 +22,6 @@ import java.util.List;
 
 public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   @NotNull private final Project project;
-  private final RepositoryLibraryTypeBase repositoryLibraryType;
   private RepositoryLibraryProperties properties;
   private RepositoryLibraryDescription repositoryLibraryDescription;
   private ComboBox versionSelector;
@@ -35,13 +34,11 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   private JPanel versionSelectorPanel;
 
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
-                                           RepositoryLibraryTypeBase libraryType,
                                            RepositoryLibraryProperties properties) {
     super(project);
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     this.properties = properties;
     repositoryLibraryDescription = RepositoryLibraryDescription.findDescription(properties);
-    repositoryLibraryType = libraryType;
     useLatest.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -93,7 +90,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
       return;
     }
     String selectedVersion = getSelectedVersion();
-    if (!selectedVersion.equals(RepositoryLibraryTypeBase.LatestVersionId)
+    if (!selectedVersion.equals(RepositoryUtils.LatestVersionId)
         && versions.indexOf(selectedVersion) == -1) {
       versions.add(0, selectedVersion);
     }
@@ -103,7 +100,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
         CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<String>(versions);
         //noinspection unchecked
         versionSelector.setModel(versionSelectorModel);
-        if (properties.getVersion().equals(RepositoryLibraryTypeBase.LatestVersionId)) {
+        if (properties.getVersion().equals(RepositoryUtils.LatestVersionId)) {
           useLatest.setSelected(true);
         }
         else {
@@ -126,7 +123,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   }
 
   private void setVersionsVisibility() {
-    if (getSelectedVersion().equals(RepositoryLibraryTypeBase.LatestVersionId)) {
+    if (getSelectedVersion().equals(RepositoryUtils.LatestVersionId)) {
       useLatest.setSelected(true);
       versionSelectorPanel.setVisible(false);
     }
@@ -139,7 +136,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
 
   public String getSelectedVersion() {
     return useLatest.isSelected() || versionSelector.getSelectedItem() == null
-           ? RepositoryLibraryTypeBase.LatestVersionId
+           ? RepositoryUtils.LatestVersionId
            : (String)versionSelector.getSelectedItem();
   }
 

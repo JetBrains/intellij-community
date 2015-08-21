@@ -16,7 +16,10 @@
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,11 +32,23 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class RepositoryLibraryType extends RepositoryLibraryTypeBase {
+public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
+  public static final PersistentLibraryKind<RepositoryLibraryProperties>
+    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository") {
+    @NotNull
+    @Override
+    public RepositoryLibraryProperties createDefaultProperties() {
+      return new RepositoryLibraryProperties();
+    }
+  };
+
+  protected RepositoryLibraryType() {
+    super(REPOSITORY_LIBRARY_KIND);
+  }
+
   public static RepositoryLibraryType getInstance() {
     return EP_NAME.findExtension(RepositoryLibraryType.class);
   }
-
 
   @Nullable
   @Override
@@ -50,12 +65,22 @@ public class RepositoryLibraryType extends RepositoryLibraryTypeBase {
 
   @Override
   public LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<RepositoryLibraryProperties> component) {
-    return new RepositoryLibraryEditor(component, this);
+    return new RepositoryLibraryWithDescriptionEditor(component, this);
+    //    return new RepositoryLibraryEditor(component, this);
   }
 
   @Override
   public Icon getIcon() {
     return MavenIcons.MavenLogo;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon(@Nullable LibraryProperties properties) {
+    if (properties == null || !(properties instanceof RepositoryLibraryProperties)) {
+      return getIcon();
+    }
+    return RepositoryLibraryDescription.findDescription((RepositoryLibraryProperties)properties).getIcon();
   }
 
   @NotNull
