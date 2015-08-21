@@ -94,7 +94,7 @@ public abstract class RepositoryLibraryDescription {
   public abstract Icon getIcon();
 
   @Nullable
-  DependencyScope getSuggestedScope() {
+  public DependencyScope getSuggestedScope() {
     return null;
   }
 

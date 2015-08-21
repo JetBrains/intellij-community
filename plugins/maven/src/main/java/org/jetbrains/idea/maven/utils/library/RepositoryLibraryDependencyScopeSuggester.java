@@ -38,6 +38,6 @@ public class RepositoryLibraryDependencyScopeSuggester extends LibraryDependency
     RepositoryLibraryProperties repositoryLibraryProperties = (RepositoryLibraryProperties)libraryProperties;
     RepositoryLibraryDescription libraryDescription = RepositoryLibraryDescription.findDescription(repositoryLibraryProperties);
 
-    return libraryDescription != null ? libraryDescription.getSuggestedScope() : null;
+    return libraryDescription.getSuggestedScope();
   }
 }

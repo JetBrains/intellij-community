@@ -25,7 +25,7 @@ public class RepositoryLibraryWithDescriptionEditor
       myEditorComponent.getProject(),
       properties);
     editor.init();
-    editor.setTitle(RepositoryLibraryType.getInstance().getDescription(properties));
+    editor.setTitle(RepositoryLibraryDescription.findDescription(properties).getDisplayName());
     if (!editor.showAndGet() || oldVersion.equals(editor.getSelectedVersion())) {
       return;
     }
