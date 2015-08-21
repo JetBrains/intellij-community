@@ -31,18 +31,19 @@ import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.BackgroundTaskUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -78,7 +79,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class AnnotateDiffViewerAction extends DumbAwareAction {
+public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware {
   public static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
 
   private static final Key<AnnotationData[]> CACHE_KEY = Key.create("Diff.AnnotateAction.Cache");
@@ -89,12 +90,13 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
   };
 
   public AnnotateDiffViewerAction() {
-    super("Annotate", null, AllIcons.Actions.Annotate);
+    EmptyAction.setupAction(this, "Annotate", null);
     setEnabledInModalContext(true);
   }
 
   @Override
   public void update(AnActionEvent e) {
+    super.update(e);
     e.getPresentation().setEnabledAndVisible(isEnabled(e));
   }
 
@@ -106,41 +108,61 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
     return null;
   }
 
-  private static boolean isEnabled(AnActionEvent e) {
+  @Nullable
+  private static EventData collectEventData(AnActionEvent e) {
     DiffViewerBase viewer = ObjectUtils.tryCast(e.getData(DiffDataKeys.DIFF_VIEWER), DiffViewerBase.class);
-    if (viewer == null) return false;
-    if (viewer.getProject() == null) return false;
-    if (viewer.isDisposed()) return false;
+    if (viewer == null) return null;
+    if (viewer.getProject() == null) return null;
+    if (viewer.isDisposed()) return null;
 
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor == null) return false;
+    if (editor == null) return null;
 
     ViewerAnnotator annotator = getAnnotator(viewer);
-    if (annotator == null) return false;
+    if (annotator == null) return null;
 
     //noinspection unchecked
     Side side = annotator.getCurrentSide(viewer, editor);
-    if (side == null) return false;
+    if (side == null) return null;
+
+    return new EventData(viewer, editor, annotator, side);
+  }
+
+  public static boolean isEnabled(AnActionEvent e) {
+    EventData data = collectEventData(e);
+    if (data == null) return false;
 
     //noinspection unchecked
-    if (annotator.isAnnotationShown(viewer, side)) return false;
-    if (checkRunningProgress(viewer, side)) return false;
-    return createAnnotationsLoader(viewer.getProject(), viewer.getRequest(), side) != null;
+    if (data.annotator.isAnnotationShown(data.viewer, data.side)) return true;
+    if (checkRunningProgress(data.viewer, data.side)) return false;
+    return createAnnotationsLoader(data.viewer.getProject(), data.viewer.getRequest(), data.side) != null;
+  }
+
+  public static void perform(AnActionEvent e) {
+    EventData data = collectEventData(e);
+    assert data != null;
+
+    //noinspection unchecked
+    boolean annotationShown = data.annotator.isAnnotationShown(data.viewer, data.side);
+    if (annotationShown) {
+      //noinspection unchecked
+      data.annotator.hideAnnotation(data.viewer, data.side);
+    }
+    else {
+      doAnnotate(data.annotator, data.viewer, data.side);
+    }
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    DiffViewerBase viewer = (DiffViewerBase)e.getRequiredData(DiffDataKeys.DIFF_VIEWER);
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
-
-    ViewerAnnotator annotator = getAnnotator(viewer);
-    assert annotator != null;
-
+  public boolean isSelected(AnActionEvent e) {
+    EventData data = collectEventData(e);
     //noinspection unchecked
-    Side side = annotator.getCurrentSide(viewer, editor);
-    assert side != null;
+    return data != null && data.annotator.isAnnotationShown(data.viewer, data.side);
+  }
 
-    doAnnotate(annotator, viewer, side);
+  @Override
+  public void setSelected(AnActionEvent e, boolean state) {
+    perform(e);
   }
 
   public static <T extends DiffViewerBase> void doAnnotate(@NotNull final ViewerAnnotator<T> annotator,
@@ -391,6 +413,11 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
       AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, null, data.annotation, data.vcs, null);
     }
+
+    @Override
+    public void hideAnnotation(@NotNull TwosideTextDiffViewer viewer, @NotNull Side side) {
+      viewer.getEditor(side).getGutter().closeAllAnnotations();
+    }
   }
 
   private static class OnesideAnnotator extends ViewerAnnotator<OnesideTextDiffViewer> {
@@ -418,6 +445,11 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
       if (side != viewer.getSide()) return;
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
       AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs, null);
+    }
+
+    @Override
+    public void hideAnnotation(@NotNull OnesideTextDiffViewer viewer, @NotNull Side side) {
+      viewer.getEditor().getGutter().closeAllAnnotations();
     }
   }
 
@@ -447,6 +479,11 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
       UnifiedUpToDateLineNumberProvider lineNumberProvider = new UnifiedUpToDateLineNumberProvider(viewer, side);
       AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs, lineNumberProvider);
+    }
+
+    @Override
+    public void hideAnnotation(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
+      viewer.getEditor().getGutter().closeAllAnnotations();
     }
   }
 
@@ -495,6 +532,8 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
     public abstract boolean isAnnotationShown(@NotNull T viewer, @NotNull Side side);
 
     public abstract void showAnnotation(@NotNull T viewer, @NotNull Side side, @NotNull AnnotationData data);
+
+    public abstract void hideAnnotation(@NotNull T viewer, @NotNull Side side);
   }
 
   private abstract static class FileAnnotationLoader {
@@ -563,5 +602,19 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
   @NotNull
   private static Object key(@NotNull DiffViewer viewer, @NotNull Side side) {
     return Pair.create(viewer, side);
+  }
+
+  private static class EventData {
+    @NotNull public final DiffViewerBase viewer;
+    @NotNull public final Editor editor;
+    @NotNull public final ViewerAnnotator annotator;
+    @NotNull public final Side side;
+
+    public EventData(@NotNull DiffViewerBase viewer, @NotNull Editor editor, @NotNull ViewerAnnotator annotator, @NotNull Side side) {
+      this.viewer = viewer;
+      this.editor = editor;
+      this.annotator = annotator;
+      this.side = side;
+    }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -62,7 +63,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e));
+    final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e)) ||
+                            AnnotateDiffViewerAction.isEnabled(e);
     e.getPresentation().setEnabled(enabled);
   }
 
@@ -127,6 +129,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
   @Override
   public void setSelected(AnActionEvent e, boolean selected) {
+    if (AnnotateDiffViewerAction.isEnabled(e)) {
+      AnnotateDiffViewerAction.perform(e);
+      return;
+    }
+
     final VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
     VirtualFile selectedFile = context.getSelectedFile();
