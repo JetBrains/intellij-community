@@ -640,8 +640,9 @@ public class PyCallExpressionHelper {
     final PyCallExpression.PyMarkedCallee markedCallee = callExpression.resolveCallee(resolveContext, implicitOffset);
 
     if (markedCallee == null || argumentList == null) {
-      return new PyCallExpression.PyArgumentsMapping(null, Collections.<PyExpression, PyNamedParameter>emptyMap(),
-                                                     Collections.<PyParameter>emptyList(), Collections.<PyExpression>emptyList());
+      return new PyCallExpression.PyArgumentsMapping(callExpression, null, Collections.<PyExpression, PyNamedParameter>emptyMap(),
+                                                     Collections.<PyParameter>emptyList(), Collections.<PyExpression>emptyList(),
+                                                     Collections.<PyNamedParameter>emptyList(),Collections.<PyNamedParameter>emptyList());
     }
 
     boolean seenSingleStar = false;
@@ -649,6 +650,8 @@ public class PyCallExpressionHelper {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<PyExpression, PyNamedParameter>();
     final List<PyParameter> unmappedParameters = new ArrayList<PyParameter>();
+    final List<PyNamedParameter> parametersMappedToVariadicKeywordArguments = new ArrayList<PyNamedParameter>();
+    final List<PyNamedParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<PyNamedParameter>();
 
     final List<PyParameter> allParameters = PyUtil.getParameters(markedCallee.getCallable(), context);
     final List<PyParameter> parameters = dropImplicitParameters(allParameters, markedCallee.getImplicitOffset());
@@ -658,7 +661,7 @@ public class PyCallExpressionHelper {
     final List<PyKeywordArgument> keywordArguments = filterKeywordArguments(arguments);
     final Pair<List<PyExpression>, List<PyExpression>> variadicPositionalArgumentsAndTheirComponents = filterVariadicPositionalArguments(arguments);
     final List<PyExpression> variadicPositionalArguments = variadicPositionalArgumentsAndTheirComponents.getFirst();
-    final List<PyExpression> positionalComponentsOfVariadicArguments = variadicPositionalArgumentsAndTheirComponents.getSecond();
+    final Set<PyExpression> positionalComponentsOfVariadicArguments = new LinkedHashSet<PyExpression>(variadicPositionalArgumentsAndTheirComponents.getSecond());
     final List<PyExpression> variadicKeywordArguments = filterVariadicKeywordArguments(arguments);
 
     final List<PyExpression> allPositionalArguments = new ArrayList<PyExpression>();
@@ -670,6 +673,9 @@ public class PyCallExpressionHelper {
         final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
         final String parameterName = namedParameter.getName();
         if (namedParameter.isPositionalContainer()) {
+          for (PyExpression argument : allPositionalArguments) {
+            mappedParameters.put(argument, namedParameter);
+          }
           if (variadicPositionalArguments.size() == 1) {
             mappedParameters.put(variadicPositionalArguments.get(0), namedParameter);
           }
@@ -677,6 +683,9 @@ public class PyCallExpressionHelper {
           variadicPositionalArguments.clear();
         }
         else if (namedParameter.isKeywordContainer()) {
+          for (PyKeywordArgument argument : keywordArguments) {
+            mappedParameters.put(argument, namedParameter);
+          }
           if (variadicKeywordArguments.size() == 1) {
             mappedParameters.put(variadicKeywordArguments.get(0), namedParameter);
           }
@@ -688,8 +697,13 @@ public class PyCallExpressionHelper {
           if (keywordArgument != null) {
             mappedParameters.put(keywordArgument, namedParameter);
           }
-          else if (variadicKeywordArguments.isEmpty() && !namedParameter.hasDefaultValue()) {
-            unmappedParameters.add(namedParameter);
+          else if (variadicKeywordArguments.isEmpty()) {
+            if (!namedParameter.hasDefaultValue()) {
+              unmappedParameters.add(namedParameter);
+            }
+          }
+          else {
+            parametersMappedToVariadicKeywordArguments.add(namedParameter);
           }
         }
         else {
@@ -702,6 +716,12 @@ public class PyCallExpressionHelper {
               unmappedParameters.add(namedParameter);
             }
             else {
+              if (!variadicPositionalArguments.isEmpty()) {
+                parametersMappedToVariadicPositionalArguments.add(namedParameter);
+              }
+              if (!variadicKeywordArguments.isEmpty()) {
+                parametersMappedToVariadicKeywordArguments.add(namedParameter);
+              }
               mappedVariadicArgumentsToParameters = true;
             }
           }
@@ -709,6 +729,9 @@ public class PyCallExpressionHelper {
             final PyExpression positionalArgument = next(allPositionalArguments);
             if (positionalArgument != null) {
               mappedParameters.put(positionalArgument, namedParameter);
+              if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+                parametersMappedToVariadicPositionalArguments.add(namedParameter);
+              }
             }
             else if (!namedParameter.hasDefaultValue()) {
               unmappedParameters.add(namedParameter);
@@ -750,7 +773,9 @@ public class PyCallExpressionHelper {
     unmappedArguments.addAll(variadicPositionalArguments);
     unmappedArguments.addAll(variadicKeywordArguments);
 
-    return new PyCallExpression.PyArgumentsMapping(markedCallee, mappedParameters, unmappedParameters, unmappedArguments);
+    return new PyCallExpression.PyArgumentsMapping(callExpression, markedCallee, mappedParameters, unmappedParameters, unmappedArguments,
+                                                   parametersMappedToVariadicPositionalArguments,
+                                                   parametersMappedToVariadicKeywordArguments);
   }
 
   @Nullable
@@ -831,11 +856,11 @@ public class PyCallExpressionHelper {
     return results;
   }
 
-  private static boolean isVariadicKeywordArgument(@NotNull PyExpression argument) {
+  public static boolean isVariadicKeywordArgument(@NotNull PyExpression argument) {
     return argument instanceof PyStarArgument && ((PyStarArgument)argument).isKeyword();
   }
 
-  private static boolean isVariadicPositionalArgument(@NotNull PyExpression argument) {
+  public static boolean isVariadicPositionalArgument(@NotNull PyExpression argument) {
     return argument instanceof PyStarArgument && !((PyStarArgument)argument).isKeyword();
   }
 

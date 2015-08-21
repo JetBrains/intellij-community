@@ -140,17 +140,33 @@ public interface PyCallExpression extends PyCallSiteExpression {
   boolean isCallee(@NotNull FQNamesProvider... name);
 
   class PyArgumentsMapping {
+    @NotNull private final PyCallExpression myCallExpression;
     @Nullable private final PyMarkedCallee myCallee;
     @NotNull private final Map<PyExpression, PyNamedParameter> myMappedParameters;
     @NotNull private final List<PyParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
+    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicPositionalArguments;
+    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicKeywordArguments;
 
-    public PyArgumentsMapping(@Nullable PyMarkedCallee markedCallee, @NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
-                              @NotNull List<PyParameter> unmappedParameters, @NotNull List<PyExpression> unmappedArguments) {
+    public PyArgumentsMapping(@NotNull PyCallExpression expression,
+                              @Nullable PyMarkedCallee markedCallee,
+                              @NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
+                              @NotNull List<PyParameter> unmappedParameters,
+                              @NotNull List<PyExpression> unmappedArguments,
+                              @NotNull List<PyNamedParameter> parametersMappedToVariadicPositionalArguments,
+                              @NotNull List<PyNamedParameter> parametersMappedToVariadicKeywordArguments) {
+      myCallExpression = expression;
       myCallee = markedCallee;
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
       myUnmappedArguments = unmappedArguments;
+      myParametersMappedToVariadicPositionalArguments = parametersMappedToVariadicPositionalArguments;
+      myParametersMappedToVariadicKeywordArguments = parametersMappedToVariadicKeywordArguments;
+    }
+
+    @NotNull
+    public PyCallExpression getCallExpression() {
+      return myCallExpression;
     }
 
     @Nullable
@@ -171,6 +187,16 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @NotNull
     public List<PyExpression> getUnmappedArguments() {
       return myUnmappedArguments;
+    }
+
+    @NotNull
+    public List<PyNamedParameter> getParametersMappedToVariadicPositionalArguments() {
+      return myParametersMappedToVariadicPositionalArguments;
+    }
+
+    @NotNull
+    public List<PyNamedParameter> getParametersMappedToVariadicKeywordArguments() {
+      return myParametersMappedToVariadicKeywordArguments;
     }
   }
 
