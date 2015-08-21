@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
@@ -48,6 +47,7 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.IMPLEMENTED_FQN;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.INDEX_ID;
 
 /**
  * Created by Max Medvedev on 03/03/14
@@ -333,7 +333,7 @@ public class GrTypeDefinitionMembersCache {
         LOG.assertTrue(trait != null);
 
         List<CandidateInfo> traitFields = new TraitProcessor<PsiField>(trait, resolveResult.getSubstitutor()) {
-          protected void processTrait(@NotNull PsiClass trait, @NotNull PsiSubstitutor substitutor) {
+          protected void processTrait(@NotNull final PsiClass trait, @NotNull final PsiSubstitutor substitutor) {
             if (trait instanceof GrTypeDefinition) {
               for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
                 addCandidate(field, substitutor);
@@ -346,27 +346,31 @@ public class GrTypeDefinitionMembersCache {
               if (traitFieldHelper == null) return;
 
               final VirtualFile virtualFile = traitFieldHelper.getContainingFile().getVirtualFile();
-              final String key = virtualFile.getCanonicalPath();
-              if (key == null) return;
-
-              final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
-                GroovyTraitFieldsFileIndex.INDEX_ID, key, trait.getResolveScope()
-              );
-              for (Collection<TraitFieldDescriptor> collection : values) {
-                for (TraitFieldDescriptor descriptor : collection) {
-                  final GrLightField field = new GrLightField(
-                    trait,
-                    descriptor.getName(),
-                    myElementFactory.createTypeFromText(descriptor.getTypeString(), trait),
-                    trait
-                  );
-                  if (descriptor.isStatic()) {
-                    field.getModifierList().addModifier(STATIC_MASK);
+              FileBasedIndex.getInstance().processValues(
+                INDEX_ID,
+                FileBasedIndex.getFileId(virtualFile),
+                virtualFile,
+                new FileBasedIndex.ValueProcessor<Collection<TraitFieldDescriptor>>() {
+                  @Override
+                  public boolean process(VirtualFile file, Collection<TraitFieldDescriptor> values) {
+                    for (TraitFieldDescriptor descriptor : values) {
+                      final GrLightField field = new GrLightField(
+                        trait,
+                        descriptor.getName(),
+                        myElementFactory.createTypeFromText(descriptor.getTypeString(), trait),
+                        trait
+                      );
+                      if (descriptor.isStatic()) {
+                        field.getModifierList().addModifier(STATIC_MASK);
+                      }
+                      field.getModifierList().addModifier(descriptor.isPublic() ? PUBLIC_MASK : PRIVATE_MASK);
+                      addCandidate(field, substitutor);
+                    }
+                    return true;
                   }
-                  field.getModifierList().addModifier(descriptor.isPublic() ? PUBLIC_MASK : PRIVATE_MASK);
-                  addCandidate(field, substitutor);
-                }
-              }
+                },
+                trait.getResolveScope()
+              );
             }
           }
         }.getResult();
