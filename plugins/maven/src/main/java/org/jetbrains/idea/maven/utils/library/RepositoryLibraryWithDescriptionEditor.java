@@ -6,35 +6,32 @@ import org.jetbrains.annotations.NotNull;
 
 public class RepositoryLibraryWithDescriptionEditor
   extends LibraryPropertiesEditorBase<RepositoryLibraryProperties, RepositoryLibraryType> {
-  private final RepositoryLibraryType libraryType;
 
-  public RepositoryLibraryWithDescriptionEditor(LibraryEditorComponent<RepositoryLibraryProperties> editorComponent,
-                                                RepositoryLibraryType libraryType) {
-    super(editorComponent, libraryType, null);
-    this.libraryType = libraryType;
+  public RepositoryLibraryWithDescriptionEditor(LibraryEditorComponent<RepositoryLibraryProperties> editorComponent) {
+    super(editorComponent, RepositoryLibraryType.getInstance(), null);
   }
 
   @Override
   public void apply() {
-
   }
 
   @Override
   protected void edit() {
     @NotNull RepositoryLibraryProperties properties = myEditorComponent.getProperties();
     String oldVersion = properties.getVersion();
-    boolean wasGeneratedName = libraryType.getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
+    boolean wasGeneratedName =
+      RepositoryLibraryType.getInstance().getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
     RepositoryLibraryPropertiesEditor editor = new RepositoryLibraryPropertiesEditor(
       myEditorComponent.getProject(),
       properties);
     editor.init();
-    editor.setTitle(libraryType.getDescription(properties));
+    editor.setTitle(RepositoryLibraryType.getInstance().getDescription(properties));
     if (!editor.showAndGet() || oldVersion.equals(editor.getSelectedVersion())) {
       return;
     }
     myEditorComponent.getProperties().loadState(editor.getProperties());
     if (wasGeneratedName) {
-      myEditorComponent.renameLibrary(libraryType.getDescription(properties));
+      myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }
     myEditorComponent.getLibraryEditor().removeAllRoots();
     myEditorComponent.getLibraryEditor().addRoots(RepositoryUtils.download(myEditorComponent.getProject(), properties));

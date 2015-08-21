@@ -65,7 +65,7 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
 
   @Override
   public LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<RepositoryLibraryProperties> component) {
-    return new RepositoryLibraryWithDescriptionEditor(component, this);
+    return new RepositoryLibraryWithDescriptionEditor(component);
     //    return new RepositoryLibraryEditor(component, this);
   }
 
@@ -86,6 +86,7 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   @NotNull
   @Override
   public String getDescription(@NotNull RepositoryLibraryProperties properties) {
-    return properties.getGroupId() + ":" + properties.getArtifactId();
+    RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(properties);
+    return description.getDisplayName() + ":" + properties.getVersion();
   }
 }
