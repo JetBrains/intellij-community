@@ -21,7 +21,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor;
 import com.intellij.psi.javadoc.PsiDocToken;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +54,7 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
         return true;
       }
     })), filePathReferenceProvider);
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocToken.class), ArbitraryPlaceUrlReferenceProvider.INSTANCE);
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocToken.class),
+                                        CommentsReferenceContributor.COMMENTS_REFERENCE_PROVIDER_TYPE.getProvider());
   }
 }
