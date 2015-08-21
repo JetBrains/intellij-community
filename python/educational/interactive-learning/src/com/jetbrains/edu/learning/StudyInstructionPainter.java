@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.actions.*;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +49,7 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     addAction(painter, "Reset current task file", StudyRefreshTaskFileAction.ACTION_ID, StudyRefreshTaskFileAction.SHORTCUT, false);
     addAction(painter, "Check task", StudyCheckAction.ACTION_ID, StudyCheckAction.SHORTCUT, false);
     addAction(painter, "Get hint for the answer placeholder", StudyShowHintAction.ACTION_ID, StudyShowHintAction.SHORTCUT, false);
-    painter.appendLine("To see your progress open the 'Course Description' panel").smaller().withBullet();
+    painter.appendLine("To see your progress open the '" + StudyProgressToolWindowFactory.ID + "' panel").smaller().withBullet();
                        painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
                          @Override
                          public Couple<Integer> fun(Integer width, Integer height) {
