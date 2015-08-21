@@ -413,7 +413,7 @@
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
 
-    <intentionAction>                                                Å
+    <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
     </intentionAction>
 
