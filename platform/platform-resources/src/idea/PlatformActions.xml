@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<component>
+<idea-plugin>
   <actions>
 
     <group id="SwitchViewActions">
@@ -742,4 +742,4 @@
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
   </actions>
-</component>
+</idea-plugin>

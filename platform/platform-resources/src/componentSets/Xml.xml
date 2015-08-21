@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <project-components>
     <component>
       <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</implementation-class>
@@ -14,4 +14,4 @@
       <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
     </component>
   </project-components>
-</components>
+</idea-plugin>
