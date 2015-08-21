@@ -580,6 +580,7 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
 
         val editorsHost = EditorPoolHost.getInModel(model!!.root)
         editorsHost.addEditor(textEditor, file)
+        setActive(file)
 
 //        val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
 //        tabHost.addEditor(textEditor, file, active = true)

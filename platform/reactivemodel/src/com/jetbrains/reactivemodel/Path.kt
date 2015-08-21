@@ -26,6 +26,8 @@ public data class Path(val components: List<Any>) {
   }
 }
 
+fun Path.toModel() = ListModel(components.map { PrimitiveModel(it) })
+
 fun Path.isPrefixOf(path: Path): Boolean =
     this.components
         .zip(path.components)

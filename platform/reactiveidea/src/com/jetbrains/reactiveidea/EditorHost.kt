@@ -226,6 +226,8 @@ public class EditorHost(val reactiveModel: ReactiveModel,
     }
   }
 
+  fun setActive(model: MapModel, active: Boolean = true): MapModel = model.putIn(path / activePath, PrimitiveModel(active))
+
   private fun writeSelectionAndCaret(m: MapModel): MapModel {
     val textRange = TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())
     val caretOffset = editor.getCaretModel().getOffset()

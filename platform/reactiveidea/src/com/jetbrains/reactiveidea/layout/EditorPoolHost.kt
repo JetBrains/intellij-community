@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.reactiveidea.EditorHost
 import com.jetbrains.reactiveidea.ProjectHost
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
@@ -44,9 +45,7 @@ class EditorPoolHost(val reactiveModel: ReactiveModel,
     val idx = nextIdx()
     reactiveModel.host(path / "values" / idx) { path, lifetime, init ->
       val host = EditorHost(reactiveModel, path, lifetime, file, editor, init)
-      if (active) {
-        init += { it.putIn(path / "activate", PrimitiveModel(idx)) }
-      }
+      init += { host.setActive(it, active) }
       init += { it.putIn(counterPath, PrimitiveModel(idx.toInt() + 1)) }
       host
     }
@@ -54,7 +53,7 @@ class EditorPoolHost(val reactiveModel: ReactiveModel,
 
 
   fun setActive(model: MapModel, editorPath: Path): MapModel =
-      model.putIn(path / "activate", PrimitiveModel(editorPath.components.last()))
+      model.putIn(Path(ProjectHost.layout) / "activate", editorPath.toModel())
 
   // todo. we should rewrite transactions to avoid getting current model
   private fun nextIdx(): String = (ReactiveModel.current()!!.root.getIn(counterPath) as PrimitiveModel<*>).value.toString()

@@ -20,6 +20,11 @@ public data class ListModel(val list: PersistentVector<Model> = Persistents.vect
     public fun add(m: Model): ListModel = ListModel(list.plus(m))
 
     override fun patch(diff: Diff<Model>): Model {
+        if(diff is ValueDiff<*>) { // new value is path
+            assert(diff.newValue is ListModel)
+            return diff.newValue as ListModel
+        }
+
         if (diff !is ListDiff) {
             throw AssertionError()
         }
