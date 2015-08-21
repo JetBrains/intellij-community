@@ -587,6 +587,7 @@
     <lang.namesValidator implementationClass="org.jetbrains.plugins.groovy.lang.GroovyNamesValidator" language="Groovy"/>
 
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex"/>
 
     <patterns.patternClass className="org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns" alias="groovy"/>
 
