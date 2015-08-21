@@ -44,6 +44,8 @@ public val editorTag: Tag<MapModel> = Tag("editor")
 
 public val editorsTag: Tag<MapModel> = Tag("editors")
 
+public val componentTag: Tag<MapModel> = Tag("components")
+
 public fun getTag(name: String): Tag<*>? = tagMap[name]
 
 public fun tagsModel(vararg tags: String): Model = ListModel(tags.map { PrimitiveModel(it) }.toArrayList())

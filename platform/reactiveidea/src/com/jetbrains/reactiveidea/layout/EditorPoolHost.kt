@@ -45,15 +45,13 @@ class EditorPoolHost(val reactiveModel: ReactiveModel,
     val idx = nextIdx()
     reactiveModel.host(path / "values" / idx) { path, lifetime, init ->
       val host = EditorHost(reactiveModel, path, lifetime, file, editor, init)
-      init += { host.setActive(it, active) }
+      if (active) {
+        init += { ComponentHost.getInModel(it).setActive(it, path) }
+      }
       init += { it.putIn(counterPath, PrimitiveModel(idx.toInt() + 1)) }
       host
     }
   }
-
-
-  fun setActive(model: MapModel, editorPath: Path): MapModel =
-      model.putIn(Path(ProjectHost.layout) / "activate", editorPath.toModel())
 
   // todo. we should rewrite transactions to avoid getting current model
   private fun nextIdx(): String = (ReactiveModel.current()!!.root.getIn(counterPath) as PrimitiveModel<*>).value.toString()

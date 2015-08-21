@@ -56,10 +56,8 @@ class UsagesPoolHost(val project: Project,
     val usagePath = path / "values" / idx
     reactiveModel.host(usagePath) { path, lifetime, init ->
       val host = UsagesHost(reactiveModel, path, lifetime, usageView as ServerUsageView, init)
-      init += {
-        it.putIn(counterPath, PrimitiveModel(idx.toInt() + 1))
-            .putIn(path / "active", PrimitiveModel(true))
-      }
+      init += { it.putIn(counterPath, PrimitiveModel(idx.toInt() + 1)) }
+      init += { ComponentHost.getInModel(it).setActive(it, path) }
       host
     }
   }

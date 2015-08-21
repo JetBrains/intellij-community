@@ -43,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactiveidea.layout.EditorPoolHost
+import com.jetbrains.reactiveidea.layout.ComponentHost
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -604,8 +605,8 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
       val host = editor.getUserData(EditorHost.editorHostKey)
       val path = editor.getUserData(pathKey)
       host.reactiveModel.transaction { m ->
-        val editorsHost = EditorPoolHost.getInModel(model!!.root)
-        val model = editorsHost.setActive(m, path)
+        val layoutHost = ComponentHost.getInModel(model!!.root)
+        val model = layoutHost.setActive(m, path)
 
         (IdeDocumentHistory.getInstance(proj) as IdeDocumentHistoryImpl).onSelectionChanged()
         model

@@ -16,21 +16,30 @@
 package com.jetbrains.reactiveidea.layout
 
 import com.intellij.openapi.project.Project
+import com.jetbrains.reactiveidea.ProjectHost
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
+import com.jetbrains.reactivemodel.util.host
 
-class LayoutHost(val project: Project,
-                 val reactiveModel: ReactiveModel,
-                 val path: Path,
-                 val lifetime: Lifetime,
-                 init: Initializer) : Host {
+class ComponentHost(val project: Project,
+                    val reactiveModel: ReactiveModel,
+                    val path: Path,
+                    val lifetime: Lifetime,
+                    init: Initializer) : Host {
 
   companion object {
     val counter = "counter"
     val editors = "editors"
     val usages = "usages"
+    val active = "active"
+
+    fun getInModel(model: MapModel): ComponentHost = componentTag.getIn(model).first().meta.host()
   }
+
+  override val tags: Array<String>
+    get() = arrayOf("components")
 
   init {
     init += {
@@ -43,5 +52,8 @@ class LayoutHost(val project: Project,
       UsagesPoolHost(project, reactiveModel, hostpath, lifetime, initializer, path / counter)
     }
   }
+
+  fun setActive(model: MapModel, componentPath: Path): MapModel =
+      model.putIn(path / active, PrimitiveModel(componentPath.components.last()))
 }
 

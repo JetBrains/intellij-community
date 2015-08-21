@@ -22,7 +22,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.psi.PsiDocumentManager
 import com.jetbrains.reactiveidea.history.host.HistoryHost
 import com.jetbrains.reactiveidea.history.host.historyPath
-import com.jetbrains.reactiveidea.layout.LayoutHost
+import com.jetbrains.reactiveidea.layout.ComponentHost
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.util.Lifetime
 
@@ -30,7 +30,7 @@ class ProjectHost(path: Path, lifetime: Lifetime, initializer: Initializer, val 
   val startupManager = StartupManager.getInstance(project)
 
   companion object {
-    val layout = "layout"
+    val components = "components"
   }
 
   init {
@@ -45,8 +45,8 @@ class ProjectHost(path: Path, lifetime: Lifetime, initializer: Initializer, val 
     reactiveModel.host(historyPath) { path, lifetime, initializer ->
       HistoryHost(reactiveModel, path, lifetime, initializer)
     }
-    reactiveModel.host(path / layout) { path, lifetime, initializer ->
-      LayoutHost(project, reactiveModel, path, lifetime, initializer)
+    reactiveModel.host(path / components) { path, lifetime, initializer ->
+      ComponentHost(project, reactiveModel, path, lifetime, initializer)
     }
   }
 
