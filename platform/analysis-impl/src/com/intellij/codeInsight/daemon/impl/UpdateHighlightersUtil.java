@@ -276,42 +276,46 @@ public class UpdateHighlightersUtil {
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     final boolean[] changed = {false};
-    RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
+    markup.inBulkUpdate(new Runnable() {
       @Override
-      public boolean generateInStartOffsetOrder(@NotNull final Processor<HighlightInfo> processor) {
-        return ContainerUtil.process(infos, processor);
-      }
-    }, new SweepProcessor<HighlightInfo>() {
-      @Override
-      public boolean process(int offset, @NotNull HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
-        if (!atStart) {
-          return true;
-        }
-        if (info.isFileLevelAnnotation() && psiFile != null && psiFile.getViewProvider().isPhysical()) {
-          codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
-          changed[0] = true;
-          return true;
-        }
-        if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
-          return true;
-        }
-        if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset() && psiFile != null) {
+      public void run() {
+        RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>() {
+          @Override
+          public boolean generateInStartOffsetOrder(@NotNull final Processor<HighlightInfo> processor) {
+            return ContainerUtil.process(infos, processor);
+          }
+        }, new SweepProcessor<HighlightInfo>() {
+          @Override
+          public boolean process(int offset, @NotNull HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
+            if (!atStart) {
+              return true;
+            }
+            if (info.isFileLevelAnnotation() && psiFile != null && psiFile.getViewProvider().isPhysical()) {
+              codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
+              changed[0] = true;
+              return true;
+            }
+            if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
+              return true;
+            }
+            if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset() && psiFile != null) {
           createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, ranges2markersCache, severityRegistrar);
+              changed[0] = true;
+            }
+            return true;
+          }
+        });
+        for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
+          highlighter.dispose();
           changed[0] = true;
         }
-        return true;
+
+        if (changed[0]) {
+          clearWhiteSpaceOptimizationFlag(document);
+        }
+        assertMarkupConsistent(markup, project);
       }
     });
-    for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      highlighter.dispose();
-      changed[0] = true;
-    }
-
-    if (changed[0]) {
-      clearWhiteSpaceOptimizationFlag(document);
-    }
-    assertMarkupConsistent(markup, project);
-    markup.fireFlush();
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,

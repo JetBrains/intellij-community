@@ -44,7 +44,6 @@ public class DocumentHost(val reactiveModel: ReactiveModel,
                           init: Initializer) : Host {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
 
-  private val recursionGuard = Guard()
   var documentUpdated: Signal<Any?>? = null
 
   private val pendingEvents = arrayListOf<DocumentEvent>()
@@ -54,28 +53,25 @@ public class DocumentHost(val reactiveModel: ReactiveModel,
   init {
     val listener = object : DocumentAdapter() {
       override fun documentChanged(e: DocumentEvent) {
-        if (recursionGuard.locked) {
-          return
-        }
         pendingEvents.add(e)
       }
     }
     val commandListener = object : CommandAdapter() {
       override fun commandFinished(event: CommandEvent?) {
-        if (event?.getCommandName() != eventListenerCommandName) {
-          reactiveModel.transaction({ m ->
-            var result = m
-            for (e in pendingEvents) {
-              result = (path / "events" / Last).putIn(result, documentEvent(e))
-            }
-            var i = doc.getUserData(TIMESTAMP)
-            if (i == null) i = 0
-            doc.putUserData(TIMESTAMP, i + pendingEvents.size())
-            result
-          })
-        } else {
+
+        reactiveModel.transaction({ m ->
+          var result = m
+          val eventsInModel = (m.getIn(path / "events") as? ListModel)?.size() ?: 0
+          var ts = doc.getUserData(TIMESTAMP) ?: 0
+          for (i in (eventsInModel - ts..pendingEvents.size() - 1)) {
+            val e = pendingEvents[i]
+            result = (path / "events" / Last).putIn(result, documentEvent(e))
+          }
+
+          doc.putUserData(TIMESTAMP, (result.getIn(path / "events") as ListModel).size())
           pendingEvents.clear()
-        }
+          result
+        })
       }
     }
 
@@ -113,22 +109,18 @@ public class DocumentHost(val reactiveModel: ReactiveModel,
           timestamp = 0
         }
         val size = evts.size()
-        doc.putUserData(TIMESTAMP, size)
 
         ApplicationManager.getApplication().runWriteAction {
           CommandProcessor.getInstance().executeCommand(project, {
             caretGuard.lock {
-              if (!recursionGuard.locked) {
-                recursionGuard.lock {
-                  for (i in (timestamp..size - 1)) {
-                    val eventModel = evts[i]
-                    play(eventModel, doc)
-                  }
-                }
+              for (i in (timestamp..size - 1)) {
+                val eventModel = evts[i]
+                play(eventModel, doc)
               }
             }
           }, eventListenerCommandName, DocCommandGroupId.noneGroupId(doc))
         }
+        doc.putUserData(TIMESTAMP, size)
       }
       evts
     }
@@ -143,8 +135,8 @@ public class DocumentHost(val reactiveModel: ReactiveModel,
 
     init += {
       it
-        .putIn(path / "text", PrimitiveModel(doc.getText()))
-        .putIn(path / "events", ListModel())
+          .putIn(path / "text", PrimitiveModel(doc.getText()))
+          .putIn(path / "events", ListModel())
     }
   }
 }

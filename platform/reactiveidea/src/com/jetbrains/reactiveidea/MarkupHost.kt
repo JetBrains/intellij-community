@@ -19,28 +19,25 @@ import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.event.MarkupModelListenerEx
 import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ColorUtil
+import com.intellij.util.Alarm
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
-import com.jetbrains.reactivemodel.models.MapDiff
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.Signal
-import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Lifetime
 import java.awt.Color
 import java.util.HashMap
 
 public class MarkupHost(val markupModel: MarkupModelEx,
-                              val reactiveModel: ReactiveModel,
-                              val path: Path,
-                              val lifetime: Lifetime,
-                              init: Initializer) : Host {
+                        val reactiveModel: ReactiveModel,
+                        val path: Path,
+                        val lifetime: Lifetime,
+                        init: Initializer) : Host {
   var markupIdFactory = 0
 
   val markupIdKey = Key<String>("com.jetbrains.reactiveidea.markupId." + reactiveModel.name)
@@ -54,18 +51,28 @@ public class MarkupHost(val markupModel: MarkupModelEx,
     }
 
     val markupBuffer = HashMap<String, Model>()
+    val flushAlarm = Alarm(markupListenerDisposable)
 
     markupModel.addMarkupModelListener(markupListenerDisposable, object : MarkupModelListenerEx {
-      override fun flush() {
-        if (!markupBuffer.isEmpty() && !disposed) {
-          reactiveModel.transaction { m ->
+      override fun flush(bulk: Boolean) {
+        if (bulk) {
+          doFlush()
+        } else {
+          flushAlarm.cancelAllRequests()
+          flushAlarm.addRequest({ doFlush() }, 200)
+        }
+      }
+
+      private fun doFlush() {
+        reactiveModel.transaction { m ->
+          if (!markupBuffer.isEmpty() && !disposed) {
             var result = m;
             for ((k, v) in markupBuffer) {
               result = (path / k).putIn(result, v)
             }
             markupBuffer.clear()
             result
-          }
+          } else m
         }
       }
 
@@ -94,11 +101,11 @@ public class MarkupHost(val markupModel: MarkupModelEx,
 
     init += {
       it.putIn(path,
-        MapModel(markupModel.getAllHighlighters()
-            .map { highlighter ->
-              (markupIdFactory++).toString() to marshalHighlighter(highlighter)
-            }
-            .toMap()))
+          MapModel(markupModel.getAllHighlighters()
+              .map { highlighter ->
+                (markupIdFactory++).toString() to marshalHighlighter(highlighter)
+              }
+              .toMap()))
     }
   }
 }

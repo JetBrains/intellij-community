@@ -59,6 +59,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final RangeHighlighterTree myHighlighterTree;          // this tree holds regular highlighters with target = HighlighterTargetArea.EXACT_RANGE
   private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
   private boolean myFlush = false;
+  private boolean myInBulkUpdate;
 
   MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
@@ -250,26 +251,42 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     ensureFlush();
   }
 
+  @Override
+  public void inBulkUpdate(@NotNull Runnable runnable) {
+    if (myInBulkUpdate) {
+      runnable.run();
+      return;
+    }
+    myInBulkUpdate = true;
+    try {
+      runnable.run();
+    } finally {
+      myInBulkUpdate = false;
+      fireFlush(true);
+    }
+  }
+
+
   private void ensureFlush() {
+    if (myInBulkUpdate) return;
     if (myFlush) return;
     myFlush = true;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        fireFlush();
+        fireFlush(false); // ?
         myFlush = false;
       }
     });
   }
 
   @Override
-  public void fireFlush() {
+  public void fireFlush(boolean bulk) {
     for (MarkupModelListener listener : myListeners) {
       if (listener instanceof MarkupModelListenerEx) {
-        ((MarkupModelListenerEx)listener).flush();
+        ((MarkupModelListenerEx)listener).flush(bulk);
       }
     }
-
   }
 
   @Override

@@ -16,5 +16,5 @@
 package com.intellij.openapi.editor.impl.event;
 
 public interface MarkupModelListenerEx extends MarkupModelListener {
-  void flush();
+  void flush(boolean bulk);
 }

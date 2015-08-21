@@ -76,6 +76,11 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
+  public void inBulkUpdate(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
     throw new ProcessCanceledException();
@@ -159,7 +164,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  public void fireFlush() {
+  public void fireFlush(boolean bulk) {
 
   }
 
