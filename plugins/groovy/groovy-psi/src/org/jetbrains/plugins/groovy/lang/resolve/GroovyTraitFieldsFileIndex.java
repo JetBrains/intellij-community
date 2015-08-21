@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
@@ -51,10 +53,10 @@ public class GroovyTraitFieldsFileIndex
              DataExternalizer<Collection<TraitFieldDescriptor>> {
 
   public static final ID<Integer, Collection<TraitFieldDescriptor>> INDEX_ID = ID.create("groovy.trait.fields");
-  public static final InputFilter INPUT_FILTER = new InputFilter() {
+  public static final InputFilter INPUT_FILTER = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
     @Override
     public boolean acceptInput(@NotNull VirtualFile file) {
-      return file.getName().endsWith("$Trait$FieldHelper.class");
+      return StringUtil.endsWith(file.getNameSequence(), "$Trait$FieldHelper.class");
     }
   };
 
