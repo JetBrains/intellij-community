@@ -303,8 +303,8 @@ public class ExtensionsImplTest {
     assertEquals("1", extensions[0].getText());
     assertEquals("2", extensions[1].getText());
     assertEquals("3", extensions[2].getText());
-    assertEquals("4", extensions[3].getText());
-    assertEquals("5", extensions[4].getText());
+    assertTrue("4".equals(extensions[3].getText()) || "5".equals(extensions[3].getText()) );
+    assertTrue("4".equals(extensions[4].getText()) || "5".equals(extensions[4].getText()) );
     assertEquals("6", extensions[5].getText());
     assertEquals("7", extensions[6].getText());
     assertEquals("8", extensions[7].getText());
