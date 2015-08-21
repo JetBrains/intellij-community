@@ -19,7 +19,7 @@ import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.easymock.EasyMock;
+import org.easymock.classextension.EasyMock;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 
