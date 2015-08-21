@@ -21,7 +21,6 @@ import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.testFramework.FileStructureTestBase;
-import com.intellij.testFramework.IdeaTestCase;
 
 /**
  * @author Konstantin Bulenkov
@@ -46,13 +45,13 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
   }
 
   public void setShowAnonymous(boolean show) {
-    myPopup.setTreeActionState(JavaAnonymousClassesNodeProvider.class, show);
-    update();
+    myPopupFixture.getPopup().setTreeActionState(JavaAnonymousClassesNodeProvider.class, show);
+    myPopupFixture.update();
   }
 
   public void setShowParents(boolean show) {
-    myPopup.setTreeActionState(JavaInheritedMembersNodeProvider.class, show);
-    update();
+    myPopupFixture.getPopup().setTreeActionState(JavaInheritedMembersNodeProvider.class, show);
+    myPopupFixture.update();
   }
 
   @Override

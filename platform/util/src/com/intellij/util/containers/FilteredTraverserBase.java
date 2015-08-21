@@ -187,14 +187,14 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
 
   protected static class Meta<T> {
-    public final Iterable<? extends T> roots;
-    public final TreeTraversal traversal;
-    public final Condition<? super T> expandFilter;
-    public final Condition<? super T> childFilter;
-    public final Condition<? super T> resultFilter;
+    final Iterable<? extends T> roots;
+    final TreeTraversal traversal;
+    final Condition<? super T> expandFilter;
+    final Condition<? super T> childFilter;
+    final Condition<? super T> resultFilter;
 
-    public final Condition<? super T> forceExclude;
-    public final Condition<? super T> forceExpandAndSkip;
+    final Condition<? super T> forceExclude;
+    final Condition<? super T> forceExpandAndSkip;
 
     public Meta(@NotNull Iterable<? extends T> roots,
                 @NotNull TreeTraversal traversal,

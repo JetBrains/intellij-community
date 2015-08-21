@@ -37,7 +37,11 @@ public abstract class RunManagerAdapter implements RunManagerListener {
   public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
   }
 
-  @Override
   public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+  }
+
+  @Override
+  public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId) {
+    runConfigurationChanged(settings);
   }
 }

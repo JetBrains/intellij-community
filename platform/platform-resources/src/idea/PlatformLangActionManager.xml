@@ -1,4 +1,4 @@
-<component xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <actions>
     <group id="LookupActions">
       <!-- these must be declared before standard EnterAction and TabAction -->
@@ -24,9 +24,9 @@
 
   </actions>
 
-  <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
@@ -57,4 +57,4 @@
     </reference>
   </actions>
 
-</component>
+</idea-plugin>

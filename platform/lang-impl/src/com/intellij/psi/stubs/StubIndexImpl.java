@@ -77,33 +77,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private StubIndexState myPreviouslyRegistered;
 
   public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
-    final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
-
-    StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
-    StringBuilder updated = new StringBuilder();
-    for (StubIndexExtension extension : extensions) {
-      @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean);
-      if (rebuildRequested) {
-        updated.append(extension).append(' ');
-      }
-    }
-    if (updated.length() > 0) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        requestRebuild();
-      }
-      else {
-        final Throwable e = new Throwable(updated.toString());
-        // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            forceRebuild(e);
-          }
-        }, ModalityState.NON_MODAL);
-      }
-    }
-    dropUnregisteredIndices();
-
     myStubProcessingHelper = new StubProcessingHelper(fileBasedIndex);
   }
 
@@ -385,6 +358,36 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   @Override
   public void initComponent() {
+    try {
+      final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
+
+      StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
+      StringBuilder updated = new StringBuilder();
+      for (StubIndexExtension extension : extensions) {
+        @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean);
+        if (rebuildRequested) {
+          updated.append(extension).append(' ');
+        }
+      }
+      if (updated.length() > 0) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          requestRebuild();
+        }
+        else {
+          final Throwable e = new Throwable(updated.toString());
+          // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              forceRebuild(e);
+            }
+          }, ModalityState.NON_MODAL);
+        }
+      }
+      dropUnregisteredIndices();
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   @Override

@@ -20,7 +20,7 @@ public class PythonNoseTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test1.py");
+        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test1.py", 0);
       }
 
       @Override
@@ -40,7 +40,7 @@ public class PythonNoseTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test2.py");
+        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test2.py", 0);
       }
 
       @Override

@@ -29,9 +29,9 @@ import java.io.IOException;
  */
 public class PyTestTestProcessRunner extends PyScriptTestProcessRunner<PyTestRunConfiguration> {
   public PyTestTestProcessRunner(@NotNull final String workingFolder,
-                                 @NotNull final String scriptName) {
+                                 @NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(PythonTestConfigurationType.getInstance().PY_PYTEST_FACTORY,
-          PyTestRunConfiguration.class, workingFolder, scriptName);
+          PyTestRunConfiguration.class, workingFolder, scriptName, timesToRerunFailedTests);
   }
 
   @Override

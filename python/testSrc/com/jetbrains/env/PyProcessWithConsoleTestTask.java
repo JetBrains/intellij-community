@@ -28,6 +28,8 @@ import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * <h1>Task that knows how to execute some process with console.</h1>
  * <p>
@@ -66,7 +68,14 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     createTempSdk(sdkHome, myRequiredSdkType);
     prepare();
     final T runner = createProcessRunner();
+    do {
+      executeRunner(sdkHome, runner);
+    }
+    while (runner.shouldRunAgain());
+    Disposer.dispose(runner);
+  }
 
+  private void executeRunner(final String sdkHome, final T runner) throws InterruptedException, InvocationTargetException {
     // Semaphore to wait end of process
     final Semaphore processFinishedSemaphore = new Semaphore();
     processFinishedSemaphore.down();
@@ -113,7 +122,6 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     processFinishedSemaphore.waitFor();
     XDebuggerTestUtil.waitForSwing();
     checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
-    Disposer.dispose(runner);
   }
 
   /**
@@ -138,7 +146,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    *               Check concrete runner documentation
    * @param stdout process stdout
    * @param stderr process stderr
-   * @param all joined stdout and stderr
+   * @param all    joined stdout and stderr
    */
   protected abstract void checkTestResults(@NotNull T runner, @NotNull String stdout, @NotNull String stderr, @NotNull String all);
 }

@@ -18,6 +18,8 @@ package com.intellij.execution.startup;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Irina.Chernushina on 8/19/2015.
@@ -29,4 +31,38 @@ import com.intellij.openapi.components.StoragePathMacros;
   }
 )
 public class ProjectStartupLocalConfiguration extends ProjectStartupConfigurationBase {
+  private final static String SHARED = "shared";
+  private boolean myIsShared;
+
+  @Nullable
+  @Override
+  public Element getState() {
+    Element state = super.getState();
+    if (state == null) {
+      if (! myIsShared) return null;
+      state = new Element(TOP_ELEMENT);
+    }
+    state.setAttribute(SHARED, String.valueOf(myIsShared));
+    return state;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    super.loadState(state);
+    if (state != null) {
+      myIsShared = "true".equals(state.getAttributeValue(SHARED));
+    }
+  }
+
+  public void local() {
+    myIsShared = false;
+  }
+
+  public void shared() {
+    myIsShared = true;
+  }
+
+  public boolean isShared() {
+    return myIsShared;
+  }
 }

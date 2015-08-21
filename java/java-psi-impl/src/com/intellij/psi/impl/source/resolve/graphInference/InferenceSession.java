@@ -48,6 +48,12 @@ public class InferenceSession {
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = new Function<Pair<PsiType, PsiType>, PsiType>() {
     @Override
     public PsiType fun(Pair<PsiType, PsiType> pair) {
+      if (pair.first instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)pair.first, pair.second)) {
+        return null;
+      }
+      if (pair.second instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)pair.second, pair.first)) {
+        return null;
+      }
       return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
     }
   };
@@ -94,7 +100,7 @@ public class InferenceSession {
     LOG.assertTrue(leftTypes.length == rightTypes.length);
     for (int i = 0; i < leftTypes.length; i++) {
       final PsiType rightType = mySiteSubstitutor.substitute(rightTypes[i]);
-      if (rightType != null) {
+      if (rightType != null && leftTypes[i] != null) {
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(leftTypes[i]), substituteWithInferenceVariables(rightType)));
       }
     }

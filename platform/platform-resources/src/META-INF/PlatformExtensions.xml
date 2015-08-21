@@ -245,7 +245,7 @@
 
     <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
                     serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
-    
+
     <projectService serviceInterface="com.intellij.execution.testframework.sm.TestHistoryConfiguration"
                     serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
@@ -319,7 +319,7 @@
 
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
-    
+
     <applicationService serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <projectService serviceImplementation="com.intellij.ui.switcher.SwitchManager"/>
@@ -411,5 +411,16 @@
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
+
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+    </intentionAction>
+
+
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupConfiguration"/>
+    <projectConfigurable groupId="build" instance="com.intellij.execution.startup.ProjectStartupConfigurable"/>
+    <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
   </extensions>
 </idea-plugin>

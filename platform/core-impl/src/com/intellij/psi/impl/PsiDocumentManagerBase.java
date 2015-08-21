@@ -317,6 +317,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                               final boolean synchronously) {
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
+
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile != null) {
+      ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).fastenBelts(virtualFile);
+    }
+
     myIsCommitInProgress = true;
     boolean success = true;
     try {
@@ -635,9 +641,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     if (document instanceof DocumentImpl && !myUncommittedInfos.containsKey(document)) {
       myUncommittedInfos.put(document, new UncommittedInfo((DocumentImpl)document));
-      if (isRelevant) {
-        ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).fastenBelts(virtualFile);
-      }
     }
 
     final FileViewProvider viewProvider = getCachedViewProvider(document);
@@ -769,7 +772,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     UncommittedInfo info = myUncommittedInfos.remove(document);
     if (info != null) {
       ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).updatePointers(document, info.myFrozen, info.myEvents);
-      Disposer.dispose(info);
+      info.removeListener();
     }
     return info;
   }
@@ -845,7 +848,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @VisibleForTesting
   public void clearUncommittedDocuments() {
     for (UncommittedInfo info : myUncommittedInfos.values()) {
-      Disposer.dispose(info);
+      info.removeListener();
     }
     myUncommittedInfos.clear();
     myUncommittedDocuments.clear();
@@ -892,7 +895,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return mySynchronizer;
   }
 
-  private static class UncommittedInfo extends DocumentAdapter implements PrioritizedInternalDocumentListener, Disposable {
+  private static class UncommittedInfo extends DocumentAdapter implements PrioritizedInternalDocumentListener {
     final DocumentImpl myOriginal;
     final FrozenDocument myFrozen;
     final List<DocumentEvent> myEvents = ContainerUtil.newArrayList();
@@ -900,7 +903,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     public UncommittedInfo(DocumentImpl original) {
       myOriginal = original;
       myFrozen = original.freeze();
-      myOriginal.addDocumentListener(this, this);
+      myOriginal.addDocumentListener(this);
     }
 
     @Override
@@ -918,8 +921,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       myEvents.add(new RetargetRangeMarkers(myOriginal, start, end, base));
     }
 
-    @Override
-    public void dispose() {
+    public void removeListener() {
+      myOriginal.removeDocumentListener(this);
     }
   }
 

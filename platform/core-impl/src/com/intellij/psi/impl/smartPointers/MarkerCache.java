@@ -24,65 +24,39 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.containers.WeakValueHashMap;
+import gnu.trove.TLongObjectHashMap;
+import gnu.trove.TLongObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author peter
  */
 class MarkerCache {
-  private final Set<ManualRangeMarker> myMarkerSet = Collections.newSetFromMap(new WeakHashMap<ManualRangeMarker, Boolean>());
-  private WeakValueHashMap<RangeKey, ManualRangeMarker> myByRange = new WeakValueHashMap<RangeKey, ManualRangeMarker>();
-  private volatile Trinity<Integer, Map<RangeKey, ManualRangeMarker>, FrozenDocument> myUpdatedRanges;
+  private final SmartPointerManagerImpl.FilePointersList myPointers;
+  private volatile Trinity<Integer, TLongObjectHashMap<ManualRangeMarker>, FrozenDocument> myUpdatedRanges;
 
-  @Nullable
-  private static RangeKey keyOf(@NotNull ManualRangeMarker marker) {
-    ProperTextRange range = marker.getRange();
-    return range == null ? null : new RangeKey(range, marker.isGreedyLeft(), marker.isGreedyRight(), marker.isSurviveOnExternalChange());
+  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers) {
+    myPointers = pointers;
   }
 
-  @NotNull
-  synchronized ManualRangeMarker obtainMarker(@NotNull ProperTextRange range, @NotNull FrozenDocument frozen, boolean greedyLeft, boolean greedyRight, boolean persistent) {
-    WeakValueHashMap<RangeKey, ManualRangeMarker> byRange = getByRangeCache();
-    RangeKey key = new RangeKey(range, greedyLeft, greedyRight, persistent);
-    ManualRangeMarker marker = byRange.get(key);
-    if (marker == null) {
-      marker = new ManualRangeMarker(frozen, range, greedyLeft, greedyRight, persistent);
-      myMarkerSet.add(marker);
-      byRange.put(key, marker);
-      myUpdatedRanges = null;
-    }
-    return marker;
+  private static long keyOf(@NotNull ProperTextRange range, boolean forInjected) {
+    long start = range.getStartOffset();
+    assert start >= 0;
+    assert start < Integer.MAX_VALUE;
+
+    long packed = (start + 1) | ((long)range.getEndOffset() << 32);
+    assert packed > 0;
+    return forInjected ? -packed : packed;
   }
 
-  private WeakValueHashMap<RangeKey, ManualRangeMarker> getByRangeCache() {
-    if (myByRange == null) {
-      myByRange = new WeakValueHashMap<RangeKey, ManualRangeMarker>();
-      for (ManualRangeMarker marker : myMarkerSet) {
-        RangeKey key = keyOf(marker);
-        if (key != null) {
-          myByRange.put(key, marker);
-        }
-      }
-    }
-    return myByRange;
-  }
-
-  private Map<RangeKey, ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
-    if (myMarkerSet.isEmpty()) return Collections.emptyMap();
-
+  private TLongObjectHashMap<ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     int eventCount = events.size();
     assert eventCount > 0;
 
-    Trinity<Integer, Map<RangeKey, ManualRangeMarker>, FrozenDocument> cache = myUpdatedRanges;
+    Trinity<Integer, TLongObjectHashMap<ManualRangeMarker>, FrozenDocument> cache = myUpdatedRanges;
     if (cache != null && cache.first.intValue() == eventCount) return cache.second;
 
     //noinspection SynchronizeOnThis
@@ -90,17 +64,19 @@ class MarkerCache {
       cache = myUpdatedRanges;
       if (cache != null && cache.first.intValue() == eventCount) return cache.second;
 
-      Map<RangeKey, ManualRangeMarker> answer = ContainerUtil.newHashMap();
+      TLongObjectHashMap<ManualRangeMarker> answer;
       if (cache != null && cache.first < eventCount) {
         // apply only the new events
-        answer.putAll(cache.second);
+        answer = cache.second.clone();
         frozen = applyEvents(cache.third, events.subList(cache.first, eventCount), answer);
       }
       else {
-        for (ManualRangeMarker marker : myMarkerSet) {
-          RangeKey key = keyOf(marker);
-          if (key != null) {
-            answer.put(key, marker);
+        answer = new TLongObjectHashMap<ManualRangeMarker>();
+        for (SelfElementInfo info : getInfos()) {
+          ProperTextRange range = info.getPsiRange();
+          if (range != null) {
+            boolean forInjected = info.isForInjected();
+            answer.put(keyOf(range, forInjected), new ManualRangeMarker(frozen, range, forInjected, forInjected, !forInjected));
           }
         }
         frozen = applyEvents(frozen, events, answer);
@@ -112,10 +88,10 @@ class MarkerCache {
   }
 
   private static FrozenDocument applyEvents(@NotNull FrozenDocument frozen,
-                                  @NotNull List<DocumentEvent> events,
-                                  Map<RangeKey, ManualRangeMarker> map) {
+                                            @NotNull List<DocumentEvent> events,
+                                            final TLongObjectHashMap<ManualRangeMarker> map) {
     for (DocumentEvent event : events) {
-      DocumentEvent corrected;
+      final DocumentEvent corrected;
       if ((event instanceof RetargetRangeMarkers)) {
         RetargetRangeMarkers retarget = (RetargetRangeMarkers)event;
         corrected = new RetargetRangeMarkers(frozen, retarget.getStartOffset(), retarget.getEndOffset(), retarget.getMoveDestinationOffset());
@@ -126,102 +102,55 @@ class MarkerCache {
                                           event.isWholeTextReplaced());
       }
 
-      for (Map.Entry<RangeKey, ManualRangeMarker> entry : map.entrySet()) {
-        ManualRangeMarker currentRange = entry.getValue();
-        if (currentRange != null) {
-          entry.setValue(currentRange.getUpdatedRange(corrected));
+      map.forEachEntry(new TLongObjectProcedure<ManualRangeMarker>() {
+        @Override
+        public boolean execute(long key, ManualRangeMarker currentRange) {
+          if (currentRange != null) {
+            map.put(key, currentRange.getUpdatedRange(corrected));
+          }
+          return true;
         }
-      }
+      });
     }
     return frozen;
   }
 
-  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events, @NotNull List<SmartPsiElementPointerImpl> pointers) {
-    List<SelfElementInfo> infos = ContainerUtil.findAll(ContainerUtil.map(pointers, new NullableFunction<SmartPsiElementPointerImpl, SmartPointerElementInfo>() {
-      @Nullable
-      @Override
-      public SmartPointerElementInfo fun(SmartPsiElementPointerImpl pointer) {
-        return pointer.getElementInfo();
-      }
-    }), SelfElementInfo.class);
+  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+    TLongObjectHashMap<ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
 
-    Map<RangeKey, ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
-    Map<ManualRangeMarker, ManualRangeMarker> newStates = ContainerUtil.newHashMap();
-    for (SelfElementInfo info : infos) {
-      ManualRangeMarker marker = info.getRangeMarker();
-      RangeKey key = marker == null ? null : keyOf(marker);
-      if (key != null) {
-        newStates.put(marker, updated.get(key));
+    for (SelfElementInfo info : getInfos()) {
+      ProperTextRange range = info.getPsiRange();
+      if (range != null) {
+        ManualRangeMarker newRange = updated.get(keyOf(range, info.isForInjected()));
+        info.setRange(newRange == null ? null : newRange.getRange());
       }
     }
 
-    myMarkerSet.clear();
-    for (Map.Entry<ManualRangeMarker, ManualRangeMarker> entry : newStates.entrySet()) {
-      ManualRangeMarker marker = entry.getKey();
-      marker.applyState(entry.getValue());
-      if (marker.isValid()) {
-        myMarkerSet.add(marker); //re-add only alive markers
-      }
-    }
-    myByRange = null;
     myUpdatedRanges = null;
+  }
 
-    for (SelfElementInfo info : infos) {
-      info.updateValidity();
-    }
+  @NotNull
+  private List<SelfElementInfo> getInfos() {
+    return ContainerUtil.findAll(ContainerUtil.map(myPointers.getAlivePointers(), new NullableFunction<SmartPsiElementPointerImpl, SmartPointerElementInfo>() {
+        @Override
+        public SmartPointerElementInfo fun(SmartPsiElementPointerImpl pointer) {
+          return pointer.getElementInfo();
+        }
+      }), SelfElementInfo.class);
   }
 
   @Nullable
-  ProperTextRange getUpdatedRange(@NotNull ManualRangeMarker marker, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
-    ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(keyOf(marker));
+  ProperTextRange getUpdatedRange(SelfElementInfo info, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+    ProperTextRange range = info.getPsiRange();
+    if (range == null) return null;
+
+    ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(keyOf(range, info.isForInjected()));
     return updated == null ? null : updated.getRange();
   }
 
-  @TestOnly
-  synchronized int getMarkerCount() {
-    return myMarkerSet.size();
-  }
-
-  private static class RangeKey {
-    final int start;
-    final int end;
-    final int flags;
-
-    RangeKey(ProperTextRange range, boolean greedyLeft, boolean greedyRight, boolean persistent) {
-      start = range.getStartOffset();
-      end = range.getEndOffset();
-      flags = (persistent ? 4 : 0) + (greedyLeft ? 2 : 0) + (greedyRight ? 1 : 0);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof RangeKey)) return false;
-
-      RangeKey key = (RangeKey)o;
-
-      if (start != key.start) return false;
-      if (end != key.end) return false;
-      if (flags != key.flags) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = start;
-      result = 31 * result + end;
-      result = 31 * result + flags;
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "RangeKey{" +
-             "start=" + start +
-             ", end=" + end +
-             ", flags=" + flags +
-             '}';
+  synchronized void rangeChanged(@NotNull ProperTextRange range, boolean forInjected) {
+    if (myUpdatedRanges != null && !myUpdatedRanges.second.contains(keyOf(range, forInjected))) {
+      myUpdatedRanges = null;
     }
   }
 

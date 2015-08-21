@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -867,9 +868,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         setSearchInProgress(true);
         associateProgress(indicator);
 
-        myChangesDetected = false;
-        UsageSearcher usageSearcher = myUsageSearcherFactory.create();
-        usageSearcher.generate(new Processor<Usage>() {
+        Processor<Usage> processor = new Processor<Usage>() {
           @Override
           public boolean process(final Usage usage) {
             if (searchHasBeenCancelled()) return false;
@@ -882,7 +881,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
               if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
                 if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
                   UsageViewManagerImpl
-                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(), UsageViewImpl.this);
+                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(),
+                                              UsageViewImpl.this);
                 }
               }
               ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -894,8 +894,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             }
             return !indicator.isCanceled();
           }
-        });
-        drainQueuedUsageNodes();
+        };
+
+        myChangesDetected = false;
+        PsiManager.getInstance(project).startBatchFilesProcessingMode();
+        try {
+          myUsageSearcherFactory.create().generate(processor);
+          drainQueuedUsageNodes();
+        }
+        finally {
+          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
+        }
         setSearchInProgress(false);
       }
     };

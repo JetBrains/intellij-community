@@ -46,7 +46,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerTopics;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -360,7 +360,7 @@ public class EditorOptionsPanel {
       updateVcsSettings = true;
     }
     if (updateVcsSettings) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(LineStatusTrackerTopics.SETTINGS_CHANGED).updateSettings();
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated();
     }
 
     reinitAllEditors();

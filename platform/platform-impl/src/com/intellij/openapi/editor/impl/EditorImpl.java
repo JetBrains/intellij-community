@@ -1076,6 +1076,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               getCaretModel().moveToLogicalPosition(getLogicalPositionForScreenPos(location.x, location.y, true));
             }
             getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+            requestFocus();
           }
         });
       }

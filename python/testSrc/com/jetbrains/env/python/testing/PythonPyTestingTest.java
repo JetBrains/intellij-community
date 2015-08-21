@@ -23,7 +23,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test1.py");
+        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test1.py", 0);
       }
 
       @Override
@@ -43,7 +43,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test2.py");
+        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test2.py", 0);
       }
 
       @Override
@@ -76,7 +76,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/unit", fileName);
+        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/unit", fileName, 0);
       }
 
       @Override

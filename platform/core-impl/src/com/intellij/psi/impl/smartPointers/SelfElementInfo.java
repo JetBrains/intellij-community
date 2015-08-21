@@ -17,11 +17,8 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.impl.FrozenDocument;
-import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -37,7 +34,6 @@ import java.util.List;
 * User: cdr
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SelfElementInfo");
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   @NotNull private final VirtualFile myVirtualFile;
   private final Class myType;
@@ -45,7 +41,6 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private final Language myLanguage;
   private final MarkerCache myMarkerCache;
   private final boolean myForInjected;
-  @Nullable private ManualRangeMarker myRangeMarker;
   @Nullable private ProperTextRange myPsiRange;
   private final PsiDocumentManagerBase myPsiDocManager;
 
@@ -65,39 +60,23 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myPsiRange = range;
     myMarkerCache = ((SmartPointerManagerImpl)SmartPointerManager.getInstance(project)).getMarkerCache(myVirtualFile);
     myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    setRange(range);
+  }
 
-    Document document = myPsiDocManager.getCachedDocument(containingFile);
-    if (document != null) {
-      setRange(range, document);
+  void setRange(@Nullable ProperTextRange range) {
+    myPsiRange = range;
+    if (range != null) {
+      myMarkerCache.rangeChanged(range, myForInjected);
     }
   }
 
-  void setRange(@NotNull TextRange range, @NotNull Document document) {
-    myPsiRange = null;
-    FrozenDocument frozenDocument = myPsiDocManager.getLastCommittedDocument(document);
-    myRangeMarker = myMarkerCache.obtainMarker(ProperTextRange.create(range), frozenDocument, myForInjected, myForInjected, !myForInjected);
+  boolean isForInjected() {
+    return myForInjected;
   }
 
   @Override
   public Document getDocumentToSynchronize() {
     return ourFileDocManager.getCachedDocument(myVirtualFile);
-  }
-
-  // before change
-  @Override
-  public void fastenBelt() {
-    if (myRangeMarker != null) return; // already tracks changes
-    if (myPsiRange == null) return; // invalid
-
-    Document document = ourFileDocManager.getDocument(myVirtualFile);
-    if (document == null || !myPsiDocManager.isCommitted(document)) {
-      // we only have PSI range and now they say the document is uncommitted, so this PSI range is useless
-      // so, just invalidate
-      myPsiRange = null;
-      return;
-    }
-
-    setRange(myPsiRange, document);
   }
 
   @Override
@@ -112,8 +91,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  protected Segment getPsiRange() {
-    return myRangeMarker != null ? myRangeMarker.getRange() : myPsiRange;
+  protected ProperTextRange getPsiRange() {
+    return myPsiRange;
   }
 
   @Override
@@ -149,19 +128,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public void cleanup() {
-    myRangeMarker = null;
     myPsiRange = null;
-  }
-
-  void updateValidity() {
-    if (myPsiRange != null) {
-      LOG.error("Non-fastened smart pointer " + this + " " + myRangeMarker);
-      myPsiRange = null;
-      myRangeMarker = null;
-    }
-    if (myRangeMarker != null && !myRangeMarker.isValid()) {
-      myRangeMarker = null;
-    }
   }
 
   @Nullable
@@ -252,16 +219,15 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   @Override
   @Nullable
   public Segment getRange() {
-    if (myRangeMarker != null) {
+    if (myPsiRange != null) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
         PsiDocumentManagerBase documentManager = myPsiDocManager;
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          return myMarkerCache.getUpdatedRange(myRangeMarker, documentManager.getLastCommittedDocument(document), events);
+          return myMarkerCache.getUpdatedRange(this, documentManager.getLastCommittedDocument(document), events);
         }
       }
-      return myRangeMarker.getRange();
     }
     return myPsiRange;
   }
@@ -272,8 +238,4 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myProject;
   }
 
-  @Nullable
-  ManualRangeMarker getRangeMarker() {
-    return myRangeMarker;
-  }
 }

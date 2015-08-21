@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
-import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.Disposer
@@ -156,7 +155,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-
   fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>) = storageLock.withLock { Pair(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
 
   fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<StateStorage> {
@@ -234,6 +232,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       storageManager.beforeElementLoaded(element)
       super<FileBasedStorage>.beforeElementLoaded(element)
     }
+
+    override fun dataLoadedFromProvider(element: Element?) {
+      storageManager.dataLoadedFromProvider(this, element)
+    }
   }
 
   private fun String.normalizePath(): String {
@@ -248,6 +250,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun beforeElementLoaded(element: Element) {
   }
 
+  protected open fun dataLoadedFromProvider(storage: FileBasedStorage, element: Element?) {
+  }
+
   override final fun rename(path: String, newName: String) {
     storageLock.withLock {
       val storage = getOrCreateStorage(collapseMacros(path), RoamingType.PER_USER) as FileBasedStorage
@@ -257,7 +262,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
         if (file != null) {
           file.rename(storage, newName)
         }
-        else if (storage.getFile().getName() != newName) {
+        else if (storage.file.getName() != newName) {
           // old file didn't exist or renaming failed
           val expandedPath = expandMacros(path)
           val parentPath = PathUtilRt.getParentPath(expandedPath)

@@ -359,7 +359,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
 
     if (existingSettings == settings) {
-      myDispatcher.getMulticaster().runConfigurationChanged(settings);
+      myDispatcher.getMulticaster().runConfigurationChanged(settings, existingId);
     }
     else {
       myDispatcher.getMulticaster().runConfigurationAdded(settings);
@@ -1274,7 +1274,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public void fireRunConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-    myDispatcher.getMulticaster().runConfigurationChanged(settings);
+    myDispatcher.getMulticaster().runConfigurationChanged(settings, null);
   }
 
   private void fireRunConfigurationsRemoved(@Nullable List<RunnerAndConfigurationSettings> removed) {

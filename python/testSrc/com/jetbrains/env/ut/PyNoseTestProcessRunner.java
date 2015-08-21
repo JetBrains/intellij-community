@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyNoseTestProcessRunner extends PyScriptTestProcessRunner<PythonNoseTestRunConfiguration> {
   public PyNoseTestProcessRunner(@NotNull final String workingFolder,
-                                 @NotNull final String scriptName) {
+                                 @NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(PythonTestConfigurationType.getInstance().PY_NOSETEST_FACTORY,
-          PythonNoseTestRunConfiguration.class, workingFolder, scriptName);
+          PythonNoseTestRunConfiguration.class, workingFolder, scriptName, timesToRerunFailedTests);
   }
 }

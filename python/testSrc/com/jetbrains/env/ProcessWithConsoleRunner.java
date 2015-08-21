@@ -109,4 +109,11 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
   public void dispose() {
     Disposer.dispose(myConsole);
   }
+
+  /**
+   * Called after each run. If returns true, runner will be launched again.
+   */
+  protected boolean shouldRunAgain() {
+    return false;
+  }
 }
