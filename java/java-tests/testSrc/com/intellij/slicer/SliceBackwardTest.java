@@ -54,7 +54,7 @@ public class SliceBackwardTest extends SliceTestCase {
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = true;
 
-    SliceUsage usage = SliceUsage.createRootUsage(element, params);
+    SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
     checkUsages(usage, myFlownOffsets);
   }
 

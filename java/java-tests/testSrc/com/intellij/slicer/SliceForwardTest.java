@@ -45,7 +45,7 @@ public class SliceForwardTest extends DaemonAnalyzerTestCase {
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = false;
-    SliceUsage usage = SliceUsage.createRootUsage(element, params);
+    SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
     SliceBackwardTest.checkUsages(usage, myFlownOffsets);
   }
 

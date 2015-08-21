@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.CommonProcessors;
@@ -32,21 +31,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-public class SliceUsage extends UsageInfo2UsageAdapter {
+public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   public final SliceAnalysisParams params;
-  private final PsiSubstitutor mySubstitutor;
   protected final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
   @NotNull protected final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
 
   public SliceUsage(@NotNull PsiElement element,
                     @NotNull SliceUsage parent,
-                    @NotNull PsiSubstitutor substitutor,
                     int indexNesting,
                     @NotNull String syntheticField) {
     super(new UsageInfo(element));
     myParent = parent;
-    mySubstitutor = substitutor;
     this.syntheticField = syntheticField;
     params = parent.params;
     assert params != null;
@@ -54,18 +50,12 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   }
 
   // root usage
-  private SliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
+  protected SliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     super(new UsageInfo(element));
     myParent = null;
     this.params = params;
-    mySubstitutor = PsiSubstitutor.EMPTY;
     indexNesting = 0;
     syntheticField = "";
-  }
-
-  @NotNull
-  public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
-    return new SliceUsage(element, params);
   }
 
   public void processChildren(@NotNull Processor<SliceUsage> processor) {
@@ -95,14 +85,18 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
       @Override
       public void run() {
         if (params.dataFlowToThis) {
-          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor, indexNesting,syntheticField);
+          processUsagesFlownDownTo(element, uniqueProcessor);
         }
         else {
-          SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
+          processUsagesFlownFromThe(element, uniqueProcessor);
         }
       }
     });
   }
+
+  protected abstract void processUsagesFlownFromThe(PsiElement element, Processor<SliceUsage> uniqueProcessor);
+
+  protected abstract void processUsagesFlownDownTo(PsiElement element, Processor<SliceUsage> uniqueProcessor);
 
   public SliceUsage getParent() {
     return myParent;
@@ -116,11 +110,15 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   @NotNull
   SliceUsage copy() {
     PsiElement element = getUsageInfo().getElement();
-    return getParent() == null ? createRootUsage(element, params) : new SliceUsage(element, getParent(),mySubstitutor,indexNesting,syntheticField);
+    return getParent() == null ? createNewRootInstance(element, params) :
+           createNewInstance(element, getParent(),indexNesting,syntheticField);
   }
 
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
-    return mySubstitutor;
-  }
+  public abstract SliceUsage createNewInstance(@NotNull PsiElement element,
+                                               @NotNull SliceUsage parent,
+                                               int indexNesting,
+                                               @NotNull String syntheticField);
+
+  public abstract SliceUsage createNewRootInstance(@NotNull PsiElement element, @NotNull SliceAnalysisParams params);
+
 }

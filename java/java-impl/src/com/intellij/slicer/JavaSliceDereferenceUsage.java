@@ -15,24 +15,20 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.ui.JBColor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * User: cdr
  */
-public class SliceTooComplexDFAUsage extends SliceUsage {
-  public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+public class JavaSliceDereferenceUsage extends JavaSliceUsage {
+  public JavaSliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     super(element, parent, substitutor,0,"");
   }
 
@@ -45,13 +41,12 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
   @Override
   public UsagePresentation getPresentation() {
     final UsagePresentation presentation = super.getPresentation();
+
     return new UsagePresentation() {
       @Override
       @NotNull
       public TextChunk[] getText() {
-        return new TextChunk[]{
-          new TextChunk(new TextAttributes(JBColor.RED, null, null, EffectType.WAVE_UNDERSCORE, Font.PLAIN), getTooltipText())
-        };
+        return presentation.getText();
       }
 
       @Override
@@ -67,7 +62,7 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
 
       @Override
       public String getTooltipText() {
-        return "Too complex to analyze, analysis stopped here";
+        return "Variable dereferenced";
       }
     };
   }

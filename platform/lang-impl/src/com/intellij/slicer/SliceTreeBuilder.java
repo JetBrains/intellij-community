@@ -85,8 +85,12 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void switchToGroupedByLeavesNodes() {
+    SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
+    if(provider == null){
+      return;
+    }
     analysisInProgress = true;
-    SliceLeafAnalyzer.startAnalyzeValues(getTreeStructure(), new Runnable(){
+    provider.startAnalyzeLeafValues(getTreeStructure(), new Runnable(){
       @Override
       public void run() {
         analysisInProgress = false;
@@ -96,8 +100,20 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
 
 
   public void switchToLeafNulls() {
+    SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
+    if(provider == null){
+      return;
+    }
     analysisInProgress = true;
-    SliceNullnessAnalyzer.startAnalyzeNullness(getTreeStructure(), new Runnable(){
+    provider.startAnalyzeLeafValues(getTreeStructure(), new Runnable(){
+      @Override
+      public void run() {
+        analysisInProgress = false;
+      }
+    });
+
+    analysisInProgress = true;
+    provider.startAnalyzeNullness(getTreeStructure(), new Runnable(){
       @Override
       public void run() {
         analysisInProgress = false;

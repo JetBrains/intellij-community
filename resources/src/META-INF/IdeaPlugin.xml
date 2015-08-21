@@ -533,10 +533,6 @@
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
                     serviceImplementation="com.intellij.usages.impl.rules.PackageGroupingRule"/>
 
-    <projectService serviceInterface="com.intellij.slicer.SliceToolwindowSettings"
-                    serviceImplementation="com.intellij.slicer.SliceToolwindowSettings"/>
-    <projectService serviceInterface="com.intellij.slicer.SliceManager"
-                    serviceImplementation="com.intellij.slicer.SliceManager"/>
 
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
@@ -1113,6 +1109,8 @@
 
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
+
+    <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
 
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>

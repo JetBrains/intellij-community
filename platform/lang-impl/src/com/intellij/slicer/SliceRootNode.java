@@ -33,7 +33,10 @@ public class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
 
   public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, final SliceUsage rootUsage) {
-    super(project, SliceUsage.createRootUsage(rootUsage.getElement().getContainingFile(), rootUsage.params), targetEqualUsages);
+    super(project,
+          LanguageSlicing.getProvider(rootUsage.getElement().getContainingFile()).
+            createRootUsage(rootUsage.getElement().getContainingFile(), rootUsage.params),
+          targetEqualUsages);
     myRootUsage = rootUsage;
   }
 
@@ -82,7 +85,7 @@ public class SliceRootNode extends SliceNode {
 
 
   @Override
-  public void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer,
+  public void customizeCellRenderer(@NotNull SliceUsageCellRendererBase renderer,
                                     @NotNull JTree tree,
                                     Object value,
                                     boolean selected,

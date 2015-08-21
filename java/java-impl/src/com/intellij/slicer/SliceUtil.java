@@ -342,14 +342,14 @@ class SliceUtil {
                                      @NotNull PsiSubstitutor substitutor,
                                      int indexNesting,
                                      @NotNull String syntheticField) {
-    return new SliceUsage(simplify(element), parent, substitutor,indexNesting, syntheticField);
+    return new JavaSliceUsage(simplify(element), parent, substitutor,indexNesting, syntheticField);
   }
 
   @NotNull
   private static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element,
                                                      @NotNull SliceUsage parent,
                                                      @NotNull PsiSubstitutor substitutor) {
-    return new SliceTooComplexDFAUsage(simplify(element), parent, substitutor);
+    return new SliceTooComplexDFAUsage(simplify(element), parent);
   }
 
   private static boolean processParameterUsages(@NotNull final PsiParameter parameter,

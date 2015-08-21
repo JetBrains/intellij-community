@@ -15,21 +15,24 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.ui.JBColor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: cdr
  */
-public class SliceDereferenceUsage extends SliceUsage {
-  public SliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
-    super(element, parent, substitutor,0,"");
+public class SliceTooComplexDFAUsage extends SliceUsage {
+  public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
+    super(element, parent, 0, "");
   }
 
   @Override
@@ -37,16 +40,40 @@ public class SliceDereferenceUsage extends SliceUsage {
     // no children
   }
 
+  @Override
+  protected void processUsagesFlownFromThe(PsiElement element, Processor<SliceUsage> uniqueProcessor) {
+    // no children
+  }
+
+  @Override
+  protected void processUsagesFlownDownTo(PsiElement element, Processor<SliceUsage> uniqueProcessor) {
+    // no children
+  }
+
+  @Override
+  public SliceUsage createNewInstance(@NotNull PsiElement element,
+                                      @NotNull SliceUsage parent,
+                                      int indexNesting,
+                                      @NotNull String syntheticField) {
+    return new SliceTooComplexDFAUsage(element, parent);
+  }
+
+  @Override
+  public SliceUsage createNewRootInstance(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
+    throw new IllegalStateException();
+  }
+
   @NotNull
   @Override
   public UsagePresentation getPresentation() {
     final UsagePresentation presentation = super.getPresentation();
-
     return new UsagePresentation() {
       @Override
       @NotNull
       public TextChunk[] getText() {
-        return presentation.getText();
+        return new TextChunk[]{
+          new TextChunk(new TextAttributes(JBColor.RED, null, null, EffectType.WAVE_UNDERSCORE, Font.PLAIN), getTooltipText())
+        };
       }
 
       @Override
@@ -62,7 +89,7 @@ public class SliceDereferenceUsage extends SliceUsage {
 
       @Override
       public String getTooltipText() {
-        return "Variable dereferenced";
+        return "Too complex to analyze, analysis stopped here";
       }
     };
   }
