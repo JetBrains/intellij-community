@@ -29,10 +29,13 @@ public class CompoundShelfFileProcessor {
   }
 
   public interface ContentProvider {
-    void writeContentTo(Writer writer, CommitContext commitContext) throws IOException;
+    void writeContentTo(@NotNull Writer writer, @NotNull CommitContext commitContext) throws IOException;
   }
 
-  public void savePathFile(ContentProvider contentProvider, final File patchPath, CommitContext commitContext) throws IOException {
+  public void savePathFile(@NotNull ContentProvider contentProvider,
+                           @NotNull final File patchPath,
+                           @NotNull CommitContext commitContext)
+    throws IOException {
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(patchPath), CharsetToolkit.UTF8_CHARSET);
     try {
       contentProvider.writeContentTo(writer, commitContext);
