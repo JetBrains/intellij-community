@@ -32,6 +32,9 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.BackgroundTaskUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +44,8 @@ import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
@@ -60,12 +65,18 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class AnnotateDiffViewerAction extends DumbAwareAction {
   public static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
@@ -165,10 +176,15 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
               if (diffContext != null) diffContext.showProgressBar(false);
               markRunningProgress(viewer, side, false);
 
-              if (loader.getException() != null) {
-                AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(viewer.getProject());
-                vcsHelper.showError(loader.getException(), VcsBundle.message("operation.name.annotate"));
+              VcsException exception = loader.getException();
+              if (exception != null) {
+                Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+                  .createNotification("Can't Load Annotations", exception.getMessage(), NotificationType.ERROR, null);
+                showNotification(viewer, notification);
+                LOG.warn(exception);
+                return;
               }
+
               if (loader.getResult() == null) return;
               if (viewer.isDisposed()) return;
 
@@ -324,6 +340,29 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
 
       myViewer.getRequest().putUserData(ANNOTATIONS_SHOWN_KEY, annotationsShown);
     }
+  }
+
+  private static void showNotification(@NotNull DiffViewerBase viewer, @NotNull Notification notification) {
+    JComponent component = viewer.getComponent();
+
+    Window window = UIUtil.getWindow(component);
+    if (window instanceof IdeFrame && NotificationsManagerImpl.findWindowForBalloon(viewer.getProject()) == window) {
+      notification.notify(viewer.getProject());
+      return;
+    }
+
+    Balloon balloon = NotificationsManagerImpl.createBalloon(component, notification, false, true);
+    Disposer.register(viewer, balloon);
+
+    Dimension componentSize = component.getSize();
+    Dimension balloonSize = balloon.getPreferredSize();
+
+    int width = Math.min(balloonSize.width, componentSize.width);
+    int height = Math.min(balloonSize.height, componentSize.height);
+
+    // top-right corner, 20px to the edges
+    RelativePoint point = new RelativePoint(component, new Point(componentSize.width - 20 - width / 2, 20 + height / 2));
+    balloon.show(point, Balloon.Position.above);
   }
 
   private static class TwosideAnnotator extends ViewerAnnotator<TwosideTextDiffViewer> {
