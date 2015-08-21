@@ -2091,6 +2091,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void startDumb() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
+    if (rect.width == 0 && rect.height == 0) {
+      return;
+    }
     BufferedImage image = UIUtil.createImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
     Graphics2D graphics = image.createGraphics();
     graphics.translate(-rect.x, -rect.y);
