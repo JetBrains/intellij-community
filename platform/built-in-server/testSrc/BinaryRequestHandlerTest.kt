@@ -1,6 +1,6 @@
 package org.jetbrains.ide
 
-import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.ProjectRule
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.net.NetUtils
@@ -18,24 +18,18 @@ import org.jetbrains.io.ChannelExceptionHandler
 import org.jetbrains.io.Decoder
 import org.jetbrains.io.MessageDecoder
 import org.jetbrains.io.NettyUtil
-import org.junit.Rule
+import org.junit.ClassRule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 // we don't handle String in efficient way - because we want to test readContent/readChars also
 public class BinaryRequestHandlerTest {
-  private val fixtureManager = FixtureRule()
+  companion object {
+    @ClassRule val projectRule = ProjectRule()
+  }
 
-  private val _chain = RuleChain
-      .outerRule(fixtureManager)
-
-  Rule
-  public fun getChain(): RuleChain = _chain
-
-  Test
-  public fun test() {
+  @Test fun test() {
     val text = "Hello!"
     val result = AsyncPromise<String>()
 

@@ -20,6 +20,7 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -60,6 +62,7 @@ public class ProjectRule() : ExternalResource() {
     }
 
     private var sharedProject: ProjectEx? = null
+    private var sharedModule: Module? = null
     private val projectOpened = AtomicBoolean()
 
     private fun createLightProject(): ProjectEx {
@@ -87,6 +90,7 @@ public class ProjectRule() : ExternalResource() {
     private fun disposeProject() {
       val project = sharedProject ?: return
       sharedProject = null
+      sharedModule = null
       Disposer.dispose(project)
     }
   }
@@ -120,6 +124,24 @@ public class ProjectRule() : ExternalResource() {
 
       if (projectOpened.compareAndSet(false, true)) {
         ProjectManagerEx.getInstanceEx().openTestProject(project)
+      }
+      return result!!
+    }
+
+  public val module: Module
+    get() {
+      var project = project
+      var result = sharedModule
+      if (result == null) {
+        LightProjectDescriptor().setUpProject(project, object: LightProjectDescriptor.SetupHandler {
+          override fun moduleCreated(module: Module) {
+            result = module
+            sharedModule = module
+          }
+
+          override fun sourceRootCreated(sourceRoot: VirtualFile) {
+          }
+        })
       }
       return result!!
     }

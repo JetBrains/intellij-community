@@ -34,6 +34,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/builder-test-api/builder-test-api.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/builder-test-api/builder-test-api.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" filepath="$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/chartlib/chartlib.iml" filepath="$PROJECT_DIR$/android/tools-base/chartlib/chartlib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/colorSchemes/colorSchemes.iml" filepath="$PROJECT_DIR$/colorSchemes/colorSchemes.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/commander.iml" filepath="$PROJECT_DIR$/plugins/commander/commander.iml" group="plugins" />

@@ -126,6 +126,14 @@ public fun Path.writeChild(relativePath: String, data: String): Path {
   return Files.write(path, data.toByteArray())
 }
 
+/**
+ * Opposite to ugly Java, parent directories will be created
+ */
+public fun Path.createFile() {
+  getParent()?.createDirectories()
+  Files.createFile(this)
+}
+
 public fun Path.refreshVfs() {
   LocalFileSystem.getInstance()?.let { fs ->
     // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
