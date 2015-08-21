@@ -356,14 +356,14 @@ public class GrTypeDefinitionMembersCache {
                     for (TraitFieldDescriptor descriptor : values) {
                       final GrLightField field = new GrLightField(
                         trait,
-                        descriptor.getName(),
-                        myElementFactory.createTypeFromText(descriptor.getTypeString(), trait),
+                        descriptor.name,
+                        myElementFactory.createTypeFromText(descriptor.name, trait),
                         trait
                       );
-                      if (descriptor.isStatic()) {
+                      if (descriptor.isStatic) {
                         field.getModifierList().addModifier(STATIC_MASK);
                       }
-                      field.getModifierList().addModifier(descriptor.isPublic() ? PUBLIC_MASK : PRIVATE_MASK);
+                      field.getModifierList().addModifier(descriptor.isPublic ? PUBLIC_MASK : PRIVATE_MASK);
                       addCandidate(field, substitutor);
                     }
                     return true;

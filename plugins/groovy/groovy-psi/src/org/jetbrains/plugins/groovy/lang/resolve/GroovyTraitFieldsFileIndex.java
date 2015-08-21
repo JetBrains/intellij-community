@@ -170,10 +170,10 @@ public class GroovyTraitFieldsFileIndex
   public void save(@NotNull DataOutput out, Collection<TraitFieldDescriptor> values) throws IOException {
     writeINT(out, values.size());
     for (TraitFieldDescriptor descriptor : values) {
-      writeSINT(out, descriptor.isStatic() ? 1 : 0);
-      writeSINT(out, descriptor.isPublic() ? 1 : 0);
-      writeUTF(out, descriptor.getTypeString());
-      writeUTF(out, descriptor.getName());
+      writeSINT(out, descriptor.isStatic ? 1 : 0);
+      writeSINT(out, descriptor.isPublic ? 1 : 0);
+      writeUTF(out, descriptor.typeString);
+      writeUTF(out, descriptor.name);
     }
   }
 
@@ -192,36 +192,16 @@ public class GroovyTraitFieldsFileIndex
   }
 
   public static class TraitFieldDescriptor {
-    private final boolean myStatic;
-    private final boolean myPublic;
-    private final @NotNull String myTypeString;
-    private final @NotNull String myName;
-
+    public final boolean isStatic;
+    public final boolean isPublic;
+    public final @NotNull String typeString;
+    public final @NotNull String name;
 
     TraitFieldDescriptor(boolean aStatic, boolean aPublic, @NotNull String typeString, @NotNull String name) {
-      myStatic = aStatic;
-      myPublic = aPublic;
-      myTypeString = typeString;
-      myName = name;
-    }
-
-
-    public boolean isStatic() {
-      return myStatic;
-    }
-
-    public boolean isPublic() {
-      return myPublic;
-    }
-
-    @NotNull
-    public String getTypeString() {
-      return myTypeString;
-    }
-
-    @NotNull
-    public String getName() {
-      return myName;
+      isStatic = aStatic;
+      isPublic = aPublic;
+      this.typeString = typeString;
+      this.name = name;
     }
 
     @Override
@@ -231,20 +211,20 @@ public class GroovyTraitFieldsFileIndex
 
       TraitFieldDescriptor that = (TraitFieldDescriptor)o;
 
-      if (myStatic != that.myStatic) return false;
-      if (myPublic != that.myPublic) return false;
-      if (!myTypeString.equals(that.myTypeString)) return false;
-      if (!myName.equals(that.myName)) return false;
+      if (isStatic != that.isStatic) return false;
+      if (isPublic != that.isPublic) return false;
+      if (!typeString.equals(that.typeString)) return false;
+      if (!name.equals(that.name)) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = (myStatic ? 1 : 0);
-      result = 31 * result + (myPublic ? 1 : 0);
-      result = 31 * result + myTypeString.hashCode();
-      result = 31 * result + myName.hashCode();
+      int result = (isStatic ? 1 : 0);
+      result = 31 * result + (isPublic ? 1 : 0);
+      result = 31 * result + typeString.hashCode();
+      result = 31 * result + name.hashCode();
       return result;
     }
   }
