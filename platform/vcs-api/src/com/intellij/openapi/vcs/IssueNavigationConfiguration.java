@@ -20,8 +20,8 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,9 +41,6 @@ import java.util.regex.Pattern;
   }
 )
 public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {
-  @NonNls private static final Pattern ourHtmlPattern =
-    Pattern.compile("(http:|https:)\\/\\/([^\\s()](?!&(gt|lt|nbsp)+;))+[^\\p{Pe}\\p{Pc}\\p{Pd}\\p{Ps}\\p{Po}\\s]/?");
-
   public static IssueNavigationConfiguration getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, IssueNavigationConfiguration.class);
   }
@@ -102,7 +99,7 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
         addMatch(result, new TextRange(m.start(), m.end()), replacement);
       }
     }
-    Matcher m = ourHtmlPattern.matcher(text);
+    Matcher m = URLUtil.URL_PATTERN.matcher(text);
     while(m.find()) {
       addMatch(result, new TextRange(m.start(), m.end()), m.group());
     }

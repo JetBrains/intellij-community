@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.execution.filters.UrlFilter;
 import com.intellij.openapi.paths.GlobalPathReferenceProvider;
 import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.util.TextRange;
@@ -28,18 +27,14 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 
-/**
-* Created by Maxim.Mossienko on 12/19/2014.
-*/
 public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
-  public static final ArbitraryPlaceUrlReferenceProvider INSTANCE = new ArbitraryPlaceUrlReferenceProvider();
-
   private static final UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object> ourRefsCache = new UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object>("psielement.url.refs") {
     private final AtomicReference<GlobalPathReferenceProvider> myReferenceProvider = new AtomicReference<GlobalPathReferenceProvider>();
 
@@ -48,7 +43,7 @@ public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
       return CachedValuesManager
         .getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiReference[]>() {
           public Result<PsiReference[]> compute() {
-            Matcher matcher = UrlFilter.URL_PATTERN.matcher(element.getText());
+            Matcher matcher = URLUtil.URL_PATTERN.matcher(element.getText());
 
             List<PsiReference> refs = null;
             GlobalPathReferenceProvider provider = myReferenceProvider.get();
