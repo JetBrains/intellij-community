@@ -165,7 +165,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
         return fromString(text);
       }
     }
-    catch (IOException ignored) { }
+    catch (IOException ignored) {
+    }
 
     return fallback();
   }
@@ -210,6 +211,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
     BuildNumber that = (BuildNumber)o;
 
+    if (isSnapshot() && ((BuildNumber)o).isSnapshot()) return true;
+
     if (myBaselineVersion != that.myBaselineVersion) return false;
     if (myBuildNumber != that.myBuildNumber) return false;
     if (!myProductCode.equals(that.myProductCode)) return false;
@@ -220,6 +223,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   @Override
   public int hashCode() {
+    if (isSnapshot()) {
+      return 0;
+    }
     int result = myProductCode.hashCode();
     result = 31 * result + myBaselineVersion;
     result = 31 * result + myBuildNumber;
