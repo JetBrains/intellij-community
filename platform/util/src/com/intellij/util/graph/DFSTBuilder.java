@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntStack;
+import com.intellij.util.containers.Stack;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,15 @@ public class DFSTBuilder<Node> {
   public void buildDFST() {
   }
 
+  /**
+   * Tarjan strong-connect-components search algorithm.
+   * See e.g. <a href="https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm">https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm</a><br>
+   * This implementation differs from the canonical one above by<br>
+   * <ul>
+   *   <li>- being not recursive</li>
+   *   <li>- computing also topological order during the same single pass</li>
+   * </ul>
+   */
   private class Tarjan {
     private final int[] lowLink = new int[myInvN.length];
     private final int[] index = new int[myInvN.length];
