@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -34,6 +35,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.intellij.util.io.DataInputOutputUtil.*;
@@ -56,6 +58,7 @@ public class GroovyTraitFieldsFileIndex
     }
   };
 
+  private static final Logger LOG = Logger.getInstance(GroovyTraitFieldsFileIndex.class);
   private static final String INSTANCE_PREFIX = "$ins";
   private static final String STATIC_PREFIX = "$static";
   private static final String PRIVATE_PREFIX = "$0";
@@ -105,6 +108,17 @@ public class GroovyTraitFieldsFileIndex
   @NotNull
   @Override
   public Map<Integer, Collection<TraitFieldDescriptor>> map(@NotNull FileContent inputData) {
+    try {
+      return mapInner(inputData);
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      return Collections.emptyMap();
+    }
+  }
+
+  @NotNull
+  private static Map<Integer, Collection<TraitFieldDescriptor>> mapInner(@NotNull FileContent inputData) {
     final int key = FileBasedIndex.getFileId(inputData.getFile());
     final Map<Integer, Collection<TraitFieldDescriptor>> result = ContainerUtil.newHashMap();
     new ClassReader(inputData.getContent()).accept(new ClassVisitor(ASM5) {
