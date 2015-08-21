@@ -518,6 +518,12 @@
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingAction"/>
     </group>
+    
+    <group id="BasicEditorPopupMenu">
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
+    </group>
 
     <group id="ConsoleEditorPopupMenu">
       <reference ref="CutCopyPasteGroup"/>

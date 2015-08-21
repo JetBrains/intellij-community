@@ -901,6 +901,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       public EditorEx compute() {
         EditorEx editor = doCreateConsoleEditor();
+        editor.setContextMenuGroupId(null); // disabling default context menu
         editor.addEditorMouseListener(new EditorPopupHandler() {
           @Override
           public void invokePopup(final EditorMouseEvent event) {
