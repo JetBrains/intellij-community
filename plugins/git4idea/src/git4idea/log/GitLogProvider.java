@@ -317,6 +317,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> parameters = new ArrayList<String>(GitHistoryUtils.LOG_ALL);
     parameters.add("--sparse");
+    parameters.add("--date-order");
 
     final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
     Set<VcsUser> userRegistry = newHashSet();
@@ -453,7 +454,6 @@ public class GitLogProvider implements VcsLogProvider {
     if (maxCount > 0) {
       filterParameters.add(prepareParameter("max-count", String.valueOf(maxCount)));
     }
-    filterParameters.add("--date-order");
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (filterCollection.getStructureFilter() != null) {

@@ -506,7 +506,6 @@ public class GitHistoryUtils {
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters("--full-history");
-    h.addParameters("--date-order");
     h.addParameters("--decorate=full");
     h.addParameters(parameters);
     h.endOptions();
