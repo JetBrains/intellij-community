@@ -35,6 +35,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     if (course == null) return;
     if (myProject.getBaseDir().equals(myValue.getVirtualFile())) {
       data.clearText();
+      data.setIcon(EducationalIcons.Course);
       data.addText(course.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
