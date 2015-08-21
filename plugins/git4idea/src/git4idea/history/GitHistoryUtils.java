@@ -505,7 +505,6 @@ public class GitHistoryUtils {
                                                  AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("--full-history");
     h.addParameters("--decorate=full");
     h.addParameters(parameters);
     h.endOptions();

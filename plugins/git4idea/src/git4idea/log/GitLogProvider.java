@@ -316,7 +316,6 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     List<String> parameters = new ArrayList<String>(GitHistoryUtils.LOG_ALL);
-    parameters.add("--sparse");
     parameters.add("--date-order");
 
     final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
@@ -459,6 +458,7 @@ public class GitLogProvider implements VcsLogProvider {
     if (filterCollection.getStructureFilter() != null) {
       Collection<VirtualFile> files = filterCollection.getStructureFilter().getFiles();
       if (!files.isEmpty()) {
+        filterParameters.add("--full-history");
         filterParameters.add("--simplify-merges");
         filterParameters.add("--");
         for (VirtualFile file : files) {
