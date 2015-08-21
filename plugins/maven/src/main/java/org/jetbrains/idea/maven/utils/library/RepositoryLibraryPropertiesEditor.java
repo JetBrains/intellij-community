@@ -144,7 +144,10 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   }
 
   public RepositoryLibraryProperties getProperties() {
-    return new RepositoryLibraryProperties(getSelectedVersion());
+    return new RepositoryLibraryProperties(
+      repositoryLibraryDescription.getGroupId(),
+      repositoryLibraryDescription.getArtifactId(),
+      getSelectedVersion());
   }
 
   public JPanel getMainPanel() {

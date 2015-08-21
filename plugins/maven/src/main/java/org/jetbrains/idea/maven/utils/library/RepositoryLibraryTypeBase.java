@@ -100,15 +100,13 @@ public abstract class RepositoryLibraryTypeBase extends LibraryType<RepositoryLi
   }
 
   public static void reloadDependenciesAsync(@NotNull final Project project,
-                                             @NotNull final LibraryEx library,
-                                             @NotNull final RepositoryLibraryProperties libraryProperties) {
+                                             @NotNull final LibraryEx library) {
     Task task = new Task.Backgroundable(project, "Maven", false) {
       public void run(@NotNull ProgressIndicator indicator) {
         reloadDependencies(
           indicator,
           project,
-          library,
-          libraryProperties);
+          library);
       }
     };
     ProgressManager.getInstance().run(task);
@@ -116,9 +114,9 @@ public abstract class RepositoryLibraryTypeBase extends LibraryType<RepositoryLi
 
   public static void reloadDependencies(@NotNull ProgressIndicator indicator,
                                         @NotNull final Project project,
-                                        @NotNull final LibraryEx library,
-                                        @NotNull final RepositoryLibraryProperties libraryProperties) {
+                                        @NotNull final LibraryEx library) {
     indicator.setText(ProjectBundle.message("maven.loading.library.hint", library.getName()));
+    @NotNull final RepositoryLibraryProperties libraryProperties = (RepositoryLibraryProperties)library.getProperties();
     RepositoryAttachHandler.doResolveInner(
       project,
       Collections

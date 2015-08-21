@@ -45,7 +45,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof RepositoryLibraryProperties && Comparing.equal(getMavenId(), ((RepositoryLibraryProperties)obj).getMavenId());
+    return obj instanceof RepositoryLibraryProperties && Comparing.equal(mavenId, ((RepositoryLibraryProperties)obj).mavenId);
   }
 
   @Override
@@ -60,9 +60,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Override
   public void loadState(RepositoryLibraryProperties state) {
-    this.groupId = state.groupId;
-    this.artifactId = state.artifactId;
-    this.version = state.version;
+    setMavenId(state.mavenId);
   }
 
   @Attribute("maven-id")

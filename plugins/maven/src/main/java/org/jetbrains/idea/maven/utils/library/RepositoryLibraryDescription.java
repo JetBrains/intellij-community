@@ -29,25 +29,27 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class RepositoryLibraryDescription {
-  protected static ExtensionPointName<RepositoryLibraryDescription> EP_NAME
+  protected static final ExtensionPointName<RepositoryLibraryDescription> EP_NAME
     = ExtensionPointName.create("org.jetbrains.idea.maven.repositoryLibrary");
-  private static Map<String, RepositoryLibraryDescription> registeredLibraries = registerLibraries();
-
-  private static Map<String, RepositoryLibraryDescription> registerLibraries() {
-    Map<String, RepositoryLibraryDescription> result = new HashMap<String, RepositoryLibraryDescription>();
-    for (RepositoryLibraryDescription description : EP_NAME.getExtensions()) {
-      String id = description.getGroupId() + ":" + description.getArtifactId();
-      RepositoryLibraryDescription existDescription = result.get(id);
-      if (existDescription == null || existDescription.getWeight() >= description.getWeight()) {
-        continue;
-      }
-      result.put(id, description);
-    }
-    return result;
-  }
+  private static final List<MavenRepositoryInfo> defaultRemoteRepositories = Collections.singletonList(new MavenRepositoryInfo(
+    "maven.central",
+    "maven.central",
+    "http://repo1.maven.org/maven2"));
+  private static Map<String, RepositoryLibraryDescription> registeredLibraries;
 
   @NotNull
-  public static RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
+  public static synchronized RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
+    if (registeredLibraries == null) {
+      registeredLibraries = new HashMap<String, RepositoryLibraryDescription>();
+      for (RepositoryLibraryDescription description : EP_NAME.getExtensions()) {
+        String id = description.getGroupId() + ":" + description.getArtifactId();
+        RepositoryLibraryDescription existDescription = registeredLibraries.get(id);
+        if (existDescription == null || existDescription.getWeight() >= description.getWeight()) {
+          continue;
+        }
+        registeredLibraries.put(id, description);
+      }
+    }
     String id = properties.getGroupId() + ":" + properties.getArtifactId();
     RepositoryLibraryDescription description = registeredLibraries.get(id);
     if (description != null) {
@@ -99,7 +101,7 @@ public abstract class RepositoryLibraryDescription {
 
   @NotNull
   List<MavenRepositoryInfo> getRemoteRepositories() {
-    return Collections.emptyList();
+    return defaultRemoteRepositories;
   }
 
   // One library could have more then one description - for ex. in different plugins
