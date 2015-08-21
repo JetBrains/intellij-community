@@ -350,7 +350,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @NotNull
-  private static TypeInfo fieldType(String desc, String signature) {
+  public static TypeInfo fieldType(String desc, String signature) {
     if (signature != null) {
       try {
         return TypeInfo.fromString(SignatureParsing.parseTypeString(new StringCharacterIterator(signature, 0)));

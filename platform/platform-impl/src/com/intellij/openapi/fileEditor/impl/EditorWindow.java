@@ -245,6 +245,16 @@ public class EditorWindow {
             }
           }
           else {
+
+            if (inSplitter()) {
+              Splitter splitter = (Splitter)myPanel.getParent();
+              JComponent otherComponent = splitter.getOtherComponent(myPanel);
+
+              if (otherComponent != null) {
+                IdeFocusManager.findInstance().requestFocus(otherComponent, true);
+              }
+            }
+
             myPanel.removeAll ();
             if (editor != null) {
               editorManager.disposeComposite(editor);

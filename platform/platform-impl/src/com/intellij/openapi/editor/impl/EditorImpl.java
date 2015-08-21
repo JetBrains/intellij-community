@@ -26,6 +26,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -317,6 +318,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   
   private boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
+  
+  private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
 
   // Characters that excluded from zero-latency painting after key typing
   private static final Set<Character> KEY_CHARS_TO_SKIP = new HashSet<Character>(Arrays.asList('\n', '\t', '(', ')', '[', ']', '{', '}', '"', '\''));
@@ -595,6 +598,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setSize(preferredSize);
 
     updateCaretCursor();
+    
+    addEditorMouseListener(new MyEditorPopupHandler());
 
     // This hacks context layout problem where editor appears scrolled to the right just after it is created.
     if (!ourIsUnitTestMode) {
@@ -698,6 +703,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public int getExpectedCaretOffset() {
     return myExpectedCaretOffset == -1 ? getCaretModel().getOffset() : myExpectedCaretOffset;
+  }
+
+  @Override
+  public void setContextMenuGroupId(@Nullable String groupId) {
+    myContextMenuGroupId = groupId;
+  }
+
+  @Nullable
+  @Override
+  public String getContextMenuGroupId() {
+    return myContextMenuGroupId;
   }
 
   @Override
@@ -7433,6 +7449,41 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
              && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
                  offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
                  myInnerWhitespaceShown);
+    }
+  }
+  
+  private class MyEditorPopupHandler extends EditorMouseAdapter {
+    @Override
+    public void mouseReleased(EditorMouseEvent e) {
+      invokePopupIfNeeded(e);
+    }
+
+    @Override
+    public void mousePressed(EditorMouseEvent e) {
+      invokePopupIfNeeded(e);
+    }
+
+    @Override
+    public void mouseClicked(EditorMouseEvent e) {
+      invokePopupIfNeeded(e);
+    }
+
+    private void invokePopupIfNeeded(EditorMouseEvent event) {
+      if (myContextMenuGroupId != null && 
+          event.getArea() == EditorMouseEventArea.EDITING_AREA && 
+          event.getMouseEvent().isPopupTrigger() && 
+          !event.isConsumed()) {
+        AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(myContextMenuGroupId);
+        if (action instanceof ActionGroup) {
+          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, (ActionGroup)action);
+          MouseEvent e = event.getMouseEvent();
+          final Component c = e.getComponent();
+          if (c != null && c.isShowing()) {
+            popupMenu.getComponent().show(c, e.getX(), e.getY());
+          }
+          e.consume();
+        }
+      }
     }
   }
 }

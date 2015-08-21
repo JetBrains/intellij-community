@@ -1,7 +1,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.util.text.StringUtilRt

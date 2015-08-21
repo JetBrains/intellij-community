@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.application.ex;
 
-import com.intellij.openapi.components.impl.stores.StateMap;
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
@@ -38,12 +38,12 @@ public class DecodeDefaultsUtil {
     if (url == null) {
       Class<?> requestorClass = requestor.getClass();
       if (StringUtil.startsWithChar(componentResourcePath, '/')) {
-        url = requestorClass.getResource(componentResourcePath + StateMap.DEFAULT_EXT);
+        url = requestorClass.getResource(componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
       }
       else {
-        url = requestorClass.getResource('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath + StateMap.DEFAULT_EXT);
+        url = requestorClass.getResource('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
         if (url == null) {
-          url = requestorClass.getResource('/' + componentResourcePath + StateMap.DEFAULT_EXT);
+          url = requestorClass.getResource('/' + componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
         }
       }
       RESOURCE_CACHE.put(componentResourcePath, url);

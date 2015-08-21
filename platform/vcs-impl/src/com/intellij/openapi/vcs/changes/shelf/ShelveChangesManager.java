@@ -116,8 +116,13 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           return child;
         }
       });
-    myFileProcessor = new CompoundShelfFileProcessor(mySchemeManager.getRootDirectory());
-    ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(mySchemeManager.getRootDirectory().getAbsolutePath());
+    File shelfDirectory = mySchemeManager.getRootDirectory();
+    myFileProcessor = new CompoundShelfFileProcessor(shelfDirectory);
+    // do not try to ignore when new project created,
+    // because it may lead to predefined ignore creation conflict; see ConvertExcludedToIgnoredTest etc
+    if (shelfDirectory.exists()) {
+      ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(shelfDirectory.getAbsolutePath());
+    }
     mySchemeManager.loadSchemes();
   }
 
@@ -270,12 +275,13 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       baseRevisionsOfDvcsIntoContext(textChanges, commitContext);
       myFileProcessor.savePathFile(
         new CompoundShelfFileProcessor.ContentProvider() {
-          @Override
-          public void writeContentTo(final Writer writer, CommitContext commitContext) throws IOException {
-            UnifiedDiffWriter.write(myProject, patches, writer, "\n", commitContext);
-          }
-        },
-        patchPath, commitContext);
+                                     @Override
+                                     public void writeContentTo(@NotNull final Writer writer, @NotNull CommitContext commitContext)
+                                       throws IOException {
+                                       UnifiedDiffWriter.write(myProject, patches, writer, "\n", commitContext);
+                                     }
+                                   },
+                                   patchPath, commitContext);
 
       changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
       changeList.setName(schemePatchDir.getName());
@@ -331,7 +337,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       myFileProcessor.savePathFile(
         new CompoundShelfFileProcessor.ContentProvider() {
           @Override
-          public void writeContentTo(final Writer writer, CommitContext commitContext) throws IOException {
+          public void writeContentTo(@NotNull final Writer writer, @NotNull CommitContext commitContext)
+            throws IOException {
             UnifiedDiffWriter.write(myProject, patches, writer, "\n", patchTransitExtensions, commitContext);
           }
         },
@@ -427,6 +434,10 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull
   private File generateUniqueSchemePatchDir(@NotNull final String defaultName, boolean createResourceDirectory) {
+    File shelfDir = getShelfResourcesDirectory();
+    if (!shelfDir.exists()) {
+      ChangeListManager.getInstance(myProject).addDirectoryToIgnoreImplicitly(shelfDir.getAbsolutePath());
+    }
     String uniqueName = UniqueNameGenerator
       .generateUniqueName(shortenAndSanitize(defaultName), mySchemeManager.getAllSchemeNames());
     File dir = new File(myFileProcessor.getBaseDir(), uniqueName);

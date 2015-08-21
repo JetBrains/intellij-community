@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,11 @@ public class ExtensionPointImplTest {
     assertThat(ourTestLog.errors(), empty());
 
     adapter.setFire(false);
-    assertThat(extensionPoint.getExtensions(), arrayContaining("second", "", "first"));
+    String[] extensions = extensionPoint.getExtensions();
+    assertEquals("second", extensions[0]);
+    assertThat(extensions[1], isOneOf("", "first"));
+    assertThat(extensions[2], isOneOf("", "first"));
+    assertNotEquals(extensions[2], extensions[1]);
     assertThat(ourTestLog.errors(), empty());
   }
 

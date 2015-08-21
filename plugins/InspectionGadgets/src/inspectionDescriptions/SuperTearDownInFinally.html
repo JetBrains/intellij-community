@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports <b>super.tearDown()</b> calls which are not performed inside a <b>finally</b> block.
+If there are other method calls in the <b>tearDown()</b> method, which may throw
+an exception before the <b>super.tearDown()</b> call, this may lead to inconsistencies and leaks.
+<!-- tooltip end -->
+<p>
+<small>New in 15</small>
+</body>
+</html>

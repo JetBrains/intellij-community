@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<component>
+<idea-plugin>
   <actions>
 
     <group id="SwitchViewActions">
@@ -518,6 +518,12 @@
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingAction"/>
     </group>
+    
+    <group id="BasicEditorPopupMenu">
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
+    </group>
 
     <group id="ConsoleEditorPopupMenu">
       <reference ref="CutCopyPasteGroup"/>
@@ -742,4 +748,4 @@
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
   </actions>
-</component>
+</idea-plugin>

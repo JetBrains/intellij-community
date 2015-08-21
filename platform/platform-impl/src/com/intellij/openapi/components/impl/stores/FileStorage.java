@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -24,9 +23,6 @@ import java.io.File;
 public interface FileStorage {
   @Nullable
   VirtualFile getVirtualFile();
-
-  @NotNull
-  File getFile();
 
   // todo remove
   void setFile(@Nullable VirtualFile file, @Nullable File ioFileIfChanged);

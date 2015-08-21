@@ -50,8 +50,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     if (valueName.equals(myProject.getName())) {
       data.clearText();
+      data.setIcon(EducationalIcons.Course);
       data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
-      data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else if (valueName.contains(EduNames.TASK)) {
       TaskFile file = null;

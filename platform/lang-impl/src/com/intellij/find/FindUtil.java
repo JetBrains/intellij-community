@@ -58,13 +58,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -915,7 +915,7 @@ public class FindUtil {
   }
 
   @Nullable
-  public static UsageView showInUsageView(PsiElement sourceElement, @NotNull final PsiElement[] targets, @NotNull String title, @NotNull Project project) {
+  public static UsageView showInUsageView(PsiElement sourceElement, @NotNull PsiElement[] targets, @NotNull String title, @NotNull final Project project) {
     if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
@@ -928,17 +928,30 @@ public class FindUtil {
     final Usage[] usages = {UsageInfoToUsageConverter.convert(primary, new UsageInfo(targets[0]))};
     final UsageView view =
       UsageViewManager.getInstance(project).showUsages(usageTargets, usages, presentation);
+
+    final List<SmartPsiElementPointer> pointers = ContainerUtil.map(targets, new Function<PsiElement, SmartPsiElementPointer>() {
+      @Override
+      public SmartPsiElementPointer fun(PsiElement psiElement) {
+        return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
+      }
+    });
+
+    // usage view will load document/AST so still referencing all these PSI elements might lead to out of memory
+    //noinspection UnusedAssignment
+    targets = PsiElement.EMPTY_ARRAY;
+
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (int i = 1; i < targets.length; i++) {
+        for (final SmartPsiElementPointer pointer : pointers) {
           if (((UsageViewImpl)view).isDisposed()) break;
-          final PsiElement target = targets[i];
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              final Usage usage = UsageInfoToUsageConverter.convert(primary, new UsageInfo(target));
-              view.appendUsage(usage);
+              final PsiElement target = pointer.getElement();
+              if (target != null) {
+                view.appendUsage(UsageInfoToUsageConverter.convert(primary, new UsageInfo(target)));
+              }
             }
           });
         }

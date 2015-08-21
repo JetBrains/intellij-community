@@ -136,12 +136,12 @@ if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
 
-vm_options_file="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
+vm_options_file="$OS_SPECIFIC_BIN_DIR/@@vm_options@@$BITS.vmoptions"
 user_vm_options_file="$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions"
 if [ -r "$user_vm_options_file" ]; then
   vm_options_file="$user_vm_options_file"
 fi
-if [ -n "$@@product_uc@@_VM_OPTIONS" ]; then
+if [ -n "$@@product_uc@@_VM_OPTIONS" ] && [ -r "$@@product_uc@@_VM_OPTIONS" ]; then
   vm_options_file="$@@product_uc@@_VM_OPTIONS"
 fi
 
@@ -184,5 +184,6 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/jre/bin/java" \
   com.intellij.idea.Main \
   "$@"
 EC=$?
-test $EC -ne 88 && exit $EC
-exec "$0" "$@"
+exit $EC
+# test $EC -ne 88 && exit $EC
+# exec "$0" "$@"
