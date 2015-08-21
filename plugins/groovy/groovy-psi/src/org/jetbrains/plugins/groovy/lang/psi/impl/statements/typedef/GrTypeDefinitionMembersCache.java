@@ -354,12 +354,7 @@ public class GrTypeDefinitionMembersCache {
                   @Override
                   public boolean process(VirtualFile file, Collection<TraitFieldDescriptor> values) {
                     for (TraitFieldDescriptor descriptor : values) {
-                      final GrLightField field = new GrLightField(
-                        trait,
-                        descriptor.name,
-                        myElementFactory.createTypeFromText(descriptor.name, trait),
-                        trait
-                      );
+                      final GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
                       if (descriptor.isStatic) {
                         field.getModifierList().addModifier(STATIC_MASK);
                       }
