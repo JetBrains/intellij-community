@@ -19,17 +19,23 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
-  protected final static IElementType MINUS_TYPE = new IElementType("MINUS", null);
+  public final static IElementType MINUS_TYPE = new IElementType("MINUS", null);
 
   public TemplateMasqueradingLexer(@NotNull Lexer delegate) {
     super(delegate);
   }
 
   protected abstract static class MyLexer extends LexerBase {
+    protected static final int LEXING_BY_SELF = 0;
+    protected static final int DELEGATE_IS_LEXING_LINE = 1;
+    protected static final int DELEGATE_IS_LEXING_BLOCK = 2;
+    protected static final int EOF = 3;
+
     protected final int myIndent;
     protected final Lexer myDelegate;
 
@@ -37,6 +43,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
     protected int myEndOffset;
     protected CharSequence myBuffer;
 
+    @MagicConstant(intValues = {LEXING_BY_SELF, DELEGATE_IS_LEXING_LINE, DELEGATE_IS_LEXING_BLOCK, EOF})
     protected int myState;
     protected IElementType myTokenType;
     protected int myTokenStart;
@@ -61,12 +68,15 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
       myBuffer = buffer;
       myStartOffset = startOffset;
       myEndOffset = endOffset;
+      //noinspection MagicConstant
       myState = initialState % 239;
 
       myTokenEnd = startOffset;
 
-      if (myState == 1) {
-        myTokenEnd = findEol(startOffset);
+      if (myState == DELEGATE_IS_LEXING_LINE || myState == DELEGATE_IS_LEXING_BLOCK) {
+        myTokenEnd = (myState == DELEGATE_IS_LEXING_LINE)
+                     ? findEol(startOffset)
+                     : findEndByIndent(startOffset);
         myDelegate.start(buffer, startOffset, myTokenEnd, getDelegateState(initialState / 239));
       }
       else
@@ -84,10 +94,10 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
     @Nullable
     @Override
     public IElementType getTokenType() {
-      if (myState == 2) {
+      if (myState == EOF) {
         return null;
       }
-      if (myState == 1) {
+      if (myState == DELEGATE_IS_LEXING_LINE || myState == DELEGATE_IS_LEXING_BLOCK) {
         return myDelegate.getTokenType();
       }
 
@@ -97,10 +107,10 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
     @NotNull
     @Override
     public String getTokenText() {
-      if (myState == 2) {
+      if (myState == EOF) {
         return "";
       }
-      if (myState == 1) {
+      if (myState == DELEGATE_IS_LEXING_LINE || myState == DELEGATE_IS_LEXING_BLOCK) {
         return myDelegate.getTokenText();
       }
 
@@ -109,7 +119,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
 
     @Override
     public int getTokenStart() {
-      if (myState == 1) {
+      if (myState == DELEGATE_IS_LEXING_LINE || myState == DELEGATE_IS_LEXING_BLOCK) {
         return myDelegate.getTokenStart();
       }
 
@@ -118,7 +128,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
 
     @Override
     public int getTokenEnd() {
-      if (myState == 1) {
+      if (myState == DELEGATE_IS_LEXING_LINE || myState == DELEGATE_IS_LEXING_BLOCK) {
         return myDelegate.getTokenEnd();
       }
 
@@ -127,17 +137,17 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
 
     @Override
     public void advance() {
-      if (myState == 1) {
+      if (myState == DELEGATE_IS_LEXING_LINE || myState == DELEGATE_IS_LEXING_BLOCK) {
         myDelegate.advance();
         if (myDelegate.getTokenType() == null) {
-          myState = 0;
+          myState = LEXING_BY_SELF;
           myTokenEnd = myDelegate.getBufferEnd();
           advance();
         }
       }
       else {
         if (myTokenEnd == myEndOffset) {
-          myState = 2;
+          myState = EOF;
           return;
         }
 
@@ -151,8 +161,14 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
 
         int curIndent = calcIndent(myTokenStart);
         if (curIndent > myIndent) {
-          myTokenType = getEmbeddedContentTokenType();
           myTokenEnd = findEndByIndent(myTokenStart + 1);
+          if (prevLineWithMinusIsEmpty(myTokenStart)) {
+            myDelegate.start(myBuffer, myTokenStart, myTokenEnd, myDelegate.getState());
+            myState = DELEGATE_IS_LEXING_BLOCK;
+          }
+          else {
+            myTokenType = getEmbeddedContentTokenType();
+          }
           return;
         }
 
@@ -164,9 +180,21 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
         else {
           myTokenEnd = findEol(myTokenStart);
           myDelegate.start(myBuffer, myTokenStart, myTokenEnd, getDelegateState(myDelegate.getState()));
-          myState = 1;
+          myState = DELEGATE_IS_LEXING_LINE;
         }
       }
+    }
+
+    private boolean prevLineWithMinusIsEmpty(int offset) {
+      final int minusOffset = StringUtil.lastIndexOf(myBuffer, '-', myStartOffset, offset);
+      if (minusOffset == -1) {
+        return false;
+      }
+      final int eolPos = findEol(minusOffset);
+      if (eolPos == -1) {
+        return false;
+      }
+      return StringUtil.isEmptyOrSpaces(myBuffer.subSequence(minusOffset + 1, eolPos));
     }
 
     protected int findEndByIndent(int offset) {
