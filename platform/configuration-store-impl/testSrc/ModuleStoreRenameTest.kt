@@ -10,7 +10,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.ModuleAdapter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.systemIndependentPath
@@ -24,12 +23,13 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.io.File
+import java.nio.file.Paths
 import java.util.UUID
 import kotlin.properties.Delegates
 
 class ModuleStoreRenameTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
   }
 
   var module: Module by Delegates.notNull()
@@ -44,8 +44,15 @@ class ModuleStoreRenameTest {
     object : ExternalResource() {
       override fun before() {
         runInEdtAndWait {
-          module = runWriteAction { ModuleManager.getInstance(projectRule.project).newModule(tempDirManager.newPath().resolve("m.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+          module = projectRule.createModule(tempDirManager.newPath().resolve("m.iml"))
         }
+
+        module.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
+          override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
+            assertThat(modules).containsOnly(module)
+            oldModuleNames.add(oldNameProvider.`fun`(module))
+          }
+        })
       }
 
       // should be invoked after project tearDown
@@ -58,22 +65,12 @@ class ModuleStoreRenameTest {
         }
       }
     },
-    DisposeModulesRule(projectRule),
-    object : ExternalResource() {
-      override fun before() {
-        module.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
-          override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
-            assertThat(modules).containsOnly(module)
-            oldModuleNames.add(oldNameProvider.`fun`(module))
-          }
-        })
-      }
-    }
+    DisposeModulesRule(projectRule)
   )
 
   public Rule fun getChain(): RuleChain = ruleChain
 
-  fun Module.change(task: ModifiableModuleModel.() -> Unit) {
+  fun changeModule(task: ModifiableModuleModel.() -> Unit) {
     runInEdtAndWait {
       val model = ModuleManager.getInstance(projectRule.project).getModifiableModel()
       runWriteAction {
@@ -92,7 +89,7 @@ class ModuleStoreRenameTest {
 
     val oldName = module.getName()
     val newName = "foo"
-    module.change { renameModule(module, newName) }
+    changeModule { renameModule(module, newName) }
     assertRename(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }
@@ -135,9 +132,9 @@ class ModuleStoreRenameTest {
     val parentVirtualDir = storage.getVirtualFile()!!.getParent()
     runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
 
-    val newFile = File(parentVirtualDir.getPath(), module.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
+    val newFile = Paths.get(parentVirtualDir.getPath(), "${module.getName()}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     try {
-      assertThat(newFile).isFile()
+      assertThat(newFile).isRegularFile()
       assertRename(module.getName(), oldFile)
       assertThat(oldModuleNames).isEmpty()
     }

@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.CompoundRuntimeException
@@ -50,7 +49,6 @@ import java.lang.annotation.Target
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
-import kotlin.properties.Delegates
 
 /**
  * Project created on request, so, could be used as a bare (only application).
@@ -153,24 +151,6 @@ public open class FixtureRule() : ExternalResource() {
 
   override final fun after() {
     runInEdtAndWait { projectFixture.tearDown() }
-  }
-}
-
-public fun FixtureRule(tuner: TestFixtureBuilder<IdeaProjectTestFixture>.() -> Unit): FixtureRule = HeavyFixtureRule(tuner)
-
-private class HeavyFixtureRule(private val tune: TestFixtureBuilder<IdeaProjectTestFixture>.() -> Unit) : FixtureRule() {
-  private var name: String by Delegates.notNull()
-
-  override final fun apply(base: Statement, description: Description): Statement {
-    name = description.getMethodName()
-    return super.apply(base, description)
-  }
-
-  override final fun createBuilder(): TestFixtureBuilder<IdeaProjectTestFixture> {
-    val builder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
-    _projectFixture = builder.getFixture()
-    builder.tune()
-    return builder
   }
 }
 
