@@ -19,7 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class ProgressToolWindowFactory implements ToolWindowFactory, DumbAware {
+public class StudyProgressToolWindowFactory implements ToolWindowFactory, DumbAware {
   public static final String ID = "Course Progress";
 
 

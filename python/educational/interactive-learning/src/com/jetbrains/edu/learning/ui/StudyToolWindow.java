@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -89,7 +90,9 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
                       "font-size: " + font.getSize() + "pt; }";
     ((HTMLDocument)taskTextPane.getDocument()).getStyleSheet().addRule(bodyRule);
     taskTextPane.setEditable(false);
-    taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    if (!UIUtil.isUnderDarcula()) {
+      taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    }
     taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
     return taskTextPane;
   }

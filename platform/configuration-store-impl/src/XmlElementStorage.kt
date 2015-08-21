@@ -20,15 +20,12 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
-import org.jdom.JDOMException
 import java.io.IOException
-import java.util.Arrays
 
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
                                                        protected val rootElementName: String,
@@ -42,12 +39,15 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
   override fun getStateAndArchive(storageData: StateMap, component: Any, componentName: String) = storageData.getStateAndArchive(componentName)
 
+  override fun hasState(storageData: StateMap, componentName: String) = storageData.hasState(componentName)
+
   override fun loadData(): StateMap {
     val element: Element?
     // we don't use local data if has stream provider
     if (provider != null && provider.enabled) {
       try {
         element = loadDataFromProvider()
+        dataLoadedFromProvider(element)
       }
       catch (e: Exception) {
         LOG.error(e)
@@ -57,15 +57,17 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     else {
       element = loadLocalData()
     }
-    return if (element == null) StateMap() else loadState(element)
+    return if (element == null) StateMap.EMPTY else loadState(element)
   }
 
-  throws(IOException::class, JDOMException::class)
+  protected open fun dataLoadedFromProvider(element: Element?) {
+  }
+
   private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.load(element, pathMacroSubstitutor, true)
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
   }
 
   fun setDefaultState(element: Element) {
@@ -104,7 +106,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 
   abstract class XmlElementStorageSaveSession<T : XmlElementStorage>(private val originalStates: StateMap, protected val storage: T) : SaveSessionBase() {
-    private var copiedStates: StateMap? = null
+    private var copiedStates: MutableMap<String, Any>? = null
 
     private val newLiveStates = THashMap<String, Element>()
 
@@ -115,13 +117,13 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         copiedStates = setStateAndCloneIfNeed(componentName, element, originalStates, newLiveStates)
       }
       else {
-        copiedStates!!.setState(componentName, element, newLiveStates)
+        updateState(copiedStates!!, componentName, element, newLiveStates)
       }
     }
 
     override fun save() {
-      var states = copiedStates!!
-      var element = save(states, newLiveStates, storage.rootElementName)
+      val stateMap = StateMap.fromMap(copiedStates!!)
+      var element = save(stateMap, newLiveStates, storage.rootElementName)
       if (element == null || JDOMUtil.isEmpty(element)) {
         element = null
       }
@@ -143,7 +145,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       else {
         saveLocally(element)
       }
-      storage.setStates(originalStates, states)
+      storage.setStates(originalStates, stateMap)
     }
 
     throws(IOException::class)
@@ -198,20 +200,17 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>, rootElem
   }
 
   val rootElement = Element(rootElementName)
-  val componentNames = ArrayUtil.toStringArray(states.keys())
-  Arrays.sort(componentNames)
-  for (componentName in componentNames) {
-    assert(componentName != null)
+  for (componentName in states.keys()) {
     val element = states.getElement(componentName, newLiveStates)
     // name attribute should be first
     val elementAttributes = element.getAttributes()
     if (elementAttributes.isEmpty()) {
-      element.setAttribute(StateMap.NAME, componentName)
+      element.setAttribute(FileStorageCoreUtil.NAME, componentName)
     }
     else {
-      var nameAttribute: Attribute? = element.getAttribute(StateMap.NAME)
+      var nameAttribute: Attribute? = element.getAttribute(FileStorageCoreUtil.NAME)
       if (nameAttribute == null) {
-        nameAttribute = Attribute(StateMap.NAME, componentName)
+        nameAttribute = Attribute(FileStorageCoreUtil.NAME, componentName)
         elementAttributes.add(0, nameAttribute)
       }
       else {
@@ -228,14 +227,14 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>, rootElem
   return rootElement
 }
 
-fun setStateAndCloneIfNeed(componentName: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>): StateMap? {
+fun setStateAndCloneIfNeed(componentName: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>): MutableMap<String, Any>? {
   val oldState = oldStates.get(componentName)
   if (newState == null || JDOMUtil.isEmpty(newState)) {
     if (oldState == null) {
       return null
     }
 
-    val newStates = StateMap(oldStates)
+    val newStates = oldStates.toMutableMap()
     newStates.remove(componentName)
     return newStates
   }
@@ -257,7 +256,7 @@ fun setStateAndCloneIfNeed(componentName: String, newState: Element?, oldStates:
     }
   }
 
-  val newStates = StateMap(oldStates)
+  val newStates = oldStates.toMutableMap()
   newStates.put(componentName, newBytes ?: newState)
   return newStates
 }
@@ -267,40 +266,37 @@ fun prepareElement(state: Element) {
     LOG.warn("State element must not have parent ${JDOMUtil.writeElement(state)}")
     state.detach()
   }
-  state.setName(StateMap.COMPONENT)
+  state.setName(FileStorageCoreUtil.COMPONENT)
 }
 
-fun StateMap.setState(componentName: String, newState: Element?, newLiveStates: MutableMap<String, Element>): Any? {
+private fun updateState(states: MutableMap<String, Any>, componentName: String, newState: Element?, newLiveStates: MutableMap<String, Element>) {
   if (newState == null || JDOMUtil.isEmpty(newState)) {
-    return remove(componentName)
+    states.remove(componentName)
+    return
   }
 
   prepareElement(newState)
 
   newLiveStates.put(componentName, newState)
 
-  val oldState = get(componentName)
+  val oldState = states.get(componentName)
 
   var newBytes: ByteArray? = null
   if (oldState is Element) {
     if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
-      return null
+      return
     }
   }
   else if (oldState != null) {
-    newBytes = StateMap.getNewByteIfDiffers(componentName, newState, oldState as ByteArray)
-    if (newBytes == null) {
-      return null
-    }
+    newBytes = StateMap.getNewByteIfDiffers(componentName, newState, oldState as ByteArray) ?: return
   }
 
-  put(componentName, if (newBytes == null) newState else newBytes)
-  return newState
+  states.put(componentName, newBytes ?: newState)
 }
 
 // newStorageData - myStates contains only live (unarchived) states
 private fun StateMap.getChangedComponentNames(newStates: StateMap): Set<String> {
-  val bothStates = SmartHashSet(keys())
+  val bothStates = keys().toMutableSet()
   bothStates.retainAll(newStates.keys())
 
   val diffs = SmartHashSet<String>()

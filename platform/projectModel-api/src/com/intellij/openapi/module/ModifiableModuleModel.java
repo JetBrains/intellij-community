@@ -138,6 +138,4 @@ public interface ModifiableModuleModel {
   boolean hasModuleGroups();
 
   void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath);
-
-  void setModuleFilePath(@NotNull Module module, String oldPath, String newFilePath);
 }

@@ -56,7 +56,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -1368,17 +1371,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    UsefulTestCase.replaceIdeEventQueueSafely();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    TestFrameworkPackage.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
-        try {
-          myProjectFixture.setUp();
-          myTempDirFixture.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+      public void run() throws Throwable {
+        myProjectFixture.setUp();
+        myTempDirFixture.setUp();
 
         VirtualFile tempDir = myTempDirFixture.getFile("");
         PlatformTestCase.synchronizeTempDirVfs(tempDir);
@@ -1538,7 +1536,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    TestFrameworkPackage.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() {
         if (!copy.getFileType().isBinary()) {
@@ -1573,7 +1571,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           setupEditorForInjectedLanguage();
         }
       }
-    }, ModalityState.any());
+    });
 
     return getFile();
   }

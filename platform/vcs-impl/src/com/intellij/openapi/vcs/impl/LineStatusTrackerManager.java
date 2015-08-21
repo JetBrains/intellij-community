@@ -124,9 +124,9 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         if (tracker != null) tracker.finishBulkUpdate();
       }
     });
-    busConnection.subscribe(LineStatusTrackerTopics.SETTINGS_CHANGED, new LineStatusTrackerTopics.LineStatusTrackerSettingListener() {
+    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, new LineStatusTrackerSettingListener() {
       @Override
-      public void updateSettings() {
+      public void settingsUpdated() {
         synchronized (myLock) {
           LineStatusTracker.Mode mode = getMode();
           for (LineStatusTracker tracker : myLineStatusTrackers.values()) {

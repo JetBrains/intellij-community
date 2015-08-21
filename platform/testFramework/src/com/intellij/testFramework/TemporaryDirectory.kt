@@ -51,19 +51,15 @@ public class TemporaryDirectory : ExternalResource() {
    */
   public fun newDirectory(directoryName: String? = null): File = generatePath(directoryName).toFile()
 
-  public fun newPath(directoryName: String? = null): Path {
+  public fun newPath(directoryName: String? = null, refreshVfs: Boolean = true): Path {
     val path = generatePath(directoryName)
-    LocalFileSystem.getInstance()?.let { fs ->
-      // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
-      val virtualFile = fs.findFileByPath(path.systemIndependentPath)
-      if (virtualFile != null) {
-        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
-      }
+    if (refreshVfs) {
+      path.refreshVfs()
     }
     return path
   }
 
-  public fun generatePath(suffix: String?): Path {
+  private fun generatePath(suffix: String?): Path {
     var fileName = sanitizedName!!
     if (suffix != null) {
       fileName += "_$suffix"
@@ -121,3 +117,24 @@ public val Path.parentSystemIndependentPath: String
   get() = getParent()!!.toString().replace(File.separatorChar, '/')
 
 public fun Path.readText(): String = Files.readAllBytes(this).toString(Charsets.UTF_8)
+
+public fun VirtualFile.writeChild(relativePath: String, data: String): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
+
+public fun Path.writeChild(relativePath: String, data: String): Path {
+  val path = resolve(relativePath)
+  path.getParent().createDirectories()
+  return Files.write(path, data.toByteArray())
+}
+
+public fun Path.refreshVfs() {
+  LocalFileSystem.getInstance()?.let { fs ->
+    // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
+    val virtualFile = fs.findFileByPath(systemIndependentPath)
+    if (virtualFile != null) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+    }
+  }
+}
+
+val VirtualFile.path: String
+  get() = getPath()

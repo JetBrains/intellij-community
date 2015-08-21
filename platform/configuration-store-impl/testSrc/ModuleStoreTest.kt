@@ -26,7 +26,7 @@ import java.nio.file.Paths
 @RunsInActiveStoreMode
 class ModuleStoreTest {
   companion object {
-     ClassRule val projectRule = ProjectRule()
+     @ClassRule val projectRule = ProjectRule()
 
     val MODULE_DIR = "\$MODULE_DIR$"
 
@@ -41,7 +41,7 @@ class ModuleStoreTest {
 
     private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(getPath()) }
 
-    private fun Path.createModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).newModule(systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+    fun Path.createModule() = projectRule.createModule(this)
   }
 
   private val tempDirManager = TemporaryDirectory()
@@ -160,3 +160,5 @@ class ModuleStoreTest {
 
 val Module.contentRootUrls: Array<String>
   get() = ModuleRootManager.getInstance(this).getContentRootUrls()
+
+fun ProjectRule.createModule(path: Path) = runWriteAction { ModuleManager.getInstance(project).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }

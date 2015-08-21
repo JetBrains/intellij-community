@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.impl.stores.StateMap
 import com.intellij.openapi.util.JDOMBuilder.attr
 import com.intellij.openapi.util.JDOMBuilder.tag
 import junit.framework.TestCase
