@@ -318,29 +318,27 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   @NotNull
   public List<T> apply() {
-    if (!helper.hasModifiedItems()) {
-      return model.items;
-    }
-
-    @SuppressWarnings("unchecked")
-    final ColumnInfo<T, Object>[] columns = model.getColumnInfos();
-    helper.process(new TObjectObjectProcedure<T, T>() {
-      @Override
-      public boolean execute(T newItem, @NotNull T oldItem) {
-        for (ColumnInfo<T, Object> column : columns) {
-          if (column.isCellEditable(newItem)) {
-            column.setValue(oldItem, column.valueOf(newItem));
+    if (helper.hasModifiedItems()) {
+      @SuppressWarnings("unchecked")
+      final ColumnInfo<T, Object>[] columns = model.getColumnInfos();
+      helper.process(new TObjectObjectProcedure<T, T>() {
+        @Override
+        public boolean execute(T newItem, @NotNull T oldItem) {
+          for (ColumnInfo<T, Object> column : columns) {
+            if (column.isCellEditable(newItem)) {
+              column.setValue(oldItem, column.valueOf(newItem));
+            }
           }
-        }
 
-        if (itemEditor instanceof DialogItemEditor) {
-          ((DialogItemEditor<T>)itemEditor).applyEdited(oldItem, newItem);
-        }
+          if (itemEditor instanceof DialogItemEditor) {
+            ((DialogItemEditor<T>)itemEditor).applyEdited(oldItem, newItem);
+          }
 
-        model.items.set(ContainerUtil.indexOfIdentity(model.items, newItem), oldItem);
-        return true;
-      }
-    });
+          model.items.set(ContainerUtil.indexOfIdentity(model.items, newItem), oldItem);
+          return true;
+        }
+      });
+    }
 
     helper.reset(model.items);
     return model.items;
