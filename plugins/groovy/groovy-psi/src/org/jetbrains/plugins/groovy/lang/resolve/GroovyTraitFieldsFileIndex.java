@@ -15,12 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -48,6 +49,12 @@ public class GroovyTraitFieldsFileIndex
              DataExternalizer<Collection<TraitFieldDescriptor>> {
 
   public static final ID<Integer, Collection<TraitFieldDescriptor>> INDEX_ID = ID.create("groovy.trait.fields");
+  public static final InputFilter INPUT_FILTER = new InputFilter() {
+    @Override
+    public boolean acceptInput(@NotNull VirtualFile file) {
+      return file.getName().endsWith("$Trait$FieldHelper.class");
+    }
+  };
 
   private static final String INSTANCE_PREFIX = "$ins";
   private static final String STATIC_PREFIX = "$static";
@@ -81,8 +88,8 @@ public class GroovyTraitFieldsFileIndex
 
   @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE);
+  public InputFilter getInputFilter() {
+    return INPUT_FILTER;
   }
 
   @Override
@@ -92,7 +99,7 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public int getVersion() {
-    return 1;
+    return 2;
   }
 
   @NotNull
