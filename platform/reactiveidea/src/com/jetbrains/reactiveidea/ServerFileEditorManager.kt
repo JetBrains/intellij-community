@@ -42,11 +42,10 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.reactiveidea.tabs.TabViewHost
+import com.jetbrains.reactiveidea.layout.EditorPoolHost
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.util.get
 import com.jetbrains.reactivemodel.util.host
 import com.jetbrains.reactivemodel.util.lifetime
 import java.awt.Component
@@ -79,7 +78,7 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
       val m = model ?: return HashMap()
 
       var signal = modelEditors.getOrPut(m, {
-        val editorSignal = m.subscribe(m.lifetime, editorsTag)
+        val editorSignal = m.subscribe(m.lifetime, editorTag)
         reaction(true, "editors reaction", editorSignal) { editors ->
           hashMapOf(*editors.map { editor ->
             val file = editor.meta.host<EditorHost>().file
@@ -98,7 +97,7 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
       val m = model ?: return null
 
       var signal = selectedEditorSignals.getOrPut(m, {
-        val editorSignal = m.subscribe(m.lifetime, editorsTag)
+        val editorSignal = m.subscribe(m.lifetime, editorTag)
         val subs = reaction(true, "selected editor reaction", editorSignal) { editors ->
           editors.map { editor: MapModel ->
             val host = editor.meta.host<EditorHost>()
@@ -576,9 +575,14 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
                 .fileOpened(this@ServerFileEditorManager, file)
           }
         })
-        val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
+
         val textEditor = newEditors[0] as TextEditor
-        tabHost.addEditor(textEditor, file, active = true)
+
+        val editorsHost = EditorPoolHost.getInModel(model!!.root)
+        editorsHost.addEditor(textEditor, file)
+
+//        val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
+//        tabHost.addEditor(textEditor, file, active = true)
 
         //[jeka] this is a hack to support back-forward navigation
         // previously here was incorrect call to fireSelectionChanged() with a side-effect
@@ -597,9 +601,10 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
           .first()
 
       val host = editor.getUserData(EditorHost.editorHostKey)
+      val path = editor.getUserData(pathKey)
       host.reactiveModel.transaction { m ->
-        val tabs = host.path.dropLast(2).getIn(m)!!.meta["host"] as? TabViewHost
-        val model = tabs?.setActiveTab(m, host.path.components.last().toString()) ?: m
+        val editorsHost = EditorPoolHost.getInModel(model!!.root)
+        val model = editorsHost.setActive(m, path)
 
         (IdeDocumentHistory.getInstance(proj) as IdeDocumentHistoryImpl).onSelectionChanged()
         model

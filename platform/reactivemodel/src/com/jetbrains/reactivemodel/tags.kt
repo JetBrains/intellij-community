@@ -40,7 +40,9 @@ class Tag<T : Model>(val name: String) {
 
 public val tagsField: String = "@@@--^tags"
 
-public val editorsTag: Tag<MapModel> = Tag("editor")
+public val editorTag: Tag<MapModel> = Tag("editor")
+
+public val editorsTag: Tag<MapModel> = Tag("editors")
 
 public fun getTag(name: String): Tag<*>? = tagMap[name]
 

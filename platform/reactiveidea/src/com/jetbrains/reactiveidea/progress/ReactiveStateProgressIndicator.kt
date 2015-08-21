@@ -33,32 +33,32 @@ class ReactiveStateProgressIndicator(life: Lifetime) : AbstractProgressIndicator
 
   private volatile var stateChanged = false
 
-  override fun onProgressChange() = fireUpdate(true)
-  override fun onRunningChange() = fireUpdate(true)
+  override fun onProgressChange() = fireUpdate()
+  override fun onRunningChange() = fireUpdate()
 
   override fun initStateFrom(indicator: ProgressIndicator) {
     super.initStateFrom(indicator)
-    fireUpdate(true)
+    fireUpdate()
   }
 
   override fun pushState() {
     stop()
-    fireUpdate(false)
+    fireUpdate()
     stateChanged = true
     super.pushState()
   }
 
   override fun popState() {
     stop()
-    fireUpdate(false)
+    fireUpdate()
     stateChanged = true
     super.popState()
   }
 
-  private fun fireUpdate(running: Boolean) {
+  private fun fireUpdate() {
     if (!stateChanged) {
       // need to capture actual state
-      val model = toModel(running)
+      val model = toModel()
       UIUtil.invokeLaterIfNeeded {
         modelSignal.value = model
       }
@@ -71,7 +71,7 @@ class ReactiveStateProgressIndicator(life: Lifetime) : AbstractProgressIndicator
   }
 
   // todo separate logic
-  private fun toModel(running: Boolean): MapModel {
+  private fun toModel(): MapModel {
     return MapModel(hashMapOf(
         "fraction" to PrimitiveModel(getFraction()),
         "text" to PrimitiveModel(getText()),

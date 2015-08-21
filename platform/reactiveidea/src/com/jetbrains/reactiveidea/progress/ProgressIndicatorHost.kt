@@ -44,17 +44,17 @@ public class ProgressIndicatorHost(val reactiveModel: ReactiveModel,
       progress.lifetime.terminate()
     }
     init += { m ->
-      reaction(false, "progress reaction", progress.modelSignal) { model ->
-        reactiveModel.transaction { it.putIn(path / value, model) }
-      }
-      reaction(false, "progress cancelation", reactiveModel.subscribe(lifetime, path / value / canceled)) { cancel ->
-        cancel as PrimitiveModel<*>
-        val isCanceled = cancel.value as Boolean
-        if (isCanceled) {
-          progress.cancel()
-        }
-      }
       m.putIn(path / value, progress.modelSignal.value)
+    }
+    reaction(false, "progress reaction", progress.modelSignal) { model ->
+      reactiveModel.transaction { it.putIn(path / value, model) }
+    }
+    reaction(false, "progress cancelation", reactiveModel.subscribe(lifetime, path / value / canceled)) { cancel ->
+      cancel as PrimitiveModel<*>
+      val isCanceled = cancel.value as Boolean
+      if (isCanceled) {
+        progress.cancel()
+      }
     }
   }
 }
