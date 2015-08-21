@@ -415,6 +415,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (!shouldRunTest()) return;
 
     if (runInDispatchThread()) {
+      TestRunnerUtil.replaceIdeEventQueueSafely();
       TestFrameworkPackage.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
         @Override
         public void run() throws Throwable {
