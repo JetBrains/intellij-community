@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
 
     <action id="ExternalSystem.RefreshAllProjects"
@@ -183,4 +183,4 @@
 
 
   </actions>
-</component>
+</idea-plugin>
