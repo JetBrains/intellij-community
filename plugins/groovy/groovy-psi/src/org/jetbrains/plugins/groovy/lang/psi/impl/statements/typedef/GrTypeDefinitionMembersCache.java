@@ -19,15 +19,16 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -36,16 +37,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.IMPLEMENTED_FQN;
 
 /**
@@ -64,9 +65,13 @@ public class GrTypeDefinitionMembersCache {
   private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
 
   private final GrTypeDefinition myDefinition;
+  private final JavaPsiFacade myPsiFacade;
+  private final PsiElementFactory myElementFactory;
 
   public GrTypeDefinitionMembersCache(GrTypeDefinition definition) {
     myDefinition = definition;
+    myPsiFacade = JavaPsiFacade.getInstance(definition.getProject());
+    myElementFactory = myPsiFacade.getElementFactory();
   }
 
 
@@ -275,13 +280,11 @@ public class GrTypeDefinitionMembersCache {
                   addCandidate(method, substitutor);
                 }
               }
-              final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(trait.getProject());
               final String helperFQN = trait.getQualifiedName();
-              final PsiClass traitHelper = javaPsiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
+              final PsiClass traitHelper = myPsiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
               if (traitHelper != null) {
-                final PsiElementFactory psiElementFactory = javaPsiFacade.getElementFactory();
                 final PsiType classType = TypesUtil.createJavaLangClassType(
-                  psiElementFactory.createType(trait), trait.getProject(), trait.getResolveScope()
+                  myElementFactory.createType(trait), trait.getProject(), trait.getResolveScope()
                 );
                 for (PsiMethod method : traitHelper.getMethods()) {
                   if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
@@ -336,6 +339,35 @@ public class GrTypeDefinitionMembersCache {
                 addCandidate(field, substitutor);
               }
             }
+            else if (trait instanceof ClsClassImpl) {
+              final PsiClass traitFieldHelper = myPsiFacade.findClass(
+                trait.getQualifiedName() + "$Trait$FieldHelper", trait.getResolveScope()
+              );
+              if (traitFieldHelper == null) return;
+
+              final VirtualFile virtualFile = traitFieldHelper.getContainingFile().getVirtualFile();
+              final String key = virtualFile.getCanonicalPath();
+              if (key == null) return;
+
+              final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
+                GroovyTraitFieldsFileIndex.INDEX_ID, key, trait.getResolveScope()
+              );
+              for (Collection<TraitFieldDescriptor> collection : values) {
+                for (TraitFieldDescriptor descriptor : collection) {
+                  final GrLightField field = new GrLightField(
+                    trait,
+                    descriptor.getName(),
+                    myElementFactory.createTypeFromText(descriptor.getTypeString(), trait),
+                    trait
+                  );
+                  if (descriptor.isStatic()) {
+                    field.getModifierList().addModifier(STATIC_MASK);
+                  }
+                  field.getModifierList().addModifier(descriptor.isPublic() ? PUBLIC_MASK : PRIVATE_MASK);
+                  addCandidate(field, substitutor);
+                }
+              }
+            }
           }
         }.getResult();
         for (CandidateInfo candidateInfo : traitFields) {
@@ -350,7 +382,7 @@ public class GrTypeDefinitionMembersCache {
     private List<GrMethod> getExpandingMethods(@NotNull CandidateInfo candidateInfo) {
       PsiMethod method = (PsiMethod)candidateInfo.getElement();
       GrLightMethodBuilder implementation = GrTraitMethod.create(method, candidateInfo.getSubstitutor()).setContainingClass(myDefinition);
-      implementation.getModifierList().removeModifier(GrModifierFlags.ABSTRACT_MASK);
+      implementation.getModifierList().removeModifier(ABSTRACT_MASK);
 
       GrReflectedMethod[] reflectedMethods = implementation.getReflectedMethods();
       return reflectedMethods.length > 0 ? Arrays.<GrMethod>asList(reflectedMethods) : Collections.<GrMethod>singletonList(implementation);
