@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 public class FixedConcurrentIntQueue {
   private final AtomicInteger tail = new AtomicInteger();
   final AtomicIntegerArray queue;
+  private final int capacity;
   private final int tombValue;
 
   /**
@@ -34,6 +35,7 @@ public class FixedConcurrentIntQueue {
    * @param tombValue the value which is guaranteed to not be used in the queue.
    */
   public FixedConcurrentIntQueue(int capacity, int tombValue) {
+    this.capacity = capacity;
     this.tombValue = tombValue;
     queue = new AtomicIntegerArray(capacity);
     for (int i = 0; i < capacity; i++) {
@@ -49,8 +51,20 @@ public class FixedConcurrentIntQueue {
     if (value == tombValue) {
       throw new IllegalArgumentException("Must not use tomb value: "+value);
     }
-    int index = tail.getAndIncrement();
-    int oldValue = queue.getAndSet(index % queue.length(), value);
-    return oldValue;
+    int index = getAndIncrement();
+    return queue.getAndSet(index, value);
+  }
+
+  private int getAndIncrement() {
+    int index;
+    int next;
+    do {
+      index = tail.get();
+      next = index + 1;
+      if (next >= capacity) {
+        next -= capacity;
+      }
+    } while (!tail.compareAndSet(index, next));
+    return index;
   }
 }

@@ -35,6 +35,14 @@ public class FixedConcurrentIntQueueTest extends TestCase {
     assertEquals(6, queue.push(0));
   }
 
+  public void testIntegerOverflow() {
+    int tombValue = -1;
+    final FixedConcurrentIntQueue queue = new FixedConcurrentIntQueue(4, tombValue);
+    for (int i=10; i!=9; i++) {
+      queue.push(2); // must not AIOOBE
+    }
+  }
+
   public void testStress() throws InterruptedException {
     for (int k=0; k<100; k++) {
       final int N = 1 << 20;
