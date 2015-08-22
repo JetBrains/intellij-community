@@ -105,13 +105,10 @@ public class GitUntrackedFilesHelper {
   }
 
   public static boolean showUntrackedFilesDialogWithRollback(@NotNull final Project project,
-                                                             @NotNull String operationName,
+                                                             @NotNull final String operationName,
                                                              @NotNull final String rollbackProposal,
                                                              @NotNull VirtualFile root,
                                                              @NotNull final Collection<String> relativePaths) {
-    final String title = "Could not " + StringUtil.capitalize(operationName);
-    final String description = createUntrackedFilesOverwrittenDescription(operationName, false);
-
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
     final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
       @Override
@@ -131,8 +128,9 @@ public class GitUntrackedFilesHelper {
         else {
           filesBrowser = new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false);
         }
-        DialogWrapper dialog = new UntrackedFilesRollBackDialog(project, filesBrowser, StringUtil.stripHtml(description, true),
-                                                                rollbackProposal);
+        String title = "Could not " + StringUtil.capitalize(operationName);
+        String description = StringUtil.stripHtml(createUntrackedFilesOverwrittenDescription(operationName, false), true);
+        DialogWrapper dialog = new UntrackedFilesRollBackDialog(project, filesBrowser, description, rollbackProposal);
         dialog.setTitle(title);
         DialogManager.show(dialog);
         rollback.set(dialog.isOK());
