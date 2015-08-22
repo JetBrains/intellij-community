@@ -43,7 +43,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.ui.ChangesBrowserWithRollback;
 import git4idea.util.GitSimplePathsBrowser;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,14 +128,14 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @Override
   public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root, relativePaths, operationName, null);
+    GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root, relativePaths, operationName, null);
   }
 
   @Override
   public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal,
                                                       @NotNull VirtualFile root, @NotNull final Collection<String> relativePaths) {
     final String title = "Could not " + StringUtil.capitalize(operationName);
-    final String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
+    final String description = GitUntrackedFilesHelper.createUntrackedFilesOverwrittenDescription(operationName, false);
 
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
     final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {

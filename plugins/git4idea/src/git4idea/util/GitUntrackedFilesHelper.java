@@ -35,9 +35,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class UntrackedFilesNotifier {
+public class GitUntrackedFilesHelper {
 
-  private UntrackedFilesNotifier() {
+  private GitUntrackedFilesHelper() {
   }
 
   /**

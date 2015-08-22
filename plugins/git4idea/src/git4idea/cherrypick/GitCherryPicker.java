@@ -48,7 +48,7 @@ import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,8 +163,8 @@ public class GitCherryPicker extends VcsCherryPicker {
                              "Please move, remove or add them before you can cherry-pick. <a href='view'>View them</a>";
         description += getSuccessfulCommitDetailsIfAny(successfulCommits);
 
-        UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, repository.getRoot(),
-                                                                 untrackedFilesDetector.getRelativeFilePaths(), "cherry-pick", description);
+        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, repository.getRoot(),
+                                                                  untrackedFilesDetector.getRelativeFilePaths(), "cherry-pick", description);
         return false;
       }
       else if (localChangesOverwrittenDetector.hasHappened()) {

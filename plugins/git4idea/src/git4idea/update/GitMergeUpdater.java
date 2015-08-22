@@ -42,7 +42,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -141,9 +141,9 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, myRoot,
-                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getRelativeFilePaths(),
-                                                               "merge", null);
+      GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, myRoot,
+                                                                untrackedFilesWouldBeOverwrittenByMergeDetector.getRelativeFilePaths(),
+                                                                "merge", null);
       return GitUpdateResult.ERROR;
     }
     else {
