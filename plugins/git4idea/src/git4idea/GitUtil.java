@@ -966,7 +966,7 @@ public class GitUtil {
     msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {
-        return msg.substring(prefix.length()).trim();
+        msg = msg.substring(prefix.length()).trim();
       }
     }
     return msg;
