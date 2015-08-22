@@ -105,6 +105,16 @@ public class GitUntrackedFilesHelper {
     return notificationDesc;
   }
 
+  /**
+   * Show dialog for the "Untracked Files Would be Overwritten by checkout/merge/rebase" error,
+   * with a proposal to rollback the action (checkout/merge/rebase) in successful repositories.
+   * <p/>
+   * The method receives the relative paths to some untracked files, returned by Git command,
+   * and tries to find corresponding VirtualFiles, based on the given root, to display in the standard dialog.
+   * If for some reason it doesn't find any VirtualFile, it shows the paths in a simple dialog.
+   *
+   * @return true if the user agrees to rollback, false if the user decides to keep things as is and simply close the dialog.
+   */
   public static boolean showUntrackedFilesDialogWithRollback(@NotNull final Project project,
                                                              @NotNull final String operationName,
                                                              @NotNull final String rollbackProposal,
