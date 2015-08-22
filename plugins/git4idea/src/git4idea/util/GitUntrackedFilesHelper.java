@@ -17,11 +17,13 @@ package git4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
@@ -29,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
@@ -119,9 +120,10 @@ public class GitUntrackedFilesHelper {
       }
     });
 
-    return UIUtil.invokeAndWaitIfNeeded(new Computable<Boolean>() {
+    final Ref<Boolean> rollback = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
-      public Boolean compute() {
+      public void run() {
         JComponent filesBrowser;
         if (untrackedFiles.isEmpty()) {
           filesBrowser = new GitSimplePathsBrowser(project, absolutePaths);
@@ -133,9 +135,10 @@ public class GitUntrackedFilesHelper {
                                                                 rollbackProposal);
         dialog.setTitle(title);
         DialogManager.show(dialog);
-        return dialog.isOK();
+        rollback.set(dialog.isOK());
       }
-    });
+    }, ModalityState.defaultModalityState());
+    return rollback.get();
   }
 
   private static class UntrackedFilesDialog extends SelectFilesDialog {
