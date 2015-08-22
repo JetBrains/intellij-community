@@ -91,6 +91,7 @@ public class GitUntrackedFilesHelper {
     });
   }
   
+  @NotNull
   public static String createUntrackedFilesOverwrittenDescription(@NotNull final String operation, boolean addLinkToViewFiles) {
     final String description1 = " untracked working tree files would be overwritten by " + operation + ".";
     final String description2 = "Please move or remove them before you can " + operation + ".";
@@ -176,7 +177,9 @@ public class GitUntrackedFilesHelper {
       JComponent buttons = super.createSouthPanel();
       JPanel panel = new JPanel(new VerticalFlowLayout());
       panel.add(new JBLabel(XmlStringUtil.wrapInHtml(myRollbackProposal)));
-      panel.add(buttons);
+      if (buttons != null) {
+        panel.add(buttons);
+      }
       return panel;
     }
 
