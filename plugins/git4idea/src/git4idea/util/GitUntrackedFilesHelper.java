@@ -55,7 +55,7 @@ public class GitUntrackedFilesHelper {
    * @param root
    * @param relativePaths
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
-   * @param description the content of the notification or null if the deafult content is to be used.
+   * @param description the content of the notification or null if the default content is to be used.
    */
   public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project,
                                                        @NotNull final VirtualFile root, @NotNull Collection<String> relativePaths,
