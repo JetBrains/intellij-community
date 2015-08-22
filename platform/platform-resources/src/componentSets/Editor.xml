@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
     <component>
       <implementation-class>com.intellij.ide.actionMacro.ActionMacroManager</implementation-class>
@@ -27,4 +27,4 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
     </component>
   </project-components>
-</components>
+</idea-plugin>

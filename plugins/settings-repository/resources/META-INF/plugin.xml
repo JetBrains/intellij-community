@@ -18,6 +18,9 @@
     <projectService serviceInterface="org.jetbrains.settingsRepository.ProjectId"
                     serviceImplementation="org.jetbrains.settingsRepository.ProjectId"/>
     <!--<checkinHandlerFactory implementation="org.jetbrains.settingsRepository.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>-->
+
+    <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="reference.settings.ics"
+                             key="ics.settings" bundle="messages.IcsBundle"/>
   </extensions>
 
   <actions>

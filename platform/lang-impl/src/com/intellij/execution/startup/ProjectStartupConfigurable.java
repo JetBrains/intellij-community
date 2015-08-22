@@ -85,7 +85,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nls
   @Override
   public String getDisplayName() {
-    return "Project Startup Tasks";
+    return "Startup Tasks";
   }
 
   @Nullable

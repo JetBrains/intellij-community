@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class StateStorageBase<T extends StorageDataBase> implements StateStorage {
+public abstract class StateStorageBase<T> implements StateStorage {
   protected static final Logger LOG = Logger.getInstance(StateStorageBase.class);
 
   private boolean mySavingDisabled = false;
@@ -49,9 +49,11 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
   @Nullable
   protected abstract Element getStateAndArchive(@NotNull T storageData, Object component, @NotNull String componentName);
 
+  protected abstract boolean hasState(@NotNull T storageData, @NotNull String componentName);
+
   @Override
   public final boolean hasState(@NotNull String componentName, boolean reloadData) {
-    return getStorageData(reloadData).hasState(componentName);
+    return hasState(getStorageData(reloadData), componentName);
   }
 
   @NotNull

@@ -15,7 +15,7 @@
  */
 
 import com.intellij.TestAll;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.TestRunnerUtil;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -60,7 +60,7 @@ public class _FirstInSuiteTest extends TestCase {
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
     // so we try to forcibly terminate EDT here to urge JVM to re-spawn new shiny permanent EDT-1
-    UsefulTestCase.replaceIdeEventQueueSafely();
+    TestRunnerUtil.replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {

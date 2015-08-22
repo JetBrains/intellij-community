@@ -1,12 +1,18 @@
 package com.siyeh.ig.numeric;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ConfusingFloatingPointLiteralInspectionTest
-  extends IGInspectionTestCase {
+public class ConfusingFloatingPointLiteralInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/numeric/confusing_floating_point_literal",
-           new ConfusingFloatingPointLiteralInspection());
+  public void testConfusingFloatingPointLiteral() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ConfusingFloatingPointLiteralInspection();
   }
 }

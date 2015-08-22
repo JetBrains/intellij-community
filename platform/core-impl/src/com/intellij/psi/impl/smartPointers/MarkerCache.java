@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TLongObjectHashMap;
@@ -36,20 +37,12 @@ import java.util.List;
  */
 class MarkerCache {
   private final SmartPointerManagerImpl.FilePointersList myPointers;
+  private final VirtualFile myVirtualFile;
   private volatile Trinity<Integer, TLongObjectHashMap<ManualRangeMarker>, FrozenDocument> myUpdatedRanges;
 
-  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers) {
+  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers, VirtualFile virtualFile) {
     myPointers = pointers;
-  }
-
-  private static long keyOf(@NotNull ProperTextRange range, boolean forInjected) {
-    long start = range.getStartOffset();
-    assert start >= 0;
-    assert start < Integer.MAX_VALUE;
-
-    long packed = (start + 1) | ((long)range.getEndOffset() << 32);
-    assert packed > 0;
-    return forInjected ? -packed : packed;
+    myVirtualFile = virtualFile;
   }
 
   private TLongObjectHashMap<ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
@@ -74,9 +67,10 @@ class MarkerCache {
         answer = new TLongObjectHashMap<ManualRangeMarker>();
         for (SelfElementInfo info : getInfos()) {
           ProperTextRange range = info.getPsiRange();
-          if (range != null) {
+          long key = info.markerCacheKey();
+          if (range != null && key != 0) {
             boolean forInjected = info.isForInjected();
-            answer.put(keyOf(range, forInjected), new ManualRangeMarker(frozen, range, forInjected, forInjected, !forInjected));
+            answer.put(key, new ManualRangeMarker(frozen, range, forInjected, forInjected, !forInjected));
           }
         }
         frozen = applyEvents(frozen, events, answer);
@@ -119,9 +113,9 @@ class MarkerCache {
     TLongObjectHashMap<ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
 
     for (SelfElementInfo info : getInfos()) {
-      ProperTextRange range = info.getPsiRange();
-      if (range != null) {
-        ManualRangeMarker newRange = updated.get(keyOf(range, info.isForInjected()));
+      long key = info.markerCacheKey();
+      if (key != 0) {
+        ManualRangeMarker newRange = updated.get(key);
         info.setRange(newRange == null ? null : newRange.getRange());
       }
     }
@@ -140,18 +134,18 @@ class MarkerCache {
   }
 
   @Nullable
-  ProperTextRange getUpdatedRange(SelfElementInfo info, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
-    ProperTextRange range = info.getPsiRange();
-    if (range == null) return null;
-
-    ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(keyOf(range, info.isForInjected()));
+  ProperTextRange getUpdatedRange(long rangeKey, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+    ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(rangeKey);
     return updated == null ? null : updated.getRange();
   }
 
-  synchronized void rangeChanged(@NotNull ProperTextRange range, boolean forInjected) {
-    if (myUpdatedRanges != null && !myUpdatedRanges.second.contains(keyOf(range, forInjected))) {
+  synchronized void rangeChanged(long rangeKey) {
+    if (myUpdatedRanges != null && !myUpdatedRanges.second.contains(rangeKey)) {
       myUpdatedRanges = null;
     }
   }
 
+  VirtualFile getVirtualFile() {
+    return myVirtualFile;
+  }
 }

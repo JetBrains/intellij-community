@@ -35,14 +35,14 @@ import java.util.List;
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
-  @NotNull private final VirtualFile myVirtualFile;
   private final Class myType;
-  private final Project myProject;
+  private final SmartPointerManagerImpl myManager;
   private final Language myLanguage;
   private final MarkerCache myMarkerCache;
   private final boolean myForInjected;
-  @Nullable private ProperTextRange myPsiRange;
-  private final PsiDocumentManagerBase myPsiDocManager;
+  private boolean myHasRange;
+  private int myStartOffset;
+  private int myEndOffset;
 
   SelfElementInfo(@NotNull Project project,
                   @NotNull ProperTextRange range,
@@ -52,23 +52,41 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                   boolean forInjected) {
     myLanguage = language;
     myForInjected = forInjected;
-    myVirtualFile = containingFile.getViewProvider().getVirtualFile();
     myType = anchorClass;
     assert !PsiFile.class.isAssignableFrom(anchorClass) : "FileElementInfo must be used for files";
 
-    myProject = project;
-    myPsiRange = range;
-    myMarkerCache = ((SmartPointerManagerImpl)SmartPointerManager.getInstance(project)).getMarkerCache(myVirtualFile);
-    myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    myManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
+    myMarkerCache = myManager.getMarkerCache(containingFile.getViewProvider().getVirtualFile());
     setRange(range);
   }
 
-  void setRange(@Nullable ProperTextRange range) {
-    myPsiRange = range;
+  void setRange(@Nullable Segment range) {
     if (range != null) {
-      myMarkerCache.rangeChanged(range, myForInjected);
+      myHasRange = true;
+      myStartOffset = range.getStartOffset();
+      myEndOffset = range.getEndOffset();
+      myMarkerCache.rangeChanged(markerCacheKey());
+    } else {
+      myHasRange = false;
     }
   }
+
+  long markerCacheKey() {
+    if (!myHasRange) return 0;
+
+    long start = myStartOffset;
+    assert start >= 0;
+    assert start < Integer.MAX_VALUE;
+
+    long packed = (start + 1) | ((long)myEndOffset << 32);
+    assert packed > 0;
+    assert packed != Long.MIN_VALUE;
+
+    long result = myForInjected ? -packed : packed;
+    assert result != 0;
+    return result;
+  }
+
 
   boolean isForInjected() {
     return myForInjected;
@@ -76,7 +94,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public Document getDocumentToSynchronize() {
-    return ourFileDocManager.getCachedDocument(myVirtualFile);
+    return ourFileDocManager.getCachedDocument(getVirtualFile());
   }
 
   @Override
@@ -92,12 +110,17 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Nullable
   protected ProperTextRange getPsiRange() {
-    return myPsiRange;
+    return calcPsiRange();
+  }
+
+  @Nullable
+  private ProperTextRange calcPsiRange() {
+    return myHasRange ? ProperTextRange.create(myStartOffset, myEndOffset) : null;
   }
 
   @Override
   public PsiFile restoreFile() {
-    return restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+    return restoreFileFromVirtual(getVirtualFile(), getProject(), myLanguage);
   }
 
   static PsiElement findElementInside(@NotNull PsiFile file,
@@ -128,7 +151,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public void cleanup() {
-    myPsiRange = null;
+    myHasRange = false;
   }
 
   @Nullable
@@ -185,7 +208,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public int elementHashCode() {
-    return myVirtualFile.hashCode();
+    return getVirtualFile().hashCode();
   }
 
   @Override
@@ -194,7 +217,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       SelfElementInfo otherInfo = (SelfElementInfo)other;
       Segment range1 = getPsiRange();
       Segment range2 = otherInfo.getPsiRange();
-      return Comparing.equal(myVirtualFile, otherInfo.myVirtualFile)
+      return Comparing.equal(getVirtualFile(), otherInfo.getVirtualFile())
              && myType == otherInfo.myType
              && range1 != null
              && range2 != null
@@ -212,30 +235,30 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   @NotNull
-  public VirtualFile getVirtualFile() {
-    return myVirtualFile;
+  public final VirtualFile getVirtualFile() {
+    return myMarkerCache.getVirtualFile();
   }
 
   @Override
   @Nullable
   public Segment getRange() {
-    if (myPsiRange != null) {
+    if (myHasRange) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        PsiDocumentManagerBase documentManager = myPsiDocManager;
+        PsiDocumentManagerBase documentManager = myManager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          return myMarkerCache.getUpdatedRange(this, documentManager.getLastCommittedDocument(document), events);
+          return myMarkerCache.getUpdatedRange(markerCacheKey(), documentManager.getLastCommittedDocument(document), events);
         }
       }
     }
-    return myPsiRange;
+    return calcPsiRange();
   }
 
   @NotNull
   @Override
-  public Project getProject() {
-    return myProject;
+  public final Project getProject() {
+    return myManager.getProject();
   }
 
 }

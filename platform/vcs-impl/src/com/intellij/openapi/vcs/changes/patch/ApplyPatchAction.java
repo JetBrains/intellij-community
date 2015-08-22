@@ -116,7 +116,8 @@ public class ApplyPatchAction extends DumbAwareAction {
     }
   }
 
-  private static void showApplyPatch(@NotNull final Project project, @NotNull final VirtualFile file) {
+  // used by TeamCity plugin
+  public static void showApplyPatch(@NotNull final Project project, @NotNull final VirtualFile file) {
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(
       project, new ApplyPatchDefaultExecutor(project),
       Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);

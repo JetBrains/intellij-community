@@ -206,7 +206,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             VirtualFile file = event instanceof VFileCreateEvent ? /* avoid expensive find child here */ null : event.getFile();
             VirtualFile filtered = file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
             if (toLog()) {
-              log("F: handled " + event + "; filtered file: " + filtered);
+              log("F: handled " + event + "; filtered file: " + filtered + "(file: "+file+"; wasAutoDetectedBefore(file): "+(file == null ? null : wasAutoDetectedBefore(file))+"; isDetectable(file): "+(file == null ? null : isDetectable(file))+"; file.getLength(): "+(file == null ? null : file.getLength())+"; file.isValid(): "+(file == null ? null : file.isValid())+"; file.is(VFileProperty.SPECIAL): "+(file == null ? null : file.is(VFileProperty.SPECIAL))+"; packedFlags.get(id): "+(!(file instanceof VirtualFileWithId) ? null : packedFlags.get(((VirtualFileWithId)file).getId()))+"; file.getFileSystem():"+(file == null ? null : file.getFileSystem())+")");
             }
             return filtered;
           }

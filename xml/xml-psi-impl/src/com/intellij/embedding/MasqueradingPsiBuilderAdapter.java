@@ -187,8 +187,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   @Nullable
   @Override
   public IElementType getTokenType() {
-    if (allIsEmpty()) {
-      return TokenType.DUMMY_HOLDER;
+    if (eof()) {
+      return null;
     }
     skipWhitespace();
 
@@ -198,8 +198,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   @Nullable
   @Override
   public String getTokenText() {
-    if (allIsEmpty()) {
-      return getDelegate().getOriginalText().toString();
+    if (eof()) {
+      return null;
     }
     skipWhitespace();
 
@@ -225,13 +225,14 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   @NotNull
   @Override
   public Marker mark() {
+    Marker originalPositionMarker = super.mark();
     // In the case of the topmost node all should be inserted
     if (myLexPosition != 0) {
       synchronizePositions(true);
     }
 
     final Marker mark = super.mark();
-    return new MyMarker(mark, myLexPosition);
+    return new MyMarker(mark, originalPositionMarker, myLexPosition);
   }
 
   private boolean allIsEmpty() {
@@ -332,26 +333,55 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     private final int myBuilderPosition;
 
-    public MyMarker(Marker delegate, int builderPosition) {
+    private final Marker myOriginalPositionMarker;
+
+    public MyMarker(Marker delegate, Marker originalPositionMarker, int builderPosition) {
       super(delegate);
 
       myBuilderPosition = builderPosition;
+      myOriginalPositionMarker = originalPositionMarker;
     }
 
     @Override
     public void rollbackTo() {
-      super.rollbackTo();
+      myOriginalPositionMarker.rollbackTo();
       myLexPosition = myBuilderPosition;
     }
 
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before) {
+      myOriginalPositionMarker.drop();
       super.doneBefore(type, getDelegateOrThis(before));
     }
 
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage) {
+      myOriginalPositionMarker.drop();
       super.doneBefore(type, getDelegateOrThis(before), errorMessage);
+    }
+
+    @Override
+    public void drop() {
+      myOriginalPositionMarker.drop();
+      super.drop();
+    }
+
+    @Override
+    public void done(@NotNull IElementType type) {
+      myOriginalPositionMarker.drop();
+      super.done(type);
+    }
+
+    @Override
+    public void collapse(@NotNull IElementType type) {
+      myOriginalPositionMarker.drop();
+      super.collapse(type);
+    }
+
+    @Override
+    public void error(String message) {
+      myOriginalPositionMarker.drop();
+      super.error(message);
     }
 
     @NotNull

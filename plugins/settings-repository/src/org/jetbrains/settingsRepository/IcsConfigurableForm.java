@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.impl;
+package org.jetbrains.settingsRepository;
 
-import com.intellij.util.messages.Topic;
+import javax.swing.*;
 
-public interface LineStatusTrackerTopics {
-  Topic<LineStatusTrackerSettingListener> SETTINGS_CHANGED = Topic.create("line status tracker settings changed", LineStatusTrackerSettingListener.class);
-
-  interface LineStatusTrackerSettingListener {
-    void updateSettings();
-  }
+public class IcsConfigurableForm {
+  JPanel readOnlySourcesPanel;
+  JPanel rootPanel;
 }

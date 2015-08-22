@@ -20,6 +20,7 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -27,13 +28,13 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
@@ -46,10 +47,7 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
-import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.SwingUtilities
-import kotlin.properties.Delegates
 
 /**
  * Project created on request, so, could be used as a bare (only application).
@@ -61,6 +59,7 @@ public class ProjectRule() : ExternalResource() {
     }
 
     private var sharedProject: ProjectEx? = null
+    private var sharedModule: Module? = null
     private val projectOpened = AtomicBoolean()
 
     private fun createLightProject(): ProjectEx {
@@ -88,13 +87,14 @@ public class ProjectRule() : ExternalResource() {
     private fun disposeProject() {
       val project = sharedProject ?: return
       sharedProject = null
+      sharedModule = null
       Disposer.dispose(project)
     }
   }
 
   override final fun before() {
     IdeaTestApplication.getInstance()
-    UsefulTestCase.replaceIdeEventQueueSafely()
+    TestRunnerUtil.replaceIdeEventQueueSafely()
   }
 
   override fun after() {
@@ -124,6 +124,28 @@ public class ProjectRule() : ExternalResource() {
       }
       return result!!
     }
+
+  public val module: Module
+    get() {
+      var project = project
+      var result = sharedModule
+      if (result == null) {
+        LightProjectDescriptor().setUpProject(project, object: LightProjectDescriptor.SetupHandler {
+          override fun moduleCreated(module: Module) {
+            result = module
+            sharedModule = module
+          }
+
+          override fun sourceRootCreated(sourceRoot: VirtualFile) {
+          }
+        })
+      }
+      return result!!
+    }
+}
+
+public fun runInEdtAndWait(runnable: () -> Unit) {
+  EdtTestUtil.runInEdtAndWait(runnable)
 }
 
 public open class FixtureRule() : ExternalResource() {
@@ -146,30 +168,12 @@ public open class FixtureRule() : ExternalResource() {
       _projectFixture = builder.getFixture()
     }
 
-    UsefulTestCase.replaceIdeEventQueueSafely()
+    TestRunnerUtil.replaceIdeEventQueueSafely()
     runInEdtAndWait { projectFixture.setUp() }
   }
 
   override final fun after() {
     runInEdtAndWait { projectFixture.tearDown() }
-  }
-}
-
-public fun FixtureRule(tuner: TestFixtureBuilder<IdeaProjectTestFixture>.() -> Unit): FixtureRule = HeavyFixtureRule(tuner)
-
-private class HeavyFixtureRule(private val tune: TestFixtureBuilder<IdeaProjectTestFixture>.() -> Unit) : FixtureRule() {
-  private var name: String by Delegates.notNull()
-
-  override final fun apply(base: Statement, description: Description): Statement {
-    name = description.getMethodName()
-    return super.apply(base, description)
-  }
-
-  override final fun createBuilder(): TestFixtureBuilder<IdeaProjectTestFixture> {
-    val builder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
-    _projectFixture = builder.getFixture()
-    builder.tune()
-    return builder
   }
 }
 
@@ -191,23 +195,6 @@ public class RuleChain(vararg val rules: TestRule) : TestRule {
 
     CompoundRuntimeException.doThrow(errors)
     return statement
-  }
-}
-
-// Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
-// The problem is - Application logs errors, but not throws. But in tests must be thrown.
-// In any case name "runInEdtAndWait" is better than "invokeAndWait".
-public fun runInEdtAndWait(runnable: () -> Unit) {
-  if (SwingUtilities.isEventDispatchThread()) {
-    runnable()
-  }
-  else {
-    try {
-      SwingUtilities.invokeAndWait(runnable)
-    }
-    catch (e: InvocationTargetException) {
-      throw e.getCause() ?: e
-    }
   }
 }
 
@@ -272,19 +259,21 @@ public class DisposeModulesRule(private val projectRule: ProjectRule) : External
     projectRule.projectIfOpened?.let {
       var errors: MutableList<Throwable>? = null
       val moduleManager = ModuleManager.getInstance(it)
-      for (module in moduleManager.getModules()) {
-        if (module.isDisposed()) {
-          continue
-        }
-
-        try {
-          moduleManager.disposeModule(module)
-        }
-        catch(e: Throwable) {
-          if (errors == null) {
-            errors = SmartList()
+      runInEdtAndWait {
+        for (module in moduleManager.getModules()) {
+          if (module.isDisposed()) {
+            continue
           }
-          errors.add(e)
+
+          try {
+            moduleManager.disposeModule(module)
+          }
+          catch(e: Throwable) {
+            if (errors == null) {
+              errors = SmartList()
+            }
+            errors!!.add(e)
+          }
         }
       }
       CompoundRuntimeException.doThrow(errors)

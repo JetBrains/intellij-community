@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.vcs.impl;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.messages.Topic;
 
-public interface StorageDataBase {
-  boolean hasState(@NotNull String componentName);
+public interface LineStatusTrackerSettingListener {
+  Topic<LineStatusTrackerSettingListener> TOPIC = Topic.create("line status tracker settings changed", LineStatusTrackerSettingListener.class);
+
+  void settingsUpdated();
 }

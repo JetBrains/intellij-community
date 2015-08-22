@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleServiceManager;
@@ -340,18 +339,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
         String ancestorPath = parentPath + "/" + event.getOldValue();
         String moduleFilePath = getModuleFilePath();
         if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-          setModuleFilePath(moduleFilePath, parentPath + "/" + event.getNewValue() + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
+          setModuleFilePath(parentPath + "/" + event.getNewValue() + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
         }
       }
     }
 
-    private void setModuleFilePath(String moduleFilePath, String newFilePath) {
+    private void setModuleFilePath(String newFilePath) {
       ClasspathStorage.modulePathChanged(ModuleImpl.this, newFilePath);
-
-      final ModifiableModuleModel modifiableModel = ModuleManagerImpl.getInstanceImpl(getProject()).getModifiableModel();
-      modifiableModel.setModuleFilePath(ModuleImpl.this, moduleFilePath, newFilePath);
-      modifiableModel.commit();
-
       getMainStorage(ModuleImpl.this).setFile(null, new File(newFilePath));
       ComponentsPackage.getStateStore(ModuleImpl.this).setPath(FileUtilRt.toSystemIndependentName(newFilePath));
     }
@@ -362,7 +356,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       String ancestorPath = event.getOldParent().getPath() + "/" + dirName;
       String moduleFilePath = getModuleFilePath();
       if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
-        setModuleFilePath(moduleFilePath, event.getNewParent().getPath() + "/" + dirName + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
+        setModuleFilePath(event.getNewParent().getPath() + "/" + dirName + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
       }
     }
   }

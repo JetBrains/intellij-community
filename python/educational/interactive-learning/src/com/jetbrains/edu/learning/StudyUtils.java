@@ -36,7 +36,7 @@ import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.learning.ui.ProgressToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,9 +122,9 @@ public class StudyUtils {
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
     factory.createToolWindowContent(project, windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
 
-    windowManager.getToolWindow(ProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
-    ProgressToolWindowFactory windowFactory = new ProgressToolWindowFactory();
-    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(ProgressToolWindowFactory.ID));
+    windowManager.getToolWindow(StudyProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
+    StudyProgressToolWindowFactory windowFactory = new StudyProgressToolWindowFactory();
+    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(StudyProgressToolWindowFactory.ID));
   }
 
   public static void deleteFile(@NotNull final VirtualFile file) {

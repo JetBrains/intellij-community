@@ -29,6 +29,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -56,9 +57,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   private final Project myProject;
   private final Key<FilePointersList> POINTERS_KEY;
+  private final PsiDocumentManagerBase myPsiDocManager;
 
   public SmartPointerManagerImpl(Project project) {
     myProject = project;
+    myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     POINTERS_KEY = Key.create("SMART_POINTERS for "+project);
   }
 
@@ -173,7 +176,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     synchronized (lock) {
       FilePointersList pointers = getPointers(containingFile);
       if (pointers == null) {
-        pointers = new FilePointersList(); // we synchronise access anyway
+        pointers = new FilePointersList(containingFile);
         containingFile.putUserData(POINTERS_KEY, pointers);
       }
       return pointers;
@@ -243,6 +246,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     list.markerCache.updateMarkers(frozen, events);
   }
 
+  Project getProject() {
+    return myProject;
+  }
+
+  PsiDocumentManagerBase getPsiDocumentManager() {
+    return myPsiDocManager;
+  }
+
   private static class PointerReference extends WeakReference<SmartPointerEx> {
     @NotNull private final VirtualFile file;
     @NotNull private final Key<FilePointersList> key;
@@ -261,7 +272,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     private int nextAvailableIndex;
     private int size;
     private PointerReference[] references = new PointerReference[10];
-    private final MarkerCache markerCache = new MarkerCache(this);
+    private final MarkerCache markerCache;
+
+    FilePointersList(VirtualFile file) {
+      markerCache = new MarkerCache(this, file);
+    }
 
     private void add(@NotNull PointerReference reference) {
       if (nextAvailableIndex >= references.length || nextAvailableIndex > size*2) {  // overflow or too many dead refs
