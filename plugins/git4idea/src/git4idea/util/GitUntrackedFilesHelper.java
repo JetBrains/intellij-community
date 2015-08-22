@@ -19,17 +19,25 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
+import git4idea.DialogManager;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,6 +103,41 @@ public class GitUntrackedFilesHelper {
     return notificationDesc;
   }
 
+  public static boolean showUntrackedFilesDialogWithRollback(@NotNull final Project project,
+                                                             @NotNull String operationName,
+                                                             @NotNull final String rollbackProposal,
+                                                             @NotNull VirtualFile root,
+                                                             @NotNull final Collection<String> relativePaths) {
+    final String title = "Could not " + StringUtil.capitalize(operationName);
+    final String description = createUntrackedFilesOverwrittenDescription(operationName, false);
+
+    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
+    final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
+      @Override
+      public VirtualFile fun(String absolutePath) {
+        return GitUtil.findRefreshFileOrLog(absolutePath);
+      }
+    });
+
+    return UIUtil.invokeAndWaitIfNeeded(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        JComponent filesBrowser;
+        if (untrackedFiles.isEmpty()) {
+          filesBrowser = new GitSimplePathsBrowser(project, absolutePaths);
+        }
+        else {
+          filesBrowser = new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false);
+        }
+        DialogWrapper dialog = new UntrackedFilesRollBackDialog(project, filesBrowser, StringUtil.stripHtml(description, true),
+                                                                rollbackProposal);
+        dialog.setTitle(title);
+        DialogManager.show(dialog);
+        return dialog.isOK();
+      }
+    });
+  }
+
   private static class UntrackedFilesDialog extends SelectFilesDialog {
 
     public UntrackedFilesDialog(Project project, Collection<VirtualFile> untrackedFiles, String dialogDesc) {
@@ -108,5 +151,47 @@ public class GitUntrackedFilesHelper {
       return new Action[]{getOKAction()};
     }
 
+  }
+
+  private static class UntrackedFilesRollBackDialog extends DialogWrapper {
+
+    @NotNull private final JComponent myFilesBrowser;
+    @NotNull private final String myPrompt;
+    @NotNull private final String myRollbackProposal;
+
+    public UntrackedFilesRollBackDialog(@NotNull Project project, @NotNull JComponent filesBrowser, @NotNull String prompt,
+                                        @NotNull String rollbackProposal) {
+      super(project);
+      myFilesBrowser = filesBrowser;
+      myPrompt = prompt;
+      myRollbackProposal = rollbackProposal;
+      setOKButtonText("Rollback");
+      setCancelButtonText("Don't rollback");
+      init();
+    }
+
+    @Override
+    protected JComponent createSouthPanel() {
+      JComponent buttons = super.createSouthPanel();
+      JPanel panel = new JPanel(new VerticalFlowLayout());
+      panel.add(new JBLabel(XmlStringUtil.wrapInHtml(myRollbackProposal)));
+      panel.add(buttons);
+      return panel;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myFilesBrowser;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createNorthPanel() {
+      JLabel label = new JLabel(myPrompt);
+      label.setUI(new MultiLineLabelUI());
+      label.setBorder(new EmptyBorder(5, 1, 5, 1));
+      return label;
+    }
   }
 }
