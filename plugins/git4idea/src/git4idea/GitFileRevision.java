@@ -45,15 +45,17 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   @Nullable private final String myBranch;
   @Nullable private final Date myAuthorTime;
   @NotNull private final Collection<String> myParents;
+  @Nullable private final VirtualFile myRoot;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
-    this(project, path, revision, null, null, null, null, Collections.<String>emptyList());
+    this(project, null, path, revision, null, null, null, null, Collections.<String>emptyList());
   }
 
-  public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
+  public GitFileRevision(@NotNull Project project, @Nullable VirtualFile root, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
                          @Nullable Couple<Couple<String>> authorAndCommitter, @Nullable String message,
                          @Nullable String branch, @Nullable final Date authorTime, @NotNull Collection<String> parents) {
     myProject = project;
+    myRoot = root;
     myPath = path;
     myRevision = revision;
     myAuthorAndCommitter = authorAndCommitter;
@@ -135,8 +137,12 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   }
 
   public synchronized byte[] loadContent() throws IOException, VcsException {
-    VirtualFile root = GitUtil.getGitRoot(myPath);
+    VirtualFile root = getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));
+  }
+
+  private VirtualFile getRoot() throws VcsException {
+    return myRoot != null ? myRoot : GitUtil.getGitRoot(myPath);
   }
 
   public synchronized byte[] getContent() throws IOException, VcsException {
