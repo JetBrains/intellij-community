@@ -91,6 +91,13 @@ public class GitUtil {
 
   public static final String ORIGIN_HEAD = "origin/HEAD";
 
+  public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = new Function<GitRepository, VirtualFile>() {
+    @Override
+    public VirtualFile fun(@NotNull GitRepository repository) {
+      return repository.getRoot();
+    }
+  };
+
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
   /**
@@ -706,12 +713,7 @@ public class GitUtil {
 
   @NotNull
   public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
-    return ContainerUtil.map(repositories, new Function<GitRepository, VirtualFile>() {
-      @Override
-      public VirtualFile fun(@NotNull GitRepository repository) {
-        return repository.getRoot();
-      }
-    });
+    return ContainerUtil.map(repositories, REPOSITORY_TO_ROOT);
   }
 
   @NotNull
@@ -980,5 +982,15 @@ public class GitUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static String joinToHtml(@NotNull Collection<GitRepository> repositories) {
+    return StringUtil.join(repositories, new Function<GitRepository, String>() {
+      @Override
+      public String fun(GitRepository repository) {
+        return repository.getPresentableUrl();
+      }
+    }, "<br/>");
   }
 }

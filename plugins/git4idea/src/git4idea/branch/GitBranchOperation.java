@@ -137,12 +137,7 @@ abstract class GitBranchOperation {
   
   @NotNull
   protected String successfulRepositoriesJoined() {
-    return StringUtil.join(mySuccessfulRepositories, new Function<GitRepository, String>() {
-      @Override
-      public String fun(GitRepository repository) {
-        return repository.getPresentableUrl();
-      }
-    }, "<br/>");
+    return GitUtil.joinToHtml(mySuccessfulRepositories);
   }
   
   @NotNull
