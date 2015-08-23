@@ -67,7 +67,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
   private boolean isAvailableForFunction(PyFunction function) {
     if (function.getDocStringValue() != null) {
-      final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function).withDefaultParameters();
+      final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
       if (docstringGenerator.hasParametersToAdd()) {
         myText = PyBundle.message("INTN.add.parameters.to.docstring");
         return true;
@@ -106,7 +106,6 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       docstringGenerator
         .useTypesFromDebuggerSignature(true)
         .addReturn()
-        .withDefaultParameters()
         .addFirstEmptyLine();
 
       if (docStringOwner.getDocStringValue() == null) {

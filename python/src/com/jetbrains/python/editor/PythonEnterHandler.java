@@ -264,7 +264,6 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       final String docString = new PyDocstringGenerator(docOwner)
         .addReturn()
         .useTypesFromDebuggerSignature(true)
-        .withDefaultParameters()
         .withQuotes(quotes)
         .forceNewMode()
         .buildDocString();

@@ -45,15 +45,16 @@ import java.util.List;
 public class PyDocstringGenerator {
 
   private final List<DocstringParam> myParams = Lists.newArrayList();
-  private boolean myGenerateReturn;
-
   // Updated after buildAndInsert
   @NotNull
   private PyDocStringOwner myDocStringOwner;
-  private String myQuotes = "\"\"\"";
+
   private boolean myUseTypesFromDebuggerSignature = false;
-  private boolean myNewMode = false;
+  private boolean myNewMode = false; // true - generate new string, false - update existing
   private boolean myAddFirstEmptyLine = false;
+  private boolean myParametersPrepared = false;
+  private boolean myGenerateReturn;
+  private String myQuotes = "\"\"\"";
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
@@ -108,10 +109,9 @@ public class PyDocstringGenerator {
     return this;
   }
 
-  @NotNull
-  public PyDocstringGenerator withDefaultParameters() {
-    // Populate parameters lift if no one was specified explicitly
-    if (myParams.isEmpty()) {
+  private void prepareParameters() {
+    // Populate parameter list, if no one was specified explicitly
+    if (!myParametersPrepared && myParams.isEmpty()) {
       if (myDocStringOwner instanceof PyFunction) {
         PySignature signature = null;
         if (myUseTypesFromDebuggerSignature) {
@@ -149,12 +149,12 @@ public class PyDocstringGenerator {
           }
         }
       }
-
     }
-    return this;
+    myParametersPrepared = true;
   }
 
   public boolean hasParametersToAdd() {
+    prepareParameters();
     return !myParams.isEmpty();
   }
 
@@ -260,6 +260,7 @@ public class PyDocstringGenerator {
 
   @NotNull
   public String buildDocString() {
+    prepareParameters();
     if (isNewMode()) {
       return createDocString();
     }
