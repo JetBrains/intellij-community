@@ -30,7 +30,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.documentation.docstrings.DocStringProvider;
 import com.jetbrains.python.documentation.docstrings.TagBasedDocStringBuilder;
 import com.jetbrains.python.documentation.docstrings.TagBasedDocStringUpdater;
 import com.jetbrains.python.psi.*;
@@ -45,30 +44,21 @@ import java.util.List;
  */
 public class PyDocstringGenerator {
 
-  private List<DocstringParam> myParams = Lists.newArrayList();
+  private final List<DocstringParam> myParams = Lists.newArrayList();
   private boolean myGenerateReturn;
 
   // Updated after buildAndInsert
   @NotNull
   private PyDocStringOwner myDocStringOwner;
-  private final StructuredDocString myOriginalDocString;
-  private final DocStringFormat myDocStringFormat;
   private String myQuotes = "\"\"\"";
   private boolean myUseTypesFromDebuggerSignature = false;
   private boolean myNewMode = false;
-  private boolean addFirstEmptyLine = false;
+  private boolean myAddFirstEmptyLine = false;
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
-    myDocStringFormat = DocStringUtil.getDocStringFormat(docStringOwner);
-    final DocStringProvider provider = myDocStringFormat.getProvider();
     final PyStringLiteralExpression docStringExpression = myDocStringOwner.getDocStringExpression();
-    if (docStringExpression != null) {
-      myOriginalDocString = provider.parseDocString(docStringExpression);
-    }
-    else {
-      myOriginalDocString = null;
-    }
+    myNewMode = docStringExpression == null;
   }
 
   @NotNull
@@ -107,6 +97,12 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
+  public PyDocstringGenerator addFirstEmptyLine() {
+    myAddFirstEmptyLine = true;
+    return this;
+  }
+
+  @NotNull
   public PyDocstringGenerator forceNewMode() {
     myNewMode = true;
     return this;
@@ -122,18 +118,38 @@ public class PyDocstringGenerator {
           signature = PySignatureCacheManager.getInstance(myDocStringOwner.getProject()).findSignature((PyFunction)myDocStringOwner);
         }
         for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
-          String paramName = param.getName();
-          if (StringUtil.isEmpty(paramName) || param.isSelf() ||
-               myOriginalDocString != null && myOriginalDocString.getParamTypeSubstring(paramName) != null) {
+          final String paramName = param.getName();
+          final StructuredDocString docString = getStructuredDocString();
+          if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParamTypeSubstring(paramName) != null) {
             continue;
           }
-          String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
+          final String signatureType = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
+          String type = null;
+          if (signatureType != null) {
+            type = signatureType;
+          }
+          else if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+            type = "";
+          }
           withParam(paramName);
           if (type != null) {
             withParamTypedByName(paramName, type);
           }
         }
+        if (myGenerateReturn) {
+          final RaiseVisitor visitor = new RaiseVisitor();
+          final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
+          statementList.accept(visitor);
+          if (visitor.myHasReturn) {
+            // will add :return: placeholder in Sphinx/Epydoc docstrings
+            myParams.add(new DocstringParam("", null, true));
+            if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+              withReturnValue("");
+            }
+          }
+        }
       }
+
     }
     return this;
   }
@@ -145,6 +161,21 @@ public class PyDocstringGenerator {
   @Nullable
   private PyStringLiteralExpression getDocStringExpression() {
     return myDocStringOwner.getDocStringExpression();
+  }
+
+  @NotNull
+  private DocStringFormat getDocStringFormat() {
+    return DocStringUtil.getDocStringFormat(myDocStringOwner);
+  }
+
+  @Nullable
+  private StructuredDocString getStructuredDocString() {
+    final PyStringLiteralExpression expression = getDocStringExpression();
+    final DocStringFormat format = getDocStringFormat();
+    if (format == DocStringFormat.PLAIN || expression == null) {
+      return null;
+    }
+    return format.getProvider().parseDocString(expression);
   }
 
   public static String generateRaiseOrReturn(@NotNull PyFunction element, String offset, String prefix, boolean checkReturn) {
@@ -238,16 +269,18 @@ public class PyDocstringGenerator {
   }
 
   private boolean isNewMode() {
-    return myNewMode || myOriginalDocString == null;
+    return myNewMode;
   }
 
   @NotNull
   private String createDocString() {
-    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
-      final TagBasedDocStringBuilder builder = new TagBasedDocStringBuilder(myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":");
-      builder.addEmptyLine();
-      String indentation = getDocStringIndentation();
-      boolean addedReturn = false;
+    final String indentation = getDocStringIndentation();
+    final DocStringFormat format = getDocStringFormat();
+    if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
+      final TagBasedDocStringBuilder builder = new TagBasedDocStringBuilder(format == DocStringFormat.EPYTEXT ? "@" : ":");
+      if (myAddFirstEmptyLine) {
+        builder.addEmptyLine();
+      }
       for (DocstringParam param : myParams) {
         if (param.isReturnValue()) {
           if (param.getType() != null) {
@@ -256,7 +289,6 @@ public class PyDocstringGenerator {
           else {
             builder.addReturnValueDescription("");
           }
-          addedReturn = true;
         }
         else {
           if (param.getType() != null) {
@@ -267,18 +299,6 @@ public class PyDocstringGenerator {
           }
         }
       }
-      if (myGenerateReturn && myDocStringOwner instanceof PyFunction) {
-        final RaiseVisitor visitor = new RaiseVisitor();
-        final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
-        statementList.accept(visitor);
-        if (!addedReturn && visitor.myHasReturn) {
-          builder.addReturnValueDescription("");
-        }
-        if (visitor.myHasRaise) {
-          builder.addExceptionDescription(visitor.getRaiseTargetText(), "");
-        }
-      }
-
       if (builder.getLines().size() > 1) {
         return myQuotes + '\n' + builder.buildContent(indentation, true) + '\n' + indentation + myQuotes;
       }
@@ -287,7 +307,7 @@ public class PyDocstringGenerator {
       }
     }
     else {
-      return "";
+      return myQuotes + '\n' + indentation + myQuotes;
     }
   }
 
@@ -302,10 +322,12 @@ public class PyDocstringGenerator {
 
   @NotNull
   private String updateDocString() {
-    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
-      final String prefix = myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":";
-      //noinspection unchecked
-      TagBasedDocStringUpdater updater = new TagBasedDocStringUpdater((TagBasedDocString)myOriginalDocString, prefix, getDocStringIndentation());
+    final DocStringFormat format = getDocStringFormat();
+    if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
+      final String prefix = format == DocStringFormat.EPYTEXT ? "@" : ":";
+      //noinspection unchecked,ConstantConditions
+      TagBasedDocStringUpdater updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(),
+                                                                      prefix, getDocStringIndentation());
       for (DocstringParam param : myParams) {
         if (param.isReturnValue()) {
           updater.addReturnValue(param.getType());

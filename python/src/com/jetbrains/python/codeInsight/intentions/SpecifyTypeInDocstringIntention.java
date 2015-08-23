@@ -78,6 +78,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     final boolean isReturn = "rtype".equals(kind);
 
     final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
+    docstringGenerator.addFirstEmptyLine();
     final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
     String name = isReturn ? "" : StringUtil.notNullize(problemElement.getName());
     final String typeFromSignature = signature != null ? StringUtil.notNullize(signature.getArgTypeQualifiedName(name)) : "";

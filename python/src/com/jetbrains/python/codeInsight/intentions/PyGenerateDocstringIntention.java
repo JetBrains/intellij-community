@@ -103,8 +103,12 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     }
     final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(docStringOwner);
     if (docStringOwner instanceof PyFunction) {
-      docstringGenerator.useTypesFromDebuggerSignature(true);
-      docstringGenerator.withDefaultParameters();
+      docstringGenerator
+        .useTypesFromDebuggerSignature(true)
+        .addReturn()
+        .withDefaultParameters()
+        .addFirstEmptyLine();
+
       if (docStringOwner.getDocStringValue() == null) {
         docstringGenerator.addReturn();
       }
