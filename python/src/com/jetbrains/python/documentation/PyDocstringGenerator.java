@@ -49,11 +49,11 @@ public class PyDocstringGenerator {
   @NotNull
   private PyDocStringOwner myDocStringOwner;
 
-  private boolean myUseTypesFromDebuggerSignature = false;
+  private boolean myUseTypesFromDebuggerSignature = true;
   private boolean myNewMode = false; // true - generate new string, false - update existing
   private boolean myAddFirstEmptyLine = false;
   private boolean myParametersPrepared = false;
-  private boolean myGenerateReturn;
+  private boolean myAlwaysGenerateReturn;
   private String myQuotes = "\"\"\"";
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
@@ -91,9 +91,14 @@ public class PyDocstringGenerator {
     return this;
   }
 
+  /**
+   * By default return declaration is added only if function body contains return statement. Sometimes it's not possible, e.g.
+   * in  {@link com.jetbrains.python.editor.PythonEnterHandler} where unclosed docstring literal "captures" whole function body
+   * including return statements.
+   */
   @NotNull
-  public PyDocstringGenerator addReturn() {
-    myGenerateReturn = true;
+  public PyDocstringGenerator forceAddReturn() {
+    myAlwaysGenerateReturn = true;
     return this;
   }
 
@@ -136,16 +141,14 @@ public class PyDocstringGenerator {
             withParamTypedByName(paramName, type);
           }
         }
-        if (myGenerateReturn) {
-          final RaiseVisitor visitor = new RaiseVisitor();
-          final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
-          statementList.accept(visitor);
-          if (visitor.myHasReturn) {
-            // will add :return: placeholder in Sphinx/Epydoc docstrings
-            myParams.add(new DocstringParam("", null, true));
-            if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-              withReturnValue("");
-            }
+        final RaiseVisitor visitor = new RaiseVisitor();
+        final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
+        statementList.accept(visitor);
+        if (visitor.myHasReturn || myAlwaysGenerateReturn) {
+          // will add :return: placeholder in Sphinx/Epydoc docstrings
+          myParams.add(new DocstringParam("", null, true));
+          if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+            withReturnValue("");
           }
         }
       }

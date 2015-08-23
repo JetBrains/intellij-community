@@ -102,16 +102,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       return;
     }
     final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(docStringOwner);
-    if (docStringOwner instanceof PyFunction) {
-      docstringGenerator
-        .useTypesFromDebuggerSignature(true)
-        .addReturn()
-        .addFirstEmptyLine();
-
-      if (docStringOwner.getDocStringValue() == null) {
-        docstringGenerator.addReturn();
-      }
-    }
+    docstringGenerator.addFirstEmptyLine();
     final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
     if (updated != null && editor != null) {
       final int offset = updated.getTextOffset();
