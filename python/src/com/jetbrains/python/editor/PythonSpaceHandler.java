@@ -17,20 +17,17 @@ package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.documentation.DocStringFormat;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.PyDocstringGenerator;
+import com.jetbrains.python.psi.PyDocStringOwner;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,32 +40,27 @@ public class PythonSpaceHandler extends TypedHandlerDelegate {
     if (c == ' ' && codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
       int offset = editor.getCaretModel().getOffset();
       PsiElement element = file.findElementAt(offset);
-      if (element == null && offset > 1)
-        element = file.findElementAt(offset-2);
+      if (element == null && offset > 1) {
+        element = file.findElementAt(offset - 2);
+      }
       if (element == null) return Result.CONTINUE;
-      int expectedStringStart = editor.getCaretModel().getOffset()-4;        // """ or ''' plus space char
+      int expectedStringStart = offset - 4;        // """ or ''' plus space char
       if (PythonDocCommentUtil.atDocCommentStart(element, expectedStringStart)) {
-        PythonDocumentationProvider provider = new PythonDocumentationProvider();
-        PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
         final PsiElement parent = element.getParent();
-        if (fun != null) {
-          String docStub = provider.generateDocumentationContentStub(fun, false);
-          docStub += parent.getText().substring(0,3);
-          if (docStub.length() != 0) {
-            editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
-            Module module = ModuleUtilCore.findModuleForPsiElement(element);
-            if (module == null) return Result.CONTINUE;
-            PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-            if (documentationSettings.getFormat() != DocStringFormat.PLAIN) {
-              editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
-            }
-            return Result.STOP;
+        final PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
+        if (docOwner != null) {
+          final Document document = editor.getDocument();
+          final String quotes = document.getText(TextRange.from(expectedStringStart, 3));
+          final String docString = new PyDocstringGenerator(docOwner)
+            .forceNewMode()
+            .addFirstEmptyLine()
+            .withQuotes(quotes)
+            .forceAddReturn()
+            .buildDocString();
+          document.insertString(offset, docString.substring(3));
+          if (DocStringUtil.getDocStringFormat(parent) != DocStringFormat.PLAIN) {
+            editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
           }
-        }
-        PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
-        if (klass != null) {
-          editor.getDocument().insertString(editor.getCaretModel().getOffset(),
-                          PythonDocCommentUtil.generateDocForClass(klass, parent.getText().substring(0, 3)));
           return Result.STOP;
         }
       }

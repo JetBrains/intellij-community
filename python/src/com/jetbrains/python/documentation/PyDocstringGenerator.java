@@ -303,16 +303,11 @@ public class PyDocstringGenerator {
           }
         }
       }
-      if (builder.getLines().size() > 1) {
+      if (!builder.getLines().isEmpty()) {
         return myQuotes + '\n' + builder.buildContent(indentation, true) + '\n' + indentation + myQuotes;
       }
-      else {
-        return myQuotes + builder.buildContent(indentation, false) + myQuotes;
-      }
     }
-    else {
-      return myQuotes + '\n' + indentation + myQuotes;
-    }
+    return myQuotes + '\n' + indentation + myQuotes;
   }
 
   @NotNull

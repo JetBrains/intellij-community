@@ -23,8 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -36,12 +34,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
-import com.jetbrains.python.debugger.PySignature;
-import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -75,9 +69,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NonNls static final String LINK_TYPE_PARENT = "#parent#";
   @NonNls static final String LINK_TYPE_PARAM = "#param#";
   @NonNls static final String LINK_TYPE_TYPENAME = "#typename#";
-
-  @NonNls private static final String RST_PREFIX = ":";
-  @NonNls private static final String EPYDOC_PREFIX = "@";
 
   // provides ctrl+hover info
   @Override
@@ -541,80 +532,4 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   public static final LinkWrapper LinkMyClass = new LinkWrapper(LINK_TYPE_CLASS);
   // link item to containing class
-
-  @NotNull
-  private static String generateDocumentationContentStub(@NotNull PyFunction element, @NotNull String offset, boolean checkReturn) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) return "";
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-    String result = "";
-    if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
-      result += generateContent(element, offset, EPYDOC_PREFIX, checkReturn);
-    }
-    else if (documentationSettings.isReSTFormat(element.getContainingFile())) {
-      result += generateContent(element, offset, RST_PREFIX, checkReturn);
-    }
-    else {
-      result += offset;
-    }
-    return result;
-  }
-
-  @NotNull
-  private static String getStatementListIndent(@NotNull PyStatementList statementList) {
-    final PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
-    if (whitespace != null) {
-      final String text = whitespace.getText();
-      final int index = text.lastIndexOf('\n');
-      if (index >= 0) {
-        return text.substring(index + 1);
-      }
-    }
-    return "";
-  }
-
-  @NotNull
-  public String generateDocumentationContentStub(@NotNull PyFunction function, boolean checkReturn) {
-    final PyStatementList insertPlace = function.getStatementList();
-    return generateDocumentationContentStub(function, "\n" + getStatementListIndent(insertPlace), checkReturn);
-  }
-
-  private static String generateContent(@NotNull PyFunction function, @NotNull String offset, String prefix, boolean checkReturn) {
-    //TODO: this code duplicates PyDocstringGenerator in some parts
-
-    final StringBuilder builder = new StringBuilder(offset);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), function.getContainingFile());
-    final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
-    final PyDecoratorList decoratorList = function.getDecoratorList();
-    final boolean classMethod = decoratorList != null && decoratorList.findDecorator(PyNames.CLASSMETHOD) != null;
-    for (PyParameter p : PyUtil.getParameters(function, context)) {
-      final String parameterName = p.getName();
-      if (parameterName == null ||
-          parameterName.equals(PyNames.CANONICAL_SELF) ||
-          (classMethod && parameterName.equals(PyNames.CANONICAL_CLS))) {
-        continue;
-      }
-      final String argType = signature == null ? null : signature.getArgTypeQualifiedName(parameterName);
-
-      if (argType == null) {
-        builder.append(prefix);
-        builder.append("param ");
-        builder.append(parameterName);
-        builder.append(": ");
-        builder.append(offset);
-      }
-      if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB || argType != null) {
-        builder.append(prefix);
-        builder.append("type ");
-        builder.append(parameterName);
-        builder.append(": ");
-        if (signature != null && argType != null) {
-          builder.append(PySignatureUtil.getShortestImportableName(function, argType));
-        }
-        builder.append(offset);
-      }
-    }
-    builder.append(PyDocstringGenerator.generateRaiseOrReturn(function, offset, prefix, checkReturn));
-    return builder.toString();
-  }
 }
