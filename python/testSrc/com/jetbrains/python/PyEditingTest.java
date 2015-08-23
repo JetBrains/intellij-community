@@ -211,6 +211,29 @@ public class PyEditingTest extends PyTestCase {
     }
   }
 
+  public void testEnterDocStringStubInClass() {
+    doTypingTest('\n');
+  }
+
+  public void testEnterDocStringStubInFile() {
+    doTypingTest('\n');
+  }
+
+  // PY-3421
+  public void testSpaceDocStringStubInFunction() {
+    doTypingTest(' ');
+  }
+
+  // PY-3421
+  public void testSpaceDocStringStubInFile() {
+    doTypingTest(' ');
+  }
+
+  // PY-3421
+  public void testSpaceDocStringStubInClass() {
+    doTypingTest(' ');
+  }
+
   public void testEnterInString() {  // PY-1738
     doTestEnter("a = \"some <caret>string\"", "a = \"some \" \\\n" +
                                               "    \"string\"");

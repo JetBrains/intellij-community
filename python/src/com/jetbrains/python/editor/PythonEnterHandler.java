@@ -257,7 +257,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   private static void insertDocStringStub(Editor editor, PsiElement element) {
-    PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class);
+    PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     if (docOwner != null) {
       final int caretOffset = editor.getCaretModel().getOffset();
       final String quotes = editor.getDocument().getText(TextRange.from(caretOffset - 3, 3));

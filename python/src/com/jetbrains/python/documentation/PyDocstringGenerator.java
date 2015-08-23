@@ -264,7 +264,7 @@ public class PyDocstringGenerator {
   @NotNull
   public String buildDocString() {
     prepareParameters();
-    if (isNewMode()) {
+    if (myNewMode) {
       return createDocString();
     }
     else {

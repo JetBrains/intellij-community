@@ -18,7 +18,6 @@ package com.jetbrains.python.editor;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -61,19 +60,6 @@ public class PythonDocCommentUtil {
       }
     }
     return false;
-  }
-
-  static public String generateDocForClass(PsiElement klass, String suffix) {
-    String ws = "\n";
-    if (klass instanceof PyClass) {
-      PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyClass)klass).getStatementList(), PsiWhiteSpace.class);
-      if (whitespace != null) {
-        String[] spaces = whitespace.getText().split("\n");
-        if (spaces.length > 1)
-          ws += spaces[1];
-      }
-    }
-    return ws+suffix;
   }
 
   static public String removeParamFromDocstring(String text, String prefix, String paramName) {

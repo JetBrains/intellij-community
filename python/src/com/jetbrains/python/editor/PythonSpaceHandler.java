@@ -21,11 +21,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.documentation.DocStringFormat;
-import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import org.jetbrains.annotations.NotNull;
@@ -46,19 +45,17 @@ public class PythonSpaceHandler extends TypedHandlerDelegate {
       if (element == null) return Result.CONTINUE;
       int expectedStringStart = offset - 4;        // """ or ''' plus space char
       if (PythonDocCommentUtil.atDocCommentStart(element, expectedStringStart)) {
-        final PsiElement parent = element.getParent();
         final PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
         if (docOwner != null) {
           final Document document = editor.getDocument();
           final String quotes = document.getText(TextRange.from(expectedStringStart, 3));
           final String docString = new PyDocstringGenerator(docOwner)
             .forceNewMode()
-            .addFirstEmptyLine()
             .withQuotes(quotes)
             .forceAddReturn()
             .buildDocString();
           document.insertString(offset, docString.substring(3));
-          if (DocStringUtil.getDocStringFormat(parent) != DocStringFormat.PLAIN) {
+          if (!StringUtil.isEmptyOrSpaces(docString.substring(3, docString.length() - 3))) {
             editor.getCaretModel().moveCaretRelatively(100, 1, false, false, false);
           }
           return Result.STOP;
