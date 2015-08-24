@@ -370,7 +370,10 @@ public class ConfigurableExtensionPointUtil {
     return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
   }
 
-  private static ResourceBundle getBundle(String resource, List<Configurable> configurables, ResourceBundle alternative) {
+  @Nullable
+  public static ResourceBundle getBundle(@NotNull String resource,
+                                         @Nullable Iterable<Configurable> configurables,
+                                         @Nullable ResourceBundle alternative) {
     ResourceBundle bundle = OptionsBundle.getBundle();
     if (getString(bundle, resource) != null) {
       return bundle;
