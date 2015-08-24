@@ -281,6 +281,20 @@ class GitTest : TestCase() {
     compareFiles(fs())
   }
 
+  Test fun `commit if unmerged`() {
+    createLocalRepository(null)
+
+    sync(SyncType.MERGE)
+
+    provider.delete("remote.xml", RoamingType.PER_USER)
+    repositoryManager.commit()
+
+    sync(SyncType.MERGE)
+    restoreRemoteAfterPush()
+
+    compareFiles(fs())
+  }
+
   // remote is uninitialized (empty - initial commit is not done)
   Test fun `merge with uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.MERGE)
