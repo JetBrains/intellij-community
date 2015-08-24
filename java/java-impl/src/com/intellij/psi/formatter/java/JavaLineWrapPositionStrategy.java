@@ -51,11 +51,19 @@ public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrateg
   private static boolean isInsideTag(Document document, int offset, String tagStart, String tagEnd) {
     CharSequence sequence = document.getCharsSequence();
 
-    int lineNumber = document.getLineNumber(offset);
-    int lineStartOffset = document.getLineStartOffset(lineNumber);
-    int lineEndOffset = document.getLineEndOffset(lineNumber);
+    final int lineNumber = document.getLineNumber(offset);
+    final int lineStartOffset = document.getLineStartOffset(lineNumber);
+    final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
-    return CharArrayUtil.indexOf(sequence, tagStart, lineStartOffset, offset) > 0
-      && CharArrayUtil.indexOf(sequence, tagEnd, offset, lineEndOffset) > 0;
+    int searchStartOffset = lineStartOffset;
+    int searchEndOffset = lineEndOffset;
+
+    if (lineEndOffset - lineStartOffset > 200) {
+      searchStartOffset = Math.max(offset - 100, lineStartOffset);
+      searchEndOffset = Math.min(offset + 100, lineEndOffset);
+    }
+
+    return CharArrayUtil.indexOf(sequence, tagStart, searchStartOffset, offset) > 0
+      && CharArrayUtil.indexOf(sequence, tagEnd, offset, searchEndOffset) > 0;
   }
 }
