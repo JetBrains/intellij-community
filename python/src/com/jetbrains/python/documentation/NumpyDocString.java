@@ -17,6 +17,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -50,9 +51,12 @@ public class NumpyDocString extends SectionBasedDocString {
   @NotNull
   @Override
   protected Pair<String, Integer> parseSectionHeader(int lineNum) {
-    final Substring nextLine = getLineOrNull(lineNum + 1);
-    if (nextLine != null && SECTION_HEADER.matcher(nextLine).matches()) {
-      return Pair.create(getLine(lineNum).trim().toString(), lineNum + 2);
+    @NonNls final String title = getLine(lineNum).trim().toString();
+    if (SECTION_NAMES.contains(title.toLowerCase())) {
+      final Substring nextLine = getLineOrNull(lineNum + 1);
+      if (nextLine != null && SECTION_HEADER.matcher(nextLine).matches()) {
+        return Pair.create(getLine(lineNum).trim().toString(), lineNum + 2);
+      }
     }
     return Pair.create(null, lineNum);
   }

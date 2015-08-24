@@ -24,6 +24,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -287,28 +288,28 @@ public class  PyIntentionTest extends PyTestCase {
 
   public void testTypeInDocstring() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    doDocReferenceTest();
+    doDocReferenceTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring3() {
-    doDocReferenceTest();
+    doDocReferenceTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring4() {
-    doDocReferenceTest();
+    doDocReferenceTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstringParameterInCallable() {
-    doDocReferenceTest();
+    doDocReferenceTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring5() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    doDocReferenceTest();
+    doDocReferenceTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstringAtTheEndOfFunction() {
-    doDocReturnTypeTest();
+    doDocReturnTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring6() {         //PY-7973
@@ -316,31 +317,31 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring7() {         //PY-8930
-    doDocReferenceTest();
+    doDocReferenceTest(DocStringFormat.REST);
   }
 
   // PY-16456
   public void testTypeInDocStringDifferentIndentationSize() {
-    doDocReferenceTest();
+    doDocReferenceTest(DocStringFormat.REST);
   }
 
   // PY-16456
   public void testReturnTypeInDocStringDifferentIndentationSize() {
-    doDocReturnTypeTest();
+    doDocReturnTypeTest(DocStringFormat.REST);
   }
 
   public void testReturnTypeInDocstring() {
-    doDocReturnTypeTest();
+    doDocReturnTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring1() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    doDocReturnTypeTest();
+    doDocReturnTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring2() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    doDocReturnTypeTest();
+    doDocReturnTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInPy3Annotation() {      //PY-7045
@@ -402,18 +403,18 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testDocStub() {
-    doDocStubTest();
+    doDocStubTest(DocStringFormat.REST);
   }
 
   public void testOneLineDocStub() {
-    doDocStubTest();
+    doDocStubTest(DocStringFormat.REST);
   }
 
   public void testDocStubKeywordOnly() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
       public void run() {
-        doDocStubTest();
+        doDocStubTest(DocStringFormat.REST);
       }
     });
   }
@@ -436,6 +437,16 @@ public class  PyIntentionTest extends PyTestCase {
   // PY-9795
   public void testGoogleDocStubEmptyFunctionBody() {
     doDocStubTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testReturnTypeInNewGoogleDocString() {
+    doDocReturnTypeTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testParamTypeInNewGoogleDocString() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);
   }
 
   // PY-9795
@@ -468,6 +479,16 @@ public class  PyIntentionTest extends PyTestCase {
       codeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertTypeDocStub;
     }
   }
+  
+  // PY-4717
+  public void testReturnTypeInNewNumpyDocString() {
+    doDocReturnTypeTest(DocStringFormat.NUMPY);
+  }
+
+  // PY-4717
+  public void testParamTypeInNewNumpyDocString() {
+    doDocReferenceTest(DocStringFormat.NUMPY);
+  }
 
   // PY-7383
   public void testYieldFrom() {
@@ -482,32 +503,43 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.static.method.to.function"));
   }
 
-  private void doDocStubTest(@Nullable DocStringFormat format) {
+  private void doWithDocStringFormat(@NotNull DocStringFormat format, @NotNull Runnable runnable) {
     final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
     final DocStringFormat oldFormat = settings.getFormat();
-    if (format != null) {
-      settings.setFormat(format);
-    }
+    settings.setFormat(format);
     try {
-      CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-      codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
-      doTest(PyBundle.message("INTN.doc.string.stub"), true);
+      runnable.run();
     }
     finally {
       settings.setFormat(oldFormat);
     }
   }
 
-  private void doDocStubTest() {
-    doDocStubTest(null);
+  private void doDocStubTest(@NotNull DocStringFormat format) {
+    doWithDocStringFormat(format, new Runnable() {
+      @Override
+      public void run() {
+        CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
+        doTest(PyBundle.message("INTN.doc.string.stub"), true);
+      }
+    });
   }
 
-  private void doDocReferenceTest() {
-    doTest(PyBundle.message("INTN.specify.type"));
+  private void doDocReferenceTest(@NotNull DocStringFormat format) {
+    doWithDocStringFormat(format, new Runnable() {
+      public void run() {
+        doTest(PyBundle.message("INTN.specify.type"));
+      }
+    });
   }
 
-  private void doDocReturnTypeTest() {
-    doTest(PyBundle.message("INTN.specify.return.type"));
+  private void doDocReturnTypeTest(@NotNull DocStringFormat format) {
+    doWithDocStringFormat(format, new Runnable() {
+        public void run() {
+          doTest(PyBundle.message("INTN.specify.return.type"));
+        }
+      });
+
   }
 
 }

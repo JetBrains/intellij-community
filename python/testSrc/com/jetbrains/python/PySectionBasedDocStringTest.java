@@ -237,6 +237,36 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                  "Line after single break", param1.getDescription());
   }
 
+  public void testGoogleEmptyParamTypeInParenthesis() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section paramSection = docString.getSections().get(0);
+    assertEquals("parameters", paramSection.getTitle());
+    assertSize(1, paramSection.getFields());
+    final SectionField param1 = paramSection.getFields().get(0);
+    assertEquals("x", param1.getName());
+    assertEmpty(param1.getDescription());
+    assertEmpty(param1.getType());
+    assertNotNull(param1.getTypeAsSubstring());
+    assertEquals(26, param1.getTypeAsSubstring().getStartOffset());
+    assertEquals(26, param1.getTypeAsSubstring().getEndOffset());
+  }
+
+  public void testGoogleReturnTypeNoDescription() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section returnSection = docString.getSections().get(0);
+    assertEquals("returns", returnSection.getTitle());
+    assertSize(1, returnSection.getFields());
+    final SectionField return1 = returnSection.getFields().get(0);
+    assertEmpty(return1.getName());
+    assertEmpty(return1.getDescription());
+    assertEquals("object", return1.getType());
+    assertNotNull(return1.getTypeAsSubstring());
+    assertEquals(20, return1.getTypeAsSubstring().getStartOffset());
+    assertEquals(26, return1.getTypeAsSubstring().getEndOffset());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

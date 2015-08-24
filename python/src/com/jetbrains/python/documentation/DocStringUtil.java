@@ -72,9 +72,9 @@ public class DocStringUtil {
   }
 
 
-    @NotNull
+  @NotNull
   public static StructuredDocString parseDocString(@NotNull DocStringFormat format,
-                                            @NotNull PyStringLiteralExpression literalExpression) {
+                                                   @NotNull PyStringLiteralExpression literalExpression) {
     return parseDocString(format, literalExpression.getStringNodes().get(0));
   }
 
@@ -150,6 +150,7 @@ public class DocStringUtil {
 
   /**
    * Looks for a doc string under given parent.
+   *
    * @param parent where to look. For classes and functions, this would be PyStatementList, for modules, PyFile.
    * @return the defining expression, or null.
    */
@@ -248,7 +249,8 @@ public class DocStringUtil {
     final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
     if (settings.isPlain(file)) {
       final List<String> values = DocStringFormat.ALL_NAMES_BUT_PLAIN;
-      final int i = Messages.showChooseDialog("Docstring format:", "Select Docstring Type", ArrayUtil.toStringArray(values), values.get(0), null);
+      final int i =
+        Messages.showChooseDialog("Docstring format:", "Select Docstring Type", ArrayUtil.toStringArray(values), values.get(0), null);
       if (i < 0) {
         return false;
       }

@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*(\\w+):\\s*", Pattern.MULTILINE);
-  private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.+?)\\s*\\)\\s*");
+  private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.*?)\\s*\\)\\s*");
 
   public GoogleCodeStyleDocString(@NotNull Substring text) {
     super(text);
@@ -115,7 +116,10 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
   protected Pair<String, Integer> parseSectionHeader(int lineNum) {
     final Matcher matcher = SECTION_HEADER_RE.matcher(getLine(lineNum));
     if (matcher.matches()) {
-      return Pair.create(matcher.group(1).trim(), lineNum + 1);
+      @NonNls final String title = matcher.group(1).trim();
+      if (SECTION_NAMES.contains(title.toLowerCase())) {
+        return Pair.create(title, lineNum + 1);
+      }
     }
     return Pair.create(null, lineNum);
   }

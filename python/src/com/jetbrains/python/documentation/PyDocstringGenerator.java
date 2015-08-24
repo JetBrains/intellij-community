@@ -216,24 +216,23 @@ public class PyDocstringGenerator {
     }
 
     final DocstringParam paramToEdit = getParamToEdit();
-    final String paramName = paramToEdit.getName();
-    final String stringContent = docStringExpression.getStringValue();
-    final StructuredDocString parsed = DocStringUtil.parse(stringContent);
-    if (parsed == null) {
+    final DocStringFormat format = getDocStringFormat();
+    if (format == DocStringFormat.PLAIN) {
       return;
     }
-    Substring substring;
+    final StructuredDocString parsed = DocStringUtil.parseDocString(format, docStringExpression);
+    final Substring substring;
     if (paramToEdit.isReturnValue()) {
       substring = parsed.getReturnTypeSubstring();
     }
     else {
+      final String paramName = paramToEdit.getName();
       substring = parsed.getParamTypeSubstring(paramName);
     }
     if (substring == null) {
       return;
     }
-    builder.replaceRange(substring.getTextRange().shiftRight(docStringExpression.getStringValueTextRange().getStartOffset()),
-                         getDefaultType(getParamToEdit()));
+    builder.replaceRange(substring.getTextRange(), getDefaultType(getParamToEdit()));
     Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
     final VirtualFile virtualFile = myDocStringOwner.getContainingFile().getVirtualFile();
     if (virtualFile == null) return;

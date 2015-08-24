@@ -80,13 +80,19 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
     docstringGenerator.addFirstEmptyLine();
     final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
-    String name = isReturn ? "" : StringUtil.notNullize(problemElement.getName());
-    final String typeFromSignature = signature != null ? StringUtil.notNullize(signature.getArgTypeQualifiedName(name)) : "";
-    if (!isReturn) {
-      docstringGenerator.withParamTypedByName(name, typeFromSignature);
+    final String name = isReturn ? "" : StringUtil.notNullize(problemElement.getName());
+    final String type;
+    if (signature != null) {
+      type = StringUtil.notNullize(signature.getArgTypeQualifiedName(name), "object");
     }
     else {
-      docstringGenerator.withReturnValue(typeFromSignature);
+      type = "object";
+    }
+    if (!isReturn) {
+      docstringGenerator.withParamTypedByName(name, type);
+    }
+    else {
+      docstringGenerator.withReturnValue(type);
     }
 
     docstringGenerator.buildAndInsert();

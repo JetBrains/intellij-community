@@ -115,7 +115,7 @@ public class Substring implements CharSequence {
         start = m.end();
       }
       while (end < myEndOffset && m.find() && splitCount < maxSplits);
-      if (start < myEndOffset) {
+      if (start <= myEndOffset) {
         result.add(createAnotherSubstring(start, myEndOffset));
       }
     }
