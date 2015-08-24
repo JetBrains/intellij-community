@@ -93,17 +93,17 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    We cannot store an index since we cannot determine what is an argument until we actually map arguments to parameters.
    This is because a tuple in arguments may be a whole argument or map to a tuple parameter.
    */
-  public void updateParameterInfo(@NotNull final PyArgumentList arglist, @NotNull final UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() != arglist) {
+  public void updateParameterInfo(@NotNull final PyArgumentList argumentList, @NotNull final UpdateParameterInfoContext context) {
+    if (context.getParameterOwner() != argumentList) {
       context.removeHint();
       return;
     }
     // align offset to nearest expression; context may point to a space, etc.
-    List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(arglist.getArguments());
+    List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(argumentList.getArguments());
     int alleged_cursor_offset = context.getOffset(); // this is already shifted backwards to skip spaces
 
-    final TextRange argListTextRange = arglist.getTextRange();
-    if (!argListTextRange.contains(alleged_cursor_offset) && arglist.getText().endsWith(")")) {
+    final TextRange argListTextRange = argumentList.getTextRange();
+    if (!argListTextRange.contains(alleged_cursor_offset) && argumentList.getText().endsWith(")")) {
       context.removeHint();
       return;
     }
@@ -251,8 +251,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     for (PyExpression arg : flatArgs) {
       final boolean mustHighlight = arg.getTextRange().contains(currentParamOffset);
       PsiElement seeker = arg;
+      // An argument tuple may have been flattened; find it
       while (!(seeker instanceof PyArgumentList) && seeker instanceof PyExpression && !mappedParameters.containsKey(seeker)) {
-        seeker = seeker.getParent(); // flattener may have flattened a tuple arg that is mapped to a plain param; find it.
+        seeker = seeker.getParent();
       }
       if (seeker instanceof PyExpression) {
         final PyNamedParameter parameter = mappedParameters.get((PyExpression)seeker);
