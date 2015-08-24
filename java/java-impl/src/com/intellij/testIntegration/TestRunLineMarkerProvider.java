@@ -16,25 +16,20 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.execution.lineMarker.RunLineMarkerInfo;
+import com.intellij.execution.lineMarker.ExecutorAction;
+import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class TestRunLineMarkerProvider implements LineMarkerProvider {
+public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
   private static final Function<PsiElement, String> TOOLTIP_PROVIDER = new Function<PsiElement, String>() {
     @Override
@@ -45,27 +40,24 @@ public class TestRunLineMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement e) {
+  public Info getInfo(PsiElement e) {
     if (e instanceof PsiIdentifier) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass) {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
-          return new RunLineMarkerInfo(e, framework.getIcon(), TOOLTIP_PROVIDER);
+          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.ACTIONS);
         }
       }
       if (element instanceof PsiMethod) {
-        TestFramework framework = TestFrameworks.detectFramework(PsiTreeUtil.getParentOfType(element, PsiClass.class));
-        if (framework != null && framework.isTestMethod(element)) {
-          return new RunLineMarkerInfo(e, framework.getIcon(), TOOLTIP_PROVIDER);
+        PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+        TestFramework framework = TestFrameworks.detectFramework(psiClass);
+        if (psiClass != null && framework != null && framework.isTestMethod(element)) {
+//          String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
+          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.ACTIONS);
         }
       }
     }
     return null;
-  }
-
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-
   }
 }

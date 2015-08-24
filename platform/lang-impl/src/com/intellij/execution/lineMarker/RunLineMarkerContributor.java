@@ -18,12 +18,32 @@ package com.intellij.execution.lineMarker;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public abstract class RunLineMarkerContributor {
 
   final static LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<RunLineMarkerContributor>("com.intellij.runLineMarkerContributor");
 
+  public static class Info {
+
+    public final Icon icon;
+    public final AnAction[] actions;
+    public final Function<PsiElement, String> tooltipProvider;
+
+    public Info(Icon icon, @Nullable Function<PsiElement, String> tooltipProvider, AnAction... actions) {
+      this.icon = icon;
+      this.actions = actions;
+      this.tooltipProvider = tooltipProvider;
+    }
+
+    public Info(AnAction action) {
+      this(action.getTemplatePresentation().getIcon(), null, action);
+    }
+  }
+
   @Nullable
-  public abstract AnAction getAdditionalAction(PsiElement element);
+  public abstract Info getInfo(PsiElement element);
 }

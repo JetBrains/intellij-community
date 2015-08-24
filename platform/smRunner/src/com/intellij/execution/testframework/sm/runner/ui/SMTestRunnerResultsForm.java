@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.*;
@@ -794,6 +796,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      writeState();
+      DaemonCodeAnalyzer.getInstance(getProject()).restart();
       try {
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
@@ -803,7 +807,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
                                                      new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
 
-        myOutputFile = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
+        myOutputFile = new File(TestStateStorage.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
         FileUtilRt.createParentDirs(myOutputFile);
         handler.setResult(new StreamResult(new FileWriter(myOutputFile)));
         final SMTestProxy.SMRootTestProxy root = myRoot;
@@ -820,6 +824,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       }
     }
 
+    private void writeState() {
+      TestStateStorage storage = TestStateStorage.getInstance(getProject());
+      List<SMTestProxy> tests = myRoot.getAllTests();
+      for (SMTestProxy proxy : tests) {
+        if (proxy.isLeaf()) {
+          String url = proxy.getLocationUrl();
+          storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
+        }
+      }
+
+    }
     @Override
     public void onSuccess() {
       if (myOutputFile != null && myOutputFile.exists()) {
