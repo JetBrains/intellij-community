@@ -148,11 +148,7 @@ public class ShelvedChange {
       }
       ContentRevision afterRevision = null;
       if (myFileStatus != FileStatus.DELETED) {
-        File afterFile = getAbsolutePath(baseDir, myAfterPath);
-        FilePath afterPath = getFileStatus().equals(FileStatus.ADDED)
-                             ? VcsUtil.getFilePathOnNonLocal(afterFile.getAbsolutePath(), false)
-                             : VcsUtil.getFilePath(
-                               afterFile, false);
+        FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
         afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
       }
       myChange = new Change(beforeRevision, afterRevision, myFileStatus);
