@@ -181,35 +181,6 @@ public class PyDocstringGenerator {
     return format.getProvider().parseDocString(expression);
   }
 
-  public static String generateRaiseOrReturn(@NotNull PyFunction element, String offset, String prefix, boolean checkReturn) {
-    final StringBuilder builder = new StringBuilder();
-    if (checkReturn) {
-      final RaiseVisitor visitor = new RaiseVisitor();
-      final PyStatementList statementList = element.getStatementList();
-      statementList.accept(visitor);
-      if (visitor.myHasReturn) {
-        builder.append(prefix).append("return:").append(offset);
-        if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-          builder.append(prefix).append("rtype:").append(offset);
-        }
-      }
-      if (visitor.myHasRaise) {
-        builder.append(prefix).append("raise");
-        if (visitor.myRaiseTarget != null) {
-          builder.append(" ").append(visitor.getRaiseTargetText());
-        }
-        builder.append(":").append(offset);
-      }
-    }
-    else {
-      builder.append(prefix).append("return:").append(offset);
-      if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-        builder.append(prefix).append("rtype:").append(offset);
-      }
-    }
-    return builder.toString();
-  }
-
   public void startTemplate() {
     final PyStringLiteralExpression docStringExpression = getDocStringExpression();
     assert docStringExpression != null;
@@ -270,10 +241,6 @@ public class PyDocstringGenerator {
     else {
       return updateDocString();
     }
-  }
-
-  private boolean isNewMode() {
-    return myNewMode;
   }
 
   @NotNull
