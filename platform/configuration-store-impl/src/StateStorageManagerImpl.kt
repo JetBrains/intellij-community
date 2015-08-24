@@ -143,15 +143,15 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   override final fun getStateStorage(fileSpec: String, roamingType: RoamingType) = getOrCreateStorage(fileSpec, roamingType)
 
-  fun getOrCreateStorage(fileSpec: String, roamingType: RoamingType, storageClass: Class<out StateStorage> = javaClass<StateStorage>(), SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = javaClass<StateSplitterEx>()): StateStorage {
+  fun getOrCreateStorage(fileSpec: String, roamingType: RoamingType, storageClass: Class<out StateStorage> = javaClass<StateStorage>(), @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = javaClass<StateSplitterEx>()): StateStorage {
     val key = if (storageClass == javaClass<StateStorage>()) fileSpec else storageClass.getName()
     storageLock.withLock {
-      var stateStorage = storages.get(key)
-      if (stateStorage == null) {
-        stateStorage = createStateStorage(storageClass, fileSpec, roamingType, stateSplitter)
-        storages.put(key, stateStorage)
+      var storage = storages.get(key)
+      if (storage == null) {
+        storage = createStateStorage(storageClass, fileSpec, roamingType, stateSplitter)
+        storages.put(key, storage)
       }
-      return stateStorage
+      return storage
     }
   }
 
@@ -178,23 +178,21 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   // overridden in upsource
-  protected open fun createStateStorage(storageClass: Class<out StateStorage>, fileSpec: String, roamingType: RoamingType, SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter>): StateStorage {
+  protected open fun createStateStorage(storageClass: Class<out StateStorage>, fileSpec: String, roamingType: RoamingType, @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter>): StateStorage {
     if (storageClass != javaClass<StateStorage>()) {
       val constructor = storageClass.getConstructors()[0]!!
       constructor.setAccessible(true)
       return constructor.newInstance(componentManager!!, this) as StateStorage
     }
 
-    val filePath = expandMacros(fileSpec)
-    val file = File(filePath)
-
     if (isUseVfsListener == ThreeState.UNSURE) {
       isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.enabled)
     }
 
+    val filePath = expandMacros(fileSpec)
     //noinspection deprecation
     if (stateSplitter != javaClass<StateSplitter>() && stateSplitter != javaClass<StateSplitterEx>()) {
-      val directoryBasedStorage = MyDirectoryStorage(this, file, ReflectionUtil.newInstance(stateSplitter))
+      val directoryBasedStorage = MyDirectoryStorage(this, File(filePath), ReflectionUtil.newInstance(stateSplitter))
       virtualFileTracker?.put(filePath.normalizePath(), directoryBasedStorage)
       return directoryBasedStorage
     }
@@ -204,7 +202,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
-    val storage = MyFileStorage(this, file, fileSpec, rootTagName, effectiveRoamingType, getMacroSubstitutor(fileSpec), streamProvider)
+    val storage = MyFileStorage(this, File(filePath), fileSpec, rootTagName, effectiveRoamingType, getMacroSubstitutor(fileSpec), streamProvider)
     if (isUseVfsListener == ThreeState.YES) {
       virtualFileTracker?.put(filePath.normalizePath(), storage)
     }
