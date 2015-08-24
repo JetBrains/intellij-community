@@ -25,6 +25,7 @@ import java.util.List;
 
 /**
  * @author yole
+ * @see LineMarkerProviders#EP_NAME
  */
 public interface LineMarkerProvider {
   /**
