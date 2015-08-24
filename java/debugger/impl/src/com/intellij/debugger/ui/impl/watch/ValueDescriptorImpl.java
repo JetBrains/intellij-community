@@ -27,6 +27,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
@@ -379,7 +380,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public String calcValueName() {
-    return getName();
+    String name = getName();
+    NodeDescriptorNameAdjuster nameAdjuster = NodeDescriptorNameAdjuster.findFor(this);
+    if (nameAdjuster != null) {
+      return nameAdjuster.fixName(name, this);
+    }
+    return name;
   }
 
   @Nullable
