@@ -23,20 +23,25 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.documentation.docstrings.TagBasedDocStringBuilder;
-import com.jetbrains.python.documentation.docstrings.TagBasedDocStringUpdater;
+import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -153,6 +158,25 @@ public class PyDocstringGenerator {
         }
       }
     }
+    final DocStringFormat format = getDocStringFormat();
+    if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
+      // Google and Numpy docstring formats combine type and description in single declaration, thus
+      // if both declaration with type and without it are requested, we should filter out duplicates
+      final ArrayList<DocstringParam> copy = new ArrayList<DocstringParam>(myParams);
+      for (final DocstringParam param : copy) {
+        if (param.getType() == null) {
+          final DocstringParam sameParamWithType = ContainerUtil.find(myParams, new Condition<DocstringParam>() {
+            @Override
+            public boolean value(DocstringParam other) {
+              return other.isReturnValue() == param.isReturnValue() && other.getName().equals(param.getName()) && other.getType() != null;
+            }
+          });
+          if (sameParamWithType != null) {
+            myParams.remove(param);
+          }
+        }
+      }
+    }
     myParametersPrepared = true;
   }
 
@@ -178,7 +202,7 @@ public class PyDocstringGenerator {
     if (format == DocStringFormat.PLAIN || expression == null) {
       return null;
     }
-    return format.getProvider().parseDocString(expression);
+    return DocStringUtil.parseDocString(format, expression);
   }
 
   public void startTemplate() {
@@ -247,32 +271,68 @@ public class PyDocstringGenerator {
   private String createDocString() {
     final String indentation = getDocStringIndentation();
     final DocStringFormat format = getDocStringFormat();
+    DocStringBuilder builder = null;
     if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
-      final TagBasedDocStringBuilder builder = new TagBasedDocStringBuilder(format == DocStringFormat.EPYTEXT ? "@" : ":");
+      builder = new TagBasedDocStringBuilder(format == DocStringFormat.EPYTEXT ? "@" : ":");
+      TagBasedDocStringBuilder tagBuilder = (TagBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
-        builder.addEmptyLine();
+        tagBuilder.addEmptyLine();
       }
       for (DocstringParam param : myParams) {
         if (param.isReturnValue()) {
           if (param.getType() != null) {
-            builder.addReturnValueType(param.getType());
+            tagBuilder.addReturnValueType(param.getType());
           }
           else {
-            builder.addReturnValueDescription("");
+            tagBuilder.addReturnValueDescription("");
           }
         }
         else {
           if (param.getType() != null) {
-            builder.addParameterType(param.getName(), param.getType());
+            tagBuilder.addParameterType(param.getName(), param.getType());
           }
           else {
-            builder.addParameterDescription(param.getName(), "");
+            tagBuilder.addParameterDescription(param.getName(), "");
           }
         }
       }
-      if (!builder.getLines().isEmpty()) {
-        return myQuotes + '\n' + builder.buildContent(indentation, true) + '\n' + indentation + myQuotes;
+    }
+    else if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
+      builder = format == DocStringFormat.GOOGLE ? new GoogleCodeStyleDocStringBuilder() : new NumpyDocStringBuilder();
+      final SectionBasedDocStringBuilder sectionBuilder = (SectionBasedDocStringBuilder)builder;
+      if (myAddFirstEmptyLine) {
+        sectionBuilder.addEmptyLine();
       }
+      final List<DocstringParam> parameters = ContainerUtil.findAll(myParams, new Condition<DocstringParam>() {
+        @Override
+        public boolean value(DocstringParam param) {
+          return !param.isReturnValue();
+        }
+      });
+      if (!parameters.isEmpty()) {
+        sectionBuilder.startParametersSection();
+        for (DocstringParam param : parameters) {
+          sectionBuilder.addParameter(param.getName(), param.getType(), "");
+        }
+      }
+
+      final List<DocstringParam> returnValues = ContainerUtil.findAll(myParams, new Condition<DocstringParam>() {
+        @Override
+        public boolean value(DocstringParam param) {
+          return param.isReturnValue();
+
+        }
+      });
+
+      if (!returnValues.isEmpty()) {
+        sectionBuilder.startReturnsSection();
+        for (DocstringParam returnValue : returnValues) {
+          sectionBuilder.addReturnValue(null, StringUtil.notNullize(returnValue.getType()), "");
+        }
+      }
+    }
+    if (builder != null && !builder.getLines().isEmpty()) {
+      return myQuotes + '\n' + builder.buildContent(indentation, true) + '\n' + indentation + myQuotes;
     }
     return myQuotes + '\n' + indentation + myQuotes;
   }
@@ -336,15 +396,23 @@ public class PyDocstringGenerator {
       final Document document = PsiDocumentManager.getInstance(project).getDocument(myDocStringOwner.getContainingFile());
 
       if (document != null) {
-        if (PyUtil.onSameLine(statements, myDocStringOwner) || statements.getStatements().length == 0) {
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+        final PsiElement beforeStatements = statements.getPrevSibling();
+        final boolean onSameLine = !(beforeStatements instanceof PsiWhiteSpace) || !beforeStatements.textContains('\n');
+        if (onSameLine || statements.getStatements().length == 0) {
           String replacementWithLineBreaks = "\n" + indentation + replacementText;
           if (statements.getStatements().length > 0) {
             replacementWithLineBreaks += "\n" + indentation;
           }
+          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
           documentManager.doPostponedOperationsAndUnblockDocument(document);
+          final TextRange range = beforeStatements.getTextRange();
           try {
-            document.insertString(statements.getTextOffset(), replacementWithLineBreaks);
+            if (beforeStatements instanceof PsiWhiteSpace) {
+              document.replaceString(range.getStartOffset(), range.getEndOffset(), replacementWithLineBreaks);
+            }
+            else {
+              document.insertString(range.getEndOffset(), replacementWithLineBreaks);
+            }
           }
           finally {
             documentManager.commitDocument(document);
@@ -382,6 +450,37 @@ public class PyDocstringGenerator {
 
     public boolean isReturnValue() {
       return myReturnValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      DocstringParam param = (DocstringParam)o;
+
+      if (myReturnValue != param.myReturnValue) return false;
+      if (!myName.equals(param.myName)) return false;
+      if (myType != null ? !myType.equals(param.myType) : param.myType != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myName.hashCode();
+      result = 31 * result + (myType != null ? myType.hashCode() : 0);
+      result = 31 * result + (myReturnValue ? 1 : 0);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "DocstringParam{" +
+             "myName='" + myName + '\'' +
+             ", myType='" + myType + '\'' +
+             ", myReturnValue=" + myReturnValue +
+             '}';
     }
   }
 

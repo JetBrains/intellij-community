@@ -25,6 +25,7 @@ import com.jetbrains.python.documentation.SectionBasedDocString.Section;
 import com.jetbrains.python.documentation.SectionBasedDocString.SectionField;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,12 +81,12 @@ public class PySectionBasedDocStringTest extends PyTestCase {
   }
 
   @NotNull
-  private String findAndParseDocString() {
+  private Substring findAndParseDocString() {
     myFixture.configureByFile(getTestName(true) + ".py");
     final String docStringText = findFirstDocString();
 
     assertNotNull(docStringText);
-    return docStringText;
+    return new Substring(docStringText);
   }
 
   @NotNull

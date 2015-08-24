@@ -61,7 +61,7 @@ public class PyIndentUtil {
     final PsiElement prevSibling = statementList.getPrevSibling();
     final String whitespace = prevSibling instanceof PsiWhiteSpace ? prevSibling.getText() : "";
     final int i = whitespace.lastIndexOf("\n");
-    if (i >= 0) {
+    if (i >= 0 && statementList.getStatements().length != 0) {
       return whitespace.substring(i + 1);
     }
     else {

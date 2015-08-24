@@ -32,7 +32,7 @@ public class NumpyDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER = Pattern.compile("^\\s*[-=]{2,}\\s*$", Pattern.MULTILINE);
 
   private Substring mySignature;
-  public NumpyDocString(@NotNull String text) {
+  public NumpyDocString(@NotNull Substring text) {
     super(text);
   }
 

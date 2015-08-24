@@ -33,7 +33,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*(\\w+):\\s*", Pattern.MULTILINE);
   private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.+?)\\s*\\)\\s*");
 
-  public GoogleCodeStyleDocString(@NotNull String text) {
+  public GoogleCodeStyleDocString(@NotNull Substring text) {
     super(text);
   }
 

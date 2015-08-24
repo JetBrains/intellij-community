@@ -145,10 +145,10 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   @Nullable
   public StructuredDocString getDocString() {
     if (myDocStringFormat.equals(DocStringFormat.EPYTEXT)) {
-      return DocStringFormat.EPYTEXT.getProvider().parseDocStringContent("");
+      return DocStringUtil.parseDocStringContent(DocStringFormat.EPYTEXT, "");
     }
     if (myDocStringFormat.equals(DocStringFormat.REST)) {
-      return DocStringFormat.REST.getProvider().parseDocStringContent("");
+      return DocStringUtil.parseDocStringContent(DocStringFormat.REST, "");
     }
     return null;
   }

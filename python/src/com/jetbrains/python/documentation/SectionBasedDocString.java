@@ -89,12 +89,17 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   private static final ImmutableSet<String> SECTIONS_WITH_TYPE = ImmutableSet.of(RAISES_SECTION);
   private static final ImmutableSet<String> SECTIONS_WITH_NAME = ImmutableSet.of(METHODS_SECTION);
 
+  @Nullable
+  protected static String normalizeSectionTitle(@Nullable @NonNls String title) {
+    return title == null ? null : SECTION_ALIASES.get(title.toLowerCase());
+  }
+
   private final Substring mySummary;
   private final List<Section> mySections = new ArrayList<Section>();
   private final List<Substring> myOtherContent = new ArrayList<Substring>();
 
-  protected SectionBasedDocString(@NotNull String text) {
-    super(new Substring(text));
+  protected SectionBasedDocString(@NotNull Substring text) {
+    super(text);
     List<Substring> summary = Collections.emptyList();
     int startLine = skipEmptyLines(parseHeader(0));
     int lineNum = startLine;
@@ -203,11 +208,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       lineNum++;
     }
     return lineNum;
-  }
-
-  @Nullable
-  protected String normalizeSectionTitle(@Nullable @NonNls String title) {
-    return title == null ? null : SECTION_ALIASES.get(title.toLowerCase());
   }
 
   protected boolean isSectionStart(int lineNum) {

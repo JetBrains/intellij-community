@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.google.common.base.Preconditions;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -26,9 +29,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,15 +60,61 @@ public class DocStringUtil {
       return null;
     }
     if (isSphinxDocString(text)) {
-      return DocStringFormat.REST.getProvider().parseDocStringContent(text);
+      return parseDocStringContent(DocStringFormat.REST, text);
     }
     if (isGoogleDocString(text)) {
-      return new GoogleCodeStyleDocString(text);
+      return parseDocStringContent(DocStringFormat.GOOGLE, text);
     }
     if (isNumpyDocstring(text)) {
-      return new NumpyDocString(text);
+      return parseDocStringContent(DocStringFormat.NUMPY, text);
     }
-    return DocStringFormat.EPYTEXT.getProvider().parseDocStringContent(text);
+    return parseDocStringContent(DocStringFormat.EPYTEXT, text);
+  }
+
+
+    @NotNull
+  public static StructuredDocString parseDocString(@NotNull DocStringFormat format,
+                                            @NotNull PyStringLiteralExpression literalExpression) {
+    return parseDocString(format, literalExpression.getStringNodes().get(0));
+  }
+
+  @NotNull
+  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull ASTNode node) {
+    Preconditions.checkArgument(node.getElementType() == PyTokenTypes.DOCSTRING);
+    return parseDocString(format, node.getText());
+  }
+
+
+  @NotNull
+  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull String stringText) {
+    return parseDocString(format, stripSuffixAndQuotes(stringText));
+  }
+
+  @NotNull
+  public static StructuredDocString parseDocStringContent(@NotNull DocStringFormat format, @NotNull String stringContent) {
+    return parseDocString(format, new Substring(stringContent));
+  }
+
+  @NotNull
+  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
+    switch (format) {
+      case REST:
+        return new SphinxDocString(content);
+      case EPYTEXT:
+        return new EpydocString(content);
+      case GOOGLE:
+        return new GoogleCodeStyleDocString(content);
+      case NUMPY:
+        return new NumpyDocString(content);
+      default:
+        throw new UnsupportedOperationException("Not supported for plain docstrings. Use PyDocStringUtil#ensureNotPlainDocstringFormat");
+    }
+  }
+
+  @NotNull
+  private static Substring stripSuffixAndQuotes(@NotNull String text) {
+    final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(text);
+    return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
 
   public static boolean isSphinxDocString(@NotNull String text) {

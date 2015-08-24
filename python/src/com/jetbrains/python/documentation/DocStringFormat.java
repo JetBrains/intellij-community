@@ -19,9 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.documentation.docstrings.*;
-import com.jetbrains.python.psi.StructuredDocString;
-import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,20 +33,8 @@ public enum DocStringFormat {
    * @see DocStringUtil#ensureNotPlainDocstringFormat(PsiElement)
    */
   PLAIN("Plain"),
-  EPYTEXT("Epytext") {
-    @NotNull
-    @Override
-    public EpydocDocStringProvider getProvider() {
-      return new EpydocDocStringProvider();
-    }
-  },
-  REST("reStructuredText") {
-    @NotNull
-    @Override
-    public SphinxDocstringProvider getProvider() {
-      return new SphinxDocstringProvider();
-    }
-  },
+  EPYTEXT("Epytext"),
+  REST("reStructuredText"),
   NUMPY("NumPy"),
   GOOGLE("Google");
 
@@ -80,7 +65,7 @@ public enum DocStringFormat {
   @Nullable
   public static DocStringFormat fromName(@NotNull String name) {
     for (DocStringFormat format : values()) {
-      if (format.getName().equals(name)) {
+      if (format.getName().equalsIgnoreCase(name)) {
         return format;
       }
     }
@@ -103,27 +88,4 @@ public enum DocStringFormat {
     return myName;
   }
 
-  @NotNull
-  public DocStringProvider getProvider() {
-    return new StubDocStringProvider();
-  }
-
-  private static class StubDocStringProvider extends DocStringProvider<StructuredDocString> {
-    @Override
-    public StructuredDocString parseDocString(@NotNull Substring content) {
-      throw new UnsupportedOperationException("Parsing is not available for docstring format " + this);
-    }
-
-    @NotNull
-    @Override
-    public DocStringUpdater updateDocString(@NotNull StructuredDocString docstring) {
-      throw new UnsupportedOperationException("Updating is not available for docstring format " + this);
-    }
-
-    @NotNull
-    @Override
-    public DocStringBuilder createDocString() {
-      throw new UnsupportedOperationException("Creating new docstring is not available for docstring format " + this);
-    }
-  }
 }
