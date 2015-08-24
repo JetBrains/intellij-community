@@ -13,35 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
-
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.Stubbed;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public interface Actions extends DomElement {
+/**
+ * @since 15
+ */
+public interface ActionOrGroup extends DomElement {
 
   @NotNull
+  @NameValue
   @Stubbed
-  List<Action> getActions();
-
-  Action addAction();
-
-
-  @NotNull
-  @Stubbed
-  List<Group> getGroups();
-
-  Group addGroup();
-
-  @NotNull
-  List<Reference> getReferences();
-
-  Reference addReference();
+  @Required(value = false, nonEmpty = true)
+  GenericAttributeValue<String> getId();
 }
