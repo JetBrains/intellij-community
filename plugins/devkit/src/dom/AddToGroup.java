@@ -46,7 +46,8 @@ public interface AddToGroup extends DomElement {
 	 * @return the value of the relative-to-action child.
 	 */
 	@NotNull
-	GenericAttributeValue<String> getRelativeToAction();
+	@Convert(ActionOrGroupResolveConverter.class)
+        GenericAttributeValue<ActionOrGroup> getRelativeToAction();
 
 
 	/**

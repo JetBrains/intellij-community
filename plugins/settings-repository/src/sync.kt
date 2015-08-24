@@ -38,13 +38,11 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
     private set
 
   public fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
-    ApplicationManager.getApplication()!!.assertIsDispatchThread()
-
     var exception: Throwable? = null
     var restartApplication = false
     var updateResult: UpdateResult? = null
     icsManager.runInAutoCommitDisabledMode {
-      ApplicationManager.getApplication()!!.saveSettings()
+      UIUtil.invokeAndWaitIfNeeded(Runnable { ApplicationManager.getApplication()!!.saveSettings() })
       try {
         writeAndDeleteProhibited = true
         ProgressManager.getInstance().run(object : Task.Modal(project, IcsBundle.message("task.sync.title"), true) {

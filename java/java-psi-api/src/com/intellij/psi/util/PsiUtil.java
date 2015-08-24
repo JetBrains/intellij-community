@@ -536,8 +536,8 @@ public final class PsiUtil extends PsiUtilCore {
 
     if (checkVarargs && method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
       if (args.length < parms.length) return ApplicabilityLevel.VARARGS;
-      PsiParameter lastParameter = parms[parms.length - 1];
-      if (!lastParameter.isVarArgs()) return ApplicabilityLevel.NOT_APPLICABLE;
+      PsiParameter lastParameter = parms.length == 0 ? null : parms[parms.length - 1];
+      if (lastParameter == null || !lastParameter.isVarArgs()) return ApplicabilityLevel.NOT_APPLICABLE;
       PsiType lastParmType = getParameterType(lastParameter, languageLevel, substitutorForMethod);
       if (!(lastParmType instanceof PsiArrayType)) return ApplicabilityLevel.NOT_APPLICABLE;
       lastParmType = ((PsiArrayType)lastParmType).getComponentType();

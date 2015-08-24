@@ -188,9 +188,16 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(addToGroup.getRelativeToAction())) return;
 
-    if (DomUtil.hasXml(addToGroup.getAnchor())) return;
+    if (!DomUtil.hasXml(addToGroup.getAnchor())) {
+      holder.createProblem(addToGroup, "'anchor' must be specified with 'relative-to-action'",
+                           new AddDomElementQuickFix<GenericAttributeValue>(addToGroup.getAnchor()));
+      return;
+    }
 
-    holder.createProblem(addToGroup, "'anchor' must be specified",
-                         new AddDomElementQuickFix<GenericAttributeValue>(addToGroup.getAnchor()));
+    final Anchor value = addToGroup.getAnchor().getValue();
+    if (value == Anchor.after || value == Anchor.before) {
+      return;
+    }
+    holder.createProblem(addToGroup.getAnchor(), "Must use '" + Anchor.after + "'|'" + Anchor.before + "' with 'relative-to-action'");
   }
 }
