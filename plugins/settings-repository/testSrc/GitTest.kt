@@ -22,11 +22,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.Matchers.contains
-import org.hamcrest.Matchers.empty
 import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.edit
@@ -37,7 +35,6 @@ import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.resetHard
-import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.File
 import javax.swing.SwingUtilities
@@ -54,21 +51,6 @@ class GitTest : TestCase() {
     tempDirManager.createRepository("upstream")
   }
 
-  private fun delete(data: ByteArray, directory: Boolean) {
-    val addedFile = "\$APP_CONFIG$/remote.xml"
-    provider.save(addedFile, data)
-    provider.delete(if (directory) "\$APP_CONFIG$" else addedFile, RoamingType.PER_USER)
-
-    val diff = repository.computeIndexDiff()
-    assertThat(diff.diff(), equalTo(false))
-    assertThat(diff.getAdded(), empty())
-    assertThat(diff.getChanged(), empty())
-    assertThat(diff.getRemoved(), empty())
-    assertThat(diff.getModified(), empty())
-    assertThat(diff.getUntracked(), empty())
-    assertThat(diff.getUntrackedFolders(), empty())
-  }
-
   private fun addAndCommit(path: String): FileInfo {
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
     provider.save(path, data)
@@ -76,49 +58,66 @@ class GitTest : TestCase() {
     return FileInfo(path, data)
   }
 
-  public Test fun add() {
+  Test fun add() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
-    val addedFile = "\$APP_CONFIG$/remote.xml"
+    val addedFile = "remote.xml"
     provider.save(addedFile, data)
 
     val diff = repository.computeIndexDiff()
-    assertThat(diff.diff(), equalTo(true))
-    assertThat(diff.getAdded(), contains(equalTo(addedFile)))
-    assertThat(diff.getChanged(), empty())
-    assertThat(diff.getRemoved(), empty())
-    assertThat(diff.getModified(), empty())
-    assertThat(diff.getUntracked(), empty())
-    assertThat(diff.getUntrackedFolders(), empty())
+    assertThat(diff.diff()).isTrue()
+    assertThat(diff.getAdded()).containsOnly(addedFile)
+    assertThat(diff.getChanged()).isEmpty()
+    assertThat(diff.getRemoved()).isEmpty()
+    assertThat(diff.getModified()).isEmpty()
+    assertThat(diff.getUntracked()).isEmpty()
+    assertThat(diff.getUntrackedFolders()).isEmpty()
   }
 
-  public Test fun addSeveral() {
+  Test fun addSeveral() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     val data2 = FileUtil.loadFileBytes(File(testDataPath, "local.xml"))
-    val addedFile = "\$APP_CONFIG$/remote.xml"
-    val addedFile2 = "\$APP_CONFIG$/local.xml"
+    val addedFile = "remote.xml"
+    val addedFile2 = "local.xml"
     provider.save(addedFile, data)
     provider.save(addedFile2, data2)
 
     val diff = repository.computeIndexDiff()
-    assertThat(diff.diff(), equalTo(true))
-    assertThat(diff.getAdded(), contains(equalTo(addedFile), equalTo(addedFile2)))
-    assertThat(diff.getChanged(), empty())
-    assertThat(diff.getRemoved(), empty())
-    assertThat(diff.getModified(), empty())
-    assertThat(diff.getUntracked(), empty())
-    assertThat(diff.getUntrackedFolders(), empty())
+    assertThat(diff.diff()).isTrue()
+    assertThat(diff.getAdded()).containsOnly(addedFile, addedFile2)
+    assertThat(diff.getChanged()).isEmpty()
+    assertThat(diff.getRemoved()).isEmpty()
+    assertThat(diff.getModified()).isEmpty()
+    assertThat(diff.getUntracked()).isEmpty()
+    assertThat(diff.getUntrackedFolders()).isEmpty()
   }
 
-  public Test fun delete() {
-    val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
+  Test fun delete() {
+    val addedFile = "remote.xml"
+    fun delete(data: ByteArray, directory: Boolean) {
+      val dir = "dir"
+      val fullFileSpec = "$dir/$addedFile"
+      provider.save(fullFileSpec, data)
+      provider.delete(if (directory) dir else fullFileSpec, RoamingType.PER_USER)
+
+      val diff = repository.computeIndexDiff()
+      assertThat(diff.diff()).isFalse()
+      assertThat(diff.getAdded()).isEmpty()
+      assertThat(diff.getChanged()).isEmpty()
+      assertThat(diff.getRemoved()).isEmpty()
+      assertThat(diff.getModified()).isEmpty()
+      assertThat(diff.getUntracked()).isEmpty()
+      assertThat(diff.getUntrackedFolders()).isEmpty()
+    }
+
+    val data = FileUtil.loadFileBytes(File(testDataPath, addedFile))
     delete(data, false)
     delete(data, true)
   }
 
-  public Test fun setUpstream() {
+  Test fun setUpstream() {
     val url = "https://github.com/user/repo.git"
     repositoryManager.setUpstream(url, null)
-    assertThat(repositoryManager.getUpstream(), equalTo(url))
+    assertThat(repositoryManager.getUpstream()).isEqualTo(url)
   }
 
   Test
@@ -126,7 +125,7 @@ class GitTest : TestCase() {
     doPullToRepositoryWithoutCommits(null)
   }
 
-  public Test fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
+  Test fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
     doPullToRepositoryWithoutCommits("customRemoteBranchName")
   }
 
@@ -136,11 +135,11 @@ class GitTest : TestCase() {
     compareFiles(repository.getWorkTree(), remoteRepository.getWorkTree())
   }
 
-  public Test fun pullToRepositoryWithCommits() {
+  Test fun pullToRepositoryWithCommits() {
     doPullToRepositoryWithCommits(null)
   }
 
-  public Test fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
+  Test fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
     doPullToRepositoryWithCommits("customRemoteBranchName")
   }
 
@@ -150,7 +149,7 @@ class GitTest : TestCase() {
     val progressIndicator = EmptyProgressIndicator()
     repositoryManager.commit(progressIndicator)
     repositoryManager.pull(progressIndicator)
-    assertThat(FileUtil.loadFile(File(repository.getWorkTree(), file.name)), equalTo(String(file.data, CharsetToolkit.UTF8_CHARSET)))
+    assertThat(FileUtil.loadFile(File(repository.getWorkTree(), file.name))).isEqualTo(String(file.data, CharsetToolkit.UTF8_CHARSET))
     compareFiles(repository.getWorkTree(), remoteRepository.getWorkTree(), null, PathUtilRt.getFileName(file.name))
   }
   
@@ -161,7 +160,7 @@ class GitTest : TestCase() {
 
   private fun createLocalRepositoryAndCommit(remoteBranchName: String? = null): FileInfo {
     createLocalRepository(remoteBranchName)
-    return addAndCommit("\$APP_CONFIG$/local.xml")
+    return addAndCommit("local.xml")
   }
 
   private fun compareFiles(fs: MockVirtualFileSystem) {
@@ -173,13 +172,13 @@ class GitTest : TestCase() {
   }
 
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
-  public Test fun resetToTheirsIfFirstMerge() {
+  Test fun resetToTheirsIfFirstMerge() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.OVERWRITE_LOCAL)
-    compareFiles(fs("\$APP_CONFIG$/remote.xml"))
+    compareFiles(fs("remote.xml"))
   }
 
-  public Test fun resetToTheirsISecondMergeIsNull() {
+  Test fun resetToTheirsISecondMergeIsNull() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.MERGE)
 
@@ -188,8 +187,8 @@ class GitTest : TestCase() {
     val fs = MockVirtualFileSystem()
 
     fun testRemote() {
-      fs.findFileByPath("\$APP_CONFIG$/local.xml")
-      fs.findFileByPath("\$APP_CONFIG$/remote.xml")
+      fs.findFileByPath("local.xml")
+      fs.findFileByPath("remote.xml")
       compareFiles(fs.getRoot())
     }
     testRemote()
@@ -207,20 +206,20 @@ class GitTest : TestCase() {
     testRemote()
   }
 
-  public Test fun resetToMyIfFirstMerge() {
+  Test fun resetToMyIfFirstMerge() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
-    compareFiles(fs("\$APP_CONFIG$/local.xml"))
+    compareFiles(fs("local.xml"))
   }
 
-  public Test fun `reset to my, second merge is null`() {
+  Test fun `reset to my, second merge is null`() {
     createLocalRepositoryAndCommit()
     sync(SyncType.MERGE)
 
     restoreRemoteAfterPush()
 
-    val fs = fs("\$APP_CONFIG$/local.xml", "\$APP_CONFIG$/remote.xml")
+    val fs = fs("local.xml", "remote.xml")
     compareFiles(fs)
 
     val localToFilePath = "_mac/local2.xml"
@@ -239,28 +238,28 @@ class GitTest : TestCase() {
     compareFiles(fs)
   }
 
-  public Test fun `merge - resolve conflicts to my`() {
+  Test fun `merge - resolve conflicts to my`() {
     createLocalRepository(null)
 
     val data = AM.MARKER_ACCEPT_MY
-    provider.save("\$APP_CONFIG$/remote.xml", data)
+    provider.save("remote.xml", data)
 
     sync(SyncType.MERGE)
 
     restoreRemoteAfterPush()
-    compareFiles(fs("\$APP_CONFIG$/remote.xml"))
+    compareFiles(fs("remote.xml"))
   }
 
-  public Test fun `merge - theirs file deleted, my modified, accept theirs`() {
+  Test fun `merge - theirs file deleted, my modified, accept theirs`() {
     createLocalRepository(null)
 
     sync(SyncType.MERGE)
 
     val data = AM.MARKER_ACCEPT_THEIRS
-    provider.save("\$APP_CONFIG$/remote.xml", data)
+    provider.save("remote.xml", data)
     repositoryManager.commit(EmptyProgressIndicator())
 
-    remoteRepository.deletePath("\$APP_CONFIG$/remote.xml")
+    remoteRepository.deletePath("remote.xml")
     remoteRepository.commit("delete remote.xml")
 
     sync(SyncType.MERGE)
@@ -268,15 +267,15 @@ class GitTest : TestCase() {
     compareFiles(fs())
   }
 
-  public Test fun `merge - my file deleted, theirs modified, accept my`() {
+  Test fun `merge - my file deleted, theirs modified, accept my`() {
     createLocalRepository(null)
 
     sync(SyncType.MERGE)
 
-    provider.delete("\$APP_CONFIG$/remote.xml", RoamingType.PER_USER)
+    provider.delete("remote.xml", RoamingType.PER_USER)
     repositoryManager.commit(EmptyProgressIndicator())
 
-    remoteRepository.writePath("\$APP_CONFIG$/remote.xml", AM.MARKER_ACCEPT_THEIRS)
+    remoteRepository.writePath("remote.xml", AM.MARKER_ACCEPT_THEIRS)
     remoteRepository.commit("")
 
     sync(SyncType.MERGE)
@@ -286,15 +285,15 @@ class GitTest : TestCase() {
   }
 
   // remote is uninitialized (empty - initial commit is not done)
-  public Test fun `merge with uninitialized upstream`() {
+  Test fun `merge with uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.MERGE)
   }
 
-  public Test fun `reset to my, uninitialized upstream`() {
+  Test fun `reset to my, uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_REMOTE)
   }
 
-  public Test fun `reset to theirs, uninitialized upstream`() {
+  Test fun `reset to theirs, uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_LOCAL)
   }
 
@@ -303,7 +302,7 @@ class GitTest : TestCase() {
 
     val workTree: File = repository.getWorkTree()
     if (initialCommit) {
-      val addedFile = "\$APP_CONFIG$/remote.xml"
+      val addedFile = "remote.xml"
       FileUtil.copy(File(testDataPath, "remote.xml"), File(workTree, addedFile))
       repository.edit(AddFile(addedFile))
       repository.commit("")
@@ -325,7 +324,7 @@ class GitTest : TestCase() {
     createFileRemote(null, false)
     repositoryManager.setUpstream(remoteRepository.getWorkTree().getAbsolutePath(), null)
 
-    val path = "\$APP_CONFIG$/local.xml"
+    val path = "local.xml"
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
     provider.save(path, data)
 
