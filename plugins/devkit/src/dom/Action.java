@@ -22,6 +22,7 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
@@ -163,7 +164,8 @@ public interface Action extends ActionOrGroup {
 	AddToGroup addAddToGroup();
 
         @NotNull
-        GenericAttributeValue<String> getUseShortcutOf();
+	@Convert(ActionOrGroupResolveConverter.OnlyActions.class)
+        GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
 
         @NotNull
         GenericAttributeValue<String> getKeymap();

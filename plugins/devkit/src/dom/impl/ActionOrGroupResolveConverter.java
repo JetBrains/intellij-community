@@ -48,7 +48,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     PairProcessor<String, ActionOrGroup> collectProcessor = new PairProcessor<String, ActionOrGroup>() {
       @Override
       public boolean process(String s, ActionOrGroup actionOrGroup) {
-        variants.add(actionOrGroup);
+        if (isRelevant(actionOrGroup)) {
+          variants.add(actionOrGroup);
+        }
         return true;
       }
     };
@@ -65,7 +67,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     PairProcessor<String, ActionOrGroup> findProcessor = new PairProcessor<String, ActionOrGroup>() {
       @Override
       public boolean process(String s, ActionOrGroup actionOrGroup) {
-        if (Comparing.strEqual(value, s)) {
+        if (isRelevant(actionOrGroup) &&
+            Comparing.strEqual(value, s)) {
           result[0] = actionOrGroup;
           return false;
         }
@@ -78,8 +81,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Nullable
   @Override
-  public String toString(@Nullable ActionOrGroup group, ConvertContext context) {
-    return group == null ? null : getName(group);
+  public String toString(@Nullable ActionOrGroup actionGroup, ConvertContext context) {
+    return actionGroup == null ? null : getName(actionGroup);
   }
 
   @Override
@@ -111,6 +114,22 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     }
 
     return super.createLookupElement(actionOrGroup);
+  }
+
+  protected boolean isRelevant(ActionOrGroup actionOrGroup) {
+    return true;
+  }
+
+  public static class OnlyActions extends ActionOrGroupResolveConverter {
+    @Override
+    protected boolean isRelevant(ActionOrGroup actionOrGroup) {
+      return actionOrGroup instanceof Action;
+    }
+
+    @Override
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return "Cannot resolve action '" + s + "'";
+    }
   }
 
   private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<String, ActionOrGroup> processor) {
