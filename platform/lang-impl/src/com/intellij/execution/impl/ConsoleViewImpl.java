@@ -535,7 +535,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myEditor.getScrollPane().getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
-        JScrollBar scrollBar = (JScrollBar)e.getAdjustable();
+        Adjustable scrollBar = e.getAdjustable();
         boolean vscrollAtBottom = scrollBar.getValue() == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
 
         if (e.getValueIsAdjusting()) {
