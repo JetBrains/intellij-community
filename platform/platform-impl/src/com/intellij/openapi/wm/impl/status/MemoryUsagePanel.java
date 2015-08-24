@@ -48,12 +48,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     long maxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
     SAMPLE_STRING = maxMemory + " of " + maxMemory + "M ";
   }
-  private static final int HEIGHT = 16;
   private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
-  private static final Color USED_COLOR_2 = new JBColor(Gray._145, Gray._120);
   private static final Color UNUSED_COLOR_1 = new JBColor(Gray._200.withAlpha(100), Gray._120);
-  private static final Color UNUSED_COLOR_2 = new JBColor(Gray._150.withAlpha(130), Gray._100);
-  private static final Color UNUSED_COLOR_3 = Gray._175;
 
   private long myLastTotal = -1;
   private long myLastUsed = -1;
@@ -201,21 +197,6 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       g2.drawLine(0,0,2 * getWidth(), 0);
       g2.scale(1, 1);
       g2.dispose();
-    }
-  }
-
-  private static void setGradient(Graphics2D g2, boolean invert, int height, Color start, Color end) {
-    g2.setColor(start);
-    if (true) return;
-    if (UIUtil.isUnderDarcula()) {
-      start = start.darker();
-      end = end.darker();
-    }
-    if (invert) {
-      g2.setPaint(UIUtil.getGradientPaint(0, 0, end, 0, height, start));
-    }
-    else {
-      g2.setPaint(UIUtil.getGradientPaint(0, 0, start, 0, height, end));
     }
   }
 
