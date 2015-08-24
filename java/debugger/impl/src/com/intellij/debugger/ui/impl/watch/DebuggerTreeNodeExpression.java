@@ -153,7 +153,7 @@ public class DebuggerTreeNodeExpression {
     }
 
   @Nullable
-  public static PsiExpression substituteThis(@Nullable PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
+  public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
     if (expressionWithThis == null) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();

@@ -702,6 +702,7 @@ public class RefactoringUtil {
 
     if (!targetClass.isInterface()) {
       PsiUtil.setModifierProperty(targetClass, PsiModifier.ABSTRACT, true);
+      prepareForAbstract(method);
     }
     else {
       prepareForInterface(method);
@@ -717,10 +718,14 @@ public class RefactoringUtil {
   }
 
   private static void prepareForInterface(PsiMethod method) {
+    PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
+    prepareForAbstract(method);
+  }
+
+  private static void prepareForAbstract(PsiMethod method) {
     PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
     PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
     PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
-    PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
     removeFinalParameters(method);
   }
 

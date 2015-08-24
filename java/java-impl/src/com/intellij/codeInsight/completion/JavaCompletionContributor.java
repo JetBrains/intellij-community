@@ -126,7 +126,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return ElementClassFilter.CLASS;
     }
 
-    if (psiElement().afterLeaf(psiElement(JavaTokenType.RBRACE).withParents(PsiCodeBlock.class, PsiTryStatement.class)).accepts(position) ||
+    if (isCatchFinallyPosition(position) ||
         JavaKeywordCompletion.START_SWITCH.accepts(position) ||
         JavaKeywordCompletion.isInstanceofPlace(position) ||
         JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
@@ -164,6 +164,15 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return TrueFilter.INSTANCE;
+  }
+
+  private static boolean isCatchFinallyPosition(PsiElement position) {
+    PsiElement leaf = PsiTreeUtil.prevVisibleLeaf(position);
+    return leaf != null &&
+           leaf.textMatches("}") &&
+           leaf.getParent() instanceof PsiCodeBlock &&
+           leaf.getParent().getParent() instanceof PsiTryStatement &&
+           ((PsiTryStatement)leaf.getParent().getParent()).getResourceList() == null;
   }
 
   private static boolean isInsideAnnotationName(PsiElement position) {
