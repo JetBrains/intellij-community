@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -53,8 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
   name = "InspectionProjectProfileManager",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles", scheme = StorageScheme.DIRECTORY_BASED,
-             stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
+    @Storage(file = "inspectionProfiles", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = DefaultProjectProfileManager.ProfileStateSplitter.class)
   }
 )
 public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager {
