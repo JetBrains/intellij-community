@@ -108,7 +108,7 @@ target('default': "Build artifacts") {
     ant.mkdir(dir: paths.sandbox)
     //Use EDU versions of IdeTipsAndTricks.xml and icon-robots.txt.
     ant.delete(file: "${pythonCommunityHome}/src/META-INF/IdeTipsAndTricks.xml")
-    ant.delete(file: "${home}/python/resources/icon-robots.txt")
+    ant.delete(file: "${pythonCommunityHome}/resources/icon-robots.txt")
   }
 
   ant.tstamp() {
