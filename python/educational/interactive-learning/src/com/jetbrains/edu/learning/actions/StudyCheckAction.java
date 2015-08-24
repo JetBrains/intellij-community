@@ -104,7 +104,7 @@ public class StudyCheckAction extends DumbAwareAction {
 
   public void check(@NotNull final Project project) {
     if (DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing in in progress");
+      DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing is in progress");
       return;
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

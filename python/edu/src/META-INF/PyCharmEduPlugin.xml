@@ -34,7 +34,9 @@
       <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
-    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
+
   </extensions>
 
 </idea-plugin>
