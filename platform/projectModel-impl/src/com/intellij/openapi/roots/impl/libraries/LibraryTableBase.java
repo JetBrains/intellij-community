@@ -69,9 +69,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
       else {
         LibraryModel model = new LibraryModel();
-        model.readExternal(element);
         AccessToken token = WriteAction.start();
         try {
+          model.readExternal(element);
           commit(model);
         }
         finally {
