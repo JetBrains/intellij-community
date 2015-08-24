@@ -24,16 +24,20 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -300,19 +304,10 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   private static String getString(Configurable configurable, String key) {
-    try {
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        ResourceBundle bundle = wrapper.getExtensionPoint().findBundle();
-        if (bundle != null) {
-          return CommonBundle.message(bundle, key);
-        }
-      }
-      return OptionsBundle.message(key);
-    }
-    catch (AssertionError error) {
-      return null;
-    }
+    JBIterable<Configurable> it = JBIterable.of(configurable).append(
+      JBIterable.of(configurable instanceof Configurable.Composite ? ((Configurable.Composite)configurable).getConfigurables() : null));
+    ResourceBundle bundle = ConfigurableExtensionPointUtil.getBundle(key, it, null);
+    return bundle != null ? bundle.getString(key) : null;
   }
 
   static ConfigurationException apply(Configurable configurable) {
