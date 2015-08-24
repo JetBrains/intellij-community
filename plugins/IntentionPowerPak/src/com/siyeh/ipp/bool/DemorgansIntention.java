@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class DemorgansIntention extends MutablyNamedIntention {
 
+  @Override
   protected String getTextForElement(PsiElement element) {
     final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
@@ -39,11 +40,13 @@ public class DemorgansIntention extends MutablyNamedIntention {
     }
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ConjunctionPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
     final String newExpression = convertConjunctionExpression(polyadicExpression);
