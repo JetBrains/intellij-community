@@ -247,6 +247,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     assert callee != null;
     int lastParamIndex = callee.getImplicitOffset();
     final Map<PyExpression, PyNamedParameter> mappedParameters = mapping.getMappedParameters();
+    final Map<PyExpression, PyTupleParameter> mappedTupleParameters = mapping.getMappedTupleParameters();
     for (PyExpression arg : flatArgs) {
       final boolean mustHighlight = arg.getTextRange().contains(currentParamOffset);
       PsiElement seeker = arg;
@@ -273,18 +274,30 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         }
       }
       else {
-        // TODO: Handle arguments that are mapped to tuple parameters
-        //final List<PyNamedParameter> namedParameters = mapping.getNestedMappedParams().get(arg);
-        //if (namedParameters != null) {
-        //  for (PyNamedParameter parameter : namedParameters) {
-        //    lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
-        //    highlightParameter(parameter, parameterToIndex, hintFlags, mustHighlight);
-        //  }
-        //}
+        final PyTupleParameter tupleParameter = mappedTupleParameters.get(arg);
+        if (tupleParameter != null) {
+          for (PyNamedParameter parameter : getFlattenedTupleParameterComponents(tupleParameter)) {
+            lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
+            highlightParameter(parameter, parameterToIndex, hintFlags, mustHighlight);
+          }
+        }
       }
-      // else: stay unhighlighted
     }
     return lastParamIndex;
+  }
+
+  @NotNull
+  private static List<PyNamedParameter> getFlattenedTupleParameterComponents(@NotNull PyTupleParameter parameter) {
+    final List<PyNamedParameter> results = new ArrayList<PyNamedParameter>();
+    for (PyParameter component : parameter.getContents()) {
+      if (component instanceof PyNamedParameter) {
+        results.add((PyNamedParameter)component);
+      }
+      else if (component instanceof PyTupleParameter) {
+        results.addAll(getFlattenedTupleParameterComponents((PyTupleParameter)component));
+      }
+    }
+    return results;
   }
 
   private static void highlightParameter(@NotNull final PyNamedParameter parameter,

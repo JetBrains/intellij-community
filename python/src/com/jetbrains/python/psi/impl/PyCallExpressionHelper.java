@@ -642,7 +642,8 @@ public class PyCallExpressionHelper {
     if (markedCallee == null || argumentList == null) {
       return new PyCallExpression.PyArgumentsMapping(callExpression, null, Collections.<PyExpression, PyNamedParameter>emptyMap(),
                                                      Collections.<PyParameter>emptyList(), Collections.<PyExpression>emptyList(),
-                                                     Collections.<PyNamedParameter>emptyList(),Collections.<PyNamedParameter>emptyList());
+                                                     Collections.<PyNamedParameter>emptyList(), Collections.<PyNamedParameter>emptyList(),
+                                                     Collections.<PyExpression, PyTupleParameter>emptyMap());
     }
 
     boolean seenSingleStar = false;
@@ -650,8 +651,10 @@ public class PyCallExpressionHelper {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<PyExpression, PyNamedParameter>();
     final List<PyParameter> unmappedParameters = new ArrayList<PyParameter>();
+    final List<PyExpression> unmappedArguments = new ArrayList<PyExpression>();
     final List<PyNamedParameter> parametersMappedToVariadicKeywordArguments = new ArrayList<PyNamedParameter>();
     final List<PyNamedParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<PyNamedParameter>();
+    final Map<PyExpression, PyTupleParameter> tupleMappedParameters = new LinkedHashMap<PyExpression, PyTupleParameter>();
 
     final List<PyParameter> allParameters = PyUtil.getParameters(markedCallee.getCallable(), context);
     final List<PyParameter> parameters = dropImplicitParameters(allParameters, markedCallee.getImplicitOffset());
@@ -741,17 +744,21 @@ public class PyCallExpressionHelper {
       }
       else if (parameter instanceof PyTupleParameter) {
         final PyExpression positionalArgument = next(allPositionalArguments);
-        // TODO: Python 2: If we found a positional argument, we should match the components of the argument against the components of the
-        // tuple parameter
-        if (positionalArgument == null) {
-          if (variadicPositionalArguments.isEmpty()) {
-            if (!parameter.hasDefaultValue()) {
-              unmappedParameters.add(parameter);
-            }
+        if (positionalArgument != null) {
+          final PyTupleParameter tupleParameter = (PyTupleParameter)parameter;
+          tupleMappedParameters.put(positionalArgument, tupleParameter);
+          final TupleMappingResults tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, tupleParameter);
+          mappedParameters.putAll(tupleMappingResults.getParameters());
+          unmappedParameters.addAll(tupleMappingResults.getUnmappedParameters());
+          unmappedArguments.addAll(tupleMappingResults.getUnmappedArguments());
+        }
+        else if (variadicPositionalArguments.isEmpty()) {
+          if (!parameter.hasDefaultValue()) {
+            unmappedParameters.add(parameter);
           }
-          else {
-            mappedVariadicArgumentsToParameters = true;
-          }
+        }
+        else {
+          mappedVariadicArgumentsToParameters = true;
         }
       }
       else if (parameter instanceof PySingleStarParameter) {
@@ -767,7 +774,6 @@ public class PyCallExpressionHelper {
       variadicKeywordArguments.clear();
     }
 
-    final List<PyExpression> unmappedArguments = new ArrayList<PyExpression>();
     unmappedArguments.addAll(allPositionalArguments);
     unmappedArguments.addAll(keywordArguments);
     unmappedArguments.addAll(variadicPositionalArguments);
@@ -775,7 +781,85 @@ public class PyCallExpressionHelper {
 
     return new PyCallExpression.PyArgumentsMapping(callExpression, markedCallee, mappedParameters, unmappedParameters, unmappedArguments,
                                                    parametersMappedToVariadicPositionalArguments,
-                                                   parametersMappedToVariadicKeywordArguments);
+                                                   parametersMappedToVariadicKeywordArguments, tupleMappedParameters);
+  }
+
+  private static class TupleMappingResults {
+    @NotNull private final Map<PyExpression, PyNamedParameter> myParameters;
+    @NotNull private final List<PyParameter> myUnmappedParameters;
+    @NotNull private final List<PyExpression> myUnmappedArguments;
+
+    TupleMappingResults(@NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
+                        @NotNull List<PyParameter> unmappedParameters,
+                        @NotNull List<PyExpression> unmappedArguments) {
+
+      myParameters = mappedParameters;
+      myUnmappedParameters = unmappedParameters;
+      myUnmappedArguments = unmappedArguments;
+    }
+
+    @NotNull
+    public Map<PyExpression, PyNamedParameter> getParameters() {
+      return myParameters;
+    }
+
+    @NotNull
+    public List<PyParameter> getUnmappedParameters() {
+      return myUnmappedParameters;
+    }
+
+    @NotNull
+    public List<PyExpression> getUnmappedArguments() {
+      return myUnmappedArguments;
+    }
+  }
+
+  @NotNull
+  private static TupleMappingResults mapComponentsOfTupleParameter(@Nullable PyExpression argument, @NotNull PyTupleParameter parameter) {
+    final List<PyParameter> unmappedParameters = new ArrayList<PyParameter>();
+    final List<PyExpression> unmappedArguments = new ArrayList<PyExpression>();
+    final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<PyExpression, PyNamedParameter>();
+    argument = PyPsiUtils.flattenParens(argument);
+    if (argument instanceof PySequenceExpression) {
+      final PySequenceExpression sequenceExpr = (PySequenceExpression)argument;
+      final PyExpression[] argumentComponents = sequenceExpr.getElements();
+      final PyParameter[] parameterComponents = parameter.getContents();
+      for (int i = 0; i < parameterComponents.length; i++) {
+        final PyParameter param = parameterComponents[i];
+        if (i < argumentComponents.length) {
+          final PyExpression arg = argumentComponents[i];
+          if (arg != null) {
+            if (param instanceof PyNamedParameter) {
+              mappedParameters.put(arg, (PyNamedParameter)param);
+            }
+            else if (param instanceof PyTupleParameter) {
+              final TupleMappingResults nestedResults = mapComponentsOfTupleParameter(arg, (PyTupleParameter)param);
+              mappedParameters.putAll(nestedResults.getParameters());
+              unmappedParameters.addAll(nestedResults.getUnmappedParameters());
+              unmappedArguments.addAll(nestedResults.getUnmappedArguments());
+            }
+            else {
+              unmappedArguments.add(arg);
+            }
+          }
+          else {
+            unmappedParameters.add(param);
+          }
+        }
+        else {
+          unmappedParameters.add(param);
+        }
+      }
+      if (argumentComponents.length > parameterComponents.length) {
+        for (int i = parameterComponents.length; i < argumentComponents.length; i++) {
+          final PyExpression arg = argumentComponents[i];
+          if (arg != null) {
+            unmappedArguments.add(arg);
+          }
+        }
+      }
+    }
+    return new TupleMappingResults(mappedParameters, unmappedParameters, unmappedArguments);
   }
 
   @Nullable
