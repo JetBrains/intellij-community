@@ -61,25 +61,24 @@ public class BoolUtils {
 
   @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
-    if (condition == null) {
+    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES);
+  }
+
+  @NotNull
+  public static String getNegatedExpressionText(@Nullable PsiExpression expression, int precedence) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression == null) {
       return "";
     }
-    if (condition instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)condition;
-      final PsiExpression contentExpression =
-        parenthesizedExpression.getExpression();
-      return '(' + getNegatedExpressionText(contentExpression) + ')';
-    }
-    else if (isNegation(condition)) {
-      final PsiExpression negated = getNegated(condition);
+    if (isNegation(expression)) {
+      final PsiExpression negated = getNegated(expression);
       if (negated == null) {
         return "";
       }
-      return negated.getText();
+      return ParenthesesUtils.getPrecedence(negated) > precedence ? '(' + negated.getText() + ')' : negated.getText();
     }
-    else if (ComparisonUtils.isComparison(condition)) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+    else if (ComparisonUtils.isComparison(expression)) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
       final StringBuilder result = new StringBuilder();
       final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -101,12 +100,9 @@ public class BoolUtils {
       }
       return result.toString();
     }
-    else if (ParenthesesUtils.getPrecedence(condition) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-      return "!(" + condition.getText() + ')';
-    }
-    else {
-      return '!' + condition.getText();
-    }
+    else return ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE
+                ? "!(" + expression.getText() + ')'
+                : '!' + expression.getText();
   }
 
   @Nullable
