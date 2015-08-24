@@ -443,20 +443,22 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
 
         assert shreds.isValid();
-        oldViewProvider.performNonPhysically(new Runnable() {
-          @Override
-          public void run() {
-            DebugUtil.startPsiModification("injected tree diff");
-            try {
-              final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
-                                                                  oldFileNode.getText());
-              DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
+        if (!oldFile.textMatches(injectedPsi)) {
+          oldViewProvider.performNonPhysically(new Runnable() {
+            @Override
+            public void run() {
+              DebugUtil.startPsiModification("injected tree diff");
+              try {
+                final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+                                                                    oldFileNode.getText());
+                DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
+              }
+              finally {
+                DebugUtil.finishPsiModification();
+              }
             }
-            finally {
-              DebugUtil.finishPsiModification();
-            }
-          }
-        });
+          });
+        }
         assert shreds.isValid();
 
         return oldFile;
