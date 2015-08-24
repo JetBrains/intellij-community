@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -40,7 +41,7 @@ import java.util.regex.Pattern;
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {
+public class IssueNavigationConfiguration extends SimpleModificationTracker implements PersistentStateComponent<IssueNavigationConfiguration> {
   public static IssueNavigationConfiguration getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, IssueNavigationConfiguration.class);
   }
@@ -53,6 +54,7 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
 
   public void setLinks(final List<IssueNavigationLink> links) {
     myLinks = new ArrayList<IssueNavigationLink>(links);
+    incModificationCount();
   }
 
   public IssueNavigationConfiguration getState() {

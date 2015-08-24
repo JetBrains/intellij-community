@@ -52,7 +52,7 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
     return new MyFakePsiElement();
   }
 
-  protected String getUrl() {
+  public String getUrl() {
     return myUrl != null ? myUrl : getValue();
   }
 

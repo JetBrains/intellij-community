@@ -17,8 +17,8 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.paths.GlobalPathReferenceProvider;
 import com.intellij.openapi.paths.PathReferenceManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
@@ -27,46 +27,40 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
 
 public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
   private static final UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object> ourRefsCache = new UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object>("psielement.url.refs") {
-    private final AtomicReference<GlobalPathReferenceProvider> myReferenceProvider = new AtomicReference<GlobalPathReferenceProvider>();
+      private final AtomicReference<GlobalPathReferenceProvider> myReferenceProvider = new AtomicReference<GlobalPathReferenceProvider>();
 
-    @Override
-    protected CachedValue<PsiReference[]> compute(final PsiElement element, Object p) {
-      return CachedValuesManager
-        .getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiReference[]>() {
+      @Override
+      protected CachedValue<PsiReference[]> compute(final PsiElement element, Object p) {
+        return CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiReference[]>() {
           public Result<PsiReference[]> compute() {
-            Matcher matcher = URLUtil.URL_PATTERN.matcher(element.getText());
-
+            IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(element.getProject());
+            if (navigationConfiguration == null) {
+              return Result.create(PsiReference.EMPTY_ARRAY, element);
+            }
+            
             List<PsiReference> refs = null;
             GlobalPathReferenceProvider provider = myReferenceProvider.get();
-
-            while (matcher.find()) {
-              final int start = matcher.start();
-              final int end = matcher.end();
+            for (IssueNavigationConfiguration.LinkMatch link : navigationConfiguration.findIssueLinks(element.getText())) {
               if (refs == null) refs = new SmartList<PsiReference>();
               if (provider == null) {
                 provider = (GlobalPathReferenceProvider)PathReferenceManager.getInstance().getGlobalWebPathReferenceProvider();
                 myReferenceProvider.lazySet(provider);
               }
-
-              provider.createUrlReference(element, matcher.group(0), new TextRange(start, end), refs);
+              provider.createUrlReference(element, link.getTargetUrl(), link.getRange(), refs);
             }
-
-            return new Result<PsiReference[]>(refs != null ? refs.toArray(new PsiReference[refs.size()]) : PsiReference.EMPTY_ARRAY,
-                                              element);
+            PsiReference[] references = refs != null ? refs.toArray(new PsiReference[refs.size()]) : PsiReference.EMPTY_ARRAY;
+            return new Result<PsiReference[]>(references, element, navigationConfiguration);
           }
         }, false);
-
-    }
-  };
+      }
+    };
 
   @NotNull
   @Override
