@@ -13,130 +13,158 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.fragmented;
+package com.intellij.diff.tools.fragmented
 
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.UsefulTestCase
+import kotlin.test.assertEquals
 
-public class LineNumberConvertorTest extends UsefulTestCase {
-  public void testEmpty() {
-    Test test = new Test();
-    test.finish();
-
-    test.checkEmpty(-5, 20);
-
-    test.checkEmptyInv(-5, 20);
+public class LineNumberConvertorTest : UsefulTestCase() {
+  public fun testEmpty() {
+    doTest(
+        {
+        },
+        {
+          checkEmpty(-5, 20)
+          checkEmptyInv(-5, 20)
+        }
+    )
   }
 
-  public void testSingleRange() {
-    Test test = new Test();
-    test.put(2, 3, 2);
-    test.finish();
+  public fun testSingleRange() {
+    doTest(
+        {
+          put(2, 3, 2)
+        },
+        {
+          checkMatch(2, 3, 2)
 
-    test.checkMatch(2, 3, 2);
+          checkEmpty(-5, 1)
+          checkEmpty(4, 10)
 
-    test.checkEmpty(-5, 1);
-    test.checkEmpty(4, 10);
-
-    test.checkEmptyInv(-5, 2);
-    test.checkEmptyInv(5, 10);
+          checkEmptyInv(-5, 2)
+          checkEmptyInv(5, 10)
+        }
+    )
   }
 
-  public void testTwoRanges() {
-    Test test = new Test();
-    test.put(2, 3, 2);
-    test.put(10, 7, 1);
-    test.finish();
+  public fun testTwoRanges() {
+    doTest(
+        {
+          put(2, 3, 2)
+          put(10, 7, 1)
+        },
+        {
+          checkMatch(2, 3, 2)
+          checkMatch(10, 7, 1)
 
-    test.checkMatch(2, 3, 2);
-    test.checkMatch(10, 7, 1);
+          checkEmpty(-5, 1)
+          checkEmpty(4, 9)
+          checkEmpty(11, 15)
 
-    test.checkEmpty(-5, 1);
-    test.checkEmpty(4, 9);
-    test.checkEmpty(11, 15);
-
-    test.checkEmptyInv(-5, 2);
-    test.checkEmptyInv(5, 6);
-    test.checkEmptyInv(8, 12);
+          checkEmptyInv(-5, 2)
+          checkEmptyInv(5, 6)
+          checkEmptyInv(8, 12)
+        }
+    )
   }
 
-  public void testAdjustmentRanges() {
-    Test test = new Test();
-    test.put(2, 3, 2);
-    test.put(4, 5, 3);
-    test.finish();
+  public fun testAdjustmentRanges() {
+    doTest(
+        {
+          put(2, 3, 2)
+          put(4, 5, 3)
+        },
+        {
+          checkMatch(2, 3, 5)
 
-    test.checkMatch(2, 3, 5);
+          checkEmpty(-5, 1)
+          checkEmpty(7, 10)
 
-    test.checkEmpty(-5, 1);
-    test.checkEmpty(7, 10);
-
-    test.checkEmptyInv(-5, 2);
-    test.checkEmptyInv(8, 10);
+          checkEmptyInv(-5, 2)
+          checkEmptyInv(8, 10)
+        }
+    )
   }
 
-  public void testPartiallyAdjustmentRanges() {
-    Test test = new Test();
-    test.put(2, 3, 2);
-    test.put(4, 10, 3);
-    test.finish();
+  public fun testPartiallyAdjustmentRanges() {
+    doTest(
+        {
+          put(2, 3, 2)
+          put(4, 10, 3)
+        },
+        {
+          checkMatch(2, 3, 2)
+          checkMatch(4, 10, 3)
 
-    test.checkMatch(2, 3, 2);
-    test.checkMatch(4, 10, 3);
+          checkEmpty(-5, 1)
+          checkEmpty(7, 10)
 
-    test.checkEmpty(-5, 1);
-    test.checkEmpty(7, 10);
-
-    test.checkEmptyInv(-5, 2);
-    test.checkEmptyInv(5, 9);
-    test.checkEmptyInv(13, 15);
+          checkEmptyInv(-5, 2)
+          checkEmptyInv(5, 9)
+          checkEmptyInv(13, 15)
+        }
+    )
   }
 
-  public void testTwoRangesApproximate() {
-    Test test = new Test();
-    test.put(1, 2, 1);
-    test.put(6, 5, 2);
-    test.finish();
-
-    assertEquals(0, test.myConvertor.convertApproximate1(0));
-    assertEquals(2, test.myConvertor.convertApproximate1(1));
-    assertEquals(3, test.myConvertor.convertApproximate1(2));
-    assertEquals(3, test.myConvertor.convertApproximate1(3));
-    assertEquals(3, test.myConvertor.convertApproximate1(4));
-    assertEquals(3, test.myConvertor.convertApproximate1(5));
-    assertEquals(5, test.myConvertor.convertApproximate1(6));
-    assertEquals(6, test.myConvertor.convertApproximate1(7));
-    assertEquals(7, test.myConvertor.convertApproximate1(8));
-    assertEquals(7, test.myConvertor.convertApproximate1(9));
+  public fun testTwoRangesApproximate() {
+    doTest(
+        {
+          put(1, 2, 1)
+          put(6, 5, 2)
+        },
+        {
+          assertEquals(0, convertor.convertApproximate1(0))
+          assertEquals(2, convertor.convertApproximate1(1))
+          assertEquals(3, convertor.convertApproximate1(2))
+          assertEquals(3, convertor.convertApproximate1(3))
+          assertEquals(3, convertor.convertApproximate1(4))
+          assertEquals(3, convertor.convertApproximate1(5))
+          assertEquals(5, convertor.convertApproximate1(6))
+          assertEquals(6, convertor.convertApproximate1(7))
+          assertEquals(7, convertor.convertApproximate1(8))
+          assertEquals(7, convertor.convertApproximate1(9))
+        }
+    )
   }
 
-  private static class Test {
-    private final LineNumberConvertor.Builder myBuilder = new LineNumberConvertor.Builder();
-    private LineNumberConvertor myConvertor;
+  //
+  // Impl
+  //
 
-    public void put(int left, int right, int length) {
-      myBuilder.put1(left, right, length);
+  private fun doTest(prepare: TestBuilder.() -> Unit, check: Test.() -> Unit) {
+    val builder = TestBuilder()
+    builder.prepare()
+    val test = builder.finish()
+    test.check()
+  }
+
+  private class TestBuilder {
+    private val builder = LineNumberConvertor.Builder()
+
+    public fun put(left: Int, right: Int, length: Int) {
+      builder.put1(left, right, length)
     }
 
-    public void finish() {
-      myConvertor = myBuilder.build();
-    }
+    public fun finish(): Test = Test(builder.build())
+  }
 
-    public void checkMatch(int left, int right, int length) {
-      for (int i = 0; i < length; i++) {
-        assertEquals(right + i, myConvertor.convert1(left + i));
-        assertEquals(left + i, myConvertor.convertInv1(right + i));
+  private class Test(val convertor: LineNumberConvertor) {
+    public fun checkMatch(left: Int, right: Int, length: Int) {
+      for (i in 0..length - 1) {
+        assertEquals(right + i, convertor.convert1(left + i))
+        assertEquals(left + i, convertor.convertInv1(right + i))
       }
     }
 
-    public void checkEmpty(int start, int end) {
-      for (int i = start; i <= end; i++) {
-        assertEquals(-1, myConvertor.convert1(i));
+    public fun checkEmpty(start: Int, end: Int) {
+      for (i in start..end) {
+        assertEquals(-1, convertor.convert1(i))
       }
     }
 
-    public void checkEmptyInv(int start, int end) {
-      for (int i = start; i <= end; i++) {
-        assertEquals(-1, myConvertor.convertInv1(i));
+    public fun checkEmptyInv(start: Int, end: Int) {
+      for (i in start..end) {
+        assertEquals(-1, convertor.convertInv1(i))
       }
     }
   }

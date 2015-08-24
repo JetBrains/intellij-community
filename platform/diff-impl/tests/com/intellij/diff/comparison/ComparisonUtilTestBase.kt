@@ -13,521 +13,352 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.fragments.LineFragment;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.fragments.DiffFragment
+import com.intellij.diff.fragments.LineFragment
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.containers.ContainerUtil
+import java.util.BitSet
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-import java.util.BitSet;
-import java.util.List;
+public abstract class ComparisonUtilTestBase : UsefulTestCase() {
+  private var oldRegistryValue: Boolean = false
 
-public abstract class ComparisonUtilTestBase extends UsefulTestCase {
-  private static DumbProgressIndicator INDICATOR = DumbProgressIndicator.INSTANCE;
-  private static ComparisonManager myComparisonManager = new ComparisonManagerImpl();
-
-  private boolean myOldRegistryValue;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myOldRegistryValue = Registry.get("diff.verify.iterable").asBoolean();
-    Registry.get("diff.verify.iterable").setValue(true);
+  override fun setUp() {
+    super.setUp()
+    oldRegistryValue = REGISTRY.asBoolean()
+    REGISTRY.setValue(true)
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    Registry.get("diff.verify.iterable").setValue(myOldRegistryValue);
-    super.tearDown();
+  override fun tearDown() {
+    REGISTRY.setValue(oldRegistryValue)
+    super.tearDown()
   }
 
   //
   // Impl
   //
 
-  private static void doLineTest(@NotNull Document before,
-                                 @NotNull Document after,
-                                 @Nullable Couple<BitSet> matchings,
-                                 @Nullable List<Change> expected,
-                                 @NotNull ComparisonPolicy policy) {
-    CharSequence sequence1 = before.getCharsSequence();
-    CharSequence sequence2 = after.getCharsSequence();
-    List<LineFragment> fragments = myComparisonManager.compareLines(sequence1, sequence2, policy, INDICATOR);
-    checkConsistency(fragments, before, after, policy);
-    if (matchings != null) checkLineMatching(fragments, before, after, matchings, policy);
-    if (expected != null) checkLineChanges(fragments, before, after, expected, policy);
+  private fun doLineTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+    val fragments = MANAGER.compareLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+    checkConsistency(fragments, before, after)
+    if (matchings != null) checkLineMatching(fragments, matchings)
+    if (expected != null) checkLineChanges(fragments, expected)
   }
 
-  private static void doWordTest(@NotNull Document before,
-                                 @NotNull Document after,
-                                 @Nullable Couple<BitSet> matchings,
-                                 @Nullable List<Change> expected,
-                                 @NotNull ComparisonPolicy policy) {
-    CharSequence sequence1 = before.getCharsSequence();
-    CharSequence sequence2 = after.getCharsSequence();
-    List<LineFragment> rawFragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
-    List<LineFragment> fragments = myComparisonManager.squash(rawFragments);
+  private fun doWordTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+    val rawFragments = MANAGER.compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+    val fragments = MANAGER.squash(rawFragments)
+    checkConsistencyWord(fragments, before, after)
 
-    checkConsistencyWord(fragments, before, after, policy);
-
-    List<DiffFragment> diffFragments = fragments.get(0).getInnerFragments();
-    assert diffFragments != null;
-
-    if (matchings != null) checkDiffMatching(diffFragments, before, after, matchings, policy);
-    if (expected != null) checkDiffChanges(diffFragments, before, after, expected, policy);
+    val diffFragments = fragments.get(0).getInnerFragments()!!
+    if (matchings != null) checkDiffMatching(diffFragments, matchings)
+    if (expected != null) checkDiffChanges(diffFragments, expected)
   }
 
-  private static void doCharTest(@NotNull Document before,
-                                 @NotNull Document after,
-                                 @Nullable Couple<BitSet> matchings,
-                                 @Nullable List<Change> expected,
-                                 @NotNull ComparisonPolicy policy) {
-    CharSequence sequence1 = before.getCharsSequence();
-    CharSequence sequence2 = after.getCharsSequence();
-    List<DiffFragment> fragments = myComparisonManager.compareChars(sequence1, sequence2, policy, INDICATOR);
-    checkConsistency(fragments, before, after, policy);
-    if (matchings != null) checkDiffMatching(fragments, before, after, matchings, policy);
-    if (expected != null) checkDiffChanges(fragments, before, after, expected, policy);
+  private fun doCharTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+    val fragments = MANAGER.compareChars(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+    checkConsistency(fragments, before, after)
+    if (matchings != null) checkDiffMatching(fragments, matchings)
+    if (expected != null) checkDiffChanges(fragments, expected)
   }
 
-  private static void doSplitterTest(@NotNull Document before,
-                                     @NotNull Document after,
-                                     @Nullable Couple<BitSet> matchings,
-                                     @Nullable List<Change> expected,
-                                     @NotNull ComparisonPolicy policy) {
-    CharSequence sequence1 = before.getCharsSequence();
-    CharSequence sequence2 = after.getCharsSequence();
-    List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
-    checkConsistency(fragments, before, after, policy);
-    if (matchings != null) checkLineMatching(fragments, before, after, matchings, policy);
-    if (expected != null) checkLineChanges(fragments, before, after, expected, policy);
+  private fun doSplitterTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+    val fragments = MANAGER.compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+    checkConsistency(fragments, before, after)
+    if (matchings != null) checkLineMatching(fragments, matchings)
+    if (expected != null) checkLineChanges(fragments, expected)
   }
 
-  private static void checkConsistencyWord(@NotNull List<LineFragment> fragments,
-                                           @NotNull Document before,
-                                           @NotNull Document after,
-                                           @NotNull ComparisonPolicy policy) {
-    assertTrue(fragments.size() == 1);
-    LineFragment fragment = fragments.get(0);
-    List<DiffFragment> diffFragments = fragment.getInnerFragments();
-    assertNotNull(diffFragments); // It could be null if there are no common words. We do not test such cases here.
+  private fun checkConsistencyWord(fragments: List<LineFragment>, before: Document, after: Document) {
+    assertTrue(fragments.size() == 1)
+    val fragment = fragments.get(0)
 
-    assertTrue(fragment.getStartOffset1() == 0 &&
-               fragment.getStartOffset2() == 0 &&
-               fragment.getEndOffset1() == before.getTextLength() &&
-               fragment.getEndOffset2() == after.getTextLength());
+    assertTrue(fragment.getStartOffset1() == 0)
+    assertTrue(fragment.getStartOffset2() == 0)
+    assertTrue(fragment.getEndOffset1() == before.getTextLength())
+    assertTrue(fragment.getEndOffset2() == after.getTextLength())
 
-    checkConsistency(diffFragments, before, after, policy);
+    // It could be null if there are no common words. We do not test such cases here.
+    checkConsistency(fragment.getInnerFragments()!!, before, after)
   }
 
-  private static void checkConsistency(@NotNull List<? extends DiffFragment> fragments,
-                                       @NotNull Document before,
-                                       @NotNull Document after,
-                                       @NotNull ComparisonPolicy policy) {
-    for (DiffFragment fragment : fragments) {
-      assertTrue(fragment.getStartOffset1() <= fragment.getEndOffset1());
-      assertTrue(fragment.getStartOffset2() <= fragment.getEndOffset2());
+  private fun checkConsistency(fragments: List<DiffFragment>, before: Document, after: Document) {
+    for (fragment in fragments) {
+      assertTrue(fragment.getStartOffset1() <= fragment.getEndOffset1())
+      assertTrue(fragment.getStartOffset2() <= fragment.getEndOffset2())
 
-      if (fragment instanceof LineFragment) {
-        LineFragment lineFragment = (LineFragment)fragment;
-        assertTrue(lineFragment.getStartLine1() <= lineFragment.getEndLine1());
-        assertTrue(lineFragment.getStartLine2() <= lineFragment.getEndLine2());
+      if (fragment is LineFragment) {
+        assertTrue(fragment.getStartLine1() <= fragment.getEndLine1())
+        assertTrue(fragment.getStartLine2() <= fragment.getEndLine2())
 
-        assertTrue(lineFragment.getStartLine1() != lineFragment.getEndLine1() || lineFragment.getStartLine2() != lineFragment.getEndLine2());
+        assertTrue(fragment.getStartLine1() != fragment.getEndLine1() || fragment.getStartLine2() != fragment.getEndLine2())
 
-        assertTrue(lineFragment.getStartLine1() >= 0);
-        assertTrue(lineFragment.getStartLine2() >= 0);
-        assertTrue(lineFragment.getEndLine1() <= getLineCount(before));
-        assertTrue(lineFragment.getEndLine2() <= getLineCount(after));
+        assertTrue(fragment.getStartLine1() >= 0)
+        assertTrue(fragment.getStartLine2() >= 0)
+        assertTrue(fragment.getEndLine1() <= getLineCount(before))
+        assertTrue(fragment.getEndLine2() <= getLineCount(after))
 
-        checkLineOffsets(lineFragment, before, after, policy);
+        checkLineOffsets(fragment, before, after)
 
-        if (lineFragment.getInnerFragments() != null) checkConsistency(lineFragment.getInnerFragments(), before, after, policy);
-      } else {
-        assertTrue(fragment.getStartOffset1() != fragment.getEndOffset1() || fragment.getStartOffset2() != fragment.getEndOffset2());
+        val innerFragments = fragment.getInnerFragments()
+        innerFragments?.let { checkConsistency(innerFragments!!, before, after) }
+      }
+      else {
+        assertTrue(fragment.getStartOffset1() != fragment.getEndOffset1() || fragment.getStartOffset2() != fragment.getEndOffset2())
       }
     }
   }
 
-  private static void checkLineChanges(@NotNull List<? extends LineFragment> fragments,
-                                       @NotNull Document before,
-                                       @NotNull Document after,
-                                       @NotNull List<Change> expected,
-                                       @NotNull ComparisonPolicy policy) {
-    List<Change> changes = convertLineFragments(fragments);
-    assertOrderedEquals(policy.name(), changes, expected);
+  private fun checkLineChanges(fragments: List<LineFragment>, expected: List<Change>) {
+    val changes = convertLineFragments(fragments)
+    UsefulTestCase.assertOrderedEquals(changes, expected)
   }
 
-  private static void checkDiffChanges(@NotNull List<? extends DiffFragment> fragments,
-                                           @NotNull Document before,
-                                           @NotNull Document after,
-                                           @NotNull List<Change> expected,
-                                           @NotNull ComparisonPolicy policy) {
-    List<Change> changes = convertDiffFragments(fragments);
-    assertOrderedEquals(policy.name(), changes, expected);
+  private fun checkDiffChanges(fragments: List<DiffFragment>, expected: List<Change>) {
+    val changes = convertDiffFragments(fragments)
+    UsefulTestCase.assertOrderedEquals(changes, expected)
   }
 
-  private static void checkLineMatching(@NotNull List<? extends LineFragment> fragments,
-                                        @NotNull Document before,
-                                        @NotNull Document after,
-                                        @NotNull Couple<BitSet> matchings,
-                                        @NotNull ComparisonPolicy policy) {
-    BitSet set1 = new BitSet();
-    BitSet set2 = new BitSet();
-    for (LineFragment fragment : fragments) {
-      set1.set(fragment.getStartLine1(), fragment.getEndLine1());
-      set2.set(fragment.getStartLine2(), fragment.getEndLine2());
+  private fun checkLineMatching(fragments: List<LineFragment>, matchings: Couple<BitSet>) {
+    val set1 = BitSet()
+    val set2 = BitSet()
+    for (fragment in fragments) {
+      set1.set(fragment.getStartLine1(), fragment.getEndLine1())
+      set2.set(fragment.getStartLine2(), fragment.getEndLine2())
     }
 
-    assertEquals(policy.name(), matchings.first, set1);
-    assertEquals(policy.name(), matchings.second, set2);
+    assertEquals(matchings.first, set1)
+    assertEquals(matchings.second, set2)
   }
 
-  private static void checkDiffMatching(@NotNull List<? extends DiffFragment> fragments,
-                                        @NotNull Document before,
-                                        @NotNull Document after,
-                                        @NotNull Couple<BitSet> matchings,
-                                        @NotNull ComparisonPolicy policy) {
-    BitSet set1 = new BitSet();
-    BitSet set2 = new BitSet();
-    for (DiffFragment fragment : fragments) {
-      set1.set(fragment.getStartOffset1(), fragment.getEndOffset1());
-      set2.set(fragment.getStartOffset2(), fragment.getEndOffset2());
+  private fun checkDiffMatching(fragments: List<DiffFragment>, matchings: Couple<BitSet>) {
+    val set1 = BitSet()
+    val set2 = BitSet()
+    for (fragment in fragments) {
+      set1.set(fragment.getStartOffset1(), fragment.getEndOffset1())
+      set2.set(fragment.getStartOffset2(), fragment.getEndOffset2())
     }
 
-    assertEquals(policy.name(), matchings.first, set1);
-    assertEquals(policy.name(), matchings.second, set2);
+    assertEquals(matchings.first, set1)
+    assertEquals(matchings.second, set2)
   }
 
-  @NotNull
-  private static List<Change> convertDiffFragments(@NotNull List<? extends DiffFragment> fragments) {
-    return ContainerUtil.map(fragments, new Function<DiffFragment, Change>() {
-      @Override
-      public Change fun(DiffFragment fragment) {
-        return new Change(fragment.getStartOffset1(), fragment.getEndOffset1(), fragment.getStartOffset2(), fragment.getEndOffset2());
-      }
-    });
+  private fun convertDiffFragments(fragments: List<DiffFragment>): List<Change> {
+    return fragments.map { Change(it.getStartOffset1(), it.getEndOffset1(), it.getStartOffset2(), it.getEndOffset2()) }
   }
 
-  @NotNull
-  private static List<Change> convertLineFragments(@NotNull List<? extends LineFragment> fragments) {
-    return ContainerUtil.map(fragments, new Function<LineFragment, Change>() {
-      @Override
-      public Change fun(LineFragment fragment) {
-        return new Change(fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartLine2(), fragment.getEndLine2());
-      }
-    });
+  private fun convertLineFragments(fragments: List<LineFragment>): List<Change> {
+    return fragments.map { Change(it.getStartLine1(), it.getEndLine1(), it.getStartLine2(), it.getEndLine2()) }
   }
 
-  private static void checkLineOffsets(@NotNull LineFragment fragment,
-                                       @NotNull Document before,
-                                       @NotNull Document after,
-                                       @NotNull ComparisonPolicy policy) {
-    checkLineOffsets(before, fragment.getStartLine1(), fragment.getEndLine1(),
-                     fragment.getStartOffset1(), fragment.getEndOffset1(), policy);
+  private fun checkLineOffsets(fragment: LineFragment, before: Document, after: Document) {
+    checkLineOffsets(before, fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartOffset1(), fragment.getEndOffset1())
 
-    checkLineOffsets(after, fragment.getStartLine2(), fragment.getEndLine2(),
-                     fragment.getStartOffset2(), fragment.getEndOffset2(), policy);
+    checkLineOffsets(after, fragment.getStartLine2(), fragment.getEndLine2(), fragment.getStartOffset2(), fragment.getEndOffset2())
   }
 
-  private static void checkLineOffsets(@NotNull Document document,
-                                       int startLine,
-                                       int endLine,
-                                       int startOffset,
-                                       int endOffset,
-                                       @NotNull ComparisonPolicy policy) {
+  private fun checkLineOffsets(document: Document, startLine: Int, endLine: Int, startOffset: Int, endOffset: Int) {
     if (startLine != endLine) {
-      assertEquals(policy.name(), document.getLineStartOffset(startLine), startOffset);
-      int offset = document.getLineEndOffset(endLine - 1);
-      if (offset < document.getTextLength()) offset++;
-      assertEquals(policy.name(), offset, endOffset);
+      assertEquals(document.getLineStartOffset(startLine), startOffset)
+      var offset = document.getLineEndOffset(endLine - 1)
+      if (offset < document.getTextLength()) offset++
+      assertEquals(offset, endOffset)
     }
     else {
-      int offset = startLine == getLineCount(document)
-                   ? document.getTextLength()
-                   : document.getLineStartOffset(startLine);
-      assertEquals(policy.name(), offset, startOffset);
-      assertEquals(policy.name(), offset, endOffset);
+      val offset = if (startLine == getLineCount(document)) document.getTextLength() else document.getLineStartOffset(startLine)
+      assertEquals(offset, startOffset)
+      assertEquals(offset, endOffset)
     }
+  }
+
+  private fun getLineCount(document: Document): Int {
+    return Math.max(1, document.getLineCount())
   }
 
   //
   // Test Builder
   //
 
-  public static class TestData {
-    enum TestType {LINE, WORD, CHAR, SPLITTER}
+  private enum class TestType {
+    LINE, WORD, CHAR, SPLITTER
+  }
 
-    @NotNull private final TestType myType;
-    @NotNull private final String myBefore;
-    @NotNull private final String myAfter;
+  public inner class TestBuilder(private val type: TestType) {
+    private var isExecuted: Boolean = false;
 
-    @Nullable private List<Change> myDefaultChanges;
-    @Nullable private List<Change> myTrimChanges;
-    @Nullable private List<Change> myIgnoreChanges;
+    private var before: Document? = null
+    private var after: Document? = null
 
-    @Nullable private Couple<BitSet> myDefaultMatching;
-    @Nullable private Couple<BitSet> myTrimMatching;
-    @Nullable private Couple<BitSet> myIgnoreMatching;
+    private var defaultChanges: List<Change>? = null
+    private var trimChanges: List<Change>? = null
+    private var ignoreChanges: List<Change>? = null
 
-    private boolean mySkipDefault;
-    private boolean mySkipTrim;
-    private boolean mySkipIgnore;
+    private var defaultMatching: Couple<BitSet>? = null
+    private var trimMatching: Couple<BitSet>? = null
+    private var ignoreMatching: Couple<BitSet>? = null
 
-    public TestData(@NotNull TestType type, @NotNull String before, @NotNull String after) {
-      myType = type;
-      myBefore = before;
-      myAfter = after;
+    private fun changes(policy: ComparisonPolicy): List<Change>? = when (policy) {
+      ComparisonPolicy.IGNORE_WHITESPACES -> ignoreChanges ?: trimChanges ?: defaultChanges;
+      ComparisonPolicy.TRIM_WHITESPACES -> trimChanges ?: defaultChanges;
+      ComparisonPolicy.DEFAULT -> defaultChanges
     }
 
-    @NotNull
-    public static TestData lines(@NotNull String before, @NotNull String after) {
-      return new TestData(TestType.LINE, before, after);
+    private fun matchings(policy: ComparisonPolicy): Couple<BitSet>? = when (policy) {
+      ComparisonPolicy.IGNORE_WHITESPACES -> ignoreMatching ?: trimMatching ?: defaultMatching;
+      ComparisonPolicy.TRIM_WHITESPACES -> trimMatching ?: defaultMatching;
+      ComparisonPolicy.DEFAULT -> defaultMatching
     }
 
-    @NotNull
-    public static TestData words(@NotNull String before, @NotNull String after) {
-      return new TestData(TestType.WORD, before, after);
+    public fun assertExecuted() {
+      assertTrue(isExecuted)
     }
 
-    @NotNull
-    public static TestData chars(@NotNull String before, @NotNull String after) {
-      TestData data = new TestData(TestType.CHAR, before, after);
-      data.mySkipTrim = true; // Not supported
-      return data;
-    }
+    private fun run(policy: ComparisonPolicy) {
+      try {
+        isExecuted = true;
 
-    @NotNull
-    public static TestData split(@NotNull String before, @NotNull String after) {
-      return new TestData(TestType.SPLITTER, before, after);
-    }
+        val change = changes(policy)
+        val matchings = matchings(policy)
+        assertTrue(change != null || matchings != null)
 
-    @NotNull
-    public TestData _______Def_(@NotNull String before, @NotNull String after) {
-      assert myBefore.length() == before.length();
-      assert myAfter.length() == after.length();
-      myDefaultMatching = parseMatching(before, after);
-      return this;
-    }
-
-    @NotNull
-    public TestData ______Trim_(@NotNull String before, @NotNull String after) {
-      assert myType != TestType.CHAR;
-      assert myBefore.length() == before.length();
-      assert myAfter.length() == after.length();
-      myTrimMatching = parseMatching(before, after);
-      return this;
-    }
-
-    @NotNull
-    public TestData ____Ignore_(@NotNull String before, @NotNull String after) {
-      assert myBefore.length() == before.length();
-      assert myAfter.length() == after.length();
-      myIgnoreMatching = parseMatching(before, after);
-      return this;
-    }
-
-    @NotNull
-    public TestData _Def_(Change... expected) {
-      myDefaultChanges = ContainerUtil.list(expected);
-      return this;
-    }
-
-    @NotNull
-    public TestData _Trim_(Change... expected) {
-      myTrimChanges = ContainerUtil.list(expected);
-      return this;
-    }
-
-    @NotNull
-    public TestData _Ignore_(Change... expected) {
-      myIgnoreChanges = ContainerUtil.list(expected);
-      return this;
-    }
-
-    public void all() {
-      run();
-    }
-
-    public void skipDef() {
-      mySkipDefault = true;
-      run();
-    }
-
-    public void skipTrim() {
-      mySkipTrim = true;
-      run();
-    }
-
-    public void skipIgnore() {
-      mySkipIgnore = true;
-      run();
-    }
-
-    public void def() {
-      mySkipTrim = true;
-      mySkipIgnore = true;
-      run();
-    }
-
-    public void trim() {
-      mySkipDefault = true;
-      mySkipIgnore = true;
-      run();
-    }
-
-    public void ignore() {
-      mySkipDefault = true;
-      mySkipTrim = true;
-      run();
-    }
-
-    @NotNull
-    public Document getBefore() {
-      return new DocumentImpl(myBefore.replace('_', '\n'));
-    }
-
-    @NotNull
-    public Document getAfter() {
-      return new DocumentImpl(myAfter.replace('_', '\n'));
-    }
-
-    @Nullable
-    List<Change> getChange(@NotNull ComparisonPolicy policy) {
-      switch (policy) {
-        case IGNORE_WHITESPACES:
-          if (myIgnoreChanges != null) return myIgnoreChanges;
-        case TRIM_WHITESPACES:
-          if (myTrimChanges != null) return myTrimChanges;
-        case DEFAULT:
-          if (myDefaultChanges != null) return myDefaultChanges;
+        when (type) {
+          TestType.LINE -> doLineTest(before!!, after!!, matchings, change, policy)
+          TestType.WORD -> doWordTest(before!!, after!!, matchings, change, policy)
+          TestType.CHAR -> doCharTest(before!!, after!!, matchings, change, policy)
+          TestType.SPLITTER -> doSplitterTest(before!!, after!!, matchings, change, policy)
+        }
       }
-      return null;
-    }
-
-    @Nullable
-    Couple<BitSet> getMatchings(@NotNull ComparisonPolicy policy) {
-      switch (policy) {
-        case IGNORE_WHITESPACES:
-          if (myIgnoreMatching != null) return myIgnoreMatching;
-        case TRIM_WHITESPACES:
-          if (myTrimMatching != null) return myTrimMatching;
-        case DEFAULT:
-          if (myDefaultMatching != null) return myDefaultMatching;
-      }
-      return null;
-    }
-
-    private void run(@NotNull ComparisonPolicy policy) {
-      List<Change> change = getChange(policy);
-      Couple<BitSet> matchings = getMatchings(policy);
-
-      switch (myType) {
-        case LINE:
-          doLineTest(getBefore(), getAfter(), matchings, change, policy);
-          break;
-        case WORD:
-          doWordTest(getBefore(), getAfter(), matchings, change, policy);
-          break;
-        case CHAR:
-          doCharTest(getBefore(), getAfter(), matchings, change, policy);
-          break;
-        case SPLITTER:
-          doSplitterTest(getBefore(), getAfter(), matchings, change, policy);
-          break;
+      catch (e: Throwable) {
+        println("Policy: " + policy.name())
+        throw e;
       }
     }
 
-    private void run() {
-      if (!mySkipDefault) run(ComparisonPolicy.DEFAULT);
-      if (!mySkipTrim) run(ComparisonPolicy.TRIM_WHITESPACES);
-      if (!mySkipIgnore) run(ComparisonPolicy.IGNORE_WHITESPACES);
+    private fun parseSource(string: String): Document = DocumentImpl(string.replace('_', '\n'))
+
+    private fun parseMatching(before: String, after: String): Couple<BitSet> {
+      return Couple.of(parseMatching(before), parseMatching(after))
+    }
+
+    private fun parseMatching(matching: String): BitSet {
+      val set = BitSet()
+      matching.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
+      return set
+    }
+
+
+    public fun testAll() {
+      testDefault()
+      testTrim()
+      testIgnore()
+    }
+
+    public fun testDefault() {
+      run(ComparisonPolicy.DEFAULT)
+    }
+
+    public fun testTrim() {
+      if (type == TestType.CHAR) return // not supported
+      run(ComparisonPolicy.TRIM_WHITESPACES)
+    }
+
+    public fun testIgnore() {
+      run(ComparisonPolicy.IGNORE_WHITESPACES)
+    }
+
+
+    public fun String.minus(v: String): Helper {
+      return Helper(this, v)
+    }
+
+    public inner class Helper(val before: String, val after: String) {
+      init {
+        val builder = this@TestBuilder
+        if (builder.before == null && builder.after == null) {
+          builder.before = parseSource(before)
+          builder.after = parseSource(after)
+        }
+      }
+
+      public fun default() {
+        defaultMatching = parseMatching(before, after)
+      }
+
+      public fun trim() {
+        trimMatching = parseMatching(before, after)
+      }
+
+      public fun ignore() {
+        ignoreMatching = parseMatching(before, after)
+      }
+    }
+
+
+    public fun default(vararg expected: Change): Unit {
+      defaultChanges = ContainerUtil.list(*expected)
+    }
+
+    public fun trim(vararg expected: Change): Unit {
+      trimChanges = ContainerUtil.list(*expected)
+    }
+
+    public fun ignore(vararg expected: Change): Unit {
+      ignoreChanges = ContainerUtil.list(*expected)
+    }
+
+    public fun mod(line1: Int, line2: Int, count1: Int, count2: Int): Change {
+      assert(count1 != 0)
+      assert(count2 != 0)
+      return Change(line1, line1 + count1, line2, line2 + count2)
+    }
+
+    public fun del(line1: Int, line2: Int, count1: Int): Change {
+      assert(count1 != 0)
+      return Change(line1, line1 + count1, line2, line2)
+    }
+
+    public fun ins(line1: Int, line2: Int, count2: Int): Change {
+      assert(count2 != 0)
+      return Change(line1, line1, line2, line2 + count2)
     }
   }
 
-  @NotNull
-  public static Couple<BitSet> parseMatching(@NotNull String before, @NotNull String after) {
-    return Couple.of(parseMatching(before), parseMatching(after));
+  public fun lines(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE, f)
+
+  public fun words(f: TestBuilder.() -> Unit): Unit = doTest(TestType.WORD, f)
+
+  public fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
+
+  public fun split(f: TestBuilder.() -> Unit): Unit = doTest(TestType.SPLITTER, f)
+
+  private fun doTest(type: TestType, f: TestBuilder.() -> Unit) {
+    val builder = TestBuilder(type)
+    builder.f()
+    builder.assertExecuted()
   }
 
-  @NotNull
-  public static BitSet parseMatching(@NotNull String matching) {
-    BitSet set = new BitSet();
-    for (int i = 0; i < matching.length(); i++) {
-      if (matching.charAt(i) != ' ') set.set(i);
-    }
-    return set;
-  }
+  //
+  // Helpers
+  //
 
-  public static Change mod(int line1, int line2, int count1, int count2) {
-    assert count1 != 0;
-    assert count2 != 0;
-    return new Change(line1, line1 + count1, line2, line2 + count2);
-  }
-
-  public static Change del(int line1, int line2, int count1) {
-    assert count1 != 0;
-    return new Change(line1, line1 + count1, line2, line2);
-  }
-
-  public static Change ins(int line1, int line2, int count2) {
-    assert count2 != 0;
-    return new Change(line1, line1, line2, line2 + count2);
-  }
-
-  public static class Change {
-    public int start1;
-    public int end1;
-    public int start2;
-    public int end2;
-
-    public Change(int start1, int end1, int start2, int end2) {
-      this.start1 = start1;
-      this.end1 = end1;
-      this.start2 = start2;
-      this.end2 = end2;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Change change = (Change)o;
-
-      if (end1 != change.end1) return false;
-      if (end2 != change.end2) return false;
-      if (start1 != change.start1) return false;
-      if (start2 != change.start2) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = start1;
-      result = 31 * result + end1;
-      result = 31 * result + start2;
-      result = 31 * result + end2;
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "(" + start1 + ", " + end1 + ") - (" + start2 + ", " + end2 + ")";
+  public data class Change(val start1: Int, val end1: Int, val start2: Int, val end2: Int) {
+    override fun toString(): String {
+      return "(" + start1 + ", " + end1 + ") - (" + start2 + ", " + end2 + ")"
     }
   }
 
-  private static int getLineCount(@NotNull Document document) {
-    return Math.max(1, document.getLineCount());
+  companion object {
+    private val REGISTRY = Registry.get("diff.verify.iterable");
+
+    private val INDICATOR = DumbProgressIndicator.INSTANCE
+    private val MANAGER = ComparisonManagerImpl()
   }
 }

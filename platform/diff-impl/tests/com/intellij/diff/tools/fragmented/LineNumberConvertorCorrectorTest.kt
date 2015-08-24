@@ -13,150 +13,178 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.fragmented;
+package com.intellij.diff.tools.fragmented
 
-import com.intellij.diff.util.Side;
-import com.intellij.testFramework.UsefulTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.Side
+import com.intellij.testFramework.UsefulTestCase
+import kotlin.test.assertEquals
 
-public class LineNumberConvertorCorrectorTest extends UsefulTestCase {
-  public void testUnmodified() {
-    Test test = new Test();
-    test.equal(0, 0, 10, Side.LEFT);
-    test.equal(0, 0, 12, Side.RIGHT);
-    test.finish();
-
-    test.checkStrictSymmetrical();
-    test.ensureMatchedCount(10, 12);
+public class LineNumberConvertorCorrectorTest : UsefulTestCase() {
+  public fun testUnmodified() {
+    doTest(
+        {
+          equal(0, 0, 10, Side.LEFT)
+          equal(0, 0, 12, Side.RIGHT)
+        },
+        {
+          checkStrictSymmetrical()
+          ensureMatchedCount(10, 12)
+        }
+    )
   }
 
-  public void testEqual1() {
-    Test test = new Test();
-    test.equal(0, 0, 10, Side.LEFT);
-    test.equal(0, 0, 10, Side.RIGHT);
-    test.finish();
+  public fun testEqual1() {
+    doTest(
+        {
+          equal(0, 0, 10, Side.LEFT)
+          equal(0, 0, 10, Side.RIGHT)
+        },
+        {
+          change(4, 3, 5, Side.LEFT)
 
-    test.change(4, 3, 5, Side.LEFT);
-
-    test.checkStrictSymmetrical();
-    test.ensureMatchedCount(12, 7);
+          checkStrictSymmetrical()
+          ensureMatchedCount(12, 7)
+        }
+    )
   }
 
-  public void testEqual2() {
-    Test test = new Test();
-    test.equal(0, 0, 10, Side.LEFT);
-    test.equal(0, 0, 10, Side.RIGHT);
-    test.finish();
+  public fun testEqual2() {
+    doTest(
+        {
+          equal(0, 0, 10, Side.LEFT)
+          equal(0, 0, 10, Side.RIGHT)
+        },
+        {
+          change(4, 5, 3, Side.RIGHT)
 
-    test.change(4, 5, 3, Side.RIGHT);
-
-    test.checkStrictSymmetrical();
-    test.ensureMatchedCount(5, 8);
+          checkStrictSymmetrical()
+          ensureMatchedCount(5, 8)
+        }
+    )
   }
 
-  public void testEqual3() {
-    Test test = new Test();
-    test.equal(0, 0, 10, Side.LEFT);
-    test.equal(0, 0, 10, Side.RIGHT);
-    test.finish();
+  public fun testEqual3() {
+    doTest(
+        {
+          equal(0, 0, 10, Side.LEFT)
+          equal(0, 0, 10, Side.RIGHT)
+        },
+        {
+          change(4, 3, 3, Side.LEFT)
 
-    test.change(4, 3, 3, Side.LEFT);
-
-    test.checkStrictSymmetrical();
-    test.ensureMatchedCount(10, 7);
+          checkStrictSymmetrical()
+          ensureMatchedCount(10, 7)
+        }
+    )
   }
 
-  public void testEqual4() {
-    Test test = new Test();
-    test.equal(0, 0, 15, Side.LEFT);
-    test.equal(0, 0, 15, Side.RIGHT);
-    test.finish();
+  public fun testEqual4() {
+    doTest(
+        {
+          equal(0, 0, 15, Side.LEFT)
+          equal(0, 0, 15, Side.RIGHT)
+        },
+        {
+          change(4, 3, 5, Side.LEFT)
+          checkStrictSymmetrical()
+          change(1, 2, 1, Side.RIGHT)
+          checkStrictSymmetrical()
+          change(12, 3, 1, Side.LEFT)
+          checkStrictSymmetrical()
 
-    test.change(4, 3, 5, Side.LEFT);
-    test.checkStrictSymmetrical();
-    test.change(1, 2, 1, Side.RIGHT);
-    test.checkStrictSymmetrical();
-    test.change(12, 3, 1, Side.LEFT);
-    test.checkStrictSymmetrical();
-
-    test.ensureMatchedCount(13, 8);
+          ensureMatchedCount(13, 8)
+        }
+    )
   }
 
-  public void testInsideModifiedRange() {
-    Test test = new Test();
-    test.equal(0, 0, 15, Side.LEFT);
-    test.equal(0, 0, 15, Side.RIGHT);
-    test.finish();
-
-    test.change(0, 10, 15, Side.LEFT);
-    test.checkStrictSymmetrical();
-    test.change(0, 8, 6, Side.LEFT);
-    test.checkStrictSymmetrical();
-    test.change(2, 4, 2, Side.LEFT);
-    test.checkStrictSymmetrical();
+  public fun testInsideModifiedRange() {
+    doTest(
+        {
+          equal(0, 0, 15, Side.LEFT)
+          equal(0, 0, 15, Side.RIGHT)
+        },
+        {
+          change(0, 10, 15, Side.LEFT)
+          checkStrictSymmetrical()
+          change(0, 8, 6, Side.LEFT)
+          checkStrictSymmetrical()
+          change(2, 4, 2, Side.LEFT)
+          checkStrictSymmetrical()
+        }
+    )
   }
 
-  private static class Test {
-    private final LineNumberConvertor.Builder myBuilder = new LineNumberConvertor.Builder();
-    private LineNumberConvertor myConvertor;
-    private int myLength = 0; // search for strict matchings in this boundaries (*2 - just in case)
+  //
+  // Impl
+  //
 
-    public void equal(int onesideStart, int twosideStart, int length, @NotNull Side side) {
+  private fun doTest(prepare: TestBuilder.() -> Unit, check: Test.() -> Unit) {
+    val builder = TestBuilder()
+    builder.prepare()
+    val test = builder.finish()
+    test.check()
+  }
+
+  private class TestBuilder {
+    private val builder = LineNumberConvertor.Builder()
+    private var maxLength = 0 // search for strict matchings in this boundaries (*2 - just in case)
+
+    public fun equal(onesideStart: Int, twosideStart: Int, length: Int, side: Side) {
       if (side.isLeft()) {
-        myBuilder.put1(onesideStart, twosideStart, length);
+        builder.put1(onesideStart, twosideStart, length)
       }
       else {
-        myBuilder.put2(onesideStart, twosideStart, length);
+        builder.put2(onesideStart, twosideStart, length)
       }
-      myLength = Math.max(myLength, onesideStart + length);
-      myLength = Math.max(myLength, twosideStart + length);
+      maxLength = Math.max(maxLength, onesideStart + length)
+      maxLength = Math.max(maxLength, twosideStart + length)
     }
 
-    public void finish() {
-      myConvertor = myBuilder.build();
+    public fun finish(): Test = Test(builder.build(), maxLength)
+  }
+
+  private class Test(val convertor: LineNumberConvertor, var length: Int) {
+    public fun change(onesideLine: Int, oldLength: Int, newLength: Int, side: Side) {
+      convertor.handleOnesideChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side)
+      length = Math.max(length, length + newLength - oldLength)
     }
 
-    public void change(int onesideLine, int oldLength, int newLength, @NotNull Side side) {
-      myConvertor.handleOnesideChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side);
-      myLength = Math.max(myLength, myLength + newLength - oldLength);
-    }
+    public fun checkStrictSymmetrical() {
+      for (i in 0..length * 2) {
+        val value1 = convertor.convertInv1(i)
+        if (value1 != -1) assertEquals(i, convertor.convert1(value1))
 
-    public void checkStrictSymmetrical() {
-      for (int i = 0; i < myLength * 2; i++) {
-        int value1 = myConvertor.convertInv1(i);
-        if (value1 != -1) assertEquals(i, myConvertor.convert1(value1));
+        val value2 = convertor.convertInv2(i)
+        if (value2 != -1) assertEquals(i, convertor.convert2(value2))
 
-        int value2 = myConvertor.convertInv2(i);
-        if (value2 != -1) assertEquals(i, myConvertor.convert2(value2));
+        val value3 = convertor.convert1(i)
+        if (value3 != -1) assertEquals(i, convertor.convertInv1(value3))
 
-        int value3 = myConvertor.convert1(i);
-        if (value3 != -1) assertEquals(i, myConvertor.convertInv1(value3));
-
-        int value4 = myConvertor.convert2(i);
-        if (value4 != -1) assertEquals(i, myConvertor.convertInv2(value4));
+        val value4 = convertor.convert2(i)
+        if (value4 != -1) assertEquals(i, convertor.convertInv2(value4))
       }
     }
 
-    public void ensureMatchedCount(int minimumMatched1, int minimumMatched2) {
-      int counter1 = 0;
-      int counter2 = 0;
-      for (int i = 0; i < myLength * 2; i++) {
-        if (myConvertor.convert1(i) != -1) counter1++;
-        if (myConvertor.convert2(i) != -1) counter2++;
+    public fun ensureMatchedCount(minimumMatched1: Int, minimumMatched2: Int) {
+      var counter1 = 0
+      var counter2 = 0
+      for (i in 0..length * 2) {
+        if (convertor.convert1(i) != -1) counter1++
+        if (convertor.convert2(i) != -1) counter2++
       }
-      assertEquals(minimumMatched1, counter1);
-      assertEquals(minimumMatched2, counter2);
+      assertEquals(minimumMatched1, counter1)
+      assertEquals(minimumMatched2, counter2)
     }
 
-    public void printMatchings() {
-      for (int i = 0; i < myLength * 2; i++) {
-        int value = myConvertor.convert1(i);
-        if (value != -1) System.out.println("L: " + i + " - " + value);
+    public fun printMatchings() {
+      for (i in 0..length * 2 - 1) {
+        val value = convertor.convert1(i)
+        if (value != -1) println("L: " + i + " - " + value)
       }
 
-      for (int i = 0; i < myLength * 2; i++) {
-        int value = myConvertor.convert2(i);
-        if (value != -1) System.out.println("R: " + i + " - " + value);
+      for (i in 0..length * 2 - 1) {
+        val value = convertor.convert2(i)
+        if (value != -1) println("R: " + i + " - " + value)
       }
     }
   }

@@ -13,268 +13,376 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-public class CharComparisonUtilTest extends ComparisonUtilTestBase {
-  public void testEqualStrings() {
-    TestData.chars("", "")
-      ._______Def_("", "")
-      .all();
+public class CharComparisonUtilTest : ComparisonUtilTestBase() {
+  public fun testEqualStrings() {
+    chars {
+      ("" - "")
+      ("" - "").default()
+      testAll()
+    }
 
-    TestData.chars("x", "x")
-      ._______Def_(" ", " ")
-      .all();
+    chars {
+      ("x" - "x")
+      (" " - " ").default()
+      testAll()
+    }
 
-    TestData.chars("x_y_z_", "x_y_z_")
-      ._______Def_("      ", "      ")
-      .all();
+    chars {
+      ("x_y_z_" - "x_y_z_")
+      ("      " - "      ").default()
+      testAll()
+    }
 
-    TestData.chars("_", "_")
-      ._______Def_(" ", " ")
-      .all();
+    chars {
+      ("_" - "_")
+      (" " - " ").default()
+      testAll()
+    }
 
-    TestData.chars("xxx", "xxx")
-      ._______Def_("   ", "   ")
-      .all();
+    chars {
+      ("xxx" - "xxx")
+      ("   " - "   ").default()
+      testAll()
+    }
 
-    TestData.chars("xyz", "xyz")
-      ._______Def_("   ", "   ")
-      .all();
+    chars {
+      ("xyz" - "xyz")
+      ("   " - "   ").default()
+      testAll()
+    }
 
-    TestData.chars(".x!", ".x!")
-      ._______Def_("   ", "   ")
-      .all();
+    chars {
+      (".x!" - ".x!")
+      ("   " - "   ").default()
+      testAll()
+    }
   }
 
-  public void testTrivialCases() {
-    TestData.chars("x", "")
-      ._______Def_("-", "")
-      .all();
+  public fun testTrivialCases() {
+    chars {
+      ("x" - "")
+      ("-" - "").default()
+      testAll()
+    }
 
-    TestData.chars("", "x")
-      ._______Def_("", "-")
-      .all();
+    chars {
+      ("" - "x")
+      ("" - "-").default()
+      testAll()
+    }
 
-    TestData.chars("x", "y")
-      ._______Def_("-", "-")
-      .all();
+    chars {
+      ("x" - "y")
+      ("-" - "-").default()
+      testAll()
+    }
 
-    TestData.chars("x_", "")
-      ._______Def_("--", "")
-      .____Ignore_("- ", "")
-      .all();
+    chars {
+      ("x_" - "")
+      ("--" - "").default()
+      ("- " - "").ignore()
+      testAll()
+    }
 
-    TestData.chars("", "x_")
-      ._______Def_("", "--")
-      .____Ignore_("", "- ")
-      .all();
+    chars {
+      ("" - "x_")
+      ("" - "--").default()
+      ("" - "- ").ignore()
+      testAll()
+    }
 
-    TestData.chars("x_", "y_")
-      ._______Def_("- ", "- ")
-      .all();
+    chars {
+      ("x_" - "y_")
+      ("- " - "- ").default()
+      testAll()
+    }
 
-    TestData.chars("_x", "_y")
-      ._______Def_(" -", " -")
-      .all();
+    chars {
+      ("_x" - "_y")
+      (" -" - " -").default()
+      testAll()
+    }
   }
 
-  public void testSimpleCases() {
-    TestData.chars("xyx", "xxx")
-      ._______Def_(" - ", " - ")
-      .all();
+  public fun testSimpleCases() {
+    chars {
+      ("xyx" - "xxx")
+      (" - " - " - ").default()
+      testAll()
+    }
 
-    TestData.chars("xyyx", "xmx")
-      ._______Def_(" -- ", " - ")
-      .all();
+    chars {
+      ("xyyx" - "xmx")
+      (" -- " - " - ").default()
+      testAll()
+    }
 
-    TestData.chars("xyy", "yyx")
-      ._______Def_("-  ", "  -")
-      .all();
+    chars {
+      ("xyy" - "yyx")
+      ("-  " - "  -").default()
+      testAll()
+    }
 
-    TestData.chars("x!!", "!!x")
-      ._______Def_("-  ", "  -")
-      .all();
+    chars {
+      ("x!!" - "!!x")
+      ("-  " - "  -").default()
+      testAll()
+    }
 
-    TestData.chars("xyx", "xx")
-      ._______Def_(" - ", "  ")
-      .all();
+    chars {
+      ("xyx" - "xx")
+      (" - " - "  ").default()
+      testAll()
+    }
 
-    TestData.chars("xx", "xyx")
-      ._______Def_("  ", " - ")
-      .all();
+    chars {
+      ("xx" - "xyx")
+      ("  " - " - ").default()
+      testAll()
+    }
 
-    TestData.chars("!...", "...!")
-      ._______Def_("-   ", "   -")
-      .all();
+    chars {
+      ("!..." - "...!")
+      ("-   " - "   -").default()
+      testAll()
+    }
   }
 
-  public void testWhitespaceChangesOnly() {
-    TestData.chars(" x y z ", "xyz")
-      ._______Def_("- - - -", "   ")
-      .____Ignore_("       ", "   ")
-      .all();
+  public fun testWhitespaceChangesOnly() {
+    chars {
+      (" x y z " - "xyz")
+      ("- - - -" - "   ").default()
+      ("       " - "   ").ignore()
+      testAll()
+    }
 
-    TestData.chars("xyz", " x y z ")
-      ._______Def_("   ", "- - - -")
-      .____Ignore_("   ", "       ")
-      .all();
+    chars {
+      ("xyz" - " x y z ")
+      ("   " - "- - - -").default()
+      ("   " - "       ").ignore()
+      testAll()
+    }
 
-    TestData.chars("x ", "x")
-      ._______Def_(" -", " ")
-      .____Ignore_("  ", " ")
-      .all();
+    chars {
+      ("x " - "x")
+      (" -" - " ").default()
+      ("  " - " ").ignore()
+      testAll()
+    }
 
-    TestData.chars("x", " x")
-      ._______Def_(" ", "- ")
-      .____Ignore_(" ", "  ")
-      .all();
+    chars {
+      ("x" - " x")
+      (" " - "- ").default()
+      (" " - "  ").ignore()
+      testAll()
+    }
 
-    TestData.chars(" x ", "x")
-      ._______Def_("- -", " ")
-      .____Ignore_("   ", " ")
-      .all();
+    chars {
+      (" x " - "x")
+      ("- -" - " ").default()
+      ("   " - " ").ignore()
+      testAll()
+    }
 
-    TestData.chars("x", " x ")
-      ._______Def_(" ", "- -")
-      .____Ignore_(" ", "   ")
-      .all();
+    chars {
+      ("x" - " x ")
+      (" " - "- -").default()
+      (" " - "   ").ignore()
+      testAll()
+    }
   }
 
-  public void testWhitespaceChanges() {
-    TestData.chars(" x ", "z")
-      ._______Def_("---", "-")
-      .____Ignore_(" - ", "-")
-      .all();
+  public fun testWhitespaceChanges() {
+    chars {
+      (" x " - "z")
+      ("---" - "-").default()
+      (" - " - "-").ignore()
+      testAll()
+    }
 
-    TestData.chars("x", " z ")
-      ._______Def_("-", "---")
-      .____Ignore_("-", " - ")
-      .all();
+    chars {
+      ("x" - " z ")
+      ("-" - "---").default()
+      ("-" - " - ").ignore()
+      testAll()
+    }
 
-    TestData.chars(" x", "z\t")
-      ._______Def_("--", "--")
-      .____Ignore_(" -", "- ")
-      .all();
+    chars {
+      (" x" - "z\t")
+      ("--" - "--").default()
+      (" -" - "- ").ignore()
+      testAll()
+    }
 
-    TestData.chars("x ", "\tz")
-      ._______Def_("--", "--")
-      .____Ignore_("- ", " -")
-      .all();
+    chars {
+      ("x " - "\tz")
+      ("--" - "--").default()
+      ("- " - " -").ignore()
+      testAll()
+    }
   }
 
-  public void testIgnoreInnerWhitespaces() {
-    TestData.chars("x z y", "xmn")
-      ._______Def_(" ----", " --")
-      .____Ignore_("  ---", " --")
-      .all();
+  public fun testIgnoreInnerWhitespaces() {
+    chars {
+      ("x z y" - "xmn")
+      (" ----" - " --").default()
+      ("  ---" - " --").ignore()
+      testAll()
+    }
 
-    TestData.chars("x y z ", "x y m ")
-      ._______Def_("    - ", "    - ")
-      .all();
+    chars {
+      ("x y z " - "x y m ")
+      ("    - " - "    - ").default()
+      testAll()
+    }
 
-    TestData.chars("x y z", "x y m ")
-      ._______Def_("    -", "    --")
-      .____Ignore_("    -", "    - ")
-      .all();
+    chars {
+      ("x y z" - "x y m ")
+      ("    -" - "    --").default()
+      ("    -" - "    - ").ignore()
+      testAll()
+    }
 
-    TestData.chars(" x y z", " m y z")
-      ._______Def_(" -    ", " -    ")
-      .all();
+    chars {
+      (" x y z" - " m y z")
+      (" -    " - " -    ").default()
+      testAll()
+    }
 
-    TestData.chars("x y z", " m y z")
-      ._______Def_("-    ", "--    ")
-      .____Ignore_("-    ", " -    ")
-      .all();
+    chars {
+      ("x y z" - " m y z")
+      ("-    " - "--    ").default()
+      ("-    " - " -    ").ignore()
+      testAll()
+    }
 
-    TestData.chars("x y z", "x m z")
-      ._______Def_("  -  ", "  -  ")
-      .all();
+    chars {
+      ("x y z" - "x m z")
+      ("  -  " - "  -  ").default()
+      testAll()
+    }
 
-    TestData.chars("x y z", "x  z")
-      ._______Def_("  -  ", "    ")
-      .all();
+    chars {
+      ("x y z" - "x  z")
+      ("  -  " - "    ").default()
+      testAll()
+    }
 
-    TestData.chars("x  z", "x m z")
-      ._______Def_("    ", "  -  ")
-      .all();
+    chars {
+      ("x  z" - "x m z")
+      ("    " - "  -  ").default()
+      testAll()
+    }
 
-    TestData.chars("x  z", "x n m z")
-      ._______Def_("    ", "  ---  ")
-      .all();
+    chars {
+      ("x  z" - "x n m z")
+      ("    " - "  ---  ").default()
+      testAll()
+    }
   }
 
-  public void testEmptyRangePositions() {
-    TestData.chars("x y", "x zy")
-      ._Def_(ins(2, 2, 1))
-      .all();
+  public fun testEmptyRangePositions() {
+    chars {
+      ("x y" - "x zy")
+      default(ins(2, 2, 1))
+      testAll()
+    }
 
-    TestData.chars("x y", "xz y")
-      ._Def_(ins(1, 1, 1))
-      .all();
+    chars {
+      ("x y" - "xz y")
+      default(ins(1, 1, 1))
+      testAll()
+    }
 
-    TestData.chars("x y z", "x  z")
-      ._Def_(del(2, 2, 1))
-      .all();
+    chars {
+      ("x y z" - "x  z")
+      default(del(2, 2, 1))
+      testAll()
+    }
 
-    TestData.chars("x  z", "x m z")
-      ._Def_(ins(2, 2, 1))
-      .all();
+    chars {
+      ("x  z" - "x m z")
+      default(ins(2, 2, 1))
+      testAll()
+    }
 
-    TestData.chars("xyx", "xx")
-      ._Def_(del(1, 1, 1))
-      .all();
+    chars {
+      ("xyx" - "xx")
+      default(del(1, 1, 1))
+      testAll()
+    }
 
-    TestData.chars("xx", "xyx")
-      ._Def_(ins(1, 1, 1))
-      .all();
+    chars {
+      ("xx" - "xyx")
+      default(ins(1, 1, 1))
+      testAll()
+    }
 
-    TestData.chars("xy", "x")
-      ._Def_(del(1, 1, 1))
-      .all();
+    chars {
+      ("xy" - "x")
+      default(del(1, 1, 1))
+      testAll()
+    }
 
-    TestData.chars("x", "xy")
-      ._Def_(ins(1, 1, 1))
-      .all();
+    chars {
+      ("x" - "xy")
+      default(ins(1, 1, 1))
+      testAll()
+    }
   }
 
-  public void testAlgorithmSpecific() {
+  public fun testAlgorithmSpecific() {
     // This is a strange example: "ignore whitespace" produces lesser matching, than "Default".
     // This is fine, as the main goal of "ignore whitespaces" is to reduce 'noise' of diff, and 1 change is better than 3 changes
     // So we actually "ignore" whitespaces during comparison, rather than "mark all whitespaces as matched".
-    TestData.chars("x   y   z", "xX      Zz")
-      ._______Def_("    -    ", " -      - ")
-      .____Ignore_("    -    ", " -------- ")
-      .all();
+    chars {
+      ("x   y   z" - "xX      Zz")
+      ("    -    " - " -      - ").default()
+      ("    -    " - " -------- ").ignore()
+      testAll()
+    }
   }
 
-  public void testNonDeterministicCases() {
-    TestData.chars("x", "  ")
-      ._Def_(del(0, 0, 1))
-      .ignore();
+  public fun testNonDeterministicCases() {
+    chars {
+      ("x" - "  ")
+      ignore(del(0, 0, 1))
+      testIgnore()
+    }
 
-    TestData.chars("  ", "x")
-      ._Def_(ins(0, 0, 1))
-      ._Ignore_();
+    chars {
+      ("  " - "x")
+      ignore(ins(0, 0, 1))
+      testIgnore()
+    }
 
-    TestData.chars("x .. z", "x y .. z")
-      ._______Def_("      ", "  --    ")
-      .____Ignore_("      ", "  -     ")
-      ._Def_(ins(2, 2, 2))
-      ._Ignore_(ins(2, 2, 1))
-      .all();
+    chars {
+      ("x .. z" - "x y .. z")
+      ("      " - "  --    ").default()
+      ("      " - "  -     ").ignore()
+      default(ins(2, 2, 2))
+      ignore(ins(2, 2, 1))
+      testAll()
+    }
 
-    TestData.chars(" x _ y _ z ", "x z")
-      ._______Def_("-  ------ -", "   ")
-      .____Ignore_("     -     ", "   ")
-      ._Def_(del(0, 0, 1), del(3, 2, 6), del(10, 3, 1))
-      ._Ignore_(del(5, 2, 1))
-      .all();
+    chars {
+      (" x _ y _ z " - "x z")
+      ("-  ------ -" - "   ").default()
+      ("     -     " - "   ").ignore()
+      default(del(0, 0, 1), del(3, 2, 6), del(10, 3, 1))
+      ignore(del(5, 2, 1))
+      testAll()
+    }
 
-    TestData.chars("x z", " x _ y _ z ")
-      ._______Def_("   ", "-  ------ -")
-      .____Ignore_("   ", "     -     ")
-      ._Def_(ins(0, 0, 1), ins(2, 3, 6), ins(3, 10, 1))
-      ._Ignore_(ins(2, 5, 1))
-      .all();
+    chars {
+      ("x z" - " x _ y _ z ")
+      ("   " - "-  ------ -").default()
+      ("   " - "     -     ").ignore()
+      default(ins(0, 0, 1), ins(2, 3, 6), ins(3, 10, 1))
+      ignore(ins(2, 5, 1))
+      testAll()
+    }
   }
 }

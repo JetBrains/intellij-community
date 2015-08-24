@@ -13,96 +13,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.text.CharSequenceSubSequence;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.text.CharSequenceSubSequence
+import java.util.Random
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.test.assertTrue
 
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
+public abstract class AutoTestCase : UsefulTestCase() {
+  protected val RNG: Random = Random()
 
-public abstract class AutoTestCase extends UsefulTestCase {
-  protected final Random myRng = new Random();
-  private long myLastSeed = -1;
-  private boolean myGotSeedException = false;
+  private var gotSeedException = false
 
-  @NotNull
-  protected String generateText(int maxLength, int charCount, @NotNull Map<Integer, Character> chars) {
-    int length = myRng.nextInt(maxLength + 1);
-    StringBuilder builder = new StringBuilder(length);
+  protected fun generateText(maxLength: Int, charCount: Int, predefinedChars: Map<Int, Char>): String {
+    val length = RNG.nextInt(maxLength + 1)
+    val builder = StringBuilder(length)
 
-    for (int i = 0; i < length; i++) {
-      int rnd = myRng.nextInt(charCount);
-      if (chars.containsKey(rnd)) {
-        builder.append(chars.get(rnd));
-      }
-      else {
-        builder.append((char)(rnd + 97));
-      }
+    for (i in 1..length) {
+      val rnd = RNG.nextInt(charCount)
+      val char = predefinedChars.get(rnd) ?: (rnd + 97).toChar();
+      builder.append(char)
     }
-
-    return builder.toString();
+    return builder.toString()
   }
 
-  protected void rememberSeed() {
-    myLastSeed = getCurrentSeed();
-  }
-
-  protected long getLastSeed() {
-    return myLastSeed;
-  }
-
-  protected long getCurrentSeed() {
-    if (myGotSeedException) return -1;
+  protected fun getCurrentSeed(): Long {
+    if (gotSeedException) return -1
     try {
-      Field seedField = myRng.getClass().getDeclaredField("seed");
-      seedField.setAccessible(true);
-      AtomicLong seedFieldValue = (AtomicLong)seedField.get(myRng);
-      return seedFieldValue.get() ^ 0x5DEECE66DL;
+      val seedField = RNG.javaClass.getDeclaredField("seed")
+      seedField.setAccessible(true)
+      val seedFieldValue = seedField.get(RNG) as AtomicLong
+      return seedFieldValue.get() xor 0x5DEECE66DL
     }
-    catch (Exception e) {
-      myGotSeedException = true;
-      System.err.println("Can't get random seed: " + e.getMessage());
-      return -1;
+    catch (e: Exception) {
+      gotSeedException = true
+      System.err.println("Can't get random seed: " + e.getMessage())
+      return -1
     }
   }
 
-  @NotNull
-  public static String textToReadableFormat(@Nullable Document text) {
-    if (text == null) return "null";
-    return "'" + text.getCharsSequence().toString().replace('\n', '*').replace('\t', '+') + "'";
+  public fun textToReadableFormat(text: CharSequence?): String {
+    if (text == null) return "null"
+    return "'" + text.toString().replace('\n', '*').replace('\t', '+') + "'"
   }
 
-  public static void assertEqualsCharSequences(@NotNull CharSequence chunk1, @NotNull CharSequence chunk2,
-                                               boolean ignoreSpaces, boolean skipLastNewline) {
+  public fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
     if (ignoreSpaces) {
-      assertTrue(StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2));
+      assertTrue(StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2))
     }
     else {
       if (skipLastNewline) {
-        CharSequence chunk12 = StringUtil.endsWithChar(chunk1, '\n') ? trimLastChar(chunk1) : null;
-        CharSequence chunk22 = StringUtil.endsWithChar(chunk2, '\n') ? trimLastChar(chunk2) : null;
-
-        if (StringUtil.equals(chunk1, chunk2)) return;
-        if (StringUtil.equals(chunk12, chunk2)) return;
-        if (StringUtil.equals(chunk1, chunk22)) return;
-
-        assertTrue(false);
+        if (StringUtil.equals(chunk1, chunk2)) return
+        if (StringUtil.equals(stripNewline(chunk1), chunk2)) return
+        if (StringUtil.equals(chunk1, stripNewline(chunk2))) return
+        assertTrue(false)
       }
       else {
-        assertTrue(StringUtil.equals(chunk1, chunk2));
+        assertTrue(StringUtil.equals(chunk1, chunk2))
       }
     }
   }
 
-  @NotNull
-  private static CharSequence trimLastChar(@NotNull CharSequence text) {
-    return new CharSequenceSubSequence(text, 0, text.length() - 1);
+  private fun stripNewline(text: CharSequence): CharSequence? {
+    return when (StringUtil.endsWithChar(text, '\n') ) {
+      true -> CharSequenceSubSequence(text, 0, text.length() - 1)
+      false -> null
+    }
   }
+
+  protected fun Int.until(a: Int): IntRange = this..a - 1
 }

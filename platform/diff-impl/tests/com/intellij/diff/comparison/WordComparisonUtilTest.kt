@@ -13,212 +13,295 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-public class WordComparisonUtilTest extends ComparisonUtilTestBase {
-  public void testSimpleCases() {
-    TestData.words("x z", "y z")
-      ._______Def_("-  ", "-  ")
-      .all();
+public class WordComparisonUtilTest : ComparisonUtilTestBase() {
+  public fun testSimpleCases() {
+    words {
+      ("x z" - "y z")
+      ("-  " - "-  ").default()
+      testAll()
+    }
 
-    TestData.words(" x z", "y z")
-      ._______Def_("--  ", "-  ")
-      .______Trim_(" -  ", "-  ")
-      .all();
+    words {
+      ("x z" - "y z")
+      ("-  " - "-  ").default()
+      testAll()
+    }
 
-    TestData.words("x z ", "y z")
-      ._______Def_("-  -", "-  ")
-      .______Trim_("-   ", "-  ")
-      .all();
+    words {
+      (" x z" - "y z")
+      ("--  " - "-  ").default()
+      (" -  " - "-  ").trim()
+      testAll()
+    }
 
-    TestData.words("x z ", "y z")
-      ._______Def_("-  -", "-  ")
-      .______Trim_("-   ", "-  ")
-      .all();
+    words {
+      ("x z " - "y z")
+      ("-  -" - "-  ").default()
+      ("-   " - "-  ").trim()
+      testAll()
+    }
 
-    TestData.words("x z", " y z ")
-      ._______Def_("-  ", "--  -")
-      .______Trim_("-  ", " -   ")
-      .all();
+    words {
+      ("x z " - "y z")
+      ("-  -" - "-  ").default()
+      ("-   " - "-  ").trim()
+      testAll()
+    }
 
-    TestData.words("x y", "x z ")
-      ._______Def_("  -", "  --")
-      .______Trim_("  -", "  - ")
-      .all();
+    words {
+      ("x z" - " y z ")
+      ("-  " - "--  -").default()
+      ("-  " - " -   ").trim()
+      testAll()
+    }
 
-    TestData.words("x,y", "x")
-      ._______Def_(" --", " ")
-      .all();
+    words {
+      ("x y" - "x z ")
+      ("  -" - "  --").default()
+      ("  -" - "  - ").trim()
+      testAll()
+    }
 
-    TestData.words("x,y", "y")
-      ._______Def_("-- ", " ")
-      .all();
+    words {
+      ("x,y" - "x")
+      (" --" - " ").default()
+      testAll()
+    }
 
-    TestData.words(".x=", ".!=")
-      ._______Def_(" - ", " - ")
-      .all();
+    words {
+      ("x,y" - "y")
+      ("-- " - " ").default()
+      testAll()
+    }
+
+    words {
+      (".x=" - ".!=")
+      (" - " - " - ").default()
+      testAll()
+    }
   }
 
-  public void testPunctuation() {
-    TestData.words(" x.z.x ", "x..x")
-      ._______Def_("-  -  -", "    ")
-      .______Trim_("   -   ", "    ")
-      .all();
+  public fun testPunctuation() {
+    words {
+      (" x.z.x " - "x..x")
+      ("-  -  -" - "    ").default()
+      ("   -   " - "    ").trim()
+      testAll()
+    }
 
-    TestData.words("x..x", " x.z.x ")
-      ._______Def_("    ", "-  -  -")
-      .______Trim_("    ", "   -   ")
-      .all();
+    words {
+      ("x..x" - " x.z.x ")
+      ("    " - "-  -  -").default()
+      ("    " - "   -   ").trim()
+      testAll()
+    }
 
-    TestData.words("x ... z", "y ... z")
-      ._______Def_("-      ", "-      ")
-      .all();
+    words {
+      ("x ... z" - "y ... z")
+      ("-      " - "-      ").default()
+      testAll()
+    }
 
-    TestData.words("x ... z", "x ... y")
-      ._______Def_("      -", "      -")
-      .all();
+    words {
+      ("x ... z" - "x ... y")
+      ("      -" - "      -").default()
+      testAll()
+    }
 
-    TestData.words("x ,... z", "x ... y")
-      ._______Def_("  -    -", "      -")
-      .all();
+    words {
+      ("x ,... z" - "x ... y")
+      ("  -    -" - "      -").default()
+      testAll()
+    }
 
-    TestData.words("x . , .. z", "x ... y")
-      ._______Def_("   ---   -", "      -")
-      .____Ignore_("    -    -", "      -")
-      .all();
+    words {
+      ("x . , .. z" - "x ... y")
+      ("   ---   -" - "      -").default()
+      ("    -    -" - "      -").ignore()
+      testAll()
+    }
 
-    TestData.words("x==y==z", "x====z")
-      ._______Def_("   -   ", "      ")
-      .all();
+    words {
+      ("x==y==z" - "x====z")
+      ("   -   " - "      ").default()
+      testAll()
+    }
 
-    TestData.words("x====z", "x==t==z")
-      ._______Def_("      ", "   -   ")
-      .all();
+    words {
+      ("x====z" - "x==t==z")
+      ("      " - "   -   ").default()
+      testAll()
+    }
   }
 
-  public void testOldDiffBug() {
-    TestData.words("x'y'>", "x'>")
-      ._______Def_("  -- ", "   ")
-      .all();
+  public fun testOldDiffBug() {
+    words {
+      ("x'y'>" - "x'>")
+      ("  -- " - "   ").default()
+      testAll()
+    }
 
-    TestData.words("x'>", "x'y'>")
-      ._______Def_("   ", "  -- ")
-      .all();
+    words {
+      ("x'>" - "x'y'>")
+      ("   " - "  -- ").default()
+      testAll()
+    }
   }
 
-  public void testWhitespaceOnlyChanges() {
-    TestData.words("x  =z", "x=  z")
-      ._______Def_(" --  ", "  -- ")
-      .skipIgnore();
+  public fun testWhitespaceOnlyChanges() {
+    words {
+      ("x  =z" - "x=  z")
+      (" --  " - "  -- ").default()
+      testDefault()
+      testTrim()
+    }
 
-    TestData.words("x  =", "x=  z")
-      ._______Def_(" -- ", "  ---")
-      .____Ignore_("    ", "    -")
-      .all();
+    words {
+      ("x  =" - "x=  z")
+      (" -- " - "  ---").default()
+      ("    " - "    -").ignore()
+      testAll()
+    }
   }
 
-  public void testNewlines() {
-    TestData.words(" x _ y _ z ", "x z")
-      ._______Def_("- ------  -", "   ")
-      .______Trim_("     -     ", "   ")
-      .____Ignore_("     -     ", "   ")
-      .all();
+  public fun testNewlines() {
+    words {
+      (" x _ y _ z " - "x z")
+      ("- ------  -" - "   ").default()
+      ("     -     " - "   ").trim()
+      ("     -     " - "   ").ignore()
+      testAll()
+    }
 
-    TestData.words("x z", " x _ y _ z ")
-      ._______Def_("   ", "- ------  -")
-      .______Trim_("   ", "     -     ")
-      .____Ignore_("   ", "     -     ")
-      .all();
+    words {
+      ("x z" - " x _ y _ z ")
+      ("   " - "- ------  -").default()
+      ("   " - "     -     ").trim()
+      ("   " - "     -     ").ignore()
+      testAll()
+    }
   }
 
-  public void testFixedBugs() {
-    TestData.words(".! ", ".  y!")
-      ._______Def_("  -", " --- ")
-      .______Trim_("   ", " --- ")
-      .____Ignore_("   ", "   - ")
-      .all();
+  public fun testFixedBugs() {
+    words {
+      (".! " - ".  y!")
+      ("  -" - " --- ").default()
+      ("   " - " --- ").trim()
+      ("   " - "   - ").ignore()
+      testAll()
+    }
 
-    TestData.words(" x n", " y_  x m")
-      ._______Def_("   -", "----   -")
-      .______Trim_("   -", " -     -")
-      .____Ignore_("   -", " -     -")
-      .all();
+    words {
+      (" x n" - " y_  x m")
+      ("   -" - "----   -").default()
+      ("   -" - " -     -").trim()
+      ("   -" - " -     -").ignore()
+      testAll()
+    }
 
-    TestData.words("x_", "x!  ")
-      ._______Def_(" -", " ---")
-      .______Trim_("  ", " -  ")
-      .____Ignore_("  ", " -  ")
-      .all();
+    words {
+      ("x_" - "x!  ")
+      (" -" - " ---").default()
+      ("  " - " -  ").trim()
+      ("  " - " -  ").ignore()
+      testAll()
+    }
   }
 
-  public void testInnerWhitespaces() {
-    TestData.words("<< x >>", "<.<>.>")
-      ._______Def_("  ---  ", " -  - ")
-      .____Ignore_("   -   ", " -  - ")
-      .all();
+  public fun testInnerWhitespaces() {
+    words {
+      ("<< x >>" - "<.<>.>")
+      ("  ---  " - " -  - ").default()
+      ("   -   " - " -  - ").ignore()
+      testAll()
+    }
 
-    TestData.words("<< x >>", "y<<x>>y")
-      ._______Def_("  - -  ", "-     -")
-      .____Ignore_("       ", "-     -")
-      .all();
+    words {
+      ("<< x >>" - "y<<x>>y")
+      ("  - -  " - "-     -").default()
+      ("       " - "-     -").ignore()
+      testAll()
+    }
 
-    TestData.words("x .. z", "x y .. z")
-      ._______Def_("      ", " --     ") // TODO: looks wrong
-      .____Ignore_("      ", "  -     ")
-      .all();
+    words {
+      ("x .. z" - "x y .. z")
+      ("      " - " --     ").default() // TODO: looks wrong.default()
+      ("      " - "  -     ").ignore()
+      testAll()
+    }
 
-    TestData.words("  x..z", "x..y  ")
-      ._______Def_("--   -", "   ---")
-      .______Trim_("     -", "   -  ")
-      .all();
+    words {
+      ("  x..z" - "x..y  ")
+      ("--   -" - "   ---").default()
+      ("     -" - "   -  ").trim()
+      testAll()
+    }
 
-    TestData.words(" x y x _ x z x ", "x x_x x")
-      ._______Def_("- --  - - --  -", "       ")
-      .______Trim_("  --      --   ", "       ")
-      .____Ignore_("   -       -   ", "       ")
-      .all();
+    words {
+      (" x y x _ x z x " - "x x_x x")
+      ("- --  - - --  -" - "       ").default()
+      ("  --      --   " - "       ").trim()
+      ("   -       -   " - "       ").ignore()
+      testAll()
+    }
   }
 
-  public void testEmptyRangePositions() {
+  public fun testEmptyRangePositions() {
     // TODO
   }
 
-  public void testAlgorithmSpecific() {
+  public fun testAlgorithmSpecific() {
     // prefer words over punctuation
-    TestData.words("...x", "x...")
-      ._______Def_("--- ", " ---")
-      .all();
+    words {
+      ("...x" - "x...")
+      ("--- " - " ---").default()
+      testAll()
+    }
 
     // prefer longer words sequences
-    TestData.words("x x y", "x y")
-      ._______Def_("--   ", "   ")
-      .____Ignore_("-    ", "   ")
-      .all();
+    words {
+      ("x x y" - "x y")
+      ("--   " - "   ").default()
+      ("-    " - "   ").ignore()
+      testAll()
+    }
 
-    TestData.words("y x x", "y x")
-      ._______Def_("   --", "   ")
-      .____Ignore_("    -", "   ")
-      .all();
+    words {
+      ("y x x" - "y x")
+      ("   --" - "   ").default()
+      ("    -" - "   ").ignore()
+      testAll()
+    }
 
-    TestData.words("A X A B", "A B")
-      ._______Def_("----   ", "   ")
-      .____Ignore_("---    ", "   ")
-      .all();
+    words {
+      ("A X A B" - "A B")
+      ("----   " - "   ").default()
+      ("---    " - "   ").ignore()
+      testAll()
+    }
 
     // prefer less modified 'sentences'
-    TestData.words("A.X A.Z", "A.X A.Y A.Z")
-      ._______Def_("       ", "   ----    ")
-      .____Ignore_("       ", "    ---    ")
-      .all();
+    words {
+      ("A.X A.Z" - "A.X A.Y A.Z")
+      ("       " - "   ----    ").default()
+      ("       " - "    ---    ").ignore()
+      testAll()
+    }
 
-    TestData.words("X.A Z.A", "X.A Y.A Z.A")
-      ._______Def_("       ", "   ----    ")
-      .____Ignore_("       ", "    ---    ")
-      .all();
+    words {
+      ("X.A Z.A" - "X.A Y.A Z.A")
+      ("       " - "   ----    ").default()
+      ("       " - "    ---    ").ignore()
+      testAll()
+    }
 
     // prefer punctuation over whitespaces
-    TestData.words(".   ", "   .")
-      ._______Def_(" ---", "--- ")
-      .def();
+    words {
+      (".   " - "   .")
+      (" ---" - "--- ").default()
+      testDefault()
+    }
   }
 }

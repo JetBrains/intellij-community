@@ -13,426 +13,366 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.fragments.DiffFragment
+import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.HashMap
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+public class ComparisonUtilAutoTest : AutoTestCase() {
+  private var oldRegistryValue: Boolean = false
 
-@SuppressWarnings({"InstanceofCatchParameter"})
-public class ComparisonUtilAutoTest extends AutoTestCase {
-  private static DumbProgressIndicator INDICATOR = DumbProgressIndicator.INSTANCE;
-  private static ComparisonManager myComparisonManager = new ComparisonManagerImpl();
-
-  private static final int CHAR_COUNT = 12;
-  private static final Map<Integer, Character> CHAR_TABLE = initCharMap();
-
-  private boolean myOldRegistryValue;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myOldRegistryValue = Registry.get("diff.verify.iterable").asBoolean();
-    Registry.get("diff.verify.iterable").setValue(true);
+  override fun setUp() {
+    super.setUp()
+    oldRegistryValue = REGISTRY.asBoolean()
+    REGISTRY.setValue(true)
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    Registry.get("diff.verify.iterable").setValue(myOldRegistryValue);
-    super.tearDown();
+  override fun tearDown() {
+    REGISTRY.setValue(oldRegistryValue)
+    super.tearDown()
   }
 
-  public void testChar() throws Exception {
-    doTestChar(System.currentTimeMillis(), 30, 30);
+  public fun testChar() {
+    doTestChar(System.currentTimeMillis(), 30, 30)
   }
 
-  public void testWord() throws Exception {
-    doTestWord(System.currentTimeMillis(), 30, 300);
+  public fun testWord() {
+    doTestWord(System.currentTimeMillis(), 30, 300)
   }
 
-  public void testLine() throws Exception {
-    doTestLine(System.currentTimeMillis(), 30, 300);
+  public fun testLine() {
+    doTestLine(System.currentTimeMillis(), 30, 300)
   }
 
-  public void testLineSquashed() throws Exception {
-    doTestLineSquashed(System.currentTimeMillis(), 30, 300);
+  public fun testLineSquashed() {
+    doTestLineSquashed(System.currentTimeMillis(), 30, 300)
   }
 
-  public void testLineTrimSquashed() throws Exception {
-    doTestLineTrimSquashed(System.currentTimeMillis(), 30, 300);
+  public fun testLineTrimSquashed() {
+    doTestLineTrimSquashed(System.currentTimeMillis(), 30, 300)
   }
 
-  private void doTestLine(long seed, int runs, int maxLength) throws Exception {
-    ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
+  private fun doTestLine(seed: Long, runs: Int, maxLength: Int) {
+    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
-    doTest(seed, runs, maxLength, policies, new TestTask() {
-      @Override
-      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
-        CharSequence sequence1 = text1.getCharsSequence();
-        CharSequence sequence2 = text2.getCharsSequence();
+    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+      val sequence1 = text1.getCharsSequence()
+      val sequence2 = text2.getCharsSequence()
 
-        List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
-        debugData.set(fragments);
+      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
+      debugData.set(fragments)
 
-        checkResultLine(text1, text2, fragments, policy, true);
-      }
-    });
+      checkResultLine(text1, text2, fragments, policy, true)
+    }
   }
 
-  private void doTestLineSquashed(long seed, int runs, int maxLength) throws Exception {
-    ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
+  private fun doTestLineSquashed(seed: Long, runs: Int, maxLength: Int) {
+    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
-    doTest(seed, runs, maxLength, policies, new TestTask() {
-      @Override
-      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
-        CharSequence sequence1 = text1.getCharsSequence();
-        CharSequence sequence2 = text2.getCharsSequence();
+    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+      val sequence1 = text1.getCharsSequence()
+      val sequence2 = text2.getCharsSequence()
 
-        List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
-        debugData.set(fragments);
+      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
+      debugData.set(fragments)
 
-        List<LineFragment> squashedFragments = myComparisonManager.squash(fragments);
-        debugData.set(new Object[]{fragments, squashedFragments});
+      val squashedFragments = MANAGER.squash(fragments)
+      debugData.set(listOf(fragments, squashedFragments))
 
-        checkResultLine(text1, text2, squashedFragments, policy, false);
-      }
-    });
+      checkResultLine(text1, text2, squashedFragments, policy, false)
+    }
   }
 
-  private void doTestLineTrimSquashed(long seed, int runs, int maxLength) throws Exception {
-    ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
+  private fun doTestLineTrimSquashed(seed: Long, runs: Int, maxLength: Int) {
+    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
-    doTest(seed, runs, maxLength, policies, new TestTask() {
-      @Override
-      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
-        CharSequence sequence1 = text1.getCharsSequence();
-        CharSequence sequence2 = text2.getCharsSequence();
+    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+      val sequence1 = text1.getCharsSequence()
+      val sequence2 = text2.getCharsSequence()
 
-        List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
-        debugData.set(fragments);
+      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
+      debugData.set(fragments)
 
-        List<LineFragment> processed = myComparisonManager.processBlocks(fragments, sequence1, sequence2, policy, true, true);
-        debugData.set(new Object[]{fragments, processed});
+      val processed = MANAGER.processBlocks(fragments, sequence1, sequence2, policy, true, true)
+      debugData.set(listOf(fragments, processed))
 
-        checkResultLine(text1, text2, processed, policy, false);
-      }
-    });
+      checkResultLine(text1, text2, processed, policy, false)
+    }
   }
 
-  private void doTestChar(long seed, int runs, int maxLength) throws Exception {
-    ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES};
+  private fun doTestChar(seed: Long, runs: Int, maxLength: Int) {
+    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES)
 
-    doTest(seed, runs, maxLength, policies, new TestTask() {
-      @Override
-      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
-        CharSequence sequence1 = text1.getCharsSequence();
-        CharSequence sequence2 = text2.getCharsSequence();
+    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+      val sequence1 = text1.getCharsSequence()
+      val sequence2 = text2.getCharsSequence()
 
-        List<DiffFragment> fragments = myComparisonManager.compareChars(sequence1, sequence2, policy, INDICATOR);
-        debugData.set(fragments);
+      val fragments = MANAGER.compareChars(sequence1, sequence2, policy, INDICATOR)
+      debugData.set(fragments)
 
-        checkResultChar(sequence1, sequence2, fragments, policy);
-      }
-    });
+      checkResultChar(sequence1, sequence2, fragments, policy)
+    }
   }
 
-  private void doTestWord(long seed, int runs, int maxLength) throws Exception {
-    ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
+  private fun doTestWord(seed: Long, runs: Int, maxLength: Int) {
+    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
-    doTest(seed, runs, maxLength, policies, new TestTask() {
-      @Override
-      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
-        CharSequence sequence1 = text1.getCharsSequence();
-        CharSequence sequence2 = text2.getCharsSequence();
+    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+      val sequence1 = text1.getCharsSequence()
+      val sequence2 = text2.getCharsSequence()
 
-        List<DiffFragment> fragments = myComparisonManager.compareWords(sequence1, sequence2, policy, INDICATOR);
-        debugData.set(fragments);
+      val fragments = MANAGER.compareWords(sequence1, sequence2, policy, INDICATOR)
+      debugData.set(fragments)
 
-        checkResultWord(sequence1, sequence2, fragments, policy);
-      }
-    });
+      checkResultWord(sequence1, sequence2, fragments, policy)
+    }
   }
 
-  private void doTest(long seed, int runs, int maxLength, @NotNull ComparisonPolicy[] policies, @NotNull TestTask test) throws Exception {
-    myRng.setSeed(seed);
+  private fun doTest(seed: Long, runs: Int, maxLength: Int, policies: List<ComparisonPolicy>,
+                     test: (Document, Document, ComparisonPolicy, Ref<Any>) -> Unit) {
+    RNG.setSeed(seed)
 
-    ComparisonPolicy policy = null;
-    Ref<Object> debugData = new Ref<Object>();
+    var policy: ComparisonPolicy? = null
+    var lastSeed: Long = -1;
+    val debugData = Ref<Any>()
 
-    for (int i = 1; i <= runs; i++) {
-      if (i % 1000 == 0) System.out.println(i);
-      Document text1 = null;
-      Document text2 = null;
+    for (i in 1..runs) {
+      if (i % 1000 == 0) println(i)
+      var text1: Document? = null
+      var text2: Document? = null
       try {
-        rememberSeed();
+        lastSeed = getCurrentSeed()
 
-        text1 = generateText(maxLength);
-        text2 = generateText(maxLength);
+        text1 = generateText(maxLength)
+        text2 = generateText(maxLength)
 
-        for (ComparisonPolicy comparisonPolicy : policies) {
-          policy = comparisonPolicy;
-          test.run(text1, text2, comparisonPolicy, debugData);
+        for (comparisonPolicy in policies) {
+          policy = comparisonPolicy
+          test(text1, text2, comparisonPolicy, debugData)
         }
       }
-      catch (Throwable e) {
-        System.out.println("Seed: " + seed);
-        System.out.println("Runs: " + runs);
-        System.out.println("MaxLength: " + maxLength);
-        System.out.println("Policy: " + policy);
-        System.out.println("I: " + i);
-        System.out.println("Current seed: " + getLastSeed());
-        System.out.println("Text1: " + textToReadableFormat(text1));
-        System.out.println("Text2: " + textToReadableFormat(text2));
-        System.out.println("Debug Data: " + debugData.get());
-        if (e instanceof Error) throw (Error)e;
-        if (e instanceof Exception) throw (Exception)e;
-        throw new Exception(e);
+      catch (e: Throwable) {
+        println("Seed: " + seed)
+        println("Runs: " + runs)
+        println("MaxLength: " + maxLength)
+        println("Policy: " + policy!!)
+        println("I: " + i)
+        println("Current seed: " + lastSeed)
+        println("Text1: " + textToReadableFormat(text1?.getCharsSequence()))
+        println("Text2: " + textToReadableFormat(text2?.getCharsSequence()))
+        println("Debug Data: " + debugData.get())
+        throw e
       }
     }
   }
 
-  private static void checkResultLine(@NotNull Document text1, @NotNull Document text2,
-                                      @NotNull List<LineFragment> fragments,
-                                      @NotNull ComparisonPolicy policy,
-                                      boolean allowNonSquashed) {
-    checkLineConsistency(text1, text2, fragments, allowNonSquashed);
+  private fun generateText(maxLength: Int): Document {
+    return DocumentImpl(generateText(maxLength, CHAR_COUNT, CHAR_TABLE))
+  }
 
-    for (LineFragment fragment : fragments) {
+  private fun checkResultLine(text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
+    checkLineConsistency(text1, text2, fragments, allowNonSquashed)
+
+    for (fragment in fragments) {
       if (fragment.getInnerFragments() != null) {
-        CharSequence sequence1 = subsequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
-        CharSequence sequence2 = subsequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
+        val sequence1 = text1.subsequence(fragment.getStartOffset1(), fragment.getEndOffset1())
+        val sequence2 = text2.subsequence(fragment.getStartOffset2(), fragment.getEndOffset2())
 
-        checkResultWord(sequence1, sequence2, fragment.getInnerFragments(), policy);
+        checkResultWord(sequence1, sequence2, fragment.getInnerFragments(), policy)
       }
     }
 
-    checkUnchanged(text1.getCharsSequence(), text2.getCharsSequence(), fragments, policy, true);
-    checkCantTrimLines(text1, text2, fragments, policy, allowNonSquashed);
+    checkUnchanged(text1.getCharsSequence(), text2.getCharsSequence(), fragments, policy, true)
+    checkCantTrimLines(text1, text2, fragments, policy, allowNonSquashed)
   }
 
-  private static void checkResultWord(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                      @NotNull List<DiffFragment> fragments,
-                                      @NotNull ComparisonPolicy policy) {
-    checkDiffConsistency(fragments);
+  private fun checkResultWord(text1: CharSequence, text2: CharSequence, fragments: List<DiffFragment>, policy: ComparisonPolicy) {
+    checkDiffConsistency(fragments)
 
-    checkUnchanged(text1, text2, fragments, policy, false);
+    checkUnchanged(text1, text2, fragments, policy, false)
   }
 
-  private static void checkResultChar(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                      @NotNull List<DiffFragment> fragments,
-                                      @NotNull ComparisonPolicy policy) {
-    checkDiffConsistency(fragments);
+  private fun checkResultChar(text1: CharSequence, text2: CharSequence, fragments: List<DiffFragment>, policy: ComparisonPolicy) {
+    checkDiffConsistency(fragments)
 
-    checkUnchanged(text1, text2, fragments, policy, false);
+    checkUnchanged(text1, text2, fragments, policy, false)
   }
 
-  private static void checkLineConsistency(@NotNull Document text1, @NotNull Document text2,
-                                           @NotNull List<LineFragment> fragments,
-                                           boolean allowNonSquashed) {
-    int last1 = -1;
-    int last2 = -1;
+  private fun checkLineConsistency(text1: Document, text2: Document, fragments: List<LineFragment>, allowNonSquashed: Boolean) {
+    var last1 = -1
+    var last2 = -1
 
-    for (LineFragment fragment : fragments) {
-      int startOffset1 = fragment.getStartOffset1();
-      int startOffset2 = fragment.getStartOffset2();
-      int endOffset1 = fragment.getEndOffset1();
-      int endOffset2 = fragment.getEndOffset2();
+    for (fragment in fragments) {
+      val startOffset1 = fragment.getStartOffset1()
+      val startOffset2 = fragment.getStartOffset2()
+      val endOffset1 = fragment.getEndOffset1()
+      val endOffset2 = fragment.getEndOffset2()
 
-      int start1 = fragment.getStartLine1();
-      int start2 = fragment.getStartLine2();
-      int end1 = fragment.getEndLine1();
-      int end2 = fragment.getEndLine2();
+      val start1 = fragment.getStartLine1()
+      val start2 = fragment.getStartLine2()
+      val end1 = fragment.getEndLine1()
+      val end2 = fragment.getEndLine2()
 
-      assertTrue(startOffset1 >= 0);
-      assertTrue(startOffset2 >= 0);
-      assertTrue(endOffset1 <= text1.getTextLength());
-      assertTrue(endOffset2 <= text2.getTextLength());
+      assertTrue(startOffset1 >= 0)
+      assertTrue(startOffset2 >= 0)
+      assertTrue(endOffset1 <= text1.getTextLength())
+      assertTrue(endOffset2 <= text2.getTextLength())
 
-      assertTrue(start1 >= 0);
-      assertTrue(start2 >= 0);
-      assertTrue(end1 <= getLineCount(text1));
-      assertTrue(end2 <= getLineCount(text2));
+      assertTrue(start1 >= 0)
+      assertTrue(start2 >= 0)
+      assertTrue(end1 <= getLineCount(text1))
+      assertTrue(end2 <= getLineCount(text2))
 
-      assertTrue(startOffset1 <= endOffset1);
-      assertTrue(startOffset2 <= endOffset2);
+      assertTrue(startOffset1 <= endOffset1)
+      assertTrue(startOffset2 <= endOffset2)
 
-      assertTrue(start1 <= end1);
-      assertTrue(start2 <= end2);
-      assertTrue(start1 != end1 || start2 != end2);
+      assertTrue(start1 <= end1)
+      assertTrue(start2 <= end2)
+      assertTrue(start1 != end1 || start2 != end2)
 
-      assertTrue(allowNonSquashed || start1 != last1 || start2 != last2);
+      assertTrue(allowNonSquashed || start1 != last1 || start2 != last2)
 
-      checkLineOffsets(fragment, text1, text2);
+      checkLineOffsets(fragment, text1, text2)
 
-      last1 = end1;
-      last2 = end2;
+      last1 = end1
+      last2 = end2
     }
   }
 
-  private static void checkDiffConsistency(@NotNull List<? extends DiffFragment> fragments) {
-    int last1 = -1;
-    int last2 = -1;
+  private fun checkDiffConsistency(fragments: List<DiffFragment>) {
+    var last1 = -1
+    var last2 = -1
 
-    for (DiffFragment diffFragment : fragments) {
-      int start1 = diffFragment.getStartOffset1();
-      int start2 = diffFragment.getStartOffset2();
-      int end1 = diffFragment.getEndOffset1();
-      int end2 = diffFragment.getEndOffset2();
+    for (diffFragment in fragments) {
+      val start1 = diffFragment.getStartOffset1()
+      val start2 = diffFragment.getStartOffset2()
+      val end1 = diffFragment.getEndOffset1()
+      val end2 = diffFragment.getEndOffset2()
 
-      assertTrue(start1 <= end1);
-      assertTrue(start2 <= end2);
-      assertTrue(start1 != end1 || start2 != end2);
+      assertTrue(start1 <= end1)
+      assertTrue(start2 <= end2)
+      assertTrue(start1 != end1 || start2 != end2)
 
-      assertTrue(start1 != last1 || start2 != last2);
+      assertTrue(start1 != last1 || start2 != last2)
 
-      last1 = end1;
-      last2 = end2;
+      last1 = end1
+      last2 = end2
     }
   }
 
-  private static void checkLineOffsets(@NotNull LineFragment fragment, @NotNull Document before, @NotNull Document after) {
-    checkLineOffsets(before, fragment.getStartLine1(), fragment.getEndLine1(),
-                     fragment.getStartOffset1(), fragment.getEndOffset1());
+  private fun checkLineOffsets(fragment: LineFragment, before: Document, after: Document) {
+    checkLineOffsets(before, fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartOffset1(), fragment.getEndOffset1())
 
-    checkLineOffsets(after, fragment.getStartLine2(), fragment.getEndLine2(),
-                     fragment.getStartOffset2(), fragment.getEndOffset2());
+    checkLineOffsets(after, fragment.getStartLine2(), fragment.getEndLine2(), fragment.getStartOffset2(), fragment.getEndOffset2())
   }
 
-  private static void checkLineOffsets(@NotNull Document document,
-                                       int startLine, int endLine,
-                                       int startOffset, int endOffset) {
+  private fun checkLineOffsets(document: Document, startLine: Int, endLine: Int, startOffset: Int, endOffset: Int) {
     if (startLine != endLine) {
-      assertEquals(document.getLineStartOffset(startLine), startOffset);
-      int offset = document.getLineEndOffset(endLine - 1);
-      if (offset < document.getTextLength()) offset++;
-      assertEquals(offset, endOffset);
+      assertEquals(document.getLineStartOffset(startLine), startOffset)
+      var offset = document.getLineEndOffset(endLine - 1)
+      if (offset < document.getTextLength()) offset++
+      assertEquals(offset, endOffset)
     }
     else {
-      int offset = startLine == getLineCount(document)
-                   ? document.getTextLength()
-                   : document.getLineStartOffset(startLine);
-      assertEquals(offset, startOffset);
-      assertEquals(offset, endOffset);
+      val offset = if (startLine == getLineCount(document))
+        document.getTextLength()
+      else
+        document.getLineStartOffset(startLine)
+      assertEquals(offset, startOffset)
+      assertEquals(offset, endOffset)
     }
   }
 
-  private static void checkUnchanged(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                     @NotNull List<? extends DiffFragment> fragments,
-                                     @NotNull ComparisonPolicy policy,
-                                     boolean skipNewline) {
+  private fun checkUnchanged(text1: CharSequence, text2: CharSequence, fragments: List<DiffFragment>, policy: ComparisonPolicy, skipNewline: Boolean) {
     // TODO: better check for Trim spaces case ?
-    boolean ignoreSpaces = policy != ComparisonPolicy.DEFAULT;
+    val ignoreSpaces = policy !== ComparisonPolicy.DEFAULT
 
-    int last1 = 0;
-    int last2 = 0;
-    for (DiffFragment fragment : fragments) {
-      CharSequence chunk1 = text1.subSequence(last1, fragment.getStartOffset1());
-      CharSequence chunk2 = text2.subSequence(last2, fragment.getStartOffset2());
+    var last1 = 0
+    var last2 = 0
+    for (fragment in fragments) {
+      val chunk1 = text1.subSequence(last1, fragment.getStartOffset1())
+      val chunk2 = text2.subSequence(last2, fragment.getStartOffset2())
 
-      assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline);
+      assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline)
 
-      last1 = fragment.getEndOffset1();
-      last2 = fragment.getEndOffset2();
+      last1 = fragment.getEndOffset1()
+      last2 = fragment.getEndOffset2()
     }
-    CharSequence chunk1 = text1.subSequence(last1, text1.length());
-    CharSequence chunk2 = text2.subSequence(last2, text2.length());
-    assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline);
+    val chunk1 = text1.subSequence(last1, text1.length())
+    val chunk2 = text2.subSequence(last2, text2.length())
+    assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline)
   }
 
-  private static void checkCantTrimLines(@NotNull Document text1, @NotNull Document text2,
-                                         @NotNull List<? extends LineFragment> fragments,
-                                         @NotNull ComparisonPolicy policy, boolean allowNonSquashed) {
-    for (LineFragment fragment : fragments) {
-      Couple<CharSequence> sequence1 = getFirstLastLines(text1, fragment.getStartLine1(), fragment.getEndLine1());
-      Couple<CharSequence> sequence2 = getFirstLastLines(text2, fragment.getStartLine2(), fragment.getEndLine2());
-      if (sequence1 == null || sequence2 == null) continue;
+  private fun checkCantTrimLines(text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
+    for (fragment in fragments) {
+      val sequence1 = getFirstLastLines(text1, fragment.getStartLine1(), fragment.getEndLine1())
+      val sequence2 = getFirstLastLines(text2, fragment.getStartLine2(), fragment.getEndLine2())
+      if (sequence1 == null || sequence2 == null) continue
 
-      checkNonEqualsIfLongEnough(sequence1.first, sequence2.first, policy, allowNonSquashed);
-      checkNonEqualsIfLongEnough(sequence1.second, sequence2.second, policy, allowNonSquashed);
+      checkNonEqualsIfLongEnough(sequence1.first, sequence2.first, policy, allowNonSquashed)
+      checkNonEqualsIfLongEnough(sequence1.second, sequence2.second, policy, allowNonSquashed)
     }
   }
 
-  private static void checkNonEqualsIfLongEnough(@NotNull CharSequence line1, @NotNull CharSequence line2,
-                                                 @NotNull ComparisonPolicy policy, boolean allowNonSquashed) {
+  private fun checkNonEqualsIfLongEnough(line1: CharSequence, line2: CharSequence, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
     // in non-squashed blocks non-trimmed elements are possible, if it's 'unimportant' lines
-    if (allowNonSquashed && countNonWhitespaceCharacters(line1) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return;
-    if (allowNonSquashed && countNonWhitespaceCharacters(line2) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return;
+    if (allowNonSquashed && countNonWhitespaceCharacters(line1) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
+    if (allowNonSquashed && countNonWhitespaceCharacters(line2) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
 
-    assertFalse(myComparisonManager.isEquals(line1, line2, policy));
+    assertFalse(MANAGER.isEquals(line1, line2, policy))
   }
 
-  private static int countNonWhitespaceCharacters(@NotNull CharSequence line) {
-    int count = 0;
-    for (int i = 0; i < line.length(); i++) {
-      if (!StringUtil.isWhiteSpace(line.charAt(i))) count++;
+  private fun countNonWhitespaceCharacters(line: CharSequence): Int {
+    var count = 0
+    for (i in 0 until line.length()) {
+      if (!StringUtil.isWhiteSpace(line.charAt(i))) count++
     }
-    return count;
+    return count
   }
 
-  @Nullable
-  private static Couple<CharSequence> getFirstLastLines(@NotNull Document text, int start, int end) {
-    if (start == end) return null;
+  private fun getFirstLastLines(text: Document, start: Int, end: Int): Couple<CharSequence>? {
+    if (start == end) return null
 
-    TextRange firstLineRange = DiffUtil.getLinesRange(text, start, start + 1);
-    TextRange lastLineRange = DiffUtil.getLinesRange(text, end - 1, end);
+    val firstLineRange = DiffUtil.getLinesRange(text, start, start + 1)
+    val lastLineRange = DiffUtil.getLinesRange(text, end - 1, end)
 
-    CharSequence firstLine = firstLineRange.subSequence(text.getCharsSequence());
-    CharSequence lastLine = lastLineRange.subSequence(text.getCharsSequence());
+    val firstLine = firstLineRange.subSequence(text.getCharsSequence())
+    val lastLine = lastLineRange.subSequence(text.getCharsSequence())
 
-    return Couple.of(firstLine, lastLine);
+    return Couple.of(firstLine, lastLine)
   }
 
-  @NotNull
-  private Document generateText(int maxLength) {
-    return new DocumentImpl(generateText(maxLength, CHAR_COUNT, CHAR_TABLE));
+  private fun Document.subsequence(start: Int, end: Int): CharSequence {
+    return this.getCharsSequence().subSequence(start, end)
   }
 
-  @NotNull
-  private static Map<Integer, Character> initCharMap() {
-    Map<Integer, Character> map = new HashMap<Integer, Character>();
-
-    List<Character> characters = new ArrayList<Character>();
-    characters.add('\n');
-    characters.add('\n');
-    characters.add('\t');
-    characters.add(' ');
-    characters.add(' ');
-    characters.add('.');
-    characters.add('<');
-    characters.add('!');
-
-    for (int i = 0; i < characters.size(); i++) {
-      map.put(i, characters.get(i));
-    }
-
-    return map;
+  private fun getLineCount(document: Document): Int {
+    return Math.max(1, document.getLineCount())
   }
 
-  @NotNull
-  private static CharSequence subsequence(@NotNull Document document, int start, int end) {
-    return document.getCharsSequence().subSequence(start, end);
-  }
+  companion object {
+    private val REGISTRY = Registry.get("diff.verify.iterable");
 
-  private static int getLineCount(@NotNull Document document) {
-    return Math.max(1, document.getLineCount());
-  }
+    private val INDICATOR = DumbProgressIndicator.INSTANCE
+    private val MANAGER = ComparisonManagerImpl()
 
-  private interface TestTask {
-    void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData);
+    private val CHAR_COUNT = 12
+    private val CHAR_TABLE: Map<Int, Char> = {
+      val map = HashMap<Int, Char>()
+      listOf('\n', '\n', '\t', ' ', ' ', '.', '<', '!').forEachIndexed { i, c -> map.put(i, c) }
+      map
+    }()
   }
 }

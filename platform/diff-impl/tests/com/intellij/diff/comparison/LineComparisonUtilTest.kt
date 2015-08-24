@@ -13,184 +13,260 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-public class LineComparisonUtilTest extends ComparisonUtilTestBase {
-  public void testEqualStrings() {
-    TestData.lines("", "")
-      ._Def_()
-      .all();
+public class LineComparisonUtilTest : ComparisonUtilTestBase() {
+  public fun testEqualStrings() {
+    lines {
+      ("" - "")
+      default()
+      testAll()
+    }
 
-    TestData.lines("x", "x")
-      ._Def_()
-      .all();
+    lines {
+      ("x" - "x")
+      default()
+      testAll()
+    }
 
-    TestData.lines("x_y_z_", "x_y_z_")
-      ._Def_()
-      .all();
+    lines {
+      ("x_y_z_" - "x_y_z_")
+      default()
+      testAll()
+    }
 
-    TestData.lines("_", "_")
-      ._Def_()
-      .all();
+    lines {
+      ("_" - "_")
+      default()
+      testAll()
+    }
 
-    TestData.lines(" x_y ", " x_y ")
-      ._Def_()
-      .all();
+    lines {
+      (" x_y " - " x_y ")
+      default()
+      testAll()
+    }
   }
 
-  public void testTrivialCases() {
-    TestData.lines("x_", "y_")
-      ._Def_(mod(0, 0, 1, 1))
-      .all();
+  public fun testTrivialCases() {
+    lines {
+      ("x_" - "y_")
+      default(mod(0, 0, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x", "")
-      ._Def_(mod(0, 0, 1, 1))
-      .all();
+    lines {
+      ("x" - "")
+      default(mod(0, 0, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("", "x")
-      ._Def_(mod(0, 0, 1, 1))
-      .all();
+    lines {
+      ("" - "x")
+      default(mod(0, 0, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x", "y")
-      ._Def_(mod(0, 0, 1, 1))
-      .all();
+    lines {
+      ("x" - "y")
+      default(mod(0, 0, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x_z", "y_z")
-      ._Def_(mod(0, 0, 1, 1))
-      .all();
+    lines {
+      ("x_z" - "y_z")
+      default(mod(0, 0, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("z_x", "z_y")
-      ._Def_(mod(1, 1, 1, 1))
-      .all();
+    lines {
+      ("z_x" - "z_y")
+      default(mod(1, 1, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x", "x_")
-      ._Def_(ins(1, 1, 1))
-      .all();
+    lines {
+      ("x" - "x_")
+      default(ins(1, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x_", "x")
-      ._Def_(del(1, 1, 1))
-      .all();
+    lines {
+      ("x_" - "x")
+      default(del(1, 1, 1))
+      testAll()
+    }
   }
 
-  public void testSimpleCases() {
-    TestData.lines("x_z", "y_z")
-      ._Def_(mod(0, 0, 1, 1))
-      .all();
+  public fun testSimpleCases() {
+    lines {
+      ("x_z" - "y_z")
+      default(mod(0, 0, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x_", "x_z")
-      ._Def_(mod(1, 1, 1, 1))
-      .all();
+    lines {
+      ("x_" - "x_z")
+      default(mod(1, 1, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x_y", "n_m")
-      ._Def_(mod(0, 0, 2, 2))
-      .all();
+    lines {
+      ("x_y" - "n_m")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
 
-    TestData.lines("x_y_z", "n_y_m")
-      ._Def_(mod(0, 0, 1, 1), mod(2, 2, 1, 1))
-      .all();
+    lines {
+      ("x_y_z" - "n_y_m")
+      default(mod(0, 0, 1, 1), mod(2, 2, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x_y_z", "n_k_y")
-      ._Def_(mod(0, 0, 1, 2), del(2, 3, 1))
-      .all();
+    lines {
+      ("x_y_z" - "n_k_y")
+      default(mod(0, 0, 1, 2), del(2, 3, 1))
+      testAll()
+    }
 
-    TestData.lines("x_y_z", "y")
-      ._Def_(del(0, 0, 1), del(2, 1, 1))
-      .all();
+    lines {
+      ("x_y_z" - "y")
+      default(del(0, 0, 1), del(2, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("a_b_x", "x_m_n")
-      ._Def_(del(0, 0, 2), ins(3, 1, 2))
-      .all();
+    lines {
+      ("a_b_x" - "x_m_n")
+      default(del(0, 0, 2), ins(3, 1, 2))
+      testAll()
+    }
   }
 
-  public void testEmptyLastLine() {
-    TestData.lines("x_", "")
-      ._Def_(del(0, 0, 1))
-      .all();
+  public fun testEmptyLastLine() {
+    lines {
+      ("x_" - "")
+      default(del(0, 0, 1))
+      testAll()
+    }
 
-    TestData.lines("", "x_")
-      ._Def_(ins(0, 0, 1))
-      .all();
+    lines {
+      ("" - "x_")
+      default(ins(0, 0, 1))
+      testAll()
+    }
 
-    TestData.lines("x_", "x")
-      ._Def_(del(1, 1, 1))
-      .all();
+    lines {
+      ("x_" - "x")
+      default(del(1, 1, 1))
+      testAll()
+    }
 
-    TestData.lines("x_", "x_z ")
-      ._Def_(mod(1, 1, 1, 1))
-      .all();
+    lines {
+      ("x_" - "x_z ")
+      default(mod(1, 1, 1, 1))
+      testAll()
+    }
   }
 
-  public void testWhitespaceOnlyChanges() {
-    TestData.lines("x ", " x")
-      ._Def_(mod(0, 0, 1, 1))
-      ._Trim_()
-      .all();
+  public fun testWhitespaceOnlyChanges() {
+    lines {
+      ("x " - " x")
+      default(mod(0, 0, 1, 1))
+      trim()
+      testAll()
+    }
 
-    TestData.lines("x \t", "\t x")
-      ._Def_(mod(0, 0, 1, 1))
-      ._Trim_()
-      .all();
+    lines {
+      ("x \t" - "\t x")
+      default(mod(0, 0, 1, 1))
+      trim()
+      testAll()
+    }
 
-    TestData.lines("x_", "x ")
-      ._Def_(mod(0, 0, 2, 1))
-      ._Trim_(del(1, 1, 1))
-      .all();
+    lines {
+      ("x_" - "x ")
+      default(mod(0, 0, 2, 1))
+      trim(del(1, 1, 1))
+      testAll()
+    }
 
-    TestData.lines(" x_y ", "x _ y")
-      ._Def_(mod(0, 0, 2, 2))
-      ._Trim_()
-      .all();
+    lines {
+      (" x_y " - "x _ y")
+      default(mod(0, 0, 2, 2))
+      trim()
+      testAll()
+    }
 
-    TestData.lines("x y ", "x  y")
-      ._Def_(mod(0, 0, 1, 1))
-      ._Ignore_()
-      .all();
+    lines {
+      ("x y " - "x  y")
+      default(mod(0, 0, 1, 1))
+      ignore()
+      testAll()
+    }
 
-    TestData.lines("x y_x y_x y", "  x y  _x y  _x   y")
-      ._Def_(mod(0, 0, 3, 3))
-      ._Trim_(mod(2, 2, 1, 1))
-      ._Ignore_()
-      .all();
+    lines {
+      ("x y_x y_x y" - "  x y  _x y  _x   y")
+      default(mod(0, 0, 3, 3))
+      trim(mod(2, 2, 1, 1))
+      ignore()
+      testAll()
+    }
   }
 
-  public void testAlgorithmSpecific() {
-    TestData.lines("x_y_z_AAAAA", "AAAAA_x_y_z")
-      ._Def_(del(0, 0, 3), ins(4, 1, 3))
-      .all();
+  public fun testAlgorithmSpecific() {
+    lines {
+      ("x_y_z_AAAAA" - "AAAAA_x_y_z")
+      default(del(0, 0, 3), ins(4, 1, 3))
+      testAll()
+    }
 
-    TestData.lines("x_y_z", " y_ m_ n")
-      ._Def_(mod(0, 0, 3, 3))
-      ._Trim_(del(0, 0, 1), mod(2, 1, 1, 2))
-      .all();
+    lines {
+      ("x_y_z" - " y_ m_ n")
+      default(mod(0, 0, 3, 3))
+      trim(del(0, 0, 1), mod(2, 1, 1, 2))
+      testAll()
+    }
 
-    TestData.lines("}_ }", " }")
-      ._Def_(del(0, 0, 1))
-      .def();
+    lines {
+      ("}_ }" - " }")
+      default(del(0, 0, 1))
+      testDefault()
+    }
 
-    TestData.lines("{_}", "{_ {_ }_}_x")
-      ._Def_(ins(1, 1, 2), ins(2, 4, 1))
-      .def();
+    lines {
+      ("{_}" - "{_ {_ }_}_x")
+      default(ins(1, 1, 2), ins(2, 4, 1))
+      testDefault()
+    }
   }
 
-  public void testNonDeterministicCases() {
-    TestData.lines("", "__")
-      ._Def_(ins(1, 1, 2))
-      .all();
+  public fun testNonDeterministicCases() {
+    lines {
+      ("" - "__")
+      default(ins(1, 1, 2))
+      testAll()
+    }
 
-    TestData.lines("__", "")
-      ._Def_(del(1, 1, 2))
-      .all();
+    lines {
+      ("__" - "")
+      default(del(1, 1, 2))
+      testAll()
+    }
   }
 
-  public void testBigBlockShiftRegression() {
-    TestData.lines(" X_  X", "  X_   X")
-      ._Def_(mod(0, 0, 2, 2))
-      .def();
+  public fun testBigBlockShiftRegression() {
+    lines {
+      (" X_  X" - "  X_   X")
+      default(mod(0, 0, 2, 2))
+      testDefault()
+    }
   }
 
-  public void testTwoStepCanTrimRegression() {
-    TestData.lines("q__7_ 6_ 7", "_7")
-      ._Def_(del(0, 0, 1), del(3, 2, 2))
-      .def();
+  public fun testTwoStepCanTrimRegression() {
+    lines {
+      ("q__7_ 6_ 7" - "_7")
+      default(del(0, 0, 1), del(3, 2, 2))
+      testDefault()
+    }
   }
 }

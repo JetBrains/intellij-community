@@ -13,51 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.UsefulTestCase
+import junit.framework.TestCase
 
-public class ComparisonUtilTest extends UsefulTestCase {
-  private static final ComparisonManager manager = new ComparisonManagerImpl();
+public class ComparisonUtilTest : UsefulTestCase() {
+  public fun testTrimEquals() {
+    doTestTrim(true, "", "")
+    doTestTrim(true, "", "   ")
+    doTestTrim(true, "   ", "   ")
+    doTestTrim(true, "\n   ", "  \n")
+    doTestTrim(true, "asd ", "asd  ")
+    doTestTrim(true, "    asd", "asd")
+    doTestTrim(true, "\n\n\n", "\n\n\n")
+    doTestTrim(true, "\n  \n  \n ", "  \n \n\n  ")
+    doTestTrim(false, "\n\n", "\n\n\n")
 
-  public void testTrimEquals() {
-    assertTrue(manager.isEquals("", "", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("", "   ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("   ", "   ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("\n   ", "  \n", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("asd ", "asd  ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("    asd", "asd", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("\n\n\n", "\n\n\n", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("\n  \n  \n ", "  \n \n\n  ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("\n\n", "\n\n\n", ComparisonPolicy.TRIM_WHITESPACES));
+    doTestTrim(false, "\nasd ", "asd\n  ")
+    doTestTrim(true, "\nasd \n", "\n asd\n  ")
+    doTestTrim(false, "x", "y")
+    doTestTrim(false, "\n", " ")
 
-    assertFalse(manager.isEquals("\nasd ", "asd\n  ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("\nasd \n", "\n asd\n  ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("x", "y", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("\n", " ", ComparisonPolicy.TRIM_WHITESPACES));
+    doTestTrim(true, "\t ", "")
+    doTestTrim(false, "", "\t\n \n\t")
+    doTestTrim(false, "\t", "\n")
 
-    assertTrue(manager.isEquals("\t ", "", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("", "\t\n \n\t", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("\t", "\n", ComparisonPolicy.TRIM_WHITESPACES));
+    doTestTrim(true, "x", " x")
+    doTestTrim(true, "x", "x ")
+    doTestTrim(false, "x\n", "x")
 
-    assertTrue(manager.isEquals("x", " x", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("x", "x ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("x\n", "x", ComparisonPolicy.TRIM_WHITESPACES));
+    doTestTrim(false, "abc", "a\nb\nc\n")
+    doTestTrim(true, "\nx y x\n", "\nx y x\n")
+    doTestTrim(false, "\nxyx\n", "\nx y x\n")
+    doTestTrim(true, "\nx y x", "\nx y x")
+    doTestTrim(false, "\nxyx", "\nx y x")
+    doTestTrim(true, "x y x", "x y x")
+    doTestTrim(false, "xyx", "x y x")
+    doTestTrim(true, "  x y x  ", "x y x")
 
-    assertFalse(manager.isEquals("abc", "a\nb\nc\n", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("\nx y x\n", "\nx y x\n", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("\nxyx\n", "\nx y x\n", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("\nx y x", "\nx y x", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("\nxyx", "\nx y x", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("x y x", "x y x", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("xyx", "x y x", ComparisonPolicy.TRIM_WHITESPACES));
-    assertTrue(manager.isEquals("  x y x  ", "x y x", ComparisonPolicy.TRIM_WHITESPACES));
+    doTestTrim(false, "x", "\t\n ")
+    doTestTrim(false, "", " x ")
+    doTestTrim(false, "", "x ")
+    doTestTrim(false, "", " x")
+    doTestTrim(false, "xyx", "xxx")
+    doTestTrim(false, "xyx", "xYx")
+  }
 
-    assertFalse(manager.isEquals("x", "\t\n ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("", " x ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("", "x ", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("", " x", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("xyx", "xxx", ComparisonPolicy.TRIM_WHITESPACES));
-    assertFalse(manager.isEquals("xyx", "xYx", ComparisonPolicy.TRIM_WHITESPACES));
+  private fun doTestTrim(expected: Boolean, string1: String, string2: String) {
+    doTest(expected, string1, string2, ComparisonPolicy.TRIM_WHITESPACES);
+  }
+
+  private fun doTest(expected: Boolean, string1: String, string2: String, policy: ComparisonPolicy) {
+    val result = MANAGER.isEquals(string1, string2, policy);
+    TestCase.assertEquals("---\n" + string1 + "\n---\n" + string2 + "\n---", expected, result);
+  }
+
+  companion object {
+    private val MANAGER = ComparisonManagerImpl()
   }
 }
