@@ -71,3 +71,21 @@ class SAM {
     Object runnable = (Runnable) () -> {};
   }
 }
+class CloseableWarningTest {
+  private Object x = new Object();
+
+  public void example() {
+    //if (x instanceof SafeCloseable) {
+      ((SafeCloseable) x).close();
+    //}
+  }
+}
+
+interface SafeCloseable extends Closeable {
+  @Override
+  void close();
+}
+interface Closeable extends AutoCloseable {
+
+  public void close() throws java.io.IOException;
+}
