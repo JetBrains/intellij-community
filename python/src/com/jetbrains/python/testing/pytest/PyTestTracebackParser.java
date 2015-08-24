@@ -28,7 +28,8 @@ import java.util.regex.Pattern;
 public final class PyTestTracebackParser extends TraceBackParser {
 
   public PyTestTracebackParser() {
-    super(Pattern.compile("([^\"]+?):(\\d+)"));
+    // File name can't start with number, can't be more then 200 chars long (its insane) and line number is also limited to int maxvalue
+   super(Pattern.compile("([^0-9][^\"]{0,200}?):(\\d{1,8})"));
   }
 
   @NotNull

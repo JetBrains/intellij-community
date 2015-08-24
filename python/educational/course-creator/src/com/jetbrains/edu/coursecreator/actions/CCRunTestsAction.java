@@ -56,6 +56,11 @@ public abstract class CCRunTestsAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (!CCProjectService.setCCActionAvailable(e)) {
+      EduUtils.enableAction(e, false);
+      return;
+    }
+
     Presentation presentation = e.getPresentation();
     presentation.setText("");
     presentation.setVisible(false);

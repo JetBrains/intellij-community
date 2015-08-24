@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,8 @@ import java.util.List;
 /**
  * plugin.dtd:group interface.
  */
-public interface Group extends Actions {
+@Presentation(icon = "AllIcons.Actions.GroupByPackage")
+public interface Group extends Actions, ActionOrGroup {
 
 	/**
 	 * Returns the value of the popup child.
@@ -86,14 +88,6 @@ public interface Group extends Actions {
 	 */
 	@NotNull
 	GenericAttributeValue<String> getText();
-
- 	/**
-	 * Returns the value of the id child.
-	 * Attribute id
-	 * @return the value of the id child.
-	 */
-        @NotNull
-        GenericAttributeValue<String> getId();
 
   	///**
 	// * Returns the value of the overrides child.

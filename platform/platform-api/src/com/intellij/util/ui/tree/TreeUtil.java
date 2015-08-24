@@ -192,13 +192,22 @@ public final class TreeUtil {
 
   @NotNull
   public static TreePath getPathFromRoot(@NotNull TreeNode node) {
-    final ArrayList<TreeNode> path = new ArrayList<TreeNode>();
-    do {
-      path.add(node);
-      node = node.getParent();
-    } while (node != null);
-    Collections.reverse(path);
-    return new TreePath(path.toArray());
+    TreeNode[] path = getPathFromRoot(node, 1);
+    return new TreePath(path);
+  }
+
+  @NotNull
+  private static TreeNode[] getPathFromRoot(@NotNull TreeNode node, int depth) {
+    TreeNode[] path;
+    TreeNode parent = node.getParent();
+    if (parent == null) {
+      path = new TreeNode[depth];
+    }
+    else {
+      path = getPathFromRoot(parent, depth + 1);
+    }
+    path[path.length - depth] = node;
+    return path;
   }
 
   @Nullable

@@ -29,17 +29,14 @@
 
   <extensions defaultExtensionNs="com.intellij">
       <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+      <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>
+      <executor implementation="com.jetbrains.python.edu.debugger.PyEduDebugExecutor" order="first,after run"/>
+      <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
-    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
+
   </extensions>
 
-  <actions>
-    <group id="PyRunMenu">
-      <action id="runCurrentFile" class="com.jetbrains.python.edu.PyRunCurrentFileAction"/>
-      <add-to-group group-id="RunMenu" anchor="first"/>
-    </group>
-
-
-  </actions>
 </idea-plugin>

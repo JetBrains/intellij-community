@@ -33,7 +33,6 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -61,12 +60,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.Document;
 import javax.swing.text.Position;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
@@ -443,9 +438,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         StringWriter sw = new StringWriter(p1.getOffset() - p0.getOffset());
         getEditorKit().write(sw, doc, p0.getOffset(), p1.getOffset() - p0.getOffset());
 
-        MyHtml2Text parser = new MyHtml2Text();
-        parser.parse(new StringReader(sw.toString()));
-        return parser.getText();
+        return StringUtil.removeHtmlTags(sw.toString());
       }
       catch (BadLocationException e) {
         LOG.warn(e);
@@ -454,25 +447,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         LOG.warn(e);
       }
       return super.getSelectedText();
-    }
-
-    private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
-      @NotNull private final StringBuilder myBuffer = new StringBuilder();
-
-      public void parse(Reader in) throws IOException {
-        myBuffer.setLength(0);
-        new ParserDelegator().parse(in, this, Boolean.TRUE);
-      }
-
-      public void handleText(char[] text, int pos) {
-        if (myBuffer.length() > 0) myBuffer.append(SystemProperties.getLineSeparator());
-
-        myBuffer.append(text);
-      }
-
-      public String getText() {
-        return myBuffer.toString();
-      }
     }
 
     @Override

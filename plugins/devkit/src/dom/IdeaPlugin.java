@@ -134,6 +134,7 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @SubTagList("actions")
+  @Stubbed
   List<Actions> getActions();
   Actions addActions();
 

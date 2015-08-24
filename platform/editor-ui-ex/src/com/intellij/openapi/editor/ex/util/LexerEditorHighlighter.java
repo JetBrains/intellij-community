@@ -186,6 +186,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
     int lastTokenStart = -1;
     int lastLexerState = -1;
+    IElementType lastTokenType = null;
 
     while (myLexer.getTokenType() != null) {
       if (startIndex >= oldStartIndex) break;
@@ -193,7 +194,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int tokenStart = myLexer.getTokenStart();
       int lexerState = myLexer.getState();
 
-      if (tokenStart == lastTokenStart && lexerState == lastLexerState) {
+      if (tokenStart == lastTokenStart && lexerState == lastLexerState && myLexer.getTokenType() == lastTokenType) {
         throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + document.getText());
       }
 
@@ -205,6 +206,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         break;
       }
       startIndex++;
+      lastTokenType = myLexer.getTokenType();
       myLexer.advance();
       lastTokenStart = tokenStart;
       lastLexerState = lexerState;
@@ -214,18 +216,20 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     int repaintEnd = -1;
     int insertSegmentCount = 0;
     int oldEndIndex = -1;
+    lastTokenType = null;
     SegmentArrayWithData insertSegments = new SegmentArrayWithData();
 
     while(myLexer.getTokenType() != null) {
       int tokenStart = myLexer.getTokenStart();
       int lexerState = myLexer.getState();
 
-      if (tokenStart == lastTokenStart && lexerState == lastLexerState) {
+      if (tokenStart == lastTokenStart && lexerState == lastLexerState && myLexer.getTokenType() == lastTokenType) {
         throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + document.getText());
       }
 
       lastTokenStart = tokenStart;
       lastLexerState = lexerState;
+      lastTokenType = myLexer.getTokenType();
 
       int tokenEnd = myLexer.getTokenEnd();
       data = packData(myLexer.getTokenType(), lexerState);
