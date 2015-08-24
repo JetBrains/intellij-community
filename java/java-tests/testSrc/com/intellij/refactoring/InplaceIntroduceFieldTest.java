@@ -124,6 +124,13 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     doTestEscape();
   }
 
+  public void testNearAnotherDeclaration() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {}
+    });
+  }
+
   @Override
   protected String getBasePath() {
     return BASE_PATH;
