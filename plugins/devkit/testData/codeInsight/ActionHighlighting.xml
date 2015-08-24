@@ -21,6 +21,9 @@
       <add-to-group group-id="myGroup"/>
       <add-to-group group-id="<error descr="Cannot resolve group 'myAction'">myAction</error>"/>
       <add-to-group group-id="<error descr="Cannot resolve group 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+
+      <add-to-group group-id="myGroup" relative-to-action="myAction" anchor="first"/>
+      <<error descr="'anchor' must be specified">add-to-group</error> group-id="myGroup" relative-to-action="myAction"/>
     </action>
 
     <reference id="myGroup"/>
