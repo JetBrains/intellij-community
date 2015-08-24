@@ -19,6 +19,9 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistryImpl;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
@@ -31,6 +34,9 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -313,6 +319,10 @@ public class PyCharmEduInitialConfigurator {
   }
 
   private static void patchProjectAreaExtensions(@NotNull final Project project) {
+    Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    unregisterAction(debugExecutor.getId(), ExecutorRegistryImpl.RUNNERS_GROUP);
+    unregisterAction(debugExecutor.getContextActionId(), ExecutorRegistryImpl.RUN_CONTEXT_GROUP);
+
     ExtensionsArea projectArea = Extensions.getArea(project);
 
     for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
@@ -326,6 +336,18 @@ public class PyCharmEduInitialConfigurator {
       if (pane.getId().equals(ScopeViewPane.ID)) {
         Disposer.dispose(pane);
         projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);
+      }
+    }
+  }
+
+  private static void unregisterAction(String actionId, String groupId) {
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction action = actionManager.getAction(actionId);
+    if (action != null) {
+      AnAction actionGroup = actionManager.getAction(groupId);
+      if (actionGroup != null && actionGroup instanceof DefaultActionGroup) {
+        ((DefaultActionGroup)actionGroup).remove(action);
+        actionManager.unregisterAction(actionId);
       }
     }
   }
