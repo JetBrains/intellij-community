@@ -434,10 +434,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull
   private File generateUniqueSchemePatchDir(@NotNull final String defaultName, boolean createResourceDirectory) {
-    File shelfDir = getShelfResourcesDirectory();
-    if (!shelfDir.exists()) {
-      ChangeListManager.getInstance(myProject).addDirectoryToIgnoreImplicitly(shelfDir.getAbsolutePath());
-    }
+    ignoreShelfDirectoryIfFirstShelf();
     String uniqueName = UniqueNameGenerator
       .generateUniqueName(shortenAndSanitize(defaultName), mySchemeManager.getAllSchemeNames());
     File dir = new File(myFileProcessor.getBaseDir(), uniqueName);
@@ -446,6 +443,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       dir.mkdirs();
     }
     return dir;
+  }
+
+  private void ignoreShelfDirectoryIfFirstShelf() {
+    File shelfDir = getShelfResourcesDirectory();
+    //check that shelf directory wasn't exist before that to ignore it only once
+    if (!shelfDir.exists()) {
+      ChangeListManager.getInstance(myProject).addDirectoryToIgnoreImplicitly(shelfDir.getAbsolutePath());
+    }
   }
 
   @NotNull
