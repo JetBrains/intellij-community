@@ -17,7 +17,6 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,7 +36,6 @@ import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.resetHard
 import org.junit.Test
 import java.io.File
-import javax.swing.SwingUtilities
 import kotlin.properties.Delegates
 
 class GitTest : TestCase() {
@@ -54,7 +52,7 @@ class GitTest : TestCase() {
   private fun addAndCommit(path: String): FileInfo {
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
     provider.save(path, data)
-    repositoryManager.commit(EmptyProgressIndicator())
+    repositoryManager.commit()
     return FileInfo(path, data)
   }
 
@@ -131,7 +129,7 @@ class GitTest : TestCase() {
 
   private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
     createLocalRepository(remoteBranchName)
-    repositoryManager.pull(EmptyProgressIndicator())
+    repositoryManager.pull()
     compareFiles(repository.getWorkTree(), remoteRepository.getWorkTree())
   }
 
@@ -146,9 +144,8 @@ class GitTest : TestCase() {
   private fun doPullToRepositoryWithCommits(remoteBranchName: String?) {
     val file = createLocalRepositoryAndCommit(remoteBranchName)
 
-    val progressIndicator = EmptyProgressIndicator()
-    repositoryManager.commit(progressIndicator)
-    repositoryManager.pull(progressIndicator)
+    repositoryManager.commit()
+    repositoryManager.pull()
     assertThat(FileUtil.loadFile(File(repository.getWorkTree(), file.name))).isEqualTo(String(file.data, CharsetToolkit.UTF8_CHARSET))
     compareFiles(repository.getWorkTree(), remoteRepository.getWorkTree(), null, PathUtilRt.getFileName(file.name))
   }
@@ -257,7 +254,7 @@ class GitTest : TestCase() {
 
     val data = AM.MARKER_ACCEPT_THEIRS
     provider.save("remote.xml", data)
-    repositoryManager.commit(EmptyProgressIndicator())
+    repositoryManager.commit()
 
     remoteRepository.deletePath("remote.xml")
     remoteRepository.commit("delete remote.xml")
@@ -273,7 +270,7 @@ class GitTest : TestCase() {
     sync(SyncType.MERGE)
 
     provider.delete("remote.xml", RoamingType.PER_USER)
-    repositoryManager.commit(EmptyProgressIndicator())
+    repositoryManager.commit()
 
     remoteRepository.writePath("remote.xml", AM.MARKER_ACCEPT_THEIRS)
     remoteRepository.commit("")
@@ -351,8 +348,6 @@ class GitTest : TestCase() {
   }
 
   private fun sync(syncType: SyncType) {
-    SwingUtilities.invokeAndWait {
-      icsManager.sync(syncType, fixtureManager.projectFixture.getProject())
-    }
+    icsManager.sync(syncType, fixtureManager.projectFixture.getProject())
   }
 }
