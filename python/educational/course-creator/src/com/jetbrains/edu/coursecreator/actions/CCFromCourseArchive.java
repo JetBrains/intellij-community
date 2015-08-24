@@ -94,6 +94,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
         for (Task task : lesson.getTaskList()) {
           final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(taskIndex));
           task.setIndex(taskIndex);
+          task.setLesson(lesson);
           if (taskDir == null) continue;
           for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
