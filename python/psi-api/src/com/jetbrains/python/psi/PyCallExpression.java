@@ -84,7 +84,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   PyExpression getKeywordArgument(String keyword);
 
   /**
-   * TODO: Copy/Paste with {@link com.jetbrains.python.psi.PyArgumentList#addArgument(PyExpression)}
+   * TODO: Copy/Paste with {@link PyArgumentList#addArgument(PyExpression)}
    * @param expression
    */
   void addArgument(PyExpression expression);
