@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -112,7 +113,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return super.createLookupElement(actionOrGroup);
   }
 
-  private static boolean processActionOrGroup(ConvertContext context, PairProcessor<String, ActionOrGroup> processor) {
+  private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<String, ActionOrGroup> processor) {
     final Project project = context.getProject();
 
     Module module = context.getModule();
@@ -121,12 +122,14 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
       return processPlugins(plugins, processor);
     }
 
-    final Collection<IdeaPlugin> modulePlugins = IdeaPluginConverter.getPlugins(project, module.getModuleScope(false));
-    if (!processPlugins(modulePlugins, processor)) return false;
-
-    final Collection<IdeaPlugin> dependenciesAndLibs =
-      IdeaPluginConverter.getPlugins(project, module.getModuleWithDependenciesAndLibrariesScope(false));
-    return processPlugins(dependenciesAndLibs, processor);
+    return ModuleUtilCore.visitMeAndDependentModules(module, new ModuleUtilCore.ModuleVisitor() {
+      @Override
+      public boolean visit(Module module) {
+        final Collection<IdeaPlugin> dependenciesAndLibs =
+          IdeaPluginConverter.getPlugins(project, module.getModuleRuntimeScope(false));
+        return processPlugins(dependenciesAndLibs, processor);
+      }
+    });
   }
 
   private static boolean processPlugins(Collection<IdeaPlugin> plugins, PairProcessor<String, ActionOrGroup> processor) {
