@@ -196,7 +196,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       File newPatchFile = getPatchFileInConfigDir(targetDirectory);
       try {
         FileUtil.copy(patchFile, newPatchFile);
-        list.PATH = newPatchFile.getPath();
+        list.PATH = FileUtil.toSystemIndependentName(newPatchFile.getPath());
         FileUtil.delete(patchFile);
       }
       catch (IOException e) {
@@ -211,7 +211,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           File newShelvedFile = new File(targetDirectory, PathUtil.getFileName(file.AFTER_PATH));
           try {
             FileUtil.copy(shelvedFile, newShelvedFile);
-            file.SHELVED_PATH = newShelvedFile.getPath();
+            file.SHELVED_PATH = FileUtil.toSystemIndependentName(newShelvedFile.getPath());
             FileUtil.delete(shelvedFile);
           }
           catch (IOException e) {
