@@ -50,12 +50,12 @@ public class NumpyDocString extends SectionBasedDocString {
 
   @NotNull
   @Override
-  protected Pair<String, Integer> parseSectionHeader(int lineNum) {
+  protected Pair<Substring, Integer> parseSectionHeader(int lineNum) {
     @NonNls final String title = getLine(lineNum).trim().toString();
     if (SECTION_NAMES.contains(title.toLowerCase())) {
       final Substring nextLine = getLineOrNull(lineNum + 1);
       if (nextLine != null && SECTION_HEADER.matcher(nextLine).matches()) {
-        return Pair.create(getLine(lineNum).trim().toString(), lineNum + 2);
+        return Pair.create(getLine(lineNum).trim(), lineNum + 2);
       }
     }
     return Pair.create(null, lineNum);

@@ -26,7 +26,7 @@ public abstract class SectionBasedDocStringBuilder extends DocStringBuilder {
   protected static final String DEFAULT_SECTION_INDENT = StringUtil.repeatSymbol(' ', 4);
   protected static final String DEFAULT_CONTINUATION_INDENT = StringUtil.repeatSymbol(' ', 4);
 
-  protected final String mySectionIndent = DEFAULT_SECTION_INDENT;
+  protected String mySectionIndent = DEFAULT_SECTION_INDENT;
   protected final String myContinuationIndent = DEFAULT_CONTINUATION_INDENT;
 
   private String myCurSectionTitle = null;
@@ -66,5 +66,11 @@ public abstract class SectionBasedDocStringBuilder extends DocStringBuilder {
   @NotNull
   protected SectionBasedDocStringBuilder addSectionLine(@NotNull String line) {
     return (SectionBasedDocStringBuilder)addLine(mySectionIndent + line);
+  }
+
+  @NotNull
+  protected SectionBasedDocStringBuilder withSectionIndent(@NotNull String indent) {
+    mySectionIndent = indent;
+    return this;
   }
 }

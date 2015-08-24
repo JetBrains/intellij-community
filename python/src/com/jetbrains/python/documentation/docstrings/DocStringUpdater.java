@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.documentation.DocStringLineParser;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.toolbox.Substring;
@@ -32,7 +33,7 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   protected final T myOriginalDocString;
   private final StringBuilder myBuilder;
   private final List<Modification> myUpdates = new ArrayList<Modification>();
-  private final String myMinContentIndent;
+  protected final String myMinContentIndent;
 
   public DocStringUpdater(@NotNull T docString, @NotNull String minContentIndent) {
     myBuilder = new StringBuilder(docString.getDocStringContent().getSuperString());
@@ -93,12 +94,21 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   }
 
   @NotNull
-  protected String getLineIndent(int lastNonEmptyLine) {
-    final String indent = myOriginalDocString.getLineIndent(lastNonEmptyLine);
-    if (PyIndentUtil.getLineIndentSize(indent) < PyIndentUtil.getLineIndentSize(myMinContentIndent)) {
+  protected String getLineIndent(int lineNum) {
+    final String lastLineIndent = myOriginalDocString.getLineIndent(lineNum);
+    if (PyIndentUtil.getLineIndentSize(lastLineIndent) < PyIndentUtil.getLineIndentSize(myMinContentIndent)) {
       return myMinContentIndent;
     }
-    return indent;
+    return lastLineIndent;
+  }
+
+  protected int findLastNonEmptyLine() {
+    for (int i = myOriginalDocString.getLineCount() - 1; i >= 0; i--) {
+      if (StringUtil.isEmptyOrSpaces(myOriginalDocString.getLine(i))) {
+        return i;
+      }
+    }
+    return 0;
   }
 
   private static class Modification implements Comparable<Modification> {

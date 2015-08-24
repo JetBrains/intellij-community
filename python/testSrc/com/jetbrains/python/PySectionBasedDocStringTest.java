@@ -49,7 +49,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final List<Section> sections = docString.getSections();
     assertSize(3, sections);
 
-    assertEquals("parameters", sections.get(0).getTitle());
+    assertEquals("parameters", sections.get(0).getNormalizedTitle());
     final List<SectionField> paramFields = sections.get(0).getFields();
     assertSize(2, paramFields);
     final SectionField param1 = paramFields.get(0);
@@ -63,7 +63,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals("second parameter\n" +
                  "with longer description", param2.getDescription());
 
-    assertEquals("raises", sections.get(1).getTitle());
+    assertEquals("raises", sections.get(1).getNormalizedTitle());
     final List<SectionField> exceptionFields = sections.get(1).getFields();
     assertSize(1, exceptionFields);
     final SectionField exception1 = exceptionFields.get(0);
@@ -71,7 +71,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals("Exception", exception1.getType());
     assertEquals("if anything bad happens", exception1.getDescription());
 
-    assertEquals("returns", sections.get(2).getTitle());
+    assertEquals("returns", sections.get(2).getNormalizedTitle());
     final List<SectionField> returnFields = sections.get(2).getFields();
     assertSize(1, returnFields);
     final SectionField return1 = returnFields.get(0);
@@ -126,7 +126,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertSize(2, docString.getSections());
 
     final Section examplesSection = docString.getSections().get(0);
-    assertEquals("examples", examplesSection.getTitle());
+    assertEquals("examples", examplesSection.getNormalizedTitle());
     assertSize(1, examplesSection.getFields());
     final SectionField example1 = examplesSection.getFields().get(0);
     assertEmpty(example1.getName());
@@ -135,7 +135,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                  "func() == func()", example1.getDescription());
 
     final Section notesSection = docString.getSections().get(1);
-    assertEquals("notes", notesSection.getTitle());
+    assertEquals("notes", notesSection.getNormalizedTitle());
     assertSize(1, notesSection.getFields());
     final SectionField note1 = notesSection.getFields().get(0);
     assertEmpty(note1.getName());
@@ -168,7 +168,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertSize(1, docString.getSections());
     final Section section1 = docString.getSections().get(0);
-    assertEquals("parameters", section1.getTitle());
+    assertEquals("parameters", section1.getNormalizedTitle());
     assertSize(1, section1.getFields());
     final SectionField param1 = section1.getFields().get(0);
     assertEquals("x", param1.getName());
@@ -226,7 +226,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final NumpyDocString docString = findAndParseNumpyStyleDocString();
     assertSize(1, docString.getSections());
     final Section paramSection = docString.getSections().get(0);
-    assertEquals("parameters", paramSection.getTitle());
+    assertEquals("parameters", paramSection.getNormalizedTitle());
     assertSize(1, paramSection.getFields());
     final SectionField param1 = paramSection.getFields().get(0);
     assertEquals("x", param1.getName());
@@ -241,7 +241,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertSize(1, docString.getSections());
     final Section paramSection = docString.getSections().get(0);
-    assertEquals("parameters", paramSection.getTitle());
+    assertEquals("parameters", paramSection.getNormalizedTitle());
     assertSize(1, paramSection.getFields());
     final SectionField param1 = paramSection.getFields().get(0);
     assertEquals("x", param1.getName());
@@ -256,7 +256,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertSize(1, docString.getSections());
     final Section returnSection = docString.getSections().get(0);
-    assertEquals("returns", returnSection.getTitle());
+    assertEquals("returns", returnSection.getNormalizedTitle());
     assertSize(1, returnSection.getFields());
     final SectionField return1 = returnSection.getFields().get(0);
     assertEmpty(return1.getName());

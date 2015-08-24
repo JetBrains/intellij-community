@@ -159,6 +159,10 @@ public class Substring implements CharSequence {
     return myEndOffset - myStartOffset;
   }
 
+  public boolean isEmpty() {
+    return length() <= 0;
+  }
+
   @Override
   public char charAt(int i) {
     return myString.charAt(myStartOffset + i);

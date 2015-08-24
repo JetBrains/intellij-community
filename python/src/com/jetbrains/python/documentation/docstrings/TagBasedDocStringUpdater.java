@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.documentation.TagBasedDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
@@ -70,15 +69,6 @@ public class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocSt
     final int lastNonEmptyLine = findLastNonEmptyLine();
     final String indent = getLineIndent(lastNonEmptyLine);
     insertAfterLine(lastNonEmptyLine, lineBuilder.buildContent(indent, true));
-  }
-
-  private int findLastNonEmptyLine() {
-    for (int i = myOriginalDocString.getLineCount() - 1; i >= 0; i--) {
-      if (StringUtil.isEmptyOrSpaces(myOriginalDocString.getLine(i))) {
-        return i;
-      }
-    }
-    return 0;
   }
 
   private int findFirstLineWithTag() {

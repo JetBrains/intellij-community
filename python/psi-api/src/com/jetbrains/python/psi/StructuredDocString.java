@@ -91,4 +91,7 @@ public interface StructuredDocString {
 
   @Nullable
   Substring getParamByNameAndKind(@NotNull String name, String kind);
+
+  @Nullable
+  Substring getParamNameSubstring();
 }

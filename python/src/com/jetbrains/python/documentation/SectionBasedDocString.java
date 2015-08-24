@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Condition;
@@ -44,14 +43,14 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   /**
    * Frequently used section types
    */
-  @NonNls protected static final String RETURNS_SECTION = "returns";
-  @NonNls protected static final String RAISES_SECTION = "raises";
-  @NonNls protected static final String KEYWORD_ARGUMENTS_SECTION = "keyword arguments";
-  @NonNls protected static final String PARAMETERS_SECTION = "parameters";
-  @NonNls protected static final String ATTRIBUTES_SECTION = "attributes";
-  @NonNls protected static final String METHODS_SECTION = "methods";
-  @NonNls protected static final String OTHER_PARAMETERS_SECTION = "other parameters";
-  @NonNls protected static final String YIELDS_SECTION = "yields";
+  @NonNls public static final String RETURNS_SECTION = "returns";
+  @NonNls public static final String RAISES_SECTION = "raises";
+  @NonNls public static final String KEYWORD_ARGUMENTS_SECTION = "keyword arguments";
+  @NonNls public static final String PARAMETERS_SECTION = "parameters";
+  @NonNls public static final String ATTRIBUTES_SECTION = "attributes";
+  @NonNls public static final String METHODS_SECTION = "methods";
+  @NonNls public static final String OTHER_PARAMETERS_SECTION = "other parameters";
+  @NonNls public static final String YIELDS_SECTION = "yields";
 
   protected static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
@@ -90,8 +89,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   private static final ImmutableSet<String> SECTIONS_WITH_NAME = ImmutableSet.of(METHODS_SECTION);
 
   @Nullable
-  protected static String normalizeSectionTitle(@Nullable @NonNls String title) {
-    return title == null ? null : SECTION_ALIASES.get(title.toLowerCase());
+  protected static String normalizeSectionTitle(@NotNull @NonNls String title) {
+    return SECTION_ALIASES.get(title.toLowerCase());
   }
 
   private final Substring mySummary;
@@ -145,9 +144,12 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   protected Pair<Section, Integer> parseSection(int sectionStartLine) {
-    final Pair<String, Integer> pair = parseSectionHeader(sectionStartLine);
-    final String title = normalizeSectionTitle(pair.getFirst());
-    if (title == null) {
+    final Pair<Substring, Integer> pair = parseSectionHeader(sectionStartLine);
+    if (pair.getFirst() == null) {
+      return Pair.create(null, sectionStartLine);
+    }
+    final String normalized = normalizeSectionTitle(pair.getFirst().toString());
+    if (normalized == null) {
       return Pair.create(null, sectionStartLine);
     }
     int lineNum = skipEmptyLines(pair.getSecond());
@@ -155,7 +157,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     final int sectionIndent = getLineIndentSize(sectionStartLine);
     while (!isSectionBreak(lineNum, sectionIndent)) {
       if (!isEmpty(lineNum)) {
-        final Pair<SectionField, Integer> result = parseSectionField(lineNum, title, sectionIndent);
+        final Pair<SectionField, Integer> result = parseSectionField(lineNum, normalized, sectionIndent);
         if (result.getFirst() != null) {
           fields.add(result.getFirst());
           lineNum = result.getSecond();
@@ -164,7 +166,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       }
       lineNum++;
     }
-    return Pair.create(new Section(title, fields), lineNum);
+    return Pair.create(new Section(pair.getFirst(), fields), lineNum);
   }
 
   @NotNull
@@ -201,7 +203,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @NotNull
-  protected abstract Pair<String, Integer> parseSectionHeader(int lineNum);
+  protected abstract Pair<Substring, Integer> parseSectionHeader(int lineNum);
 
   protected int skipEmptyLines(int lineNum) {
     while (lineNum < getLineCount() && isEmpty(lineNum)) {
@@ -211,7 +213,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   protected boolean isSectionStart(int lineNum) {
-    final Pair<String, Integer> pair = parseSectionHeader(lineNum);
+    final Pair<Substring, Integer> pair = parseSectionHeader(lineNum);
     return pair.getFirst() != null;
   }
 
@@ -315,7 +317,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return StringUtil.join(skipFirstLine ? ContainerUtil.prepend(dedentedLines, firstLine) : dedentedLines, "\n");
   }
 
-  @VisibleForTesting
+  @NotNull
   public List<Section> getSections() {
     return Collections.unmodifiableList(mySections);
   }
@@ -396,7 +398,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   private List<SectionField> getParameterFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
     for (Section section : mySections) {
-      if (section.getTitle().equals(PARAMETERS_SECTION)) {
+      if (section.getNormalizedTitle().equals(PARAMETERS_SECTION)) {
         for (SectionField field : section.getFields()) {
           result.add(field);
         }
@@ -441,7 +443,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   private List<SectionField> getKeywordArgumentFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
     for (Section section : mySections) {
-      if (section.getTitle().equals(KEYWORD_ARGUMENTS_SECTION)) {
+      if (section.getNormalizedTitle().equals(KEYWORD_ARGUMENTS_SECTION)) {
         for (SectionField field : section.getFields()) {
           result.add(field);
         }
@@ -484,7 +486,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Nullable
   private SectionField getFirstReturnField() {
     for (Section section : mySections) {
-      if (section.getTitle().equals(RETURNS_SECTION) && !section.getFields().isEmpty()) {
+      if (section.getNormalizedTitle().equals(RETURNS_SECTION) && !section.getFields().isEmpty()) {
         return section.getFields().get(0);
       }
     }
@@ -517,7 +519,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   private List<SectionField> getExceptionFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
     for (Section section : mySections) {
-      if (section.getTitle().equals(RAISES_SECTION)) {
+      if (section.getNormalizedTitle().equals(RAISES_SECTION)) {
         result.addAll(section.getFields());
       }
     }
@@ -547,17 +549,28 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   public static class Section {
-    private final String myTitle;
+    private final Substring myTitle;
     private final List<SectionField> myFields;
 
-    public Section(@NotNull String title, @NotNull List<SectionField> fields) {
+    public Section(@NotNull Substring title, @NotNull List<SectionField> fields) {
       myTitle = title;
       myFields = new ArrayList<SectionField>(fields);
     }
 
     @NotNull
-    public String getTitle() {
+    public Substring getTitleAsSubstring() {
       return myTitle;
+    }
+
+    @NotNull
+    public String getTitle() {
+      return myTitle.toString();
+    }
+    
+    @NotNull
+    public String getNormalizedTitle() {
+      //noinspection ConstantConditions
+      return normalizeSectionTitle(getTitle());
     }
 
     @NotNull

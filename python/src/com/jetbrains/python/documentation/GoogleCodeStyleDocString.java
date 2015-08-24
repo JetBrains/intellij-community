@@ -113,11 +113,12 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
 
   @NotNull
   @Override
-  protected Pair<String, Integer> parseSectionHeader(int lineNum) {
-    final Matcher matcher = SECTION_HEADER_RE.matcher(getLine(lineNum));
+  protected Pair<Substring, Integer> parseSectionHeader(int lineNum) {
+    final Substring line = getLine(lineNum);
+    final Matcher matcher = SECTION_HEADER_RE.matcher(line);
     if (matcher.matches()) {
-      @NonNls final String title = matcher.group(1).trim();
-      if (SECTION_NAMES.contains(title.toLowerCase())) {
+      @NonNls final Substring title = line.getMatcherGroup(matcher, 1).trim();
+      if (SECTION_NAMES.contains(title.toString().toLowerCase())) {
         return Pair.create(title, lineNum + 1);
       }
     }
