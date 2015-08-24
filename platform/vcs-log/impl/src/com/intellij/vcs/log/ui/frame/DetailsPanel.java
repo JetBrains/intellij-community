@@ -443,9 +443,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         StringWriter sw = new StringWriter(p1.getOffset() - p0.getOffset());
         getEditorKit().write(sw, doc, p0.getOffset(), p1.getOffset() - p0.getOffset());
 
-        MyHtml2Text parser = new MyHtml2Text();
-        parser.parse(new StringReader(sw.toString()));
-        return parser.getText();
+        return StringUtil.removeHtmlTags(sw.toString());
       }
       catch (BadLocationException e) {
         LOG.warn(e);
@@ -454,25 +452,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         LOG.warn(e);
       }
       return super.getSelectedText();
-    }
-
-    private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
-      @NotNull private final StringBuilder myBuffer = new StringBuilder();
-
-      public void parse(Reader in) throws IOException {
-        myBuffer.setLength(0);
-        new ParserDelegator().parse(in, this, Boolean.TRUE);
-      }
-
-      public void handleText(char[] text, int pos) {
-        if (myBuffer.length() > 0) myBuffer.append(SystemProperties.getLineSeparator());
-
-        myBuffer.append(text);
-      }
-
-      public String getText() {
-        return myBuffer.toString();
-      }
     }
 
     @Override

@@ -242,7 +242,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
       String description = chooserDescriptor.getDescription();
       if (!StringUtil.isEmpty(description)) {
-        invoke(chooser, "setMessage:", Foundation.nsString(description));
+        invoke(chooser, "setMessage:", Foundation.nsString(StringUtil.removeHtmlTags(description)));
       }
 
       if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setCanCreateDirectories:"))) {
