@@ -35,7 +35,7 @@ public final class PyTestTracebackParserTest {
   @Before
   public void setUp() throws Exception {
     // Generate junk to text regexp speed
-    final int junkSize = 1000;
+    final int junkSize = 10000;
     final byte[] junk = new byte[junkSize];
     for (int i = 0; i < junkSize; i++) {
       // We do not care about precision nor security, that junk for tests
@@ -73,7 +73,7 @@ public final class PyTestTracebackParserTest {
    * Ensures
    * Regexp worst cases are limited to prevent freezing on very long lines
    */
-  @Test(timeout = 15000)
+  @Test(timeout = 5000)
   public void testExponential() throws Exception {
     Assert
       .assertNull("No link should be found in numbers list", new PyTestTracebackParser().findLinkInTrace(myStringJunk));

@@ -57,9 +57,11 @@ public abstract class TraceBackParser {
    * @return line info (if found)
    */
   @Nullable
-  public final LinkInTrace findLinkInTrace(@NotNull final String line) {
+  public final LinkInTrace findLinkInTrace(@NotNull String line) {
     if (line.length() > MAX_LINE_TO_PARSE) {
-      return null;
+      // Cut down line is too long to parse (to prevent freeze)
+      //noinspection AssignmentToMethodParameter
+      line = line.substring(0, MAX_LINE_TO_PARSE);
     }
     final Matcher matcher = myPattern.matcher(line);
     if (!matcher.find()) {
