@@ -44,6 +44,9 @@ public abstract class SectionBasedDocStringBuilder extends DocStringBuilder {
 
   @NotNull
   protected SectionBasedDocStringBuilder startSection(@NotNull String title) {
+    if (myCurSectionTitle != null) {
+      addEmptyLine();
+    }
     myCurSectionTitle = title;
     return this;
   }

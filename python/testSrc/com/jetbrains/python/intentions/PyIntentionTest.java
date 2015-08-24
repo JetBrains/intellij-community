@@ -18,6 +18,7 @@ package com.jetbrains.python.intentions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -410,7 +411,62 @@ public class  PyIntentionTest extends PyTestCase {
 
   public void testDocStubKeywordOnly() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    doDocStubTest(LanguageLevel.PYTHON32);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
+      public void run() {
+        doDocStubTest();
+      }
+    });
+  }
+
+  // PY-9795
+  public void testGoogleDocStubInlineFunctionBody() {
+    doDocStubTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testGoogleDocStubInlineFunctionBodyMultilineParametersList() {
+    doDocStubTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testGoogleDocStubInlineFunctionBodyNoSpaceBefore() {
+    doDocStubTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testGoogleDocStubEmptyFunctionBody() {
+    doDocStubTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testGoogleDocStubWithTypes() {
+    final PyCodeInsightSettings codeInsightSettings = PyCodeInsightSettings.getInstance();
+    final boolean oldInsertTypeDocStub = codeInsightSettings.INSERT_TYPE_DOCSTUB;
+    codeInsightSettings.INSERT_TYPE_DOCSTUB = true;
+    try {
+      doDocStubTest(DocStringFormat.GOOGLE);
+    }
+    finally {
+      codeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertTypeDocStub;
+    }
+  }
+
+  // PY-4717
+  public void testNumpyDocStub() {
+    doDocStubTest(DocStringFormat.NUMPY);
+  }
+
+  // PY-4717
+  public void testNumpyDocStubWithTypes() {
+    final PyCodeInsightSettings codeInsightSettings = PyCodeInsightSettings.getInstance();
+    final boolean oldInsertTypeDocStub = codeInsightSettings.INSERT_TYPE_DOCSTUB;
+    codeInsightSettings.INSERT_TYPE_DOCSTUB = true;
+    try {
+      doDocStubTest(DocStringFormat.NUMPY);
+    }
+    finally {
+      codeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertTypeDocStub;
+    }
   }
 
   // PY-7383
@@ -426,20 +482,24 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.static.method.to.function"));
   }
 
-  private void doDocStubTest(LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+  private void doDocStubTest(@Nullable DocStringFormat format) {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    final DocStringFormat oldFormat = settings.getFormat();
+    if (format != null) {
+      settings.setFormat(format);
+    }
     try {
-      doDocStubTest();
+      CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+      codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
+      doTest(PyBundle.message("INTN.doc.string.stub"), true);
     }
     finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+      settings.setFormat(oldFormat);
     }
   }
 
   private void doDocStubTest() {
-    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
-    doTest(PyBundle.message("INTN.doc.string.stub"), true);
+    doDocStubTest(null);
   }
 
   private void doDocReferenceTest() {

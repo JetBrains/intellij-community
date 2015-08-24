@@ -233,7 +233,7 @@ public class PyDocstringGenerator {
       return;
     }
     builder.replaceRange(substring.getTextRange().shiftRight(docStringExpression.getStringValueTextRange().getStartOffset()),
-                         getDefaultType());
+                         getDefaultType(getParamToEdit()));
     Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
     final VirtualFile virtualFile = myDocStringOwner.getContainingFile().getVirtualFile();
     if (virtualFile == null) return;
@@ -246,8 +246,7 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
-  private String getDefaultType() {
-    DocstringParam param = getParamToEdit();
+  private static String getDefaultType(@NotNull DocstringParam param) {
     if (StringUtil.isEmpty(param.getType())) {
       return PyNames.OBJECT;
     }
@@ -320,14 +319,20 @@ public class PyDocstringGenerator {
         @Override
         public boolean value(DocstringParam param) {
           return param.isReturnValue();
-
         }
       });
 
       if (!returnValues.isEmpty()) {
         sectionBuilder.startReturnsSection();
+        boolean hasTypedReturns = false;
         for (DocstringParam returnValue : returnValues) {
-          sectionBuilder.addReturnValue(null, StringUtil.notNullize(returnValue.getType()), "");
+          if (returnValue.getType() != null) {
+            sectionBuilder.addReturnValue(null, getDefaultType(returnValue), "");
+            hasTypedReturns = true;
+          }
+        }
+        if (!hasTypedReturns) {
+          sectionBuilder.addEmptyLine();
         }
       }
     }
@@ -408,7 +413,13 @@ public class PyDocstringGenerator {
           final TextRange range = beforeStatements.getTextRange();
           try {
             if (beforeStatements instanceof PsiWhiteSpace) {
-              document.replaceString(range.getStartOffset(), range.getEndOffset(), replacementWithLineBreaks);
+              if (statements.getStatements().length > 0) {
+                document.replaceString(range.getStartOffset(), range.getEndOffset(), replacementWithLineBreaks);
+              }
+              else {
+                // preserve original spacing, since it probably separates function and other declarations
+                document.insertString(range.getStartOffset(), replacementWithLineBreaks);
+              }
             }
             else {
               document.insertString(range.getEndOffset(), replacementWithLineBreaks);
