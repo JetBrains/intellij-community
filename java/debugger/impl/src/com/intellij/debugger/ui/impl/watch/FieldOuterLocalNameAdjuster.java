@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class FieldOuterLocalNameAdjuster extends NodeDescriptorNameAdjuster {
 
   @Override
-  public boolean shouldApply(@NotNull NodeDescriptor descriptor) {
+  public boolean isApplicable(@NotNull NodeDescriptor descriptor) {
     if (descriptor instanceof FieldDescriptorImpl && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
       return ((FieldDescriptorImpl)descriptor).isOuterLocalVariableValue();
     }

@@ -25,7 +25,6 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
@@ -93,12 +92,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public String getName() {
-    String varName = myLocalVariable.name();
-    NodeDescriptorNameAdjuster nameAdjuster = NodeDescriptorNameAdjuster.findFor(this);
-    if (nameAdjuster != null) {
-      return nameAdjuster.fixName(varName, this);
-    }
-    return varName;
+    return myLocalVariable.name();
   }
 
   @Nullable

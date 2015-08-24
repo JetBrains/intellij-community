@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
 public abstract class NodeDescriptorNameAdjuster {
   public static ExtensionPointName<NodeDescriptorNameAdjuster> EP_NAME = ExtensionPointName.create("com.intellij.debugger.nodeNameAdjuster");
 
-  public abstract boolean shouldApply(@NotNull NodeDescriptor descriptor);
+  public abstract boolean isApplicable(@NotNull NodeDescriptor descriptor);
 
   public abstract String fixName(String name, @NotNull NodeDescriptor descriptor);
 
   public static NodeDescriptorNameAdjuster findFor(@NotNull NodeDescriptor descriptor) {
     for (NodeDescriptorNameAdjuster adjuster:EP_NAME.getExtensions()) {
-      if (adjuster.shouldApply(descriptor)) return adjuster;
+      if (adjuster.isApplicable(descriptor)) return adjuster;
     }
     return null;
   }
