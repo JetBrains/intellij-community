@@ -16,7 +16,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -35,10 +37,12 @@ import org.jetbrains.annotations.Nullable;
 */
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private final Project myProject;
+  private final GotoFileModel myModel;
 
-  public GotoFileItemProvider(@NotNull Project project, @Nullable PsiElement context) {
+  public GotoFileItemProvider(@NotNull Project project, @Nullable PsiElement context, GotoFileModel model) {
     super(context);
     myProject = project;
+    myModel = model;
   }
 
   @Override
@@ -48,7 +52,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                 @NotNull ProgressIndicator indicator,
                                 @NotNull Processor<Object> consumer) {
     if (pattern.contains("/") || pattern.contains("\\")) {
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(FileUtil.toSystemIndependentName(pattern));
+      String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, myModel));
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
       if (vFile != null) {
         ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
         if (index.isInContent(vFile) || index.isInLibraryClasses(vFile) || index.isInLibrarySource(vFile)) {

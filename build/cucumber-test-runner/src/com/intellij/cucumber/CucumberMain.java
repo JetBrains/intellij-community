@@ -17,9 +17,8 @@ package com.intellij.cucumber;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.ui.UIUtil;
-import cucumber.runtime.Env;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
@@ -39,8 +38,14 @@ public class CucumberMain {
   }
 
   public static void main(String[] args) throws IOException {
-    int exitstatus = run(args, Thread.currentThread().getContextClassLoader());
-    System.exit(exitstatus);
+    int exitStatus;
+    try {
+      exitStatus = run(args, Thread.currentThread().getContextClassLoader());
+    }
+    catch (Throwable e) {
+      exitStatus = 1;
+    }
+    System.exit(exitStatus);
 
   }
 
@@ -49,7 +54,7 @@ public class CucumberMain {
     final Ref<Runtime> runtimeRef = new Ref<Runtime>();
 
     try {
-      UsefulTestCase.replaceIdeEventQueueSafely();
+      TestRunnerUtil.replaceIdeEventQueueSafely();
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
@@ -60,17 +65,18 @@ public class CucumberMain {
             Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
             runtimeRef.set(runtime);
             runtime.run();
-          } catch (Throwable throwable) {
-              errorRef.set(throwable);
-              Logger.getInstance(CucumberMain.class).error(throwable);
-            }
           }
-        });
-      }
-      catch (Throwable t) {
-        errorRef.set(t);
-        Logger.getInstance(CucumberMain.class).error(t);
-      }
+          catch (Throwable throwable) {
+            errorRef.set(throwable);
+            Logger.getInstance(CucumberMain.class).error(throwable);
+          }
+        }
+      });
+    }
+    catch (Throwable t) {
+      errorRef.set(t);
+      Logger.getInstance(CucumberMain.class).error(t);
+    }
 
     final Throwable throwable = errorRef.get();
     if (throwable != null) {

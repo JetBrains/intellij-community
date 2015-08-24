@@ -31,7 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
@@ -96,7 +96,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
     myExcludePackagesModel.add(index, packageName);
     myExcludePackagesList.setSelectedValue(packageName, true);
-    ListScrollingUtil.ensureIndexIsVisible(myExcludePackagesList, index, 0);
+    ScrollingUtil.ensureIndexIsVisible(myExcludePackagesList, index, 0);
     IdeFocusManager.getGlobalInstance().requestFocus(myExcludePackagesList, false);
   }
 

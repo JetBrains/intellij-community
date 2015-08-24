@@ -26,10 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 class SequentialCleanupTask implements SequentialTask {
   private static final Logger LOG = Logger.getInstance(SequentialCleanupTask.class);
@@ -63,7 +60,13 @@ class SequentialCleanupTask implements SequentialTask {
     }
     final PsiFile file = myFileIterator.next();
     final List<HighlightInfo> infos = myResults.get(file);
-    Collections.reverse(infos); //sort bottom - top
+    // sort from bottom to top
+    Collections.sort(infos, new Comparator<HighlightInfo>() {
+      @Override
+      public int compare(HighlightInfo info1, HighlightInfo info2) {
+        return info2.getStartOffset() - info1.getStartOffset();
+      }
+    });
     for (HighlightInfo info : infos) {
       for (final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : info.quickFixActionRanges) {
         try {

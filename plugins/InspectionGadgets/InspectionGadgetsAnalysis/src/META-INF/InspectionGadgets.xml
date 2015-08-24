@@ -1476,6 +1476,9 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="SuiteNotDeclaredStatic" shortName="StaticSuite" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="static.suite.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.junit.StaticSuiteInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuperTearDownInFinally" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="super.tear.down.in.finally.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
+                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.junit.SuperTearDownInFinallyInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="JUnitTestCaseInProductSource" shortName="TestCaseInProductCode" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="test.case.in.product.code.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"

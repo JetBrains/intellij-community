@@ -28,7 +28,7 @@ public class EduAnswerPlaceholderPainter {
       return;
     }
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), color,
+    final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
                                                                     EffectType.BOXED, Font.PLAIN);
     final Project project = editor.getProject();
     assert project != null;
@@ -40,6 +40,18 @@ public class EduAnswerPlaceholderPainter {
     RangeHighlighter
       highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST + 1,
                                                                 textAttributes, HighlighterTargetArea.EXACT_RANGE);
+    highlighter.setCustomRenderer(new CustomHighlighterRenderer() {
+      @Override
+      public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+        Color oldColor = g.getColor();
+        g.setColor(color);
+        Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
+        Point pointEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getEndOffset()));
+        g.drawRect(point.x, point.y, pointEnd.x - point.x, editor.getLineHeight());
+        g.setColor(oldColor);
+      }
+    });
+
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }

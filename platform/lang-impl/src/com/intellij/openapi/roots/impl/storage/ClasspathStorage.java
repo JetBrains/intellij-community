@@ -24,7 +24,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
-import com.intellij.openapi.components.impl.stores.StorageDataBase;
 import com.intellij.openapi.components.impl.stores.StorageManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -54,7 +53,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorageData> {
+public class ClasspathStorage extends StateStorageBase<Boolean> {
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
@@ -128,19 +127,15 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
     return (S)state;
   }
 
-  static class MyStorageData extends StorageDataBase {
-    private boolean loaded;
-
-    @Override
-    public boolean hasState(@NotNull String componentName) {
-      return !loaded;
-    }
+  @Override
+  protected boolean hasState(@NotNull Boolean storageData, @NotNull String componentName) {
+    return !storageData;
   }
 
   @Nullable
   @Override
-  protected Element getStateAndArchive(@NotNull MyStorageData storageData, Object component, @NotNull String componentName) {
-    if (storageData.loaded) {
+  protected Element getStateAndArchive(@NotNull Boolean storageData, Object component, @NotNull String componentName) {
+    if (storageData) {
       return null;
     }
 
@@ -178,13 +173,13 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
       throw new RuntimeException(e);
     }
 
-    storageData.loaded = true;
+    storageDataRef.set(true);
     return element;
   }
 
   @Override
-  protected MyStorageData loadData() {
-    return new MyStorageData();
+  protected Boolean loadData() {
+    return false;
   }
 
   @Override
@@ -197,10 +192,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
-    MyStorageData storageData = storageDataRef.get();
-    if (storageData != null) {
-      storageData.loaded = false;
-    }
+    storageDataRef.set(false);
   }
 
   @Nullable

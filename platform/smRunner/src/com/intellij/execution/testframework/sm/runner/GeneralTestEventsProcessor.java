@@ -69,6 +69,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   public void onSuiteTreeStarted(String suiteName, String locationHint) { }
 
   public void onSuiteTreeEnded(String suiteName) { }
+  public void onBuildTreeEnded() { }
 
   // progress events
 

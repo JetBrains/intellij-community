@@ -29,6 +29,9 @@ import java.nio.charset.Charset;
 public abstract class BaseOutputReader extends BaseDataReader {
   protected final Reader myReader;
 
+  private final char[] myInputBuffer = new char[8192];
+  private final StringBuilder myLineBuffer = new StringBuilder();
+
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
     this(inputStream, charset, null);
   }
@@ -62,18 +65,16 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @throws IOException If an I/O error occurs
    */
   protected final boolean readAvailableNonBlocking() throws IOException {
-    char[] buffer = new char[8192];
-    StringBuilder line = new StringBuilder();
     boolean read = false;
 
     int n;
-    while (myReader.ready() && (n = myReader.read(buffer)) > 0) {
+    while (myReader.ready() && (n = myReader.read(myInputBuffer)) > 0) {
       read = true;
-      processLine(buffer, line, n);
+      processLine(myInputBuffer, myLineBuffer, n);
     }
 
-    if (line.length() > 0) {
-      sendLine(line);
+    if (myLineBuffer.length() > 0) {
+      sendLine(myLineBuffer);
     }
 
     return read;
@@ -89,23 +90,21 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @throws IOException If an I/O error occurs
    */
   protected final boolean readAvailableBlocking() throws IOException {
-    char[] buffer = new char[8192];
-    StringBuilder line = new StringBuilder();
     boolean read = false;
 
     int n;
-    while ((n = myReader.read(buffer)) > 0) {
+    while ((n = myReader.read(myInputBuffer)) > 0) {
       read = true;
-      processLine(buffer, line, n);
+      processLine(myInputBuffer, myLineBuffer, n);
 
       if (!myReader.ready()) {
-        if (line.length() > 0) sendLine(line);
+        if (myLineBuffer.length() > 0) sendLine(myLineBuffer);
         onBufferExhaustion();
       }
     }
 
-    if (line.length() > 0) {
-      sendLine(line);
+    if (myLineBuffer.length() > 0) {
+      sendLine(myLineBuffer);
     }
 
     return read;

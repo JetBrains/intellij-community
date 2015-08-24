@@ -173,7 +173,12 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   protected void disableSyncScrollSupport(boolean disable) {
     if (mySyncScrollSupport != null) {
-      mySyncScrollSupport.setDisabled(disable);
+      if (disable) {
+        mySyncScrollSupport.enterDisableScrollSection();
+      }
+      else {
+        mySyncScrollSupport.exitDisableScrollSection();
+      }
     }
   }
 

@@ -43,6 +43,17 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testIDEA140035() throws Exception {
+    doTestAllMethodCallExpressions();
+    final Collection<PsiParameter> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
+    for (PsiParameter parameter : parameterLists) {
+      if (parameter.getTypeElement() != null) continue;
+      getPsiManager().dropResolveCaches();
+      final PsiType type = parameter.getType();
+      assertFalse("Failed inference for: " + parameter.getParent().getText(), type instanceof PsiLambdaParameterType);
+    }
+  }
+
   private void doTestAllMethodCallExpressions() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);

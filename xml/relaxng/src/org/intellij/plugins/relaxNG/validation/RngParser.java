@@ -31,6 +31,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl;
 import com.thaiopensource.relaxng.impl.SchemaReaderImpl;
@@ -68,6 +69,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.StringReader;
+import java.util.concurrent.ConcurrentMap;
 
 /*
 * Created by IntelliJ IDEA.
@@ -91,6 +93,8 @@ public class RngParser {
     }
   };
 
+  private static final ConcurrentMap<String, DPattern> ourCache = ContainerUtil.createConcurrentSoftMap();
+
   private static DatatypeLibraryFactory createXsdDatatypeFactory() {
     try {
       return new DatatypeLibraryFactoryImpl();
@@ -101,7 +105,6 @@ public class RngParser {
   }
 
   static final Key<CachedValue<Schema>> SCHEMA_KEY = Key.create("SCHEMA");
-  static final Key<CachedValue<DPattern>> PATTERN_KEY = Key.create("PATTERN");
 
   public static final DefaultHandler DEFAULT_HANDLER = new DefaultHandler() {
     @Override
@@ -114,14 +117,23 @@ public class RngParser {
   static final PropertyMap EMPTY_PROPS = new PropertyMapBuilder().toPropertyMap();
 
   public static DPattern getCachedPattern(final PsiFile descriptorFile, final ErrorHandler eh) {
-    final CachedValuesManager mgr = CachedValuesManager.getManager(descriptorFile.getProject());
+    final VirtualFile file = descriptorFile.getVirtualFile();
 
-    return mgr.getCachedValue(descriptorFile, PATTERN_KEY, new CachedValueProvider<DPattern>() {
-      @Override
-      public Result<DPattern> compute() {
-        return Result.create(parsePattern(descriptorFile, eh, false), descriptorFile);
+    if (file == null) {
+      return parsePattern(descriptorFile, eh, false);
+    }
+    String url = file.getUrl();
+    DPattern pattern = ourCache.get(url);
+    if (pattern == null) {
+      pattern = parsePattern(descriptorFile, eh, false);
+    }
+    if (pattern != null) {
+      DPattern oldPattern = ourCache.putIfAbsent(url, pattern);
+      if (oldPattern != null) {
+        return oldPattern;
       }
-    }, false);
+    }
+    return pattern;
   }
 
   public static DPattern parsePattern(final PsiFile file, final ErrorHandler eh, boolean checking) {

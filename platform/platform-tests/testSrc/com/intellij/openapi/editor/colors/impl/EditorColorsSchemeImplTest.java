@@ -245,6 +245,14 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     EditorColorsScheme scheme = loadScheme(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<scheme name=\"Test\" version=\"141\" parent_scheme=\"Default\">\n" +
+      // Some 'attributes' section is required for the upgrade procedure to work.
+      "<attributes>" +
+      "   <option name=\"TEXT\">\n" +
+      "      <value>\n" +
+      "           option name=\"FOREGROUND\" value=\"ffaaaa\" />\n" +
+      "      </value>\n" +
+      "   </option>" +
+      "</attributes>" +
       "</scheme>\n"
     );
 
@@ -264,7 +272,6 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
 
     targetScheme.readExternal(root);
-    ((AbstractColorsScheme)targetScheme).upgradeSchemeFromPreviousVersion();
 
     return targetScheme;
   }

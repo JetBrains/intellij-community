@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -42,12 +43,12 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -74,9 +75,8 @@ public class ReferenceExpressionCompletionContributor {
       return this;
     }
   };
-
-  private ReferenceExpressionCompletionContributor() {
-  }
+  public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
+    psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class));
 
   @NotNull 
   private static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
@@ -125,7 +125,7 @@ public class ReferenceExpressionCompletionContributor {
   public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
     final PsiElement element = parameters.getPosition();
     if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
-    if (JavaCompletionData.isAfterPrimitiveOrArrayType(element)) return null;
+    if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(element)) return null;
 
     final int offset = parameters.getParameters().getOffset();
     final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
@@ -219,10 +219,11 @@ public class ReferenceExpressionCompletionContributor {
     return elements;
   }
 
-  public static Set<PsiField> findConstantsUsedInSwitch(PsiElement element) {
-    final Set<PsiField> used = new HashSet<PsiField>();
-    if (psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class)).accepts(element)) {
-      PsiSwitchStatement sw = PsiTreeUtil.getParentOfType(element, PsiSwitchStatement.class);
+  @NotNull 
+  public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
+    if (IN_SWITCH_LABEL.accepts(position)) {
+      Set<PsiField> used = ContainerUtil.newLinkedHashSet();
+      PsiSwitchStatement sw = PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class);
       assert sw != null;
       final PsiCodeBlock body = sw.getBody();
       assert body != null;
@@ -237,8 +238,9 @@ public class ReferenceExpressionCompletionContributor {
           }
         }
       }
+      return used;
     }
-    return used;
+    return Collections.emptySet();
   }
 
   @Nullable

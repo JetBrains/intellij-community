@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
@@ -89,5 +90,17 @@ public class CCUtils {
         }
       });
     }
+  }
+
+  public static boolean isLessonDir(PsiDirectory sourceDirectory) {
+    if (sourceDirectory == null) {
+      return false;
+    }
+    CCProjectService service = CCProjectService.getInstance(sourceDirectory.getProject());
+    Course course = service.getCourse();
+    if (course != null && course.getLesson(sourceDirectory.getName()) != null) {
+      return true;
+    }
+    return false;
   }
 }

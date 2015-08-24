@@ -26,9 +26,11 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.io.File
 import java.io.IOException
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 public class TemporaryDirectory : ExternalResource() {
-  private val files = SmartList<File>()
+  private val paths = SmartList<Path>()
 
   private var sanitizedName: String? = null
 
@@ -38,62 +40,109 @@ public class TemporaryDirectory : ExternalResource() {
   }
 
   override fun after() {
-    for (file in files) {
-      FileUtil.delete(file)
+    for (path in paths) {
+      path.deleteRecursively()
     }
-    files.clear()
+    paths.clear()
   }
 
   /**
    * Directory is not created.
    */
-  public fun newDirectory(directoryName: String? = null): File {
-    val file = generatePath(directoryName)
-    val fs = LocalFileSystem.getInstance()
-    if (fs != null) {
-      // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
-      val virtualFile = fs.findFileByIoFile(file)
-      if (virtualFile != null) {
-        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
-      }
+  public fun newDirectory(directoryName: String? = null): File = generatePath(directoryName).toFile()
+
+  public fun newPath(directoryName: String? = null, refreshVfs: Boolean = true): Path {
+    val path = generatePath(directoryName)
+    if (refreshVfs) {
+      path.refreshVfs()
     }
-    return file
+    return path
   }
 
-  public fun generatePath(suffix: String?): File {
+  private fun generatePath(suffix: String?): Path {
     var fileName = sanitizedName!!
     if (suffix != null) {
       fileName += "_$suffix"
     }
 
-    var file = generateTemporaryPath(fileName)
-    files.add(file)
-    return file
+    var path = generateTemporaryPath(fileName)
+    paths.add(path)
+    return path
   }
 
   public fun newVirtualDirectory(directoryName: String? = null): VirtualFile {
-    val file = generatePath(directoryName)
-    if (!file.mkdirs()) {
-      throw AssertionError("Cannot create directory")
-    }
-
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    val path = generatePath(directoryName)
+    path.createDirectories()
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.systemIndependentPath)
     VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     return virtualFile!!
   }
 }
 
-public fun generateTemporaryPath(fileName: String?): File {
-  val tempDirectory = FileUtilRt.getTempDirectory()
-  var file = File(tempDirectory, fileName)
+public fun generateTemporaryPath(fileName: String?): Path {
+  val tempDirectory = Paths.get(FileUtilRt.getTempDirectory())
+  var path = tempDirectory.resolve(fileName)
   var i = 0
-  while (file.exists() && i < 9) {
-    file = File(tempDirectory, "${fileName}_$i")
+  while (path.exists() && i < 9) {
+    path = tempDirectory.resolve("${fileName}_$i")
     i++
   }
 
-  if (file.exists()) {
+  if (path.exists()) {
     throw IOException("Cannot generate unique random path")
   }
-  return file
+  return path
 }
+
+public fun Path.exists(): Boolean = Files.exists(this)
+
+public fun Path.createDirectories(): Path = Files.createDirectories(this)
+
+public fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
+  override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+    Files.delete(file)
+    return FileVisitResult.CONTINUE
+  }
+
+  override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+    Files.delete(dir)
+    return FileVisitResult.CONTINUE
+  }
+}) else this
+
+public val Path.systemIndependentPath: String
+  get() = toString().replace(File.separatorChar, '/')
+
+public val Path.parentSystemIndependentPath: String
+  get() = getParent()!!.toString().replace(File.separatorChar, '/')
+
+public fun Path.readText(): String = Files.readAllBytes(this).toString(Charsets.UTF_8)
+
+public fun VirtualFile.writeChild(relativePath: String, data: String): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
+
+public fun Path.writeChild(relativePath: String, data: String): Path {
+  val path = resolve(relativePath)
+  path.getParent().createDirectories()
+  return Files.write(path, data.toByteArray())
+}
+
+/**
+ * Opposite to ugly Java, parent directories will be created
+ */
+public fun Path.createFile() {
+  getParent()?.createDirectories()
+  Files.createFile(this)
+}
+
+public fun Path.refreshVfs() {
+  LocalFileSystem.getInstance()?.let { fs ->
+    // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
+    val virtualFile = fs.findFileByPath(systemIndependentPath)
+    if (virtualFile != null) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+    }
+  }
+}
+
+val VirtualFile.path: String
+  get() = getPath()

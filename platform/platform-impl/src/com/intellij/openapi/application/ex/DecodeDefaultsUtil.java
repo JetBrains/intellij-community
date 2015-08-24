@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.application.ex;
 
-import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
@@ -38,12 +38,12 @@ public class DecodeDefaultsUtil {
     if (url == null) {
       Class<?> requestorClass = requestor.getClass();
       if (StringUtil.startsWithChar(componentResourcePath, '/')) {
-        url = requestorClass.getResource(componentResourcePath + DirectoryStorageData.DEFAULT_EXT);
+        url = requestorClass.getResource(componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
       }
       else {
-        url = requestorClass.getResource('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath + DirectoryStorageData.DEFAULT_EXT);
+        url = requestorClass.getResource('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
         if (url == null) {
-          url = requestorClass.getResource('/' + componentResourcePath + DirectoryStorageData.DEFAULT_EXT);
+          url = requestorClass.getResource('/' + componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
         }
       }
       RESOURCE_CACHE.put(componentResourcePath, url);

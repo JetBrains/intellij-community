@@ -143,40 +143,66 @@ public class JavaDocInfoGenerator {
   }
 
   interface DocTagLocator <T> {
-    T find(PsiDocComment comment);
+    T find(PsiDocCommentOwner owner, PsiDocComment comment);
   }
 
-  private static DocTagLocator<PsiDocTag> parameterLocator(final String name) {
+  private static DocTagLocator<PsiDocTag> parameterLocator(final int parameterIndex) {
     return new DocTagLocator<PsiDocTag>() {
       @Override
-      public PsiDocTag find(PsiDocComment comment) {
-        if (comment == null) {
-          return null;
-        }
+      public PsiDocTag find(PsiDocCommentOwner owner, PsiDocComment comment) {
+        if (parameterIndex < 0 || comment == null || !(owner instanceof PsiMethod)) return null;
 
-        PsiDocTag[] tags = comment.findTagsByName("param");
-
-        for (PsiDocTag tag : tags) {
-          PsiDocTagValue value = tag.getValueElement();
-
-          if (value != null) {
-            String text = value.getText();
-
-            if (text != null && text.equals(name)) {
-              return tag;
-            }
-          }
-        }
-
-        return null;
+        PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
+        if (parameterIndex >= parameters.length) return null;
+        
+        String name = parameters[parameterIndex].getName();
+        return getParamTagByName(comment, name);
       }
     };
   }
 
+  private static DocTagLocator<PsiDocTag> typeParameterLocator(final int parameterIndex) {
+    return new DocTagLocator<PsiDocTag>() {
+      @Override
+      public PsiDocTag find(PsiDocCommentOwner owner, PsiDocComment comment) {
+        if (parameterIndex < 0 || comment == null || !(owner instanceof PsiTypeParameterListOwner)) return null;
+        
+        PsiTypeParameter[] parameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
+        if (parameterIndex >= parameters.length) return null;
+
+        String rawName = parameters[parameterIndex].getName();
+        if (rawName == null) return null;
+        String name = "<" + rawName + ">";
+        return getParamTagByName(comment, name);
+      }
+    };
+  }
+
+  private static PsiDocTag getParamTagByName(@NotNull PsiDocComment comment, String name) {
+    PsiDocTag[] tags = comment.findTagsByName("param");
+    return getTagByName(tags, name);
+  }
+
+  private static PsiDocTag getTagByName(@NotNull PsiDocTag[] tags, String name) {
+    for (PsiDocTag tag : tags) {
+      PsiDocTagValue value = tag.getValueElement();
+
+      if (value != null) {
+        String text = value.getText();
+
+        if (text != null && text.equals(name)) {
+          return tag;
+        }
+      }
+    }
+
+    return null;
+  }
+  
   private static DocTagLocator<PsiDocTag> exceptionLocator(final String name) {
     return new DocTagLocator<PsiDocTag>() {
       @Override
-      public PsiDocTag find(PsiDocComment comment) {
+      public PsiDocTag find(PsiDocCommentOwner owner, PsiDocComment comment) {
         if (comment == null) {
           return null;
         }
@@ -467,25 +493,24 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateTypeParametersSection(final StringBuilder buffer, final PsiClass aClass) {
-    final PsiDocComment docComment = aClass.getDocComment();
-    if (docComment == null) return;
-    final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> result =
-      new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
+    final LinkedList<ParamInfo> result = new LinkedList<ParamInfo>();
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      final DocTagLocator<PsiDocTag> locator = parameterLocator("<" + typeParameter.getName() + ">");
+    for (int i = 0; i < typeParameters.length; i++) {
+      PsiTypeParameter typeParameter = typeParameters[i];
+      String name = "<" + typeParameter.getName() + ">";
+      final DocTagLocator<PsiDocTag> locator = typeParameterLocator(i);
       final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> inClassComment = findInClassComment(aClass, locator);
       if (inClassComment != null) {
-        result.add(inClassComment);
+        result.add(new ParamInfo(name, inClassComment));
       }
       else {
         final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInHierarchy(aClass, locator);
         if (pair != null) {
-          result.add(pair);
+          result.add(new ParamInfo(name, pair));
         }
       }
     }
-    generateTypeParametersSection(buffer, result);
+    generateParametersSection(buffer, CodeInsightBundle.message("javadoc.type.parameters"), result);
   }
 
   @Nullable
@@ -502,7 +527,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInClassComment(final PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {
-    final PsiDocTag tag = locator.find(getDocComment(psiClass));
+    final PsiDocTag tag = locator.find(psiClass, getDocComment(psiClass));
     if (tag != null) {
       return new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, new InheritDocProvider<PsiDocTag>() {
         @Override
@@ -543,17 +568,7 @@ public class JavaDocInfoGenerator {
     if (generatePrologueAndEpilogue)
       generatePrologue(buffer);
 
-    PsiClass parentClass = field.getContainingClass();
-    if (parentClass != null) {
-      String qName = parentClass.getQualifiedName();
-      if (qName != null) {
-        buffer.append("<small><b>");
-        //buffer.append(qName);
-        generateLink(buffer, qName, qName, field, false);
-        buffer.append("</b></small>");
-        //buffer.append("<br>");
-      }
-    }
+    generateLinkToParentIfNeeded(buffer, field);
 
     buffer.append("<PRE>");
     generateFieldSignature(buffer, field, true);
@@ -693,11 +708,9 @@ public class JavaDocInfoGenerator {
     try {
       final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(htmlText.getBytes(CharsetToolkit.UTF8_CHARSET)));
       final Element rootTag = document.getRootElement();
-      if (rootTag != null) {
-        final Element subTag = rootTag.getChild("body");
-        if (subTag != null) {
-          htmlText = subTag.getValue();
-        }
+      final Element subTag = rootTag.getChild("body");
+      if (subTag != null) {
+        htmlText = subTag.getValue();
       }
     }
     catch (JDOMException ignore) {}
@@ -933,8 +946,11 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateMethodParameterJavaDoc(@NonNls StringBuilder buffer, PsiParameter parameter, boolean generatePrologueAndEpilogue) {
-    if (generatePrologueAndEpilogue)
+    String parameterName = parameter.getName();
+    
+    if (generatePrologueAndEpilogue) {
       generatePrologue(buffer);
+    }
 
     buffer.append("<PRE>");
     String modifiers = PsiFormatUtil.formatModifiers(parameter, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
@@ -946,7 +962,7 @@ public class JavaDocInfoGenerator {
     generateType(buffer, parameter.getType(), parameter);
     buffer.append(" ");
     buffer.append("<b>");
-    buffer.append(parameter.getName());
+    buffer.append(parameterName);
     appendInitializer(buffer, parameter);
     buffer.append("</b>");
     buffer.append("</PRE>");
@@ -954,14 +970,17 @@ public class JavaDocInfoGenerator {
     final PsiElement method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class, PsiLambdaExpression.class);
 
     if (method instanceof PsiMethod) {
-      final PsiDocComment docComment = getDocComment((PsiMethod)method);
-      final PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
-      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tagInfoProvider =
-        findDocTag(localTags, parameter.getName(), (PsiMethod)method);
+      PsiMethod psiMethod = (PsiMethod)method;
+      PsiParameterList parameterList = psiMethod.getParameterList();
+      if (parameter.getParent() == parameterList) { // this can also be a parameter in foreach statement or in catch clause
+        final PsiDocComment docComment = getDocComment(psiMethod);
+        final PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
+        int parameterIndex = parameterList.getParameterIndex(parameter);
+        final ParamInfo tagInfoProvider = findDocTag(localTags, parameterName, psiMethod, parameterLocator(parameterIndex));
 
-      if (tagInfoProvider != null) {
-        PsiElement[] elements = tagInfoProvider.first.getDataElements();
-        if (elements.length != 0) generateOneParameter(elements, buffer, tagInfoProvider);
+        if (tagInfoProvider != null) {
+          generateOneParameter(buffer, tagInfoProvider);
+        }
       }
     }
 
@@ -973,17 +992,7 @@ public class JavaDocInfoGenerator {
     if (generatePrologueAndEpilogue)
       generatePrologue(buffer);
 
-    PsiClass parentClass = method.getContainingClass();
-    if (parentClass != null) {
-      String qName = parentClass.getQualifiedName();
-      if (qName != null) {
-        buffer.append("<small><b>");
-        generateLink(buffer, qName, qName, method, false);
-        //buffer.append(qName);
-        buffer.append("</b></small>");
-        //buffer.append("<br>");
-      }
-    }
+    generateLinkToParentIfNeeded(buffer, method);
 
     buffer.append("<PRE>");
     generateMethodSignature(buffer, method, true, false);
@@ -1003,7 +1012,7 @@ public class JavaDocInfoGenerator {
     }
 
     generateParametersSection(buffer, method, comment);
-    generateTypeParametersSection(buffer, method);
+    generateTypeParametersSection(buffer, method, comment);
     generateReturnsSection(buffer, method, comment);
     generateThrowsSection(buffer, method, comment);
 
@@ -1015,6 +1024,18 @@ public class JavaDocInfoGenerator {
 
     if (generatePrologueAndEpilogue)
       generateEpilogue(buffer);
+  }
+
+  private static void generateLinkToParentIfNeeded(StringBuilder buffer, PsiMember member) {
+    PsiClass parentClass = member.getContainingClass();
+    if (parentClass != null) {
+      String qName = parentClass.getQualifiedName();
+      if (qName != null) {
+        buffer.append("<small><b>");
+        generateLink(buffer, qName, qName, member, false);
+        buffer.append("</b></small>");
+      }
+    }
   }
 
   private static void generateMethodSignature(StringBuilder buffer, PsiMethod method, boolean generateLink, boolean useShortNames) {
@@ -1107,6 +1128,7 @@ public class JavaDocInfoGenerator {
   }
 
   private PsiDocComment loadSyntheticDocComment(final PsiMethod method, final String resourceName) {
+    //noinspection IOResourceOpenedButNotSafelyClosed
     final InputStream commentStream = JavaDocInfoGenerator.class.getResourceAsStream(resourceName);
     if (commentStream == null) {
       return null;
@@ -1134,7 +1156,9 @@ public class JavaDocInfoGenerator {
     }
 
     String s = buffer.toString();
-    s = StringUtil.replace(s, "<ClassName>", method.getContainingClass().getName());
+    PsiClass containingClass = method.getContainingClass();
+    assert containingClass != null;
+    s = StringUtil.replace(s, "<ClassName>", containingClass.getName());
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     try {
       return elementFactory.createDocCommentFromText(s);
@@ -1219,7 +1243,7 @@ public class JavaDocInfoGenerator {
   private void generateMethodDescription(@NonNls StringBuilder buffer, final PsiMethod method, final PsiDocComment comment) {
     final DocTagLocator<PsiElement[]> descriptionLocator = new DocTagLocator<PsiElement[]>() {
       @Override
-      public PsiElement[] find(PsiDocComment comment) {
+      public PsiElement[] find(PsiDocCommentOwner owner, PsiDocComment comment) {
         if (comment == null) {
           return null;
         }
@@ -1298,6 +1322,7 @@ public class JavaDocInfoGenerator {
       return "";
     }
 
+    //noinspection ReplaceAllDot
     return "../" + ourNotDot.matcher(qName).replaceAll("").replaceAll(".", "../");
   }
 
@@ -1415,6 +1440,9 @@ public class JavaDocInfoGenerator {
       if (myElement instanceof PsiField) valueField = (PsiField) myElement;
     }
     else {
+      if (text.indexOf('#') == -1) {
+        text = "#" + text;
+      }
       PsiElement target = JavaDocUtil.findReferenceTarget(PsiManager.getInstance(myProject), text, myElement);
       if (target instanceof PsiField) {
         valueField = (PsiField) target;
@@ -1534,113 +1562,86 @@ public class JavaDocInfoGenerator {
     PsiParameter[] params = method.getParameterList().getParameters();
     PsiDocTag[] localTags = comment != null ? comment.findTagsByName("param") : PsiDocTag.EMPTY_ARRAY;
 
-    LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags =
-      new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
+    LinkedList<ParamInfo> collectedTags = new LinkedList<ParamInfo>();
 
-    for (PsiParameter param : params) {
+    for (int i = 0; i < params.length; i++) {
+      PsiParameter param = params[i];
       final String paramName = param.getName();
-      Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = findDocTag(localTags, paramName, method);
+      DocTagLocator<PsiDocTag> tagLocator = parameterLocator(i);
+      ParamInfo parmTag = findDocTag(localTags, paramName, method, tagLocator);
 
       if (parmTag != null) {
         collectedTags.addLast(parmTag);
       }
     }
 
-    if (!collectedTags.isEmpty()) {
-      buffer.append("<DD><DL>");
-      buffer.append("<DT><b>").append(CodeInsightBundle.message("javadoc.parameters")).append("</b>");
-      for (Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag : collectedTags) {
-        PsiElement[] elements = tag.first.getDataElements();
-        if (elements.length == 0) continue;
-        generateOneParameter(elements, buffer, tag);
-      }
-      buffer.append("</DD></DL></DD>");
-    }
+    generateParametersSection(buffer, CodeInsightBundle.message("javadoc.parameters"), collectedTags);
   }
 
-  private void generateTypeParametersSection(final StringBuilder buffer, final PsiMethod method) {
-    final PsiDocComment docComment = method.getDocComment();
-    if (docComment == null) return;
-    final PsiDocTag[] localTags = docComment.findTagsByName("param");
+  private void generateTypeParametersSection(final StringBuilder buffer, final PsiMethod method, PsiDocComment comment) {
+    final PsiDocTag[] localTags = comment == null ? PsiDocTag.EMPTY_ARRAY : comment.findTagsByName("param");
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-    final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags = new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
-    for (PsiTypeParameter typeParameter : typeParameters) {
+    final LinkedList<ParamInfo> collectedTags = new LinkedList<ParamInfo>();
+    for (int i = 0; i < typeParameters.length; i++) {
+      PsiTypeParameter typeParameter = typeParameters[i];
       final String paramName = "<" + typeParameter.getName() + ">";
-      Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = findDocTag(localTags, paramName, method);
+      DocTagLocator<PsiDocTag> tagLocator = typeParameterLocator(i);
+      ParamInfo parmTag = findDocTag(localTags, paramName, method, tagLocator);
 
       if (parmTag != null) {
         collectedTags.addLast(parmTag);
       }
     }
-    generateTypeParametersSection(buffer, collectedTags);
+    generateParametersSection(buffer, CodeInsightBundle.message("javadoc.type.parameters"), collectedTags);
   }
 
-  private void generateTypeParametersSection(final StringBuilder buffer, final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags) {
+  private void generateParametersSection(StringBuilder buffer, String titleMessage, LinkedList<ParamInfo> collectedTags) {
     if (!collectedTags.isEmpty()) {
       buffer.append("<DD><DL>");
-      buffer.append("<DT><b>").append(CodeInsightBundle.message("javadoc.type.parameters")).append("</b>");
-      for (Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag : collectedTags) {
-        PsiElement[] elements = tag.first.getDataElements();
-        if (elements.length == 0) continue;
-        generateOneParameter(elements, buffer, tag);
+      buffer.append("<DT><b>").append(titleMessage).append("</b>");
+      for (ParamInfo tag : collectedTags) {
+        generateOneParameter(buffer, tag);
       }
       buffer.append("</DD></DL></DD>");
     }
   }
 
-  @Nullable private Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findDocTag(final PsiDocTag[] localTags,
-                                                                                         final String paramName,
-                                                                                         final PsiMethod method) {
-    Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = null;
-    for (PsiDocTag localTag : localTags) {
-      PsiDocTagValue value = localTag.getValueElement();
-
-      if (value != null) {
-        String tagName = value.getText();
-
-        if (tagName != null && tagName.equals(paramName)) {
-          parmTag =
-          new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>
-            (localTag,
-             new InheritDocProvider<PsiDocTag>() {
-               @Override
-               public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-                 return findInheritDocTag(method, parameterLocator(paramName));
-               }
-
-               @Override
-               public PsiClass getElement() {
-                 return method.getContainingClass();
-               }
-             });
-          break;
+  @Nullable private ParamInfo findDocTag(final PsiDocTag[] localTags, 
+                                         final String paramName, final PsiMethod method, final DocTagLocator<PsiDocTag> tagLocator) {
+    PsiDocTag localTag = getTagByName(localTags, paramName);
+    if (localTag != null) {
+      return new ParamInfo(paramName, localTag, new InheritDocProvider<PsiDocTag>() {
+        @Override
+        public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
+          return findInheritDocTag(method, tagLocator);
         }
-      }
-    }
 
-    if (parmTag == null) {
-      parmTag = findInheritDocTag(method, parameterLocator(paramName));
+        @Override
+        public PsiClass getElement() {
+          return method.getContainingClass();
+        }
+      });
     }
-    return parmTag;
+    Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag = findInheritDocTag(method, tagLocator);
+    return tag == null ? null : new ParamInfo(paramName, tag);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void generateOneParameter(final PsiElement[] elements,
-                                    final StringBuilder buffer,
-                                    final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag) {
+  private void generateOneParameter(StringBuilder buffer, ParamInfo tag) {
+    PsiElement[] elements = tag.docTag.getDataElements();
+    if (elements.length == 0) return;
     String text = elements[0].getText();
     buffer.append("<DD>");
     int spaceIndex = text.indexOf(' ');
     if (spaceIndex < 0) {
       spaceIndex = text.length();
     }
-    String parmName = text.substring(0, spaceIndex);
     buffer.append("<code>");
-    buffer.append(StringUtil.escapeXml(parmName));
+    buffer.append(StringUtil.escapeXml(tag.name));
     buffer.append("</code>");
     buffer.append(" - ");
     buffer.append(text.substring(spaceIndex));
-    generateValue(buffer, elements, 1, mapProvider(tag.second, true));
+    generateValue(buffer, elements, 1, mapProvider(tag.inheritDocTagProvider, true));
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -2012,7 +2013,7 @@ public class JavaDocInfoGenerator {
             buffer.append(separator);
             length += 3;
           }
-          length += generateType(buffer, psiType, context, generateLink, useShortNames);
+          length += generateType(buffer, psiType, context, true, useShortNames);
         }
         return length;
       }
@@ -2070,7 +2071,7 @@ public class JavaDocInfoGenerator {
       final PsiMethod overriden =  findMethodInSuperClass(method, aSuper);
 
       if (overriden != null) {
-        T tag = loc.find(getDocComment(overriden));
+        T tag = loc.find(overriden, getDocComment(overriden));
 
         if (tag != null) {
           return new Pair<T, InheritDocProvider<T>>
@@ -2164,10 +2165,26 @@ public class JavaDocInfoGenerator {
 
     return findInheritDocTagInClass(method, aClass, loc, new HashSet<PsiClass>());
   }
+  
+  private static class ParamInfo {
+    private final String name;
+    private final PsiDocTag docTag;
+    private final InheritDocProvider<PsiDocTag> inheritDocTagProvider;
+
+    private ParamInfo(String paramName, PsiDocTag tag, InheritDocProvider<PsiDocTag> provider) {
+      name = paramName;
+      docTag = tag;
+      inheritDocTagProvider = provider;
+    }
+    
+    private ParamInfo(String paramName, @NotNull Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tagWithInheritProvider) {
+      this(paramName, tagWithInheritProvider.first, tagWithInheritProvider.second);
+    }
+  }
 
   private static class ReturnTagLocator implements DocTagLocator<PsiDocTag> {
     @Override
-    public PsiDocTag find(PsiDocComment comment) {
+    public PsiDocTag find(PsiDocCommentOwner owner, PsiDocComment comment) {
       if (comment == null) {
         return null;
       }

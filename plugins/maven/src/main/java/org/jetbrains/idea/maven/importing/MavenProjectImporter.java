@@ -431,7 +431,7 @@ public class MavenProjectImporter {
     javacOptions.ADDITIONAL_OPTIONS_STRING = options;
   }
 
-  private void importModules(final List<MavenProjectsProcessorTask> postTasks) {
+  private void importModules(final List<MavenProjectsProcessorTask> tasks) {
     Map<MavenProject, MavenProjectChanges> projectsWithChanges = myProjectsToImportWithChanges;
 
     Set<MavenProject> projectsWithNewlyCreatedModules = new THashSet<MavenProject>();
@@ -471,7 +471,11 @@ public class MavenProjectImporter {
     }
 
     for (MavenModuleImporter importer : importers) {
-      importer.configFacets(postTasks);
+      importer.configFacets(tasks);
+    }
+
+    for (MavenModuleImporter importer : importers) {
+      importer.postConfigFacets();
     }
 
     setMavenizedModules(modulesToMavenize, true);

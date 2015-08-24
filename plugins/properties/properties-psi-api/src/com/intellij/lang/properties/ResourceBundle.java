@@ -62,12 +62,13 @@ public abstract class ResourceBundle {
   public abstract String getBaseName();
 
   /**
-   * @return null if resource bundle is not default ( == instance of ResourceBundleImpl)
+   * @return null if properties files are not lying in the same directory
    */
-  @Deprecated
   @Nullable
   public abstract VirtualFile getBaseDirectory();
 
   @NotNull
-  public abstract Project getProject();
+  public Project getProject() {
+    return getDefaultPropertiesFile().getProject();
+  };
 }

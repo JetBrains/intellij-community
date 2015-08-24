@@ -741,10 +741,13 @@ public class RedundantCastUtil {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).hasParameters()) return true;
     }
 
-    if (operand instanceof PsiLambdaExpression || operand instanceof PsiMethodReferenceExpression) {
-      if (castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE)) return true;
+    final PsiExpression stripParenthesisOperand = PsiUtil.skipParenthesizedExprDown(operand);
+    if (stripParenthesisOperand instanceof PsiFunctionalExpression) {
+      if (isCastToSerializable(castType)) return true;
       if (castType instanceof PsiIntersectionType) {
-        return true;
+        for (PsiType type : ((PsiIntersectionType)castType).getConjuncts()) {
+          if (isCastToSerializable(type)) return true;
+        }
       }
     }
 
@@ -771,6 +774,10 @@ public class RedundantCastUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isCastToSerializable(PsiType castType) {
+    return castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE);
   }
 
   private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {

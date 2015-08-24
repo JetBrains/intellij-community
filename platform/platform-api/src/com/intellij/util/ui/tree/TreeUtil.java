@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
@@ -192,13 +192,22 @@ public final class TreeUtil {
 
   @NotNull
   public static TreePath getPathFromRoot(@NotNull TreeNode node) {
-    final ArrayList<TreeNode> path = new ArrayList<TreeNode>();
-    do {
-      path.add(node);
-      node = node.getParent();
-    } while (node != null);
-    Collections.reverse(path);
-    return new TreePath(path.toArray());
+    TreeNode[] path = getPathFromRoot(node, 1);
+    return new TreePath(path);
+  }
+
+  @NotNull
+  private static TreeNode[] getPathFromRoot(@NotNull TreeNode node, int depth) {
+    TreeNode[] path;
+    TreeNode parent = node.getParent();
+    if (parent == null) {
+      path = new TreeNode[depth];
+    }
+    else {
+      path = getPathFromRoot(parent, depth + 1);
+    }
+    path[path.length - depth] = node;
+    return path;
   }
 
   @Nullable
@@ -383,7 +392,7 @@ public final class TreeUtil {
       return showRowCentred(tree, tree.getRowForPath(path));
     } else {
       final int row = tree.getRowForPath(path);
-      return showAndSelect(tree, row - ListScrollingUtil.ROW_PADDING, row + ListScrollingUtil.ROW_PADDING, row, -1);
+      return showAndSelect(tree, row - ScrollingUtil.ROW_PADDING, row + ScrollingUtil.ROW_PADDING, row, -1);
     }
   }
 

@@ -183,6 +183,18 @@ public class LineSet{
     return new LineSet(myStarts, flags, myLength);
   }
 
+  LineSet clearModificationFlags(int startLine, int endLine) {
+    if (startLine == endLine) return this;
+    checkLineIndex(startLine);
+    checkLineIndex(endLine - 1);
+
+    byte[] flags = myFlags.clone();
+    for (int i = startLine; i < endLine; i++) {
+      flags[i] &= ~MODIFIED_MASK;
+    }
+    return new LineSet(myStarts, flags, myLength);
+  }
+
   LineSet clearModificationFlags() {
     byte[] flags = myFlags.clone();
     for (int i = 0; i < flags.length; i++) {

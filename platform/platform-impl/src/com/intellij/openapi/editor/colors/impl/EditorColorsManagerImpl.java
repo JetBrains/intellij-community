@@ -124,27 +124,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
     }, RoamingType.PER_USER);
 
-    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
-      mySchemeManager.addScheme(defaultScheme);
-    }
-
-    // Load default schemes from providers
-    if (!isUnitTestOrHeadlessMode()) {
-      for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, new ThrowableConvertor<Element, EditorColorsScheme, Throwable>() {
-          @Override
-          public EditorColorsScheme convert(Element element) throws Throwable {
-            return new ReadOnlyColorsSchemeImpl(element);
-          }
-        });
-      }
-    }
-
+    initDefaultSchemes();
+    loadBundledSchemes();
     mySchemeManager.loadSchemes();
-
-    loadAdditionalTextAttributes();
-
-    upgradeSchemesFromPreviousVersion();
 
     String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
     EditorColorsScheme scheme = null;
@@ -155,10 +137,22 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
   }
 
-  private void upgradeSchemesFromPreviousVersion() {
-    for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
-      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
-        ((AbstractColorsScheme)scheme).upgradeSchemeFromPreviousVersion();
+  private void initDefaultSchemes() {
+    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
+      mySchemeManager.addScheme(defaultScheme);
+    }
+    loadAdditionalTextAttributes();
+  }
+
+  private void loadBundledSchemes() {
+    if (!isUnitTestOrHeadlessMode()) {
+      for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
+        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, new ThrowableConvertor<Element, EditorColorsScheme, Throwable>() {
+          @Override
+          public EditorColorsScheme convert(Element element) throws Throwable {
+            return new ReadOnlyColorsSchemeImpl(element);
+          }
+        });
       }
     }
   }

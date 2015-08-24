@@ -332,7 +332,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public String getLabel() {
-    return calcValueName() + " = " + getValueLabel();
+    return calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
   }
 
   public ValueDescriptorImpl getFullValueDescriptor() {
@@ -379,7 +379,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public String calcValueName() {
     return getName();
-  };
+  }
+
+  @Nullable
+  public String getDeclaredType() {
+    return null;
+  }
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
@@ -591,15 +596,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myProject;
   }
 
-  protected String addDeclaredType(String typeName) {
-    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-    StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(getName()).append(": ").append(classRenderer.renderTypeName(typeName));
-      return buf.toString();
+  @NotNull
+  public String getDeclaredTypeLabel() {
+    ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    if (classRenderer.SHOW_DECLARED_TYPE) {
+      String declaredType = getDeclaredType();
+      if (!StringUtil.isEmpty(declaredType)) {
+        return ": " + classRenderer.renderTypeName(declaredType);
+      }
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    return "";
   }
 }

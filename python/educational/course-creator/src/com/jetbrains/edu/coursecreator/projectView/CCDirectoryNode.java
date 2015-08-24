@@ -12,6 +12,7 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import icons.EducationalIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class CCDirectoryNode extends PsiDirectoryNode {
@@ -28,23 +29,22 @@ public class CCDirectoryNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
-    //TODO:change presentable name for files with suffix _answer
-
     String valueName = myValue.getName();
     final CCProjectService service = CCProjectService.getInstance(myProject);
     final Course course = service.getCourse();
     if (course == null) return;
     if (myProject.getBaseDir().equals(myValue.getVirtualFile())) {
       data.clearText();
-      data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      data.addText(" (" + course.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      data.setIcon(EducationalIcons.Course);
+      data.addText(course.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
     final Lesson lesson = course.getLesson(valueName);
     if (lesson != null) {
       data.clearText();
-      data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      data.addText(" (" + lesson.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      data.setIcon(EducationalIcons.Lesson);
+      data.addText(lesson.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       return;
     }
     else {
@@ -55,8 +55,8 @@ public class CCDirectoryNode extends PsiDirectoryNode {
           final Task task = parentLesson.getTask(valueName);
           if (task != null) {
             data.clearText();
-            data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            data.addText(" (" + task.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            data.setIcon(EducationalIcons.Task);
+            data.addText(task.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
             return;
           }
         }

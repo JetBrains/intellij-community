@@ -57,3 +57,14 @@ class A23 extends B23 {
         b23.set(<warning descr="Unnecessary unboxing '((Double) o).doubleValue()'">((Double) o).doubleValue()</warning>);
     }
 }
+class test {
+    static abstract class AAbstractLongMap extends java.util.AbstractMap<Long, Long> {
+        public Long put(long key, Long value) {
+            return null;
+        }
+    }
+    static AAbstractLongMap new_times;
+    void m(Long l) {
+        new_times.put(l.longValue(), new Long(2l));
+    }
+}

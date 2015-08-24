@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -47,9 +48,8 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   private EvaluateException myEvaluateException;
   private String myLabel = UNKNOWN_VALUE_MESSAGE;
 
-  private HashMap<Key, Object> myUserData;
+  private Map<Key, Object> myUserData;
 
-  private final List<NodeDescriptorImpl> myChildren = new ArrayList<NodeDescriptorImpl>();
   private static final Key<Map<ObjectReference, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<ObjectReference, ValueMarkup>>("ValueMarkupMap");
 
   @Override
@@ -69,7 +69,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   @Override
   public <T> void putUserData(Key<T> key, T value) {
     if(myUserData == null) {
-      myUserData = new HashMap<Key, Object>();
+      myUserData = new SmartHashMap<Key, Object>();
     }
     myUserData.put(key, value);
   }
@@ -151,10 +151,6 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   public void clear() {
     myEvaluateException = null;
     myLabel = "";
-  }
-
-  public List<NodeDescriptorImpl> getChildren() {
-    return myChildren;
   }
 
   @Override

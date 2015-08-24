@@ -21,6 +21,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,10 +108,7 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
       if (parameterList.getParametersCount() != 0) {
         return;
       }
-      final CallToSuperFinalizeVisitor visitor =
-        new CallToSuperFinalizeVisitor();
-      method.accept(visitor);
-      if (visitor.isCallToSuperFinalizeFound()) {
+      if (MethodCallUtils.containsSuperMethodCall(HardcodedMethodConstants.FINALIZE, method)) {
         return;
       }
       if (ignoreTrivialFinalizers && MethodUtils.isTrivial(method, false)) {

@@ -17,11 +17,11 @@
 package org.jetbrains.testme.instrumentation;
 
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 public class Instrumenter extends ClassVisitor {
+  private static final int ADDED_CODE_STACK_SIZE = 6;
   protected final ClassVisitor myClassVisitor;
   private final String myClassName;
   private final String myInternalClassName;
@@ -88,7 +88,7 @@ public class Instrumenter extends ClassVisitor {
       mv = new StaticBlockMethodVisitor(mv);
       mv.visitCode();
       mv.visitInsn(Opcodes.RETURN);
-      mv.visitMaxs(myMethodNames.length + 2, 1);
+      mv.visitMaxs(ADDED_CODE_STACK_SIZE, 0);
       mv.visitEnd();
     }
     super.visitEnd();
@@ -102,12 +102,11 @@ public class Instrumenter extends ClassVisitor {
     public void visitCode() {
       super.visitCode();
 
+      visitLdcInsn(myClassName);
       pushInstruction(this, myMethodNames.length);
       visitIntInsn(Opcodes.NEWARRAY, Opcodes.T_BOOLEAN);
-      visitFieldInsn(Opcodes.PUTSTATIC, myInternalClassName, METHODS_VISITED, METHODS_VISITED_CLASS);
 
       pushInstruction(this, myMethodNames.length);
-
       visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/String");
 
       for(int i = 0; i < myMethodNames.length; ++i) {
@@ -117,28 +116,16 @@ public class Instrumenter extends ClassVisitor {
         visitInsn(Opcodes.AASTORE);
       }
 
-      visitVarInsn(Opcodes.ASTORE, 0);
+      visitMethodInsn(Opcodes.INVOKESTATIC, ProjectData.PROJECT_DATA_OWNER, "trace", "(Ljava/lang/String;[Z[Ljava/lang/String;)[Z", false);
+      visitFieldInsn(Opcodes.PUTSTATIC, myInternalClassName, METHODS_VISITED, METHODS_VISITED_CLASS);
 
-      Label startLabel = new Label();
-      visitLabel(startLabel);
-
-      visitLdcInsn(myClassName);
-      visitFieldInsn(Opcodes.GETSTATIC, myInternalClassName, METHODS_VISITED, METHODS_VISITED_CLASS);
-      visitVarInsn(Opcodes.ALOAD, 0);
-      visitMethodInsn(Opcodes.INVOKESTATIC, ProjectData.PROJECT_DATA_OWNER, "trace", "(Ljava/lang/String;[Z[Ljava/lang/String;)V", false);
-
-      Label endLabel = new Label();
-      visitLabel(endLabel);
-
-      visitLocalVariable("methodNames", "[Ljava/lang/String;", null, startLabel, endLabel, 0);
       // no return here
     }
 
     public void visitMaxs(int maxStack, int maxLocals) {
-      final int ourMaxStack = myMethodNames.length + 2;
-      final int ourMaxLocals = 1;
+      final int ourMaxStack = ADDED_CODE_STACK_SIZE;
 
-      super.visitMaxs(Math.max(ourMaxStack, maxStack), Math.max(ourMaxLocals, maxLocals));
+      super.visitMaxs(Math.max(ourMaxStack, maxStack), maxLocals);
     }
   }
 

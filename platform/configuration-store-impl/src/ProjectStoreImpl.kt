@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
@@ -109,17 +108,9 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
   }
 
   override fun getProjectBasePath(): String? {
-    val path = getProjectFilePath()
-    if (!StringUtil.isEmptyOrSpaces(path)) {
-      return getBasePath(File(path))
-    }
-
-    //we are not yet initialized completely ("open directory", etc)
-    val storage = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER)
-    return if (storage is FileBasedStorage) getBasePath(storage.getFile()) else null
+    val path = PathUtilRt.getParentPath(getProjectFilePath())
+    return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
   }
-
-  private fun getBasePath(file: File) = if (scheme == StorageScheme.DEFAULT) file.getParent() else file.getParentFile()?.getParent()
 
   override fun getProjectName(): String {
     if (scheme == StorageScheme.DIRECTORY_BASED) {
@@ -246,8 +237,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
   protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
   }
-
-  override fun getMessageBus() = project.getMessageBus()
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,

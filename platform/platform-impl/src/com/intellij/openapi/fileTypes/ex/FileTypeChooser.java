@@ -29,7 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +109,7 @@ public class FileTypeChooser extends DialogWrapper {
       }
     );
 
-    ListScrollingUtil.selectItem(myList, FileTypes.PLAIN_TEXT);
+    ScrollingUtil.selectItem(myList, FileTypes.PLAIN_TEXT);
 
     return myPanel;
   }

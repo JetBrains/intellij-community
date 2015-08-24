@@ -411,6 +411,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
       myOpenProjects = ArrayUtil.append(myOpenProjects, project);
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? project : null;
     }
     return true;
   }
@@ -419,6 +420,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private Collection<Project> removeFromOpened(@NotNull Project project) {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
       return Arrays.asList(myOpenProjects);
     }
   }
@@ -558,7 +560,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     doReloadProject(project);
   }
 
-  protected static void doReloadProject(@NotNull Project project) {
+  public static void doReloadProject(@NotNull Project project) {
     final Ref<Project> projectRef = Ref.create(project);
     ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
     ApplicationManager.getApplication().invokeLater(new Runnable() {

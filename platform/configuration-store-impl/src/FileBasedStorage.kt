@@ -22,24 +22,22 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.FileStorage
+import com.intellij.openapi.components.impl.stores.StorageUtil
+import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jdom.JDOMException
-
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.CharBuffer
 
-open class FileBasedStorage(private volatile var file: File,
+open class FileBasedStorage(file: File,
                             fileSpec: String,
                             rootElementName: String,
                             pathMacroManager: TrackingPathMacroSubstitutor? = null,
@@ -48,6 +46,9 @@ open class FileBasedStorage(private volatile var file: File,
   private volatile var cachedVirtualFile: VirtualFile? = null
   private var lineSeparator: LineSeparator? = null
   private var blockSavingTheContent = false
+
+  volatile var file = file
+    private set
 
   init {
     if (ApplicationManager.getApplication().isUnitTestMode() && file.getPath().startsWith('$')) {
@@ -65,9 +66,9 @@ open class FileBasedStorage(private volatile var file: File,
     }
   }
 
-  override fun createSaveSession(storageData: StorageData) = FileSaveSession(storageData, this)
+  override fun createSaveSession(states: StateMap) = FileSaveSession(states, this)
 
-  protected open class FileSaveSession(storageData: StorageData, storage: FileBasedStorage) : XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
+  protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) : XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
     override fun save() {
       if (!storage.blockSavingTheContent) {
         super.save()
@@ -98,8 +99,6 @@ open class FileBasedStorage(private volatile var file: File,
     }
     return cachedVirtualFile
   }
-
-  override fun getFile() = file
 
   override fun loadLocalData(): Element? {
     blockSavingTheContent = false

@@ -150,11 +150,11 @@ public class GitLogProvider implements VcsLogProvider {
     return new LogDataImpl(allRefs, sortedCommits);
   }
 
-  private static void validateDataAndReportError(final VirtualFile root,
-                                                 final Set<VcsRef> allRefs,
-                                                 final List<VcsCommitMetadata> sortedCommits,
-                                                 final DetailedLogData firstBlockSyncData,
-                                                 final Set<VcsRef> manuallyReadBranches,
+  private static void validateDataAndReportError(@NotNull final VirtualFile root,
+                                                 @NotNull final Set<VcsRef> allRefs,
+                                                 @NotNull final List<VcsCommitMetadata> sortedCommits,
+                                                 @NotNull final DetailedLogData firstBlockSyncData,
+                                                 @NotNull final Set<VcsRef> manuallyReadBranches,
                                                  @Nullable final Set<String> currentTagNames,
                                                  @Nullable final DetailedLogData commitsFromTags) {
     StopWatch sw = StopWatch.start("validating data in " + root.getName());
@@ -167,17 +167,17 @@ public class GitLogProvider implements VcsLogProvider {
 
     PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<Hash>() {
       @Override
-      public int getColorOfBranch(Hash headCommit) {
+      public int getColorOfBranch(@NotNull Hash headCommit) {
         return 0;
       }
 
       @Override
-      public int getColorOfFragment(Hash headCommit, int magicIndex) {
+      public int getColorOfFragment(@NotNull Hash headCommit, int magicIndex) {
         return 0;
       }
 
       @Override
-      public int compareHeads(Hash head1, Hash head2) {
+      public int compareHeads(@NotNull Hash head1, @NotNull Hash head2) {
         if (!refs.contains(head1) || !refs.contains(head2)) {
           LOG.error("GitLogProvider returned inconsistent data", new Attachment("error-details.txt",
                                                                                 printErrorDetails(root, allRefs, sortedCommits,
@@ -191,13 +191,13 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  private static String printErrorDetails(VirtualFile root,
-                                          final Set<VcsRef> allRefs,
-                                          final List<VcsCommitMetadata> sortedCommits,
-                                          final DetailedLogData firstBlockSyncData,
-                                          final Set<VcsRef> manuallyReadBranches,
-                                          @Nullable final Set<String> currentTagNames,
-                                          @Nullable final DetailedLogData commitsFromTags) {
+  private static String printErrorDetails(@NotNull VirtualFile root,
+                                          @NotNull Set<VcsRef> allRefs,
+                                          @NotNull List<VcsCommitMetadata> sortedCommits,
+                                          @NotNull DetailedLogData firstBlockSyncData,
+                                          @NotNull Set<VcsRef> manuallyReadBranches,
+                                          @Nullable Set<String> currentTagNames,
+                                          @Nullable DetailedLogData commitsFromTags) {
 
     StringBuilder sb = new StringBuilder();
     sb.append("[" + root.getName() + "]\n");
@@ -227,16 +227,13 @@ public class GitLogProvider implements VcsLogProvider {
     return sb.toString();
   }
 
-  private static String printLogData(DetailedLogData firstBlockSyncData) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Last 100 commits:\n");
-    sb.append(printCommits(firstBlockSyncData.getCommits()));
-    sb.append("\nRefs:\n");
-    sb.append(printRefs(firstBlockSyncData.getRefs()));
-    return sb.toString();
+  @NotNull
+  private static String printLogData(@NotNull DetailedLogData firstBlockSyncData) {
+    return String.format("Last 100 commits:\n%s\nRefs:\n%s", printCommits(firstBlockSyncData.getCommits()), printRefs(firstBlockSyncData.getRefs()));
   }
 
-  private static String printCommits(List<VcsCommitMetadata> commits) {
+  @NotNull
+  private static String printCommits(@NotNull List<VcsCommitMetadata> commits) {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < Math.min(commits.size(), 100); i++) {
       GraphCommit<Hash> commit = commits.get(i);
@@ -251,7 +248,8 @@ public class GitLogProvider implements VcsLogProvider {
     return sb.toString();
   }
 
-  private static String printRefs(Set<VcsRef> refs) {
+  @NotNull
+  private static String printRefs(@NotNull Set<VcsRef> refs) {
     return StringUtil.join(refs, new Function<VcsRef, String>() {
       @Override
       public String fun(VcsRef ref) {
@@ -316,7 +314,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     List<String> parameters = new ArrayList<String>(GitHistoryUtils.LOG_ALL);
-    parameters.add("--sparse");
+    parameters.add("--date-order");
 
     final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
     Set<VcsUser> userRegistry = newHashSet();
@@ -453,12 +451,12 @@ public class GitLogProvider implements VcsLogProvider {
     if (maxCount > 0) {
       filterParameters.add(prepareParameter("max-count", String.valueOf(maxCount)));
     }
-    filterParameters.add("--date-order");
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (filterCollection.getStructureFilter() != null) {
       Collection<VirtualFile> files = filterCollection.getStructureFilter().getFiles();
       if (!files.isEmpty()) {
+        filterParameters.add("--full-history");
         filterParameters.add("--simplify-merges");
         filterParameters.add("--");
         for (VirtualFile file : files) {
@@ -468,8 +466,8 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
-    GitHistoryUtils.readCommits(myProject, root, filterParameters, Consumer.EMPTY_CONSUMER, Consumer.EMPTY_CONSUMER,
-                                new CollectConsumer<TimedVcsCommit>(commits));
+    GitHistoryUtils.readCommits(myProject, root, filterParameters, EmptyConsumer.<VcsUser>getInstance(),
+                                EmptyConsumer.<VcsRef>getInstance(), new CollectConsumer<TimedVcsCommit>(commits));
     return commits;
   }
 

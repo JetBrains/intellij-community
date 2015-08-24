@@ -41,7 +41,7 @@ import java.util.concurrent.Future;
 public class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
 
-  private static final int SHELL_ENV_READING_TIMEOUT = 10000;
+  private static final int SHELL_ENV_READING_TIMEOUT = 20000;
 
   private static final Future<Map<String, String>> ourEnvGetter;
   static {

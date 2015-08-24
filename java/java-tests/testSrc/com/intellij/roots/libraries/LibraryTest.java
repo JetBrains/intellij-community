@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -69,6 +70,22 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertSameElements(getLibraries(), library);
   }
 
+  public void testFindLibraryByNameAfterRename() {
+    Library a = createLibrary("a", null, null);
+    assertSame(a, getLibraryTable().getLibraryByName("a"));
+    Library.ModifiableModel libraryModel = a.getModifiableModel();
+    libraryModel.setName("b");
+    commit(libraryModel);
+    assertSame(a, getLibraryTable().getLibraryByName("b"));
+  }
+
+  public void testReloadLibraryTable() {
+    ((LibraryTableBase)getLibraryTable()).loadState(new Element("component"));
+    createLibrary("a", null, null);
+    ((LibraryTableBase)getLibraryTable()).loadState(new Element("component").addContent(new Element("library").setAttribute("name", "b")));
+    assertEquals("b", assertOneElement(getLibraryTable().getLibraries()).getName());
+  }
+
   public void testResolveDependencyToRenamedLibrary() {
     Library library = createLibrary("jdom2", getJDomJar(), null);
 
@@ -98,7 +115,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testNativePathSerialization() {
-    LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable table = getLibraryTable();
     Library library = table.createLibrary("native");
     Library.ModifiableModel model = library.getModifiableModel();
     model.addRoot("file://native-lib-root", NativeLibraryOrderRootType.getInstance());
@@ -112,8 +129,13 @@ public class LibraryTest extends ModuleRootManagerTestCase {
       element);
   }
 
+  @NotNull
+  private LibraryTable getLibraryTable() {
+    return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+  }
+
   public void testJarDirectoriesSerialization() {
-    LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable table = getLibraryTable();
     Library library = table.createLibrary("jarDirs");
     Library.ModifiableModel model = library.getModifiableModel();
     model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);

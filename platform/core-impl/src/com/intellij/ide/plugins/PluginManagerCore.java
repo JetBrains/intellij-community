@@ -486,23 +486,48 @@ public class PluginManagerCore {
     return 0;
   }
 
-  @NotNull
   private static Collection<URL> getClassLoaderUrls() {
+    Collection<URL> urls = null;
     final ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     final Class<? extends ClassLoader> aClass = classLoader.getClass();
     try {
-      @SuppressWarnings("unchecked") List<URL> urls = (List<URL>)aClass.getMethod("getUrls").invoke(classLoader);
-      return urls;
+      //noinspection unchecked
+      urls = (List<URL>)aClass.getMethod("getUrls").invoke(classLoader);
     }
     catch (IllegalAccessException ignored) { }
     catch (InvocationTargetException ignored) { }
     catch (NoSuchMethodException ignored) { }
 
-    if (classLoader instanceof URLClassLoader) {
-      return Arrays.asList(((URLClassLoader)classLoader).getURLs());
+    if (urls == null && classLoader instanceof URLClassLoader) {
+      urls = Arrays.asList(((URLClassLoader)classLoader).getURLs());
     }
 
-    return Collections.emptyList();
+    return urls == null ? Collections.<URL>emptyList() : getClassLoaderUrls(urls);
+  }
+
+  public static Collection<URL> getClassLoaderUrls(Collection<URL> urls) {
+    List<URL> additionalRefs = new ArrayList<URL>();
+    for (URL url : urls) {
+      if ("file".equals(url.getProtocol())) {
+        File file = new File(decodeUrl(url.getFile()));
+        final String[] referencedJars = ClassPath.loadManifestClasspath(file);
+        if (referencedJars != null) {
+          for (String referencedJar : referencedJars) {
+            try {
+              additionalRefs.add(new URL(referencedJar));
+            }
+            catch (Exception ignore) {}
+          }
+        }
+      }
+    }
+
+    if (!additionalRefs.isEmpty()) {
+      Collection<URL> result = new ArrayList<URL>(urls);
+      result.addAll(additionalRefs);
+      return result;
+    }
+    return urls;
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull List<String> errors) {
@@ -906,21 +931,6 @@ public class PluginManagerCore {
         if (pluginDescriptor != null) {
           if (progress != null && !pluginDescriptor.getName().equals(SPECIAL_IDEA_PLUGIN)) {
             progress.showProgress("Plugin loaded: " + pluginDescriptor.getName(), PLUGINS_PROGRESS_MAX_VALUE * (float)i / urls.size());
-          }
-          continue;
-        }
-
-        final String[] referencedJars = ClassPath.loadManifestClasspath(file);
-        if (referencedJars != null) {
-          for (String referencedJar : referencedJars) {
-            final File referencedFile;
-            try {
-              referencedFile = new File(new URI(referencedJar));
-            }
-            catch (Exception e) {
-              continue;
-            }
-            loadDescriptorFromClassPath(referencedFile, result, platformPrefix);
           }
         }
       }

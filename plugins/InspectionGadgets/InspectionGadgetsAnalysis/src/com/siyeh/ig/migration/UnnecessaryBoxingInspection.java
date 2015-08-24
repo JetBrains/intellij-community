@@ -27,10 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -232,7 +229,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       registerError(expression);
     }
 
-    private boolean canBeUnboxed(PsiExpression expression) {
+    private boolean canBeUnboxed(PsiCallExpression expression) {
       PsiElement parent = expression.getParent();
       while (parent instanceof PsiParenthesizedExpression) {
         parent = parent.getParent();
@@ -242,13 +239,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       else if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
-        final PsiType castType = castExpression.getType();
-        if (castType instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)castType;
-          final PsiClass aClass = classType.resolve();
-          if (aClass instanceof PsiTypeParameter) {
-            return false;
-          }
+        if (TypeUtils.isTypeParameter(castExpression.getType())) {
+          return false;
         }
       }
       else if (parent instanceof PsiConditionalExpression) {
@@ -316,46 +308,20 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     private boolean isSameMethodCalledWithoutBoxing(@NotNull PsiCallExpression methodCallExpression,
-                                                    @NotNull PsiExpression boxingExpression) {
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (argumentList == null) {
+                                                    @NotNull PsiCallExpression boxingExpression) {
+      final PsiExpressionList boxedArgumentList = boxingExpression.getArgumentList();
+      if (boxedArgumentList == null) {
         return false;
       }
-      final PsiExpression[] expressions = argumentList.getExpressions();
+      final PsiExpression[] arguments = boxedArgumentList.getExpressions();
+      if (arguments.length != 1) {
+        return false;
+      }
+      final PsiExpression unboxedExpression = arguments[0];
       final PsiMethod originalMethod = methodCallExpression.resolveMethod();
-      if (originalMethod == null) {
-        return false;
-      }
-      final String name = originalMethod.getName();
-      final PsiClass containingClass = originalMethod.getContainingClass();
-      if (containingClass == null) {
-        return false;
-      }
-      final PsiType[] types = PsiType.createArray(expressions.length);
-
-      for (int i = 0; i < expressions.length; i++) {
-        final PsiExpression expression = expressions[i];
-        final PsiType type = expression.getType();
-        if (boxingExpression.equals(expression)) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
-          if (unboxedType == null) {
-            return false;
-          }
-          types[i] = unboxedType;
-        }
-        else {
-          types[i] = type;
-        }
-      }
-      final PsiMethod[] methods = containingClass.findMethodsByName(name, true);
-      for (final PsiMethod method : methods) {
-        if (!originalMethod.equals(method)) {
-          if (MethodCallUtils.isApplicable(method, PsiSubstitutor.EMPTY, types)) {
-            return false;
-          }
-        }
-      }
-      return true;
+      final PsiMethod otherMethod =
+        MethodCallUtils.findMethodWithReplacedArgument(methodCallExpression, boxingExpression, unboxedExpression);
+      return originalMethod == otherMethod;
     }
   }
 }

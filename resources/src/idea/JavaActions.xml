@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
@@ -361,4 +361,4 @@
       <add-to-group group-id="FileChooserToolbar" anchor="last"/>
     </action>
   </actions>
-</component>
+</idea-plugin>

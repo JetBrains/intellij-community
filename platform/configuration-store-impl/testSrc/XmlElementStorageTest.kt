@@ -18,6 +18,9 @@ package com.intellij.configurationStore
 import com.intellij.openapi.util.JDOMBuilder.attr
 import com.intellij.openapi.util.JDOMBuilder.tag
 import junit.framework.TestCase
+import org.hamcrest.CoreMatchers.notNullValue
+import org.hamcrest.CoreMatchers.nullValue
+import org.hamcrest.MatcherAssert.assertThat
 import org.jdom.Element
 import org.junit.Test
 
@@ -33,28 +36,28 @@ class XmlElementStorageTest {
   public Test fun testGetStateNotSucceeded() {
     val storage = MyXmlElementStorage(tag("root"))
     val state = storage.getState(this, "test", javaClass<Element>())
-    TestCase.assertNull(state)
+    assertThat(state, nullValue())
   }
 
-  public Test fun testSetStateOverridesOldState() {
+  public Test fun `set state overrides old state`() {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
     val newState = tag("component", attr("name", "test"), tag("bar"))
     val externalizationSession = storage.startExternalization()!!
-    externalizationSession.setState(this, "test", newState, null)
+    externalizationSession.setState(this, "test", newState)
     externalizationSession.createSaveSession()!!.save()
-    TestCase.assertNotNull(storage.mySavedElement)
-    TestCase.assertNotNull(storage.mySavedElement!!.getChild("component").getChild("bar"))
-    TestCase.assertNull(storage.mySavedElement!!.getChild("component").getChild("foo"))
+    assertThat(storage.savedElement, notNullValue())
+    assertThat(storage.savedElement!!.getChild("component").getChild("bar"), notNullValue())
+    assertThat(storage.savedElement!!.getChild("component").getChild("foo"), nullValue())
   }
 
   private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root", null, null, null) {
-    var mySavedElement: Element? = null
+    var savedElement: Element? = null
 
     override fun loadLocalData() = myElement
 
-    override fun createSaveSession(storageData: StorageData) = object : XmlElementStorage.XmlElementStorageSaveSession<MyXmlElementStorage>(storageData, this) {
+    override fun createSaveSession(states: StateMap) = object : XmlElementStorage.XmlElementStorageSaveSession<MyXmlElementStorage>(states, this) {
       override fun saveLocally(element: Element?) {
-        mySavedElement = element?.clone()
+        savedElement = element?.clone()
       }
     }
   }

@@ -3,6 +3,9 @@
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
+                        serviceImplementation="com.intellij.codeInsight.actions.VcsAwareFormatChangedTextUtil" overrides="true"/>
+
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.IssueNavigationConfiguration"

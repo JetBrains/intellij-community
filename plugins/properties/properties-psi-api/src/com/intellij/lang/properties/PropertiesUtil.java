@@ -84,6 +84,15 @@ public class PropertiesUtil {
     return true;
   }
 
+  public static boolean containsProperty(final ResourceBundle resourceBundle, final String propertyName) {
+    for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
+      if (propertiesFile.findPropertyByKey(propertyName) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @NotNull
   public static String getDefaultBaseName(final Collection<PropertiesFile> files) {
     String commonPrefix = null;

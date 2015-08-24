@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   private List<Crumb> myCrumbs = new ArrayList<Crumb>();
   private final CrumbLineMouseListener myMouseListener;
   private List<T> myItems;
+  private int myOffset;
 
   public BreadcrumbsComponent() {
     myMouseListener = new CrumbLineMouseListener(this);
@@ -65,6 +66,13 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     repaint();
+  }
+
+  public void setOffset(int offset) {
+    if (myOffset != offset) {
+      myOffset = offset;
+      repaint();
+    }
   }
 
   public void addBreadcrumbsItemListener(@NotNull final BreadcrumbsItemListener<T> listener) {
@@ -312,7 +320,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     //assert screenWidth < width;
 
     // now fix up offsets going forward
-    int offset = 0;
+    int offset = myOffset;
     for (final Crumb each : result) {
       each.setOffset(offset);
       offset += each.getWidth();

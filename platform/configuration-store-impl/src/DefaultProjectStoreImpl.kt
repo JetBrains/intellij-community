@@ -49,7 +49,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
       }
     }
 
-    override fun createSaveSession(storageData: StorageData) = object : FileBasedStorage.FileSaveSession(storageData, this) {
+    override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
       override fun saveLocally(element: Element?) {
         super.saveLocally(Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(element)))
       }
@@ -84,9 +84,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
-
-  override fun getMessageBus() = project.getMessageBus()
-
+  
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
   override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, StorageScheme.DEFAULT)
@@ -96,11 +94,11 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
-      externalizationSession.setState(component, componentName, state, null)
+      externalizationSession.setState(component, componentName, state)
     }
 
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-      externalizationSession.setState(component, componentName, state, null)
+      externalizationSession.setState(component, componentName, state)
     }
 
     override fun createSaveSessions() = ContainerUtil.createMaybeSingletonList(externalizationSession.createSaveSession())

@@ -21,9 +21,9 @@
   <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
   <module value="com.intellij.modules.all"/>
-  <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
-  <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/structuralsearch.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -135,6 +135,8 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
+    <extensionPoint name="debugger.jvmSteppingCommandProvider"
+                    interface="com.intellij.debugger.impl.JvmSteppingCommandProvider"/>
 
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
@@ -172,6 +174,7 @@
     <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor"/>
 
     <extensionPoint name="compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
@@ -348,6 +351,7 @@
     <allOverridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaAllOverridingMethodsSearcher"/>
     <methodReferencesSearch implementation="com.intellij.psi.impl.search.MethodUsagesSearcher"/>
     <deepestSuperMethodsSearch implementation="com.intellij.psi.impl.search.MethodDeepestSuperSearcher"/>
+    <classesWithAnnotatedMembersSearch implementation="com.intellij.psi.impl.search.ClassesWithAnnotatedMembersSearcher"/>
 
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
@@ -1078,6 +1082,8 @@
                           order="before declaration"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration"
                           order="before xml"/>
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.CaseBlockMover" id="caseBlock"
+                          order="before statement"/>
 
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
 

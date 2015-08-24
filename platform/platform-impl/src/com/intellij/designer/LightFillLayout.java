@@ -24,6 +24,16 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class LightFillLayout implements LayoutManager2 {
+  private final boolean myVertical;
+
+  public LightFillLayout() {
+    this(false);
+  }
+
+  public LightFillLayout(boolean vertical) {
+    myVertical = vertical;
+  }
+
   @Override
   public void addLayoutComponent(Component comp, Object constraints) {
   }
@@ -57,7 +67,7 @@ public class LightFillLayout implements LayoutManager2 {
 
   @Override
   public Dimension preferredLayoutSize(Container parent) {
-    return layoutSize(parent, new Function<Component, Dimension>() {
+    return layoutSize(parent, myVertical, new Function<Component, Dimension>() {
       @Override
       public Dimension fun(Component component) {
         return component.getPreferredSize();
@@ -67,7 +77,7 @@ public class LightFillLayout implements LayoutManager2 {
 
   @Override
   public Dimension minimumLayoutSize(Container parent) {
-    return layoutSize(parent, new Function<Component, Dimension>() {
+    return layoutSize(parent, myVertical, new Function<Component, Dimension>() {
       @Override
       public Dimension fun(Component component) {
         return component.getMinimumSize();
@@ -75,23 +85,37 @@ public class LightFillLayout implements LayoutManager2 {
     });
   }
 
-  private static Dimension layoutSize(Container parent, Function<Component, Dimension> getSize) {
+  private static Dimension layoutSize(Container parent, boolean vertical, Function<Component, Dimension> getSize) {
+    int[] extraSize = new int[2];
+    JComponent jParent = (JComponent)parent;
+    getSize(jParent, LightToolWindow.LEFT_MIN_KEY, vertical, extraSize);
+    getSize(jParent, LightToolWindow.RIGHT_MIN_KEY, vertical, extraSize);
+
     Component toolbar = parent.getComponent(0);
     Dimension toolbarSize = toolbar.isVisible() ? getSize.fun(toolbar) : new Dimension();
     Dimension contentSize = getSize.fun(parent.getComponent(1));
-    int extraWidth = 0;
-    JComponent jParent = (JComponent)parent;
-    if (jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY) != null) {
-      extraWidth += LightToolWindow.MINIMIZE_WIDTH;
+
+    return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraSize[0]),
+                         toolbarSize.height + contentSize.height + extraSize[1]);
+  }
+
+  private static void getSize(JComponent jParent, String key, boolean vertical, int[] size) {
+    if (jParent.getClientProperty(key) != null) {
+      size[vertical ? 1 : 0] += LightToolWindow.MINIMIZE_WIDTH;
     }
-    if (jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY) != null) {
-      extraWidth += LightToolWindow.MINIMIZE_WIDTH;
-    }
-    return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraWidth), toolbarSize.height + contentSize.height);
   }
 
   @Override
   public void layoutContainer(Container parent) {
+    if (myVertical) {
+      layoutVContainer(parent);
+    }
+    else {
+      layoutHContainer(parent);
+    }
+  }
+
+  private static void layoutHContainer(Container parent) {
     int leftWidth = 0;
     int rightWidth = 0;
     JComponent jParent = (JComponent)parent;
@@ -117,6 +141,26 @@ public class LightFillLayout implements LayoutManager2 {
     }
     if (right != null) {
       right.setBounds(width + leftWidth, 0, rightWidth, height);
+    }
+  }
+
+  private static void layoutVContainer(Container parent) {
+    int bottomHeight = 0;
+    JComponent jParent = (JComponent)parent;
+    JComponent bottom = (JComponent)jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY);
+    if (bottom != null) {
+      bottomHeight = LightToolWindow.MINIMIZE_WIDTH;
+    }
+
+    int width = parent.getWidth();
+    int height = parent.getHeight() - bottomHeight;
+    Component toolbar = parent.getComponent(0);
+    Dimension toolbarSize = toolbar.isVisible() ? toolbar.getPreferredSize() : new Dimension();
+    toolbar.setBounds(0, 0, width, toolbarSize.height);
+    parent.getComponent(1).setBounds(0, toolbarSize.height, width, height - toolbarSize.height);
+
+    if (bottom != null) {
+      bottom.setBounds(0, height, width, bottomHeight);
     }
   }
 }

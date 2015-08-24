@@ -30,6 +30,9 @@
   <extensions defaultExtensionNs="com.intellij">
       <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
   </extensions>
+  <extensions defaultExtensionNs="Edu">
+    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction"/>
+  </extensions>
 
   <actions>
     <group id="PyRunMenu">

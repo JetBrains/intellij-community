@@ -321,10 +321,10 @@ public class Switcher extends AnAction implements DumbAware {
         }
       });
       toolWindows.addKeyListener(this);
-      ListScrollingUtil.installActions(toolWindows);
+      ScrollingUtil.installActions(toolWindows);
       toolWindows.addMouseListener(this);
       toolWindows.addMouseMotionListener(this);
-      ListScrollingUtil.ensureSelectionExists(toolWindows);
+      ScrollingUtil.ensureSelectionExists(toolWindows);
       myClickListener.installOn(toolWindows);
       toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(@NotNull ListSelectionEvent e) {
@@ -512,11 +512,11 @@ public class Switcher extends AnAction implements DumbAware {
       files.setCellRenderer(filesRenderer);
       files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       files.addKeyListener(this);
-      ListScrollingUtil.installActions(files);
+      ScrollingUtil.installActions(files);
       files.addMouseListener(this);
       files.addMouseMotionListener(this);
       myClickListener.installOn(files);
-      ListScrollingUtil.ensureSelectionExists(files);
+      ScrollingUtil.ensureSelectionExists(files);
 
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
@@ -965,7 +965,11 @@ public class Switcher extends AnAction implements DumbAware {
       @Override
       protected void processKeyEvent(@NotNull final KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        if (keyCode == VK_ENTER) return;
+        if (keyCode == VK_ENTER) {
+          SWITCHER.navigate(e.isShiftDown());
+          e.consume();
+          return;
+        }
         if (keyCode == VK_LEFT || keyCode == VK_RIGHT) {
           return;
         }
@@ -1066,7 +1070,7 @@ public class Switcher extends AnAction implements DumbAware {
         files.repaint();
         toolWindows.repaint();
         if (value != null) {
-          ListScrollingUtil.ensureSelectionExists(getSelectedList(list));
+          ScrollingUtil.ensureSelectionExists(getSelectedList(list));
         }
       }
     }

@@ -2,6 +2,7 @@ package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -132,5 +133,10 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
   @Override
   public int hashCode() {
     return myTag.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "XmlProperty: key = '" + getKey() + "', value = '" + getValue() + "'";
   }
 }

@@ -41,6 +41,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -346,12 +347,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         }
       });
       Disposer.register(parentDisposable, processIndicator);
-
-      CompositePrintable.invokeInAlarm(new Runnable() {
-        public void run() {
-          ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
-        }
-      });
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
     }
   }
 
@@ -808,6 +804,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                      new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
 
         myOutputFile = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
+        FileUtilRt.createParentDirs(myOutputFile);
         handler.setResult(new StreamResult(new FileWriter(myOutputFile)));
         final SMTestProxy.SMRootTestProxy root = myRoot;
         final RunConfiguration configuration = myConfiguration;

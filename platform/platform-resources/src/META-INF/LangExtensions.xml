@@ -63,6 +63,9 @@
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
+                        serviceImplementation="com.intellij.codeInsight.actions.FormatChangedTextUtil"/>
+
     <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                         serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
 
@@ -164,7 +167,7 @@
                         serviceImplementation="com.intellij.lang.DefaultASTFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
-                        serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
+                        serviceImplementation="com.intellij.impl.ConversionServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
                         serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>

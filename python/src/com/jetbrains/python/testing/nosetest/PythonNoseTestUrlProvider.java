@@ -16,21 +16,27 @@
 package com.jetbrains.python.testing.nosetest;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.jetbrains.python.testing.PythonTestLocator;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class PythonNoseTestUrlProvider implements SMTestLocator, DumbAware {
+public class PythonNoseTestUrlProvider implements PythonTestLocator, DumbAware {
   public static final String PROTOCOL_ID = "python_nosetestid";
 
   public static final PythonNoseTestUrlProvider INSTANCE = new PythonNoseTestUrlProvider();
+
+  @NotNull
+  @Override
+  public final String getProtocolId() {
+    return PROTOCOL_ID;
+  }
 
   @NotNull
   @Override

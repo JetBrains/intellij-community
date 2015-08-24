@@ -20,6 +20,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -201,11 +202,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isSelected();
 
     ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
+    boolean updateEditorScheme = false;
     if (settings.COLOR_BLINDNESS != blindness) {
       settings.COLOR_BLINDNESS = blindness;
       update = true;
       ComponentsPackage.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
-      shouldUpdateUI = true;
+      updateEditorScheme = true;
     }
 
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
@@ -266,6 +268,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.updateCombo();
 
     EditorUtil.reinitSettings();
+
+    if (updateEditorScheme) {
+      EditorColorsManagerImpl.schemeChangedOrSwitched();
+    }
   }
 
   private static int getIntValue(JComboBox combo, int defaultValue) {

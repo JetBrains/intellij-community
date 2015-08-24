@@ -700,10 +700,11 @@ public class RefactoringUtil {
       PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
     }
 
-    prepareForInterface(method);
-
     if (!targetClass.isInterface()) {
       PsiUtil.setModifierProperty(targetClass, PsiModifier.ABSTRACT, true);
+    }
+    else {
+      prepareForInterface(method);
     }
 
   }

@@ -82,7 +82,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                     @NotNull EvaluationContextImpl evaluationContext,
                     NodeManagerImpl nodeManager,
                     boolean contextSet) {
-    super(valueDescriptor.getName());
+    super(valueDescriptor.calcValueName());
     myParent = parent;
     myValueDescriptor = valueDescriptor;
     myEvaluationContext = evaluationContext;
@@ -181,7 +181,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {
-    private final EvaluationContextImpl myEvaluationContext;
+    protected final EvaluationContextImpl myEvaluationContext;
 
     public JavaFullValueEvaluator(@NotNull String linkText, EvaluationContextImpl evaluationContext) {
       super(linkText);
@@ -309,10 +309,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @NotNull
     @Override
     public String getSeparator() {
-      String fullName = myValueDescriptor.calcValueName();
-      String name = myValueDescriptor.getName();
-      if (!StringUtil.isEmpty(fullName) && !name.equals(fullName) && fullName.startsWith(name)) {
-        return fullName.substring(name.length()) + " " + DEFAULT_SEPARATOR;
+      String declaredType = myValueDescriptor.getDeclaredTypeLabel();
+      if (!StringUtil.isEmpty(declaredType)) {
+        return declaredType + " " + DEFAULT_SEPARATOR;
       }
       return DEFAULT_SEPARATOR;
     }

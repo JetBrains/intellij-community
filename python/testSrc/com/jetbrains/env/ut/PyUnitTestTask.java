@@ -51,6 +51,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * TODO: Move {@link com.jetbrains.python.gherkin.PyBDDEnvTestTask} to the new API and git rid of this class
+ */
+
 /**
  * Tasks to run unit test configurations.
  * You should extend it either implementing {@link #after()} and {@link #before()} or implement {@link #runTestOn(String)}
@@ -59,7 +64,10 @@ import java.util.List;
  * Use {@link #myDescriptor} and {@link #myConsoleView} to check output
  *
  * @author traff
+ * @deprecated Consider using {@link com.jetbrains.env.PyProcessWithConsoleTestTask} instead. It has runner for python tests.
+ * This class is here only because {@link com.jetbrains.python.gherkin.PyBDDEnvTestTask} uses it.
  */
+@Deprecated
 public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   protected ProcessHandler myProcessHandler;
@@ -103,10 +111,6 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
         return true;
       }
     });
-  }
-
-  public PyUnitTestTask(String workingFolder, String scriptName) {
-    this(workingFolder, scriptName, null);
   }
 
   @Override
@@ -276,25 +280,6 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   protected void configure(AbstractPythonTestRunConfiguration config) {
   }
 
-  public void allTestsPassed() {
-    Assert.assertEquals(output(), 0, myTestProxy.getChildren(Filter.NOT_PASSED).size());
-    Assert.assertEquals(output(), 0, failedTestsCount());
-  }
-
-  /**
-   * Searches for test by its name recursevly in {@link #myTestProxy}
-   *
-   * @param testName test name to find
-   * @return test
-   * @throws AssertionError if no test found
-   */
-  @NotNull
-  public AbstractTestProxy findTestByName(@NotNull final String testName) {
-    final AbstractTestProxy test = findTestByName(testName, myTestProxy);
-    assert test != null : "No test found with name" + testName;
-    return test;
-  }
-
   /**
    * Searches for test by its name recursevly in test, passed as arumuent.
    *
@@ -315,13 +300,13 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     }
     return null;
   }
-
-  public int failedTestsCount() {
-    return myTestProxy.collectChildren(NOT_SUIT.and(Filter.FAILED_OR_INTERRUPTED)).size();
+  public void assertFinished() {
+    Assert.assertTrue("State is " + myTestProxy.getMagnitudeInfo().getTitle() + "\n" + output(),
+                      myTestProxy.wasLaunched() && !myTestProxy.wasTerminated());
   }
 
-  public int passedTestsCount() {
-    return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
+  public int allTestsCount() {
+    return myTestProxy.collectChildren(NOT_SUIT).size();
   }
 
   /**
@@ -361,15 +346,6 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     final String message = String.format("Following output is searched for hightlighed strings: %s \n", editor.getDocument().getText());
     Logger.getInstance(getClass()).warn(message);
     return Pair.create(resultRanges, resultStrings);
-  }
-
-  public void assertFinished() {
-    Assert.assertTrue("State is " + myTestProxy.getMagnitudeInfo().getTitle() + "\n" + output(),
-                      myTestProxy.wasLaunched() && !myTestProxy.wasTerminated());
-  }
-
-  public int allTestsCount() {
-    return myTestProxy.collectChildren(NOT_SUIT).size();
   }
 
   public static final Filter<SMTestProxy> NOT_SUIT = new Filter<SMTestProxy>() {

@@ -298,8 +298,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
   /**
    * @return true when Remote Desktop (i.e. Windows RDP) is connected
+   * @deprecated Use RemoteDesktopDetector class - it should work in more cases. To be removed in IDEA 16.
    */
-  // TODO[neuro]: move to UIUtil
+  @SuppressWarnings("unused")
   public static boolean isRemoteDesktopConnected() {
     if (System.getProperty("os.name").contains("Windows")) {
       final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");

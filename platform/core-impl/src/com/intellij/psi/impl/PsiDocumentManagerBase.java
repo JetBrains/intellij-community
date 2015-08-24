@@ -16,19 +16,25 @@
 
 package com.intellij.psi.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
+import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -56,7 +62,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.*;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, ProjectComponent {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
@@ -311,6 +317,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                               final boolean synchronously) {
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
+
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile != null) {
+      ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).fastenBelts(virtualFile);
+    }
+
     myIsCommitInProgress = true;
     boolean success = true;
     try {
@@ -624,12 +636,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (myStopTrackingDocuments || myProject.isDisposed()) return;
 
     final Document document = event.getDocument();
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
+
     if (document instanceof DocumentImpl && !myUncommittedInfos.containsKey(document)) {
       myUncommittedInfos.put(document, new UncommittedInfo((DocumentImpl)document));
     }
-
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
 
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     boolean inMyProject = viewProvider != null && viewProvider.getManager() == myPsiManager;
@@ -664,10 +676,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (myStopTrackingDocuments || myProject.isDisposed()) return;
 
     final Document document = event.getDocument();
-    if (document instanceof DocumentImpl) {
-      myUncommittedInfos.get(document).myEvents.add(event);
-    }
-
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
 
@@ -764,6 +772,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     UncommittedInfo info = myUncommittedInfos.remove(document);
     if (info != null) {
       ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).updatePointers(document, info.myFrozen, info.myEvents);
+      info.removeListener();
     }
     return info;
   }
@@ -836,8 +845,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return false;
   }
 
-  @TestOnly
+  @VisibleForTesting
   public void clearUncommittedDocuments() {
+    for (UncommittedInfo info : myUncommittedInfos.values()) {
+      info.removeListener();
+    }
     myUncommittedInfos.clear();
     myUncommittedDocuments.clear();
     mySynchronizer.cleanupForNextTest();
@@ -855,12 +867,35 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     });
   }
 
+  @Override
+  public void projectOpened() {
+  }
+
+  @Override
+  public void projectClosed() {
+  }
+
+  @Override
+  public void initComponent() {
+  }
+
+  @Override
+  public void disposeComponent() {
+    clearUncommittedDocuments();
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return getClass().getSimpleName();
+  }
+
   @NotNull
   public PsiToDocumentSynchronizer getSynchronizer() {
     return mySynchronizer;
   }
 
-  private static class UncommittedInfo {
+  private static class UncommittedInfo extends DocumentAdapter implements PrioritizedInternalDocumentListener {
     final DocumentImpl myOriginal;
     final FrozenDocument myFrozen;
     final List<DocumentEvent> myEvents = ContainerUtil.newArrayList();
@@ -868,8 +903,27 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     public UncommittedInfo(DocumentImpl original) {
       myOriginal = original;
       myFrozen = original.freeze();
+      myOriginal.addDocumentListener(this);
     }
 
+    @Override
+    public int getPriority() {
+      return EditorDocumentPriorities.RANGE_MARKER;
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      myEvents.add(e);
+    }
+
+    @Override
+    public void moveTextHappened(int start, int end, int base) {
+      myEvents.add(new RetargetRangeMarkers(myOriginal, start, end, base));
+    }
+
+    public void removeListener() {
+      myOriginal.removeDocumentListener(this);
+    }
   }
 
 }

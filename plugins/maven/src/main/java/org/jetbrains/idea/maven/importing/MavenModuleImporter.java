@@ -159,6 +159,31 @@ public class MavenModuleImporter {
     });
   }
 
+  public void postConfigFacets() {
+    MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
+      public void run() {
+        if (myModule.isDisposed()) return;
+
+        final ModuleType moduleType = ModuleType.get(myModule);
+
+        for (final MavenImporter importer : getSuitableImporters()) {
+          final MavenProjectChanges changes;
+          if (myMavenProjectChanges == null) {
+            if (importer.processChangedModulesOnly()) continue;
+            changes = MavenProjectChanges.NONE;
+          }
+          else {
+            changes = myMavenProjectChanges;
+          }
+
+          if (importer.getModuleType() == moduleType) {
+            importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
+          }
+        }
+      }
+    });
+  }
+
   private List<MavenImporter> getSuitableImporters() {
     return myMavenProject.getSuitableImporters();
   }

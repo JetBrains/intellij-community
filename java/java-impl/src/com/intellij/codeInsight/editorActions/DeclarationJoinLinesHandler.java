@@ -104,6 +104,12 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
 
   public static PsiExpression getInitializerExpression(PsiLocalVariable var,
                                                        PsiAssignmentExpression assignment) {
+    return getInitializerExpression(var.getInitializer(), 
+                                    assignment);
+  }
+
+  public static PsiExpression getInitializerExpression(PsiExpression initializer,
+                                                       PsiAssignmentExpression assignment) {
     PsiExpression initializerExpression;
     final IElementType originalOpSign = assignment.getOperationTokenType();
     final PsiExpression rExpression = assignment.getRExpression();
@@ -111,7 +117,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
       initializerExpression = rExpression;
     }
     else {
-      if (var.getInitializer() == null) return null;
+      if (initializer == null) return null;
       String opSign = null;
       if (originalOpSign == JavaTokenType.ANDEQ) {
         opSign = "&";
@@ -148,8 +154,8 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
       }
 
       try {
-        final Project project = var.getProject();
-        String initializerText = var.getInitializer().getText() + opSign;
+        final Project project = assignment.getProject();
+        String initializerText = initializer.getText() + opSign;
         final String rightText = rExpression.getText();
         if (ParenthesesUtils.areParenthesesNeeded(assignment.getOperationSign(), rExpression)) {
           initializerText += "(" + rightText + ")";
@@ -157,7 +163,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
         else {
           initializerText += rightText;
         }
-        initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, var);
+        initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
         initializerExpression = (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
       }
       catch (IncorrectOperationException e) {

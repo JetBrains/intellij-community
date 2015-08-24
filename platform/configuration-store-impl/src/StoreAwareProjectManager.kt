@@ -18,8 +18,8 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.*
@@ -65,10 +65,12 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
         val changes = CHANGED_FILES_KEY.get(project) ?: continue
         CHANGED_FILES_KEY.set(project, null)
         if (!changes.isEmpty()) {
-          for ((store, storages) in changes.entrySet()) {
-            @suppress("UNCHECKED_CAST")
-            if (reloadStore(storages as Set<StateStorage>, store, false) == ReloadComponentStoreStatus.RESTART_AGREED) {
-              projectsToReload.add(project)
+          runBatchUpdate(project.getMessageBus()) {
+            for ((store, storages) in changes.entrySet()) {
+              @suppress("UNCHECKED_CAST")
+              if (reloadStore(storages as Set<StateStorage>, store, false) == ReloadComponentStoreStatus.RESTART_AGREED) {
+                projectsToReload.add(project)
+              }
             }
           }
         }
@@ -216,7 +218,6 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
-    val token = WriteAction.start()
     try {
       notReloadableComponents = store.reload(changedStorages)
     }
@@ -224,9 +225,6 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
       LOG.warn(e)
       Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()), ProjectBundle.message("project.reload.failed.title"))
       return ReloadComponentStoreStatus.ERROR
-    }
-    finally {
-      token.finish()
     }
 
     if (notReloadableComponents == null || notReloadableComponents.isEmpty()) {

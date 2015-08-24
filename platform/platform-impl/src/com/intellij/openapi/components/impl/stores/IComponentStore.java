@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -34,7 +35,7 @@ public interface IComponentStore {
 
   void initComponent(@NotNull Object component, boolean service);
 
-  void reloadStates(@NotNull Set<String> componentNames);
+  void reloadStates(@NotNull Set<String> componentNames, @NotNull MessageBus messageBus);
 
   void reloadState(@NotNull Class<? extends PersistentStateComponent<?>> componentClass);
 

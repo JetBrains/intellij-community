@@ -38,6 +38,7 @@ import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
   public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
@@ -123,12 +124,10 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
+  @Nullable
   @Override
-  public String calcValueName() {
-    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE) {
-      return addDeclaredType(myField.typeName());
-    }
-    return super.calcValueName();
+  public String getDeclaredType() {
+    return myField.typeName();
   }
 
   @Override

@@ -269,7 +269,7 @@ public class GitHistoryUtils {
           final Couple<String> committerPair =
             record.getCommitterName() == null ? null : Couple.of(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, Couple.of(authorPair, committerPair), message, null,
+          consumer.consume(new GitFileRevision(project, finalRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message, null,
                                                new Date(record.getAuthorTimeStamp()), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
@@ -505,8 +505,6 @@ public class GitHistoryUtils {
                                                  AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("--full-history");
-    h.addParameters("--date-order");
     h.addParameters("--decorate=full");
     h.addParameters(parameters);
     h.endOptions();

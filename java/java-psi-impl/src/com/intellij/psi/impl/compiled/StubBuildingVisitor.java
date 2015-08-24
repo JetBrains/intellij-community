@@ -27,7 +27,6 @@ import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -344,14 +343,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false, false);
     TypeInfo type = fieldType(desc, signature);
-    String initializer = constToString(value, type.text.getString(), false);
+    String initializer = constToString(value, type.text, false);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new AnnotationCollectingVisitor(modList);
   }
 
   @NotNull
-  private static TypeInfo fieldType(String desc, String signature) {
+  public static TypeInfo fieldType(String desc, String signature) {
     if (signature != null) {
       try {
         return TypeInfo.fromString(SignatureParsing.parseTypeString(new StringCharacterIterator(signature, 0)));
@@ -412,9 +411,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     List<String> args = new ArrayList<String>();
     List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
 
-    StringRef stringRef = StringRef.fromString(canonicalMethodName);
     int modifiersMask = packMethodFlags(access, myResult.isInterface());
-    PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, stringRef, flags, signature, args, throwables, desc, modifiersMask);
+    PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, canonicalMethodName, flags, signature, args, throwables, desc, modifiersMask);
 
     PsiModifierListStub modList = (PsiModifierListStub)stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
     assert modList != null : stub;

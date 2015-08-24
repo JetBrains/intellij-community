@@ -32,10 +32,12 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     def path = vFile.path
 
     ApplicationManager.application.runReadAction {
-      def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), new GotoFileItemProvider(project, null))
+      def model = new GotoFileModel(project)
+      def popup = ChooseByNamePopup.createPopup(project, model, new GotoFileItemProvider(project, null, model))
       assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
       assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
       assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]
+      assert ChooseByNameTest.calcPopupElements(popup, path + ':0') == [psiFile]
       popup.close(false)
     }
   }

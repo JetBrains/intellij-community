@@ -31,7 +31,8 @@ public class PyTracebackParser extends TraceBackParser {
 
 
   public PyTracebackParser() {
-    super(Pattern.compile("File \"([^\"]+)\", line (\\d+)"));
+    // File name can't start with number, can't be more then 200 chars long (its insane) and line number is also limited to int maxvalue
+    super(Pattern.compile("File \"([^0-9][^\"]{0,200})\", line (\\d{1,8})"));
   }
 
   @NotNull

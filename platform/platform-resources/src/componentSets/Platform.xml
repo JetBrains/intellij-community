@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
     <component>
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
@@ -128,6 +128,10 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.internal.DebugAttachDetector</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.diagnostic.DebugLogManager</implementation-class>
     </component>
 
@@ -180,4 +184,4 @@
       <skipForDefaultProject/>
     </component>
   </project-components>
-</components>
+</idea-plugin>

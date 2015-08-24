@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.util.ui.JBUI;
-
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicLabelUI;
@@ -28,7 +26,6 @@ public class MacIntelliJLabelUI extends BasicLabelUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    c.setBorder(JBUI.Borders.empty(1, 3, 0, 0).asUIResource());
     return new MacIntelliJLabelUI();
   }
 }

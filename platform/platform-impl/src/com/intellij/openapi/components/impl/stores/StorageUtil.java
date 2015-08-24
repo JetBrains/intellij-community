@@ -186,7 +186,7 @@ public class StorageUtil {
         }
       }
 
-      store.reloadStates(components);
+      store.reloadStates(components, project.getMessageBus());
     }
     else if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration Changed", Messages.getQuestionIcon()) == Messages.YES) {
       ProjectManagerEx.getInstanceEx().reloadProject(project);

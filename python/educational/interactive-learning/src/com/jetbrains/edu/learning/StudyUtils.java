@@ -14,14 +14,15 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
@@ -35,7 +36,7 @@ import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.learning.ui.ProgressToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,9 +122,9 @@ public class StudyUtils {
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
     factory.createToolWindowContent(project, windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
 
-    windowManager.getToolWindow(ProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
-    ProgressToolWindowFactory windowFactory = new ProgressToolWindowFactory();
-    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(ProgressToolWindowFactory.ID));
+    windowManager.getToolWindow(StudyProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
+    StudyProgressToolWindowFactory windowFactory = new StudyProgressToolWindowFactory();
+    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(StudyProgressToolWindowFactory.ID));
   }
 
   public static void deleteFile(@NotNull final VirtualFile file) {
@@ -302,5 +303,23 @@ public class StudyUtils {
         });
       }
     }
+  }
+
+  @Nullable
+  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    Task task = taskFile.getTask();
+    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
+    String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
+    Course course = task.getLesson().getCourse();
+    File resourceFile = new File(course.getCourseDirectory());
+    if (!resourceFile.exists()) {
+      return  null;
+    }
+    String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, name);
+    VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
+    if (patternFile == null) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(patternFile);
   }
 }
