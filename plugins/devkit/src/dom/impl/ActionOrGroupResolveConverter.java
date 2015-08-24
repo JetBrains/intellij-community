@@ -132,6 +132,18 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     }
   }
 
+  public static class OnlyGroups extends ActionOrGroupResolveConverter {
+    @Override
+    protected boolean isRelevant(ActionOrGroup actionOrGroup) {
+      return actionOrGroup instanceof Group;
+    }
+
+    @Override
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return "Cannot resolve group '" + s + "'";
+    }
+  }
+
   private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<String, ActionOrGroup> processor) {
     final Project project = context.getProject();
 
