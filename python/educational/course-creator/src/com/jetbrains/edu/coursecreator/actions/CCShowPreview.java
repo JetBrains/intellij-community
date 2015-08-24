@@ -48,7 +48,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.text.SimpleDateFormat;
-import java.util.AbstractMap;
 import java.util.Calendar;
 
 public class CCShowPreview extends DumbAwareAction {
@@ -106,8 +105,7 @@ public class CCShowPreview extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-        EduUtils.createStudentFileFromAnswer(project, taskDir.getVirtualFile(), taskDir.getVirtualFile(),
-                                             new AbstractMap.SimpleEntry<String, TaskFile>(taskFileName, taskFileCopy));
+          EduUtils.createStudentFileFromAnswer(project, taskDir.getVirtualFile(), taskDir.getVirtualFile(), taskFileName, taskFileCopy);
       }
     });
 
