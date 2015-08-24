@@ -26,6 +26,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,7 +219,16 @@ public class ExecUtil {
       final List<String> sudoCommand = new ArrayList<String>();
       sudoCommand.add("pkexec");
       sudoCommand.addAll(command);
-      return new GeneralCommandLine(sudoCommand).withWorkDirectory(workDir).withEnvironment(environment).createProcess();
+
+      final Map<String, String> parentEnvironment = GeneralCommandLine.getParentEnvironment();
+      final Map<String, String> inheritedEnvironment = ContainerUtilRt.newHashMap(parentEnvironment.size());
+
+      for (Map.Entry<String, String> envVariable : parentEnvironment.entrySet()) {
+        inheritedEnvironment.put(envVariable.getKey(), escapeUnixShellArgument(envVariable.getValue()));
+      }
+      inheritedEnvironment.putAll(environment);
+
+      return new GeneralCommandLine(sudoCommand).withWorkDirectory(workDir).withEnvironment(inheritedEnvironment).createProcess();
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
       final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
