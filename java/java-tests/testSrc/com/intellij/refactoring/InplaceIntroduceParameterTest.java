@@ -125,7 +125,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
-  public void testNoConflictingVariable() throws Exception {
+  public void testNoConflictingVariableDueToReparse() throws Exception {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
