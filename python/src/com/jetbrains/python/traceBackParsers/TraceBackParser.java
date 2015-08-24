@@ -30,6 +30,10 @@ import java.util.regex.Pattern;
  * @author Ilya.Kazakevich
  */
 public abstract class TraceBackParser {
+  /**
+   * We do not search anything in line longer than this, because it makes no sense to search something in so long lines
+   */
+  private static final int MAX_LINE_TO_PARSE = 5000;
   @NotNull
   private final Pattern myPattern;
 
@@ -54,6 +58,9 @@ public abstract class TraceBackParser {
    */
   @Nullable
   public final LinkInTrace findLinkInTrace(@NotNull final String line) {
+    if (line.length() > MAX_LINE_TO_PARSE) {
+      return null;
+    }
     final Matcher matcher = myPattern.matcher(line);
     if (!matcher.find()) {
       return null;

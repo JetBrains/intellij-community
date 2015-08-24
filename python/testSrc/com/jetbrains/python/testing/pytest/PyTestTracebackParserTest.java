@@ -35,7 +35,7 @@ public final class PyTestTracebackParserTest {
   @Before
   public void setUp() throws Exception {
     // Generate junk to text regexp speed
-    final int junkSize = 1000000;
+    final int junkSize = 1000;
     final byte[] junk = new byte[junkSize];
     for (int i = 0; i < junkSize; i++) {
       // We do not care about precision nor security, that junk for tests
