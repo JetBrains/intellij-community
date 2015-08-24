@@ -84,7 +84,8 @@ public class Course {
     this.authors = new ArrayList<CourseInfo.Author>();
     for (String name : authors) {
       final List<String> pair = StringUtil.split(name, " ");
-      this.authors.add(new CourseInfo.Author(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
+      if (!pair.isEmpty())
+        this.authors.add(new CourseInfo.Author(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
     }
   }
 
