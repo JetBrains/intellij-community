@@ -56,7 +56,7 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
   }
 
   @Nullable
-  private String convertToSystemIndependent(@Nullable String beforePath) {
+  private static String convertToSystemIndependent(@Nullable String beforePath) {
     return beforePath != null ? FileUtil.toSystemIndependentName(beforePath) : null;
   }
 

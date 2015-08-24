@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.google.common.base.Objects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
@@ -196,11 +197,7 @@ public class ShelvedChange {
 
   @Override
   public int hashCode() {
-    int result = myPatchPath != null ? myPatchPath.hashCode() : 0;
-    result = 31 * result + (myBeforePath != null ? myBeforePath.hashCode() : 0);
-    result = 31 * result + (myAfterPath != null ? myAfterPath.hashCode() : 0);
-    result = 31 * result + (myFileStatus != null ? myFileStatus.hashCode() : 0);
-    return result;
+    return Objects.hashCode(myPatchPath, myBeforePath, myAfterPath, myFileStatus);
   }
 
   private class PatchedContentRevision implements ContentRevision {
