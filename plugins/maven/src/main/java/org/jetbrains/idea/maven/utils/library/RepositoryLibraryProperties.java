@@ -92,4 +92,9 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   public String getVersion() {
     return version;
   }
+
+  public void setVersion(String version) {
+    this.version = version;
+    this.mavenId = groupId + ":" + artifactId + ":" + version;
+  }
 }
