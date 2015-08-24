@@ -18,7 +18,7 @@ package com.intellij.diff.requests;
 import com.intellij.CommonBundle;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.diff.merge.ThreesideMergeRequest;
+import com.intellij.diff.merge.BinaryMergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-public class BinaryMergeRequestImpl extends ThreesideMergeRequest {
+public class BinaryMergeRequestImpl extends BinaryMergeRequest {
   private static final Logger LOG = Logger.getInstance(BinaryMergeRequestImpl.class);
 
   @NotNull private final FileContent myFile;
@@ -78,6 +78,12 @@ public class BinaryMergeRequestImpl extends ThreesideMergeRequest {
   @Override
   public List<DiffContent> getContents() {
     return myContents;
+  }
+
+  @NotNull
+  @Override
+  public List<byte[]> getByteContents() {
+    return myByteContents;
   }
 
   @Nullable
