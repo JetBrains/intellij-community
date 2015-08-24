@@ -56,7 +56,6 @@ public class IcsSettingsPanel extends DialogWrapper {
       }
     });
 
-    urlTextField.requestFocusInWindow();
     SettingsRepositoryPackage.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
 
     setTitle(IcsBundle.message("settings.panel.title"));

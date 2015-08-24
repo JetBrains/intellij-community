@@ -2347,7 +2347,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   private Color getCaretRowBackground() {
     Color color = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
-    return color == null ? myScheme.getDefaultBackground() : color;
+    return color == null ? getBackgroundColor() : color;
   }
 
   @NotNull

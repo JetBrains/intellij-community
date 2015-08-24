@@ -3,5 +3,5 @@ abstract class A {
 }
 class B extends A {
   @Override
-  public void test(){}
+  public final synchronized void test(){}
 }

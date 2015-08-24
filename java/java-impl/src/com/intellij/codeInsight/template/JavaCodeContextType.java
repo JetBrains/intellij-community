@@ -147,8 +147,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   private static boolean isAfterExpression(PsiElement element) {
     ProcessingContext context = new ProcessingContext();
-    if (psiElement().hasParentNear(1, instanceOf(PsiExpression.class))
-      .afterLeaf(psiElement().hasParentNear(1, psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
+    if (psiElement().withAncestor(1, instanceOf(PsiExpression.class))
+      .afterLeaf(psiElement().withAncestor(1, psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
       PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
       if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
         return true;

@@ -47,6 +47,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Condition;
@@ -659,7 +660,7 @@ public class FindDialog extends DialogWrapper {
       pane.insertTab("Options", null, optionsPanel, null, 0);
       pane.insertTab(PREVIEW_TITLE, null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
-      final AnAction anAction = new AnAction() {
+      final AnAction anAction = new DumbAwareAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
           int selectedIndex = myContent.getSelectedIndex();

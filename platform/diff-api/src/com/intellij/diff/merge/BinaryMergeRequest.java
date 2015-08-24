@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.merge;
 
-// TODO
-public class SplitComparisonUtilTest extends ComparisonUtilTestBase {
-  public void testSplitter() {
-    TestData.split("x", "z")._Def_(mod(0, 0, 1, 1)).all();
-    TestData.split("x_y", "a_b")._Def_(mod(0, 0, 2, 2)).all();
-    TestData.split("x_y", "a_b y")._Def_(mod(0, 0, 1, 1), mod(1, 1, 1, 1)).all();
+import com.intellij.diff.contents.FileContent;
+import org.jetbrains.annotations.NotNull;
 
-    TestData.split("a_x_b_", " x_")._Def_(del(0, 0, 1), mod(1, 0, 1, 1), del(2, 1, 1)).def();
-    TestData.split("a_x_b_", "!x_")._Def_(del(0, 0, 1), mod(1, 0, 1, 1), del(2, 1, 1)).all();
-  }
+import java.util.List;
+
+public abstract class BinaryMergeRequest extends ThreesideMergeRequest {
+  @NotNull
+  public abstract List<byte[]> getByteContents();
+
+  @Override
+  @NotNull
+  public abstract FileContent getOutputContent();
 }

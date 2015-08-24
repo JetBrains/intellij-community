@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -272,14 +273,15 @@ public class EduStepicConnector {
   }
 
 
-  public static void showLoginDialog() {
+  public static boolean showLoginDialog() {
+    final LoginDialog dialog = new LoginDialog();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        final LoginDialog dialog = new LoginDialog();
         dialog.show();
       }
     }, ModalityState.defaultModalityState());
+    return dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
   }
 
   public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
@@ -342,7 +344,10 @@ public class EduStepicConnector {
     if (ourClient == null) {
       final String login = StudySettings.getInstance().getLogin();
       if (StringUtil.isEmptyOrSpaces(login)) {
-        showLoginDialog();
+        final boolean success = showLoginDialog();
+        if (!success) {
+          return;
+        }
       }
       else {
         final boolean success = login(login, StudySettings.getInstance().getPassword());
@@ -553,15 +558,16 @@ public class EduStepicConnector {
       source.files = new ArrayList<TaskFile>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+        final TaskFile taskFile = new TaskFile();
+        TaskFile.copy(entry.getValue(), taskFile);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
             final VirtualFile taskDir = task.getTaskDir(project);
             assert taskDir != null;
-            EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry);
+            EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry.getKey(), taskFile);
           }
         });
-        final TaskFile taskFile = entry.getValue();
         taskFile.name = entry.getKey();
         final Document document = task.getDocument(project, taskFile.name);
         if (document != null) {

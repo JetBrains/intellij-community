@@ -64,7 +64,7 @@ class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save(SmartList())
 
-    assertThat(streamProvider.data.get(RoamingType.PER_USER)!!.get("${StoragePathMacros.APP_CONFIG}/proxy.settings.xml")).isEqualTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
+    assertThat(streamProvider.data.get(RoamingType.PER_USER)!!.get("proxy.settings.xml")).isEqualTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
   }
 
   @Test fun testLoadFromStreamProvider() {
@@ -72,7 +72,7 @@ class ApplicationStoreTest {
 
     val streamProvider = MyStreamProvider()
     val map = THashMap<String, String>()
-    val fileSpec = "${StoragePathMacros.APP_CONFIG}/proxy.settings.xml"
+    val fileSpec = "proxy.settings.xml"
     map.put(fileSpec, "<application>\n  <component name=\"HttpConfigurable\">\n    <option name=\"foo\" value=\"newValue\" />\n  </component>\n</application>")
     streamProvider.data.put(RoamingType.PER_USER, map)
 
@@ -80,7 +80,7 @@ class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).exists()
+    assertThat(Paths.get(componentStore.storageManager.fileSpecToPath(fileSpec))).exists()
   }
 
   @Test fun `remove deprecated storage on write`() {
@@ -150,7 +150,7 @@ class ApplicationStoreTest {
     public var foo: String = "defaultValue"
   }
 
-  @State(name = "HttpConfigurable", storages = arrayOf(Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)))
+  @State(name = "HttpConfigurable", storages = arrayOf(Storage(file = "proxy.settings.xml"), Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)))
   class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
     override fun getState(): SeveralStoragesConfigured? {
       return this
@@ -161,7 +161,7 @@ class ApplicationStoreTest {
     }
   }
 
-  @State(name = "HttpConfigurable", storages = arrayOf(Storage(file = "${StoragePathMacros.APP_CONFIG}/other.xml", deprecated = true), Storage(file = "${StoragePathMacros.APP_CONFIG}/proxy.settings.xml")))
+  @State(name = "HttpConfigurable", storages = arrayOf(Storage(file = "other.xml", deprecated = true), Storage(file = "${StoragePathMacros.APP_CONFIG}/proxy.settings.xml")))
   class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
     override fun getState() = this
 

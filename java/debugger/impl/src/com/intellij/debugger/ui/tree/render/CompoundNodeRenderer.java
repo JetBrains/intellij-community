@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
@@ -62,7 +62,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     getChildrenRenderer().buildChildren(value, builder, evaluationContext);
   }
 
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+  public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return getChildrenRenderer().getChildValueExpression(node, context);
   }
 

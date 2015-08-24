@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -30,7 +27,6 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -57,7 +53,6 @@ import java.util.Comparator;
  */
 public abstract class AbstractImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + AbstractImportTestsAction.class.getName());
-  private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
   public static final String TEST_HISTORY_SIZE = "test_history_size";
   private SMTRunnerConsoleProperties myProperties;
 
@@ -70,10 +65,6 @@ public abstract class AbstractImportTestsAction extends AnAction {
     myProperties = properties;
   }
 
-  public static File getTestHistoryRoot(Project project) {
-    return new File(TEST_HISTORY_PATH, project.getLocationHash());
-  }
-  
   public static int getHistorySize() {
     int historySize;
     try {
@@ -127,7 +118,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public static void adjustHistory(Project project) {
     int historySize = getHistorySize();
 
-    final File[] files = getTestHistoryRoot(project).listFiles();
+    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles();
     if (files != null && files.length >= historySize + 1) {
       Arrays.sort(files, new Comparator<File>() {
         @Override

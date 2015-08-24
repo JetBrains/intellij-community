@@ -183,7 +183,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
   }
 
-  override fun pull(indicator: ProgressIndicator) = Pull(this, indicator).pull()
+  override fun pull(indicator: ProgressIndicator?) = Pull(this, indicator).pull()
 
   override fun resetToTheirs(indicator: ProgressIndicator) = Reset(this, indicator).reset(true)
 
@@ -191,7 +191,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   override fun canCommit() = repository.getRepositoryState().canCommit()
 
-  fun renameDirectory(pairs: Map<String, String?>) {
+  fun renameDirectory(pairs: Map<String, String?>): Boolean {
     val addCommand = AddCommand(repository)
     val toDelete = SmartList<DeleteDirectory>()
     var added = false
@@ -238,10 +238,11 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
 
     if (toDelete.isEmpty() && !added) {
-      return
+      return false
     }
 
-    repository.commit(IdeaCommitMessageFormatter().prependMessage().append("Get rid of \$ROOT_CONFIG$").toString())
+    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) } .append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
+    return true
   }
 }
 

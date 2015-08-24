@@ -27,12 +27,14 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
@@ -378,7 +380,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public String calcValueName() {
-    return getName();
+    String name = getName();
+    NodeDescriptorNameAdjuster nameAdjuster = NodeDescriptorNameAdjuster.findFor(this);
+    if (nameAdjuster != null) {
+      return nameAdjuster.fixName(name, this);
+    }
+    return name;
   }
 
   @Nullable
@@ -424,19 +431,19 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   //returns expression that evaluates tree to this descriptor
   @Nullable
-  public PsiExpression getTreeEvaluation(JavaValue value, DebuggerContextImpl context) throws EvaluateException {
-    if(value.getParent() != null) {
-      final NodeDescriptorImpl descriptor = value.getParent().getDescriptor();
-      final ValueDescriptorImpl vDescriptor = ((ValueDescriptorImpl)descriptor);
-      final PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation(value.getParent(), context);
+  public PsiElement getTreeEvaluation(JavaValue value, DebuggerContextImpl context) throws EvaluateException {
+    JavaValue parent = value.getParent();
+    if (parent != null) {
+      ValueDescriptorImpl vDescriptor = parent.getDescriptor();
+      PsiElement parentEvaluation = vDescriptor.getTreeEvaluation(parent, context);
 
-      if (parentEvaluation == null) {
+      if (!(parentEvaluation instanceof PsiExpression)) {
         return null;
       }
 
       return DebuggerTreeNodeExpression.substituteThis(
         vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(new DebuggerTreeNodeMock(value), context),
-        parentEvaluation, vDescriptor.getValue()
+        ((PsiExpression)parentEvaluation), vDescriptor.getValue()
       );
     }
 

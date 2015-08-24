@@ -125,6 +125,14 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
+  public void testNoConflictingVariableDueToReparse() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
+      }
+    });
+  }
+
   public void testLocalInsideAnonymous1() throws Exception {
     final Pass<AbstractInplaceIntroducer> pass = new Pass<AbstractInplaceIntroducer>() {
       @Override

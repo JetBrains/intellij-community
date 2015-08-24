@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$/testSrc">
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="platform-impl" />
@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="configuration-store-tests" scope="TEST" />
     <orderEntry type="module" module-name="util-tests" scope="TEST" />
     <orderEntry type="module" module-name="settings-repository" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

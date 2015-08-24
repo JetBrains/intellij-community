@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.templates.github.ZipUtil;
@@ -64,13 +65,23 @@ public class CCFromCourseArchive extends DumbAwareAction {
     final String basePath = project.getBasePath();
     if (basePath == null) return;
     final CCProjectService service = CCProjectService.getInstance(project);
-    Reader reader;
+    Reader reader = null;
     try {
       ZipUtil.unzip(null, new File(basePath), new File(virtualFile.getPath()), null, null, true);
       reader = new InputStreamReader(new FileInputStream(new File(basePath, EduNames.COURSE_META_FILE)));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-      OldCourse oldCourse = gson.fromJson(reader, OldCourse.class);
-      Course course = transformOldCourse(oldCourse);
+      Course course = gson.fromJson(reader, Course.class);
+      if (course == null || course.getLessons().isEmpty() || StringUtil.isEmptyOrSpaces(course.getLessons().get(0).getName())) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+        reader = new InputStreamReader(new FileInputStream(new File(basePath, EduNames.COURSE_META_FILE)));
+        OldCourse oldCourse = gson.fromJson(reader, OldCourse.class);
+        course = transformOldCourse(oldCourse);
+      }
 
       service.setCourse(course);
       project.getBaseDir().refresh(false, true);
@@ -83,6 +94,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
         for (Task task : lesson.getTaskList()) {
           final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(taskIndex));
           task.setIndex(taskIndex);
+          task.setLesson(lesson);
           if (taskDir == null) continue;
           for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -106,6 +118,16 @@ public class CCFromCourseArchive extends DumbAwareAction {
     }
     catch (JsonSyntaxException e) {
       LOG.error(e.getMessage());
+    }
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+      }
     }
     synchronize(project);
   }

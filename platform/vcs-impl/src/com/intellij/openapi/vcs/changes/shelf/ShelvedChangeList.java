@@ -31,6 +31,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +66,7 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   }
 
   public ShelvedChangeList(final String path, final String description, final List<ShelvedBinaryFile> binaryFiles, final long time) {
-    PATH = path;
+    PATH = FileUtil.toSystemIndependentName(path);
     DESCRIPTION = description;
     DATE = new Date(time);
     myBinaryFiles = binaryFiles;

@@ -1,4 +1,4 @@
 class A {}
 class B extends A {
-  public void te<caret>st(){}
+  public final synchronized void te<caret>st(){}
 }

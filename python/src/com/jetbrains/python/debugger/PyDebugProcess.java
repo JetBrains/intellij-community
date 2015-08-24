@@ -668,6 +668,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  public void addTemporaryBreakpoint(String typeId, String file, int line) {
+    if (isConnected()) {
+      myDebugger.setTempBreakpoint(typeId, file, line);
+    }
+  }
+
   public void removeBreakpoint(final PySourcePosition position) {
     XLineBreakpoint breakpoint = myRegisteredBreakpoints.get(position);
     if (breakpoint != null) {
@@ -703,7 +709,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       final List<PyStackFrameInfo> frames = threadInfo.getFrames();
       if (frames != null) {
-        final PySuspendContext suspendContext = new PySuspendContext(this, threadInfo);
+        final PySuspendContext suspendContext = createSuspendContext(threadInfo);
 
         XBreakpoint<?> breakpoint = null;
         if (threadInfo.isStopOnBreakpoint()) {
@@ -731,6 +737,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         }
       }
     }
+  }
+
+  @NotNull
+  protected PySuspendContext createSuspendContext(PyThreadInfo threadInfo) {
+    return new PySuspendContext(this, threadInfo);
   }
 
   @Override
