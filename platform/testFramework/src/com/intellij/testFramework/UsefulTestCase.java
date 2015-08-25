@@ -157,12 +157,15 @@ public abstract class UsefulTestCase extends TestCase {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
         if (hasTmpFilesToKeep()) {
           File[] files = new File(myTempDir).listFiles();
-          if (files != null) {
+          if (files != null && files.length > 0) {
             for (File file : files) {
               if (!shouldKeepTmpFile(file)) {
                 FileUtil.delete(file);
               }
             }
+          }
+          else {
+            FileUtil.delete(new File(myTempDir));
           }
         }
         else {
