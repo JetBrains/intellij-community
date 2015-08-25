@@ -136,7 +136,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     try {
       editorSettings.setBlinkPeriod(Integer.parseInt(myBlinkIntervalField.getText()));
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignore) {
     }
 
     editorSettings.setBlockCursor(myCbBlockCursor.isSelected());
@@ -243,8 +243,11 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   @Override
   public JComponent createComponent() {
     for (UnnamedConfigurable provider : getConfigurables()) {
-      myAddonPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.NONE, new Insets(0,0,15,0), 0,0));
+      JComponent component = provider.createComponent();
+      if (component != null) {
+        myAddonPanel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                           GridBagConstraints.NONE, new Insets(0, 0, 15, 0), 0, 0));
+      }
     }
     return myRootPanel;
   }
