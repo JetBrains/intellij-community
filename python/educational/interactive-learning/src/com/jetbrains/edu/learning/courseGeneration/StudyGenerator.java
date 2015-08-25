@@ -9,6 +9,7 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -68,6 +69,7 @@ public class StudyGenerator {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);
+          StudyTaskManager.getInstance(project).addInvisibleFiles(fileInProject.getPath());
         }
       }
     }
