@@ -22,18 +22,11 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
-import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -167,7 +160,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       return showMergeDialog(project, file, mergeData.getBase(), mergeData.getPatched(), reverse, leftPanelTitle, rightPanelTitle);
     }
     else {
-      return showBadDiffDialog(project, file, mergeData);
+      return showBadMergeDialog(project, file, mergeData);
     }
   }
 
@@ -248,9 +241,9 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static ApplyPatchStatus showBadDiffDialog(@Nullable Project project,
-                                                    @NotNull VirtualFile file,
-                                                    @NotNull final ApplyPatchForBaseRevisionTexts texts) {
+  private static ApplyPatchStatus showBadMergeDialog(@Nullable Project project,
+                                                     @NotNull VirtualFile file,
+                                                     @NotNull final ApplyPatchForBaseRevisionTexts texts) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (texts.getLocal() == null || document == null) return ApplyPatchStatus.FAILURE;
 
@@ -272,30 +265,5 @@ public class ApplyPatchAction extends DumbAwareAction {
     DiffManager.getInstance().showMerge(project, request);
 
     return successRef.get() == Boolean.TRUE ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
-  }
-
-  @NotNull
-  public static DiffRequest createBadDiffRequest(@Nullable Project project,
-                                                 @NotNull final VirtualFile file,
-                                                 @NotNull final ApplyPatchForBaseRevisionTexts texts) throws DiffRequestProducerException {
-    if (texts.getLocal() == null) {
-      throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
-    }
-
-    final String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
-    final String windowTitle = "Result Of Patch Apply To " + file.getName() + " (" + fullPath + ")";
-    final List<String> titles = ContainerUtil.list(VcsBundle.message("diff.title.local"), "Patched (with problems)");
-
-    final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    DocumentContent localContent = contentFactory.createDocument(project, file);
-    if (localContent == null) localContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
-    final DiffContent mergedContent = contentFactory.create(texts.getPatched(), file.getFileType());
-
-    final List<DiffContent> contents = ContainerUtil.list(localContent, mergedContent);
-
-    final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
-    DiffUtil.addNotification(new ApplyPatchMergeTool.DiffIsApproximateNotification(), request);
-
-    return request;
   }
 }

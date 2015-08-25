@@ -17,9 +17,11 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,8 +34,11 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class PatchDiffRequestFactory {
   @NotNull
@@ -69,7 +74,7 @@ public class PatchDiffRequestFactory {
     ApplyPatchForBaseRevisionTexts texts = textsRef.get();
 
     if (texts.getBase() == null) {
-      return ApplyPatchAction.createBadDiffRequest(project, file, texts);
+      return createBadDiffRequest(project, file, texts);
     }
     else {
       String path = FileUtil.toSystemDependentName(file.getPresentableUrl());
@@ -86,6 +91,31 @@ public class PatchDiffRequestFactory {
       return new SimpleDiffRequest(windowTitle, localContent, baseContent, patchedContent,
                                    "Current Version", "Base Version", afterTitle);
     }
+  }
+
+  @NotNull
+  public static DiffRequest createBadDiffRequest(@Nullable Project project,
+                                                 @NotNull final VirtualFile file,
+                                                 @NotNull final ApplyPatchForBaseRevisionTexts texts) throws DiffRequestProducerException {
+    if (texts.getLocal() == null) {
+      throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
+    }
+
+    final String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
+    final String windowTitle = "Result Of Patch Apply To " + file.getName() + " (" + fullPath + ")";
+    final List<String> titles = ContainerUtil.list(VcsBundle.message("diff.title.local"), "Patched (with problems)");
+
+    final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+    DocumentContent localContent = contentFactory.createDocument(project, file);
+    if (localContent == null) localContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
+    final DiffContent mergedContent = contentFactory.create(texts.getPatched(), file.getFileType());
+
+    final List<DiffContent> contents = ContainerUtil.list(localContent, mergedContent);
+
+    final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
+    DiffUtil.addNotification(new ApplyPatchMergeTool.DiffIsApproximateNotification(), request);
+
+    return request;
   }
 }
 
