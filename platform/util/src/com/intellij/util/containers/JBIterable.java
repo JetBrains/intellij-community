@@ -58,10 +58,12 @@ import java.util.*;
  *       .toList();}</pre>
  * <p/>
  * <p>Anything which can be done using {@code JBIterable} could be done in a different fashion
- * (often with {@link Iterables}), however the use of {@code JBIterable} makes many sets of
+ * (often with {@code Iterables}), however the use of {@code JBIterable} makes many sets of
  * operations significantly more concise.
  *
  * @author Marcin Mikosik
+ *
+ * @noinspection unchecked
  */
 public abstract class JBIterable<E> implements Iterable<E> {
 
@@ -270,7 +272,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @param type the type of elements desired
    */
   public final <T> JBIterable<T> filter(@NotNull Class<T> type) {
-    //noinspection unchecked
     return (JBIterable<T>)filter(Conditions.instanceOf(type));
   }
 
@@ -371,13 +372,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * The most generic iterator transformation.
    */
   @NotNull
-  public final <T> JBIterable<T> intercept(@NotNull final Function<Iterator<E>, Iterator<T>> function) {
+  public final <T, X extends Iterator<E>> JBIterable<T> intercept(@NotNull final Function<X, ? extends Iterator<T>> function) {
     if (this == EMPTY) return empty();
     final JBIterable<E> thisIterable = this;
     return new JBIterable<T>() {
       @Override
       public Iterator<T> iterator() {
-        return function.fun(thisIterable.iterator());
+        return function.fun((X)thisIterable.iterator());
       }
     };
   }
@@ -459,7 +460,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return collection;
   }
 
-  @SuppressWarnings("unchecked")
   public abstract static class Stateful<Self extends Stateful> implements Cloneable {
 
     @NotNull
