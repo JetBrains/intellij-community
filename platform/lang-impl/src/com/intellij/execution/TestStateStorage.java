@@ -94,7 +94,7 @@ public class TestStateStorage extends AbstractProjectComponent{
     }
   }
 
-  public void writeState(String testUrl, Record record) {
+  public void writeState(@NotNull String testUrl, Record record) {
     if (myMap == null) return;
     try {
       myMap.put(testUrl, record);
