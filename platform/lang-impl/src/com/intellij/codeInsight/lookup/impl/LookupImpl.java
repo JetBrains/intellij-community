@@ -424,7 +424,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void addEmptyItem(CollectionListModel<LookupElement> model) {
-    LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
+    LookupElement item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     myMatchers.put(item, new CamelHumpMatcher(""));
     model.add(item);
 
