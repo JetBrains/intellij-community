@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.impl.stores.StateStorageBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
@@ -26,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
+  private static final Logger LOG = Logger.getInstance(StateStorageBase.class);
+
   private SkipDefaultsSerializationFilter serializationFilter;
 
   @SuppressWarnings("deprecation")
@@ -48,11 +52,11 @@ public abstract class SaveSessionBase implements StateStorage.SaveSession, State
       }
     }
     catch (WriteExternalException e) {
-      StateStorageBase.LOG.debug(e);
+      LOG.debug(e);
       return;
     }
     catch (Throwable e) {
-      StateStorageBase.LOG.error("Unable to serialize " + componentName + " state", e);
+      LOG.error("Unable to serialize " + componentName + " state", e);
       return;
     }
 
