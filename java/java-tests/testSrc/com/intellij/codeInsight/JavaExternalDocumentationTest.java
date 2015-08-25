@@ -118,7 +118,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   }
   
   @NotNull
-  private static VirtualFile getJarFile(String name) {
+  public static VirtualFile getJarFile(String name) {
     VirtualFile file = getVirtualFile(getDataFile(name));
     assertNotNull(file);
     VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(file);

@@ -17,10 +17,19 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -302,6 +311,27 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("java.lang.String", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
     verifyJavaDoc(aClass, Collections.singletonList("dummyUrl"));
+  }
+  
+  public void testLibraryPackageDocumentation() throws Exception {
+    final VirtualFile libClasses = JavaExternalDocumentationTest.getJarFile("library.jar");
+    final VirtualFile libSources = JavaExternalDocumentationTest.getJarFile("library-src.jar");
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("myLib");
+      final Library.ModifiableModel model = library.getModifiableModel();
+      model.addRoot(libClasses, OrderRootType.CLASSES);
+      model.addRoot(libSources, OrderRootType.SOURCES);
+      model.commit();
+
+      Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      assertSize(1, modules);
+      ModuleRootModificationUtil.addDependency(modules[0], library);
+    });
+    
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("com.jetbrains");
+    assertNotNull(aPackage);
+    verifyJavaDoc(aPackage);
   }
 
   @Override

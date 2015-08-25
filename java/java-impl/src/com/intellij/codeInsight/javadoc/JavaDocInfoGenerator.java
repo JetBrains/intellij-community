@@ -683,7 +683,10 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageJavaDoc(final StringBuilder buffer, final PsiPackage psiPackage, boolean generatePrologueAndEpilogue) {
-    for(PsiDirectory directory: psiPackage.getDirectories()) {
+    VirtualFile[] dirs = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(psiPackage.getQualifiedName(), true);
+    for (VirtualFile dir : dirs) {
+      PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(dir);
+      if (directory == null) continue;
       final PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
         final ASTNode node = packageInfoFile.getNode();
