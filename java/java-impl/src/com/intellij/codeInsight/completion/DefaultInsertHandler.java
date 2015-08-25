@@ -26,11 +26,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.annotations.NotNull;
 
-public class DefaultInsertHandler extends TemplateInsertHandler implements Cloneable {
+public class DefaultInsertHandler implements InsertHandler {
 
   public static final DefaultInsertHandler NO_TAIL_HANDLER = new DefaultInsertHandler(){
     @Override
@@ -40,13 +38,9 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   };
 
   @Override
-  public void handleInsert(final InsertionContext context, LookupElement item) {
-    super.handleInsert(context, item);
-
-    handleInsertInner(context, (LookupItem)item, context.getCompletionChar());
-  }
-
-  private void handleInsertInner(InsertionContext context, LookupItem item, final char completionChar) {
+  public void handleInsert(final InsertionContext context, LookupElement lookupElement) {
+    LookupItem item = (LookupItem)lookupElement;
+    char completionChar = context.getCompletionChar();
     final Project project = context.getProject();
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
@@ -168,11 +162,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     editor.getCaretModel().moveToOffset(caretOffset);
     tailType.processTail(editor, tailOffset);
     return editor.getCaretModel().getOffset();
-  }
-
-  @Override
-  protected void populateInsertMap(@NotNull final PsiFile file, @NotNull final OffsetMap offsetMap) {
-    JavaCompletionUtil.initOffsets(file, offsetMap);
   }
 
   public static class InsertHandlerState{
