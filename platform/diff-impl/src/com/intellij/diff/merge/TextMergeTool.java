@@ -701,13 +701,18 @@ public class TextMergeTool implements MergeTool {
         }
 
         private void registerUndoRedo(final boolean undo) {
+          Project project = getProject();
+          if (project == null) {
+            return;
+          }
+
           List<TextMergeChange> affectedChanges = getAffectedChanges();
           final List<TextMergeChange.State> states = new ArrayList<TextMergeChange.State>(affectedChanges.size());
           for (TextMergeChange change : affectedChanges) {
             states.add(change.storeState());
           }
 
-          UndoManager.getInstance(getProject()).undoableActionPerformed(new BasicUndoableAction(myDocument) {
+          UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(myDocument) {
             @Override
             public void undo() throws UnexpectedUndoException {
               if (undo) restoreStates(states);
