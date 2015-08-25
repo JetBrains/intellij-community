@@ -214,4 +214,21 @@ public class FileUtilLightTest {
 
     assertThat(FileUtil.sanitizeFileName("a+b+c")).isEqualTo("a_b_c");
   }
+
+  @Test
+  public void windowsShortName() {
+    assertTrue(FileUtil.containsWindowsShortName("C:\\dir~1"));
+    assertTrue(FileUtil.containsWindowsShortName("C:\\dir~1\\"));
+    assertTrue(FileUtil.containsWindowsShortName("C:\\dir~1\\file.txt"));
+    assertTrue(FileUtil.containsWindowsShortName("C:/dir/file~1"));
+    assertTrue(FileUtil.containsWindowsShortName("C:/dir/file~1.txt"));
+    assertTrue(FileUtil.containsWindowsShortName("C:/dir/file~1.1"));
+
+    assertFalse(FileUtil.containsWindowsShortName("~"));
+    assertFalse(FileUtil.containsWindowsShortName("C:\\some~dir"));
+    assertFalse(FileUtil.containsWindowsShortName("C:\\some-dir~1"));
+    assertFalse(FileUtil.containsWindowsShortName("C:/dir/file~1.extension"));
+    assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.~1"));
+    assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.ext~1"));
+  }
 }

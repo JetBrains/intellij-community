@@ -1016,6 +1016,7 @@ public class FileUtil extends FileUtilRt {
    *             Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
+  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {
     return FileUtilRt.getExtension(fileName).toLowerCase();
@@ -1023,7 +1024,31 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfo.isWindows && StringUtil.containsChar(path, '~') ? new File(path).getCanonicalPath() : path;
+    return SystemInfo.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
+  }
+
+  public static boolean containsWindowsShortName(@NotNull String path) {
+    if (StringUtil.containsChar(path, '~')) {
+      path = toSystemIndependentName(path);
+
+      int start = 0;
+      while (start < path.length()) {
+        int end = path.indexOf('/', start);
+        if (end < 0) end = path.length();
+
+        // "How Windows Generates 8.3 File Names from Long File Names", https://support.microsoft.com/en-us/kb/142982
+        int dot = path.lastIndexOf('.', end);
+        if (dot < start) dot = end;
+        if (dot - start > 2 && dot - start <= 8 && end - dot - 1 <= 3 &&
+            path.charAt(dot - 2) == '~' && Character.isDigit(path.charAt(dot - 1))) {
+          return true;
+        }
+
+        start = end + 1;
+      }
+    }
+
+    return false;
   }
 
   public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<File> outFiles) {
@@ -1671,5 +1696,9 @@ public class FileUtil extends FileUtilRt {
     FileAttributes upper = FileSystemUtil.getAttributes(path.toUpperCase(Locale.ENGLISH));
     FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
     return !(attributes.equals(upper) && attributes.equals(lower));
+  }
+
+  public static boolean isWindowsShortName(@NotNull String fileName) {
+    return false;
   }
 }
