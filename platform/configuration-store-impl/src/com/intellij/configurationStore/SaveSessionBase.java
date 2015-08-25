@@ -13,55 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.configurationStore;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.impl.stores.StateStorageBase;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.StateStorageBase
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.JDOMExternalizable
+import com.intellij.openapi.util.WriteExternalException
+import com.intellij.openapi.vfs.SafeWriteRequestor
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
+import com.intellij.util.xmlb.XmlSerializer
+import org.jdom.Element
 
-public abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
-  private static final Logger LOG = Logger.getInstance(StateStorageBase.class);
-
-  private SkipDefaultsSerializationFilter serializationFilter;
+abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
+  private var serializationFilter: SkipDefaultsSerializationFilter? = null
 
   @SuppressWarnings("deprecation")
-  @Override
-  public final void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
-    Element element;
+  override fun setState(component: Any, componentName: String, state: Any) {
+    val element: Element?
     try {
-      if (state instanceof Element) {
-        element = (Element)state;
+      if (state is Element) {
+        element = state
       }
-      else if (state instanceof JDOMExternalizable) {
-        element = new Element("temp_element");
-        ((JDOMExternalizable)state).writeExternal(element);
+      else if (state is JDOMExternalizable) {
+        element = Element("temp_element")
+        state.writeExternal(element)
       }
       else {
         if (serializationFilter == null) {
-          serializationFilter = new SkipDefaultsSerializationFilter();
+          serializationFilter = SkipDefaultsSerializationFilter()
         }
-        element = XmlSerializer.serializeIfNotDefault(state, serializationFilter);
+        element = XmlSerializer.serializeIfNotDefault(state, serializationFilter)
       }
     }
-    catch (WriteExternalException e) {
-      LOG.debug(e);
-      return;
+    catch (e: WriteExternalException) {
+      LOG.debug(e)
+      return
     }
-    catch (Throwable e) {
-      LOG.error("Unable to serialize " + componentName + " state", e);
-      return;
+    catch (e: Throwable) {
+      LOG.error("Unable to serialize $componentName state", e)
+      return
     }
 
-    setSerializedState(component, componentName, element);
+    setSerializedState(component, componentName, element)
   }
 
-  protected abstract void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element);
+  protected abstract fun setSerializedState(component: Any, componentName: String, element: Element?)
 }
