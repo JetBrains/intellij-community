@@ -54,7 +54,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
   public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
   public static final Object TYPE = Key.create("TYPE");
-  public static final Key<Object> DEPRECATED_ATTR = Key.create("DEPRECATED");
 
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
 
