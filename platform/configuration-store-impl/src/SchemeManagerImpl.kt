@@ -583,7 +583,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       if (renamed) {
         externalInfo!!.scheduleDelete()
       }
-      provider!!.saveContent(providerPath, byteOut.getInternalBuffer(), byteOut.size(), roamingType)
+      provider!!.write(providerPath, byteOut.getInternalBuffer(), byteOut.size(), roamingType)
     }
 
     if (externalInfo == null) {

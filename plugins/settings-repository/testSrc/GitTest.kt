@@ -17,7 +17,6 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -84,7 +83,7 @@ class GitTest : TestCase() {
 
   private fun addAndCommit(path: String): FileInfo {
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
-    provider.save(path, data)
+    provider.write(path, data)
     repositoryManager.commit()
     return FileInfo(path, data)
   }
@@ -92,7 +91,7 @@ class GitTest : TestCase() {
   Test fun add() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     val addedFile = "remote.xml"
-    provider.save(addedFile, data)
+    provider.write(addedFile, data)
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff()).isTrue()
@@ -109,8 +108,8 @@ class GitTest : TestCase() {
     val data2 = FileUtil.loadFileBytes(File(testDataPath, "local.xml"))
     val addedFile = "remote.xml"
     val addedFile2 = "local.xml"
-    provider.save(addedFile, data)
-    provider.save(addedFile2, data2)
+    provider.write(addedFile, data)
+    provider.write(addedFile2, data2)
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff()).isTrue()
@@ -127,7 +126,7 @@ class GitTest : TestCase() {
     fun delete(data: ByteArray, directory: Boolean) {
       val dir = "dir"
       val fullFileSpec = "$dir/$addedFile"
-      provider.save(fullFileSpec, data)
+      provider.write(fullFileSpec, data)
       provider.delete(if (directory) dir else fullFileSpec, RoamingType.PER_USER)
 
       val diff = repository.computeIndexDiff()
@@ -272,7 +271,7 @@ class GitTest : TestCase() {
     createLocalRepository(null)
 
     val data = AM.MARKER_ACCEPT_MY
-    provider.save("remote.xml", data)
+    provider.write("remote.xml", data)
 
     sync(SyncType.MERGE)
 
@@ -286,7 +285,7 @@ class GitTest : TestCase() {
     sync(SyncType.MERGE)
 
     val data = AM.MARKER_ACCEPT_THEIRS
-    provider.save("remote.xml", data)
+    provider.write("remote.xml", data)
     repositoryManager.commit()
 
     remoteRepository.deletePath("remote.xml")
@@ -317,7 +316,7 @@ class GitTest : TestCase() {
   Test fun `commit if unmerged`() {
     createLocalRepository(null)
 
-    provider.saveContent("remote.xml", "<foo />")
+    provider.write("remote.xml", "<foo />")
 
     try {
       sync(SyncType.MERGE)
@@ -379,7 +378,7 @@ class GitTest : TestCase() {
 
     val path = "local.xml"
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
-    provider.save(path, data)
+    provider.write(path, data)
 
     sync(syncType)
 
@@ -406,9 +405,4 @@ class GitTest : TestCase() {
   private fun sync(syncType: SyncType) {
     icsManager.sync(syncType, fixtureManager.projectFixture.getProject())
   }
-}
-
-fun StreamProvider.saveContent(fileSpec: String, content: String) {
-  val data = content.toByteArray()
-  saveContent(fileSpec, data, data.size(), RoamingType.PER_USER)
 }

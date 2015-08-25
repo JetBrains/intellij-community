@@ -33,8 +33,13 @@ import kotlin.properties.Delegates
 
 val testDataPath: String = "${PlatformTestUtil.getCommunityPath()}/plugins/settings-repository/testData"
 
-fun StreamProvider.save(path: String, data: ByteArray) {
-  saveContent(path, data, data.size(), RoamingType.PER_USER)
+fun StreamProvider.write(path: String, data: ByteArray) {
+  write(path, data, data.size(), RoamingType.PER_USER)
+}
+
+fun StreamProvider.write(fileSpec: String, content: String) {
+  val data = content.toByteArray()
+  write(fileSpec, data, data.size(), RoamingType.PER_USER)
 }
 
 fun Repository.add(data: ByteArray, path: String): Repository {

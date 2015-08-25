@@ -37,7 +37,7 @@ class LoadTest : TestCase() {
   public Test fun `load scheme`() {
     val localScheme = TestScheme("local")
     val data = localScheme.serialize().toByteArray()
-    provider.save("$dirPath/local.xml", data)
+    provider.write("$dirPath/local.xml", data)
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
@@ -47,8 +47,8 @@ class LoadTest : TestCase() {
   public Test fun `load scheme with the same names`() {
     val localScheme = TestScheme("local")
     val data = localScheme.serialize().toByteArray()
-    provider.save("$dirPath/local.xml", data)
-    provider.save("$dirPath/local2.xml", data)
+    provider.write("$dirPath/local.xml", data)
+    provider.write("$dirPath/local2.xml", data)
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
@@ -58,7 +58,7 @@ class LoadTest : TestCase() {
   public Test fun `load scheme from repo and read-only repo`() {
     val localScheme = TestScheme("local")
 
-    provider.save("$dirPath/local.xml", localScheme.serialize().toByteArray())
+    provider.write("$dirPath/local.xml", localScheme.serialize().toByteArray())
 
     val remoteScheme = TestScheme("remote")
     val remoteRepository = tempDirManager.createRepository()
@@ -79,7 +79,7 @@ class LoadTest : TestCase() {
     val schemeName = "Emacs"
     val localScheme = TestScheme(schemeName, "local")
 
-    provider.save("$dirPath/$schemeName.xml", localScheme.serialize().toByteArray())
+    provider.write("$dirPath/$schemeName.xml", localScheme.serialize().toByteArray())
 
     val remoteScheme = TestScheme(schemeName, "remote")
     val remoteRepository = tempDirManager.createRepository("remote")

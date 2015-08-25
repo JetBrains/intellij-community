@@ -111,7 +111,7 @@ class ApplicationStoreTest {
   private class MyStreamProvider : StreamProvider {
     public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
-    override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+    override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))
     }
 

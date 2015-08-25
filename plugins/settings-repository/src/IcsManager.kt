@@ -211,7 +211,7 @@ class IcsManager(dir: File) {
       repositoryManager.processChildren(fullPath, filter, { name, input -> processor(name, input, false) })
     }
 
-    override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+    override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       if (syncManager.writeAndDeleteProhibited) {
         throw IllegalStateException("Save is prohibited now")
       }
