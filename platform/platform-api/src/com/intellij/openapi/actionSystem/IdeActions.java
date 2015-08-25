@@ -172,6 +172,7 @@ public interface IdeActions {
   @NonNls String ACTION_COLLAPSE_ALL = "CollapseAll";
   @NonNls String ACTION_EXPORT_TO_TEXT_FILE = "ExportToTextFile";
 
+  @NonNls String ACTION_COLLAPSE_REGION = "CollapseRegion";
   @NonNls String ACTION_EXPAND_ALL_REGIONS = "ExpandAllRegions";
   @NonNls String ACTION_COLLAPSE_ALL_REGIONS = "CollapseAllRegions";
   @NonNls String ACTION_EXPAND_REGION_RECURSIVELY = "ExpandRegionRecursively";
