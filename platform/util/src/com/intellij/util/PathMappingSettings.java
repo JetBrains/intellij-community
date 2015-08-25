@@ -263,11 +263,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     public void setLocalRoot(@Nullable String localRoot) {
-      myLocalRoot = localRoot;
+      myLocalRoot = normalize(localRoot);
     }
 
     public void setRemoteRoot(@Nullable String remoteRoot) {
-      myRemoteRoot = remoteRoot;
+      myRemoteRoot = normalize(remoteRoot);
     }
 
     @NotNull
