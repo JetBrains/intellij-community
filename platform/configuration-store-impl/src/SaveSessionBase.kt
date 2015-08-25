@@ -16,8 +16,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.StateStorageBase
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.SafeWriteRequestor
