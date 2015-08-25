@@ -282,11 +282,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return this;
   }
 
-  public LookupItem<T> setDeprecated(boolean deprecated) {
-    setAttribute(DEPRECATED_ATTR, deprecated ? "" : null);
-    return this;
-  }
-
   @Override
   public LookupItem<T> setAutoCompletionPolicy(final AutoCompletionPolicy policy) {
     myAutoCompletionPolicy = policy;
@@ -328,25 +323,10 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myPresentable;
   }
 
-  @Override
   @NotNull
-  public LookupItem<T> setTypeText(final String text) {
-    setAttribute(TYPE_TEXT_ATTR, text);
-    return this;
-  }
-
-  @NotNull
-  @Override
   public MutableLookupElement<T> setTailText(final String text, final boolean grayed) {
     setAttribute(TAIL_TEXT_ATTR, text);
     setAttribute(TAIL_TEXT_SMALL_ATTR, Boolean.TRUE);
-    return this;
-  }
-
-  @Override
-  @NotNull
-  public LookupItem<T> setCaseSensitive(final boolean caseSensitive) {
-    setAttribute(CASE_INSENSITIVE, !caseSensitive);
     return this;
   }
 
