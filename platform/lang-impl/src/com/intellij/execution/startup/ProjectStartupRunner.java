@@ -41,26 +41,26 @@ public class ProjectStartupRunner implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    final ProjectStartupConfiguration projectStartupConfiguration = ProjectStartupConfiguration.getInstance(project);
-    if (projectStartupConfiguration.isEmpty()) return;
+    final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
+    if (projectStartupTaskManager.isEmpty()) return;
 
     RunManagerImpl.getInstanceImpl(project).addRunManagerListener(new RunManagerAdapter() {
       @Override
       public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
-        projectStartupConfiguration.delete(settings.getName());
+        projectStartupTaskManager.delete(settings.getName());
       }
 
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId) {
         if (existingId != null) {
-          projectStartupConfiguration.rename(existingId, settings);
+          projectStartupTaskManager.rename(existingId, settings);
         }
-        projectStartupConfiguration.checkOnChange(settings);
+        projectStartupTaskManager.checkOnChange(settings);
       }
 
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
-        projectStartupConfiguration.checkOnChange(settings);
+        projectStartupTaskManager.checkOnChange(settings);
       }
     });
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
@@ -81,15 +81,15 @@ public class ProjectStartupRunner implements StartupActivity {
   }
 
   private void runActivities(final Project project) {
-    final List<RunnerAndConfigurationSettings> configurations = ProjectStartupConfiguration.getInstance(project).getStartupConfigurations();
+    final List<RunnerAndConfigurationSettings> configurations = ProjectStartupTaskManager.getInstance(project).getStartupConfigurations();
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     for (final RunnerAndConfigurationSettings configuration : configurations) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
-          ProjectStartupConfiguration.NOTIFICATION_GROUP
-            .createNotification(ProjectStartupConfiguration.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
+          ProjectStartupTaskManager.NOTIFICATION_GROUP
+            .createNotification(ProjectStartupTaskManager.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
             .notify(project);
         }
       }, ModalityState.any());

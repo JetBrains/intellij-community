@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Irina.Chernushina on 8/19/2015.
  */
-public class ProjectStartupConfiguration {
+public class ProjectStartupTaskManager {
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Project Startup Tasks Messages");
   @NonNls public static final String PREFIX = "Project Startup Tasks: ";
   private final Project myProject;
@@ -43,12 +43,12 @@ public class ProjectStartupConfiguration {
   private final RunManagerEx myRunManager;
   private boolean myInitialized;
 
-  public static ProjectStartupConfiguration getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, ProjectStartupConfiguration.class);
+  public static ProjectStartupTaskManager getInstance(@NotNull final Project project) {
+    return ServiceManager.getService(project, ProjectStartupTaskManager.class);
   }
 
-  public ProjectStartupConfiguration(Project project, ProjectStartupSharedConfiguration shared, ProjectStartupLocalConfiguration local,
-                                     @NotNull RunManager runManager) {
+  public ProjectStartupTaskManager(Project project, ProjectStartupSharedConfiguration shared, ProjectStartupLocalConfiguration local,
+                                   @NotNull RunManager runManager) {
     myProject = project;
     myShared = shared;
     myLocal = local;

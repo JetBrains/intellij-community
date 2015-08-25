@@ -61,13 +61,13 @@ import java.util.List;
 public class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private Tree myTree;
-  private ProjectStartupConfiguration myConfiguration;
+  private ProjectStartupTaskManager myConfiguration;
   private ToolbarDecorator myDecorator;
   private JBCheckBox mySharedCheckBox;
 
   public ProjectStartupConfigurable(Project project) {
     myProject = project;
-    myConfiguration = ProjectStartupConfiguration.getInstance(myProject);
+    myConfiguration = ProjectStartupTaskManager.getInstance(myProject);
   }
 
   @NotNull
