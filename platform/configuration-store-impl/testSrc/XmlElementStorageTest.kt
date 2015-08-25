@@ -18,9 +18,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.util.JDOMBuilder.attr
 import com.intellij.openapi.util.JDOMBuilder.tag
 import junit.framework.TestCase
-import org.hamcrest.CoreMatchers.notNullValue
-import org.hamcrest.CoreMatchers.nullValue
-import org.hamcrest.MatcherAssert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.Test
 
@@ -36,7 +34,7 @@ class XmlElementStorageTest {
   public Test fun testGetStateNotSucceeded() {
     val storage = MyXmlElementStorage(tag("root"))
     val state = storage.getState(this, "test", javaClass<Element>())
-    assertThat(state, nullValue())
+    assertThat(state).isNull()
   }
 
   public Test fun `set state overrides old state`() {
@@ -45,9 +43,9 @@ class XmlElementStorageTest {
     val externalizationSession = storage.startExternalization()!!
     externalizationSession.setState(this, "test", newState)
     externalizationSession.createSaveSession()!!.save()
-    assertThat(storage.savedElement, notNullValue())
-    assertThat(storage.savedElement!!.getChild("component").getChild("bar"), notNullValue())
-    assertThat(storage.savedElement!!.getChild("component").getChild("foo"), nullValue())
+    assertThat(storage.savedElement).isNotNull()
+    assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull()
+    assertThat(storage.savedElement!!.getChild("component").getChild("foo")).isNull()
   }
 
   private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root", null, null, null) {

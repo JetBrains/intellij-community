@@ -132,6 +132,7 @@ public class EduStepicConnector {
     }
     catch (UnsupportedEncodingException e) {
       LOG.error(e.getMessage());
+      ourClient = null;
       return false;
     }
 
@@ -144,11 +145,13 @@ public class EduStepicConnector {
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 302) {
         LOG.error("Failed to login " + EntityUtils.toString(response.getEntity()));
+        ourClient = null;
         return false;
       }
     }
     catch (IOException e) {
-      LOG.error(e.getMessage());
+      LOG.warn(e.getMessage());
+      ourClient = null;
       return false;
     }
     return true;

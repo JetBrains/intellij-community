@@ -17,9 +17,12 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.path
 import com.intellij.util.PathUtilRt
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.api.Git
@@ -28,15 +31,23 @@ import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.writePath
-import org.jetbrains.settingsRepository.AM
+import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
 import org.jetbrains.settingsRepository.SyncType
+import org.jetbrains.settingsRepository.conflictResolver
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.resetHard
 import org.junit.Test
 import java.io.File
+import java.util.Arrays
 import kotlin.properties.Delegates
+
+// kotlin bug, cannot be val (.NoSuchMethodError: org.jetbrains.settingsRepository.SettingsRepositoryPackage.getMARKER_ACCEPT_MY()[B)
+object AM {
+  val MARKER_ACCEPT_MY: ByteArray = "__accept my__".toByteArray()
+  val MARKER_ACCEPT_THEIRS: ByteArray = "__accept theirs__".toByteArray()
+}
 
 class GitTest : TestCase() {
   private val repositoryManager: GitRepositoryManager
@@ -47,6 +58,28 @@ class GitTest : TestCase() {
 
   val remoteRepository by Delegates.lazy {
     tempDirManager.createRepository("upstream")
+  }
+
+  init {
+    conflictResolver = { files, mergeProvider ->
+      val mergeSession = mergeProvider.createMergeSession(files)
+      for (file in files) {
+        val mergeData = mergeProvider.loadRevisions(file)
+        if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_THEIRS)) {
+          mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
+        }
+        else if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
+          mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
+        }
+        else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
+          file.setBinaryContent(mergeData.LAST!!)
+          mergeProvider.conflictResolvedForFile(file)
+        }
+        else {
+          throw CannotResolveConflictInTestMode()
+        }
+      }
+    }
   }
 
   private fun addAndCommit(path: String): FileInfo {
@@ -281,6 +314,29 @@ class GitTest : TestCase() {
     compareFiles(fs())
   }
 
+  Test fun `commit if unmerged`() {
+    createLocalRepository(null)
+
+    provider.saveContent("remote.xml", "<foo />")
+
+    try {
+      sync(SyncType.MERGE)
+    }
+    catch (e: CannotResolveConflictInTestMode) {
+    }
+
+    // repository in unmerged state
+    conflictResolver = {files, mergeProvider ->
+      assertThat(files).hasSize(1)
+      assertThat(files.first().path).isEqualTo("remote.xml")
+      val mergeSession = mergeProvider.createMergeSession(files)
+      mergeSession.conflictResolvedForFile(files.first(), MergeSession.Resolution.AcceptedTheirs)
+    }
+    sync(SyncType.MERGE)
+
+    compareFiles(fs("remote.xml"))
+  }
+
   // remote is uninitialized (empty - initial commit is not done)
   Test fun `merge with uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.MERGE)
@@ -350,4 +406,9 @@ class GitTest : TestCase() {
   private fun sync(syncType: SyncType) {
     icsManager.sync(syncType, fixtureManager.projectFixture.getProject())
   }
+}
+
+fun StreamProvider.saveContent(fileSpec: String, content: String) {
+  val data = content.toByteArray()
+  saveContent(fileSpec, data, data.size(), RoamingType.PER_USER)
 }

@@ -12,8 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.MatcherAssert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -68,7 +67,7 @@ class DefaultProjectStoreTest {
 
   public Test fun `new project from default`() {
     createProject(tempDirManager) {
-      assertThat(it.service<ExternalDependenciesManager>().getAllDependencies(), equalTo(requiredPlugins))
+      assertThat(it.service<ExternalDependenciesManager>().getAllDependencies()).isEqualTo(requiredPlugins)
     }
   }
 }

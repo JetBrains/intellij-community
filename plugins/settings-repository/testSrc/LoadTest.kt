@@ -21,12 +21,11 @@ import com.intellij.configurationStore.TestSchemesProcessor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.util.xmlb.serialize
 import com.intellij.util.xmlb.toByteArray
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Repository
-import org.hamcrest.CoreMatchers.equalTo
 import org.jetbrains.settingsRepository.ReadonlySource
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
-import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.File
 
@@ -42,7 +41,7 @@ class LoadTest : TestCase() {
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes(), equalTo(listOf(localScheme)))
+    assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
   }
 
   public Test fun `load scheme with the same names`() {
@@ -53,7 +52,7 @@ class LoadTest : TestCase() {
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes(), equalTo(listOf(localScheme)))
+    assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
   }
 
   public Test fun `load scheme from repo and read-only repo`() {
@@ -70,9 +69,9 @@ class LoadTest : TestCase() {
     remoteRepository.useAsReadOnlySource {
       val schemesManager = createSchemeManager(dirPath)
       schemesManager.loadSchemes()
-      assertThat(schemesManager.getAllSchemes(), equalTo(listOf(remoteScheme, localScheme)))
-      assertThat(schemesManager.isMetadataEditable(localScheme), equalTo(true))
-      assertThat(schemesManager.isMetadataEditable(remoteScheme), equalTo(false))
+      assertThat(schemesManager.getAllSchemes()).containsOnly(remoteScheme, localScheme)
+      assertThat(schemesManager.isMetadataEditable(localScheme)).isTrue()
+      assertThat(schemesManager.isMetadataEditable(remoteScheme)).isFalse()
     }
   }
 
@@ -91,8 +90,8 @@ class LoadTest : TestCase() {
     remoteRepository.useAsReadOnlySource {
       val schemesManager = createSchemeManager(dirPath)
       schemesManager.loadSchemes()
-      assertThat(schemesManager.getAllSchemes(), equalTo(listOf(localScheme)))
-      assertThat(schemesManager.isMetadataEditable(localScheme), equalTo(false))
+      assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
+      assertThat(schemesManager.isMetadataEditable(localScheme)).isFalse()
     }
   }
 
@@ -108,7 +107,7 @@ class LoadTest : TestCase() {
 
   fun Repository.createAndRegisterReadOnlySource(): ReadonlySource {
     val source = ReadonlySource(getWorkTree().getAbsolutePath())
-    assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).getObjectDatabase().exists(), equalTo(true))
+    assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).getObjectDatabase().exists()).isTrue()
     icsManager.readOnlySourcesManager.setSources(listOf(source))
     return source
   }

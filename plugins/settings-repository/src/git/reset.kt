@@ -24,8 +24,9 @@ import org.jetbrains.settingsRepository.UpdateResult
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
+    val message = if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local"
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Reset to ${if (toTheirs) "theirs" else "my"}")
+      LOG.debug(message)
     }
 
     val resetResult = repository.resetHard()
@@ -33,7 +34,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
 
     indicator?.checkCanceled()
 
-    val commitMessage = commitMessageFormatter.message(if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local")
+    val commitMessage = commitMessageFormatter.message(message)
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
     val firstMergeResult = pull(mergeStrategy, commitMessage)

@@ -290,5 +290,3 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     icsManager.beforeApplicationLoaded(application)
   }
 }
-
-class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)

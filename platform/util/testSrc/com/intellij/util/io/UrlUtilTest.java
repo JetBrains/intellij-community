@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class UrlUtilTest {
@@ -76,8 +76,8 @@ public class UrlUtilTest {
   @Test
   public void testDataUri() {
     byte[] test = "test".getBytes(CharsetToolkit.UTF8_CHARSET);
-    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8;base64,dGVzdA=="), equalTo(test));
+    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8;base64,dGVzdA==")).isEqualTo(test);
     // https://youtrack.jetbrains.com/issue/WEB-14581#comment=27-1014790
-    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA=="), equalTo(test));
+    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA==")).isEqualTo(test);
   }
 }

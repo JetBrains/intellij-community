@@ -308,7 +308,7 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
+    return createTempFile(prefix, suffix, true); // deleteOnExit by default
   }
 
   @NotNull

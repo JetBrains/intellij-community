@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -6,9 +21,8 @@ import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.ColumnInfo
-import org.eclipse.jgit.diff.RawText
-import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.writePath
@@ -16,7 +30,7 @@ import org.jetbrains.settingsRepository.RepositoryVirtualFile
 import java.nio.CharBuffer
 import java.util.ArrayList
 
-private fun conflictsToVirtualFiles(map: Map<String, org.eclipse.jgit.merge.MergeResult<*>>): MutableList<VirtualFile> {
+private fun conflictsToVirtualFiles(map: Map<String, Any>): MutableList<VirtualFile> {
   val result = ArrayList<VirtualFile>(map.size())
   for (path in map.keySet()) {
     result.add(RepositoryVirtualFile(path))
@@ -24,7 +38,12 @@ private fun conflictsToVirtualFiles(map: Map<String, org.eclipse.jgit.merge.Merg
   return result
 }
 
-class JGitMergeProvider(private val repository: Repository, private val myCommit: ObjectId, private val theirsCommit: ObjectId, private val conflicts: Map<String, org.eclipse.jgit.merge.MergeResult<*>>) : MergeProvider2 {
+/**
+ * If content null:
+ * Ours or Theirs - deleted.
+ * Base - missed (no base).
+ */
+class JGitMergeProvider<T>(private val repository: Repository, private val conflicts: Map<String, T>, private val pathToContent: Map<String, T>.(path: String, index: Int) -> ByteArray?) : MergeProvider2 {
   override fun createMergeSession(files: List<VirtualFile>) = JGitMergeSession()
 
   override fun conflictResolvedForFile(file: VirtualFile) {
@@ -42,21 +61,22 @@ class JGitMergeProvider(private val repository: Repository, private val myCommit
     }
   }
 
-  // cannot be private due to Kotlin bug
-  fun addFile(bytes: ByteArray, file: VirtualFile, size: Int = bytes.size()) {
+  private fun addFile(bytes: ByteArray, file: VirtualFile, size: Int = bytes.size()) {
     repository.writePath(file.getPath(), bytes, size)
   }
 
   override fun isBinary(file: VirtualFile) = file.getFileType().isBinary()
 
   override fun loadRevisions(file: VirtualFile): MergeData {
-    val sequences = conflicts[file.getPath()]!!.getSequences()
+    val path = file.getPath()
     val mergeData = MergeData()
-    mergeData.ORIGINAL = (sequences[0] as RawText).getContent()
-    mergeData.CURRENT = (sequences[1] as RawText).getContent()
-    mergeData.LAST = (sequences[2] as RawText).getContent()
+    mergeData.ORIGINAL = getContentOrEmpty(path, 0)
+    mergeData.CURRENT = getContentOrEmpty(path, 1)
+    mergeData.LAST = getContentOrEmpty(path, 2)
     return mergeData
   }
+
+  private fun getContentOrEmpty(path: String, index: Int) = conflicts.pathToContent(path, index) ?: ArrayUtil.EMPTY_BYTE_ARRAY
 
   private inner class JGitMergeSession : MergeSession {
     override fun getMergeInfoColumns(): Array<ColumnInfo<out Any?, out Any?>> {
@@ -71,19 +91,19 @@ class JGitMergeProvider(private val repository: Repository, private val myCommit
       }
       else {
         val content = getContent(file, resolution == MergeSession.Resolution.AcceptedTheirs)
-        if (content == RawText.EMPTY_TEXT) {
+        if (content == null) {
           repository.deletePath(file.getPath())
         }
         else {
-          addFile(content.getContent(), file)
+          addFile(content, file)
         }
       }
     }
 
-    private fun getContent(file: VirtualFile, isTheirs: Boolean) = conflicts[file.getPath()]!!.getSequences()[if (isTheirs) 2 else 1] as RawText
+    private fun getContent(file: VirtualFile, isTheirs: Boolean) = conflicts.pathToContent(file.getPath(), if (isTheirs) 2 else 1)
 
     inner class StatusColumn(private val isTheirs: Boolean) : ColumnInfo<VirtualFile, String>(if (isTheirs) "Theirs" else "Yours") {
-      override fun valueOf(file: VirtualFile?) = if (getContent(file!!, isTheirs) == RawText.EMPTY_TEXT) "Deleted" else "Modified"
+      override fun valueOf(file: VirtualFile?) = if (getContent(file!!, isTheirs) == null) "Deleted" else "Modified"
 
       override fun getMaxStringValue() = "Modified"
 
