@@ -16,7 +16,7 @@
 package com.jetbrains.python.run;
 
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
-import com.jetbrains.python.traceBackParsers.TraceBackParser;
+import com.jetbrains.python.traceBackParsers.TraceBackParserAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  *
  * @author Ilya.Kazakevich
  */
-public class PyTracebackParser extends TraceBackParser {
+public class PyTracebackParser extends TraceBackParserAdapter {
 
 
   public PyTracebackParser() {
