@@ -51,6 +51,9 @@ public abstract class DiffContentFactory {
   public abstract DocumentContent create(@NotNull String text, @Nullable FileType type, boolean respectLineSeparators);
 
   @NotNull
+  public abstract DocumentContent create(@NotNull String text, @Nullable VirtualFile highlightFile);
+
+  @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document);
 
   @NotNull

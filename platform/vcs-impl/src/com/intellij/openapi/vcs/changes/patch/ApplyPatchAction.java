@@ -22,7 +22,10 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.diff.*;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -47,8 +50,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
@@ -59,7 +60,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -254,52 +254,24 @@ public class ApplyPatchAction extends DumbAwareAction {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (texts.getLocal() == null || document == null) return ApplyPatchStatus.FAILURE;
 
-    final CharSequence oldContent = document.getImmutableCharSequence();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        document.setText(texts.getPatched());
-      }
-    });
-
     final String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
     final String windowTitle = "Result Of Patch Apply To " + file.getName() + " (" + fullPath + ")";
-    final List<String> titles = ContainerUtil.list(VcsBundle.message("diff.title.local"), "Patched (with problems)");
 
-    final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    final DocumentContent originalContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
-    final DiffContent mergedContent = contentFactory.create(project, document);
-
-    final List<DiffContent> contents = ContainerUtil.list(originalContent, mergedContent);
-
-    final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
-    DiffUtil.addNotification(new DiffIsApproximateNotification(), request);
-
-    final DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.MODAL);
-    dialogHints.setCancelAction(new BooleanGetter() {
+    final Ref<Boolean> successRef = new Ref<Boolean>();
+    Consumer<MergeResult> callback = new Consumer<MergeResult>() {
       @Override
-      public boolean get() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.setText(oldContent);
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-        return true;
-      }
-    });
-    dialogHints.setOkAction(new BooleanGetter() {
-      @Override
-      public boolean get() {
+      public void consume(MergeResult result) {
         FileDocumentManager.getInstance().saveDocument(document);
-        return true;
+        successRef.set(true);
       }
-    });
+    };
 
-    DiffManager.getInstance().showDiff(project, request, dialogHints);
+    MergeRequest request = new ApplyPatchMergeRequest(project, document, file, texts.getLocal().toString(), texts.getPatched(), windowTitle,
+                                                      VcsBundle.message("diff.title.local"), "Patched (with problems)", callback);
 
-    return ApplyPatchStatus.SUCCESS;
+    DiffManager.getInstance().showMerge(project, request);
+
+    return successRef.get() == Boolean.TRUE ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
   }
 
   @NotNull
@@ -322,14 +294,8 @@ public class ApplyPatchAction extends DumbAwareAction {
     final List<DiffContent> contents = ContainerUtil.list(localContent, mergedContent);
 
     final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
-    DiffUtil.addNotification(new DiffIsApproximateNotification(), request);
+    DiffUtil.addNotification(new ApplyPatchMergeTool.DiffIsApproximateNotification(), request);
 
     return request;
-  }
-
-  private static class DiffIsApproximateNotification extends EditorNotificationPanel {
-    public DiffIsApproximateNotification() {
-      myLabel.setText("<html>Couldn't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
-    }
   }
 }
