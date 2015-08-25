@@ -124,4 +124,28 @@ public class CopyReferenceActionFilesTest extends CodeInsightTestCase {
     assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)));
     assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)));
   }
+  
+  public void testCopyFile_UnderExcludeRoot_ShouldContainPathFromTheCorrespondingContentRoot() throws Exception {
+    // IDEA-144316 Copy Reference should work for excluded subfolders same way as it works for regular project subdirs
+    
+    VirtualFile dir
+    VirtualFile dir_dir
+    VirtualFile dir_dir_file
+
+    ApplicationManager.application.runWriteAction(new Runnable() {
+      @Override
+      void run() {
+        dir = additionalRoot.createChildDirectory(this, "dir");
+        dir_dir = dir.createChildDirectory(this, "dir_dir");
+        dir_dir_file = dir_dir.createChildData(this, "file.txt");
+
+        PsiTestUtil.addContentRoot(getModule(), dir);
+        PsiTestUtil.addExcludedRoot(getModule(), dir_dir);
+      }
+    })
+
+    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)));
+    assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)));
+    assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)));
+  }
 }

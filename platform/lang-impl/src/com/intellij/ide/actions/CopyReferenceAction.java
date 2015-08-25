@@ -291,7 +291,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     VirtualFile outerMostRoot = null;
     VirtualFile each = virtualFile;
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    while (each != null && (each = index.getContentRootForFile(each)) != null) {
+    while (each != null && (each = index.getContentRootForFile(each, false)) != null) {
       outerMostRoot = each;
       each = each.getParent();
     }
