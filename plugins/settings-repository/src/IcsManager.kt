@@ -198,8 +198,6 @@ class IcsManager(dir: File) {
     override val enabled: Boolean
       get() = repositoryActive
 
-    override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
-
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = buildPath(path, roamingType, null)
 
@@ -229,7 +227,7 @@ class IcsManager(dir: File) {
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
-    override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
+    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
       return repositoryManager.read(buildPath(fileSpec, roamingType, projectId))
     }
 

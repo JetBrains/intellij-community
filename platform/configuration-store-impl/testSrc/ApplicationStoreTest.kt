@@ -109,6 +109,9 @@ class ApplicationStoreTest {
   private fun writeConfig(fileName: String, Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
+    }
+
     public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -124,7 +127,7 @@ class ApplicationStoreTest {
       return map
     }
 
-    override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
+    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
       val data = getMap(roamingType).get(fileSpec) ?: return null
       return ByteArrayInputStream(data.toByteArray())
     }

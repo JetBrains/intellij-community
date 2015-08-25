@@ -13,13 +13,13 @@ class MockStreamProvider(private val myBaseDir: File) : StreamProvider {
     FileUtil.writeToFile(File(myBaseDir, fileSpec), content, 0, size)
   }
 
-  override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
+  override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
     val file = File(myBaseDir, fileSpec)
     //noinspection IOResourceOpenedButNotSafelyClosed
     return if (file.exists()) FileInputStream(file) else null
   }
 
-  override fun listSubFiles(fileSpec: String, roamingType: RoamingType): Collection<String> {
+  private fun listSubFiles(fileSpec: String, roamingType: RoamingType): Collection<String> {
     if (roamingType !== RoamingType.PER_USER) {
       return emptyList()
     }
@@ -30,6 +30,22 @@ class MockStreamProvider(private val myBaseDir: File) : StreamProvider {
       names.add(file.getName())
     }
     return names
+  }
+
+  /**
+   * You must close passed input stream.
+   */
+  override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
+    for (name in listSubFiles(path, roamingType)) {
+      if (!filter(name)) {
+        continue
+      }
+
+      val input = read("$path/$name", roamingType)
+      if (input != null && !processor(name, input, false)) {
+        break
+      }
+    }
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType) {

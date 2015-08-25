@@ -37,14 +37,6 @@ import kotlin.concurrent.write
 public abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManager {
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
-  override fun listSubFileNames(path: String): Collection<String> {
-    val files = File(dir, path).list()
-    if (files == null || files.size() == 0) {
-      return listOf()
-    }
-    return listOf(*files)
-  }
-
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
     var files: Array<out File>? = null
     lock.read {

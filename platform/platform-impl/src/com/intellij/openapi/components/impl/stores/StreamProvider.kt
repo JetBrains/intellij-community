@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores
 
 import com.intellij.openapi.components.RoamingType
-import java.io.IOException
 import java.io.InputStream
 
 public interface StreamProvider {
@@ -32,34 +31,12 @@ public interface StreamProvider {
    */
   public fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType)
 
-  public fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream?
-
-  public open fun listSubFiles(fileSpec: String, roamingType: RoamingType): Collection<String> = emptyList()
+  public fun read(fileSpec: String, roamingType: RoamingType): InputStream?
 
   /**
    * You must close passed input stream.
    */
-  public open fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
-    for (name in listSubFiles(path, roamingType)) {
-      if (!filter(name)) {
-        continue
-      }
-
-      val input: InputStream?
-      try {
-        input = loadContent("$path/$name", roamingType)
-      }
-      catch (e: IOException) {
-        StorageUtil.LOG.error(e)
-        continue
-      }
-
-
-      if (input != null && !processor(name, input, false)) {
-        break
-      }
-    }
-  }
+  public fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean)
 
   /**
    * Delete file or directory

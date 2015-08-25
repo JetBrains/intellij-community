@@ -63,7 +63,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   protected open fun dataLoadedFromProvider(element: Element?) {
   }
 
-  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
+  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.read(fileSpec, roamingType))
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)

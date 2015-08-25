@@ -45,8 +45,6 @@ public interface RepositoryManager {
 
   public fun delete(path: String)
 
-  public fun listSubFileNames(path: String): Collection<String>
-
   public fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean)
 
   /**
