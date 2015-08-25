@@ -28,10 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import java.util.regex.Matcher;
 
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class UrlUtilTest {
