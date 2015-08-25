@@ -450,6 +450,56 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   // PY-9795
+  public void testParamTypeInEmptyGoogleDocString() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);  
+  }
+  
+  // PY-9795
+  public void testParamTypeInGoogleDocStringOnlySummaryOneLine() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);  
+  }
+
+  // PY-9795
+  public void testParamTypeInGoogleDocStringOnlySummary() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-9795
+  public void testParamTypeInGoogleDocStringEmptyParamSection() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-9795
+  public void testParamTypeInGoogleDocStringParamDeclaredNoParenthesis() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testParamTypeInGoogleDocStringParamDeclaredEmptyParenthesis() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-9795
+  public void testParamTypeInGoogleDocStringOtherParamDeclared() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-9795
+  public void testParamTypeInGoogleDocStringOtherSectionExists() {
+    doDocReferenceTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-9795
+  public void testReturnTypeInEmptyGoogleDocString() {
+    doDocReturnTypeTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-9795
+  public void testReturnTypeInGoogleDocStringEmptyReturnSection() {
+    doDocReturnTypeTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
   public void testGoogleDocStubWithTypes() {
     final PyCodeInsightSettings codeInsightSettings = PyCodeInsightSettings.getInstance();
     final boolean oldInsertTypeDocStub = codeInsightSettings.INSERT_TYPE_DOCSTUB;
@@ -488,6 +538,56 @@ public class  PyIntentionTest extends PyTestCase {
   // PY-4717
   public void testParamTypeInNewNumpyDocString() {
     doDocReferenceTest(DocStringFormat.NUMPY);
+  }
+  
+   // PY-4717
+  public void testParamTypeInEmptyNumpyDocString() {
+    doDocReferenceTest(DocStringFormat.NUMPY);  
+  }
+  
+  // PY-4717
+  public void testParamTypeInNumpyDocStringOnlySummaryOneLine() {
+    doDocReferenceTest(DocStringFormat.NUMPY);  
+  }
+
+  // PY-4717
+  public void testParamTypeInNumpyDocStringOnlySummary() {
+    doDocReferenceTest(DocStringFormat.NUMPY);
+  }
+  
+  // PY-4717
+  public void testParamTypeInNumpyDocStringEmptyParamSection() {
+    doDocReferenceTest(DocStringFormat.NUMPY);
+  }
+  
+  // PY-4717
+  public void testParamTypeInNumpyDocStringParamDeclaredNoColon() {
+    doDocReferenceTest(DocStringFormat.NUMPY);
+  }
+
+  // PY-4717
+  public void testParamTypeInNumpyDocStringParamDeclaredColon() {
+    doDocReferenceTest(DocStringFormat.NUMPY);
+  }
+  
+  // PY-4717
+  public void testParamTypeInNumpyDocStringOtherParamDeclared() {
+    doDocReferenceTest(DocStringFormat.NUMPY);
+  }
+  
+  // PY-4717
+  public void testParamTypeInNumpyDocStringOtherSectionExists() {
+    doDocReferenceTest(DocStringFormat.NUMPY);
+  }
+  
+  // PY-4717
+  public void testReturnTypeInEmptyNumpyDocString() {
+    doDocReturnTypeTest(DocStringFormat.NUMPY);
+  }
+  
+  // PY-4717
+  public void testReturnTypeInNumpyDocStringEmptyReturnSection() {
+    doDocReturnTypeTest(DocStringFormat.NUMPY);
   }
 
   // PY-7383

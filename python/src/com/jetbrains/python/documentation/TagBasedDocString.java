@@ -130,7 +130,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
         int argEnd = firstArgLineRange.getEndOffset();
         while (lineno + 1 < linesCount) {
           final Substring nextLine = getLine(lineno + 1).trim();
-          if (nextLine.length() == 0 || nextLine.startsWith(tagPrefix)) {
+          if (nextLine.isEmpty() || nextLine.startsWith(tagPrefix)) {
             break;
           }
           argEnd = nextLine.getTextRange().getEndOffset();
@@ -138,7 +138,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
         }
         final Substring argValue = new Substring(argName.getSuperString(), argStart, argEnd);
         final String tagNameString = tagName.toString();
-        if (argName.length() == 0) {
+        if (argName.isEmpty()) {
           mySimpleTagValues.put(tagNameString, argValue);
         }
         else {
@@ -218,16 +218,5 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     results.addAll(getTagArguments(PARAM_TAGS));
     results.addAll(getTagArguments(PARAM_TYPE_TAGS));
     return results;
-  }
-
-  @Override
-  @Nullable
-  public Substring getParamByNameAndKind(@NotNull String name, String kind) {
-    for (Substring s : getTagArguments(kind)) {
-      if (name.equals(s.getValue())) {
-        return s;
-      }
-    }
-    return null;
   }
 }

@@ -345,7 +345,12 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Override
   public List<Substring> getParameterSubstrings() {
-    return null;
+    return ContainerUtil.mapNotNull(getParameterFields(), new Function<SectionField, Substring>() {
+      @Override
+      public Substring fun(SectionField field) {
+        return field.getNameAsSubstring();
+      }
+    });
   }
 
   @Nullable
@@ -542,12 +547,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return null;
   }
 
-  @Nullable
-  @Override
-  public Substring getParamByNameAndKind(@NotNull String name, String kind) {
-    return null;
-  }
-
   public static class Section {
     private final Substring myTitle;
     private final List<SectionField> myFields;
@@ -630,7 +629,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       return myType;
     }
 
-    @NotNull
+    @NotNull 
     public String getDescription() {
       return myDescription == null ? "" : stripCommonIndent(myDescription, true);
     }

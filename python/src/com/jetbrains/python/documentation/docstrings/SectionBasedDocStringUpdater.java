@@ -37,14 +37,20 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     super(docString, minContentIndent);
   }
 
-  public final void addParameter(@NotNull String name, @Nullable String type) {
+  @Override
+  public final void addParameter(@NotNull final String name, @Nullable String type) {
     if (type != null) {
       final Substring typeSub = myOriginalDocString.getParamTypeSubstring(name);
       if (typeSub != null) {
         replace(typeSub.getTextRange(), type);
         return;
       }
-      final Substring nameSub = myOriginalDocString.getParamNameSubstring();
+      final Substring nameSub = ContainerUtil.find(myOriginalDocString.getParameterSubstrings(), new Condition<Substring>() {
+        @Override
+        public boolean value(Substring substring) {
+          return substring.toString().equals(name);
+        }
+      });
       if (nameSub != null) {
         updateParamDeclarationWithType(nameSub, type);
         return;
@@ -60,36 +66,6 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
       }
       else {
         final String newLine = createParamLine(name, type, getSectionIndent(paramSection), getExpectedFieldIndent());
-        insertAfterLine(getSectionStartLine(paramSection), newLine);
-      }
-    }
-    else {
-      final int line = findLastNonEmptyLine();
-      final String newSection = createBuilder()
-        .withSectionIndent(getExpectedFieldIndent())
-        .startParametersSection()
-        .addParameter(name, type, "")
-        .buildContent(getExpectedSectionIndent(), true);
-      insertAfterLine(line, newSection);
-    }
-  }
-
-  public final void addReturnValue(@NotNull String type) {
-    final Substring typeSub = myOriginalDocString.getReturnTypeSubstring();
-    if (typeSub != null) {
-      replace(typeSub.getTextRange(), type);
-      return;
-    }
-    final Section paramSection = findFirstReturnSection();
-    if (paramSection != null) {
-      final List<SectionField> fields = paramSection.getFields();
-      if (!fields.isEmpty()) {
-        final SectionField firstField = fields.get(0);
-        final String newLine = createReturnLine(type, getSectionIndent(paramSection), getFieldIndent(paramSection, firstField));
-        insertBeforeLine(getFieldStartLine(firstField), newLine);
-      }
-      else {
-        final String newLine = createReturnLine(type, getSectionIndent(paramSection), getExpectedFieldIndent());
         insertAfterLine(getSectionLastTitleLine(paramSection), newLine);
       }
     }
@@ -97,6 +73,42 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
       final int line = findLastNonEmptyLine();
       final String newSection = createBuilder()
         .withSectionIndent(getExpectedFieldIndent())
+        .addEmptyLine()
+        .startParametersSection()
+        .addParameter(name, type, "")
+        .buildContent(getExpectedSectionIndent(), true);
+      insertAfterLine(line, newSection);
+    }
+  }
+
+  @Override
+  public final void addReturnValue(@Nullable String type) {
+    if (StringUtil.isEmpty(type)) {
+      return;
+    }
+    final Substring typeSub = myOriginalDocString.getReturnTypeSubstring();
+    if (typeSub != null) {
+      replace(typeSub.getTextRange(), type);
+      return;
+    }
+    final Section returnSection = findFirstReturnSection();
+    if (returnSection != null) {
+      final List<SectionField> fields = returnSection.getFields();
+      if (!fields.isEmpty()) {
+        final SectionField firstField = fields.get(0);
+        final String newLine = createReturnLine(type, getSectionIndent(returnSection), getFieldIndent(returnSection, firstField));
+        insertBeforeLine(getFieldStartLine(firstField), newLine);
+      }
+      else {
+        final String newLine = createReturnLine(type, getSectionIndent(returnSection), getExpectedFieldIndent());
+        insertAfterLine(getSectionLastTitleLine(returnSection), newLine);
+      }
+    }
+    else {
+      final int line = findLastNonEmptyLine();
+      final String newSection = createBuilder()
+        .withSectionIndent(getExpectedFieldIndent())
+        .addEmptyLine()
         .startReturnsSection()
         .addReturnValue(null, type, "")
         .buildContent(getExpectedSectionIndent(), true);
@@ -131,7 +143,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
                                     @NotNull String sectionIndent) {
     return createBuilder()
       .withSectionIndent(sectionIndent)
-      .addReturnValue("", type, "")
+      .addReturnValue(null, type, "")
       .buildContent(docStringIndent, true);
   }
 
@@ -177,7 +189,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   protected String getFieldIndent(@NotNull Section section, @NotNull SectionField field) {
     final String titleIndent = getSectionIndent(section);
     final String fieldIndent = getLineIndent(getFieldStartLine(field));
-    final int diffSize = Math.max(1, PyIndentUtil.getLineIndentSize(titleIndent) - PyIndentUtil.getLineIndentSize(fieldIndent));
+    final int diffSize = Math.max(1, PyIndentUtil.getLineIndentSize(fieldIndent) - PyIndentUtil.getLineIndentSize(titleIndent));
     return StringUtil.repeatSymbol(' ', diffSize);
   }
 

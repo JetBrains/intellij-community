@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public abstract class SectionBasedDocStringBuilder extends DocStringBuilder {
+public abstract class SectionBasedDocStringBuilder extends DocStringBuilder<SectionBasedDocStringBuilder> {
   protected static final String DEFAULT_SECTION_INDENT = StringUtil.repeatSymbol(' ', 4);
   protected static final String DEFAULT_CONTINUATION_INDENT = StringUtil.repeatSymbol(' ', 4);
 

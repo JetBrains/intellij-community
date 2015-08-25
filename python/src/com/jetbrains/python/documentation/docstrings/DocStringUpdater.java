@@ -21,6 +21,7 @@ import com.jetbrains.python.documentation.DocStringLineParser;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,12 +105,16 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
 
   protected int findLastNonEmptyLine() {
     for (int i = myOriginalDocString.getLineCount() - 1; i >= 0; i--) {
-      if (StringUtil.isEmptyOrSpaces(myOriginalDocString.getLine(i))) {
+      if (!StringUtil.isEmptyOrSpaces(myOriginalDocString.getLine(i))) {
         return i;
       }
     }
     return 0;
   }
+
+  public abstract void addParameter(@NotNull String name, @Nullable String type);
+
+  public abstract void addReturnValue(@Nullable String type);
 
   private static class Modification implements Comparable<Modification> {
     @NotNull final TextRange range;

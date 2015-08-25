@@ -59,7 +59,7 @@ public abstract class DocStringLineParser {
   }
 
   public int getLineByOffset(int offset) {
-    return StringUtil.countNewLines(myDocStringContent.subSequence(0, offset));
+    return StringUtil.countNewLines(myDocStringContent.getSuperString().subSequence(0, offset));
   }
 
   @Nullable

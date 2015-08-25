@@ -353,14 +353,25 @@ public class PyDocstringGenerator {
   @NotNull
   private String updateDocString() {
     final DocStringFormat format = getDocStringFormat();
+    DocStringUpdater updater = null;
+    final String docStringIndent = getDocStringIndentation();
     if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
       final String prefix = format == DocStringFormat.EPYTEXT ? "@" : ":";
       //noinspection unchecked,ConstantConditions
-      TagBasedDocStringUpdater updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(),
-                                                                      prefix, getDocStringIndentation());
+      updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(), prefix, docStringIndent);
+    }
+    else if (format == DocStringFormat.GOOGLE) {
+      //noinspection ConstantConditions
+      updater = new GoogleCodeStyleDocStringUpdater((SectionBasedDocString)getStructuredDocString(), docStringIndent);
+    }
+    else if (format == DocStringFormat.NUMPY) {
+      //noinspection ConstantConditions
+      updater = new NumpyDocStringUpdater((SectionBasedDocString)getStructuredDocString(), docStringIndent);
+    }
+    if (updater != null) {
       for (DocstringParam param : myParams) {
         if (param.isReturnValue()) {
-          updater.addReturnValue(param.getType());
+          updater.addReturnValue((param.getType()));
         }
         else {
           updater.addParameter(param.getName(), param.getType());

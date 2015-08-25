@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class TagBasedDocStringBuilder extends DocStringBuilder {
+public class TagBasedDocStringBuilder extends DocStringBuilder<TagBasedDocStringBuilder> {
   private final String myTagPrefix;
 
   public TagBasedDocStringBuilder(@NotNull String prefix) {
@@ -28,32 +28,32 @@ public class TagBasedDocStringBuilder extends DocStringBuilder {
   }
 
   @NotNull
-  public DocStringBuilder addParameterDescription(@NotNull String name, @NotNull String description) {
+  public TagBasedDocStringBuilder addParameterDescription(@NotNull String name, @NotNull String description) {
     return addLine(String.format("%sparam %s: %s", myTagPrefix, name, description));
   }
 
   @NotNull
-  public DocStringBuilder addParameterType(@NotNull String name, @NotNull String type) {
+  public TagBasedDocStringBuilder addParameterType(@NotNull String name, @NotNull String type) {
     return addLine(String.format("%stype %s: %s", myTagPrefix, name, type));
   }
 
   @NotNull
-  public DocStringBuilder addReturnValueType(@NotNull String type) {
+  public TagBasedDocStringBuilder addReturnValueType(@NotNull String type) {
     // named return values are not supported in Sphinx and Epydoc
     return addLine(String.format("%srtype: %s", myTagPrefix, type));
   }
 
-  public DocStringBuilder addReturnValueDescription(@NotNull String description) {
+  public TagBasedDocStringBuilder addReturnValueDescription(@NotNull String description) {
     return addLine(String.format("%sreturn: %s", myTagPrefix, description));
   }
 
   @NotNull
-  public DocStringBuilder addExceptionDescription(@NotNull String type, @NotNull String description) {
+  public TagBasedDocStringBuilder addExceptionDescription(@NotNull String type, @NotNull String description) {
     return addLine(String.format("%sraise %s: %s", myTagPrefix, type, description));
   }
 
   @NotNull
-  public DocStringBuilder addSummary(@NotNull String summary) {
+  public TagBasedDocStringBuilder addSummary(@NotNull String summary) {
     return addLine(summary).addLine("");
   }
 }

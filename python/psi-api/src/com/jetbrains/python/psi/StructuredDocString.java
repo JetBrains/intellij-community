@@ -35,11 +35,15 @@ public interface StructuredDocString {
   String createParameterType(@NotNull String name, @NotNull String type);
 
   String getSummary();
-  String getDescription();
+  String getDescription(); // for formatter
 
   List<String> getParameters();
+
+  /**
+   * @return all names of parameters mentioned in the docstring as substrings.
+   */
   List<Substring> getParameterSubstrings();
-  
+
   /**
    * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
    */
@@ -51,47 +55,41 @@ public interface StructuredDocString {
    */
   @Nullable
   Substring getParamTypeSubstring(@Nullable String paramName);
-  
+
   /**
    * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
    */
   @Nullable
   String getParamDescription(@Nullable String paramName);
-
   /**
    * Keyword arguments are those arguments that usually don't exist in function signature, 
    * but are passed e.g. via {@code **kwargs} mechanism. 
    */
   List<String> getKeywordArguments();
   List<Substring> getKeywordArgumentSubstrings();
+
   // getKeywordArgumentType(name)
   // getKeywordArgumentTypeString(name)  
   @Nullable
   String getKeywordArgumentDescription(@Nullable String paramName);
-
   @Nullable
   String getReturnType();
   @Nullable
   Substring getReturnTypeSubstring();
-  @Nullable
-  String getReturnDescription();
 
-  List<String> getRaisedExceptions();
   @Nullable
-  String getRaisedExceptionDescription(@Nullable String exceptionName);
-  
+  String getReturnDescription(); // for formatter
+  List<String> getRaisedExceptions(); // for formatter
+
+  @Nullable
+  String getRaisedExceptionDescription(@Nullable String exceptionName); // for formatter
+
   // getAttributes
   // getAttributeSubstrings
   // getAttributeType(name)
   // getAttributeTypeSubstring(name)
   @Nullable
-  String getAttributeDescription();
-  
+  String getAttributeDescription(); // for formatter
+
   // Tags related methods
-
-  @Nullable
-  Substring getParamByNameAndKind(@NotNull String name, String kind);
-
-  @Nullable
-  Substring getParamNameSubstring();
 }

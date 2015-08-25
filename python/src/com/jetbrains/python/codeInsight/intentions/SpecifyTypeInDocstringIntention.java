@@ -29,6 +29,7 @@ import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -109,7 +110,11 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (pyFunction != null) {
       final StructuredDocString structuredDocString = pyFunction.getStructuredDocString();
-      return structuredDocString != null && structuredDocString.getParamType(StringUtil.notNullize(parameter.getName())) != null;
+      if (structuredDocString == null) {
+        return false;
+      }
+      final Substring typeSub = structuredDocString.getParamTypeSubstring(StringUtil.notNullize(parameter.getName()));
+      return typeSub != null && !typeSub.isEmpty();
     }
     return false;
   }

@@ -41,6 +41,7 @@ public class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocSt
   protected void scheduleUpdates() {
   }
 
+  @Override
   public final void addParameter(@NotNull String name, @Nullable String type) {
     if (type != null) {
       insertTagLine(createBuilder().addParameterType(name, type));
@@ -50,6 +51,7 @@ public class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocSt
     }
   }
 
+  @Override
   public final void addReturnValue(@Nullable String type) {
     if (type != null) {
       insertTagLine(createBuilder().addReturnValueType(type));

@@ -25,20 +25,22 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public abstract class DocStringBuilder {
+public abstract class DocStringBuilder<This extends DocStringBuilder> {
   private final List<String> myLines;
+  
   public DocStringBuilder() {
     myLines = new ArrayList<String>();
   }
 
   @NotNull
-  public DocStringBuilder addLine(@NotNull String line) {
+  public This addLine(@NotNull String line) {
     myLines.add(line);
-    return this;
+    //noinspection unchecked
+    return (This)this;
   }
 
   @NotNull
-  public DocStringBuilder addEmptyLine() {
+  public This addEmptyLine() {
     return addLine("");
   }
 
