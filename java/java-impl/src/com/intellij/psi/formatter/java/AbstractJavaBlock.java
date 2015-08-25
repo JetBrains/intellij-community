@@ -1213,14 +1213,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return null;
   }
 
-  private ChildAlignmentStrategyProvider getStrategyProvider() {
+  protected ChildAlignmentStrategyProvider getStrategyProvider() {
     if (mySettings.ALIGN_GROUP_FIELD_DECLARATIONS && myNode.getElementType() == JavaElementType.CLASS) {
       return new SubsequentFieldAligner(mySettings);
     }
 
     ASTNode parent = myNode.getTreeParent();
     IElementType parentType = parent != null ? parent.getElementType() : null;
-    if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS && parentType == JavaElementType.METHOD) {
+    if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS
+        && (parentType == JavaElementType.METHOD || myNode instanceof PsiCodeBlock)) {
       return new SubsequentVariablesAligner();
     }
 
