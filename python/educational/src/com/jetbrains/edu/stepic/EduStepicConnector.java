@@ -356,7 +356,7 @@ public class EduStepicConnector {
   public static void postCourse(final Project project, @NotNull final Course course) {
     ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Modal(project, "Uploading Course", true) {
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText("Uploading course to " + stepicUrl);
         final HttpPost request = new HttpPost(stepicApiUrl + "courses");
         if (ourClient == null) {
@@ -398,7 +398,12 @@ public class EduStepicConnector {
             postUnit(lessonId, position, sectionId);
             position += 1;
           }
-          postAdditionalFiles(project, postedCourse.id, indicator);
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              postAdditionalFiles(project, postedCourse.id, indicator);
+            }
+          });
         }
         catch (IOException e) {
           LOG.error(e.getMessage());
