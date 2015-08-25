@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -131,6 +132,21 @@ public class EduUtils {
       catch (IOException e) {
         LOG.error(e);
       }
+    }
+
+    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      String extension = FileUtilRt.getExtension(taskFileName);
+      String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(taskFileName);
+      VirtualFile answerFile = answerFileDir.findChild(nameWithoutExtension + ".answer." + extension);
+      if (answerFile != null) {
+        try {
+          answerFile.copy(answerFileDir, userFileDir, taskFileName);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return;
     }
     try {
       userFileDir.createChildData(project, taskFileName);
