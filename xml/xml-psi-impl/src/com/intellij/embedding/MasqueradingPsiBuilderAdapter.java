@@ -24,7 +24,6 @@ import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,18 +224,20 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   @NotNull
   @Override
   public Marker mark() {
-    Marker originalPositionMarker = super.mark();
+    Marker originalPositionMarker = null;
     // In the case of the topmost node all should be inserted
     if (myLexPosition != 0) {
+      originalPositionMarker = super.mark();
       synchronizePositions(true);
     }
 
     final Marker mark = super.mark();
+    if (myLexPosition == 0) {
+      if (myDelegate.getTokenType() == TemplateMasqueradingLexer.MINUS_TYPE) {
+        myDelegate.advanceLexer();
+      }
+    }
     return new MyMarker(mark, originalPositionMarker, myLexPosition);
-  }
-
-  private boolean allIsEmpty() {
-    return myShrunkSequence.isEmpty() && getDelegate().getOriginalText().length() != 0;
   }
 
   private void skipWhitespace() {
@@ -344,43 +345,59 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     @Override
     public void rollbackTo() {
-      myOriginalPositionMarker.rollbackTo();
+      if (myOriginalPositionMarker != null) {
+        myOriginalPositionMarker.rollbackTo();
+      } else {
+        super.rollbackTo();
+      }
       myLexPosition = myBuilderPosition;
     }
 
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before) {
-      myOriginalPositionMarker.drop();
+      if (myOriginalPositionMarker != null) {
+        myOriginalPositionMarker.drop();
+      }
       super.doneBefore(type, getDelegateOrThis(before));
     }
 
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage) {
-      myOriginalPositionMarker.drop();
+      if (myOriginalPositionMarker != null) {
+        myOriginalPositionMarker.drop();
+      }
       super.doneBefore(type, getDelegateOrThis(before), errorMessage);
     }
 
     @Override
     public void drop() {
-      myOriginalPositionMarker.drop();
+      if (myOriginalPositionMarker != null) {
+        myOriginalPositionMarker.drop();
+      }
       super.drop();
     }
 
     @Override
     public void done(@NotNull IElementType type) {
-      myOriginalPositionMarker.drop();
+      if (myOriginalPositionMarker != null) {
+        myOriginalPositionMarker.drop();
+      }
       super.done(type);
     }
 
     @Override
     public void collapse(@NotNull IElementType type) {
-      myOriginalPositionMarker.drop();
+      if (myOriginalPositionMarker != null) {
+        myOriginalPositionMarker.drop();
+      }
       super.collapse(type);
     }
 
     @Override
     public void error(String message) {
-      myOriginalPositionMarker.drop();
+      if (myOriginalPositionMarker != null) {
+        myOriginalPositionMarker.drop();
+      }
       super.error(message);
     }
 
