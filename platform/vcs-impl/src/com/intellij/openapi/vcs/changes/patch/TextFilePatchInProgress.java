@@ -105,10 +105,10 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
 
           String afterTitle = getPatch().getAfterVersionId();
           if (afterTitle == null) afterTitle = "Patched Version";
-          return PatchDiffRequestFactory.createConflict(project, file, afterTitle, getter, getName(), context, indicator);
+          return PatchDiffRequestFactory.createConflictDiffRequest(project, file, afterTitle, getter, getName(), context, indicator);
         }
         else {
-          return PatchDiffRequestFactory.createFromChange(project, change, getName(), context, indicator);
+          return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
         }
       }
 

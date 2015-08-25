@@ -16,24 +16,29 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,24 +47,24 @@ import java.util.List;
 
 public class PatchDiffRequestFactory {
   @NotNull
-  public static DiffRequest createFromChange(@Nullable Project project,
-                                             @NotNull Change change,
-                                             @NotNull String name,
-                                             @NotNull UserDataHolder context,
-                                             @NotNull ProgressIndicator indicator)
+  public static DiffRequest createDiffRequest(@Nullable Project project,
+                                              @NotNull Change change,
+                                              @NotNull String name,
+                                              @NotNull UserDataHolder context,
+                                              @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {
     ChangeDiffRequestProducer proxyProducer = ChangeDiffRequestProducer.create(project, change);
     if (proxyProducer == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
     return proxyProducer.process(context, indicator);
   }
 
-  public static DiffRequest createConflict(@Nullable Project project,
-                                           @Nullable VirtualFile file,
-                                           @NotNull String afterTitle,
-                                           @NotNull final Getter<ApplyPatchForBaseRevisionTexts> textsGetter,
-                                           @NotNull String name,
-                                           @NotNull UserDataHolder context,
-                                           @NotNull ProgressIndicator indicator)
+  public static DiffRequest createConflictDiffRequest(@Nullable Project project,
+                                                      @Nullable VirtualFile file,
+                                                      @NotNull String afterTitle,
+                                                      @NotNull final Getter<ApplyPatchForBaseRevisionTexts> textsGetter,
+                                                      @NotNull String name,
+                                                      @NotNull UserDataHolder context,
+                                                      @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {
     if (file == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
     if (file.getFileType().isBinary()) throw new DiffRequestProducerException("Can't show diff for binary file '" + name + "'");
@@ -73,49 +78,173 @@ public class PatchDiffRequestFactory {
     }, indicator.getModalityState());
     ApplyPatchForBaseRevisionTexts texts = textsRef.get();
 
+    if (texts.getLocal() == null) throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
+
     if (texts.getBase() == null) {
-      return createBadDiffRequest(project, file, texts);
+      String localContent = texts.getLocal().toString();
+      String patchedContent = texts.getPatched();
+
+      return createBadDiffRequest(project, file, localContent, patchedContent, null, null, null);
     }
     else {
-      String path = FileUtil.toSystemDependentName(file.getPresentableUrl());
-      FileType type = file.getFileType();
+      String localContent = texts.getLocal().toString();
+      String baseContent = texts.getBase().toString();
+      String patchedContent = texts.getPatched();
 
-      String windowTitle = VcsBundle.message("patch.apply.conflict.title", path);
-
-      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      DocumentContent localContent = contentFactory.createDocument(project, file);
-      if (localContent == null) localContent = contentFactory.create(texts.getLocal().toString(), type);
-      DocumentContent baseContent = contentFactory.create(texts.getBase().toString(), type);
-      DocumentContent patchedContent = contentFactory.create(texts.getPatched(), type);
-
-      return new SimpleDiffRequest(windowTitle, localContent, baseContent, patchedContent,
-                                   "Current Version", "Base Version", afterTitle);
+      return createDiffRequest(project, file, ContainerUtil.list(localContent, baseContent, patchedContent), null,
+                               ContainerUtil.list("Current Version", "Base Version", afterTitle));
     }
   }
 
   @NotNull
-  public static DiffRequest createBadDiffRequest(@Nullable Project project,
-                                                 @NotNull final VirtualFile file,
-                                                 @NotNull final ApplyPatchForBaseRevisionTexts texts) throws DiffRequestProducerException {
-    if (texts.getLocal() == null) {
-      throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
-    }
+  public static DiffRequest createDiffRequest(@Nullable Project project,
+                                              @Nullable VirtualFile file,
+                                              @NotNull List<String> contents,
+                                              @Nullable String windowTitle,
+                                              @NotNull List<String> titles) {
+    assert contents.size() == 3;
+    assert titles.size() == 3;
 
-    final String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
-    final String windowTitle = "Result Of Patch Apply To " + file.getName() + " (" + fullPath + ")";
-    final List<String> titles = ContainerUtil.list(VcsBundle.message("diff.title.local"), "Patched (with problems)");
+    if (windowTitle == null) windowTitle = getPatchTitle(file);
+
+    String localTitle = StringUtil.notNullize(titles.get(0), VcsBundle.message("patch.apply.conflict.local.version"));
+    String baseTitle = StringUtil.notNullize(titles.get(1), "Base Version");
+    String patchedTitle = StringUtil.notNullize(titles.get(2), VcsBundle.message("patch.apply.conflict.patched.version"));
+
+    FileType fileType = file != null ? file.getFileType() : null;
+
+    DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+    DocumentContent localContent = file != null ? contentFactory.createDocument(project, file) : null;
+    if (localContent == null) localContent = contentFactory.create(contents.get(0), fileType);
+    DocumentContent baseContent = contentFactory.create(contents.get(1), fileType);
+    DocumentContent patchedContent = contentFactory.create(contents.get(2), fileType);
+
+    return new SimpleDiffRequest(windowTitle, localContent, baseContent, patchedContent,
+                                 localTitle, baseTitle, patchedTitle);
+  }
+
+  @NotNull
+  public static DiffRequest createBadDiffRequest(@Nullable Project project,
+                                                 @Nullable VirtualFile file,
+                                                 @NotNull String localContent,
+                                                 @NotNull String patchedContent,
+                                                 @Nullable String windowTitle,
+                                                 @Nullable String localTitle,
+                                                 @Nullable String patchedTitle) {
+    if (windowTitle == null) windowTitle = getBadPatchTitle(file);
+    if (localTitle == null) localTitle = VcsBundle.message("patch.apply.conflict.local.version");
+    if (patchedTitle == null) patchedTitle = "Patched (with problems)";
+
+    FileType fileType = file != null ? file.getFileType() : null;
 
     final DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    DocumentContent localContent = contentFactory.createDocument(project, file);
-    if (localContent == null) localContent = contentFactory.create(texts.getLocal().toString(), file.getFileType());
-    final DiffContent mergedContent = contentFactory.create(texts.getPatched(), file.getFileType());
+    DocumentContent leftContent = file != null ? contentFactory.createDocument(project, file) : null;
+    if (leftContent == null) leftContent = contentFactory.create(localContent, fileType);
+    DocumentContent rightContent = contentFactory.create(patchedContent, fileType);
 
-    final List<DiffContent> contents = ContainerUtil.list(localContent, mergedContent);
-
-    final DiffRequest request = new SimpleDiffRequest(windowTitle, contents, titles);
+    final DiffRequest request = new SimpleDiffRequest(windowTitle, leftContent, rightContent, localTitle, patchedTitle);
     DiffUtil.addNotification(new ApplyPatchMergeTool.DiffIsApproximateNotification(), request);
 
     return request;
+  }
+
+  @NotNull
+  public static MergeRequest createMergeRequest(@Nullable Project project,
+                                                @NotNull Document document,
+                                                @NotNull VirtualFile file,
+                                                @NotNull String baseContent,
+                                                @NotNull String localContent,
+                                                @NotNull String patchedContent,
+                                                @Nullable Consumer<MergeResult> callback)
+    throws InvalidDiffRequestException {
+    List<String> titles = ContainerUtil.list(null, null, null);
+    List<String> contents = ContainerUtil.list(localContent, baseContent, patchedContent);
+
+    return createMergeRequest(project, document, file, contents, null, titles, callback);
+  }
+
+  @NotNull
+  public static MergeRequest createBadMergeRequest(@Nullable Project project,
+                                                   @NotNull Document document,
+                                                   @NotNull VirtualFile file,
+                                                   @NotNull String localContent,
+                                                   @NotNull String patchedContent,
+                                                   @Nullable Consumer<MergeResult> callback)
+    throws InvalidDiffRequestException {
+    return createBadMergeRequest(project, document, file, localContent, patchedContent, null, null, null, callback);
+  }
+
+  @NotNull
+  public static MergeRequest createMergeRequest(@Nullable Project project,
+                                                @NotNull Document document,
+                                                @Nullable VirtualFile file,
+                                                @NotNull List<String> contents,
+                                                @Nullable String windowTitle,
+                                                @NotNull List<String> titles,
+                                                @Nullable Consumer<MergeResult> callback)
+    throws InvalidDiffRequestException {
+    assert contents.size() == 3;
+    assert titles.size() == 3;
+
+    if (windowTitle == null) windowTitle = getPatchTitle(file);
+
+    String localTitle = StringUtil.notNullize(titles.get(0), VcsBundle.message("patch.apply.conflict.local.version"));
+    String baseTitle = StringUtil.notNullize(titles.get(1), VcsBundle.message("patch.apply.conflict.merged.version"));
+    String patchedTitle = StringUtil.notNullize(titles.get(2), VcsBundle.message("patch.apply.conflict.patched.version"));
+
+    List<String> actualTitles = ContainerUtil.list(localTitle, baseTitle, patchedTitle);
+
+    FileType fileType = file != null ? file.getFileType() : null;
+    return DiffRequestFactory.getInstance().createMergeRequest(project, fileType, document, contents, windowTitle, actualTitles, callback);
+  }
+
+  @NotNull
+  public static MergeRequest createBadMergeRequest(@Nullable Project project,
+                                                   @NotNull Document document,
+                                                   @Nullable VirtualFile file,
+                                                   @NotNull String localContent,
+                                                   @NotNull String patchedContent,
+                                                   @Nullable String windowTitle,
+                                                   @Nullable String localTitle,
+                                                   @Nullable String patchedTitle,
+                                                   @Nullable Consumer<MergeResult> callback)
+    throws InvalidDiffRequestException {
+    if (!DiffUtil.canMakeWritable(document)) {
+      throw new InvalidDiffRequestException("Output is read only" + (file != null ? " : '" + file.getPresentableUrl() +"'": ""));
+    }
+
+    if (windowTitle == null) windowTitle = getBadPatchTitle(file);
+    if (localTitle == null) localTitle = VcsBundle.message("patch.apply.conflict.local.version");
+    if (patchedTitle == null) patchedTitle = "Patched (with problems)";
+
+    return new ApplyPatchMergeRequest(project, document, localContent, patchedContent, windowTitle, localTitle, patchedTitle, callback);
+  }
+
+  @NotNull
+  private static String getPatchTitle(@Nullable VirtualFile file) {
+    if (file != null) {
+      return VcsBundle.message("patch.apply.conflict.title", getPresentablePath(file));
+    }
+    else {
+      return "Patch Conflict";
+    }
+  }
+
+
+  @NotNull
+  private static String getBadPatchTitle(@Nullable VirtualFile file) {
+    if (file != null) {
+      return "Result Of Patch Apply To " + getPresentablePath(file);
+    }
+    else {
+      return "Result Of Patch Apply";
+    }
+  }
+
+  @NotNull
+  private static String getPresentablePath(@NotNull VirtualFile file) {
+    String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
+    return file.getName() + " (" + fullPath + ")";
   }
 }
 

@@ -145,7 +145,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
           throws DiffRequestProducerException, ProcessCanceledException {
           Change change = shelvedChange.createChange(project);
-          return PatchDiffRequestFactory.createFromChange(project, change, getName(), context, indicator);
+          return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
         }
 
         @NotNull
@@ -221,7 +221,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                 }
               };
 
-              return PatchDiffRequestFactory.createConflict(project, file, "Shelved Version", getter, getName(), context, indicator);
+              return PatchDiffRequestFactory.createConflictDiffRequest(project, file, "Shelved Version", getter, getName(), context, indicator);
             }
             catch (VcsException e) {
               throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
@@ -229,7 +229,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           }
           else {
             final Change change = shelvedChange.getChange(project);
-            return PatchDiffRequestFactory.createFromChange(project, change, getName(), context, indicator);
+            return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
           }
         }
       });
