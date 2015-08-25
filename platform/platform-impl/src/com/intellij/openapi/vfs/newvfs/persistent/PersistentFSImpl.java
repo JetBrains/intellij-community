@@ -915,7 +915,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             throw new RuntimeException("Duplicate FS roots: " + rootUrl + " and " + entry.getKey() + ", id=" + rootId + ", valid=" + existingRoot.isValid(), e);
           }
         }
-        throw new RuntimeException("No root duplication", e);
+        throw new RuntimeException("No root duplication, roots" + Arrays.toString(FSRecords.listAll(1)), e);
       }
       incStructuralModificationCount();
       mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
