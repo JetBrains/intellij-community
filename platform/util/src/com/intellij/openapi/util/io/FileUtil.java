@@ -1697,8 +1697,4 @@ public class FileUtil extends FileUtilRt {
     FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
     return !(attributes.equals(upper) && attributes.equals(lower));
   }
-
-  public static boolean isWindowsShortName(@NotNull String fileName) {
-    return false;
-  }
 }
