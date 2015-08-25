@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiImportList;
-import com.intellij.psi.PsiImportStatement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SingleClassImportInspection extends BaseInspection {
@@ -42,6 +39,11 @@ public class SingleClassImportInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PackageImportVisitor();
   }
@@ -51,16 +53,11 @@ public class SingleClassImportInspection extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
-      if (!(aClass.getParent() instanceof PsiJavaFile)) {
+      final PsiElement parent = aClass.getParent();
+      if (!(parent instanceof PsiJavaFile)) {
         return;
       }
-      if (FileTypeUtils.isInServerPageFile(aClass.getContainingFile())) {
-        return;
-      }
-      final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
-      if (file == null) {
-        return;
-      }
+      final PsiJavaFile file = (PsiJavaFile)parent;
       if (!file.getClasses()[0].equals(aClass)) {
         return;
       }
