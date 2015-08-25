@@ -63,21 +63,21 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
 
 class ApplicationStorageManager(private val application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
   companion object {
-    private val DEFAULT_STORAGE_SPEC = "${StoragePathMacros.APP_CONFIG}/${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
+    private val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
     val FILE_STORAGE_DIR = "options"
   }
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     if (component is NamedJDOMExternalizable) {
-      return "${StoragePathMacros.APP_CONFIG}/${component.getExternalFileName()}${FileStorageCoreUtil.DEFAULT_EXT}"
+      return "${component.getExternalFileName()}${FileStorageCoreUtil.DEFAULT_EXT}"
     }
     else {
       return DEFAULT_STORAGE_SPEC
     }
   }
 
-  override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
+  override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
 
   override protected val isUseXmlProlog: Boolean
     get() = false
@@ -95,6 +95,23 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
     }
     catch (e: Throwable) {
       LOG.error(e)
+    }
+  }
+
+  override fun normalizeFileSpec(fileSpec: String): String {
+    var path = super.normalizeFileSpec(fileSpec)
+    if (path.startsWithMacro(StoragePathMacros.APP_CONFIG)) {
+      return path.substring(StoragePathMacros.APP_CONFIG.length() + 1)
+    }
+    return path
+  }
+
+  override fun fileSpecToPath(fileSpec: String): String {
+    if (fileSpec[0] == '$') {
+      return super.fileSpecToPath(fileSpec)
+    }
+    else {
+      return "${expandMacro(StoragePathMacros.APP_CONFIG)}/$fileSpec"
     }
   }
 }

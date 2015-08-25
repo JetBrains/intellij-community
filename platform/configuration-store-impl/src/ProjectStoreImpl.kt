@@ -169,13 +169,13 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
   override fun getProjectFile() = getProjectFileStorage().getVirtualFile()
 
-  override fun getProjectFilePath() = storageManager.expandMacros(StoragePathMacros.PROJECT_FILE)
+  override fun getProjectFilePath() = storageManager.expandMacro(StoragePathMacros.PROJECT_FILE)
 
   private fun getProjectFileStorage() = storageManager.getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER) as FileBasedStorage
 
   override fun getWorkspaceFile() = (storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?)?.getVirtualFile()
 
-  override fun getWorkspaceFilePath() = storageManager.expandMacros(StoragePathMacros.WORKSPACE_FILE)
+  override fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
   override fun loadProjectFromTemplate(defaultProject: Project) {
     defaultProject.save()

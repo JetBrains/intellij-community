@@ -308,7 +308,7 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
+    return createTempFile(prefix, suffix, true); // deleteOnExit by default
   }
 
   @NotNull
@@ -365,7 +365,8 @@ public class FileUtilRt {
     int exceptionsCount = 0;
     while (true) {
       try {
-        final File temp = createTemp(prefix, suffix, dir, isDirectory);
+        // If there was an IOException, there's no reason to do sequential search - fallback to random
+        final File temp = createTemp(prefix, suffix, dir, isDirectory, exceptionsCount > 0);
         return normalizeFile(temp);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
@@ -377,7 +378,23 @@ public class FileUtilRt {
   }
 
   @NotNull
-  private static File createTemp(@NotNull String prefix, @NotNull String suffix, @NotNull File directory, boolean isDirectory) throws IOException {
+  private static File createTemp(@NotNull String prefix,
+                                 @NotNull String suffix,
+                                 @NotNull File directory,
+                                 boolean isDirectory,
+                                 boolean randomName) throws IOException {
+    // Fallback to the original File.createTempFile
+    if (randomName) {
+      @SuppressWarnings("SSBasedInspection")
+      File res = File.createTempFile(prefix, suffix, directory);
+      if (isDirectory) {
+        if (!res.delete() || !res.mkdir()) {
+          throw new IOException("Cannot create directory: " + res);
+        }
+      }
+      return res;
+    }
+
     // normalize and use only the file name from the prefix
     prefix = new File(prefix).getName();
 

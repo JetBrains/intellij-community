@@ -537,12 +537,26 @@ public class GenerateMembersUtil {
     PsiClass base = containingClass == null ? null : containingClass.getSuperClass();
     PsiMethod overridden = base == null ? null : base.findMethodBySignature(method, true);
 
+    boolean emptyTemplate = true;
+    PsiCodeBlock body = method.getBody();
+    if (body != null) {
+      PsiJavaToken lBrace = body.getLBrace();
+      int left = lBrace != null ? lBrace.getStartOffsetInParent() + 1 : 0;
+      PsiJavaToken rBrace = body.getRBrace();
+      int right = rBrace != null ? rBrace.getStartOffsetInParent() : body.getTextLength();
+      emptyTemplate = StringUtil.isEmptyOrSpaces(body.getText().substring(left, right));
+    }
+    
     if (overridden == null) {
-      CreateFromUsageUtils.setupMethodBody(method, containingClass);
+      if (emptyTemplate) {
+        CreateFromUsageUtils.setupMethodBody(method, containingClass);
+      }
       return;
     }
 
-    OverrideImplementUtil.setupMethodBody(method, overridden, containingClass);
+    if (emptyTemplate) {
+      OverrideImplementUtil.setupMethodBody(method, overridden, containingClass);
+    }
     OverrideImplementUtil.annotateOnOverrideImplement(method, base, overridden);
   }
 

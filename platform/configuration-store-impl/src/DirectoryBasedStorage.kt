@@ -151,19 +151,16 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
 
     private fun saveStates(dir: VirtualFile) {
       val storeElement = Element(FileStorageCoreUtil.COMPONENT)
-
       for (componentNameToFileNameToStates in copiedStorageData!!.entrySet()) {
         for (entry in componentNameToFileNameToStates.getValue().entrySet()) {
           val fileName = entry.getKey()
-          val state = entry.getValue()
-
           if (!dirtyFileNames.contains(fileName)) {
-            return
+            continue
           }
 
           var element: Element? = null
           try {
-            element = StateMap.stateToElement(fileName, state)
+            element = StateMap.stateToElement(fileName, entry.getValue())
             storage.myPathMacroSubstitutor?.collapsePaths(element)
 
             storeElement.setAttribute(FileStorageCoreUtil.NAME, componentNameToFileNameToStates.getKey())

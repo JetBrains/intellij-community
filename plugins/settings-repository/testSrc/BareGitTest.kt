@@ -18,15 +18,13 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TemporaryDirectory
 import gnu.trove.THashMap
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.nullValue
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.processChildren
 import org.jetbrains.settingsRepository.git.read
-import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -37,7 +35,7 @@ class BareGitTest {
 
   public Test fun `remote doesn't have commits`() {
     val repository = cloneBare(tempDirManager.createRepository("remote").getWorkTree().getAbsolutePath(), tempDirManager.newDirectory("local"))
-    assertThat(repository.read("\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml"), nullValue())
+    assertThat(repository.read("\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml")).isNull()
   }
 
   public Test fun bare() {
@@ -50,7 +48,7 @@ class BareGitTest {
     remoteRepository.commit("")
 
     val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
-    assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!), equalTo(FileUtil.loadFile(file)))
+    assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!)).isEqualTo(FileUtil.loadFile(file))
   }
 
   public Test fun processChildren() {
@@ -71,7 +69,7 @@ class BareGitTest {
       true
     }
 
-    assertThat(data.size(), equalTo(1))
-    assertThat(data.get("Mac OS X from RubyMine.xml"), equalTo(FileUtil.loadFile(file)))
+    assertThat(data).hasSize(1)
+    assertThat(data.get("Mac OS X from RubyMine.xml")).isEqualTo(FileUtil.loadFile(file))
   }
 }

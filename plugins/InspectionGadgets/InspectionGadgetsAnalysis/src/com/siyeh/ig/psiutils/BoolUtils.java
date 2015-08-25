@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,34 +35,50 @@ public class BoolUtils {
     return JavaTokenType.EXCL.equals(tokenType);
   }
 
+  public static boolean isNegated(PsiExpression exp) {
+    PsiExpression ancestor = exp;
+    PsiElement parent = ancestor.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      ancestor = (PsiExpression)parent;
+      parent = ancestor.getParent();
+    }
+    return parent instanceof PsiExpression && isNegation((PsiExpression)parent);
+  }
+
   @Nullable
-  private static PsiExpression getNegated(@NotNull PsiExpression expression) {
-    final PsiPrefixExpression prefixExp = (PsiPrefixExpression)expression;
-    final PsiExpression operand = prefixExp.getOperand();
+  public static PsiExpression getNegated(PsiExpression expression) {
+    if (!(expression instanceof PsiPrefixExpression)) {
+      return null;
+    }
+    final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+    final IElementType tokenType = prefixExpression.getOperationTokenType();
+    if (!JavaTokenType.EXCL.equals(tokenType)) {
+      return null;
+    }
+    final PsiExpression operand = prefixExpression.getOperand();
     return ParenthesesUtils.stripParentheses(operand);
   }
 
   @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
-    if (condition == null) {
+    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES);
+  }
+
+  @NotNull
+  public static String getNegatedExpressionText(@Nullable PsiExpression expression, int precedence) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression == null) {
       return "";
     }
-    if (condition instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)condition;
-      final PsiExpression contentExpression =
-        parenthesizedExpression.getExpression();
-      return '(' + getNegatedExpressionText(contentExpression) + ')';
-    }
-    else if (isNegation(condition)) {
-      final PsiExpression negated = getNegated(condition);
+    if (isNegation(expression)) {
+      final PsiExpression negated = getNegated(expression);
       if (negated == null) {
         return "";
       }
-      return negated.getText();
+      return ParenthesesUtils.getPrecedence(negated) > precedence ? '(' + negated.getText() + ')' : negated.getText();
     }
-    else if (ComparisonUtils.isComparison(condition)) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+    else if (ComparisonUtils.isComparison(expression)) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
       final StringBuilder result = new StringBuilder();
       final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -83,12 +100,36 @@ public class BoolUtils {
       }
       return result.toString();
     }
-    else if (ParenthesesUtils.getPrecedence(condition) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-      return "!(" + condition.getText() + ')';
+    else return ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE
+                ? "!(" + expression.getText() + ')'
+                : '!' + expression.getText();
+  }
+
+  @Nullable
+  public static PsiExpression findNegation(PsiExpression expression) {
+    PsiExpression ancestor = expression;
+    PsiElement parent = ancestor.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      ancestor = (PsiExpression)parent;
+      parent = ancestor.getParent();
     }
-    else {
-      return '!' + condition.getText();
+    if (parent instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixAncestor = (PsiPrefixExpression)parent;
+      if (JavaTokenType.EXCL.equals(prefixAncestor.getOperationTokenType())) {
+        return prefixAncestor;
+      }
     }
+    return null;
+  }
+
+  public static boolean isBooleanLiteral(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiLiteralExpression)) {
+      return false;
+    }
+    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+    @NonNls final String text = literalExpression.getText();
+    return PsiKeyword.TRUE.equals(text) || PsiKeyword.FALSE.equals(text);
   }
 
   @Contract(value = "null -> false", pure = true)

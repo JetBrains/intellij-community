@@ -52,10 +52,8 @@ public class BinaryFilePatchInProgress extends AbstractFilePatchInProgress<Shelv
 
     if (myNewContentRevision != null) return myNewContentRevision;
     if (myPatch.getAfterFileName() != null) {
-      final FilePath newFilePath = FilePatchStatus.ADDED.equals(myStatus)
-                                   ? VcsUtil.getFilePathOnNonLocal(myIoCurrentBase.getAbsolutePath(),
-                                                                   false)
-                                   : detectNewFilePathForMovedOrModified();
+      final FilePath newFilePath = FilePatchStatus.ADDED.equals(myStatus) ? VcsUtil.getFilePath(myIoCurrentBase, false)
+                                                                          : detectNewFilePathForMovedOrModified();
       myNewContentRevision = new ShelvedBinaryContentRevision(newFilePath, myPatch.getShelvedBinaryFile().SHELVED_PATH);
     }
     return myNewContentRevision;

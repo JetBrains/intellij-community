@@ -63,7 +63,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   protected open fun dataLoadedFromProvider(element: Element?) {
   }
 
-  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
+  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.read(fileSpec, roamingType))
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
@@ -139,7 +139,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         else {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
           val content = StorageUtil.writeToBytes(element, "\n")
-          provider.saveContent(storage.fileSpec, content.getInternalBuffer(), content.size(), storage.roamingType)
+          provider.write(storage.fileSpec, content.getInternalBuffer(), content.size(), storage.roamingType)
         }
       }
       else {

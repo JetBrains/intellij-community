@@ -24,7 +24,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
@@ -583,7 +582,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       if (renamed) {
         externalInfo!!.scheduleDelete()
       }
-      provider!!.saveContent(providerPath, byteOut.getInternalBuffer(), byteOut.size(), roamingType)
+      provider!!.write(providerPath, byteOut.getInternalBuffer(), byteOut.size(), roamingType)
     }
 
     if (externalInfo == null) {
@@ -612,7 +611,10 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       deleteUsingIo = false
       for (name in filesToDelete) {
         errors.catch {
-          StorageUtil.delete(provider, "$fileSpec/$name", roamingType)
+          val spec = "$fileSpec/$name"
+          if (provider.isApplicable(spec, roamingType)) {
+            provider.delete(spec, roamingType)
+          }
         }
       }
     }

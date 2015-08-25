@@ -43,7 +43,21 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "        Attribute:beanClass:BeanClass\n" +
                   "    Element:extensions\n" +
                   "      Attribute:defaultExtensionNs:defaultExtensionNs\n" +
-                  "      Attribute:xmlns:extensionXmlNs\n");
+                  "      Attribute:xmlns:extensionXmlNs\n" +
+                  "    Element:actions\n" +
+                  "      Element:action\n" +
+                  "        Attribute:id:actionId\n" +
+                  "        Attribute:text:actionText\n" +
+                  "      Element:group\n" +
+                  "        Attribute:id:groupId\n" +
+                  "        Element:action\n" +
+                  "          Attribute:id:groupAction\n" +
+                  "          Attribute:text:groupActionText\n" +
+                  "        Element:group\n" +
+                  "          Attribute:id:nestedGroup\n" +
+                  "          Element:action\n" +
+                  "            Attribute:id:nestedGroupActionId\n" +
+                  "            Attribute:text:nestedGroupActionText\n");
   }
 
   public void testXInclude() throws Exception {

@@ -27,6 +27,23 @@ class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
     val VERSION_OPTION = "version"
   }
 
+  override fun normalizeFileSpec(fileSpec: String): String {
+    var path = super.normalizeFileSpec(fileSpec)
+    if (path.startsWithMacro(StoragePathMacros.PROJECT_CONFIG_DIR)) {
+      return path.substring(StoragePathMacros.PROJECT_CONFIG_DIR.length() + 1)
+    }
+    return path
+  }
+
+  override fun fileSpecToPath(fileSpec: String): String {
+    if (fileSpec[0] == '$') {
+      return super.fileSpecToPath(fileSpec)
+    }
+    else {
+      return "${expandMacro(StoragePathMacros.PROJECT_CONFIG_DIR)}/$fileSpec"
+    }
+  }
+
   override fun beforeElementSaved(element: Element) {
     element.setAttribute(VERSION_OPTION, "4")
   }

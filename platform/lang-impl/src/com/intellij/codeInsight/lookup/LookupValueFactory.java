@@ -43,10 +43,6 @@ public class LookupValueFactory {
     return new LookupValueWithIconAndHint(name, icon, hint);
   }
 
-  public static Object createLookupValueWithHintAndTail(@NotNull String name, @Nullable Icon icon, String hint, final String tail) {
-    return new LookupValueWithHintAndTail(name, icon, hint, tail);
-  }
-
   public static class LookupValueWithIcon implements PresentableLookupValue, Iconable {
     private final String myName;
     private final Icon myIcon;
@@ -100,19 +96,4 @@ public class LookupValueFactory {
       return false;
     }
   }
-
-  public static class LookupValueWithHintAndTail extends LookupValueWithIconAndHint implements LookupValueWithTail {
-    private final String myTail;
-
-    protected LookupValueWithHintAndTail(final String name, final Icon icon, final String hint, String tail) {
-      super(name, icon, hint);
-      myTail = tail;
-    }
-
-    @Override
-    public String getTailText() {
-      return myTail;
-    }
-  }
-
 }

@@ -150,8 +150,8 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
     });
   }
 
-  public Self hasParentNear(final int levelsUp, @NotNull final ElementPattern<? extends ParentType> pattern) {
-    return with(new PatternCondition<T>("hasParentNear") {
+  public Self withAncestor(final int levelsUp, @NotNull final ElementPattern<? extends ParentType> pattern) {
+    return with(new PatternCondition<T>("withAncestor") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
         ParentType element = t;

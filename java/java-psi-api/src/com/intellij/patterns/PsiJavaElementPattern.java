@@ -62,8 +62,8 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
 
   public Self insideAnnotationParam(final ElementPattern<String> annotationQualifiedName, @NonNls final String parameterName) {
-    return hasParentNear(3,   // can be array initializer
-                         PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
+    return withAncestor(3,   // can be array initializer
+                        PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }

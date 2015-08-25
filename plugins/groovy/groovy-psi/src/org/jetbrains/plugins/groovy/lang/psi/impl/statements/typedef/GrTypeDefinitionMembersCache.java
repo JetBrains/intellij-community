@@ -65,15 +65,10 @@ public class GrTypeDefinitionMembersCache {
   private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
 
   private final GrTypeDefinition myDefinition;
-  private final JavaPsiFacade myPsiFacade;
-  private final PsiElementFactory myElementFactory;
 
   public GrTypeDefinitionMembersCache(GrTypeDefinition definition) {
     myDefinition = definition;
-    myPsiFacade = JavaPsiFacade.getInstance(definition.getProject());
-    myElementFactory = myPsiFacade.getElementFactory();
   }
-
 
   public GrMethod[] getCodeMethods() {
     return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<GrMethod[]>() {
@@ -280,11 +275,12 @@ public class GrTypeDefinitionMembersCache {
                   addCandidate(method, substitutor);
                 }
               }
+              final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(trait.getProject());
               final String helperFQN = trait.getQualifiedName();
-              final PsiClass traitHelper = myPsiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
+              final PsiClass traitHelper = psiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
               if (traitHelper != null) {
                 final PsiType classType = TypesUtil.createJavaLangClassType(
-                  myElementFactory.createType(trait), trait.getProject(), trait.getResolveScope()
+                  psiFacade.getElementFactory().createType(trait), trait.getProject(), trait.getResolveScope()
                 );
                 for (PsiMethod method : traitHelper.getMethods()) {
                   if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
@@ -340,7 +336,7 @@ public class GrTypeDefinitionMembersCache {
               }
             }
             else if (trait instanceof ClsClassImpl) {
-              final PsiClass traitFieldHelper = myPsiFacade.findClass(
+              final PsiClass traitFieldHelper = JavaPsiFacade.getInstance(trait.getProject()).findClass(
                 trait.getQualifiedName() + "$Trait$FieldHelper", trait.getResolveScope()
               );
               if (traitFieldHelper == null) return;

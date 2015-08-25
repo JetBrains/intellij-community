@@ -34,7 +34,8 @@ public class ChangeToAppendUtil {
   }
 
   @Nullable
-  public static StringBuilder buildAppendExpression(PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
+  public static StringBuilder buildAppendExpression(@Nullable PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
+    if (concatenation == null) return null;
     final PsiType type = concatenation.getType();
     if (concatenation instanceof PsiPolyadicExpression && type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;

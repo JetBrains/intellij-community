@@ -26,28 +26,30 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildTask;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
+import org.jetbrains.jps.model.artifact.elements.JpsDirectoryPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsFileCopyPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -120,8 +122,9 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
         @Override
         public boolean process(JpsPackagingElement element) {
           if (!(element instanceof JpsFileCopyPackagingElement)) return true;
+          final JpsFileCopyPackagingElement fileCopyPackagingElement = (JpsFileCopyPackagingElement)element;
 
-          final String filePath = ((JpsFileCopyPackagingElement)element).getFilePath();
+          final String filePath = fileCopyPackagingElement.getFilePath();
           final File skinnyManifest = new File(filePath);
           if (!"SKINNY_MANIFEST.MF".equals(skinnyManifest.getName())) return true;
 
@@ -144,26 +147,44 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
             final Attributes warManifestMainAttributes = warManifest.getMainAttributes();
             warManifestMainAttributes.putValue("Class-Path", StringUtil.join(skinnyWarClasspath, " "));
 
+            File skinnyManifestTargetFile = null;
             FileUtil.createParentDirs(skinnyManifest);
             FileOutputStream outputStream = new FileOutputStream(skinnyManifest);
             try {
               warManifest.write(outputStream);
 
-              final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-              final Collection<BuildRootDescriptor> descriptors =
-                projectDescriptor.getBuildRootIndex().findAllParentDescriptors(skinnyManifest, context);
-              for (BuildRootDescriptor descriptor : descriptors) {
-                try {
-                  projectDescriptor.fsState.markDirty(context, skinnyManifest, descriptor, projectDescriptor.timestamps.getStorage());
-                }
-                catch (IOException e) {
-                  LOG.debug(e);
+              if (fileCopyPackagingElement instanceof JpsElementBase) {
+                final LinkedList<String> pathParts = new LinkedList<String>();
+                pathParts.add(fileCopyPackagingElement.getRenamedOutputFileName());
+
+                JpsElementBase parent = ((JpsElementBase)fileCopyPackagingElement).getParent();
+                while (parent != null) {
+                  if (parent instanceof JpsDirectoryPackagingElement) {
+                    pathParts.addFirst(((JpsDirectoryPackagingElement)parent).getDirectoryName());
+                  }
+                  else if (parent instanceof JpsArtifact) {
+                    final String outputPath = ((JpsArtifact)parent).getOutputPath();
+                    if (outputPath != null) {
+                      pathParts.addFirst(outputPath);
+                      skinnyManifestTargetFile = new File(StringUtil.join(pathParts, "/"));
+                      break;
+                    }
+                  }
+                  parent = parent.getParent();
                 }
               }
             }
             finally {
               StreamUtil.closeStream(outputStream);
             }
+
+            if (skinnyManifestTargetFile != null) {
+              FileUtil.createParentDirs(skinnyManifestTargetFile);
+              FileUtil.copy(skinnyManifest, skinnyManifestTargetFile);
+            }
+
+            FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifest);
+            FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifestTargetFile);
           }
           catch (IOException e) {
             LOG.debug(e);

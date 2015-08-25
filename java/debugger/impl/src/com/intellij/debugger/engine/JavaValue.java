@@ -38,7 +38,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
@@ -524,7 +524,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             @Override
             public XExpression compute() {
               try {
-                PsiExpression psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
+                PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
                 if (psiExpression != null) {
                   XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
                   // add runtime imports if any

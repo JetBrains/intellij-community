@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
@@ -6,32 +21,21 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
-import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
-import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.Arrays
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 public abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManager {
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
-
-  override fun listSubFileNames(path: String): Collection<String> {
-    val files = File(dir, path).list()
-    if (files == null || files.size() == 0) {
-      return listOf()
-    }
-    return listOf(*files)
-  }
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
     var files: Array<out File>? = null
@@ -158,38 +162,25 @@ fun File.removeWithParentsIfEmpty(root: File, isFile: Boolean = true) {
     }
   }
 }
-// kotlin bug, cannot be val (.NoSuchMethodError: org.jetbrains.settingsRepository.SettingsRepositoryPackage.getMARKER_ACCEPT_MY()[B)
-TestOnly object AM {
-  val MARKER_ACCEPT_MY: ByteArray = "__accept my__".toByteArray()
-  val MARKER_ACCEPT_THEIRS: ByteArray = "__accept theirs__".toByteArray()
-}
+
+var conflictResolver: ((files: List<VirtualFile>, mergeProvider: MergeProvider2) -> Unit)? = null
 
 fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): List<VirtualFile> {
   if (ApplicationManager.getApplication()!!.isUnitTestMode()) {
-    val mergeSession = mergeProvider.createMergeSession(files)
-    for (file in files) {
-      val mergeData = mergeProvider.loadRevisions(file)
-      if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_THEIRS)) {
-        mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
-      }
-      else if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
-        mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
-      }
-      else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
-        file.setBinaryContent(mergeData.LAST!!)
-        mergeProvider.conflictResolvedForFile(file)
-      }
-      else {
-        throw UnsupportedOperationException()
-      }
+    if (conflictResolver == null) {
+      throw CannotResolveConflictInTestMode()
     }
-
+    else {
+      conflictResolver!!(files, mergeProvider)
+    }
     return files
   }
 
   var processedFiles: List<VirtualFile>? = null
   invokeAndWaitIfNeed {
-    val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, MergeDialogCustomizer())
+    val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
+      override fun getMultipleFileDialogTitle() = "Settings Repository: Files Merged with Conflicts"
+    })
     fileMergeDialog.show()
     processedFiles = fileMergeDialog.getProcessedFiles()
   }

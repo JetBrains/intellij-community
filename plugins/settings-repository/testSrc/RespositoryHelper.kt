@@ -16,12 +16,10 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
-import org.hamcrest.CoreMatchers.equalTo
-import org.junit.Assert.assertThat
 import java.io.File
 import java.util.Arrays
 import java.util.Comparator
@@ -52,7 +50,7 @@ private fun compareFiles(local: File, remote: File, expected: VirtualFile? = nul
     }
   }
 
-  assertThat(localFiles, equalTo(remoteFiles))
+  assertThat(localFiles).isEqualTo(remoteFiles)
 
   val expectedFiles: Array<VirtualFile>?
   if (expected == null) {
@@ -68,7 +66,7 @@ private fun compareFiles(local: File, remote: File, expected: VirtualFile? = nul
     })
 
     for (i in 0..expectedFiles.size() - 1) {
-      assertThat(localFiles[i], equalTo(expectedFiles[i].getName()))
+      assertThat(localFiles[i]).isEqualTo(expectedFiles[i].getName())
     }
   }
 
@@ -81,11 +79,11 @@ private fun compareFiles(local: File, remote: File, expected: VirtualFile? = nul
     }
     else {
       expectedFile = expectedFiles[i]
-      assertThat(expectedFile.isDirectory(), equalTo(localFile.isDirectory()))
+      assertThat(expectedFile.isDirectory()).isEqualTo(localFile.isDirectory())
     }
 
     if (localFile.isFile()) {
-      assertThat(FileUtil.loadFile(localFile), equalTo(FileUtil.loadFile(remoteFile)))
+      assertThat(localFile).hasSameContentAs(remoteFile)
     }
     else {
       compareFiles(localFile, remoteFile, expectedFile, *localExcludes)

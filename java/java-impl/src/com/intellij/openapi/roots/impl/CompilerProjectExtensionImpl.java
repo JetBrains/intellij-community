@@ -55,7 +55,6 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     final Element outputPathChild = element.getChild(OUTPUT_TAG);
     if (outputPathChild != null) {
       String outputPath = outputPathChild.getAttributeValue(URL);
-      assert myCompilerOutput == null;
       myCompilerOutput = VirtualFilePointerManager.getInstance().create(outputPath, myProject, null);
     }
   }

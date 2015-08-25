@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -36,7 +37,7 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
     if (!refElement.isValid() || !(refElement instanceof PsiVariable)) return;
 
     final String name = ((PsiVariable)refElement).getName();
-    if (name == null) return;
+    if (StringUtil.isEmptyOrSpaces(name)) return;
 
     SearchScope scope = p.getEffectiveSearchScope();
     if (!(scope instanceof LocalSearchScope)) {

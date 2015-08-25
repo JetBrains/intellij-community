@@ -58,7 +58,7 @@ public abstract class GroupedElementsRenderer {
     mySeparatorComponent.setMinimumWidth(preferredForcedWidth);
 
     myTextLabel.setText(text);
-    myTextLabel.setToolTipText(tooltip);
+    myRendererComponent.setToolTipText(tooltip);
 
     myTextLabel.setIcon(icon);
     myTextLabel.setDisabledIcon(disabledIcon);

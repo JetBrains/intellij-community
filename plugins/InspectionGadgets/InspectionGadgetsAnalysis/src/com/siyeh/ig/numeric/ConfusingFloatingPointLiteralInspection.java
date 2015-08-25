@@ -62,7 +62,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (ignoreScientificNotation) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreScientificNotation").setAttribute("value", "false"));
+      node.addContent(new Element("option").setAttribute("name", "ignoreScientificNotation").setAttribute("value", "true"));
     }
   }
 

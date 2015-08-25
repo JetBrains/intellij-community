@@ -13,11 +13,6 @@ import com.jetbrains.edu.learning.StudyUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: lia
- * Date: 10.05.14
- * Time: 12:45
- */
 class StudyFileEditorProvider implements FileEditorProvider, DumbAware {
   static final private String EDITOR_TYPE_ID = "StudyEditor";
   final private FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();
@@ -25,7 +20,7 @@ class StudyFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     TaskFile taskFile = StudyUtils.getTaskFile(project, file);
-    return taskFile != null && !taskFile.isUserCreated();
+    return taskFile != null && !taskFile.isUserCreated() && TextEditorProvider.isTextFile(file);
   }
 
   @NotNull

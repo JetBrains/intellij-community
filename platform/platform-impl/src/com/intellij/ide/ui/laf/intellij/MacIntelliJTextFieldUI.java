@@ -18,7 +18,6 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
@@ -102,9 +101,6 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       g.setColor(parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
-    final GraphicsConfig config = new GraphicsConfig(g);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
     if (isSearchField(c)) {
       paintSearchField(g, c, r);
@@ -116,7 +112,6 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
         super.paintBackground(g);
       }
     }
-    config.restore();
   }
 
   @NotNull

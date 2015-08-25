@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,10 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -69,11 +72,11 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
   @NotNull private final ConcurrentMap<ProjectSystemId, Set<String /* external project path */>> myFilesToRefresh
     = ContainerUtil.newConcurrentMap();
 
-  @NotNull private final Alarm         myVfsAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  @NotNull private final Alarm         myVfsAlarm;
   @NotNull private final ReadWriteLock myVfsLock  = new ReentrantReadWriteLock();
 
   @NotNull private final Set<Document> myDocumentsToSave = ContainerUtilRt.newHashSet();
-  @NotNull private final Alarm         myDocumentAlarm   = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  @NotNull private final Alarm         myDocumentAlarm;
   @NotNull private final ReadWriteLock myDocumentLock    = new ReentrantReadWriteLock();
 
   @NotNull private final Runnable                       myFilesRequest         = new Runnable() {
@@ -124,6 +127,8 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
     myProject = project;
     myProjectDataManager = projectDataManager;
     myAutoImportAware = autoImportAware;
+    myVfsAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
+    myDocumentAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
   }
 
   @SuppressWarnings("unchecked")
@@ -150,7 +155,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
       entries
     );
     final MessageBus messageBus = project.getMessageBus();
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, autoImporter);
+    messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, autoImporter);
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(autoImporter, project);
   }

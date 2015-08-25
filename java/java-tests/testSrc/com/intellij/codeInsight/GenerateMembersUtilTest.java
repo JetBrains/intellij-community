@@ -4,10 +4,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.psi.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,5 +50,23 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     List<GenerationInfo> members = GenerateMembersUtil.insertMembersAtOffset(getFile(), offset, list);
     members.get(0).positionCaret(myEditor, true);
     checkResultByFile(null, BASE_PATH + getTestName(false) + "_after.java", true);
+  }
+
+  public void testSetupGeneratedMethodNotOverridingInitialBody() throws Exception {
+    String methodText = "public void tearDown() {\n //comment\n }";
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+    PsiMethod method = factory.createMethodFromText(methodText, null);
+    GenerateMembersUtil.setupGeneratedMethod(method);
+    assertEquals(methodText, method.getText());
+    
+    //empty template
+    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject())
+      .createFileFromText(JavaLanguage.INSTANCE, "class A {void foo() {}}\n class B extends A {void foo() {}\n}");
+
+    method = file.getClasses()[1].getMethods()[0];
+    GenerateMembersUtil.setupGeneratedMethod(method);
+    assertEquals("@Override void foo() {\n" +
+                 "    super.foo();\n" +
+                 "    }", method.getText());
   }
 }

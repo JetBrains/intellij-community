@@ -1027,6 +1027,30 @@ class Foo {
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
     assertEquals 1, expandedFoldRegionsCount
   }
+  
+  public void "test expand recursively on expanded region containing collapsed regions"() {
+    def text = """
+class Foo {
+    public static void main() {
+        new Runnable(){
+            public void run() {
+            }
+        }.run();
+    }
+}
+"""
+    configure text
+    assertEquals 3, foldRegionsCount
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("run"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_REGION)
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
+    myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_REGION)
+    assertEquals 1, expandedFoldRegionsCount
+    
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("main"))
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_REGION_RECURSIVELY)
+    assertEquals 3, expandedFoldRegionsCount
+  }
 
   public void "test single line closure unfolds when converted to multiline"() {
     boolean oldValue = Registry.is("editor.durable.folding.state")

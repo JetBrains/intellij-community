@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -122,10 +123,8 @@ public class EduUtils {
   public static void createStudentFileFromAnswer(@NotNull final Project project,
                                                  @NotNull final VirtualFile userFileDir,
                                                  @NotNull final VirtualFile answerFileDir,
-                                                 @NotNull final Map.Entry<String, TaskFile> taskFileEntry) {
-    final String name = taskFileEntry.getKey();
-    final TaskFile taskFile = taskFileEntry.getValue();
-    VirtualFile file = userFileDir.findChild(name);
+                                                 @NotNull final String taskFileName, @NotNull final TaskFile taskFile) {
+    VirtualFile file = userFileDir.findChild(taskFileName);
     if (file != null) {
       try {
         file.delete(project);
@@ -134,14 +133,29 @@ public class EduUtils {
         LOG.error(e);
       }
     }
+
+    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      String extension = FileUtilRt.getExtension(taskFileName);
+      String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(taskFileName);
+      VirtualFile answerFile = answerFileDir.findChild(nameWithoutExtension + ".answer." + extension);
+      if (answerFile != null) {
+        try {
+          answerFile.copy(answerFileDir, userFileDir, taskFileName);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return;
+    }
     try {
-      userFileDir.createChildData(project, name);
+      userFileDir.createChildData(project, taskFileName);
     }
     catch (IOException e) {
       LOG.error(e);
     }
 
-    file = userFileDir.findChild(name);
+    file = userFileDir.findChild(taskFileName);
     assert file != null;
     String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
     VirtualFile answerFile = answerFileDir.findChild(answerFileName);
@@ -162,6 +176,7 @@ public class EduUtils {
           @Override
           public void run() {
             document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
+            FileDocumentManager.getInstance().saveDocument(document);
           }
         });
       }
