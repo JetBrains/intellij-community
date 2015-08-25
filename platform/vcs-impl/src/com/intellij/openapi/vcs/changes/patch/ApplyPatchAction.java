@@ -167,7 +167,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       return showMergeDialog(project, file, mergeData.getBase(), mergeData.getPatched(), reverse, leftPanelTitle, rightPanelTitle);
     }
     else {
-      return showBadDiffDialog(project, file, mergeData, false);
+      return showBadDiffDialog(project, file, mergeData);
     }
   }
 
@@ -250,8 +250,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   @NotNull
   private static ApplyPatchStatus showBadDiffDialog(@Nullable Project project,
                                                     @NotNull VirtualFile file,
-                                                    @NotNull final ApplyPatchForBaseRevisionTexts texts,
-                                                    boolean readonly) {
+                                                    @NotNull final ApplyPatchForBaseRevisionTexts texts) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (texts.getLocal() == null || document == null) return ApplyPatchStatus.FAILURE;
 
@@ -277,28 +276,26 @@ public class ApplyPatchAction extends DumbAwareAction {
     DiffUtil.addNotification(new DiffIsApproximateNotification(), request);
 
     final DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.MODAL);
-    if (!readonly) {
-      dialogHints.setCancelAction(new BooleanGetter() {
-        @Override
-        public boolean get() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              document.setText(oldContent);
-              FileDocumentManager.getInstance().saveDocument(document);
-            }
-          });
-          return true;
-        }
-      });
-      dialogHints.setOkAction(new BooleanGetter() {
-        @Override
-        public boolean get() {
-          FileDocumentManager.getInstance().saveDocument(document);
-          return true;
-        }
-      });
-    }
+    dialogHints.setCancelAction(new BooleanGetter() {
+      @Override
+      public boolean get() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.setText(oldContent);
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+        return true;
+      }
+    });
+    dialogHints.setOkAction(new BooleanGetter() {
+      @Override
+      public boolean get() {
+        FileDocumentManager.getInstance().saveDocument(document);
+        return true;
+      }
+    });
 
     DiffManager.getInstance().showDiff(project, request, dialogHints);
 
