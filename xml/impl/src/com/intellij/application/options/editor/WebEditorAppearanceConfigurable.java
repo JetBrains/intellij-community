@@ -15,16 +15,25 @@
  */
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 
-/**
- * @author yole
- */
 public class WebEditorAppearanceConfigurable extends BeanConfigurable<WebEditorOptions> implements UnnamedConfigurable {
   public WebEditorAppearanceConfigurable() {
     super(WebEditorOptions.getInstance());
     checkBox("showCssColorPreviewInGutter", "Show CSS color preview icon in gutter");
     checkBox("showCssInlineColorPreview", "Show CSS color preview as background");
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    super.apply();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
   }
 }
