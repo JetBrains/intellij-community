@@ -403,12 +403,6 @@ public class StorageUtil {
     return defaultSeparator == null ? LineSeparator.getSystemLineSeparator() : defaultSeparator;
   }
 
-  public static void delete(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {
-    if (provider.isApplicable(fileSpec, type)) {
-      provider.delete(fileSpec, type);
-    }
-  }
-
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
     return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals(StoragePathMacros.MODULE_FILE);
   }

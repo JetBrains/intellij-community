@@ -612,7 +612,10 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       deleteUsingIo = false
       for (name in filesToDelete) {
         errors.catch {
-          StorageUtil.delete(provider, "$fileSpec/$name", roamingType)
+          val spec = "$fileSpec/$name"
+          if (provider.isApplicable(spec, roamingType)) {
+            provider.delete(spec, roamingType)
+          }
         }
       }
     }
