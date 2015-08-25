@@ -360,20 +360,20 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   @Nullable
   public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
-    BreadcrumbsInfoProvider provider = null;
     if (EditorSettingsExternalizable.getInstance().isBreadcrumbsShown() && viewProvider != null) {
       final Language baseLang = viewProvider.getBaseLanguage();
-      provider = getInfoProvider(baseLang);
-      if (provider == null) {
-        for (final Language language : viewProvider.getLanguages()) {
-          provider = getInfoProvider(language);
-          if (provider != null) {
-            break;
-          }
+      BreadcrumbsInfoProvider provider = getInfoProvider(baseLang);
+      if (provider != null) {
+        return provider;
+      }
+      for (final Language language : viewProvider.getLanguages()) {
+        provider = getInfoProvider(language);
+        if (provider != null) {
+          return provider;
         }
       }
     }
-    return provider;
+    return null;
   }
 
   public JComponent getComponent() {
