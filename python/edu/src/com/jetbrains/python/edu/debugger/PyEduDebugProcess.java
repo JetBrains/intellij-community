@@ -4,6 +4,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.debugger.*;
@@ -55,12 +56,12 @@ class PyEduDebugProcess extends PyDebugProcess {
     if (frames == null) {
       return Collections.emptyList();
     }
-    final String debugger = PythonHelpersLocator.getHelperPath(PyDebugRunner.DEBUGGER_MAIN);
+    final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
     return Collections2.filter(frames, new Predicate<PyStackFrameInfo>() {
       @Override
       public boolean apply(PyStackFrameInfo frame) {
         String file = frame.getPosition().getFile();
-        return !debugger.equals(file);
+        return !FileUtil.isAncestor(helpersPath, file, false);
       }
     });
   }
