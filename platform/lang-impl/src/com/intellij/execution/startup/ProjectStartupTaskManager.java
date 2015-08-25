@@ -41,7 +41,6 @@ public class ProjectStartupTaskManager {
   private final ProjectStartupSharedConfiguration myShared;
   private final ProjectStartupLocalConfiguration myLocal;
   private final RunManagerEx myRunManager;
-  private boolean myInitialized;
 
   public static ProjectStartupTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, ProjectStartupTaskManager.class);
@@ -53,16 +52,19 @@ public class ProjectStartupTaskManager {
     myShared = shared;
     myLocal = local;
     myRunManager = (RunManagerEx)runManager;
+    verifyState();
+  }
+
+  private void verifyState() {
+    if (! myShared.isEmpty()) {
+      myLocal.shared();
+      myLocal.clear();
+    }
   }
 
   public List<RunnerAndConfigurationSettings> getStartupConfigurations() {
     final List<RunnerAndConfigurationSettings> result = new ArrayList<RunnerAndConfigurationSettings>();
     if (! myShared.isEmpty()) {
-      if (! myInitialized) {
-        myLocal.shared();
-        myInitialized = true;
-      }
-      myLocal.clear();
       return fillResult(result, myShared.getList(), true);
     }
     return fillResult(result, myLocal.getList(), false);

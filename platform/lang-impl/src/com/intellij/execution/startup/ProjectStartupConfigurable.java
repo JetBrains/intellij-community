@@ -61,13 +61,12 @@ import java.util.List;
 public class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private Tree myTree;
-  private ProjectStartupTaskManager myConfiguration;
+  private ProjectStartupTaskManager myProjectStartupTaskManager;
   private ToolbarDecorator myDecorator;
   private JBCheckBox mySharedCheckBox;
 
   public ProjectStartupConfigurable(Project project) {
     myProject = project;
-    myConfiguration = ProjectStartupTaskManager.getInstance(myProject);
   }
 
   @NotNull
@@ -97,6 +96,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public JComponent createComponent() {
+    myProjectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
+
     myTree = new Tree();
     installRenderer();
     myDecorator = ToolbarDecorator.createDecorator(myTree)
@@ -291,23 +292,24 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    if (mySharedCheckBox.isSelected() != myConfiguration.isShared()) return true;
-    final List<RunnerAndConfigurationSettings> recorded = myConfiguration.getStartupConfigurations();
+    if (mySharedCheckBox.isSelected() != myProjectStartupTaskManager.isShared()) return true;
+    final List<RunnerAndConfigurationSettings> recorded = myProjectStartupTaskManager.getStartupConfigurations();
     final List<RunnerAndConfigurationSettings> current = ((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations();
     return ! Comparing.equal(recorded, current);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myConfiguration.setStartupConfigurations(((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations(), mySharedCheckBox.isSelected());
+    myProjectStartupTaskManager
+      .setStartupConfigurations(((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations(), mySharedCheckBox.isSelected());
   }
 
   @Override
   public void reset() {
-    final ProjectStartupTasksTreeModel model = new ProjectStartupTasksTreeModel(myConfiguration.getStartupConfigurations());
+    final ProjectStartupTasksTreeModel model = new ProjectStartupTasksTreeModel(myProjectStartupTaskManager.getStartupConfigurations());
     setModel(model);
-    mySharedCheckBox.setSelected(myConfiguration.isShared());
-    mySharedCheckBox.setEnabled(myConfiguration.isShared() || myConfiguration.canBeShared());
+    mySharedCheckBox.setSelected(myProjectStartupTaskManager.isShared());
+    mySharedCheckBox.setEnabled(myProjectStartupTaskManager.isShared() || myProjectStartupTaskManager.canBeShared());
     canBeSharedCheck(model);
 
     selectPathOrFirst(null);
