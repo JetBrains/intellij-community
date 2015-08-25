@@ -29,6 +29,8 @@ import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -220,7 +222,11 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private void verifyJavaDoc(final PsiElement field) throws IOException {
-    String docInfo = new JavaDocInfoGenerator(getProject(), field).generateDocInfo(null);
+    verifyJavaDoc(field, null);
+  }
+
+  private void verifyJavaDoc(final PsiElement field, List<String> docUrls) throws IOException {
+    String docInfo = new JavaDocInfoGenerator(getProject(), field).generateDocInfo(docUrls);
     assertNotNull(docInfo);
     assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
   }
@@ -290,6 +296,12 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiClass psiClass = ((PsiJavaFile)myFile).getClasses()[1];
     PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
+  }
+  
+  public void testDocumentationForJdkClassWhenExternalDocIsNotAvailable() throws Exception {
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("java.lang.String", GlobalSearchScope.allScope(myProject));
+    assertNotNull(aClass);
+    verifyJavaDoc(aClass, Collections.singletonList("dummyUrl"));
   }
 
   @Override

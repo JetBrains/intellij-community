@@ -29,6 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -383,21 +385,50 @@ public class JavaDocInfoGenerator {
       return null;
 
     if (docURLs != null) {
-      if (buffer.length() == 0) {
-        buffer.append("<html><body></body></html>");
+      if (elementHasSourceCode()) {
+        LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
-      String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
-                   StringUtil.join(docURLs, new Function<String, String>() {
-                     @Override
-                     public String fun(String url) {
-                       return XmlStringUtil.escapeString(url);
-                     }
-                   }, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
-                   "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
-                   "<a href=\"open://Project Settings\">Project Settings.</a></p>";
-      buffer.insert(buffer.indexOf("<body>"), errorSection);
+      else {
+        if (buffer.length() == 0) {
+          buffer.append("<html><body></body></html>");
+        }
+        String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
+                              StringUtil.join(docURLs, new Function<String, String>() {
+                                @Override
+                                public String fun(String url) {
+                                  return XmlStringUtil.escapeString(url);
+                                }
+                              }, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
+                              "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
+                              "<a href=\"open://Project Settings\">Project Settings.</a></p>";
+        buffer.insert(buffer.indexOf("<body>"), errorSection);
+      }
     }
     return fixupDoc(buffer);
+  }
+
+  private boolean elementHasSourceCode() {
+    VirtualFile[] files;
+    if (myElement instanceof PsiDirectory) {
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myElement);
+      if (aPackage == null) return false;
+      files = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(aPackage.getQualifiedName(), true);
+    }
+    else if (myElement instanceof PsiPackage) {
+      files = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(((PsiPackage)myElement).getQualifiedName(), true);
+    }
+    else {
+      PsiFile containingFile = myElement.getNavigationElement().getContainingFile();
+      if (containingFile == null) return false;
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile == null) return false;
+      files = new VirtualFile[] {virtualFile};
+    }
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+    for (VirtualFile file : files) {
+      if (projectFileIndex.isInSource(file)) return true;
+    }
+    return false;
   }
 
   private void generateClassJavaDoc(@NonNls StringBuilder buffer, PsiClass aClass, boolean generatePrologueAndEpilogue) {
