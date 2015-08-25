@@ -37,7 +37,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   volatile var writeAndDeleteProhibited = false
     private set
 
-  public fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
+  public fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
     var exception: Throwable? = null
     var restartApplication = false
     var updateResult: UpdateResult? = null

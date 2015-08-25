@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.path
 import com.intellij.util.PathUtilRt
 import org.assertj.core.api.Assertions.assertThat
@@ -37,6 +38,7 @@ import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.resetHard
+import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
 import java.util.Arrays
@@ -48,7 +50,11 @@ object AM {
   val MARKER_ACCEPT_THEIRS: ByteArray = "__accept theirs__".toByteArray()
 }
 
-class GitTest : TestCase() {
+class GitTest : IcsTestCase() {
+  companion object {
+    @ClassRule val projectRule = ProjectRule()
+  }
+
   private val repositoryManager: GitRepositoryManager
     get() = icsManager.repositoryManager as GitRepositoryManager
 
@@ -403,6 +409,6 @@ class GitTest : TestCase() {
   }
 
   private fun sync(syncType: SyncType) {
-    icsManager.sync(syncType, fixtureManager.projectFixture.getProject())
+    icsManager.sync(syncType)
   }
 }

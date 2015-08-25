@@ -151,7 +151,7 @@ class IcsManager(dir: File) {
     }
   }
 
-  fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
+  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
 
   private fun cancelAndDisableAutoCommit() {
     if (autoCommitEnabled) {

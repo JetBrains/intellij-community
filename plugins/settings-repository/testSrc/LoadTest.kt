@@ -19,6 +19,7 @@ import com.intellij.configurationStore.SchemeManagerImpl
 import com.intellij.configurationStore.TestScheme
 import com.intellij.configurationStore.TestSchemesProcessor
 import com.intellij.openapi.components.RoamingType
+import com.intellij.testFramework.ProjectRule
 import com.intellij.util.xmlb.serialize
 import com.intellij.util.xmlb.toByteArray
 import org.assertj.core.api.Assertions.assertThat
@@ -26,15 +27,20 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.ReadonlySource
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
+import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
 
-class LoadTest : TestCase() {
+class LoadTest : IcsTestCase() {
+  companion object {
+    @ClassRule val projectRule = ProjectRule()
+  }
+
   private val dirPath = "\$ROOT_CONFIG$/keymaps"
 
   private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), RoamingType.PER_USER, provider, tempDirManager.newDirectory("schemes"))
 
-  public Test fun `load scheme`() {
+  @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
     val data = localScheme.serialize().toByteArray()
     provider.write("$dirPath/local.xml", data)
@@ -44,7 +50,7 @@ class LoadTest : TestCase() {
     assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
   }
 
-  public Test fun `load scheme with the same names`() {
+  @Test fun `load scheme with the same names`() {
     val localScheme = TestScheme("local")
     val data = localScheme.serialize().toByteArray()
     provider.write("$dirPath/local.xml", data)
@@ -55,7 +61,7 @@ class LoadTest : TestCase() {
     assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
   }
 
-  public Test fun `load scheme from repo and read-only repo`() {
+  @Test fun `load scheme from repo and read-only repo`() {
     val localScheme = TestScheme("local")
 
     provider.write("$dirPath/local.xml", localScheme.serialize().toByteArray())
@@ -75,7 +81,7 @@ class LoadTest : TestCase() {
     }
   }
 
-  public Test fun `scheme overrides read-only`() {
+  @Test fun `scheme overrides read-only`() {
     val schemeName = "Emacs"
     val localScheme = TestScheme(schemeName, "local")
 

@@ -18,7 +18,6 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import org.eclipse.jgit.lib.Repository
@@ -27,7 +26,6 @@ import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.git
 import org.junit.Rule
-import org.junit.rules.TestRule
 import java.io.File
 import kotlin.properties.Delegates
 
@@ -48,13 +46,9 @@ fun Repository.add(data: ByteArray, path: String): Repository {
   return this
 }
 
-abstract class TestCase {
-  val fixtureManager = FixtureRule()
-
+abstract class IcsTestCase {
   val tempDirManager = TemporaryDirectory()
-  public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
-
-  public Rule fun getFixtureRule(): TestRule = fixtureManager
+  @Rule fun getTemporaryFolder() = tempDirManager
 
   val icsManager by Delegates.lazy {
     val icsManager = IcsManager(tempDirManager.newDirectory())
