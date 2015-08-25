@@ -1335,6 +1335,7 @@ public class InferenceSession {
    */
   public static boolean isMoreSpecific(PsiMethod m1,
                                        PsiMethod m2,
+                                       PsiSubstitutor siteSubstitutor1, 
                                        PsiExpression[] args,
                                        PsiElement context,
                                        boolean varargs) {
@@ -1342,7 +1343,10 @@ public class InferenceSession {
     for (PsiTypeParameter param : PsiUtil.typeParametersIterable(m2)) {
       params.add(param);
     }
-    final InferenceSession session = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), PsiSubstitutor.EMPTY, m2.getManager(), context);
+
+    siteSubstitutor1 = getSiteSubstitutor(siteSubstitutor1, params);
+
+    final InferenceSession session = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), siteSubstitutor1, m2.getManager(), context);
 
     final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
     final PsiParameter[] parameters2 = m2.getParameterList().getParameters();
@@ -1352,8 +1356,8 @@ public class InferenceSession {
 
     final int paramsLength = !varargs ? parameters1.length : parameters1.length - 1;
     for (int i = 0; i < paramsLength; i++) {
-      PsiType sType = getParameterType(parameters1, i, PsiSubstitutor.EMPTY, false);
-      PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, PsiSubstitutor.EMPTY, varargs));
+      PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
+      PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
       if (LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) && !relates(sType, tType)) {
         if (!isFunctionalTypeMoreSpecific(sType, tType, session, args[i])) {
           return false;
@@ -1369,12 +1373,20 @@ public class InferenceSession {
     }
 
     if (varargs) {
-      PsiType sType = getParameterType(parameters1, paramsLength, PsiSubstitutor.EMPTY, true);
-      PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, paramsLength, PsiSubstitutor.EMPTY, true));
+      PsiType sType = getParameterType(parameters1, paramsLength, siteSubstitutor1, true);
+      PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, paramsLength, siteSubstitutor1, true));
       session.addConstraint(new StrictSubtypingConstraint(tType, sType));
     }
 
     return session.repeatInferencePhases(true);
+  }
+
+  private static PsiSubstitutor getSiteSubstitutor(PsiSubstitutor siteSubstitutor1, List<PsiTypeParameter> params) {
+    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+    for (PsiTypeParameter param : params) {
+      subst = subst.put(param, siteSubstitutor1.substitute(param));
+    }
+    return subst;
   }
 
   /**
