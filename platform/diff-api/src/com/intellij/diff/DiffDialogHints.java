@@ -16,11 +16,9 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.util.BooleanGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class DiffDialogHints {
@@ -35,8 +33,6 @@ public class DiffDialogHints {
 
   @Nullable private final WindowWrapper.Mode myMode;
   @Nullable private Component myParent;
-  @Nullable private BooleanGetter myOkAction;
-  @Nullable private BooleanGetter myCancelAction;
 
   public DiffDialogHints(@Nullable WindowWrapper.Mode mode) {
     this(mode, null);
@@ -51,14 +47,6 @@ public class DiffDialogHints {
     myParent = value;
   }
 
-  public void setOkAction(@Nullable BooleanGetter value) {
-    myOkAction = value;
-  }
-
-  public void setCancelAction(@Nullable BooleanGetter value) {
-    myCancelAction = value;
-  }
-
   //
   // Getters
   //
@@ -71,15 +59,5 @@ public class DiffDialogHints {
   @Nullable
   public Component getParent() {
     return myParent;
-  }
-
-  @Nullable
-  public BooleanGetter getOkAction() {
-    return myOkAction;
-  }
-
-  @Nullable
-  public BooleanGetter getCancelAction() {
-    return myCancelAction;
   }
 }
