@@ -400,14 +400,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @NotNull
-  private List<SectionField> getParameterFields() {
+  public List<SectionField> getParameterFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
-    for (Section section : mySections) {
-      if (section.getNormalizedTitle().equals(PARAMETERS_SECTION)) {
-        for (SectionField field : section.getFields()) {
-          result.add(field);
-        }
-      }
+    for (Section section : getSectionsWithNormalizedTitle(PARAMETERS_SECTION)) {
+      result.addAll(section.getFields());
     }
     return result;
   }
@@ -445,14 +441,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @NotNull
-  private List<SectionField> getKeywordArgumentFields() {
+  public List<SectionField> getKeywordArgumentFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
-    for (Section section : mySections) {
-      if (section.getNormalizedTitle().equals(KEYWORD_ARGUMENTS_SECTION)) {
-        for (SectionField field : section.getFields()) {
-          result.add(field);
-        }
-      }
+    for (Section section : getSectionsWithNormalizedTitle(KEYWORD_ARGUMENTS_SECTION)) {
+      result.addAll(section.getFields());
     }
     return result;
   }
@@ -488,14 +480,19 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return field != null ? field.getDescription() : null;
   }
 
+
+  @NotNull
+  public List<SectionField> getReturnFields() {
+    final List<SectionField> result = new ArrayList<SectionField>();
+    for (Section section : getSectionsWithNormalizedTitle(RETURNS_SECTION)) {
+      result.addAll(section.getFields());
+    }
+    return result;
+  }
+  
   @Nullable
   private SectionField getFirstReturnField() {
-    for (Section section : mySections) {
-      if (section.getNormalizedTitle().equals(RETURNS_SECTION) && !section.getFields().isEmpty()) {
-        return section.getFields().get(0);
-      }
-    }
-    return null;
+    return ContainerUtil.getFirstItem(getReturnFields());
   }
 
   @Override
@@ -521,12 +518,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @NotNull
-  private List<SectionField> getExceptionFields() {
+  public List<SectionField> getExceptionFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
-    for (Section section : mySections) {
-      if (section.getNormalizedTitle().equals(RAISES_SECTION)) {
-        result.addAll(section.getFields());
-      }
+    for (Section section : getSectionsWithNormalizedTitle(RAISES_SECTION)) {
+      result.addAll(section.getFields());
     }
     return result;
   }
@@ -537,6 +532,25 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       @Override
       public boolean value(SectionField field) {
         return exceptionType.equals(field.getType());
+      }
+    });
+  }
+
+  @NotNull
+  public List<SectionField> getAttributeFields() {
+    final List<SectionField> result = new ArrayList<SectionField>();
+    for (Section section : getSectionsWithNormalizedTitle(ATTRIBUTES_SECTION)) {
+      result.addAll(section.getFields());
+    }
+    return result;
+  }
+
+  @NotNull
+  private List<Section> getSectionsWithNormalizedTitle(@NotNull final String title) {
+    return ContainerUtil.mapNotNull(mySections, new Function<Section, Section>() {
+      @Override
+      public Section fun(Section section) {
+        return section.getNormalizedTitle().equals(title) ? section : null;
       }
     });
   }

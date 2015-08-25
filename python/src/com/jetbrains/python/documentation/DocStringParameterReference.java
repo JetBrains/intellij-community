@@ -41,12 +41,14 @@ import java.util.Set;
  * @author yole
  */
 public class DocStringParameterReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
-  private final TagBasedDocString.ReferenceType myType;
+  private final ReferenceType myType;
 
-  public DocStringParameterReference(PyStringLiteralExpression element, TextRange range, TagBasedDocString.ReferenceType refType) {
+  public DocStringParameterReference(PyStringLiteralExpression element, TextRange range, ReferenceType refType) {
     super(element, range);
     myType = refType;
   }
+
+  public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE}
 
   @Override
   public PsiElement resolve() {
@@ -58,20 +60,20 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
       final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false);
       if (init != null) {
         PsiElement element = resolveParameter(init);
-        if (element == null && (myType.equals(TagBasedDocString.ReferenceType.CLASS_VARIABLE) ||
-                                myType.equals(TagBasedDocString.ReferenceType.PARAMETER_TYPE)))
+        if (element == null && (myType.equals(ReferenceType.CLASS_VARIABLE) ||
+                                myType.equals(ReferenceType.PARAMETER_TYPE)))
           element = resolveClassVariable((PyClass)owner);
-        if (element == null && (myType.equals(TagBasedDocString.ReferenceType.INSTANCE_VARIABLE) ||
-                                myType.equals(TagBasedDocString.ReferenceType.PARAMETER_TYPE)))
+        if (element == null && (myType.equals(ReferenceType.INSTANCE_VARIABLE) ||
+                                myType.equals(ReferenceType.PARAMETER_TYPE)))
           element = resolveInstanceVariable((PyClass)owner);
         return element;
       }
       else {
-        if (myType.equals(TagBasedDocString.ReferenceType.CLASS_VARIABLE) ||
-            myType.equals(TagBasedDocString.ReferenceType.PARAMETER_TYPE))
+        if (myType.equals(ReferenceType.CLASS_VARIABLE) ||
+            myType.equals(ReferenceType.PARAMETER_TYPE))
           return resolveClassVariable((PyClass)owner);
-        if (myType.equals(TagBasedDocString.ReferenceType.INSTANCE_VARIABLE) ||
-            myType.equals(TagBasedDocString.ReferenceType.PARAMETER_TYPE))
+        if (myType.equals(ReferenceType.INSTANCE_VARIABLE) ||
+            myType.equals(ReferenceType.PARAMETER_TYPE))
           return resolveInstanceVariable((PyClass)owner);
       }
     }
@@ -141,8 +143,8 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
-  
-  public TagBasedDocString.ReferenceType getType() {
+
+  public ReferenceType getType() {
     return myType;
   }
 

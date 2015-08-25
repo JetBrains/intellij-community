@@ -52,8 +52,6 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   @NotNull
   private final String myTagPrefix;
 
-  public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE}
-
   public static String TYPE = "type";
 
   protected TagBasedDocString(@NotNull Substring docStringText, @NotNull String tagPrefix) {

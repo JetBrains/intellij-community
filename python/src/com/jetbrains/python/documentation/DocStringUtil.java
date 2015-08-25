@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -29,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -80,7 +78,7 @@ public class DocStringUtil {
 
   @NotNull
   public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull ASTNode node) {
-    Preconditions.checkArgument(node.getElementType() == PyTokenTypes.DOCSTRING);
+    //Preconditions.checkArgument(node.getElementType() == PyTokenTypes.DOCSTRING);
     return parseDocString(format, node.getText());
   }
 
