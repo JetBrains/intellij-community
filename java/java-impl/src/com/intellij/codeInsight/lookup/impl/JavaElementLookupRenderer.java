@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
@@ -34,8 +33,7 @@ import java.util.List;
 public class JavaElementLookupRenderer implements ElementLookupRenderer {
   @Override
   public boolean handlesItem(final Object element) {
-    return element instanceof PsiVariable ||
-           element instanceof PsiKeyword || element instanceof PsiExpression ||
+    return element instanceof PsiKeyword || element instanceof PsiExpression ||
            element instanceof PsiTypeElement || element instanceof BeanPropertyElement;
   }
 
@@ -69,18 +67,6 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
         }
       }
     }
-    else if (o instanceof PsiArrayType) {
-      name = ((PsiArrayType)o).getDeepComponentType().getPresentableText();
-    }
-    else if (o instanceof PsiType) {
-      name = ((PsiType)o).getPresentableText();
-    }
-
-    if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {
-      if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
-        name = ((PsiMember)o).getContainingClass().getName() + "." + name;
-      }
-    }
 
     return StringUtil.notNullize(name);
   }
@@ -91,15 +77,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
-        if (element instanceof PsiVariable){
-          PsiVariable variable = (PsiVariable)element;
-          PsiType type = variable.getType();
-          if (item instanceof VariableLookupItem) {
-            type = ((VariableLookupItem)item).getSubstitutor().substitute(type);
-          }
-          text = type.getPresentableText();
-        }
-        else if (element instanceof PsiExpression){
+        if (element instanceof PsiExpression){
           PsiExpression expression = (PsiExpression)element;
           PsiType type = expression.getType();
           if (type != null){
