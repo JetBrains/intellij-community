@@ -59,7 +59,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
                 // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
               }
               catch (e: ProcessCanceledException) {
-                LOG.debug("Canceled")
+                LOG.warn("Canceled")
                 return
               }
               catch (e: Throwable) {
@@ -104,7 +104,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               return
             }
             catch (e: Throwable) {
-              if (e !is AuthenticationException && e !is NoRemoteRepositoryException) {
+              if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
                 LOG.error(e)
               }
               exception = e
@@ -189,3 +189,7 @@ enum class SyncType {
   OVERWRITE_LOCAL,
   OVERWRITE_REMOTE
 }
+
+class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
+
+class CannotResolveConflictInTestMode() : RuntimeException()
