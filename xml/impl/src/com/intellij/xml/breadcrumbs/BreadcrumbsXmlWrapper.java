@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.ui.UISettings;
@@ -33,6 +32,7 @@ import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -80,7 +80,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<BreadcrumbsXmlWrapper>("BREADCRUMBS_KEY");
 
-  public BreadcrumbsXmlWrapper(@NotNull final Editor editor, @NotNull WebEditorOptions webEditorOptions) {
+  public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
     myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, this);
 
@@ -112,7 +112,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }, this);
 
 
-    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject), webEditorOptions);
+    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
 
     final CaretListener caretListener = new CaretAdapter() {
       @Override
@@ -359,9 +359,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider, @NotNull WebEditorOptions webEditorOptions) {
+  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
     BreadcrumbsInfoProvider provider = null;
-    if (webEditorOptions.isBreadcrumbsEnabled() && viewProvider != null) {
+    if (EditorSettingsExternalizable.getInstance().isBreadcrumbsShown() && viewProvider != null) {
       final Language baseLang = viewProvider.getBaseLanguage();
       provider = getInfoProvider(baseLang);
       if (provider == null) {
