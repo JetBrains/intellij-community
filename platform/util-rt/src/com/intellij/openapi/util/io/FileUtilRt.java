@@ -331,7 +331,7 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    return createTempFile(prefix, suffix, true); // deleteOnExit by default
+    return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
   }
 
   @NotNull
@@ -360,6 +360,7 @@ public class FileUtilRt {
                                     boolean create, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(dir, prefix, suffix, false);
     if (deleteOnExit) {
+      //noinspection SSBasedInspection
       file.deleteOnExit();
     }
     if (!create) {
