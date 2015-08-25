@@ -17,7 +17,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.*
 import com.intellij.util.SmartList
@@ -58,7 +57,7 @@ class ApplicationStoreTest {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
-    componentStore.storageManager.setStreamProvider(streamProvider)
+    componentStore.storageManager.streamProvider = streamProvider
 
     componentStore.initComponent(component, false)
     component.foo = "newValue"
@@ -76,7 +75,7 @@ class ApplicationStoreTest {
     map.put(fileSpec, "<application>\n  <component name=\"HttpConfigurable\">\n    <option name=\"foo\" value=\"newValue\" />\n  </component>\n</application>")
     streamProvider.data.put(RoamingType.PER_USER, map)
 
-    componentStore.storageManager.setStreamProvider(streamProvider)
+    componentStore.storageManager.streamProvider = streamProvider
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 

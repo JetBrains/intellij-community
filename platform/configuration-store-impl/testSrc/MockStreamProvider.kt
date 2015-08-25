@@ -1,7 +1,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SmartList
 import java.io.File

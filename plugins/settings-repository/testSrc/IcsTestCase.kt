@@ -15,8 +15,8 @@
  */
 package org.jetbrains.settingsRepository.test
 
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory

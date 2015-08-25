@@ -22,7 +22,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -56,7 +55,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   private val storageLock = ReentrantLock()
   private val storages = THashMap<String, StateStorage>()
 
-  private var streamProvider: StreamProvider? = null
+  public var streamProvider: StreamProvider? = null
 
   // access under storageLock
   private var isUseVfsListener = if (componentManager == null) ThreeState.NO else ThreeState.UNSURE // unsure because depends on stream provider state
@@ -84,12 +83,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
         tracker
       }
     }
-  }
-
-  override final fun getStreamProvider() = streamProvider
-
-  override final fun setStreamProvider(value: StreamProvider?) {
-    streamProvider = value
   }
 
   override final fun getMacroSubstitutor() = pathMacroSubstitutor

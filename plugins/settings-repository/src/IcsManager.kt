@@ -15,6 +15,8 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -22,7 +24,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -135,7 +136,7 @@ class IcsManager(dir: File) {
       return
     }
 
-    storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
+//    storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
     // updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames())
   }
 
@@ -174,7 +175,7 @@ class IcsManager(dir: File) {
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    application.stateStore.getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
+    (application.stateStore.getStateStorageManager() as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
 
     autoSyncManager.registerListeners(application)
 
