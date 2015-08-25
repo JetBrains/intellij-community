@@ -260,9 +260,6 @@ public class CompletionData {
     if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold()) {
       item.setBold();
     }
-    if (object instanceof LookupValueWithTail) {
-      item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
-    }
     item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
     return item;
   }

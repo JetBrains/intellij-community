@@ -40,9 +40,6 @@ import java.util.Collection;
 public class LookupItemUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
 
-  private LookupItemUtil() {
-  }
-
   @Nullable
   public static LookupElement addLookupItem(Collection<LookupElement> set, @NotNull Object object) {
     return addLookupItem(set, object, new CamelHumpMatcher(""));
@@ -123,9 +120,6 @@ public class LookupItemUtil{
 
     if (s == null) {
       LOG.error("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));
-    }
-    if (object instanceof LookupValueWithTail) {
-      item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
     }
     item.setLookupString(s);
 
