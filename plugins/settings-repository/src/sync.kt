@@ -55,7 +55,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
             if (localRepositoryInitializer == null) {
               try {
                 // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
-                repositoryManager.commitIfCan(indicator)
+                repositoryManager.commit(indicator, syncType)
                 // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
               }
               catch (e: ProcessCanceledException) {

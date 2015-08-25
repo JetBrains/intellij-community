@@ -24,10 +24,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import org.eclipse.jgit.api.AddCommand
+import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
 import org.jetbrains.jgit.dirCache.AddLoadedFile
@@ -110,7 +112,37 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator?) = lock.write { commit(this, indicator) }
+  override fun commit(indicator: ProgressIndicator?, syncType: SyncType?): Boolean {
+    lock.write {
+      try {
+        // will be reset if OVERWRITE_LOCAL, so, we should not fix state in this case
+        return commitIfCan(indicator, if (syncType == SyncType.OVERWRITE_LOCAL) repository.getRepositoryState() else repository.fixAndGetState())
+      }
+      catch (e: UnmergedPathsException) {
+        if (syncType == SyncType.OVERWRITE_LOCAL) {
+          LOG.warn("Unmerged detected, ignored because sync type is OVERWRITE_LOCAL", e)
+          return false
+        }
+        else {
+          indicator?.checkCanceled()
+          LOG.warn("Unmerged detected, will be attempted to resolve", e)
+          resolveUnmergedConflicts(repository)
+          indicator?.checkCanceled()
+          return commitIfCan(indicator, repository.fixAndGetState())
+        }
+      }
+    }
+  }
+
+  private fun commitIfCan(indicator: ProgressIndicator?, state: RepositoryState): Boolean {
+    if (state.canCommit()) {
+      return commit(this, indicator)
+    }
+    else {
+      LOG.warn("Cannot commit, repository in state ${state.getDescription()}")
+      return false
+    }
+  }
 
   override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
 

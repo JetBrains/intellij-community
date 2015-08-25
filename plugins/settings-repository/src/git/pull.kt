@@ -55,28 +55,10 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
     LOG.debug("Pull")
 
-    val repository = manager.repository
-    var repositoryState = repository.getRepositoryState()
-    if (repositoryState == RepositoryState.MERGING) {
-      val conflicts = LinkedHashMap<String, Array<ByteArray?>>()
-      val dirCache = repository.readDirCache()
-      val reader = repository.newObjectReader()
-      reader.use {
-        for (i in 0..(dirCache.getEntryCount() - 1)) {
-          val entry = dirCache.getEntry(i)
-          if (!entry.isMerged()) {
-            conflicts.getOrPut(entry.getPathString(), { arrayOfNulls<ByteArray>(3) })[entry.getStage() - 1] = reader.open(entry.getObjectId(), Constants.OBJ_BLOB).getCachedBytes()
-          }
-        }
-      }
-
-      resolveConflicts(JGitMergeProvider(repository, conflicts, { path, index -> get(path)!!.get(index) }), conflictsToVirtualFiles(conflicts), repository)
-      // compute new state
-      repositoryState = repository.getRepositoryState()
-    }
-
-    if (repositoryState != RepositoryState.SAFE) {
-      LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))
+    val state = manager.repository.fixAndGetState()
+    if (!state.canCheckout()) {
+      LOG.error("Cannot pull, repository in state ${state.getDescription()}")
+      return null
     }
 
     var refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
@@ -87,7 +69,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     }
 
     if (mergeStatus == MergeStatus.CONFLICTING) {
-      return resolveConflicts(mergeResult, repository)
+      return resolveConflicts(mergeResult, manager.repository)
     }
     else if (!mergeStatus.isSuccessful()) {
       throw IllegalStateException(mergeResult.toString())
@@ -180,7 +162,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         if (refUpdate.update() != RefUpdate.Result.NEW) {
           throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
         }
-        return MergeResultEx(srcCommit, MergeStatus.FAST_FORWARD, arrayOf<ObjectId?>(null, srcCommit), ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved()))
+        return MergeResultEx(MergeStatus.FAST_FORWARD, arrayOf<ObjectId?>(null, srcCommit), ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved()))
       }
 
       val refLogMessage = StringBuilder("merge ")
@@ -188,7 +170,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
       val headCommit = revWalk.lookupCommit(headId)
       if (!forceMerge && revWalk.isMergedInto(srcCommit, headCommit)) {
-        return MergeResultEx(headCommit, MergeStatus.ALREADY_UP_TO_DATE, arrayOf<ObjectId?>(headCommit, srcCommit), EMPTY_UPDATE_RESULT)
+        return MergeResultEx(MergeStatus.ALREADY_UP_TO_DATE, arrayOf<ObjectId?>(headCommit, srcCommit), EMPTY_UPDATE_RESULT)
         //return MergeResult(headCommit, srcCommit, array(headCommit, srcCommit), MergeStatus.ALREADY_UP_TO_DATE, mergeStrategy, null)
       }
       else if (!forceMerge && fastForwardMode != FastForwardMode.NO_FF && revWalk.isMergedInto(headCommit, srcCommit)) {
@@ -197,24 +179,21 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         dirCacheCheckout = DirCacheCheckout(repository, headCommit.getTree(), repository.lockDirCache(), srcCommit.getTree())
         dirCacheCheckout.setFailOnConflict(true)
         dirCacheCheckout.checkout()
-        val newHead: ObjectId
         val mergeStatus: MergeStatus
         if (squash) {
-          newHead = headId
           mergeStatus = MergeStatus.FAST_FORWARD_SQUASHED
           val squashedCommits = RevWalkUtils.find(revWalk, srcCommit, headCommit)
           repository.writeSquashCommitMsg(SquashMessageFormatter().format(squashedCommits, head))
         }
         else {
           updateHead(refLogMessage, srcCommit, headId, repository)
-          newHead = srcCommit
           mergeStatus = MergeStatus.FAST_FORWARD
         }
-        return MergeResultEx(newHead, mergeStatus, arrayOf<ObjectId?>(headCommit, srcCommit), ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved()))
+        return MergeResultEx(mergeStatus, arrayOf<ObjectId?>(headCommit, srcCommit), ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved()))
       }
       else {
         if (fastForwardMode == FastForwardMode.FF_ONLY) {
-          return MergeResultEx(headCommit, MergeStatus.ABORTED, arrayOf<ObjectId?>(headCommit, srcCommit), EMPTY_UPDATE_RESULT)
+          return MergeResultEx(MergeStatus.ABORTED, arrayOf<ObjectId?>(headCommit, srcCommit), EMPTY_UPDATE_RESULT)
         }
 
         val mergeMessage: String
@@ -257,7 +236,6 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             result = ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved())
           }
 
-          var newHeadId: ObjectId? = null
           var mergeStatus: MergeResult.MergeStatus? = null
           if (!commit && squash) {
             mergeStatus = MergeResult.MergeStatus.MERGED_SQUASHED_NOT_COMMITTED
@@ -266,23 +244,22 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             mergeStatus = MergeResult.MergeStatus.MERGED_NOT_COMMITTED
           }
           if (commit && !squash) {
-            newHeadId = repository.commit(commitMessage, refLogMessage.toString()).getId()
+            repository.commit(commitMessage, refLogMessage.toString()).getId()
             mergeStatus = MergeResult.MergeStatus.MERGED
           }
           if (commit && squash) {
-            newHeadId = headCommit.getId()
             mergeStatus = MergeResult.MergeStatus.MERGED_SQUASHED
           }
-          return MergeResultEx(newHeadId, mergeStatus!!, arrayOf(headCommit.getId(), srcCommit.getId()), result!!)
+          return MergeResultEx(mergeStatus!!, arrayOf(headCommit.getId(), srcCommit.getId()), result!!)
         }
         else if (failingPaths == null) {
           repository.writeMergeCommitMsg(MergeMessageFormatter().formatWithConflicts(mergeMessage, unmergedPaths))
-          return MergeResultEx(null, MergeResult.MergeStatus.CONFLICTING, arrayOf(headCommit.getId(), srcCommit.getId()), result!!, lowLevelResults)
+          return MergeResultEx(MergeResult.MergeStatus.CONFLICTING, arrayOf(headCommit.getId(), srcCommit.getId()), result!!, lowLevelResults)
         }
         else {
           repository.writeMergeCommitMsg(null)
           repository.writeMergeHeads(null)
-          return MergeResultEx(null, MergeResult.MergeStatus.FAILED, arrayOf(headCommit.getId(), srcCommit.getId()), result!!, lowLevelResults)
+          return MergeResultEx(MergeResult.MergeStatus.FAILED, arrayOf(headCommit.getId(), srcCommit.getId()), result!!, lowLevelResults)
         }
       }
     }
@@ -295,7 +272,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   }
 }
 
-class MergeResultEx(val newHead: ObjectId?, val mergeStatus: MergeStatus, val mergedCommits: Array<ObjectId?>, val result: ImmutableUpdateResult, val conflicts: Map<String, org.eclipse.jgit.merge.MergeResult<out Sequence>>? = null)
+class MergeResultEx(val mergeStatus: MergeStatus, val mergedCommits: Array<ObjectId?>, val result: ImmutableUpdateResult, val conflicts: Map<String, org.eclipse.jgit.merge.MergeResult<out Sequence>>? = null)
 
 private fun updateHead(refLogMessage: StringBuilder, newHeadId: ObjectId, oldHeadID: ObjectId, repository: Repository) {
   val refUpdate = repository.updateRef(Constants.HEAD)
@@ -340,7 +317,33 @@ private fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolv
     }
   }
 
+  // merge commit template will be used, so, we don't have to specify commit message explicitly
   repository.commit()
 
   return mergedFiles
+}
+
+private fun Repository.fixAndGetState(): RepositoryState {
+  var state = getRepositoryState()
+  if (state == RepositoryState.MERGING) {
+    resolveUnmergedConflicts(this)
+    // compute new state
+    state = getRepositoryState()
+  }
+  return state
+}
+
+private fun resolveUnmergedConflicts(repository: Repository) {
+  val conflicts = LinkedHashMap<String, Array<ByteArray?>>()
+  repository.newObjectReader().use { reader ->
+    val dirCache = repository.readDirCache()
+    for (i in 0..(dirCache.getEntryCount() - 1)) {
+      val entry = dirCache.getEntry(i)
+      if (!entry.isMerged()) {
+        conflicts.getOrPut(entry.getPathString(), { arrayOfNulls<ByteArray>(3) })[entry.getStage() - 1] = reader.open(entry.getObjectId(), Constants.OBJ_BLOB).getCachedBytes()
+      }
+    }
+  }
+
+  resolveConflicts(JGitMergeProvider(repository, conflicts, { path, index -> get(path)!!.get(index) }), conflictsToVirtualFiles(conflicts), repository)
 }
