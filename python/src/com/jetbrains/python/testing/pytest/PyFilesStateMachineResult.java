@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.jetbrains.python.testing.pytest;
 
 /**
- * <h1>A pack of test output parsers.</h1>
- * <p>
- * Each parser knows how to parse test output to fetch file links from stack traces.
- * All parsers should extend {@link com.jetbrains.python.traceBackParsers.TraceBackParser} and be installed to
- * {@link com.jetbrains.python.traceBackParsers.TraceBackParserAdapter#PARSERS} while this functionality has no EP.
- * </p>
+ * Results for {@link PyFilesStateMachine}
+ *
+ * @author Ilya.Kazakevich
  */
-package com.jetbrains.python.traceBackParsers;
+enum PyFilesStateMachineResult {
+  /**
+   * Discard this machine
+   */
+  FAILED,
+  /**
+   * Provide next char
+   */
+  IN_PROGRESS,
+  /**
+   * File found, you may get it
+   */
+  FINISHED
+}
