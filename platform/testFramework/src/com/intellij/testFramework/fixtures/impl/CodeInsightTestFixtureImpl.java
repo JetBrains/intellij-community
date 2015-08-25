@@ -1136,14 +1136,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
-  public Collection<GutterMark> findAllGutters(@NotNull final String filePath) {
+  public List<GutterMark> findAllGutters(@NotNull final String filePath) {
     configureByFilesInner(filePath);
     return findAllGutters();
   }
 
   @Override
   @NotNull
-  public Collection<GutterMark> findAllGutters() {
+  public List<GutterMark> findAllGutters() {
     final Project project = getProject();
     final SortedMap<Integer, List<GutterMark>> result = new TreeMap<Integer, List<GutterMark>>();
 

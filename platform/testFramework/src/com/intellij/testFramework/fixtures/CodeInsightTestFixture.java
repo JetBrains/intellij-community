@@ -472,9 +472,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Document getDocument(@NotNull PsiFile file);
 
   @NotNull
-  Collection<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
+  List<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
 
-  Collection<GutterMark> findAllGutters();
+  List<GutterMark> findAllGutters();
 
   void type(final char c);
 
