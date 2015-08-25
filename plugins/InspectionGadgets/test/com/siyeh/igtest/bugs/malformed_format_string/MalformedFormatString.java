@@ -1,7 +1,7 @@
 package com.siyeh.igtest.bugs.malformed_format_string;
 
 import java.util.Locale;
-
+import java.sql.Timestamp;
 
 public class MalformedFormatString {
 
@@ -46,5 +46,9 @@ public class MalformedFormatString {
     void shouldNotWarn() {
         String.format("%c", 0x10300);
         String charAsInt = String.format("%1$d %1$c", 10);  // int followed by char should be ok too.
+    }
+
+    String timestamp(Timestamp ts) {
+        return String.format("%tF %tT", ts, ts);
     }
 }
