@@ -16,9 +16,11 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -89,7 +91,7 @@ public class Switcher extends AnAction implements DumbAware {
     public void run() {
       synchronized (Switcher.class) {
         if (SWITCHER != null) {
-          SWITCHER.navigate(false);
+          SWITCHER.navigate(null);
         }
       }
     }
@@ -226,7 +228,7 @@ public class Switcher extends AnAction implements DumbAware {
             jList.setSelectedIndex(jList.getAnchorSelectionIndex());
           }
           if (jList.getSelectedIndex() != -1) {
-            navigate(false);
+            navigate(e);
           }
         }
         return true;
@@ -646,7 +648,7 @@ public class Switcher extends AnAction implements DumbAware {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
       boolean enter = e.getKeyCode() == VK_ENTER;
       if (ctrl && isAutoHide() || enter) {
-        navigate(e.isShiftDown() && enter);
+        navigate(e);
       }
       else if (e.getKeyCode() == VK_LEFT) {
         goLeft();
@@ -850,10 +852,15 @@ public class Switcher extends AnAction implements DumbAware {
       return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
     }
 
-    void navigate(final boolean openInNewWindow) {
+    void navigate(final InputEvent e) {
+      final boolean openInNewWindow = e != null && e.isShiftDown() && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == VK_ENTER;
       final Object[] values = getSelectedList().getSelectedValues();
+      final String searchQuery = mySpeedSearch != null ? mySpeedSearch.getEnteredPrefix() : null;
       myPopup.cancel(null);
-      if (values.length > 0 && values[0] instanceof ToolWindow) {
+      if (values.length == 0) {
+        tryToOpenFileSearch(e, searchQuery);
+      }
+      else if (values[0] instanceof ToolWindow) {
         final ToolWindow toolWindow = (ToolWindow)values[0];
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
           @Override
@@ -887,6 +894,39 @@ public class Switcher extends AnAction implements DumbAware {
                 }
               }
             }
+          }
+        });
+      }
+    }
+
+    private void tryToOpenFileSearch(final InputEvent e, final String fileName) {
+      AnAction gotoFile = ActionManager.getInstance().getAction("GotoFile");
+      if (gotoFile != null && !StringUtil.isEmpty(fileName)) {
+        myPopup.cancel();
+        final AnAction action = gotoFile;
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+
+            DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
+              @Override
+              public void consume(@NotNull final DataContext context) {
+                final DataContext dataContext = new DataContext() {
+                  @Nullable
+                  @Override
+                  public Object getData(@NonNls String dataId) {
+                    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+                      return fileName;
+                    }
+                    return context.getData(dataId);
+                  }
+                };
+                final AnActionEvent event =
+                  new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
+                                    ActionManager.getInstance(), 0);
+                action.actionPerformed(event);
+              }
+            });
           }
         });
       }
@@ -966,7 +1006,7 @@ public class Switcher extends AnAction implements DumbAware {
       protected void processKeyEvent(@NotNull final KeyEvent e) {
         final int keyCode = e.getKeyCode();
         if (keyCode == VK_ENTER) {
-          SWITCHER.navigate(e.isShiftDown());
+          SWITCHER.navigate(e);
           e.consume();
           return;
         }
