@@ -73,22 +73,26 @@ public enum PythonHelper implements HelperPackage {
   SPHINX_RUNNER("rest_runners/sphinx_runner.py");
 
   @NotNull
-  private static PathHelperPackage findModule(String moduleEntryPoint, String path) {
+  private static PathHelperPackage findModule(String moduleEntryPoint, String path, boolean asModule) {
     if (getHelperFile(path + ".zip").isFile()) {
       return new ModuleHelperPackage(moduleEntryPoint, path + ".zip");
     }
 
-    if (getHelperFile(path).isDirectory()) {
-      return new ModuleHelperPackage(moduleEntryPoint, path);
+    if (!asModule && new File(getHelperFile(path), moduleEntryPoint + ".py").isFile()) {
+      return new ScriptPythonHelper(moduleEntryPoint + ".py", getHelperFile(path));
     }
 
-    return new ScriptPythonHelper(path, getHelpersRoot());
+    return new ModuleHelperPackage(moduleEntryPoint, path);
   }
 
   private PathHelperPackage myModule;
 
   PythonHelper(String pythonPath, String moduleName) {
-    myModule = findModule(moduleName, pythonPath);
+    this(pythonPath, moduleName, false);
+  }
+
+  PythonHelper(String pythonPath, String moduleName, boolean asModule) {
+    myModule = findModule(moduleName, pythonPath, asModule);
   }
 
   PythonHelper(String helperScript) {

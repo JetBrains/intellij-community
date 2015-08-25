@@ -61,9 +61,6 @@ def patch_args(args):
             return args
 
         for x in sys.original_argv:
-            if x.find('.zip') != -1 and x.find('pydevd.py') != -1:
-                x = "-mpydevd"
-
             if sys.platform == "win32" and not x.endswith('"'):
                 arg = '"%s"' % x
             else:
