@@ -25,6 +25,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This sdk updater class is a facade to Sdk to make changes in it in a reliable way.
+ * Working with sdk instance instead of this class can be wrong, because an instance can become
+ * obsolete being substituted in sdk table by a new one. Or already created sdk modificator can be committed,
+ * discarding the changes that we doing with the sdk.
+ *
+ *
+ * There are two ways of creation of the facade:
+ *  1) by sdk path - in this case we'll get the current actual sdk instance
+ * from sdk table by that path, creating and committing SdkModificator on every change
+ *  2) by sdkModificator - in that case we'll make changes to that modificator, but it is not committed,
+ *  because it has been created outside of the updater.
+ *
+ *
  * @author traff
  */
 public abstract class PySdkUpdater {
