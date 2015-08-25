@@ -155,7 +155,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
       entries
     );
     final MessageBus messageBus = project.getMessageBus();
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, autoImporter);
+    messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, autoImporter);
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(autoImporter, project);
   }
