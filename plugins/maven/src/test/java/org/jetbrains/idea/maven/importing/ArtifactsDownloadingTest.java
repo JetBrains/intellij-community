@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.util.Arrays;
@@ -273,6 +274,9 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     resolvePlugins();
 
     assertTrue(f.exists());
+
+    // do not lock files by maven process
+    MavenServerManager.getInstance().shutdown(true);
   }
 
   public void testDownloadBuildExtensionsOnResolve() throws Exception {

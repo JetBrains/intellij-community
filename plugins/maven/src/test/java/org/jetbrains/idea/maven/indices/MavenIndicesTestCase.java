@@ -16,6 +16,16 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 public abstract class MavenIndicesTestCase extends MavenImportingTestCase {
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 }
