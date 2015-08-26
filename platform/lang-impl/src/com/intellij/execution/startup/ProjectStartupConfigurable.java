@@ -27,11 +27,13 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
@@ -50,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -103,6 +106,16 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     defaultEditor.setClickCountToStart(1);
 
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final int row = myTable.getSelectedRow();
+        if (row >= 0 && myModel.isCellEditable(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)) {
+          myModel.setValueAt(! Boolean.TRUE.equals(myTable.getValueAt(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)),
+                             row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN);
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
 
     installRenderers();
     myDecorator = ToolbarDecorator.createDecorator(myTable)
