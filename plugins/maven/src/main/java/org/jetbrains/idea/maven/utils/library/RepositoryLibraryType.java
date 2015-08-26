@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,11 +66,6 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   public LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<RepositoryLibraryProperties> component) {
     return new RepositoryLibraryWithDescriptionEditor(component);
     //    return new RepositoryLibraryEditor(component, this);
-  }
-
-  @Override
-  public Icon getIcon() {
-    return MavenIcons.MavenLogo;
   }
 
   @Nullable

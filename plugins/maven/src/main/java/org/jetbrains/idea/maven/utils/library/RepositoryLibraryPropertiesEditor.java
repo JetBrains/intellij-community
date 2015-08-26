@@ -10,12 +10,15 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -30,6 +33,10 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   private VersionKind versionKind;
   private RepositoryLibraryProperties initialProperties;
   private RepositoryLibraryProperties properties;
+  private boolean initialDownloadSources;
+  private boolean downloadSources;
+  private boolean initialDownloadJavaDocs;
+  private boolean downloadJavaDocs;
   private RepositoryLibraryDescription repositoryLibraryDescription;
   private ComboBox versionKindSelector;
   private ComboBox versionSelector;
@@ -38,10 +45,16 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   private JPanel versionPanel;
   private JPanel failedToLoadPanel;
   private JPanel loadingPanel;
+  private JBCheckBox downloadSourcesCheckBox;
+  private JBCheckBox downloadJavaDocsCheckBox;
 
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
-                                           RepositoryLibraryProperties properties) {
+                                           boolean downloadSources,
+                                           boolean downloadJavaDocs,
+                                           @NotNull RepositoryLibraryProperties properties) {
     super(project);
+    this.downloadJavaDocs = this.initialDownloadJavaDocs = downloadJavaDocs;
+    this.downloadSources = this.initialDownloadSources = downloadSources;
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     this.initialProperties = properties;
     this.properties = new RepositoryLibraryProperties();
@@ -112,24 +125,19 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
         }
       }
     });
-    versionSelector.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        properties.setVersion(getSelectedVersion());
-        checkOkButtonState();
-      }
-    });
-
     setSelectedVersionKind(getVersionKind(properties.getVersion()));
   }
 
   private void checkOkButtonState() {
-    setOKActionEnabled(currentState == State.Loaded && !properties.equals(initialProperties));
+    setOKActionEnabled(currentState == State.Loaded
+                       && (!properties.equals(initialProperties)
+                           || downloadSources != initialDownloadSources
+                           || downloadJavaDocs != initialDownloadJavaDocs));
   }
 
   private void versionKindChanged() {
     versionSelector.setEnabled(versionKind == VersionKind.Select);
-    properties.setVersion(getSelectedVersion());
+    properties.changeVersion(getSelectedVersion());
     int selection = getSelection(properties.getVersion(), versions);
     versionSelector.setSelectedIndex(selection);
     checkOkButtonState();
@@ -197,23 +205,50 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
     ProgressManager.getInstance().run(task);
   }
 
+  private void initVersionsPanel() {
+    final int selection = getSelection(properties.getVersion(), versions);
+    CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<String>(versions);
+    //noinspection unchecked
+    versionSelector.setModel(versionSelectorModel);
+    versionSelector.setSelectedIndex(selection);
+    setState(State.Loaded);
+    initVersionKindSelector();
+    versionSelector.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        properties.changeVersion(getSelectedVersion());
+        checkOkButtonState();
+      }
+    });
+    downloadSourcesCheckBox.setSelected(downloadSources);
+    downloadSourcesCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        downloadSources = downloadSourcesCheckBox.isSelected();
+        checkOkButtonState();
+      }
+    });
+    downloadJavaDocsCheckBox.setSelected(downloadJavaDocs);
+    downloadJavaDocsCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        downloadJavaDocs = downloadJavaDocsCheckBox.isSelected();
+        checkOkButtonState();
+      }
+    });
+  }
+
   private void versionsLoaded(final List<String> versions) {
     this.versions = versions;
     if (versions == null || versions.isEmpty()) {
       versionsFailedToLoad();
       return;
     }
-    final int selection = getSelection(properties.getVersion(), versions);
 
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<String>(versions);
-        //noinspection unchecked
-        versionSelector.setModel(versionSelectorModel);
-        versionSelector.setSelectedIndex(selection);
-        setState(State.Loaded);
-        initVersionKindSelector();
+        initVersionsPanel();
       }
     });
   }
@@ -242,10 +277,15 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   }
 
   public RepositoryLibraryProperties getProperties() {
-    return new RepositoryLibraryProperties(
-      repositoryLibraryDescription.getGroupId(),
-      repositoryLibraryDescription.getArtifactId(),
-      getSelectedVersion());
+    return properties;
+  }
+
+  public boolean downloadSources() {
+    return downloadSources;
+  }
+
+  public boolean downloadJavaDocs() {
+    return downloadJavaDocs;
   }
 
   public JPanel getMainPanel() {

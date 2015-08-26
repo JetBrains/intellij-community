@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.utils.library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Attribute;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,7 +46,12 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof RepositoryLibraryProperties && Comparing.equal(mavenId, ((RepositoryLibraryProperties)obj).mavenId);
+    if (!(obj instanceof RepositoryLibraryProperties)) {
+      return false;
+    }
+    RepositoryLibraryProperties other = (RepositoryLibraryProperties)obj;
+    return Comparing.equal(mavenId, other.mavenId);
+
   }
 
   @Override
@@ -89,11 +95,12 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     return artifactId;
   }
 
+  @Ignore
   public String getVersion() {
     return version;
   }
 
-  public void setVersion(String version) {
+  public void changeVersion(String version) {
     this.version = version;
     this.mavenId = groupId + ":" + artifactId + ":" + version;
   }

@@ -41,7 +41,9 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
 
   @Deprecated
   @Nullable
-  public abstract Icon getIcon();
+  public Icon getIcon() {
+    return null;
+  }
 
   @Nullable
   public Icon getIcon(@Nullable LibraryProperties properties) {

@@ -37,14 +37,14 @@ public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSuppo
   @Override
   public JComponent createComponent() {
     if (editor == null) {
-      editor = new RepositoryLibraryPropertiesEditor(project, libraryDescription.createDefaultProperties());
+      editor = new RepositoryLibraryPropertiesEditor(project, false, false, libraryDescription.createDefaultProperties());
     }
     return editor.getMainPanel();
   }
 
   public boolean showEditorAndGet() {
     if (editor == null) {
-      editor = new RepositoryLibraryPropertiesEditor(project, libraryDescription.createDefaultProperties());
+      editor = new RepositoryLibraryPropertiesEditor(project, false, false, libraryDescription.createDefaultProperties());
     }
     editor.setTitle(ProjectBundle.message("maven.add.library.support", libraryDescription.getDisplayName()));
     editor.init();
@@ -97,10 +97,12 @@ public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSuppo
     });
     Task task = new Task.Backgroundable(project, "Maven", false) {
       public void run(@NotNull ProgressIndicator indicator) {
-        RepositoryUtils.reloadDependencies(
+        RepositoryUtils.loadDependencies(
           indicator,
           module.getProject(),
-          library);
+          library,
+          editor.downloadSources(),
+          editor.downloadJavaDocs());
       }
     };
     ProgressManager.getInstance().run(task);

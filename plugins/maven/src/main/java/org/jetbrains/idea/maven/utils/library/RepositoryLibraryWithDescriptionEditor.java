@@ -23,10 +23,12 @@ public class RepositoryLibraryWithDescriptionEditor
       RepositoryLibraryType.getInstance().getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
     RepositoryLibraryPropertiesEditor editor = new RepositoryLibraryPropertiesEditor(
       myEditorComponent.getProject(),
+      RepositoryUtils.libraryHasSources(myEditorComponent.getLibraryEditor()),
+      RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()),
       properties);
     editor.init();
     editor.setTitle(RepositoryLibraryDescription.findDescription(properties).getDisplayName());
-    if (!editor.showAndGet() || oldVersion.equals(editor.getSelectedVersion())) {
+    if (!editor.showAndGet()) {
       return;
     }
     myEditorComponent.getProperties().loadState(editor.getProperties());
@@ -34,6 +36,10 @@ public class RepositoryLibraryWithDescriptionEditor
       myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }
     myEditorComponent.getLibraryEditor().removeAllRoots();
-    myEditorComponent.getLibraryEditor().addRoots(RepositoryUtils.download(myEditorComponent.getProject(), properties));
+    myEditorComponent.getLibraryEditor().addRoots(RepositoryUtils.download(
+      myEditorComponent.getProject(),
+      editor.downloadSources(),
+      editor.downloadJavaDocs(),
+      properties));
   }
 }
