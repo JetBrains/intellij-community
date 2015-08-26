@@ -22,14 +22,10 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 8/19/2015.
@@ -57,119 +53,62 @@ public class ProjectStartupTaskManager {
 
   private void verifyState() {
     if (! myShared.isEmpty()) {
-      myLocal.shared();
-      myLocal.clear();
+      final Collection<RunnerAndConfigurationSettings> sharedConfigurations = getSharedConfigurations();
+      final List<RunnerAndConfigurationSettings> canNotBeShared = new ArrayList<RunnerAndConfigurationSettings>();
+      final Iterator<RunnerAndConfigurationSettings> iterator = sharedConfigurations.iterator();
+      while (iterator.hasNext()) {
+        final RunnerAndConfigurationSettings configuration = iterator.next();
+        if (! myRunManager.isConfigurationShared(configuration)) {
+          iterator.remove();
+          canNotBeShared.add(configuration);
+        }
+      }
+      if (! canNotBeShared.isEmpty()) {
+        canNotBeShared.addAll(getLocalConfigurations());
+        setStartupConfigurations(sharedConfigurations, canNotBeShared);
+      }
     }
   }
 
-  public List<RunnerAndConfigurationSettings> getStartupConfigurations() {
+  public Collection<RunnerAndConfigurationSettings> getSharedConfigurations() {
+    return getConfigurations(myShared);
+  }
+
+  public Collection<RunnerAndConfigurationSettings> getLocalConfigurations() {
+    return getConfigurations(myLocal);
+  }
+
+  private Collection<RunnerAndConfigurationSettings> getConfigurations(ProjectStartupConfigurationBase configuration) {
+    if (configuration.isEmpty()) return Collections.emptyList();
+
     final List<RunnerAndConfigurationSettings> result = new ArrayList<RunnerAndConfigurationSettings>();
-    if (! myShared.isEmpty()) {
-      return fillResult(result, myShared.getList(), true);
-    }
-    return fillResult(result, myLocal.getList(), false);
-  }
-
-  public void rename(final String oldId, RunnerAndConfigurationSettings settings) {
-    if (! myShared.isEmpty()) {
-      renameInStorage(oldId, settings, myShared);
-    } else {
-      renameInStorage(oldId, settings, myLocal);
-    }
-  }
-
-  private static void renameInStorage(String oldId, RunnerAndConfigurationSettings settings, ProjectStartupConfigurationBase configuration) {
     final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
-    for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
-      if (descriptor.getId().equals(oldId)) {
-        final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> newList =
-          new ArrayList<ProjectStartupConfigurationBase.ConfigurationDescriptor>(list);
-        newList.remove(descriptor);
-        newList.add(new ProjectStartupConfigurationBase.ConfigurationDescriptor(settings.getUniqueID(), settings.getName()));
-        configuration.setList(newList);
-        return;
-      }
-    }
-  }
-
-  public void delete(final String name) {
-    if (! myShared.isEmpty()) {
-      deleteInStorage(name, myShared);
-    } else {
-      deleteInStorage(name, myLocal);
-    }
-  }
-
-  private static void deleteInStorage(String name, ProjectStartupConfigurationBase configuration) {
-    final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
-    final Iterator<ProjectStartupConfigurationBase.ConfigurationDescriptor> iterator = list.iterator();
-    while (iterator.hasNext()) {
-      final ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor = iterator.next();
-      if (descriptor.getName().equals(name)) {
-        iterator.remove();
-        return;
-      }
-    }
-  }
-
-  private List<RunnerAndConfigurationSettings> fillResult(List<RunnerAndConfigurationSettings> result,
-                                                          List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list,
-                                                          boolean shared) {
-    boolean changed = false;
     for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
       final RunnerAndConfigurationSettings settings = myRunManager.findConfigurationByName(descriptor.getName());
-      if (settings != null) {
+      if (settings != null && settings.getUniqueID().equals(descriptor.getId())) {
         result.add(settings);
-        if (! settings.getUniqueID().equals(descriptor.getId())) {
-          changed = true;
-        }
       } else {
-        changed = true;
         NOTIFICATION_GROUP.createNotification(PREFIX + " Run Configuration '" + descriptor.getName() + "' not found, removed from list.",
                                               MessageType.WARNING).notify(myProject);
       }
     }
-    if (changed) {
-      setStartupConfigurations(result, shared);
-    }
     return result;
   }
 
-  public void setStartupConfigurations(final @NotNull List<RunnerAndConfigurationSettings> list, final boolean shared) {
-    final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> names =
-      ContainerUtil.map(list, new Function<RunnerAndConfigurationSettings, ProjectStartupConfigurationBase.ConfigurationDescriptor>() {
-      @Override
-      public ProjectStartupConfigurationBase.ConfigurationDescriptor fun(RunnerAndConfigurationSettings settings) {
-        return new ProjectStartupConfigurationBase.ConfigurationDescriptor(settings.getUniqueID(), settings.getName());
-      }
-    });
-    if (shared) {
-      myLocal.clear();
-      myLocal.shared();
-      myShared.setList(names);
-    } else {
-      myShared.clear();
-      myLocal.setList(names);
-      myLocal.local();
-    }
+  public void rename(final String oldId, RunnerAndConfigurationSettings settings) {
+    if (myShared.rename(oldId, settings)) return;
+    myLocal.rename(oldId, settings);
   }
 
-  public boolean canBeShared() {
-    if (isShared()) return true;
-    if (isEmpty()) return true;
-
-    final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = myLocal.getList();
-    for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
-      final RunnerAndConfigurationSettings settings = myRunManager.findConfigurationByName(descriptor.getName());
-      if (settings != null) {
-        if (! myRunManager.isConfigurationShared(settings)) return false;
-      }
-    }
-    return true;
+  public void delete(final String name) {
+    if (myShared.deleteConfiguration(name)) return;
+    myLocal.deleteConfiguration(name);
   }
 
-  public boolean isShared() {
-    return myLocal.isShared();
+  public void setStartupConfigurations(final @NotNull Collection<RunnerAndConfigurationSettings> shared,
+                                       final @NotNull Collection<RunnerAndConfigurationSettings> local) {
+    myShared.setConfigurations(shared);
+    myLocal.setConfigurations(local);
   }
 
   public boolean isEmpty() {
@@ -177,11 +116,16 @@ public class ProjectStartupTaskManager {
   }
 
   public void checkOnChange(RunnerAndConfigurationSettings settings) {
-    if (! isShared()) return;
     if (! myRunManager.isConfigurationShared(settings)) {
-      myLocal.local();
-      NOTIFICATION_GROUP.createNotification(PREFIX + " configuration was made \"not shared\", since included Run Configuration '" +
-        settings.getName() + "' is not shared.", MessageType.WARNING).notify(myProject);
+      final Collection<RunnerAndConfigurationSettings> sharedConfigurations = getSharedConfigurations();
+      if (sharedConfigurations.remove(settings)) {
+        final List<RunnerAndConfigurationSettings> localConfigurations = new ArrayList<RunnerAndConfigurationSettings>(getLocalConfigurations());
+        localConfigurations.add(settings);
+        setStartupConfigurations(sharedConfigurations, localConfigurations);
+
+        NOTIFICATION_GROUP.createNotification(PREFIX + " configuration was made \"not shared\", since included Run Configuration '" +
+                                              settings.getName() + "' is not shared.", MessageType.WARNING).notify(myProject);
+      }
     }
   }
 }

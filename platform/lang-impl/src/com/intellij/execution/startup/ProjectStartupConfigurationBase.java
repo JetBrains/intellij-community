@@ -15,14 +15,16 @@
  */
 package com.intellij.execution.startup;
 
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 8/19/2015.
@@ -79,11 +81,51 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
 
   public void setList(@NotNull final List<ConfigurationDescriptor> list) {
     myList.clear();
+    Collections.sort(list, new ConfigurationDescriptorComparator());
     myList.addAll(list);
   }
 
   public boolean isEmpty() {
     return myList.isEmpty();
+  }
+
+  public void setConfigurations(@NotNull Collection<RunnerAndConfigurationSettings> collection) {
+    final List<ConfigurationDescriptor> names =
+      ContainerUtil.map(collection, new Function<RunnerAndConfigurationSettings, ConfigurationDescriptor>() {
+      @Override
+      public ConfigurationDescriptor fun(RunnerAndConfigurationSettings settings) {
+        return new ConfigurationDescriptor(settings.getUniqueID(), settings.getName());
+      }
+    });
+    setList(names);
+  }
+
+  public boolean deleteConfiguration(String name) {
+    final List<ConfigurationDescriptor> list = getList();
+    final Iterator<ConfigurationDescriptor> iterator = list.iterator();
+    while (iterator.hasNext()) {
+      final ConfigurationDescriptor descriptor = iterator.next();
+      if (descriptor.getName().equals(name)) {
+        iterator.remove();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean rename(String oldId, RunnerAndConfigurationSettings settings) {
+    final List<ConfigurationDescriptor> list = getList();
+    for (ConfigurationDescriptor descriptor : list) {
+      if (descriptor.getId().equals(oldId)) {
+        final List<ConfigurationDescriptor> newList =
+          new ArrayList<ConfigurationDescriptor>(list);
+        newList.remove(descriptor);
+        newList.add(new ConfigurationDescriptor(settings.getUniqueID(), settings.getName()));
+        setList(newList);
+        return true;
+      }
+    }
+    return false;
   }
 
   public static class ConfigurationDescriptor {
@@ -123,6 +165,14 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
       int result = myId.hashCode();
       result = 31 * result + myName.hashCode();
       return result;
+    }
+  }
+
+  private static class ConfigurationDescriptorComparator implements Comparator<ConfigurationDescriptor> {
+    @Override
+    public int compare(ConfigurationDescriptor o1,
+                       ConfigurationDescriptor o2) {
+      return o1.getName().compareToIgnoreCase(o2.getName());
     }
   }
 }

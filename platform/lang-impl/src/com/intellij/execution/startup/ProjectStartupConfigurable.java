@@ -17,6 +17,7 @@ package com.intellij.execution.startup;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
@@ -39,7 +40,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -47,12 +48,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -60,10 +58,10 @@ import java.util.List;
  */
 public class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
-  private Tree myTree;
+  private JBTable myTable;
   private ProjectStartupTaskManager myProjectStartupTaskManager;
   private ToolbarDecorator myDecorator;
-  private JBCheckBox mySharedCheckBox;
+  private ProjectStartupTasksTableModel myModel;
 
   public ProjectStartupConfigurable(Project project) {
     myProject = project;
@@ -98,9 +96,16 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   public JComponent createComponent() {
     myProjectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
 
-    myTree = new Tree();
-    installRenderer();
-    myDecorator = ToolbarDecorator.createDecorator(myTree)
+    myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
+    myTable = new JBTable(myModel);
+    new TableSpeedSearch(myTable);
+    DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
+    defaultEditor.setClickCountToStart(1);
+
+    myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+    installRenderers();
+    myDecorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -110,8 +115,9 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          RunnerAndConfigurationSettings selected = getSelectedSettings();
-          if (selected == null) return;
+          final int row = myTable.getSelectedRow();
+          if (row < 0) return;
+          final RunnerAndConfigurationSettings selected = myModel.getAllConfigurations().get(row);
 
           final RunManager runManager = RunManagerImpl.getInstance(myProject);
           final RunnerAndConfigurationSettings was = runManager.getSelectedConfiguration();
@@ -121,71 +127,47 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           } finally {
             runManager.setSelectedConfiguration(was);
           }
-          setModel(new ProjectStartupTasksTreeModel(((ProjectStartupTasksTreeModel) myTree.getModel()).getConfigurations()));
+          myModel.fireTableDataChanged();
           selectPathOrFirst(selected);
         }
       })
       .setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
-          return getSelectedSettings() != null;
+          return myTable.getSelectedRow() >= 0;
         }
       })
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          RunnerAndConfigurationSettings selected = getSelectedSettings();
-          if (selected == null) return;
-          final ProjectStartupTasksTreeModel oldModel = (ProjectStartupTasksTreeModel)myTree.getModel();
-          final List<RunnerAndConfigurationSettings> configurations = oldModel.getConfigurations();
-          if (!configurations.contains(selected)) {
-            return;
-          }
-          configurations.remove(selected);
-          Collections.sort(configurations, new Comparator<RunnerAndConfigurationSettings>() {
-            @Override
-            public int compare(RunnerAndConfigurationSettings o1, RunnerAndConfigurationSettings o2) {
-              return o1.getName().compareToIgnoreCase(o2.getName());
-            }
-          });
-          setModel(new ProjectStartupTasksTreeModel(configurations));
+          final int row = myTable.getSelectedRow();
+          if (row < 0) return;
+
+          myModel.removeRow(row);
           selectPathOrFirst(null);
         }
-      });
-    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+      }).disableUpAction().disableDownAction();
     final JPanel tasksPanel = myDecorator.createPanel();
-    mySharedCheckBox = new JBCheckBox("Share");
-    mySharedCheckBox.setMnemonic('s');
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(mySharedCheckBox, BorderLayout.EAST);
     return FormBuilder.createFormBuilder() // todo bundle
-      .addLabeledComponent(new JLabel("Tasks to be executed right after opening the project."), panel)
-      .addComponentFillVertically(tasksPanel, 2)
+      .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
       .getPanel();
   }
 
   private void selectPathOrFirst(RunnerAndConfigurationSettings settings) {
-    if (myTree.isEmpty()) return;
-    myTree.clearSelection();
+    if (myTable.isEmpty()) return;
+
     if (settings != null) {
-      final List<RunnerAndConfigurationSettings> configurations = ((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations();
+      final List<RunnerAndConfigurationSettings> configurations = myModel.getAllConfigurations();
       for (int i = 0; i < configurations.size(); i++) {
         final RunnerAndConfigurationSettings configuration = configurations.get(i);
         if (configuration == settings) {
-          myTree.setSelectionRow(i);
+          TableUtil.selectRows(myTable, new int[]{i});
           return;
         }
       }
     }
-    myTree.addSelectionRow(0);
-  }
-
-  @Nullable
-  private RunnerAndConfigurationSettings getSelectedSettings() {
-    final TreePath path = myTree.getSelectionPath();
-    if (path == null) return null;
-    if (! (path.getLastPathComponent() instanceof RunnerAndConfigurationSettings)) return null;
-    return (RunnerAndConfigurationSettings)path.getLastPathComponent();
+    TableUtil.selectRows(myTable, new int[]{0});
+    myTable.getSelectionModel().setLeadSelectionIndex(0);
   }
 
   private ChooseRunConfigurationPopup.ItemWrapper<Void> createEditWrapper() {
@@ -208,7 +190,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
             public void run() {
               RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
               if (configuration != null) {
-                addConfigurationToList(configuration);
+                myModel.addConfiguration(configuration);
                 selectPathOrFirst(configuration);
               }
             }
@@ -262,7 +244,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           final ChooseRunConfigurationPopup.ItemWrapper at = (ChooseRunConfigurationPopup.ItemWrapper)list.getModel().getElementAt(index);
           if (at.getValue() instanceof RunnerAndConfigurationSettings) {
             final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
-            addConfigurationToList(added);
+            myModel.addConfiguration(added);
             selectPathOrFirst(added);
           } else {
             at.perform(myProject, executor, button.getDataContext());
@@ -273,92 +255,64 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     popup.show(new RelativePoint(myDecorator.getActionsPanel(), new Point(10, 10)));
   }
 
-  private void addConfigurationToList(final RunnerAndConfigurationSettings settings) {
-    if (settings != null) {
-      final ProjectStartupTasksTreeModel oldModel = (ProjectStartupTasksTreeModel)myTree.getModel();
-      final List<RunnerAndConfigurationSettings> configurations = oldModel.getConfigurations();
-      if (!configurations.contains(settings)) {
-        configurations.add(settings);
-      }
-      Collections.sort(configurations, new Comparator<RunnerAndConfigurationSettings>() {
-        @Override
-        public int compare(RunnerAndConfigurationSettings o1, RunnerAndConfigurationSettings o2) {
-          return o1.getName().compareToIgnoreCase(o2.getName());
-        }
-      });
-      setModel(new ProjectStartupTasksTreeModel(configurations));
-    }
-  }
-
   @Override
   public boolean isModified() {
-    if (mySharedCheckBox.isSelected() != myProjectStartupTaskManager.isShared()) return true;
-    final List<RunnerAndConfigurationSettings> recorded = myProjectStartupTaskManager.getStartupConfigurations();
-    final List<RunnerAndConfigurationSettings> current = ((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations();
-    return ! Comparing.equal(recorded, current);
+    final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(myProjectStartupTaskManager.getSharedConfigurations());
+    final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(shared);
+    list.addAll(myProjectStartupTaskManager.getLocalConfigurations());
+    Collections.sort(list, ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
+
+    if (! Comparing.equal(list, myModel.getAllConfigurations())) return true;
+    if (! Comparing.equal(shared, myModel.getSharedConfigurations())) return true;
+    return false;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myProjectStartupTaskManager
-      .setStartupConfigurations(((ProjectStartupTasksTreeModel)myTree.getModel()).getConfigurations(), mySharedCheckBox.isSelected());
+    final List<RunnerAndConfigurationSettings> shared = new ArrayList<RunnerAndConfigurationSettings>();
+    final List<RunnerAndConfigurationSettings> local = new ArrayList<RunnerAndConfigurationSettings>();
+
+    final Set<RunnerAndConfigurationSettings> sharedSet = myModel.getSharedConfigurations();
+    final List<RunnerAndConfigurationSettings> allConfigurations = myModel.getAllConfigurations();
+    for (RunnerAndConfigurationSettings configuration : allConfigurations) {
+      if (sharedSet.contains(configuration)) {
+        shared.add(configuration);
+      } else {
+        local.add(configuration);
+      }
+    }
+
+    myProjectStartupTaskManager.setStartupConfigurations(shared, local);
   }
 
   @Override
   public void reset() {
-    final ProjectStartupTasksTreeModel model = new ProjectStartupTasksTreeModel(myProjectStartupTaskManager.getStartupConfigurations());
-    setModel(model);
-    mySharedCheckBox.setSelected(myProjectStartupTaskManager.isShared());
-    mySharedCheckBox.setEnabled(myProjectStartupTaskManager.isShared() || myProjectStartupTaskManager.canBeShared());
-    canBeSharedCheck(model);
-
+    myModel.setData(myProjectStartupTaskManager.getSharedConfigurations(), myProjectStartupTaskManager.getLocalConfigurations());
     selectPathOrFirst(null);
-  }
-
-  private void setModel(ProjectStartupTasksTreeModel model) {
-    myTree.setModel(model);
-    myTree.setShowsRootHandles(false);
-    myTree.setRootVisible(false);
-
-    canBeSharedCheck(model);
-  }
-
-  private void canBeSharedCheck(ProjectStartupTasksTreeModel model) {
-    boolean canBeShared = true;
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-    final List<RunnerAndConfigurationSettings> configurations = model.getConfigurations();
-    for (RunnerAndConfigurationSettings configuration : configurations) {
-      if (! runManager.isConfigurationShared(configuration)) {
-        canBeShared = false;
-        break;
-      }
-    }
-    mySharedCheckBox.setEnabled(canBeShared);
-    if (! canBeShared) {
-      mySharedCheckBox.setSelected(false);
-    }
   }
 
   @Override
   public void disposeUIResources() {
-
   }
 
-  private void installRenderer() {
-    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
+  private void installRenderers() {
+    final TableColumn checkboxColumn = myTable.getColumnModel().getColumn(ProjectStartupTasksTableModel.IS_SHARED_COLUMN);
+    final String header = checkboxColumn.getHeaderValue().toString();
+    final FontMetrics fm = myTable.getFontMetrics(myTable.getTableHeader().getFont());
+    final int width = - new JBCheckBox().getPreferredSize().width + fm.stringWidth(header + "ww");
+    TableUtil.setupCheckboxColumn(checkboxColumn, width);
+    checkboxColumn.setCellRenderer(new BooleanTableCellRenderer());
+
+    myTable.getTableHeader().setResizingAllowed(false);
+    myTable.getTableHeader().setReorderingAllowed(false);
+
+    final TableColumn nameColumn = myTable.getColumnModel().getColumn(ProjectStartupTasksTableModel.NAME_COLUMN);
+    nameColumn.setCellRenderer(new ColoredTableCellRenderer() {
       @Override
-      public void customizeCellRenderer(@NotNull JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
-        if (value instanceof RunnerAndConfigurationSettings) {
-          final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)value;
-          setIcon(settings.getConfiguration().getIcon());
-          append(settings.getName());
-        }
+      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+        final RunnerAndConfigurationSettings settings = myModel.getAllConfigurations().get(row);
+        setIcon(settings.getConfiguration().getIcon());
+        append(settings.getName());
       }
     });
   }

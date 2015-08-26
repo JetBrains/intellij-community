@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.startup;
 
-import com.intellij.execution.Executor;
-import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.RunManagerAdapter;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -31,6 +28,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -81,18 +79,44 @@ public class ProjectStartupRunner implements StartupActivity {
   }
 
   private void runActivities(final Project project) {
-    final List<RunnerAndConfigurationSettings> configurations = ProjectStartupTaskManager.getInstance(project).getStartupConfigurations();
+    final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
+    final List<RunnerAndConfigurationSettings> configurations =
+      new ArrayList<RunnerAndConfigurationSettings>(projectStartupTaskManager.getLocalConfigurations());
+    configurations.addAll(projectStartupTaskManager.getSharedConfigurations());
+
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     for (final RunnerAndConfigurationSettings configuration : configurations) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+          Executor currentExecutor = executor;
+          if (! canRun(executor, configuration)) {
+            currentExecutor = findExecutor(configuration);
+            if (currentExecutor == null) {
+              ProjectStartupTaskManager.NOTIFICATION_GROUP
+                .createNotification(ProjectStartupTaskManager.PREFIX + " could not find executor to start '" + configuration.getName() + "'", MessageType.ERROR)
+                .notify(project);
+              return;
+            }
+          }
+          ProgramRunnerUtil.executeConfiguration(project, configuration, currentExecutor);
           ProjectStartupTaskManager.NOTIFICATION_GROUP
             .createNotification(ProjectStartupTaskManager.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
             .notify(project);
         }
       }, ModalityState.any());
     }
+  }
+
+  private Executor findExecutor(RunnerAndConfigurationSettings configuration) {
+    final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
+    for (Executor executor : executors) {
+      if (canRun(executor, configuration)) return executor;
+    }
+    return null;
+  }
+
+  private boolean canRun(Executor executor, RunnerAndConfigurationSettings configuration) {
+    return RunnerRegistry.getInstance().getRunner(executor.getId(), configuration.getConfiguration()) != null;
   }
 }
