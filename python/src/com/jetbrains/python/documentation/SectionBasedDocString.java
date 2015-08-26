@@ -120,7 +120,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       lineNum = skipEmptyLines(lineNum);
     }
     //noinspection ConstantConditions
-    mySummary = summary.isEmpty() ? null : mergeSubstrings(summary.get(0), summary.get(summary.size() - 1)).trim();
+    mySummary = summary.isEmpty() ? null : summary.get(0).union(summary.get(summary.size() - 1)).trim();
   }
 
   @NotNull
@@ -197,7 +197,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
     if (firstLine != null && lastLine != null) {
-      return Pair.create(new SectionField(null, null, mergeSubstrings(firstLine, lastLine).trim()), pair.getSecond());
+      return Pair.create(new SectionField(null, null, firstLine.union(lastLine).trim()), pair.getSecond());
     }
     return Pair.create(null, pair.getSecond());
   }
@@ -218,9 +218,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
-    return lineNum >= getLineCount() ||
-           isSectionStart(lineNum) ||
-           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= curSectionIndent);
+    return lineNum >= getLineCount() || 
+           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= curSectionIndent) || 
+           isBlockEnd(lineNum);
   }
 
   /**
@@ -231,22 +231,13 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
    */
   @NotNull
   protected Pair<List<Substring>, Integer> parseIndentedBlock(int lineNum, int blockIndent, int sectionIndent) {
-    final List<Substring> result = new ArrayList<Substring>();
-    int lastNonEmpty = lineNum - 1;
-    while (!isSectionBreak(lineNum, sectionIndent)) {
-      if (getLineIndentSize(lineNum) > blockIndent) {
-        // copy all lines after the last non empty including the current one
-        for (int i = lastNonEmpty + 1; i <= lineNum; i++) {
-          result.add(getLine(i));
-        }
-        lastNonEmpty = lineNum;
-      }
-      else if (!isEmpty(lineNum)) {
-        break;
-      }
-      lineNum++;
-    }
-    return Pair.create(result, lineNum);
+    final int blockEnd = parseIndentedBlock(lineNum, blockIndent);
+    return Pair.create(myLines.subList(lineNum, blockEnd), blockEnd);
+  }
+
+  @Override
+  protected boolean isBlockEnd(int lineNum) {
+    return isSectionStart(lineNum);
   }
 
   /**
@@ -272,22 +263,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       return Collections.singletonList(line);
     }
     return line.split(":", 1);
-  }
-
-  /**
-   * If both substrings share the same origin, returns new substring that includes both of them. Otherwise return {@code null}.
-   *
-   * @param s2 substring to concat with
-   * @return new substring as described
-   */
-  @NotNull
-  protected static Substring mergeSubstrings(@NotNull Substring s1, @NotNull Substring s2) {
-    if (!s1.getSuperString().equals(s2.getSuperString())) {
-      throw new IllegalArgumentException(String.format("Substrings '%s' and '%s' must belong to the same origin", s1, s2));
-    }
-    return new Substring(s1.getSuperString(),
-                       Math.min(s1.getStartOffset(), s2.getStartOffset()),
-                       Math.max(s1.getEndOffset(), s2.getEndOffset()));
   }
 
   // like Python's textwrap.dedent()

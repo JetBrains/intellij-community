@@ -217,4 +217,9 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     results.addAll(getTagArguments(PARAM_TYPE_TAGS));
     return results;
   }
+
+  @Override
+  protected boolean isBlockEnd(int lineNum) {
+    return getLine(lineNum).trimLeft().startsWith(myTagPrefix);
+  }
 }

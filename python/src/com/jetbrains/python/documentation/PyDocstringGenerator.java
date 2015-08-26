@@ -371,7 +371,7 @@ public class PyDocstringGenerator {
     if (updater != null) {
       for (DocstringParam param : myParams) {
         if (param.isReturnValue()) {
-          updater.addReturnValue((param.getType()));
+          updater.addReturnValue(param.getType());
         }
         else {
           updater.addParameter(param.getName(), param.getType());

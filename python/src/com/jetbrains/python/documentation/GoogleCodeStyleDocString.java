@@ -104,7 +104,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     final List<Substring> nestedBlock = pair.getFirst();
     if (!nestedBlock.isEmpty()) {
       //noinspection ConstantConditions
-      description = mergeSubstrings(description, ContainerUtil.getLastItem(nestedBlock));
+      description = description.union(ContainerUtil.getLastItem(nestedBlock));
     }
     description = description.trim();
     return Pair.create(new SectionField(name, type, description), pair.getSecond());

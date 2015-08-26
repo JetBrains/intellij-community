@@ -116,6 +116,15 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     }
   }
 
+  @Override
+  public void removeParameter(@NotNull String name) {
+    for (SectionField param : myOriginalDocString.getParameterFields()) {
+      if (param.getName().equals(name)) {
+        removeLines(getFieldStartLine(param), getFieldEndLine(param));
+      }
+    }
+  }
+
   abstract void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type);
 
   protected int getSectionLastTitleLine(@NotNull Section paramSection) {
@@ -195,12 +204,25 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   protected int getSectionStartLine(@NotNull Section section) {
-    return myOriginalDocString.getLineByOffset(section.getTitleAsSubstring().getStartOffset());
+    return section.getTitleAsSubstring().getStartLine();
   }
 
   protected int getFieldStartLine(@NotNull SectionField field) {
     final Substring anyFieldSub = ObjectUtils.chooseNotNull(field.getNameAsSubstring(), field.getTypeAsSubstring());
     //noinspection ConstantConditions
-    return myOriginalDocString.getLineByOffset(anyFieldSub.getStartOffset());
+    return anyFieldSub.getStartLine();
+  }
+
+  protected int getFieldEndLine(@NotNull SectionField field) {
+    if (field.getDescriptionAsSubstring() != null) {
+      return field.getDescriptionAsSubstring().getEndLine();
+    }
+    else if (field.getTypeAsSubstring() != null) {
+      return field.getTypeAsSubstring().getEndLine();
+    }
+    else {
+      //noinspection ConstantConditions
+      return field.getNameAsSubstring().getEndLine();
+    } 
   }
 }

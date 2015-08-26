@@ -16,6 +16,7 @@
 package com.jetbrains.python.toolbox;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -221,11 +222,31 @@ public class Substring implements CharSequence {
     return new Substring(myString, start, end);
   }
 
+  /**
+   * If both substrings share the same origin, returns new substring that includes both of them.
+   */
+  @NotNull
+  public Substring union(@NotNull Substring other) {
+    if (!myString.equals(other.myString)) {
+      throw new IllegalArgumentException(String.format("Substrings '%s' and '%s' must belong to the same origin", this, other));
+    }
+    final TextRange unionRange = getTextRange().union(other.getTextRange());
+    return new Substring(getSuperString(), unionRange.getStartOffset(), unionRange.getEndOffset());
+  }
+
   public int getStartOffset() {
     return myStartOffset;
   }
 
+  public int getStartLine() {
+    return StringUtil.offsetToLineNumber(myString, myStartOffset);
+  }
+
   public int getEndOffset() {
     return myEndOffset;
+  }
+
+  public int getEndLine() {
+    return StringUtil.offsetToLineNumber(myString, myEndOffset);
   }
 }

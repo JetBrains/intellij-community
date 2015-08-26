@@ -33,9 +33,8 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.editor.PythonDocCommentUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -340,13 +339,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     for (PyParameter p : function.getParameterList().getParameters()) {
       final String paramName = p.getName();
       if (!names.contains(paramName) && paramName != null) {
-        PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-        String prefix = documentationSettings.isEpydocFormat(docStringExpression.getContainingFile()) ? "@" : ":";
-        final String replacement = PythonDocCommentUtil.removeParamFromDocstring(docStringExpression.getText(), prefix,
-                                                                                 paramName);
-        PyExpression str =
-          PyElementGenerator.getInstance(function.getProject()).createDocstring(replacement).getExpression();
-        docStringExpression.replace(str);
+        DocStringUtil.removeParamFromDocString(docStringExpression, paramName);
       }
     }
   }

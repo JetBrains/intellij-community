@@ -59,6 +59,21 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     insert(line.getEndOffset(), '\n' + text);
   }
 
+  protected final void remove(int startOffset, int endOffset) {
+    replace(startOffset, endOffset, "");
+  }
+
+  protected final void removeLines(int startLine, int endLine) {
+    final List<Substring> lines = myOriginalDocString.getLines();
+    final int startOffset = lines.get(startLine).getStartOffset();
+    final int endOffset = endLine < lines.size() - 1 ? lines.get(endLine + 1).getStartOffset() : lines.get(endLine).getEndOffset();
+    remove(startOffset, endOffset);
+  }
+
+  protected final void removeLine(int line) {
+    removeLines(line, line);
+  }
+
   protected final void insertBeforeLine(int lineNumber, @NotNull String text) {
     final Substring line = myOriginalDocString.getLines().get(lineNumber);
     insert(line.getStartOffset(), text + '\n');
@@ -100,6 +115,10 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     return lastLineIndent;
   }
 
+  protected int getLineIndentSize(int lineNum) {
+    return PyIndentUtil.getLineIndentSize(getLineIndent(lineNum));
+  }
+
   protected int findLastNonEmptyLine() {
     for (int i = myOriginalDocString.getLineCount() - 1; i >= 0; i--) {
       if (!StringUtil.isEmptyOrSpaces(myOriginalDocString.getLine(i))) {
@@ -112,6 +131,8 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   public abstract void addParameter(@NotNull String name, @Nullable String type);
 
   public abstract void addReturnValue(@Nullable String type);
+
+  public abstract void removeParameter(@NotNull String name);
 
   private static class Modification implements Comparable<Modification> {
     @NotNull final TextRange range;

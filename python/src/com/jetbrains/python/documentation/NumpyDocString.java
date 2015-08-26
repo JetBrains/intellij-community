@@ -85,7 +85,7 @@ public class NumpyDocString extends SectionBasedDocString {
     final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum), sectionIndent);
     final List<Substring> descriptionLines = parsedDescription.getFirst();
     if (!descriptionLines.isEmpty()) {
-      description = mergeSubstrings(descriptionLines.get(0), descriptionLines.get(descriptionLines.size() - 1));
+      description = descriptionLines.get(0).union(descriptionLines.get(descriptionLines.size() - 1));
     }
     return Pair.create(new SectionField(name, type, description != null ? description.trim() : null), parsedDescription.getSecond());
   }
@@ -96,7 +96,7 @@ public class NumpyDocString extends SectionBasedDocString {
   }
 
   @Override
-  protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
-    return super.isSectionBreak(lineNum, curSectionIndent) || (isEmpty(lineNum) && isEmptyOrDoesNotExist(lineNum + 1));
+  protected boolean isBlockEnd(int lineNum) {
+    return super.isBlockEnd(lineNum) || (isEmpty(lineNum) && isEmptyOrDoesNotExist(lineNum + 1));
   }
 }

@@ -20,14 +20,16 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Mikhail Golubev
  */
-public class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocStringUpdater<T>{
+public class TagBasedDocStringUpdater extends DocStringUpdater<TagBasedDocString>{
 
   private final String myTagPrefix;
 
-  public TagBasedDocStringUpdater(@NotNull T docString, @NotNull String tagPrefix, @NotNull String minContentIndent) {
+  public TagBasedDocStringUpdater(@NotNull TagBasedDocString docString, @NotNull String tagPrefix, @NotNull String minContentIndent) {
     super(docString, minContentIndent);
     myTagPrefix = tagPrefix;
   }
@@ -54,6 +56,23 @@ public class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocSt
     }
     else {
       insertTagLine(createBuilder().addReturnValueDescription(""));
+    }
+  }
+
+  @Override
+  public void removeParameter(@NotNull String name) {
+    final List<Substring> nameSubs = myOriginalDocString.getParameterSubstrings();
+    for (Substring sub : nameSubs) {
+      if (sub.toString().equals(name)) {
+        final int startLine = sub.getStartLine();
+        final int nextAfterBlock = myOriginalDocString.parseIndentedBlock(startLine + 1, getLineIndentSize(startLine));
+        if (nextAfterBlock != startLine + 1) {
+          removeLines(startLine, nextAfterBlock - 1);
+        }
+        else {
+          removeLine(startLine);
+        }
+      }
     }
   }
 
