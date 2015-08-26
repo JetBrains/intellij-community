@@ -42,6 +42,7 @@ public class ConcurrentPackedBitsArray {
    *  The returned bits are LSB, other (64-bitsPerChunk) higher bits are undefined
    */
   public long get(int id) {
+    assert id >= 0 : id;
     int bitIndex = id/chunksPerWord * 64 + (id%chunksPerWord)*bitsPerChunk;
     long word = bits.getWord(bitIndex) >> bitIndex;
     return word;
@@ -49,6 +50,7 @@ public class ConcurrentPackedBitsArray {
 
   // stores chunk atomically, returns previous chunk
   public long set(int id, final long flags) {
+    assert id >= 0 : id;
     if ((flags & ~mask) != 0) {
       throw new IllegalArgumentException("Flags must be between 0 and "+ mask +" but got:"+flags);
     }
