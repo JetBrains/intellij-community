@@ -562,6 +562,7 @@
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.PyTypingAnnotationInjector"/>
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
+    <refactoring.invertBoolean implementation="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
   </extensions>
 
   <extensionPoints>
@@ -763,10 +764,6 @@
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
             text="Generate Python Spellchecker Dictionaries" internal="true">
       <add-to-group group-id="Internal"/>
-    </action>
-
-    <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
-      <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
     <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.array.PyViewArrayAction" text="View as Array">

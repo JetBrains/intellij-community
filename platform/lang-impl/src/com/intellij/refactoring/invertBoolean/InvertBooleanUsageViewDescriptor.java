@@ -27,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class InvertBooleanUsageViewDescriptor implements UsageViewDescriptor {
-  private final PsiNamedElement myElement;
+  private final PsiElement myElement;
 
-  public InvertBooleanUsageViewDescriptor(final PsiNamedElement element) {
+  public InvertBooleanUsageViewDescriptor(final PsiElement element) {
     myElement = element;
   }
 
