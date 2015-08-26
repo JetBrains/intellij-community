@@ -1,14 +1,14 @@
 package com.intellij.codeInsight
 
-import com.intellij.JavaTestUtil;
-import com.intellij.ide.actions.CopyReferenceAction;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.JavaTestUtil
+import com.intellij.ide.actions.CopyReferenceAction
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NonNls
 
-public class CopyReferenceTest extends LightCodeInsightFixtureTestCase {
+public class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/copyReference";
   protected int oldSetting;
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,13 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public Segment getRange() {
-    return getInjectedRange();
+    return getInjectedRange(false);
+  }
+
+  @Nullable
+  @Override
+  public Segment getPsiRange() {
+    return getInjectedRange(true);
   }
 
   @Override
@@ -83,20 +90,14 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     PsiElement hostContext = myHostContext.getElement();
     if (hostContext == null) return null;
 
-    Segment segment = myInjectedFileRangeInHostFile.getRange();
+    Segment segment = myInjectedFileRangeInHostFile.getPsiRange();
     if (segment == null) return null;
-    final TextRange rangeInHostFile = TextRange.create(segment);
 
-    PsiElement result = null;
-    PsiFile injectedPsi = getInjectedFileIn(hostContext, hostFile, rangeInHostFile);
-    if (injectedPsi != null) {
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
-      int start = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getStartOffset());
-      int end = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getEndOffset());
-      result = SelfElementInfo.findElementInside(injectedPsi, start, end, anchorClass, anchorLanguage);
-    }
+    PsiFile injectedPsi = getInjectedFileIn(hostContext, hostFile, TextRange.create(segment));
+    ProperTextRange rangeInInjected = hostToInjected(true, segment, injectedPsi);
+    if (rangeInInjected == null) return null;
 
-    return result;
+    return SelfElementInfo.findElementInside(injectedPsi, rangeInInjected.getStartOffset(), rangeInInjected.getEndOffset(), anchorClass, anchorLanguage);
   }
 
   private PsiFile getInjectedFileIn(@NotNull final PsiElement hostContext,
@@ -161,24 +162,31 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     return getInjectedFileIn(hostContext, hostFile, rangeInHostFile);
   }
 
-  private ProperTextRange getInjectedRange() {
-    PsiFile hostFile = myHostContext.getContainingFile();
-    if (hostFile == null || !hostFile.isValid()) return null;
-
+  @Nullable
+  private ProperTextRange getInjectedRange(boolean psi) {
     PsiElement hostContext = myHostContext.getElement();
     if (hostContext == null) return null;
 
-    Segment hostElementRange = myInjectedFileRangeInHostFile.getRange();
+    Segment hostElementRange = psi ? myInjectedFileRangeInHostFile.getPsiRange() : myInjectedFileRangeInHostFile.getRange();
     if (hostElementRange == null) return null;
 
-    PsiFile injectedFile = restoreFile();
-    if (injectedFile == null) return null;
-    VirtualFile virtualFile = injectedFile.getVirtualFile();
-    DocumentWindow documentWindow = virtualFile instanceof VirtualFileWindow ?  ((VirtualFileWindow)virtualFile).getDocumentWindow() : null;
-    if (documentWindow==null) return null;
-    int start = documentWindow.hostToInjected(hostElementRange.getStartOffset());
-    int end = documentWindow.hostToInjected(hostElementRange.getEndOffset());
-    return ProperTextRange.create(start, end);
+    return hostToInjected(psi, hostElementRange, restoreFile());
+  }
+
+  @Nullable
+  private ProperTextRange hostToInjected(boolean psi, Segment hostRange, @Nullable PsiFile injectedFile) {
+    VirtualFile virtualFile = injectedFile == null ? null : injectedFile.getVirtualFile();
+    if (virtualFile instanceof VirtualFileWindow) {
+      DocumentWindow documentWindow = ((VirtualFileWindow)virtualFile).getDocumentWindow();
+      if (psi) {
+        documentWindow = (DocumentWindow) ((PsiDocumentManagerBase) PsiDocumentManager.getInstance(getProject())).getLastCommittedDocument(documentWindow);
+      }
+      int start = documentWindow.hostToInjected(hostRange.getStartOffset());
+      int end = documentWindow.hostToInjected(hostRange.getEndOffset());
+      return ProperTextRange.create(start, end);
+    }
+
+    return null;
   }
 
   @Override

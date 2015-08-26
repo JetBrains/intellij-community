@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -109,7 +110,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  protected ProperTextRange getPsiRange() {
+  @Override
+  public ProperTextRange getPsiRange() {
     return calcPsiRange();
   }
 
@@ -248,7 +250,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
         PsiDocumentManagerBase documentManager = myManager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          return myMarkerCache.getUpdatedRange(markerCacheKey(), documentManager.getLastCommittedDocument(document), events);
+          return myMarkerCache.getUpdatedRange(markerCacheKey(), (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
         }
       }
     }

@@ -35,7 +35,7 @@ public class TemporaryDirectory : ExternalResource() {
   private var sanitizedName: String? = null
 
   override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = FileUtil.sanitizeName(description.getMethodName())
+    sanitizedName = FileUtil.sanitizeFileName(description.getMethodName(), false)
     return super.apply(base, description)
   }
 

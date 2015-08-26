@@ -36,6 +36,7 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
   public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
   public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<TaskFile, StudyStatus>();
   public Map<Task, List<UserTest>> myUserTests = new HashMap<Task, List<UserTest>>();
+  public List<String> myInvisibleFiles = new ArrayList<String>();
 
   private StudyTaskManager() {
   }
@@ -183,5 +184,13 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
 
   public static StudyTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, StudyTaskManager.class);
+  }
+
+  public void addInvisibleFiles(String filePath) {
+    myInvisibleFiles.add(filePath);
+  }
+
+  public boolean isInvisibleFile(String path) {
+    return myInvisibleFiles.contains(path);
   }
 }

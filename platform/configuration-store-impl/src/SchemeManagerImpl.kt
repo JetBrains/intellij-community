@@ -508,7 +508,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     var fileNameWithoutExtension = currentFileNameWithoutExtension
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
-      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeName(scheme.getName()))
+      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.getName(), false))
     }
 
     val newHash = JDOMUtil.getTreeHash(element!!, true)
