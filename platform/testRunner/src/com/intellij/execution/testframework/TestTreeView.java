@@ -150,12 +150,25 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
     final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    CopyPasteManager.getInstance().setContents(new StringSelection(CopyReferenceAction.elementToFqn(element)));
+    final String fqn;
+    if (element != null) {
+      fqn = CopyReferenceAction.elementToFqn(element);
+    }
+    else {
+      AbstractTestProxy selectedTest = getSelectedTest();
+      fqn = selectedTest instanceof TestProxyRoot ? ((TestProxyRoot)selectedTest).getRootLocation() 
+                                                  : selectedTest != null ? selectedTest.getLocationUrl() : null;
+    }
+    CopyPasteManager.getInstance().setContents(new StringSelection(fqn));
   }
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return CommonDataKeys.PSI_ELEMENT.getData(dataContext) != null;
+    AbstractTestProxy test = getSelectedTest();
+    if (test instanceof TestProxyRoot) {
+      return ((TestProxyRoot)test).getRootLocation() != null;
+    }
+    return test != null && test.getLocationUrl() != null;
   }
 
   @Override
