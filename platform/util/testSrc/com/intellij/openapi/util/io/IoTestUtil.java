@@ -194,6 +194,7 @@ public class IoTestUtil {
   }
 
   private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
+    command.redirectErrorStream(true);
     final Process process = command.start();
     new Thread(new Runnable() {
       @Override
@@ -202,7 +203,10 @@ public class IoTestUtil {
           final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
           try {
             //noinspection StatementWithEmptyBody
-            while (reader.readLine() != null);
+            String line;
+            while ((line = reader.readLine()) != null) {
+              System.out.println(line);
+            }
           }
           finally {
             reader.close();
