@@ -179,7 +179,7 @@ public class StudyProjectGenerator {
       final File file = new File(courseDirectory, name);
       FileUtil.createIfDoesntExist(file);
       try {
-        FileUtil.writeToFile(file, text);
+        FileUtil.writeToFile(file, Base64.decodeBase64(text));
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);

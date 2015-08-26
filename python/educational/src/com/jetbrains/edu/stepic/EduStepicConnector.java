@@ -7,8 +7,6 @@ import com.google.gson.annotations.Expose;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -428,11 +426,14 @@ public class EduStepicConnector {
       task.setName(EduNames.PYCHARM_ADDITIONAL);
       task.setIndex(1);
       task.setText(EduNames.PYCHARM_ADDITIONAL);
-      final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       for (VirtualFile file : files) {
-        final Document document = documentManager.getDocument(file);
-        if (document != null) {
-          task.addTestsTexts(file.getName(), document.getText());
+        try {
+          if (file != null) {
+            task.addTestsTexts(file.getName(), Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
+          }
+        }
+        catch (IOException e) {
+          LOG.error("Can't find file " + file.getPath());
         }
       }
       lesson.addTask(task);
