@@ -20,6 +20,7 @@ C:\temp\untitled55\test_sample.py:5: AssertionError
 C:\temp\untitled55\test_sample.py:6A AssertionError
 C:\temp\untitled55\test_sample.py:7
 C:\temp\untitled55\test_sample.py:8999999999999999
+C:\Users\ilya.kazakevich\virtenvs\spammy\lib\site-packages\django_cron\models.py:4:
 
 Here is some file C:\temp\untitled55\test_sample.py:999999999999999
 c:/2files.py

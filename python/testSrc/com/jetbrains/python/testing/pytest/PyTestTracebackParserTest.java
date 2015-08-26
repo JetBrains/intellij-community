@@ -98,6 +98,7 @@ public final class PyTestTracebackParserTest {
     requiredStrings.add("C:\\temp\\untitled55\\test_sample.py - 99999");
     requiredStrings.add("../../../files/files.py - 100");
     requiredStrings.add("/Users/Mac Hipster/Applications/PyCharm 4.0 .app/helpers/lala.py - 12");
+    requiredStrings.add("C:\\Users\\ilya.kazakevich\\virtenvs\\spammy\\lib\\site-packages\\django_cron\\models.py - 4");
     for (final String line : s.split("\n")) {
       final LinkInTrace trace = new PyTestTracebackParser().findLinkInTrace(line);
       if (trace != null) {
