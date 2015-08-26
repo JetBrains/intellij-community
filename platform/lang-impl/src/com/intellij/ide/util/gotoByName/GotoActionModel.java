@@ -691,10 +691,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         }
 
         if (toggle) {
-          final OnOffButton button = new OnOffButton();
           AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((ActionWrapper)value).myDataContext);
-          button.setSelected(((ToggleAction)anAction).isSelected(event));
-          panel.add(button, BorderLayout.EAST);
+          boolean selected = ((ToggleAction)anAction).isSelected(event);
+          addOnOffButton(panel, selected);
         }
         else {
           if (groupName != null) {
@@ -731,9 +730,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         panel.setToolTipText(fullHit);
 
         if (value instanceof BooleanOptionDescription) {
-          final OnOffButton button = new OnOffButton();
-          button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
-          panel.add(button, BorderLayout.EAST);
+          boolean selected = ((BooleanOptionDescription)value).isOptionEnabled();
+          addOnOffButton(panel, selected);
         }
         else {
           final JLabel settingsLabel = new JLabel(myGroupNamer.fun((OptionDescription)value));
@@ -744,6 +742,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         }
       }
       return panel;
+    }
+
+    private static void addOnOffButton(@NotNull JPanel panel, boolean selected) {
+      OnOffButton button = new OnOffButton();
+      button.setSelected(selected);
+      panel.add(button, BorderLayout.EAST);
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
     }
 
     public String getName(String text, String groupName, boolean toggle) {
