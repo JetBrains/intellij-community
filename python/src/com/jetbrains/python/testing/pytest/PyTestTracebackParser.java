@@ -21,10 +21,6 @@ import com.jetbrains.python.traceBackParsers.TraceBackParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-
 /**
  * User : catherine
  */
@@ -34,36 +30,27 @@ public final class PyTestTracebackParser implements TraceBackParser {
   @Nullable
   @Override
   public LinkInTrace findLinkInTrace(@NotNull final String line) {
-    final Collection<PyFilesStateMachine> machines = new ArrayList<PyFilesStateMachine>();
-    machines.add(PyFilesStateMachine.createFromStart());
+    final PyFilesStateMachine quoteMachine = new PyFilesStateMachine(true);
+    final PyFilesStateMachine spaceMachine = new PyFilesStateMachine(false);
+
+
     final char[] chars = line.toCharArray();
     for (int i = 0; i < chars.length; i++) {
       final char nextChar = chars[i];
-      final Iterator<PyFilesStateMachine> iterator = machines.iterator();
-      while (iterator.hasNext()) {
-        final PyFilesStateMachine machine = iterator.next();
-        switch (machine.addChar(nextChar)) {
-          case FAILED:
-            iterator.remove(); // Machine failed, discard
-            break;
-          case FINISHED:
-            return createLinkInTrace(machine); // Link found
-          case IN_PROGRESS:
-            break;
-        }
+      if (quoteMachine.addChar(nextChar, i)) {
+        return createLinkInTrace(quoteMachine);
       }
-
-      final PyFilesStateMachine newMachine = PyFilesStateMachine.createFromChar(nextChar, i);
-      if (newMachine != null) {
-        machines.add(newMachine);
+      if (spaceMachine.addChar(nextChar, i)) {
+        return createLinkInTrace(spaceMachine);
       }
     }
 
     // Tell all machines file is ended
-    for (final PyFilesStateMachine machine : machines) {
-      if (machine.endLine() == PyFilesStateMachineResult.FINISHED) {
-        return createLinkInTrace(machine);
-      }
+    if (quoteMachine.endLine()) {
+      return createLinkInTrace(quoteMachine);
+    }
+    if (spaceMachine.endLine()) {
+      return createLinkInTrace(spaceMachine);
     }
 
     return null;

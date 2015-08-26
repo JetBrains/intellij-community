@@ -21,62 +21,49 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Automata searches for file links and numbers.
- * Create one with either {@link #createFromStart()} for initial or {@link #createFromChar(char, int)}
- * or char inside of line.
+ * Supports 2 modes: "quote-mode" (searches for strings in quotes) and "space mode" -- strings, separated by spaces (or start/end of line)
+ * Create one providing appropriate flag.
  * <p/>
- * Call {@link #addChar(char)} or {@link #endLine()} when line ends and do the following:
- * <ol>
- * <li>{@link PyFilesStateMachineResult#FINISHED}: machine found link, use {@link #getFileAndLine()} to get info</li>
- * <li>{@link PyFilesStateMachineResult#FAILED}: machine failed, discard it</li>
- * <li>{@link PyFilesStateMachineResult#IN_PROGRESS}: machine waits for next char</li>
- * </ol>
+ * Call {@link #addChar(char, int)} or {@link #endLine()} when line ends and do the following:
+ * if result is true, then machine found something. Use {@link #getFileAndLine()} to get result.
+ * If false, provide next char
  *
  * @author Ilya.Kazakevich
  */
 final class PyFilesStateMachine {
-  private final boolean myHasQuote; // In "quote" mode, spaces accepted
+  private final boolean myQuoteMode; // In "quote" mode, spaces accepted
   private boolean myLookingForFile = true; // Looking for file if true , for line number if not
+  private boolean myInProgress; // True if machine in progress, false if waits to start
   private boolean myWaitingForCharAfterSemicolon; // Semicolon entered, looking for next char
-  private final int myStart; // start position
+  private int myStart; // start position
   private final StringBuilder myFileName = new StringBuilder();
   private final StringBuilder myLineNumber = new StringBuilder();
 
-  private PyFilesStateMachine(final int start, final boolean quoteMode) {
-    myStart = start;
-    myHasQuote = quoteMode;
-  }
-
   /**
-   * @param firstChar current char
-   * @param start     machine may store start position, acessable by {@link #getStart()}
-   * @return machine or null of this char does not allow new machine
+   * @param quoteMode start machine in "quote mode" if true
    */
-  @Nullable
-  static PyFilesStateMachine createFromChar(final char firstChar, final int start) {
-    if (firstChar == '"') {
-      final PyFilesStateMachine machine = new PyFilesStateMachine(start, true);
-      return machine;
-    }
-    if (firstChar == ' ') {
-      return new PyFilesStateMachine(start, false);
-    }
-    return null;
-  }
+  PyFilesStateMachine(final boolean quoteMode) {
+    myQuoteMode = quoteMode;
 
-  /**
-   * @return machine for the start of the line
-   */
-  @NotNull
-  static PyFilesStateMachine createFromStart() {
-    return new PyFilesStateMachine(0, false);
+    if (!myQuoteMode) {
+      myInProgress = true; // We can start machine if we do not need to wait for quote
+    }
   }
 
   /**
    * @param charToCheck char to add to machine
-   * @return see class doc for possible states
+   * @param charNumber  current position of char (to be checked by {@link #getStart()})
+   * @return see class doc
    */
-  @NotNull
-  PyFilesStateMachineResult addChar(final char charToCheck) {
+  boolean addChar(final char charToCheck, final int charNumber) {
+    if (!myInProgress) {
+      if ((charToCheck == '"' && myQuoteMode)) {
+        myInProgress = true;
+        myStart = charNumber;
+      }
+      return false;
+    }
+
     if (myWaitingForCharAfterSemicolon) {
       // Previous step was ":", what is next?
       if (charToCheck == '/' || charToCheck == '\\') {
@@ -84,70 +71,91 @@ final class PyFilesStateMachine {
         myFileName.append(':');
         myFileName.append(charToCheck);
         myWaitingForCharAfterSemicolon = false;
-        return PyFilesStateMachineResult.IN_PROGRESS;
+        return false;
       }
       if (Character.isDigit(charToCheck)) {
         // Number? Line numbers started, file name found
         myLookingForFile = false;
         myLineNumber.append(charToCheck);
         myWaitingForCharAfterSemicolon = false;
-        return PyFilesStateMachineResult.IN_PROGRESS;
+        return false;
       }
-      return PyFilesStateMachineResult.FAILED;
+      resetState();
+      return false;
     }
 
     if (charToCheck == '"') {
       // If machine in quote mode, and file and line are already found, machine is finished!
-      if (myHasQuote && myFileName.length() > 0 && myLineNumber.length() > 0) {
-        return PyFilesStateMachineResult.FINISHED;
+      if (myQuoteMode && myFileName.length() > 0 && myLineNumber.length() > 0) {
+        return true;
       }
-      return PyFilesStateMachineResult.FAILED; // Can't handle quote in other modes
+      resetState();
+      if (myQuoteMode) { // Relaunch process
+        myInProgress = true;
+        myStart = charNumber;
+      }
+      return false;
+      // Can't handle quote in other modes
     }
     if (charToCheck == ' ') {
-      if (myHasQuote && myLookingForFile) { // Spaces in quote mode is legal file names
+      if (myQuoteMode && myLookingForFile) { // Spaces in quote mode is legal file names
         myFileName.append(' ');
-        return PyFilesStateMachineResult.IN_PROGRESS;
+        return false;
       }
-      if ( !myHasQuote && myFileName.length() > 0 && myLineNumber.length() > 0) { //In other modes in may indicate end
-        return PyFilesStateMachineResult.FINISHED;
+      if (!myQuoteMode && myFileName.length() > 0 && myLineNumber.length() > 0) { //In other modes in may indicate end
+        return true;
       }
-      return PyFilesStateMachineResult.FAILED;
+      resetState();
+      if (!myQuoteMode) { // Relaunch process if we do not need quote
+        myInProgress = true;
+        myStart = charNumber;
+      }
+      return false;
     }
     if (Character.isLetter(charToCheck) || charToCheck == '/' || charToCheck == '\\' || charToCheck == '.' || charToCheck == '_') {
       // Alpha symbols are or for file name
       if (myLookingForFile) {
         myFileName.append(charToCheck);
-        return PyFilesStateMachineResult.IN_PROGRESS;
+        return false;
       }
     }
     if (charToCheck == ':') {
       // Semicolon is ok as file name
       if (myLookingForFile) {
         myWaitingForCharAfterSemicolon = true;
-        return PyFilesStateMachineResult.IN_PROGRESS;
+        return false;
       }
     }
     if (Character.isDigit(charToCheck)) {
       if (!myLookingForFile) {
         myLineNumber.append(charToCheck);
-        return PyFilesStateMachineResult.IN_PROGRESS;
+        return false;
       }
       if (myFileName.length() == 0) {
         // Can't start with digit
-        return PyFilesStateMachineResult.FAILED;
+        resetState();
+        return false;
       }
       myFileName.append(charToCheck);
-      return PyFilesStateMachineResult.IN_PROGRESS;
+      return false;
     }
     // Any unknown char is success end if we already have file name and line number
     if (myFileName.length() > 0 && myLineNumber.length() > 0) {
-      return PyFilesStateMachineResult.FINISHED;
+      return true;
     }
-    return PyFilesStateMachineResult.FAILED;
+    resetState();
+    return false;
+  }
+
+  private void resetState() {
+    myInProgress = false;
+    myLookingForFile = true;
+    myLineNumber.setLength(0);
+    myFileName.setLength(0);
   }
 
   /**
-   * @return when machine is in {@link PyFilesStateMachineResult#FINISHED} use this method to get file and line number
+   * @return when machine is in {@link PyFilesStateMachineState#FINISHED} use this method to get file and line number
    */
   @NotNull
   Pair<String, String> getFileAndLine() {
@@ -166,14 +174,10 @@ final class PyFilesStateMachine {
    *
    * @return see class doc
    */
-  @NotNull
-  PyFilesStateMachineResult endLine() {
-    if (myHasQuote) {
-      return PyFilesStateMachineResult.FAILED;
+  boolean endLine() {
+    if (myQuoteMode) {
+      return false;
     }
-    if (myFileName.length() > 0 && myLineNumber.length() > 0) {
-      return PyFilesStateMachineResult.FINISHED;
-    }
-    return PyFilesStateMachineResult.FAILED;
+    return myFileName.length() > 0 && myLineNumber.length() > 0;
   }
 }
