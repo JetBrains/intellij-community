@@ -42,8 +42,7 @@ class LoadTest : IcsTestCase() {
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
-    val data = localScheme.serialize().toByteArray()
-    provider.write("$dirPath/local.xml", data)
+    provider.write("$dirPath/local.xml", localScheme.serialize().toByteArray())
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
@@ -69,7 +68,7 @@ class LoadTest : IcsTestCase() {
     val remoteScheme = TestScheme("remote")
     val remoteRepository = tempDirManager.createRepository()
     remoteRepository
-      .add(remoteScheme.serialize().toByteArray(), "$dirPath/Mac OS X from RubyMine.xml")
+      .add("$dirPath/Mac OS X from RubyMine.xml", remoteScheme.serialize().toByteArray())
       .commit("")
 
     remoteRepository.useAsReadOnlySource {
@@ -90,7 +89,7 @@ class LoadTest : IcsTestCase() {
     val remoteScheme = TestScheme(schemeName, "remote")
     val remoteRepository = tempDirManager.createRepository("remote")
     remoteRepository
-      .add(remoteScheme.serialize().toByteArray(), "$dirPath/$schemeName.xml")
+      .add("$dirPath/$schemeName.xml", remoteScheme.serialize().toByteArray())
       .commit("")
 
     remoteRepository.useAsReadOnlySource {

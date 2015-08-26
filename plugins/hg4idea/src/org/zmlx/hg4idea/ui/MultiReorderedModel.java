@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.status.ui;
+package org.zmlx.hg4idea.ui;
 
 /**
- * Interface for {@link HgIncomingOutgoingWidget} that allows it to show/hide or update itself depending on the situation:
- * if incoming/outgoing changes need to be checked or not ({@link org.zmlx.hg4idea.HgVcs#INCOMING_OUTGOING_CHECK_TOPIC}).
+ * Interface for a Table components to allow multiSelection drag and drop
  */
-public interface HgHideableWidget {
+public interface MultiReorderedModel {
 
-  void show();
 
-  void hide();
+  /**
+   * @return is rows drag and drop possible
+   */
+  boolean canMoveRows();
 
-  void update();
+  /**
+   * Reorder component rows
+   *
+   * @param rowsIndexes source array to drag
+   * @param destination destination index, already updated according to rowsToMove indexes before/after destination
+   * @return new rows indexes to select
+   */
+  int[] moveRows(int[] rowsIndexes, int destination);
 }

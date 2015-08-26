@@ -518,7 +518,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     // save only if scheme differs from bundled
     val bundledScheme = readOnlyExternalizableSchemes.get(scheme.getName())
-    if (bundledScheme != null && schemeToInfo.get(bundledScheme)!!.hash == newHash) {
+    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.hash == newHash) {
       externalInfo?.scheduleDelete()
       return
     }

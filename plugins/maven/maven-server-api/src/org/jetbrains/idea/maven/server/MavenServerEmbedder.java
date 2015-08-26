@@ -38,7 +38,9 @@ public interface MavenServerEmbedder extends Remote {
   void customizeComponents() throws RemoteException;
 
   @NotNull
-  List<String> retrieveAvailableVersions(@NotNull String groupId, @NotNull String artifactId, @NotNull String remoteRepository)
+  List<String> retrieveAvailableVersions(@NotNull String groupId,
+                                         @NotNull String artifactId,
+                                         @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException;
 
 

@@ -15,8 +15,10 @@
  */
 package com.intellij.refactoring.invertBoolean;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -29,6 +31,16 @@ import java.util.Collection;
 
 public abstract class InvertBooleanDelegate {
   public static final ExtensionPointName<InvertBooleanDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.invertBoolean");
+
+  @Nullable
+  public static InvertBooleanDelegate findInvertBooleanDelegate(PsiElement element) {
+    for (InvertBooleanDelegate delegate : Extensions.getExtensions(EP_NAME)) {
+      if (delegate.isVisibleOnElement(element)) {
+        return delegate;
+      }
+    }
+    return null;
+  }
 
   /**
    * Quick check if element is potentially acceptable by delegate
@@ -60,6 +72,29 @@ public abstract class InvertBooleanDelegate {
                                           Collection<PsiElement> elementsToInvert,
                                           @Nullable RenameProcessor renameProcessor,
                                           @NotNull String newName);
+
+  /**
+   * Invoked from {@link #getForeignElementToInvert(com.intellij.psi.PsiElement, com.intellij.psi.PsiElement, com.intellij.lang.Language)};
+   * should be used to reject usages for elements from foreign language to be refactored
+   * @return null, if reference should not be reverted
+   */
+  public abstract PsiElement getElementToInvert(PsiElement namedElement, PsiElement expression);
+
+  /**
+   * Should be called from {@link #collectRefElements(PsiElement, Collection, RenameProcessor, String)}
+   * to process found usages in foreign languages
+   */
+  protected static PsiElement getForeignElementToInvert(PsiElement namedElement,
+                                                        PsiElement expression,
+                                                        Language language) {
+    if (!expression.getLanguage().is(language)){
+      final InvertBooleanDelegate delegate = findInvertBooleanDelegate(expression);
+      if (delegate != null) {
+        return delegate.getElementToInvert(namedElement, expression);
+      }
+    }
+    return null;
+  }
 
   /**
    * Replace expression with created negation

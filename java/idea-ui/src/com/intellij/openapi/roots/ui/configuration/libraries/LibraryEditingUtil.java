@@ -182,7 +182,7 @@ public class LibraryEditingUtil {
 
           @Override
           public Icon getIconFor(LibraryType aValue) {
-            return aValue != null ? aValue.getIcon() : PlatformIcons.LIBRARY_ICON;
+            return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
           }
 
           @Override

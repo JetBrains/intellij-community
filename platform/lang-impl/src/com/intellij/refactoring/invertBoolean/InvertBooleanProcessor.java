@@ -16,7 +16,6 @@
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -58,17 +57,8 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     myRenameProcessor = !(namedElement instanceof PsiNamedElement) || Comparing.equal(((PsiNamedElement)namedElement).getName(), myNewName) 
                         ? null : new RenameProcessor(project, namedElement, newName, false, false);
     mySmartPointerManager = SmartPointerManager.getInstance(project);
-    myDelegate = findInvertBooleanDelegate(myElement);
-  }
-
-  private static InvertBooleanDelegate findInvertBooleanDelegate(PsiElement element) {
-    for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {
-      if (delegate.isVisibleOnElement(element)) {
-        return delegate;
-      }
-    }
-    LOG.error(element);
-    return null;
+    myDelegate = InvertBooleanDelegate.findInvertBooleanDelegate(myElement);
+    LOG.assertTrue(myDelegate != null);
   }
 
   @Override
@@ -170,8 +160,9 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       if (pointerToInvert != null) {
         PsiElement element = pointerToInvert.getElement();
         LOG.assertTrue(element != null);
+        InvertBooleanDelegate delegate = InvertBooleanDelegate.findInvertBooleanDelegate(element);
         try {
-          myDelegate.replaceWithNegatedExpression(element);
+          (delegate != null ? delegate : myDelegate).replaceWithNegatedExpression(element);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
