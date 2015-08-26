@@ -43,7 +43,6 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
 
     presentation.setItemText(getName(element, item));
     presentation.setStrikeout(isToStrikeout(item));
-    presentation.setItemTextBold(item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
 
     presentation.setTailText((String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR), item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
 
