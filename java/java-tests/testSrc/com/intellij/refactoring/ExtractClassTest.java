@@ -90,6 +90,16 @@ public class ExtractClassTest extends MultiFileTestCase{
   public void testFieldReference() throws Exception {
     doTestMethod("foo", "Field 'myField' needs getter");
   }
+  
+  public void testIncrement() throws Exception {
+    try {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
+      doTestField(null, false);
+    }
+    finally {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
+  }
 
   public void testVarargs() throws Exception {
     doTestMethod();
