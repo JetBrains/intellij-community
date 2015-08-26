@@ -17,6 +17,7 @@ package org.intellij.images.editor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
@@ -119,7 +120,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
     }
 
     public void dispose() {
-        editorUI.dispose();
+        Disposer.dispose(editorUI);
         VirtualFileManager.getInstance().removeVirtualFileListener(this);
         disposed = true;
     }
