@@ -144,7 +144,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
   }
 
   public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
-    return DumbService.getInstance(project).filterByDumbAwareness(LineMarkerProviders.INSTANCE.allForLanguage(language));
+    return DumbService.getInstance(project).filterByDumbAwareness(LineMarkerProviders.INSTANCE.allForLanguageOrAny(language));
   }
 
   @Override
