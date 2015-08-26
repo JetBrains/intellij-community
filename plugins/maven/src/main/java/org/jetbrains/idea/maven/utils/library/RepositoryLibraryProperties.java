@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.utils.library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Attribute;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -95,7 +94,6 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     return artifactId;
   }
 
-  @Ignore
   public String getVersion() {
     return version;
   }
