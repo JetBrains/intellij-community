@@ -97,7 +97,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public JComponent createComponent() {
-    myProjectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
+    initManager();
 
     myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
     myTable = new JBTable(myModel);
@@ -164,6 +164,12 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     return FormBuilder.createFormBuilder() // todo bundle
       .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
       .getPanel();
+  }
+
+  private void initManager() {
+    if (myProjectStartupTaskManager == null) {
+      myProjectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
+    }
   }
 
   private void selectPathOrFirst(RunnerAndConfigurationSettings settings) {
@@ -276,6 +282,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
+    initManager();
     final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(myProjectStartupTaskManager.getSharedConfigurations());
     final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(shared);
     list.addAll(myProjectStartupTaskManager.getLocalConfigurations());
@@ -288,6 +295,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void apply() throws ConfigurationException {
+    initManager();
     final List<RunnerAndConfigurationSettings> shared = new ArrayList<RunnerAndConfigurationSettings>();
     final List<RunnerAndConfigurationSettings> local = new ArrayList<RunnerAndConfigurationSettings>();
 
@@ -306,6 +314,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void reset() {
+    initManager();
     myModel.setData(myProjectStartupTaskManager.getSharedConfigurations(), myProjectStartupTaskManager.getLocalConfigurations());
     selectPathOrFirst(null);
   }
