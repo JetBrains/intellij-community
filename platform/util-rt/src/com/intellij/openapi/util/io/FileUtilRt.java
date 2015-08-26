@@ -718,7 +718,7 @@ public class FileUtilRt {
       logger().info(e);
       return false;
     }
-    return true;
+    return !file.exists();
   }
   
   private static boolean deleteRecursively(@NotNull File file) {
