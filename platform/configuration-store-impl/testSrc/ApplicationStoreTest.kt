@@ -79,7 +79,7 @@ class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.fileSpecToPath(fileSpec))).exists()
+    assertThat(Paths.get(componentStore.storageManager.fileSpecToPath(fileSpec))).isRegularFile()
   }
 
   @Test fun `remove deprecated storage on write`() {
@@ -102,7 +102,7 @@ class ApplicationStoreTest {
     component.foo = "new2"
     runInEdtAndWait { componentStore.save(SmartList()) }
 
-    assertThat(oldFile.exists()).isFalse()
+    assertThat(oldFile).doesNotExist()
   }
 
   private fun writeConfig(fileName: String, Language("XML") data: String) = testAppConfig.writeChild(fileName, data)

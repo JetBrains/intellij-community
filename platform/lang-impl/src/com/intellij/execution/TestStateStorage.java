@@ -15,13 +15,16 @@
  */
 package com.intellij.execution;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +38,7 @@ import java.util.Date;
 /**
  * @author Dmitry Avdeev
  */
-public class TestStateStorage extends AbstractProjectComponent{
+public class TestStateStorage implements Disposable {
 
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
   public static File getTestHistoryRoot(Project project) {
@@ -56,31 +59,46 @@ public class TestStateStorage extends AbstractProjectComponent{
   private PersistentHashMap<String, Record> myMap;
 
   public static TestStateStorage getInstance(@NotNull Project project) {
-    return project.getComponent(TestStateStorage.class);
+    return ServiceManager.getService(project, TestStateStorage.class);
   }
 
   public TestStateStorage(Project project) {
-    super(project);
 
     File file = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
     FileUtilRt.createParentDirs(file);
     try {
-      myMap = new PersistentHashMap<String, Record>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
-        @Override
-        public void save(@NotNull DataOutput out, Record value) throws IOException {
-          out.writeInt(value.magnitude);
-          out.writeLong(value.date.getTime());
-        }
-
-        @Override
-        public Record read(@NotNull DataInput in) throws IOException {
-          return new Record(in.readInt(), new Date(in.readLong()));
-        }
-      });
+      myMap = create(file);
+    }
+    catch (PersistentEnumeratorBase.CorruptedException e) {
+      PersistentHashMap.deleteFilesStartingWith(file);
+      try {
+        myMap = create(file);
+      }
+      catch (IOException e1) {
+        LOG.error(e1);
+      }
     }
     catch (IOException e) {
       LOG.error(e);
     }
+
+    Disposer.register(project, this);
+  }
+
+  @NotNull
+  protected PersistentHashMap<String, Record> create(File file) throws IOException {
+    return new PersistentHashMap<String, Record>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
+      @Override
+      public void save(@NotNull DataOutput out, Record value) throws IOException {
+        out.writeInt(value.magnitude);
+        out.writeLong(value.date.getTime());
+      }
+
+      @Override
+      public Record read(@NotNull DataInput in) throws IOException {
+        return new Record(in.readInt(), new Date(in.readLong()));
+      }
+    });
   }
 
   @Nullable
@@ -105,7 +123,7 @@ public class TestStateStorage extends AbstractProjectComponent{
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     try {
       myMap.close();
     }

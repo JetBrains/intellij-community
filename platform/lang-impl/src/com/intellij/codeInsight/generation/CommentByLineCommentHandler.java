@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -214,6 +215,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       }
     }
     // third pass - actual change
+    Collections.reverse(myBlocks);
     for (Block block : myBlocks) {
       if (!block.skip) {
         if (!allLinesCommented) {

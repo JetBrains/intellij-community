@@ -80,6 +80,7 @@ public class StudyRunAction extends DumbAwareAction {
         Disposer.register(project, executor);
         executor.run();
       }
+      EduUtils.synchronize();
     }
   }
 

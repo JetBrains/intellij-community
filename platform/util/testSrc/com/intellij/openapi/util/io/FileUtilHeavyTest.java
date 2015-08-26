@@ -22,8 +22,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -178,6 +178,26 @@ public class FileUtilHeavyTest {
   public void twoFilesOrder2() {
     String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "second", "first");
     assertEquals(path, myFindTestFirstFile.getAbsolutePath());
+  }
+
+  @Test
+  public void testDeleteFail() throws IOException {
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "failed_delete");
+    File file = IoTestUtil.createTestFile(targetDir, "file");
+    // lock file
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    RandomAccessFile rw = new RandomAccessFile(file, "rw");
+    FileLock lock = null;
+    try {
+      lock = rw.getChannel().tryLock();
+      assertFalse(FileUtil.delete(file));
+    }
+    finally {
+      if (lock != null) {
+        lock.release();
+      }
+      rw.close();
+    }
   }
 
   @Test

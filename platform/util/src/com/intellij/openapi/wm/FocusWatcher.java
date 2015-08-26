@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
@@ -95,6 +96,9 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     final Component component = e.getComponent();
     if(e.isTemporary()||!component.isShowing()){
       return;
+    }
+    if (component instanceof JTextComponent) {
+      UIUtil.addUndoRedoActions((JTextComponent)component);
     }
     setFocusedComponentImpl(component, e);
     setNearestFocusableComponent(component.getParent());

@@ -232,7 +232,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     });
   }
 
-  private static String toShortString(@NotNull Object o) {
+  static String toShortString(@NotNull Object o) {
     String fqn = o.getClass().getName();
     return StringUtil.replace(o.toString(), fqn, StringUtil.getShortName(fqn, '.'));
   }

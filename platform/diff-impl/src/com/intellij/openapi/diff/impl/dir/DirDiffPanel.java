@@ -70,6 +70,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SuppressWarnings({"unchecked"})
 public class DirDiffPanel implements Disposable, DataProvider {
   public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
+  private static final int DIVIDER_PROPERTY_DEFAULT_VALUE = 200;
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -506,7 +507,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
   public void dispose() {
     myModel.stopUpdating();
-    PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, String.valueOf(mySplitPanel.getDividerLocation()));
+    PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, mySplitPanel.getDividerLocation(), DIVIDER_PROPERTY_DEFAULT_VALUE);
     clearDiffPanel();
   }
 
@@ -528,7 +529,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   public void setupSplitter() {
-    mySplitPanel.setDividerLocation(Integer.valueOf(PropertiesComponent.getInstance().getValue(DIVIDER_PROPERTY, "200")));
+    mySplitPanel.setDividerLocation(Integer.valueOf(PropertiesComponent.getInstance().getInt(DIVIDER_PROPERTY, DIVIDER_PROPERTY_DEFAULT_VALUE)));
   }
 
   @Override

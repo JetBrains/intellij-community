@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class CCChangeCourseInfo extends DumbAwareAction {
   public CCChangeCourseInfo() {
@@ -92,18 +93,22 @@ public class CCChangeCourseInfo extends DumbAwareAction {
 
   static class ChangeCourseInfoDialog extends DialogWrapper {
 
-    CCNewProjectPanel myNewProjectPanel;
+    private final JPanel myMainPanel;
+
     public ChangeCourseInfoDialog(@Nullable Project project, CCNewProjectPanel panel) {
       super(project);
       setTitle("Change Course Information");
-      myNewProjectPanel = panel;
+      myMainPanel = panel.getMainPanel();
       init();
     }
 
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      return myNewProjectPanel.getMainPanel();
+      myMainPanel.setPreferredSize(new Dimension(400, 300));
+      myMainPanel.setSize(new Dimension(400, 300));
+      myMainPanel.setMaximumSize(new Dimension(400, 300));
+      return myMainPanel;
     }
   }
 }

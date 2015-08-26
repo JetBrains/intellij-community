@@ -508,7 +508,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     var fileNameWithoutExtension = currentFileNameWithoutExtension
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
-      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeName(scheme.getName()))
+      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.getName(), false))
     }
 
     val newHash = JDOMUtil.getTreeHash(element!!, true)
@@ -518,7 +518,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     // save only if scheme differs from bundled
     val bundledScheme = readOnlyExternalizableSchemes.get(scheme.getName())
-    if (bundledScheme != null && schemeToInfo.get(bundledScheme)!!.hash == newHash) {
+    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.hash == newHash) {
       externalInfo?.scheduleDelete()
       return
     }

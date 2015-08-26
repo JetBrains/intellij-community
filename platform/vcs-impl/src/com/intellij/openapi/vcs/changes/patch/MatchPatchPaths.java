@@ -193,8 +193,7 @@ public class MatchPatchPaths {
     return ContainerUtil.filter(files, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
-        return !FileUtil
-          .isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false);
+        return !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false);
       }
     });
   }

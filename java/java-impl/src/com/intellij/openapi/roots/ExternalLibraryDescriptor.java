@@ -27,11 +27,17 @@ public abstract class ExternalLibraryDescriptor {
   private final String myLibraryGroupId;
   private final String myLibraryArtifactId;
   private final String myMinVersion;
+  private final String myMaxVersion;
 
-  public ExternalLibraryDescriptor(@NotNull String libraryGroupId, @NotNull String libraryArtifactId, @Nullable String minVersion) {
+  public ExternalLibraryDescriptor(String libraryGroupId, String libraryArtifactId) {
+    this(libraryGroupId, libraryArtifactId, null, null);
+  }
+
+  public ExternalLibraryDescriptor(@NotNull String libraryGroupId, @NotNull String libraryArtifactId, @Nullable String minVersion, @Nullable String maxVersion) {
     myLibraryGroupId = libraryGroupId;
     myLibraryArtifactId = libraryArtifactId;
     myMinVersion = minVersion;
+    myMaxVersion = maxVersion;
   }
 
   @NotNull
@@ -47,6 +53,11 @@ public abstract class ExternalLibraryDescriptor {
   @Nullable
   public String getMinVersion() {
     return myMinVersion;
+  }
+
+  @Nullable
+  public String getMaxVersion() {
+    return myMaxVersion;
   }
 
   public String getPresentableName() {

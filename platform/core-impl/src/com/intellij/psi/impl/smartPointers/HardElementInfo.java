@@ -68,6 +68,11 @@ class HardElementInfo extends SmartPointerElementInfo {
     return myElement.getTextRange();
   }
 
+  @Override
+  public Segment getPsiRange() {
+    return getRange();
+  }
+
   @NotNull
   @Override
   public Project getProject() {

@@ -444,7 +444,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   GutterMark findGutter(@NotNull @TestDataFile @NonNls String filePath);
 
   @NotNull
-  Collection<GutterMark> findGuttersAtCaret();
+  List<GutterMark> findGuttersAtCaret();
 
   @NotNull
   PsiManager getPsiManager();

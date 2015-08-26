@@ -47,7 +47,7 @@ public class PyStudyShowTutorial extends AbstractProjectComponent {
               notification.whenExpired(new Runnable() {
                 @Override
                 public void run() {
-                  PropertiesComponent.getInstance().setValue(ourShowPopup, String.valueOf(false));
+                  PropertiesComponent.getInstance().setValue(ourShowPopup, false, true);
                 }
               });
             }

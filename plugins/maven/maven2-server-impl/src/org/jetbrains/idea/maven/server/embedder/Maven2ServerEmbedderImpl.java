@@ -30,7 +30,6 @@ import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
-import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.DefaultArtifactRepository;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
@@ -631,26 +630,22 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   @NotNull
   @Override
-  public List<String> retrieveAvailableVersions(@NotNull String groupId, @NotNull String artifactId, @NotNull String remoteRepositoryUrl)
+  public List<String> retrieveAvailableVersions(@NotNull String groupId,
+                                                @NotNull String artifactId,
+                                                @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException {
     try {
       Artifact artifact =
         new DefaultArtifact(groupId, artifactId, VersionRange.createFromVersion(""), Artifact.SCOPE_COMPILE, "pom", null,
                             new DefaultArtifactHandler("pom"));
       ArtifactRepositoryLayout repositoryLayout = getComponent(ArtifactRepositoryLayout.class);
-      ArtifactRepository remoteRepository = new DefaultArtifactRepository(
-        "id",
-        remoteRepositoryUrl,
-        repositoryLayout,
-        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN),
-        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN));
       List versions = getComponent(ArtifactMetadataSource.class).retrieveAvailableVersions(
         artifact,
         new DefaultArtifactRepository(
           "local",
           getLocalRepositoryFile().getPath(),
           repositoryLayout),
-        Collections.singletonList(remoteRepository));
+        convertRepositories(remoteRepositories));
 
       List<String> result = new ArrayList<String>();
       for (Object version : versions) {

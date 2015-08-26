@@ -15,24 +15,25 @@
  */
 package com.intellij.execution.startup;
 
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jdom.Element;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 8/19/2015.
  */
-public class ProjectStartupConfigurationBase implements PersistentStateComponent<Element> {
-  protected final static String TOP_ELEMENT = "startup-tasks";
-  private final static String TASK = "task";
-  private final static String NAME = "name";
-  private final static String ID = "id";
-
+public class ProjectStartupConfigurationBase implements PersistentStateComponent<ProjectStartupConfigurationBase> {
+  @Tag("configurations") @AbstractCollection(surroundWithTag = false)
   private final List<ConfigurationDescriptor> myList;
 
   protected ProjectStartupConfigurationBase() {
@@ -41,44 +42,27 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
 
   @Nullable
   @Override
-  public Element getState() {
-    if (myList.isEmpty()) return null;
-    final Element element = new Element(TOP_ELEMENT);
-    for (ConfigurationDescriptor descriptor : myList) {
-      final Element child = new Element(TASK);
-      child.setAttribute(NAME, descriptor.getName());
-      child.setAttribute(ID, descriptor.getId());
-
-      element.addContent(child);
-    }
-    return element;
+  public ProjectStartupConfigurationBase getState() {
+    return this;
   }
 
   @Override
-  public void loadState(Element state) {
-    myList.clear();
-    final List<Element> children = state.getChildren();
-    for (Element child : children) {
-      if (TASK.equals(child.getName())) {
-        final String name = child.getAttributeValue(NAME);
-        final String id = child.getAttributeValue(ID);
-        if (! StringUtil.isEmptyOrSpaces(name) && ! StringUtil.isEmptyOrSpaces(id)) {
-          myList.add(new ConfigurationDescriptor(id, name));
-        }
-      }
-    }
+  public void loadState(ProjectStartupConfigurationBase state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   public void clear() {
     myList.clear();
   }
 
+  @Transient
   public List<ConfigurationDescriptor> getList() {
     return myList;
   }
 
   public void setList(@NotNull final List<ConfigurationDescriptor> list) {
     myList.clear();
+    Collections.sort(list, new ConfigurationDescriptorComparator());
     myList.addAll(list);
   }
 
@@ -86,23 +70,74 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     return myList.isEmpty();
   }
 
+  public void setConfigurations(@NotNull Collection<RunnerAndConfigurationSettings> collection) {
+    final List<ConfigurationDescriptor> names =
+      ContainerUtil.map(collection, new Function<RunnerAndConfigurationSettings, ConfigurationDescriptor>() {
+      @Override
+      public ConfigurationDescriptor fun(RunnerAndConfigurationSettings settings) {
+        return new ConfigurationDescriptor(settings.getUniqueID(), settings.getName());
+      }
+    });
+    setList(names);
+  }
+
+  public boolean deleteConfiguration(String name) {
+    final List<ConfigurationDescriptor> list = getList();
+    final Iterator<ConfigurationDescriptor> iterator = list.iterator();
+    while (iterator.hasNext()) {
+      final ConfigurationDescriptor descriptor = iterator.next();
+      if (descriptor.getName().equals(name)) {
+        iterator.remove();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean rename(String oldId, RunnerAndConfigurationSettings settings) {
+    final List<ConfigurationDescriptor> list = getList();
+    for (ConfigurationDescriptor descriptor : list) {
+      if (descriptor.getId().equals(oldId)) {
+        final List<ConfigurationDescriptor> newList =
+          new ArrayList<ConfigurationDescriptor>(list);
+        newList.remove(descriptor);
+        newList.add(new ConfigurationDescriptor(settings.getUniqueID(), settings.getName()));
+        setList(newList);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Tag("configuration")
   public static class ConfigurationDescriptor {
-    private final @NotNull String myId;
-    private final @NotNull String myName;
+    private String myId;
+    private String myName;
+
+    public ConfigurationDescriptor() {
+    }
 
     public ConfigurationDescriptor(@NotNull String id, @NotNull String name) {
       myId = id;
       myName = name;
     }
 
-    @NotNull
+    @Attribute("id")
     public String getId() {
       return myId;
     }
 
-    @NotNull
+    @Attribute("name")
     public String getName() {
       return myName;
+    }
+
+    public void setId(String id) {
+      myId = id;
+    }
+
+    public void setName(String name) {
+      myName = name;
     }
 
     @Override
@@ -123,6 +158,14 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
       int result = myId.hashCode();
       result = 31 * result + myName.hashCode();
       return result;
+    }
+  }
+
+  private static class ConfigurationDescriptorComparator implements Comparator<ConfigurationDescriptor> {
+    @Override
+    public int compare(ConfigurationDescriptor o1,
+                       ConfigurationDescriptor o2) {
+      return o1.getName().compareToIgnoreCase(o2.getName());
     }
   }
 }

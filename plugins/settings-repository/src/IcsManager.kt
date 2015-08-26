@@ -215,16 +215,12 @@ class IcsManager(dir: File) {
         throw IllegalStateException("Save is prohibited now")
       }
 
-      doSave(fileSpec, content, size, roamingType)
-
-      if (isAutoCommit(fileSpec, roamingType)) {
+      if (doSave(fileSpec, content, size, roamingType) && isAutoCommit(fileSpec, roamingType)) {
         scheduleCommit()
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
-    }
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 

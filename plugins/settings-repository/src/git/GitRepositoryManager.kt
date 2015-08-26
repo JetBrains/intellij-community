@@ -26,6 +26,7 @@ import com.intellij.util.SmartList
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
+import org.eclipse.jgit.ignore.IgnoreNode
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
@@ -62,6 +63,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     JGitCredentialsProvider(credentialsStore, repository)
   }
 
+  private var ignoreRules: IgnoreNode? = null
+
   init {
     if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
       ShutDownTracker.getInstance().registerShutdownTask(object: Runnable {
@@ -73,6 +76,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun createRepositoryIfNeed(): Boolean {
+    ignoreRules = null
+
     if (isRepositoryExists()) {
       return false
     }
@@ -83,6 +88,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun deleteRepository() {
+    ignoreRules = null
+
     super.deleteRepository()
 
     val r = _repository
@@ -275,6 +282,28 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
     repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) } .append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
     return true
+  }
+
+  private fun getIgnoreRules(): IgnoreNode? {
+    var node = ignoreRules
+    if (node == null) {
+      val file = File(dir, Constants.DOT_GIT_IGNORE)
+      if (file.exists()) {
+        node = IgnoreNode()
+        file.inputStream().use { node!!.parse(it) }
+        ignoreRules = node
+      }
+    }
+    return node
+  }
+
+  override fun write(path: String, content: ByteArray, size: Int): Boolean {
+    val ignoreRules = getIgnoreRules()
+    // add first slash as WorkingTreeIterator does "The ignore code wants path to start with a '/' if possible."
+    if (ignoreRules != null && ignoreRules.isIgnored("/$path", false) == IgnoreNode.MatchResult.IGNORED) {
+      return false
+    }
+    return super.write(path, content, size)
   }
 }
 

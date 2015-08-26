@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,10 +272,10 @@ class IntroduceConstantDialog extends DialogWrapper {
         LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
         JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
-      myCbNonNls.setSelected(component.isTrueValue(NONNLS_SELECTED_PROPERTY));
+      myCbNonNls.setSelected(component.getBoolean(NONNLS_SELECTED_PROPERTY));
       myCbNonNls.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
-          component.setValue(NONNLS_SELECTED_PROPERTY, Boolean.toString(myCbNonNls.isSelected()));
+          component.setValue(NONNLS_SELECTED_PROPERTY, myCbNonNls.isSelected());
         }
       });
     } else {

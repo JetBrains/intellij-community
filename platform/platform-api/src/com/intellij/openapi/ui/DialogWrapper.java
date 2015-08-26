@@ -2059,12 +2059,12 @@ public abstract class DialogWrapper {
 
     @Override
     public boolean isToBeShown() {
-      return PropertiesComponent.getInstance().getBoolean(myProperty, false);
+      return PropertiesComponent.getInstance().getBoolean(myProperty);
     }
 
     @Override
     public void setToBeShown(boolean value, int exitCode) {
-      PropertiesComponent.getInstance().setValue(myProperty, Boolean.toString(value));
+      PropertiesComponent.getInstance().setValue(myProperty, value);
     }
 
     @Override

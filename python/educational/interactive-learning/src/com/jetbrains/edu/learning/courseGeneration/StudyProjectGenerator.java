@@ -32,6 +32,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +179,7 @@ public class StudyProjectGenerator {
       final File file = new File(courseDirectory, name);
       FileUtil.createIfDoesntExist(file);
       try {
-        FileUtil.writeToFile(file, text);
+        FileUtil.writeToFile(file, Base64.decodeBase64(text));
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);
@@ -205,7 +206,7 @@ public class StudyProjectGenerator {
       FileUtil.createIfDoesntExist(file);
 
       try {
-        FileUtil.writeToFile(file, taskFile.text);
+        FileUtil.writeToFile(file, Base64.decodeBase64(taskFile.text));
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);

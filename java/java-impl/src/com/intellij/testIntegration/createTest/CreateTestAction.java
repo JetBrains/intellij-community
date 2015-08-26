@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,13 +106,13 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
     checkForTestRoots(srcModule, testFolders);
-    if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT, false)) {
+    if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
       if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) !=
           Messages.OK) {
         return;
       }
 
-      propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, String.valueOf(true));
+      propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, true);
     }
 
     final CreateTestDialog d = createTestDialog(project, srcModule, srcClass, srcPackage);
