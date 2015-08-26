@@ -37,7 +37,7 @@ public interface RepositoryManager {
   /**
    * Return error message if failed
    */
-  public fun setUpstream(url: String?, branch: String?)
+  public fun setUpstream(url: String?, branch: String? = null)
 
   public fun read(path: String): InputStream?
 

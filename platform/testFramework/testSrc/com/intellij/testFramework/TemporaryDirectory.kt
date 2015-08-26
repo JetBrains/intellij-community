@@ -120,11 +120,17 @@ public fun Path.readText(): String = Files.readAllBytes(this).toString(Charsets.
 
 public fun VirtualFile.writeChild(relativePath: String, data: String): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
 
-public fun Path.writeChild(relativePath: String, data: String): Path {
+public fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
+
+public fun Path.writeChild(relativePath: String, data: ByteArray): Path {
   val path = resolve(relativePath)
   path.getParent().createDirectories()
-  return Files.write(path, data.toByteArray())
+  return Files.write(path, data)
 }
+
+public fun Path.isDirectory(): Boolean = Files.isDirectory(this)
+
+public fun Path.isFile(): Boolean = Files.isRegularFile(this)
 
 /**
  * Opposite to ugly Java, parent directories will be created
