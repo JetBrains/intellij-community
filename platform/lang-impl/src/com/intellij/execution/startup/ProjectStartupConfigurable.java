@@ -252,7 +252,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
         }
       })
       .createPopup();
-    popup.show(new RelativePoint(myDecorator.getActionsPanel(), new Point(10, 10)));
+
+    final RelativePoint point = button.getPreferredPopupPoint();
+    if (point != null) {
+      popup.show(point);
+    } else {
+      popup.showInCenterOf(myDecorator.getActionsPanel());
+    }
   }
 
   @Override
