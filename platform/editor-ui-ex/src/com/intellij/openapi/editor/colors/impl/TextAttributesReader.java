@@ -65,7 +65,7 @@ class TextAttributesReader extends ValueElementReader {
           FontStyle.read(this, element));
         // needed for compatibility with TextAttributes(Element)
         if (attributes.isEmpty()) {
-          attributes.setEnforcedDefaults(true);
+          attributes.setEnforceEmpty(true);
         }
       }
       //noinspection unchecked
