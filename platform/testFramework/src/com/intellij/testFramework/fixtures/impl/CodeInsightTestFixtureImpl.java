@@ -1105,10 +1105,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public Collection<GutterMark> findGuttersAtCaret() {
+  public List<GutterMark> findGuttersAtCaret() {
     CommonProcessors.CollectProcessor<GutterMark> processor = new CommonProcessors.CollectProcessor<GutterMark>();
     findGutters(processor);
-    return processor.getResults();
+    return new ArrayList<GutterMark>(processor.getResults());
   }
 
   private void findGutters(Processor<GutterMark> processor) {

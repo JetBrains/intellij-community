@@ -718,7 +718,7 @@ public class FileUtilRt {
       logger().info(e);
       return false;
     }
-    return true;
+    return !file.exists();
   }
   
   private static boolean deleteRecursively(@NotNull File file) {
@@ -797,6 +797,7 @@ public class FileUtilRt {
     return path.isDirectory() || path.mkdirs();
   }
 
+  @SuppressWarnings("Duplicates")
   public static void copy(@NotNull File fromFile, @NotNull File toFile) throws IOException {
     if (!ensureCanCreateFile(toFile)) {
       return;

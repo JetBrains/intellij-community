@@ -18,8 +18,8 @@ package com.intellij.refactoring.invertBoolean;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -36,12 +36,12 @@ public class InvertBooleanDialog extends RefactoringDialog {
   private JLabel myLabel;
   private JLabel myCaptionLabel;
 
-  private final PsiNamedElement myElement;
+  private final PsiElement myElement;
 
-  public InvertBooleanDialog(final PsiNamedElement element) {
+  public InvertBooleanDialog(final PsiElement element) {
     super(element.getProject(), false);
     myElement = element;
-    final String name = myElement.getName();
+    final String name = myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText();
     myNameField.setText(name);
     myLabel.setLabelFor(myNameField);
     final String typeString = UsageViewUtil.getType(myElement);
@@ -65,7 +65,7 @@ public class InvertBooleanDialog extends RefactoringDialog {
       CommonRefactoringUtil.showErrorMessage(InvertBooleanHandler.REFACTORING_NAME,
                                              RefactoringBundle.message("please.enter.a.valid.name.for.inverted.element",
                                                                        UsageViewUtil.getType(myElement)),
-                                             HelpID.INVERT_BOOLEAN, project);
+                                             InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID, project);
       return;
     }
 
@@ -73,7 +73,7 @@ public class InvertBooleanDialog extends RefactoringDialog {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.INVERT_BOOLEAN);
+    HelpManager.getInstance().invokeHelp(InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
   }
 
   protected JComponent createCenterPanel() {

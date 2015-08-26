@@ -17,19 +17,16 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.writeChild
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.jgit.dirCache.AddFile
+import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.git
 import org.junit.Rule
-import java.io.File
+import java.nio.file.Path
 import kotlin.properties.Delegates
-
-val testDataPath: String = "${PlatformTestUtil.getCommunityPath()}/plugins/settings-repository/testData"
 
 fun StreamProvider.write(path: String, data: ByteArray) {
   write(path, data, data.size(), RoamingType.PER_USER)
@@ -40,11 +37,21 @@ fun StreamProvider.write(fileSpec: String, content: String) {
   write(fileSpec, data, data.size(), RoamingType.PER_USER)
 }
 
-fun Repository.add(data: ByteArray, path: String): Repository {
-  FileUtil.writeToFile(File(getWorkTree(), path), data)
-  edit(AddFile(path))
+fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
+
+fun Repository.add(path: String, data: ByteArray): Repository {
+  workTree.writeChild(path, data)
+  edit(AddLoadedFile(path, data))
   return this
 }
+
+val Repository.workTree: Path
+  get() = getWorkTree().toPath()
+
+val SAMPLE_FILE_NAME = "file.xml"
+val SAMPLE_FILE_CONTENT = """<application>
+  <component name="Encoding" default_encoding="UTF-8" />
+</application>"""
 
 abstract class IcsTestCase {
   val tempDirManager = TemporaryDirectory()

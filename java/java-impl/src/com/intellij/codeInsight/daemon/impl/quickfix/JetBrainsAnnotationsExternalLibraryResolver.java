@@ -87,7 +87,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
 
   private static abstract class JetBrainsAnnotationsLibraryDescriptor extends ExternalLibraryDescriptor {
     public JetBrainsAnnotationsLibraryDescriptor() {
-      super("com.intellij", "annotations", null);
+      super("com.intellij", "annotations");
     }
   }
 }

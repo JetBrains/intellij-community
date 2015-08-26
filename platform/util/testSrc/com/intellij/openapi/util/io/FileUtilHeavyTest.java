@@ -23,7 +23,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -178,6 +180,20 @@ public class FileUtilHeavyTest {
   public void twoFilesOrder2() {
     String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "second", "first");
     assertEquals(path, myFindTestFirstFile.getAbsolutePath());
+  }
+
+  @Test
+  public void testDeleteFail() throws IOException {
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "failed_delete");
+    File file = IoTestUtil.createTestFile(targetDir, "file");
+    // lock file
+    OutputStream stream = new FileOutputStream(file);
+    try {
+      assertFalse(FileUtil.delete(file));
+    }
+    finally {
+      stream.close();
+    }
   }
 
   @Test

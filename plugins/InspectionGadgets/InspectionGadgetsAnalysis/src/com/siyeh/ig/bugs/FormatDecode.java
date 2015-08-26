@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -151,11 +152,10 @@ class FormatDecode {
     @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
-
       return PsiType.LONG.equals(type) ||
              CommonClassNames.JAVA_LANG_LONG.equals(text) ||
-             CommonClassNames.JAVA_UTIL_DATE.equals(text) ||
-             CommonClassNames.JAVA_UTIL_CALENDAR.equals(text);
+             InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_DATE) ||
+             InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_CALENDAR);
     }
   }
 

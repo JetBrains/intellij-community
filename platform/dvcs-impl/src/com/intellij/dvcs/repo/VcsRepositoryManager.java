@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +54,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
 
   @NotNull
   public static VcsRepositoryManager getInstance(@NotNull Project project) {
-    //noinspection ConstantConditions
-    return project.getComponent(VcsRepositoryManager.class);
+    return ObjectUtils.assertNotNull(project.getComponent(VcsRepositoryManager.class));
   }
 
   public VcsRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {

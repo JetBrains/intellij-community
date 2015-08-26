@@ -67,6 +67,10 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
         if (!changes.isEmpty()) {
           runBatchUpdate(project.getMessageBus()) {
             for ((store, storages) in changes.entrySet()) {
+              if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed() ?: false) {
+                continue
+              }
+
               @suppress("UNCHECKED_CAST")
               if (reloadStore(storages as Set<StateStorage>, store, false) == ReloadComponentStoreStatus.RESTART_AGREED) {
                 projectsToReload.add(project)

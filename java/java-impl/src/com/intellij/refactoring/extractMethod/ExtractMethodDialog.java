@@ -193,7 +193,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     }
 
     if (myGenerateAnnotations != null && myGenerateAnnotations.isEnabled()) {
-      PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_GENERATE_ANNOTATIONS, String.valueOf(myGenerateAnnotations.isSelected()));
+      PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_GENERATE_ANNOTATIONS, myGenerateAnnotations.isSelected(), true);
     }
     super.doOKAction();
   }

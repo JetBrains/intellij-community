@@ -329,7 +329,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     @Override
     protected void doOKAction() {
       super.doOKAction();
-      PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, Boolean.TRUE.toString());
+      PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true);
       myLegalNoticeAccepted = true;
     }
 

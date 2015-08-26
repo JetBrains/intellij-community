@@ -275,7 +275,7 @@ public class PsiTypeLookupItem extends LookupItem {
       }
 
       presentation.setItemText(((PsiType)object).getCanonicalText());
-      presentation.setItemTextBold(getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null || object instanceof PsiPrimitiveType);
+      presentation.setItemTextBold(object instanceof PsiPrimitiveType);
       if (isAddArrayInitializer()) {
         presentation.setTailText("{...}");
       }

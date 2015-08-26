@@ -42,7 +42,7 @@ public abstract class PropertiesComponent {
   public abstract String getValue(@NonNls String name);
 
   /**
-   * @deprecated Use {@link #setValue(String, String, String)} to avoid write defaults.
+   * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.
    */
   public abstract void setValue(@NotNull String name, @Nullable String value);
 
@@ -64,10 +64,12 @@ public abstract class PropertiesComponent {
   /**
    * Set value or unset if equals to false
    */
-  public abstract void setValue(@NotNull String name, boolean value);
+  public final void setValue(@NotNull String name, boolean value) {
+    setValue(name, value, false);
+  }
 
   /**
-   * Set value or unset if equals to false
+   * Set value or unset if equals to default
    */
   public abstract void setValue(@NotNull String name, boolean value, boolean defaultValue);
 
@@ -88,8 +90,12 @@ public abstract class PropertiesComponent {
     return Boolean.valueOf(getValue(name)).booleanValue();
   }
 
-  public final boolean getBoolean(@NonNls String name, boolean defaultValue) {
+  public final boolean getBoolean(@NotNull String name, boolean defaultValue) {
     return isValueSet(name) ? isTrueValue(name) : defaultValue;
+  }
+
+  public final boolean getBoolean(@NotNull String name) {
+    return getBoolean(name, false);
   }
 
   @NotNull

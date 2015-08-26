@@ -43,7 +43,7 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
   private final String myVersion;
 
   public JUnitExternalLibraryDescriptor(String version) {
-    super("junit", "junit", version);
+    super("junit", "junit", version + ".0", version + ".999");
     myVersion = version;
   }
 

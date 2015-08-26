@@ -27,8 +27,10 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProviderEx;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -66,7 +68,7 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
-public class JavaDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
+public class JavaDocumentationProvider extends DocumentationProviderEx implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final Logger LOG = Logger.getInstance("#" + JavaDocumentationProvider.class.getName());
 
   private static final String LINE_SEPARATOR = "\n";
@@ -791,6 +793,19 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public void promptToConfigureDocumentation(PsiElement element) {
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement) {
+    PsiDocComment docComment = PsiTreeUtil.getParentOfType(contextElement, PsiDocComment.class, false);
+    if (docComment != null && JavaDocUtil.isInsidePackageInfo(docComment)) {
+      PsiDirectory directory = file.getContainingDirectory();
+      if (directory != null) {
+        return JavaDirectoryService.getInstance().getPackage(directory);
+      }
+    }
+    return null;
   }
 
   public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {

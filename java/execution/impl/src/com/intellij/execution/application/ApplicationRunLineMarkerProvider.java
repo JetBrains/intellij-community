@@ -35,9 +35,9 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     if (e instanceof PsiIdentifier) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null)
-        return new Info(ApplicationConfigurationType.getInstance().getIcon(), null, ExecutorAction.ACTIONS);
+        return new Info(ApplicationConfigurationType.getInstance().getIcon(), null, ExecutorAction.ACTIONS(0));
       if (element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element))
-        return new Info(ApplicationConfigurationType.getInstance().getIcon(), null, ExecutorAction.ACTIONS);
+        return new Info(ApplicationConfigurationType.getInstance().getIcon(), null, ExecutorAction.ACTIONS(0));
     }
     return null;
   }

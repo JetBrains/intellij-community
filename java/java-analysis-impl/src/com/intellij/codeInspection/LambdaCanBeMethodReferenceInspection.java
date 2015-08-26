@@ -19,6 +19,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -217,7 +219,26 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   private static boolean checkQualifier(PsiElement qualifier) {
-    return !(qualifier instanceof PsiCallExpression);
+    if (qualifier == null) {
+      return true;
+    }
+    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class);
+    final Condition<PsiElement> nonFinalFieldRefCondition = new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement expression) {
+        if (expression instanceof PsiReferenceExpression) {
+          PsiElement element = ((PsiReferenceExpression)expression).resolve();
+          if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    };
+    return SyntaxTraverser
+      .psiTraverser()
+      .withRoot(qualifier)
+      .filter(Conditions.or(callExpressionCondition, nonFinalFieldRefCondition)).toList().isEmpty();
   }
 
   @Nullable
