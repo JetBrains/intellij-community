@@ -31,7 +31,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,21 +38,25 @@ import java.util.List;
  */
 public class ExecutorAction extends AnAction {
 
-  public static AnAction[] ACTIONS =
-    ContainerUtil.map2Array(ExecutorRegistry.getInstance().getRegisteredExecutors(), AnAction.class, new Function<Executor, AnAction>() {
+  public static AnAction[] ACTIONS(final int order) {
+    return ContainerUtil.map2Array(ExecutorRegistry.getInstance().getRegisteredExecutors(), AnAction.class, new Function<Executor, AnAction>() {
       @Override
       public AnAction fun(Executor executor) {
-        return new ExecutorAction(ActionManager.getInstance().getAction(executor.getContextActionId()), executor);
+        return new ExecutorAction(ActionManager.getInstance().getAction(executor.getContextActionId()), executor, order);
       }
     });
+  }
 
   private final AnAction myOrigin;
   private final Executor myExecutor;
+  private final int myOrder;
 
   private ExecutorAction(AnAction origin,
-                         Executor executor) {
+                         Executor executor,
+                         int order) {
     myOrigin = origin;
     myExecutor = executor;
+    myOrder = order;
     copyFrom(origin);
   }
 
@@ -69,7 +72,7 @@ public class ExecutorAction extends AnAction {
     myOrigin.actionPerformed(e);
   }
 
-  private static String getActionName(DataContext dataContext, @NotNull Executor executor) {
+  private String getActionName(DataContext dataContext, @NotNull Executor executor) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     List<RunConfigurationProducer<?>> producers = RunConfigurationProducer.getProducers(context.getProject());
     List<ConfigurationFromContext> list = ContainerUtil.mapNotNull(producers,
@@ -81,8 +84,8 @@ public class ExecutorAction extends AnAction {
                                                                    }
     );
     if (list.isEmpty()) return null;
-    Collections.sort(list, ConfigurationFromContext.COMPARATOR);
-    String actionName = BaseRunConfigurationAction.suggestRunActionName((LocatableConfiguration)list.get(0).getConfiguration());
+    ConfigurationFromContext configuration = list.get(myOrder < list.size() ? myOrder : 0);
+    String actionName = BaseRunConfigurationAction.suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
     return executor.getStartActionText(actionName);
   }
 
