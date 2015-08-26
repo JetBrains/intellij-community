@@ -182,7 +182,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             highlight.run();
             progress.checkCanceled();
             HighlightingSession highlightingSession = HighlightingSessionImpl.getHighlightingSession(file, progress);
-            PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder, highlightingSession);
+            PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder);
             highlightingVisitor.collectHighlights(file, holder, progress);
           }
         });
