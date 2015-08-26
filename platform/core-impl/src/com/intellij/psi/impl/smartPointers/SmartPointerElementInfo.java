@@ -51,4 +51,7 @@ abstract class SmartPointerElementInfo {
 
   public void cleanup() {
   }
+
+  @Nullable
+  public abstract Segment getPsiRange();
 }
