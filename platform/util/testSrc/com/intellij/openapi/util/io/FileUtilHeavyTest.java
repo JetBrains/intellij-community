@@ -22,10 +22,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -187,12 +185,18 @@ public class FileUtilHeavyTest {
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "failed_delete");
     File file = IoTestUtil.createTestFile(targetDir, "file");
     // lock file
-    OutputStream stream = new FileOutputStream(file);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    RandomAccessFile rw = new RandomAccessFile(file, "rw");
+    FileLock lock = null;
     try {
+      lock = rw.getChannel().tryLock();
       assertFalse(FileUtil.delete(file));
     }
     finally {
-      stream.close();
+      if (lock != null) {
+        lock.release();
+      }
+      rw.close();
     }
   }
 
