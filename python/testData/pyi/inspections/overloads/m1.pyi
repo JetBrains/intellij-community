@@ -1,5 +1,10 @@
 from typing import overload
 
+@overload
+def f(key: int) -> int: ...
+@overload
+def f(key: str) -> str: ...
+
 class C:
     @overload
     def __getitem__(self, key: int) -> int: ...

@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
@@ -97,28 +99,38 @@ public class PyiTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType getOverloadType(@NotNull PyFunction function, @NotNull final TypeEvalContext context) {
-    final PyClass cls = function.getContainingClass();
-    if (cls != null) {
-      final String name = function.getName();
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
+    final String name = function.getName();
+    final List<PyFunction> overloads = new ArrayList<PyFunction>();
+    final Processor<PyFunction> overloadsProcessor = new Processor<PyFunction>() {
+      @Override
+      public boolean process(@NotNull PyFunction f) {
+        if (name != null && name.equals(f.getName()) && isOverload(f, context)) {
+          overloads.add(f);
+        }
+        return true;
+      }
+    };
+    if (owner instanceof PyClass) {
+      final PyClass cls = (PyClass)owner;
       if (name != null) {
-        final List<PyFunction> overloads = new ArrayList<PyFunction>();
-        cls.visitMethods(new Processor<PyFunction>() {
-          @Override
-          public boolean process(PyFunction f) {
-            if (name.equals(f.getName()) && isOverload(f, context)) {
-              overloads.add(f);
-            }
-            return true;
-          }
-        }, false);
-        if (!overloads.isEmpty()) {
-          final List<PyType> overloadTypes = new ArrayList<PyType>();
-          for (PyFunction overload : overloads) {
-            overloadTypes.add(context.getType(overload));
-          }
-          return PyUnionType.union(overloadTypes);
+        cls.visitMethods(overloadsProcessor, false);
+      }
+    }
+    else if (owner instanceof PyFile) {
+      final PyFile file = (PyFile)owner;
+      for (PyFunction f : file.getTopLevelFunctions()) {
+        if (!overloadsProcessor.process(f)) {
+          break;
         }
       }
+    }
+    if (!overloads.isEmpty()) {
+      final List<PyType> overloadTypes = new ArrayList<PyType>();
+      for (PyFunction overload : overloads) {
+        overloadTypes.add(context.getType(overload));
+      }
+      return PyUnionType.union(overloadTypes);
     }
     return null;
   }
