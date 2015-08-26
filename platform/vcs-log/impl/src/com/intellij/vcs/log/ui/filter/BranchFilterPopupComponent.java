@@ -25,17 +25,21 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+  @NotNull private final VcsLogUiImpl myUi;
   private VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
-  public BranchFilterPopupComponent(@NotNull VcsLogUiProperties uiProperties,
+  public BranchFilterPopupComponent(@NotNull VcsLogUiImpl ui,
+                                    @NotNull VcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
     super("Branch", uiProperties, filterModel);
+    myUi = ui;
     myBranchFilterModel = filterModel;
   }
 
@@ -51,10 +55,16 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     return tooltip(getTextValues(filter));
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected VcsLogBranchFilter createFilter(@NotNull Collection<String> values) {
-    return VcsLogBranchFilterImpl.fromTextPresentation(values);
+    return VcsLogBranchFilterImpl
+      .fromTextPresentation(values, ContainerUtil.map2Set(myUi.getDataPack().getRefs().getBranches(), new Function<VcsRef, String>() {
+        @Override
+        public String fun(VcsRef vcsRef) {
+          return vcsRef.getName();
+        }
+      }));
   }
 
   @Override
@@ -85,8 +95,10 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     return actionGroup;
   }
 
-  public static ActionGroup constructActionGroup(@NotNull VcsLogDataPack dataPack, @Nullable ActionGroup recentItemsGroup,
-                                                 @NotNull Function<String, AnAction> actionGetter, @Nullable Collection<VirtualFile> visibleRoots) {
+  public static ActionGroup constructActionGroup(@NotNull VcsLogDataPack dataPack,
+                                                 @Nullable ActionGroup recentItemsGroup,
+                                                 @NotNull Function<String, AnAction> actionGetter,
+                                                 @Nullable Collection<VirtualFile> visibleRoots) {
     Groups groups = prepareGroups(dataPack, visibleRoots);
     return getFilteredActionGroup(groups, recentItemsGroup, actionGetter);
   }
@@ -107,7 +119,8 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     return filteredGroups;
   }
 
-  private static DefaultActionGroup getFilteredActionGroup(@NotNull Groups groups, @Nullable ActionGroup recentItems,
+  private static DefaultActionGroup getFilteredActionGroup(@NotNull Groups groups,
+                                                           @Nullable ActionGroup recentItems,
                                                            @NotNull Function<String, AnAction> actionGetter) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (String single : groups.singletonGroups) {

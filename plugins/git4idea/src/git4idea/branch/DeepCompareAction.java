@@ -64,7 +64,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     final DeepComparator dc = DeepComparator.getInstance(project, ui);
     if (selected) {
       VcsLogBranchFilter branchFilter = ui.getFilterUi().getFilters().getBranchFilter();
-      String singleBranchName = branchFilter != null ? branchFilter.getSingleFilteredBranch() : null;
+      String singleBranchName = branchFilter != null ? VcsLogUtil.getSingleFilteredBranch(branchFilter, ui.getDataPack().getRefs(), ui.getDataPack().getLogProviders().keySet()) : null;
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui.getDataPack(), e, new Consumer<String>() {
           @Override

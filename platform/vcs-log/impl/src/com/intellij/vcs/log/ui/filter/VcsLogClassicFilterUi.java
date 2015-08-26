@@ -124,7 +124,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi();
+        return new BranchFilterPopupComponent(myUi, myUiProperties, myBranchFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
@@ -203,6 +203,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       toolbar.revalidate();
       toolbar.repaint();
     }
+  }
+
+  @NotNull
+  public VcsLogUi getLogUi() {
+    return myUi;
   }
 
   private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {

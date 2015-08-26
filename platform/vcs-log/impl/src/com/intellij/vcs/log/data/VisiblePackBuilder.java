@@ -147,7 +147,7 @@ class VisiblePackBuilder {
     return new HashSet<Integer>(ContainerUtil.mapNotNull(refs.getBranches(), new Function<VcsRef, Integer>() {
       @Override
       public Integer fun(@NotNull VcsRef ref) {
-        boolean acceptRef = filter.isShown(ref.getName());
+        boolean acceptRef = filter.matches(ref.getName());
         return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash()) : null;
       }
     }));

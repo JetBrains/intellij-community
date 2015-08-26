@@ -16,20 +16,26 @@
 package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 /**
  * Tells to filter by branches with given names.
  */
 public interface VcsLogBranchFilter extends VcsLogFilter {
-  boolean isShown(@NotNull String name);
+  /**
+   * Tells if a branch matches the filter.
+   *
+   * @param name branch name.
+   * @return true if a branch matches the filter, false otherwise.
+   */
+  boolean matches(@NotNull String name);
 
-  @Nullable
-  String getSingleFilteredBranch();
-
+  /**
+   * Text presentation for the filter (to display in filter popup).
+   *
+   * @return text presentation for the filter.
+   */
   @NotNull
   Collection<String> getTextPresentation();
 }

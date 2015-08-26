@@ -21,7 +21,10 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -30,6 +33,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogFilterUi myFilterUi;
+  @Nullable private String mySingleFilteredBranch;
 
   public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder,
                                   @NotNull VcsLogUiProperties uiProperties,
@@ -37,6 +41,19 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
     myFilterUi = filterUi;
+
+
+    // this code will look much simpler when history* branch is merged
+    ((VcsLogClassicFilterUi)filterUi).getLogUi().addLogListener(new VcsLogListener() {
+      @Override
+      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+        VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
+        mySingleFilteredBranch = branchFilter == null
+                                 ? null
+                                 : VcsLogUtil
+                                   .getSingleFilteredBranch(branchFilter, dataPack.getRefs(), dataPack.getLogProviders().keySet());
+      }
+    });
   }
 
   @NotNull
@@ -48,7 +65,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
       String currentBranch = provider.getCurrentBranch(details.getRoot());
       VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
-      if (currentBranch != null && (branchFilter == null || !isFilteredByCurrentBranch(currentBranch, branchFilter))) {
+      if (currentBranch != null && (branchFilter == null || !(currentBranch.equals(mySingleFilteredBranch)))) {
         Condition<Hash> condition =
           myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
         if (condition.value(details.getId())) {
@@ -57,10 +74,6 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       }
     }
     return VcsCommitStyle.DEFAULT;
-  }
-
-  private boolean isFilteredByCurrentBranch(@NotNull String currentBranch, @NotNull VcsLogBranchFilter branchFilter) {
-    return currentBranch.equals(branchFilter.getSingleFilteredBranch());
   }
 
   public static class Factory implements VcsLogHighlighterFactory {

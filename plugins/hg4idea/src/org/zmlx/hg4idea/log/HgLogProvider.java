@@ -195,13 +195,13 @@ public class HgLogProvider implements VcsLogProvider {
 
       boolean atLeastOneBranchExists = false;
       for (String branchName : ContainerUtil.concat(branchNames, bookmarkNames, predefinedNames)) {
-        if (branchFilter.isShown(branchName)) {
+        if (branchFilter.matches(branchName)) {
           filterParameters.add(HgHistoryUtil.prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
         }
       }
 
-      if (branchFilter.isShown(HEAD_REFERENCE)) {
+      if (branchFilter.matches(HEAD_REFERENCE)) {
         filterParameters.add(HgHistoryUtil.prepareParameter("branch", "."));
         filterParameters.add("-r");
         filterParameters.add("::."); //all ancestors for current revision;

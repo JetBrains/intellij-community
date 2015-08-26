@@ -82,7 +82,7 @@ class VisiblePackBuilderTest {
       3(4)
       4()
     }
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"))))
+    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master"))))
     val visibleGraph = visiblePack.getVisibleGraph()
     assertEquals(3, visibleGraph.getVisibleCommitCount())
     assertDoesNotContain(visibleGraph, 1)
@@ -109,7 +109,7 @@ class VisiblePackBuilderTest {
     }
 
     graph.providers.entrySet().iterator().next().getValue().setFilteredCommitsProvider(func)
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master")), userFilter(DEFAULT_USER)))
+    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master")), userFilter(DEFAULT_USER)))
     val visibleGraph = visiblePack.getVisibleGraph()
     assertEquals(3, visibleGraph.getVisibleCommitCount())
     assertDoesNotContain(visibleGraph, 1)
@@ -181,7 +181,7 @@ class VisiblePackBuilderTest {
       = VcsLogFilterCollectionImpl(branchFilter(branch), userFilter(user), null, null, null, null, null)
 
   fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
-    return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch) else null
+    return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch, branch.toHashSet()) else null
   }
 
   fun userFilter(user: VcsUser?): VcsLogUserFilter? {
