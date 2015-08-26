@@ -57,6 +57,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
                 .put("arguments", PARAMETERS_SECTION)
                 .put("args", PARAMETERS_SECTION)
                 .put("parameters", PARAMETERS_SECTION)
+                .put("params", PARAMETERS_SECTION)
                 .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
                 .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
                 .put("other parameters", OTHER_PARAMETERS_SECTION)
@@ -126,7 +127,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   private Pair<List<Substring>, Integer> parseSummary(int lineNum) {
     final List<Substring> result = new ArrayList<Substring>();
-    while (!isEmptyOrDoesNotExist(lineNum)) {
+    while (!(isEmptyOrDoesNotExist(lineNum) || isBlockEnd(lineNum))) {
       result.add(getLine(lineNum));
       lineNum++;
     }
@@ -204,13 +205,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   protected abstract Pair<Substring, Integer> parseSectionHeader(int lineNum);
-
-  protected int skipEmptyLines(int lineNum) {
-    while (lineNum < getLineCount() && isEmpty(lineNum)) {
-      lineNum++;
-    }
-    return lineNum;
-  }
 
   protected boolean isSectionStart(int lineNum) {
     final Pair<Substring, Integer> pair = parseSectionHeader(lineNum);
@@ -377,10 +371,15 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   public List<SectionField> getParameterFields() {
     final List<SectionField> result = new ArrayList<SectionField>();
-    for (Section section : getSectionsWithNormalizedTitle(PARAMETERS_SECTION)) {
+    for (Section section : getParameterSections()) {
       result.addAll(section.getFields());
     }
     return result;
+  }
+
+  @NotNull
+  public List<Section> getParameterSections() {
+    return getSectionsWithNormalizedTitle(PARAMETERS_SECTION);
   }
 
   @Override

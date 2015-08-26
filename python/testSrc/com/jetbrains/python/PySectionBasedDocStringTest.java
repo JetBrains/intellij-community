@@ -267,6 +267,22 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals(26, return1.getTypeAsSubstring().getEndOffset());
   }
 
+  public void testGoogleNoEmptyLineAfterSummary() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("Summary.", docString.getSummary());
+    assertSize(1, docString.getSections());
+    assertSize(1, docString.getSections().get(0).getFields());
+  }
+
+  public void testGoogleParametersSectionWithoutSummary() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEmpty(docString.getSummary());
+    assertSize(1, docString.getSections());
+    final Section paramSection = docString.getSections().get(0);
+    assertEquals("parameters", paramSection.getNormalizedTitle());
+    assertSize(1, paramSection.getFields());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

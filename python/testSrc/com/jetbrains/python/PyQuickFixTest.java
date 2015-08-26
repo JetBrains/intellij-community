@@ -21,7 +21,6 @@ import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.DocStringFormat;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -440,39 +439,59 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-3394
   public void testDocstringParams() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
-    try {
-      doInspectionTest(PyDocstringInspection.class,
-                       PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
-    }
-    finally {
-      documentationSettings.setFormat(DocStringFormat.PLAIN);
-    }
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
+      }
+    });
   }
 
   public void testDocstringParams1() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
-    try {
-      doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
-    }
-    finally {
-      documentationSettings.setFormat(DocStringFormat.PLAIN);
-    }
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
+      }
+    });
   }
 
   // PY-4964
   public void testDocstringParams2() {
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
-    try {
-      doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "ham"), true, true);
-    }
-    finally {
-      documentationSettings.setFormat(DocStringFormat.PLAIN);
-    }
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "ham"), true, true);
+      }
+    });
+  }
+
+  // PY-9795
+  public void testGoogleDocStringAddParam() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
+      }
+    });
+  }
+
+  // PY-9795
+  public void testGoogleDocStringRemoveParam() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
+      }
+    });
+  }
+
+  // PY-9795
+  public void testGoogleDocStringRemoveParamWithSection() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
+      }
+    });
   }
 
   public void testUnnecessaryBackslash() {

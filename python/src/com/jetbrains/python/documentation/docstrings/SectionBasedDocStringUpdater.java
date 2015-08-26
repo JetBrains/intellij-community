@@ -118,9 +118,17 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
 
   @Override
   public void removeParameter(@NotNull String name) {
-    for (SectionField param : myOriginalDocString.getParameterFields()) {
-      if (param.getName().equals(name)) {
-        removeLines(getFieldStartLine(param), getFieldEndLine(param));
+    for (Section section : myOriginalDocString.getParameterSections()) {
+      for (SectionField param : section.getFields()) {
+        if (param.getName().equals(name)) {
+          if (section.getFields().size() == 1) {
+            removeLines(getSectionStartLine(section), getFieldEndLine(param));            
+          }
+          else {
+            removeLines(getFieldStartLine(param), getFieldEndLine(param));
+          }
+          break;
+        }
       }
     }
   }
