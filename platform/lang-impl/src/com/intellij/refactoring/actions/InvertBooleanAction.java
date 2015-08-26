@@ -33,7 +33,7 @@ public class InvertBooleanAction extends BaseRefactoringAction {
   }
 
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    if (elements.length == 1) {
+    if (elements.length == 1 && elements[0] != null) {
       for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {
         if (delegate.isVisibleOnElement(elements[0])) {
           return true;
