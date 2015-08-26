@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.testIntegration;
 
-package com.intellij.codeInsight.daemon;
-
-import com.intellij.lang.LanguageExtension;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiElement;
+import com.intellij.testIntegration.TestRunLineMarkerProvider;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
- * @author yole
- * @author Konstantin Bulenkov
+ * @author Dmitry Avdeev
  */
-public class LineMarkerProviders extends LanguageExtension<LineMarkerProvider> {
-  public static LineMarkerProviders INSTANCE = new LineMarkerProviders();
-  @NonNls public static final String EP_NAME = "com.intellij.codeInsight.lineMarkerProvider";
-
-  private LineMarkerProviders() {
-    super(EP_NAME);
+public class GroovyTestLineMarkerContributor extends TestRunLineMarkerProvider {
+  @Override
+  protected boolean isIdentifier(PsiElement e) {
+    return e.getNode().getElementType() == GroovyTokenTypes.mIDENT;
   }
 }
