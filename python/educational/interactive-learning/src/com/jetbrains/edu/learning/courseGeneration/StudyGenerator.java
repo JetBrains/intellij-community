@@ -69,7 +69,7 @@ public class StudyGenerator {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);
-          StudyTaskManager.getInstance(project).addInvisibleFiles(fileInProject.getPath());
+          StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
         }
       }
     }
