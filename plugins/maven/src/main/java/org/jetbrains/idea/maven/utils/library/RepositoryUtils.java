@@ -87,18 +87,18 @@ public class RepositoryUtils {
 
   public static String getStorageRoot(Library library, Project project) {
     final String[] urls = library.getUrls(OrderRootType.CLASSES);
+    if (urls.length == 0) {
+      return null;
+    }
     final String localRepositoryPath =
       FileUtil.toSystemIndependentName(MavenProjectsManager.getInstance(project).getLocalRepository().getPath());
-    List<String> roots = JBIterable.of(library.getUrls(OrderRootType.CLASSES)).transform(new Function<String, String>() {
+    List<String> roots = JBIterable.of(urls).transform(new Function<String, String>() {
       @Override
       public String fun(String urlWithPrefix) {
         String url = StringUtil.trimStart(urlWithPrefix, JarFileSystem.PROTOCOL_PREFIX);
         return url.startsWith(localRepositoryPath) ? null : FileUtil.toSystemDependentName(PathUtil.getParentPath(url));
       }
     }).toList();
-    if (roots.size() == 0) {
-      return null;
-    }
     Map<String, Integer> counts = new HashMap<String, Integer>();
     for (String root : roots) {
       int count = counts.get(root) != null ? counts.get(root) : 0;
@@ -181,9 +181,6 @@ public class RepositoryUtils {
       new Processor<List<MavenArtifact>>() {
         @Override
         public boolean process(List<MavenArtifact> artifacts) {
-          if (library.isDisposed()) {
-            return false;
-          }
           if (artifacts == null || artifacts.isEmpty()) {
             return true;
           }
@@ -191,6 +188,9 @@ public class RepositoryUtils {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
+              if (library.isDisposed()) {
+                return;
+              }
               AccessToken token = WriteAction.start();
               try {
                 final NewLibraryEditor editor = new NewLibraryEditor(null, libraryProperties);
