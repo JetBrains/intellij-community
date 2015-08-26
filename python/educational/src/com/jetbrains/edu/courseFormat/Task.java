@@ -171,14 +171,6 @@ public class Task implements StudyItem {
     return null;
   }
 
-  public Document getDocument(Project project, String name) {
-    final VirtualFile taskDirectory = getTaskDir(project);
-    if (taskDirectory == null) return null;
-    final VirtualFile file = taskDirectory.findChild(name);
-    if (file == null) return null;
-    return FileDocumentManager.getInstance().getDocument(file);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

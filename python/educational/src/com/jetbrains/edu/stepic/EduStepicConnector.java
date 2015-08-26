@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,9 +25,9 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -83,14 +84,9 @@ public class EduStepicConnector {
     request.addHeader(new BasicHeader("referer", "https://stepic.org"));
     request.addHeader(new BasicHeader("content-type", "application/json"));
 
-    RequestConfig defaultRequestConfig = RequestConfig.custom()
-      .setSocketTimeout(500)
-      .setConnectTimeout(500)
-      .setConnectionRequestTimeout(500)
-      .build();
 
     HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100000).
-      setDefaultRequestConfig(defaultRequestConfig).setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
+      setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
     ourCookieStore = new BasicCookieStore();
 
     try {
@@ -601,11 +597,19 @@ public class EduStepicConnector {
           }
         });
         taskFile.name = entry.getKey();
-        final Document document = task.getDocument(project, taskFile.name);
-        if (document != null) {
-          source.text = document.getImmutableCharSequence().toString();
-          taskFile.text = document.getImmutableCharSequence().toString();
+
+        final VirtualFile taskDirectory = task.getTaskDir(project);
+        if (taskDirectory == null) return null;
+        final VirtualFile file = taskDirectory.findChild(taskFile.name);
+        try {
+          if (file != null) {
+            taskFile.text = Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream()));
+          }
         }
+        catch (IOException e) {
+          LOG.error("Can't find file " + file.getPath());
+        }
+
         source.files.add(taskFile);
       }
       return source;
