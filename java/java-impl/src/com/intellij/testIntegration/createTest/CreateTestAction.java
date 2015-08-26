@@ -106,7 +106,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
     checkForTestRoots(srcModule, testFolders);
-    if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT, false)) {
+    if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
       if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) !=
           Messages.OK) {
         return;

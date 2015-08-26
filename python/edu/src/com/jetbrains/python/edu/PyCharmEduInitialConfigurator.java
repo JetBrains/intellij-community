@@ -136,13 +136,13 @@ public class PyCharmEduInitialConfigurator {
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
     final UISettings uiSettings = UISettings.getInstance();
-    if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
+    if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
       uiSettings.SHOW_NAVIGATION_BAR = false;
-      propertiesComponent.setValue(CONFIGURED_V1, "true");
+      propertiesComponent.setValue(CONFIGURED_V1, true);
     }
 
-    if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
+    if (!propertiesComponent.getBoolean(CONFIGURED)) {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
