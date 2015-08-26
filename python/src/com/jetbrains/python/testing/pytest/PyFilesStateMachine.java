@@ -112,7 +112,8 @@ final class PyFilesStateMachine {
       }
       return false;
     }
-    if (Character.isLetter(charToCheck) || charToCheck == '/' || charToCheck == '\\' || charToCheck == '.' || charToCheck == '_') {
+    if (Character.isLetter(charToCheck) || charToCheck == '/' || charToCheck == '\\' || charToCheck == '.' || charToCheck == '_' ||
+        charToCheck == '-') {
       // Alpha symbols are or for file name
       if (myLookingForFile) {
         myFileName.append(charToCheck);
