@@ -603,20 +603,8 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.static.method.to.function"));
   }
 
-  private void doWithDocStringFormat(@NotNull DocStringFormat format, @NotNull Runnable runnable) {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    final DocStringFormat oldFormat = settings.getFormat();
-    settings.setFormat(format);
-    try {
-      runnable.run();
-    }
-    finally {
-      settings.setFormat(oldFormat);
-    }
-  }
-
   private void doDocStubTest(@NotNull DocStringFormat format) {
-    doWithDocStringFormat(format, new Runnable() {
+    runWithDocStringFormat(format, new Runnable() {
       @Override
       public void run() {
         CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
@@ -626,7 +614,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doDocReferenceTest(@NotNull DocStringFormat format) {
-    doWithDocStringFormat(format, new Runnable() {
+    runWithDocStringFormat(format, new Runnable() {
       public void run() {
         doTest(PyBundle.message("INTN.specify.type"));
       }
@@ -634,7 +622,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doDocReturnTypeTest(@NotNull DocStringFormat format) {
-    doWithDocStringFormat(format, new Runnable() {
+    runWithDocStringFormat(format, new Runnable() {
         public void run() {
           doTest(PyBundle.message("INTN.specify.return.type"));
         }
