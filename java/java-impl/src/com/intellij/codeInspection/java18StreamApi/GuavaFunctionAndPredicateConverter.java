@@ -56,7 +56,7 @@ public class GuavaFunctionAndPredicateConverter {
     if (expression instanceof PsiNewExpression) {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expression).getAnonymousClass();
       if (anonymousClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true)) {
-        final PsiLambdaExpression lambdaExpression = AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true);
+        final PsiExpression lambdaExpression = AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true);
         LOG.assertTrue(lambdaExpression != null);
         return lambdaExpression.getText();
       }
