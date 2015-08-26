@@ -20,13 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.invertBoolean.InvertBooleanDelegate;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +39,8 @@ import java.util.Collection;
 public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   @Override
   public boolean isVisibleOnElement(@NotNull PsiElement element) {
-    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+    PsiFile containingFile = element.getContainingFile();
+    final VirtualFile virtualFile = containingFile != null ? containingFile.getVirtualFile() : null;
     if (virtualFile != null && 
         ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
       return false;
@@ -88,22 +92,13 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     final Collection<PsiReference> refs = ReferencesSearch.search(psiElement).findAll();
 
     for (PsiReference ref : refs) {
-      final PsiElement element = ref.getElement();
-      if (element instanceof PyTargetExpression) {
-        final PyTargetExpression target = (PyTargetExpression)element;
-        final PyAssignmentStatement parent = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
-        if (parent != null && parent.getTargets().length == 1) {
-          final PyExpression value = parent.getAssignedValue();
-          if (value != null)
-            elementsToInvert.add(value);
-        }
+      final PsiElement refElement = ref.getElement();
+      final PsiElement elementToInvert = getElementToInvert(psiElement, refElement);
+      if (elementToInvert != null) {
+        elementsToInvert.add(elementToInvert);
       }
-      else if (element.getParent() instanceof PyPrefixExpression) {
-        elementsToInvert.add(element.getParent());
-      }
-      else if (element instanceof PyReferenceExpression) {
-        final PyReferenceExpression refExpr = (PyReferenceExpression)element;
-        elementsToInvert.add(refExpr);
+      else {
+        ContainerUtil.addIfNotNull(elementsToInvert, getForeignElementToInvert(psiElement, refElement, PythonLanguage.getInstance()));
       }
     }
     
@@ -113,6 +108,25 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
         elementsToInvert.add(defaultValue);
       }
     }
+  }
+
+  public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
+    if (element instanceof PyTargetExpression) {
+      final PyTargetExpression target = (PyTargetExpression)element;
+      final PyAssignmentStatement parent = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
+      if (parent != null && parent.getTargets().length == 1) {
+        final PyExpression value = parent.getAssignedValue();
+        if (value != null)
+          return value;
+      }
+    }
+    else if (element.getParent() instanceof PyPrefixExpression) {
+      return element.getParent();
+    }
+    else if (element instanceof PyReferenceExpression) {
+      return element;
+    }
+    return null;
   }
 
   @Override

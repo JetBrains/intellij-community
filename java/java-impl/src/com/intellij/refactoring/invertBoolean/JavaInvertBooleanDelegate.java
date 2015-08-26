@@ -18,6 +18,7 @@ package com.intellij.refactoring.invertBoolean;
 import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +33,6 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -99,25 +99,10 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     final Collection<PsiReference> refs = query.findAll();
 
     for (PsiReference ref : refs) {
-      PsiElement refElement = null;
       final PsiElement element = ref.getElement();
-      if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression refExpr = (PsiReferenceExpression)element;
-        PsiElement parent = refExpr.getParent();
-        if (parent instanceof PsiAssignmentExpression && refExpr.equals(((PsiAssignmentExpression)parent).getLExpression())) {
-          refElement = ((PsiAssignmentExpression)parent).getRExpression();
-        }
-        else {
-          if (namedElement instanceof PsiParameter) { //filter usages in super method calls
-            PsiElement gParent = refExpr.getParent().getParent();
-            if (gParent instanceof PsiMethodCallExpression) {
-              if (!canInvertReferenceElement(((PsiMethodCallExpression)gParent).getMethodExpression(), true)) {
-                continue;
-              }
-            }
-          }
-          refElement = refExpr;
-        }
+      PsiElement refElement = getElementToInvert(namedElement, element);
+      if (refElement == null) {
+        refElement = getForeignElementToInvert(namedElement, element, JavaLanguage.INSTANCE);
       }
       if (refElement != null) {
         elementsToInvert.add(refElement);
@@ -130,6 +115,28 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         elementsToInvert.add(initializer);
       }
     }
+  }
+
+  public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
+    if (element instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression refExpr = (PsiReferenceExpression)element;
+      PsiElement parent = refExpr.getParent();
+      if (parent instanceof PsiAssignmentExpression && refExpr.equals(((PsiAssignmentExpression)parent).getLExpression())) {
+        return ((PsiAssignmentExpression)parent).getRExpression();
+      }
+      else {
+        if (namedElement instanceof PsiParameter) { //filter usages in super method calls
+          PsiElement gParent = refExpr.getParent().getParent();
+          if (gParent instanceof PsiMethodCallExpression) {
+            if (!canInvertReferenceElement(((PsiMethodCallExpression)gParent).getMethodExpression(), true)) {
+              return null;
+            }
+          }
+        }
+        return refExpr;
+      }
+    }
+    return null;
   }
 
   private static boolean canInvertReferenceElement(PsiElement expression, boolean recursive) {
@@ -148,6 +155,9 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public void replaceWithNegatedExpression(@NotNull PsiElement expression) {
+    if (!(expression instanceof PsiExpression)) {
+      return;
+    }
     if (expression.getParent() instanceof PsiMethodCallExpression) {
       expression = expression.getParent();
     }
