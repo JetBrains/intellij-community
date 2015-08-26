@@ -53,7 +53,7 @@ public class EditorConfigNotifierProvider extends EditorNotifications.Provider<E
       panel.createActionLabel("OK", new Runnable() {
         @Override
         public void run() {
-          PropertiesComponent.getInstance(project).setValue(EDITOR_CONFIG_ACCEPTED, "true");
+          PropertiesComponent.getInstance(project).setValue(EDITOR_CONFIG_ACCEPTED, true);
           EditorNotifications.getInstance(project).updateAllNotifications();
         }
       });

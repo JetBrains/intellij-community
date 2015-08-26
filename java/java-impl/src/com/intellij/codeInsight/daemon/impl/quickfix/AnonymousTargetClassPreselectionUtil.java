@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public class AnonymousTargetClassPreselectionUtil {
 
   public static void rememberSelection(PsiClass aClass, PsiClass firstClass) {
     if (firstClass instanceof PsiAnonymousClass) {
-      PropertiesComponent.getInstance().setValue(PRESELECT_ANONYMOUS, String.valueOf(aClass == firstClass));
+      PropertiesComponent.getInstance().setValue(PRESELECT_ANONYMOUS, aClass == firstClass);
     }
   }
 

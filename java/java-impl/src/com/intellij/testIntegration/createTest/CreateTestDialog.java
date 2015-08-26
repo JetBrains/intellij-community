@@ -186,13 +186,11 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void restoreShowInheritedMembersStatus() {
-    String v = getProperties().getValue(SHOW_INHERITED_MEMBERS_PROPERTY);
-    myShowInheritedMethodsBox.setSelected(v != null && v.equals("true"));
+    myShowInheritedMethodsBox.setSelected(getProperties().getBoolean(SHOW_INHERITED_MEMBERS_PROPERTY));
   }
 
   private void saveShowInheritedMembersStatus() {
-    boolean v = myShowInheritedMethodsBox.isSelected();
-    getProperties().setValue(SHOW_INHERITED_MEMBERS_PROPERTY, Boolean.toString(v));
+    getProperties().setValue(SHOW_INHERITED_MEMBERS_PROPERTY, myShowInheritedMethodsBox.isSelected());
   }
 
   private PropertiesComponent getProperties() {
