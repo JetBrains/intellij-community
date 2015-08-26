@@ -65,14 +65,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
-    addDocumentListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeDocumentListener(listener);
-      }
-    });
+  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
+    myDocumentMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -86,14 +80,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addEditorMouseListener(@NotNull final EditorMouseListener listener, @NotNull final Disposable parentDisposable) {
-    addEditorMouseListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeEditorMouseListener(listener);
-      }
-    });
+  public void addEditorMouseListener(@NotNull EditorMouseListener listener, @NotNull Disposable parentDisposable) {
+    myEditorMouseMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -107,14 +95,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener, @NotNull final Disposable parentDisposable) {
-    addEditorMouseMotionListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeEditorMouseMotionListener(listener);
-      }
-    });
+  public void addEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener, @NotNull Disposable parentDisposable) {
+    myEditorMouseMotionMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -128,14 +110,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addCaretListener(@NotNull final CaretListener listener, @NotNull final Disposable parentDisposable) {
-    addCaretListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeCaretListener(listener);
-      }
-    });
+  public void addCaretListener(@NotNull CaretListener listener, @NotNull Disposable parentDisposable) {
+    myCaretMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
