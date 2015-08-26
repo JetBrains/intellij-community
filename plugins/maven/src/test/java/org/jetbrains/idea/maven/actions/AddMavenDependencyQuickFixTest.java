@@ -64,8 +64,8 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
     intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
 
     String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
-    assert pomText.matches(
-      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*</dependency>.*");
+    assertTrue(pomText.matches(
+      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*</dependency>.*"));
   }
 
   public void testAddDependencyInTest() throws IOException {
@@ -92,8 +92,8 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
     intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
 
     String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
-    assert pomText.matches(
-      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*<scope>test</scope>\\s*</dependency>.*");
+    assertTrue(pomText.matches(
+      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*<scope>test</scope>\\s*</dependency>.*"));
   }
 
 //  public void testAddDependencyStatic() throws IOException {
