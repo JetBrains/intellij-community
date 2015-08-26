@@ -535,6 +535,9 @@ public class GeneratedParserUtilBase {
       else if (eatMoreFlagOnce || (!result && frame.position != builder.rawTokenIndex()) || frame.errorReportedAt > initialPos) {
         errorReported = reportError(builder, state, frame, null, true, false);
       }
+      else if (!result && pinned && frame.errorReportedAt < 0) {
+        errorReported = reportError(builder, state, frame, elementType, false, false);
+      }
       if (extensionMarker != null) {
         extensionMarker.done(extensionTokenType);
       }
