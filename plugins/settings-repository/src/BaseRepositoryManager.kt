@@ -103,7 +103,7 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
     return null
   }
 
-  override fun write(path: String, content: ByteArray, size: Int) {
+  override fun write(path: String, content: ByteArray, size: Int): Boolean {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Write $path")
     }
@@ -118,7 +118,9 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
     }
     catch (e: Exception) {
       LOG.error(e)
+      return false
     }
+    return true
   }
 
   /**

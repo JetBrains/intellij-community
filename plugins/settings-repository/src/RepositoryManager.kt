@@ -41,7 +41,10 @@ public interface RepositoryManager {
 
   public fun read(path: String): InputStream?
 
-  public fun write(path: String, content: ByteArray, size: Int)
+  /**
+   * Returns false if file is not written (for example, due to ignore rules).
+   */
+  public fun write(path: String, content: ByteArray, size: Int): Boolean
 
   public fun delete(path: String)
 

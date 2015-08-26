@@ -343,6 +343,25 @@ class GitTest : IcsTestCase() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_LOCAL)
   }
 
+  Test fun gitignore() {
+    createLocalRepository()
+
+    repository.add(".gitignore", "*.html")
+    sync(SyncType.MERGE)
+
+    provider.write("bar.html", "<data />")
+    provider.write("i/am/a/long/path/to/file/foo.html", "<data />")
+
+    val diff = repository.computeIndexDiff()
+    assertThat(diff.diff()).isFalse()
+    assertThat(diff.getAdded()).isEmpty()
+    assertThat(diff.getChanged()).isEmpty()
+    assertThat(diff.getRemoved()).isEmpty()
+    assertThat(diff.getModified()).isEmpty()
+    assertThat(diff.getUntracked()).isEmpty()
+    assertThat(diff.getUntrackedFolders()).isEmpty()
+  }
+
   private fun createRemoteRepository(branchName: String? = null, initialCommit: Boolean = true) {
     val repository = tempDirManager.createRepository("upstream")
     if (initialCommit) {
