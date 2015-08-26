@@ -38,10 +38,6 @@ public class TagBasedDocStringUpdater<T extends TagBasedDocString> extends DocSt
   }
 
   @Override
-  protected void scheduleUpdates() {
-  }
-
-  @Override
   public final void addParameter(@NotNull String name, @Nullable String type) {
     if (type != null) {
       insertTagLine(createBuilder().addParameterType(name, type));

@@ -122,10 +122,6 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     return getSectionStartLine(paramSection);
   }
 
-  @Override
-  protected void scheduleUpdates() {
-  }
-
   protected abstract SectionBasedDocStringBuilder createBuilder();
 
   protected String createParamLine(@NotNull String name,

@@ -64,11 +64,8 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     insert(line.getStartOffset(), text + '\n');
   }
 
-  protected abstract void scheduleUpdates();
-
   @NotNull
   public final String getDocStringText() {
-    scheduleUpdates();
     // Move closing quotes to the next line, if new lines are going to be inserted
     if (myOriginalDocString.getLineCount() == 1 && !myUpdates.isEmpty()) {
       insertAfterLine(0, myMinContentIndent);
