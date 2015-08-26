@@ -250,6 +250,18 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertNotNull(info);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
   }
+  
+  public void testPackageInfoFromComment() throws Exception {
+    final String rootPath = getTestDataPath() + "/codeInsight/javadocIG/";
+    VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+    VirtualFile piFile = root.findFileByRelativePath("packageInfoFromComment/package-info.java");
+    assertNotNull(piFile);
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(piFile);
+    assertNotNull(psiFile);
+    final String info = JavaExternalDocumentationTest.getDocumentationText(psiFile, psiFile.getText().indexOf("some"));
+    String htmlText = FileUtil.loadFile(new File(rootPath + getTestName(true) + File.separator + "packageInfo.html"));
+    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
+  }
 
   public void testInheritedParameter() throws Exception {
     configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
@@ -355,6 +367,12 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private static String replaceEnvironmentDependentContent(String html) {
-    return StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", "<base href=\"placeholder\">");
+    return html == null ? null : StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", 
+                                                                                          "<base href=\"placeholder\">");
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }
