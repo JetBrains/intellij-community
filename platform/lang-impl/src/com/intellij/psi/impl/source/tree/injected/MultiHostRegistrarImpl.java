@@ -55,7 +55,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,7 +191,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     SmartPointerManagerImpl manager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
     shreds.add(new ShredImpl(manager.createSmartPsiFileRangePointer(myHostPsiFile, relevantRangeInHost, true),
                              manager.createSmartPsiElementPointer(host, myHostPsiFile),
-                             prefix, suffix, new ProperTextRange(startOffset, endOffset)));
+                             prefix, suffix, new ProperTextRange(startOffset, endOffset), false));
     return this;
   }
 
@@ -550,5 +552,19 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
   ReferenceInjector getReferenceInjector() {
     return myReferenceInjector;
+  }
+
+  @NotNull
+  public static DocumentWindow freezeWindow(@NotNull DocumentWindowImpl window) {
+    Place shreds = window.getShreds();
+    Project project = shreds.getHostPointer().getProject();
+    DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(window.getDelegate());
+    Place place = new Place(ContainerUtil.map(shreds, new Function<PsiLanguageInjectionHost.Shred, PsiLanguageInjectionHost.Shred>() {
+      @Override
+      public PsiLanguageInjectionHost.Shred fun(final PsiLanguageInjectionHost.Shred shred) {
+        return ((ShredImpl) shred).withPsiRange();
+      }
+    }));
+    return new DocumentWindowImpl(delegate, window.isOneLine(), place);
   }
 }

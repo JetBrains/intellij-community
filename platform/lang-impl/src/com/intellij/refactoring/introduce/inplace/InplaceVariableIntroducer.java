@@ -38,6 +38,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
@@ -67,8 +68,8 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
 
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
-                                   Project project,
-                                   String title, E[] occurrences, 
+                                   final Project project,
+                                   String title, E[] occurrences,
                                    @Nullable E expr) {
     super(editor, elementToRename, project);
     myTitle = title;
@@ -78,12 +79,17 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       final ASTNode astNode = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
         .generateWhitespaceBetweenTokens(node.getTreePrev(), node);
       if (astNode != null) {
-        new WriteCommandAction<Object>(project, "Normalize declaration") {
+        PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
           @Override
-          protected void run(@NotNull Result<Object> result) throws Throwable {
-            node.getTreeParent().addChild(astNode, node);
+          public void run() {
+            new WriteCommandAction<Object>(project, "Normalize declaration") {
+              @Override
+              protected void run(@NotNull Result<Object> result) throws Throwable {
+                node.getTreeParent().addChild(astNode, node);
+              }
+            }.execute(); 
           }
-        }.execute();
+        });
       }
       myExpr = expr;
     }

@@ -2,12 +2,15 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.coursecreator.CCProjectService;
@@ -22,6 +25,12 @@ public class CCPushLesson extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     CCProjectService.setCCActionAvailable(e);
+    final DataContext dataContext = e.getDataContext();
+    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final Project project = e.getProject();
+    if (virtualFile == null || !virtualFile.isDirectory() || (project != null && virtualFile.equals(project.getBaseDir()))) {
+      EduUtils.enableAction(e, false);
+    }
   }
 
   @Override
@@ -39,11 +48,16 @@ public class CCPushLesson extends DumbAwareAction {
     if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return;
     }
-    Lesson lesson = course.getLesson(lessonDir.getName());
+    final Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) {
       return;
     }
-    EduStepicConnector.postLesson(project, lesson);
+    ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Course", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setText("Uploading course to http://stepic.org");
+        EduStepicConnector.postLesson(project, lesson, indicator);
+      }});
   }
 
 }

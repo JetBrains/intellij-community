@@ -112,6 +112,11 @@ public abstract class ConfigurationFromContext {
     return false;
   }
 
+  @Override
+  public String toString() {
+    return getConfigurationSettings().toString();
+  }
+
   /**
    * Compares configurations according to precedence.
    */

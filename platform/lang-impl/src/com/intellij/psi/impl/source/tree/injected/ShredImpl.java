@@ -28,18 +28,25 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   private final TextRange range; // range in (decoded) PSI
   private final String prefix;
   private final String suffix;
+  private final boolean usePsiRange;
 
   ShredImpl(@NotNull SmartPsiFileRange relevantRangeInHost,
             @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> hostElementPointer,
             @NotNull String prefix,
             @NotNull String suffix,
-            @NotNull TextRange range) {
+            @NotNull TextRange range,
+            boolean usePsiRange) {
     this.hostElementPointer = hostElementPointer;
     this.relevantRangeInHost = relevantRangeInHost;
     this.prefix = prefix;
     this.suffix = suffix;
     this.range = range;
+    this.usePsiRange = usePsiRange;
     assert isValid();
+  }
+
+  ShredImpl withPsiRange() {
+    return new ShredImpl(relevantRangeInHost, hostElementPointer, prefix, suffix, range, true);
   }
 
   @NotNull
@@ -50,18 +57,18 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   @Override
   @Nullable("returns null when the host document marker is invalid")
   public Segment getHostRangeMarker() {
-    return relevantRangeInHost.getRange();
+    return usePsiRange ? relevantRangeInHost.getPsiRange() : relevantRangeInHost.getRange();
   }
 
   @Override
   @NotNull
   public TextRange getRangeInsideHost() {
     PsiLanguageInjectionHost host = getHost();
-    Segment psiRange = relevantRangeInHost.getRange();
+    Segment psiRange = relevantRangeInHost.getPsiRange();
     TextRange textRange = psiRange == null ? null : TextRange.create(psiRange);
     if (host == null) {
       if (textRange != null) return textRange;
-      Segment fromSP = hostElementPointer.getRange();
+      Segment fromSP = hostElementPointer.getPsiRange();
       if (fromSP != null) return TextRange.create(fromSP);
       return new TextRange(0,0);
     }

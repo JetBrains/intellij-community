@@ -736,6 +736,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
 
+      // project may be disposed but empty folder may still be there
+      if (ourPathToKeep != null) {
+        File parent = new File(ourPathToKeep).getParentFile();
+        if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          parent.delete(); // delete only empty folders
+        }
+      }
+
       ourProject = null;
       ourPathToKeep = null;
     }

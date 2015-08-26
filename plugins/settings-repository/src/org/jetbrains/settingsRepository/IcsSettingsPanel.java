@@ -41,7 +41,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     urlTextField.setText(SettingsRepositoryPackage.getIcsManager().getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
-    syncActions = SettingsRepositoryPackage.createMergeActions(project, urlTextField, getContentPane(), new Function0<Unit>() {
+    syncActions = SettingsRepositoryPackage.createMergeActions(project, urlTextField, getRootPane(), new Function0<Unit>() {
       @Override
       public Unit invoke() {
         doOKAction();

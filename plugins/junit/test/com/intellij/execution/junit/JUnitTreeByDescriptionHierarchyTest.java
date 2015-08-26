@@ -94,6 +94,37 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void testClassWithMethodsWithoutSendTreeBefore() throws Exception {
+    Description root = Description.createSuiteDescription("ATest");
+    List<Description> tests = new ArrayList<Description>();
+    tests.add(Description.createTestDescription("ATest", "test1"));
+    tests.add(Description.createTestDescription("ATest", "test2"));
+
+    for (Description test : tests) {
+      root.addChild(test);
+    }
+
+    final StringBuffer buf = new StringBuffer();
+    JUnit4TestListener sender = createListener(buf);
+    
+    sender.testRunStarted(root);
+    for (Description test : tests) {
+      sender.testStarted(test);
+      sender.testFinished(test);
+    }
+    sender.testRunFinished(new Result());
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[testSuiteStarted name='ATest' locationHint='java:suite://ATest']\n" +
+                                          "##teamcity[testStarted name='ATest.test1' locationHint='java:test://ATest.test1']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='ATest.test1']\n" +
+                                          "##teamcity[testStarted name='ATest.test2' locationHint='java:test://ATest.test2']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='ATest.test2']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
   public void testSameShortNames() throws Exception {
     final Description rootDescription = Description.createSuiteDescription("root");
     final ArrayList<Description> tests = new ArrayList<Description>();

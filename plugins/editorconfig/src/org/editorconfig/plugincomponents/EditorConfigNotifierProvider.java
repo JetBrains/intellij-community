@@ -39,7 +39,7 @@ public class EditorConfigNotifierProvider extends EditorNotifications.Provider<E
     if (!(fileEditor instanceof TextEditor)) return null;
     final Project project = ((TextEditor)fileEditor).getEditor().getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    if (!Utils.isEnabled(settings) || PropertiesComponent.getInstance(project).getBoolean(EDITOR_CONFIG_ACCEPTED, false)) return null;
+    if (!Utils.isEnabled(settings) || PropertiesComponent.getInstance(project).getBoolean(EDITOR_CONFIG_ACCEPTED)) return null;
 
     final List<EditorConfig.OutPair> pairs = SettingsProviderComponent.getInstance().getOutPairs(project, Utils.getFilePath(project, file));
     if (!pairs.isEmpty()) {
@@ -53,7 +53,7 @@ public class EditorConfigNotifierProvider extends EditorNotifications.Provider<E
       panel.createActionLabel("OK", new Runnable() {
         @Override
         public void run() {
-          PropertiesComponent.getInstance(project).setValue(EDITOR_CONFIG_ACCEPTED, "true");
+          PropertiesComponent.getInstance(project).setValue(EDITOR_CONFIG_ACCEPTED, true);
           EditorNotifications.getInstance(project).updateAllNotifications();
         }
       });

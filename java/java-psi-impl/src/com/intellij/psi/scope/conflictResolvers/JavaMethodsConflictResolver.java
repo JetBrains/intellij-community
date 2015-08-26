@@ -544,10 +544,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
       final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite,
                                                                            languageLevel);
-      boolean applicable12 = isApplicableTo(types2AtSite, method1, languageLevel, varargsPosition, methodSubstitutor1, method2);
+      boolean applicable12 = isApplicableTo(types2AtSite, method1, languageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor2);
 
       final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, languageLevel);
-      boolean applicable21 = isApplicableTo(types1AtSite, method2, languageLevel, varargsPosition, methodSubstitutor2, method1);
+      boolean applicable21 = isApplicableTo(types1AtSite, method2, languageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor1);
 
       if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         final boolean typeArgsApplicable12 = GenericsUtil.isTypeArgumentsApplicable(typeParameters1, methodSubstitutor1, myArgumentsList, !applicable21);
@@ -641,11 +641,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                  @NotNull LanguageLevel languageLevel,
                                  boolean varargsPosition,
                                  @NotNull PsiSubstitutor methodSubstitutor1,
-                                 @NotNull PsiMethod method2) {
+                                 @NotNull PsiMethod method2, 
+                                 PsiSubstitutor siteSubstitutor1) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && method1.getTypeParameters().length > 0 && myArgumentsList instanceof PsiExpressionList) {
       final PsiElement parent = myArgumentsList.getParent();
       if (parent instanceof PsiCallExpression) {
-        return InferenceSession.isMoreSpecific(method2, method1, ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
+        return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor1,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }
     final PsiUtil.ApplicabilityChecker applicabilityChecker = languageLevel.isAtLeast(LanguageLevel.JDK_1_8) 

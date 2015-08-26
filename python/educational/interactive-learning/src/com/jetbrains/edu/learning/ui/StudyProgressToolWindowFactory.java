@@ -13,6 +13,7 @@ import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,6 +26,7 @@ public class StudyProgressToolWindowFactory implements ToolWindowFactory, DumbAw
 
   @Override
   public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
+    toolWindow.setIcon(InteractiveLearningIcons.CourseProgress);
     JPanel contentPanel = new JPanel();
     StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     if (taskManager.getCourse() != null) {
