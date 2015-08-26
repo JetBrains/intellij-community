@@ -22,7 +22,7 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
-import com.intellij.diff.merge.MergeWindow;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -61,6 +61,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -236,6 +237,9 @@ public class MultipleFileMergeDialog extends DialogWrapper {
             public void run() {
               try {
                 if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
+                  if (!DiffUtil.makeWritable(myProject, file)) {
+                    throw new IOException("File is read-only: " + file.getPresentableName());
+                  }
                   MergeData data = myProvider.loadRevisions(file);
                   if (isCurrent) {
                     file.setBinaryContent(data.CURRENT);

@@ -744,7 +744,11 @@ public class DiffUtil {
 
     @CalledInAwt
     public final void run() {
-      if (!makeWritable(myProject, myDocument)) return;
+      if (!makeWritable(myProject, myDocument)) {
+        VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
+        LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
+        return;
+      }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -795,6 +799,13 @@ public class DiffUtil {
     if (document.isWritable()) return true;
     if (project == null) return false;
     return ReadonlyStatusHandler.ensureDocumentWritable(project, document);
+  }
+
+  @CalledInAwt
+  public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
+    if (file.isWritable()) return true;
+    if (project == null) return false;
+    return ReadonlyStatusHandler.ensureFilesWritable(project, file);
   }
 
   //

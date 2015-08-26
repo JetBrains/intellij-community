@@ -18,8 +18,8 @@ package com.intellij.diff.requests;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.TextMergeRequest;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -108,12 +108,12 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     }
 
     if (applyContent != null) {
-      new WriteCommandAction.Simple(myProject) {
+      DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, new Runnable() {
         @Override
-        protected void run() throws Throwable {
+        public void run() {
           myOutput.getDocument().setText(applyContent);
         }
-      }.execute();
+      });
     }
 
     if (myApplyCallback != null) myApplyCallback.consume(result);

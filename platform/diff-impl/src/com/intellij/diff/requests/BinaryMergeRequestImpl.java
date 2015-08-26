@@ -20,11 +20,13 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.BinaryMergeRequest;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,7 @@ import java.util.List;
 public class BinaryMergeRequestImpl extends BinaryMergeRequest {
   private static final Logger LOG = Logger.getInstance(BinaryMergeRequestImpl.class);
 
+  @Nullable private final Project myProject;
   @NotNull private final FileContent myFile;
   @NotNull private final List<DiffContent> myContents;
 
@@ -46,7 +49,8 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
 
   @Nullable private final Consumer<MergeResult> myApplyCallback;
 
-  public BinaryMergeRequestImpl(@NotNull FileContent file,
+  public BinaryMergeRequestImpl(@Nullable Project project,
+                                @NotNull FileContent file,
                                 @NotNull byte[] originalContent,
                                 @NotNull List<DiffContent> contents,
                                 @NotNull List<byte[]> byteContents,
@@ -57,6 +61,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
     assert contents.size() == 3;
     assert contentTitles.size() == 3;
 
+    myProject = project;
     myFile = file;
     myOriginalContent = originalContent;
 
@@ -123,11 +128,13 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
         @Override
         protected void run() throws Throwable {
           try {
-            myFile.getFile().setBinaryContent(applyContent);
+            VirtualFile file = myFile.getFile();
+            if (!DiffUtil.makeWritable(myProject, file)) throw new IOException("File is read-only: " + file.getPresentableName());
+            file.setBinaryContent(applyContent);
           }
           catch (IOException e) {
             LOG.error(e);
-            Messages.showErrorDialog((Project)null, "Can't apply result", CommonBundle.getErrorTitle());
+            Messages.showErrorDialog(myProject, "Can't apply result", CommonBundle.getErrorTitle());
           }
         }
       }.execute();
