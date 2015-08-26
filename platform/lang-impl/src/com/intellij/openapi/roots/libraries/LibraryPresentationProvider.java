@@ -39,10 +39,14 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
     return myKind;
   }
 
+  /**
+   * @deprecated override {@link #getIcon(LibraryProperties)}.
+   */
+
   @Deprecated
   @Nullable
   public Icon getIcon() {
-    return null;
+    throw new AbstractMethodError();
   }
 
   @Nullable
