@@ -282,14 +282,16 @@ public class EduStepicConnector {
 
 
   public static boolean showLoginDialog() {
-    final LoginDialog dialog = new LoginDialog();
+    final boolean[] logged = {false};
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
+        final LoginDialog dialog = new LoginDialog();
         dialog.show();
+        logged[0] = dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
       }
     }, ModalityState.defaultModalityState());
-    return dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+    return logged[0];
   }
 
   public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
@@ -362,10 +364,11 @@ public class EduStepicConnector {
             }
           }
           else {
-            final boolean success = login(login, StudySettings.getInstance().getPassword());
+            boolean success = login(login, StudySettings.getInstance().getPassword());
             if (!success) {
-              LOG.error("Failed to push course. Failed to login.");   // TODO: show notification
-              return;
+              if (!showLoginDialog()) {
+                return;
+              }
             }
           }
         }
