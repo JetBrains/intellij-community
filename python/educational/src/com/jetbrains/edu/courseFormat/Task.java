@@ -66,7 +66,7 @@ public class Task implements StudyItem {
     return text;
   }
 
-  public void setText(@NotNull final String text) {
+  public void setText(final String text) {
     this.text = text;
   }
 

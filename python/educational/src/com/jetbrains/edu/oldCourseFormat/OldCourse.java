@@ -1,11 +1,11 @@
-package com.jetbrains.edu.coursecreator.actions.oldCourseFormat;
+package com.jetbrains.edu.oldCourseFormat;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OldCourse {
 
-  public List<OldLesson> lessons = new ArrayList<OldLesson>();
+  public List<Lesson> lessons = new ArrayList<Lesson>();
   public String description;
   public String name;
   public String myResourcePath = "";
