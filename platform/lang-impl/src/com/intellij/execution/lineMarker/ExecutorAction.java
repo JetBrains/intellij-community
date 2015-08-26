@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class ExecutorAction extends AnAction {
 
-  public static AnAction[] ACTIONS(final int order) {
+  public static AnAction[] getActions(final int order) {
     return ContainerUtil.map2Array(ExecutorRegistry.getInstance().getRegisteredExecutors(), AnAction.class, new Function<Executor, AnAction>() {
       @Override
       public AnAction fun(Executor executor) {
