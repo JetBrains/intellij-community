@@ -111,7 +111,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       public void actionPerformed(AnActionEvent e) {
         final int row = myTable.getSelectedRow();
         if (row >= 0 && myModel.isCellEditable(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)) {
-          myModel.setValueAt(! Boolean.TRUE.equals(myTable.getValueAt(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)),
+          myModel.setValueAt(!Boolean.TRUE.equals(myTable.getValueAt(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)),
                              row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN);
         }
       }
@@ -238,7 +238,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     for (ChooseRunConfigurationPopup.ItemWrapper setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
         // todo maybe auto save temporary?
-        if (! ((RunnerAndConfigurationSettings)setting.getValue()).isTemporary()) {
+        if (!((RunnerAndConfigurationSettings)setting.getValue()).isTemporary()) {
           wrappers.add(setting);
         }
       }
@@ -288,8 +288,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     list.addAll(myProjectStartupTaskManager.getLocalConfigurations());
     Collections.sort(list, ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
 
-    if (! Comparing.equal(list, myModel.getAllConfigurations())) return true;
-    if (! Comparing.equal(shared, myModel.getSharedConfigurations())) return true;
+    if (!Comparing.equal(list, myModel.getAllConfigurations())) return true;
+    if (!Comparing.equal(shared, myModel.getSharedConfigurations())) return true;
     return false;
   }
 
