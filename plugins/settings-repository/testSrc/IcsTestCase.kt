@@ -15,8 +15,6 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.configurationStore.StreamProvider
-import com.intellij.openapi.components.RoamingType
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.writeChild
 import org.eclipse.jgit.lib.Repository
@@ -27,15 +25,6 @@ import org.jetbrains.settingsRepository.git
 import org.junit.Rule
 import java.nio.file.Path
 import kotlin.properties.Delegates
-
-fun StreamProvider.write(path: String, data: ByteArray) {
-  write(path, data, data.size(), RoamingType.PER_USER)
-}
-
-fun StreamProvider.write(fileSpec: String, content: String) {
-  val data = content.toByteArray()
-  write(fileSpec, data, data.size(), RoamingType.PER_USER)
-}
 
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 

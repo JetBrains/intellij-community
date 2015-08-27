@@ -67,7 +67,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   init {
     if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
-      ShutDownTracker.getInstance().registerShutdownTask(object: Runnable {
+      ShutDownTracker.getInstance().registerShutdownTask(object : Runnable {
         override fun run() {
           _repository?.close()
         }
@@ -280,7 +280,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       return false
     }
 
-    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) } .append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
+    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
     return true
   }
 
@@ -297,13 +297,9 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     return node
   }
 
-  override fun write(path: String, content: ByteArray, size: Int): Boolean {
-    val ignoreRules = getIgnoreRules()
+  override fun isPathIgnored(path: String): Boolean {
     // add first slash as WorkingTreeIterator does "The ignore code wants path to start with a '/' if possible."
-    if (ignoreRules != null && ignoreRules.isIgnored("/$path", false) == IgnoreNode.MatchResult.IGNORED) {
-      return false
-    }
-    return super.write(path, content, size)
+    return getIgnoreRules()?.isIgnored("/$path", false) == IgnoreNode.MatchResult.IGNORED
   }
 }
 

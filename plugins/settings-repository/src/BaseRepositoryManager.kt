@@ -76,7 +76,16 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
     FileUtil.delete(dir)
   }
 
+  protected open fun isPathIgnored(path: String): Boolean = false
+
   override fun read(path: String): InputStream? {
+    if (isPathIgnored(path)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("$path is ignored")
+      }
+      return null
+    }
+
     var fileToDelete: File? = null
     lock.read {
       val file = File(dir, path)
@@ -104,6 +113,13 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
   }
 
   override fun write(path: String, content: ByteArray, size: Int): Boolean {
+    if (isPathIgnored(path)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("$path is ignored")
+      }
+      return false
+    }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("Write $path")
     }

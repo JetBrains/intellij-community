@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository.test
 
+import com.intellij.configurationStore.write
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.FileUtil
@@ -346,11 +347,13 @@ class GitTest : IcsTestCase() {
   Test fun gitignore() {
     createLocalRepository()
 
-    repository.add(".gitignore", "*.html")
+    provider.write(".gitignore", "*.html")
     sync(SyncType.MERGE)
 
-    provider.write("bar.html", "<data />")
-    provider.write("i/am/a/long/path/to/file/foo.html", "<data />")
+    val filePaths = listOf("bar.html", "i/am/a/long/path/to/file/foo.html")
+    for (path in filePaths) {
+      provider.write(path, path)
+    }
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff()).isFalse()
@@ -360,6 +363,10 @@ class GitTest : IcsTestCase() {
     assertThat(diff.getModified()).isEmpty()
     assertThat(diff.getUntracked()).isEmpty()
     assertThat(diff.getUntrackedFolders()).isEmpty()
+
+    for (path in filePaths) {
+      assertThat(provider.read(path)).isNull()
+    }
   }
 
   private fun createRemoteRepository(branchName: String? = null, initialCommit: Boolean = true) {
