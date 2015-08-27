@@ -299,6 +299,12 @@
       <keyboard-shortcut first-keystroke="ctrl TAB"/>
       <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
     </action>
+    <action id="Diff.FocusOppositePane">
+      <keyboard-shortcut first-keystroke="control TAB"/>
+    </action>
+    <action id="Diff.FocusOppositePaneAndScroll">
+      <keyboard-shortcut first-keystroke="control shift TAB"/>
+    </action>
     <action id="Vcs.QuickListPopupAction">
       <keyboard-shortcut first-keystroke="ctrl V" />
     </action>
