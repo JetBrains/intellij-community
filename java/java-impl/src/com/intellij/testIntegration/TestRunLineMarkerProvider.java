@@ -51,10 +51,12 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
       }
       if (element instanceof PsiMethod) {
         PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-        TestFramework framework = TestFrameworks.detectFramework(psiClass);
-        if (psiClass != null && framework != null && framework.isTestMethod(element)) {
-//          String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
-          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+        if (psiClass != null) {
+          TestFramework framework = TestFrameworks.detectFramework(psiClass);
+          if (framework != null && framework.isTestMethod(element)) {
+  //          String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
+            return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+          }
         }
       }
     }

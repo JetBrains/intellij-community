@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testIntegration.TestFramework;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -54,7 +55,7 @@ public abstract class TestFrameworks {
   }
   
   @Nullable
-  public static TestFramework detectFramework(final PsiClass psiClass) {
+  public static TestFramework detectFramework(@NotNull final PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<TestFramework>() {
       @Nullable
       @Override
