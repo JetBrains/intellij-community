@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -50,6 +51,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
@@ -270,38 +273,45 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(false, false);
   }
 
-  public void scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
-    Runnable onCompletion = new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-
-        if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
-          myManager.scheduleImportAndResolve();
-        }
-      }
-    };
+  public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
+    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+    return promise;
   }
 
-  public void scheduleUpdate(List<VirtualFile> filesToUpdate,
-                             List<VirtualFile> filesToDelete,
-                             boolean force,
-                             final boolean forceImportAndResolve) {
-    Runnable onCompletion = new Runnable() {
-      @Override
-      public void run() {
-        if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
-          myManager.scheduleImportAndResolve();
-        }
-      }
-    };
+  public Promise<Void> scheduleUpdate(List<VirtualFile> filesToUpdate,
+                                      List<VirtualFile> filesToDelete,
+                                      boolean force,
+                                      final boolean forceImportAndResolve) {
+    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
                                                                           filesToDelete,
                                                                           force,
                                                                           myProjectsTree,
                                                                           myGeneralSettings,
                                                                           onCompletion));
+    return promise;
+  }
+
+  @NotNull
+  private Runnable createScheduleImportAction(final boolean forceImportAndResolve, final AsyncPromise<Void> promise) {
+    return new Runnable() {
+        @Override
+        public void run() {
+          if (myProject.isDisposed()) return;
+
+          if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
+            myManager.scheduleImportAndResolve().done(new Consumer<List<Module>>() {
+              @Override
+              public void consume(List<Module> modules) {
+                promise.setResult(null);
+              }
+            });
+          }
+        }
+      };
   }
 
   private void onSettingsChange() {

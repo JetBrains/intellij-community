@@ -180,6 +180,7 @@
 
     <postStartupActivity implementation="org.jetbrains.idea.maven.utils.MavenRehighlighter$MavenRehighlighterPostStartupActivity"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.utils.MavenRehighlighter"/>
+    <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
     <library.dependencyScopeSuggester implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibraryDependencyScopeSuggester"/>
   </extensions>
 
