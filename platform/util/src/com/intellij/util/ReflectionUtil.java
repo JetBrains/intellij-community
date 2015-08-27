@@ -488,22 +488,32 @@ public class ReflectionUtil {
       for (Annotation annotation : aClass.getAnnotations()) {
         if (annotation.annotationType().getName().equals("kotlin.jvm.internal.KotlinClass")) {
           Constructor<?>[] constructors = aClass.getDeclaredConstructors();
-          if (constructors.length > 0) {
+          Exception exception = e;
+          ctorLoop:
+          for (int i = 0; i < constructors.length; i++) {
             try {
-              Constructor<?> constructor = constructors[0];
+              Constructor<?> constructor = constructors[i];
               try {
                 constructor.setAccessible(true);
               }
               catch (Throwable ignored) {
               }
 
+              Class<?>[] parameterTypes = constructor.getParameterTypes();
+              for (Class<?> type : parameterTypes) {
+                if (type.getName().equals("kotlin.jvm.internal.DefaultConstructorMarker")) {
+                  continue ctorLoop;
+                }
+              }
+
               //noinspection unchecked
-              return (T)constructor.newInstance(new Object[constructor.getParameterTypes().length]);
+              return (T)constructor.newInstance(new Object[parameterTypes.length]);
             }
             catch (Exception e1) {
-              throw new RuntimeException(e1);
+              exception = e1;
             }
           }
+          throw new RuntimeException(exception);
         }
       }
 
