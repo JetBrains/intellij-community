@@ -288,24 +288,24 @@ public class  PyIntentionTest extends PyTestCase {
 
   public void testTypeInDocstring() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    doDocReferenceTest(DocStringFormat.REST);
+    doDocParamTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring3() {
-    doDocReferenceTest(DocStringFormat.REST);
+    doDocParamTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring4() {
-    doDocReferenceTest(DocStringFormat.REST);
+    doDocParamTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstringParameterInCallable() {
-    doDocReferenceTest(DocStringFormat.REST);
+    doDocParamTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring5() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
-    doDocReferenceTest(DocStringFormat.REST);
+    doDocParamTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstringAtTheEndOfFunction() {
@@ -317,12 +317,12 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring7() {         //PY-8930
-    doDocReferenceTest(DocStringFormat.REST);
+    doDocParamTypeTest(DocStringFormat.REST);
   }
 
   // PY-16456
   public void testTypeInDocStringDifferentIndentationSize() {
-    doDocReferenceTest(DocStringFormat.REST);
+    doDocParamTypeTest(DocStringFormat.REST);
   }
 
   // PY-16456
@@ -446,47 +446,47 @@ public class  PyIntentionTest extends PyTestCase {
 
   // PY-9795
   public void testParamTypeInNewGoogleDocString() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
 
   // PY-9795
   public void testParamTypeInEmptyGoogleDocString() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);  
+    doDocParamTypeTest(DocStringFormat.GOOGLE);  
   }
   
   // PY-9795
   public void testParamTypeInGoogleDocStringOnlySummaryOneLine() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);  
+    doDocParamTypeTest(DocStringFormat.GOOGLE);  
   }
 
   // PY-9795
   public void testParamTypeInGoogleDocStringOnlySummary() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
   
   // PY-9795
   public void testParamTypeInGoogleDocStringEmptyParamSection() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
   
   // PY-9795
   public void testParamTypeInGoogleDocStringParamDeclaredNoParenthesis() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
 
   // PY-9795
   public void testParamTypeInGoogleDocStringParamDeclaredEmptyParenthesis() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
   
   // PY-9795
   public void testParamTypeInGoogleDocStringOtherParamDeclared() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
   
   // PY-9795
   public void testParamTypeInGoogleDocStringOtherSectionExists() {
-    doDocReferenceTest(DocStringFormat.GOOGLE);
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
   
   // PY-9795
@@ -529,7 +529,22 @@ public class  PyIntentionTest extends PyTestCase {
       codeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertTypeDocStub;
     }
   }
+
+  // PY-9795
+  public void testAddMissingParamsInGoogleDocString() {
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-9795
+  public void testAddMissingParamsInGoogleDocStringNoParamSection() {
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
   
+  // PY-9795
+  public void testAddMissingParamsInGoogleDocStringEmptyParamSection() {
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+
   // PY-4717
   public void testReturnTypeInNewNumpyDocString() {
     doDocReturnTypeTest(DocStringFormat.NUMPY);
@@ -537,47 +552,47 @@ public class  PyIntentionTest extends PyTestCase {
 
   // PY-4717
   public void testParamTypeInNewNumpyDocString() {
-    doDocReferenceTest(DocStringFormat.NUMPY);
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
   
    // PY-4717
   public void testParamTypeInEmptyNumpyDocString() {
-    doDocReferenceTest(DocStringFormat.NUMPY);  
+    doDocParamTypeTest(DocStringFormat.NUMPY);  
   }
   
   // PY-4717
   public void testParamTypeInNumpyDocStringOnlySummaryOneLine() {
-    doDocReferenceTest(DocStringFormat.NUMPY);  
+    doDocParamTypeTest(DocStringFormat.NUMPY);  
   }
 
   // PY-4717
   public void testParamTypeInNumpyDocStringOnlySummary() {
-    doDocReferenceTest(DocStringFormat.NUMPY);
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
   
   // PY-4717
   public void testParamTypeInNumpyDocStringEmptyParamSection() {
-    doDocReferenceTest(DocStringFormat.NUMPY);
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
   
   // PY-4717
   public void testParamTypeInNumpyDocStringParamDeclaredNoColon() {
-    doDocReferenceTest(DocStringFormat.NUMPY);
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
 
   // PY-4717
   public void testParamTypeInNumpyDocStringParamDeclaredColon() {
-    doDocReferenceTest(DocStringFormat.NUMPY);
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
   
   // PY-4717
   public void testParamTypeInNumpyDocStringOtherParamDeclared() {
-    doDocReferenceTest(DocStringFormat.NUMPY);
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
   
   // PY-4717
   public void testParamTypeInNumpyDocStringOtherSectionExists() {
-    doDocReferenceTest(DocStringFormat.NUMPY);
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
   
   // PY-4717
@@ -613,7 +628,7 @@ public class  PyIntentionTest extends PyTestCase {
     });
   }
 
-  private void doDocReferenceTest(@NotNull DocStringFormat format) {
+  private void doDocParamTypeTest(@NotNull DocStringFormat format) {
     runWithDocStringFormat(format, new Runnable() {
       public void run() {
         doTest(PyBundle.message("INTN.specify.type"));
@@ -630,4 +645,13 @@ public class  PyIntentionTest extends PyTestCase {
 
   }
 
+  public void doDocAddMissingParamsTest(@NotNull DocStringFormat format) {
+    runWithDocStringFormat(format, new Runnable() {
+      @Override
+      public void run() {
+        doTest(PyBundle.message("INTN.add.parameters.to.docstring"));
+      }
+    });
+
+  }
 }

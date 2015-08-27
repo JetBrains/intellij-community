@@ -309,7 +309,12 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Override
   public List<String> getParameters() {
-    return null;
+    return ContainerUtil.map(getParameterSubstrings(), new Function<Substring, String>() {
+      @Override
+      public String fun(Substring substring) {
+        return substring.toString();
+      }
+    });
   }
 
   @Override

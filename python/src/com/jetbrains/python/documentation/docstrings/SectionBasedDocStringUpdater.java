@@ -27,58 +27,24 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Mikhail Golubev
  */
 public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<SectionBasedDocString> {
+  private final List<AddParameter> myAddParameterRequests = new ArrayList<AddParameter>();
+
   public SectionBasedDocStringUpdater(@NotNull SectionBasedDocString docString, @NotNull String minContentIndent) {
     super(docString, minContentIndent);
   }
 
   @Override
-  public final void addParameter(@NotNull final String name, @Nullable String type) {
-    if (type != null) {
-      final Substring typeSub = myOriginalDocString.getParamTypeSubstring(name);
-      if (typeSub != null) {
-        replace(typeSub.getTextRange(), type);
-        return;
-      }
-      final Substring nameSub = ContainerUtil.find(myOriginalDocString.getParameterSubstrings(), new Condition<Substring>() {
-        @Override
-        public boolean value(Substring substring) {
-          return substring.toString().equals(name);
-        }
-      });
-      if (nameSub != null) {
-        updateParamDeclarationWithType(nameSub, type);
-        return;
-      }
-    }
-    final Section paramSection = findFirstParametersSection();
-    if (paramSection != null) {
-      final List<SectionField> fields = paramSection.getFields();
-      if (!fields.isEmpty()) {
-        final SectionField firstField = fields.get(0);
-        final String newLine = createParamLine(name, type, getSectionIndent(paramSection), getFieldIndent(paramSection, firstField));
-        insertBeforeLine(getFieldStartLine(firstField), newLine);
-      }
-      else {
-        final String newLine = createParamLine(name, type, getSectionIndent(paramSection), getExpectedFieldIndent());
-        insertAfterLine(getSectionLastTitleLine(paramSection), newLine);
-      }
-    }
-    else {
-      final int line = findLastNonEmptyLine();
-      final String newSection = createBuilder()
-        .withSectionIndent(getExpectedFieldIndent())
-        .addEmptyLine()
-        .startParametersSection()
-        .addParameter(name, type, "")
-        .buildContent(getExpectedSectionIndent(), true);
-      insertAfterLine(line, newSection);
-    }
+  public final void addParameter(@NotNull String name, @Nullable String type) {
+    // because any of requests to add new parameter can lead to creation of a new parameter section
+    // it's not safe to process them independently 
+    myAddParameterRequests.add(new AddParameter(name, type));
   }
 
   @Override
@@ -122,7 +88,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
       for (SectionField param : section.getFields()) {
         if (param.getName().equals(name)) {
           if (section.getFields().size() == 1) {
-            removeLines(getSectionStartLine(section), getFieldEndLine(param));            
+            removeLines(getSectionStartLine(section), getFieldEndLine(param));
           }
           else {
             removeLines(getFieldStartLine(param), getFieldEndLine(param));
@@ -133,6 +99,76 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     }
   }
 
+  @Override
+  protected void beforeApplyingModifications() {
+    final List<AddParameter> newParams = new ArrayList<AddParameter>();
+    for (AddParameter param : myAddParameterRequests) {
+      if (param.type != null) {
+        final Substring typeSub = myOriginalDocString.getParamTypeSubstring(param.name);
+        if (typeSub != null) {
+          replace(typeSub.getTextRange(), param.type);
+          continue;
+        }
+        final Substring nameSub = findParamNameSubstring(param.name);
+        if (nameSub != null) {
+          updateParamDeclarationWithType(nameSub, param.type);
+          continue;
+        }
+      }
+      newParams.add(param);
+    }
+    if (!newParams.isEmpty()) {
+      final SectionBasedDocStringBuilder paramBlockBuilder = createBuilder();
+      final Section firstParamSection = findFirstParametersSection();
+      // Insert whole new parameter block
+      if (firstParamSection == null) {
+        paramBlockBuilder
+          .addEmptyLine()
+          .startParametersSection();
+        final String blockText = buildBlock(paramBlockBuilder, newParams, getExpectedFieldIndent(), getExpectedSectionIndent());
+        insertAfterLine(findLastNonEmptyLine(), blockText);
+      }
+      // Update existing parameter block
+      else {
+        final SectionField firstParamField = ContainerUtil.getFirstItem(firstParamSection.getFields());
+        // Section exist, but empty
+        if (firstParamField == null) {
+          final String blockText = buildBlock(paramBlockBuilder, newParams, getExpectedFieldIndent(), getSectionIndent(firstParamSection));
+          insertAfterLine(getSectionLastTitleLine(firstParamSection), blockText);
+        }
+        else {
+          // Section contain other parameter declarations
+          final String blockText = buildBlock(paramBlockBuilder, newParams,
+                                              getFieldIndent(firstParamSection, firstParamField),
+                                              getSectionIndent(firstParamSection));
+          insertBeforeLine(getFieldStartLine(firstParamField), blockText);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static String buildBlock(@NotNull SectionBasedDocStringBuilder builder,
+                                   @NotNull List<AddParameter> params,
+                                   @NotNull String sectionIndent,
+                                   @NotNull String indent) {
+    builder.withSectionIndent(sectionIndent);
+    for (AddParameter param : params) {
+      builder.addParameter(param.name, param.type, "");
+    }
+    return builder.buildContent(indent, true);
+  }
+
+
+  private Substring findParamNameSubstring(@NotNull final String name) {
+    return ContainerUtil.find(myOriginalDocString.getParameterSubstrings(), new Condition<Substring>() {
+      @Override
+      public boolean value(Substring substring) {
+        return substring.toString().equals(name);
+      }
+    });
+  }
+
   abstract void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type);
 
   protected int getSectionLastTitleLine(@NotNull Section paramSection) {
@@ -140,16 +176,6 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   protected abstract SectionBasedDocStringBuilder createBuilder();
-
-  protected String createParamLine(@NotNull String name,
-                                   @Nullable String type,
-                                   @NotNull String docStringIndent,
-                                   @NotNull String sectionIndent) {
-    return createBuilder()
-      .withSectionIndent(sectionIndent)
-      .addParameter(name, type, "")
-      .buildContent(docStringIndent, true);
-  }
 
   protected String createReturnLine(@NotNull String type,
                                     @NotNull String docStringIndent,
@@ -231,6 +257,16 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     else {
       //noinspection ConstantConditions
       return field.getNameAsSubstring().getEndLine();
-    } 
+    }
+  }
+
+  private static class AddParameter {
+    @NotNull final String name;
+    @Nullable final String type;
+
+    public AddParameter(@NotNull String name, @Nullable String type) {
+      this.name = name;
+      this.type = type;
+    }
   }
 }

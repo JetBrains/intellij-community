@@ -130,7 +130,7 @@ public class PyDocstringGenerator {
         for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
           final String paramName = param.getName();
           final StructuredDocString docString = getStructuredDocString();
-          if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParamTypeSubstring(paramName) != null) {
+          if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParameters().contains(paramName)) {
             continue;
           }
           final String signatureType = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;

@@ -81,6 +81,7 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
 
   @NotNull
   public final String getDocStringText() {
+    beforeApplyingModifications();
     // Move closing quotes to the next line, if new lines are going to be inserted
     if (myOriginalDocString.getLineCount() == 1 && !myUpdates.isEmpty()) {
       insertAfterLine(0, myMinContentIndent);
@@ -99,6 +100,10 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
       }
     }
     return myBuilder.toString();
+  }
+
+  protected void beforeApplyingModifications() {
+    
   }
 
   @NotNull
