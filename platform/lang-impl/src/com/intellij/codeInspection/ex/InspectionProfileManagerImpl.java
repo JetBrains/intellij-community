@@ -85,7 +85,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(INSPECTION_DIR, new BaseSchemeProcessor<InspectionProfileImpl>() {
+    mySchemesManager = schemesManagerFactory.create(INSPECTION_DIR, new BaseSchemeProcessor<InspectionProfileImpl>() {
       @NotNull
       @Override
       public InspectionProfileImpl readScheme(@NotNull Element element) {
@@ -139,7 +139,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
         }
         onProfilesChanged();
       }
-    }, RoamingType.PER_USER);
+    });
     mySeverityRegistrar = new SeverityRegistrar(messageBus);
   }
 

@@ -63,7 +63,7 @@ class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save(SmartList())
 
-    assertThat(streamProvider.data.get(RoamingType.PER_USER)!!.get("proxy.settings.xml")).isEqualTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
+    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("proxy.settings.xml")).isEqualTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
   }
 
   @Test fun testLoadFromStreamProvider() {
@@ -73,7 +73,7 @@ class ApplicationStoreTest {
     val map = THashMap<String, String>()
     val fileSpec = "proxy.settings.xml"
     map.put(fileSpec, "<application>\n  <component name=\"HttpConfigurable\">\n    <option name=\"foo\" value=\"newValue\" />\n  </component>\n</application>")
-    streamProvider.data.put(RoamingType.PER_USER, map)
+    streamProvider.data.put(RoamingType.DEFAULT, map)
 
     componentStore.storageManager.streamProvider = streamProvider
     componentStore.initComponent(component, false)

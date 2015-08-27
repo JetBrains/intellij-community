@@ -20,7 +20,10 @@ import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -75,7 +78,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemesManagerFactory schemeManagerFactory) {
     myDefaultColorSchemeManager = defaultColorSchemeManager;
 
-    mySchemeManager = schemeManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
       @NotNull
       @Override
       public EditorColorsSchemeImpl readScheme(@NotNull Element element) {
@@ -122,7 +125,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       public boolean isUpgradeNeeded() {
         return true;
       }
-    }, RoamingType.PER_USER);
+    });
 
     initDefaultSchemes();
     loadBundledSchemes();

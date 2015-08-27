@@ -18,7 +18,6 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.configurationStore.SchemeManagerImpl
 import com.intellij.configurationStore.TestScheme
 import com.intellij.configurationStore.TestSchemesProcessor
-import com.intellij.openapi.components.RoamingType
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.xmlb.serialize
 import com.intellij.util.xmlb.toByteArray
@@ -38,7 +37,7 @@ class LoadTest : IcsTestCase() {
 
   private val dirPath = "\$ROOT_CONFIG$/keymaps"
 
-  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), RoamingType.PER_USER, provider, tempDirManager.newDirectory("schemes"))
+  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), provider, tempDirManager.newDirectory("schemes"))
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")

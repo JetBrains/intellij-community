@@ -81,5 +81,5 @@ private fun getRoamingType(components: Collection<ExportableComponent>): Roaming
       }
     }
   }
-  return RoamingType.PER_USER
+  return RoamingType.DEFAULT
 }

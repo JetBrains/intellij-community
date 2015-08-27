@@ -148,7 +148,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
    */
   open fun fileSpecToPath(fileSpec: String): String = expandMacros(fileSpec)
 
-  fun getOrCreateStorage(fileSpec: String, roamingType: RoamingType, storageClass: Class<out StateStorage> = javaClass<StateStorage>(), @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = javaClass<StateSplitterEx>()): StateStorage {
+  fun getOrCreateStorage(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT, storageClass: Class<out StateStorage> = javaClass<StateStorage>(), @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = javaClass<StateSplitterEx>()): StateStorage {
     val collapsedPath = normalizeFileSpec(fileSpec)
     val key = if (storageClass == javaClass<StateStorage>()) collapsedPath else storageClass.getName()
     storageLock.withLock {
@@ -206,7 +206,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
     }
 
-    val effectiveRoamingType = if (roamingType == RoamingType.PER_USER && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
+    val effectiveRoamingType = if (roamingType == RoamingType.DEFAULT && fileSpec == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
     val storage = MyFileStorage(this, File(filePath), fileSpec, rootTagName, effectiveRoamingType, getMacroSubstitutor(fileSpec), streamProvider)
     if (isUseVfsListener == ThreeState.YES) {
       virtualFileTracker?.put(filePath, storage)
@@ -252,7 +252,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   override final fun rename(path: String, newName: String) {
     storageLock.withLock {
-      val storage = getOrCreateStorage(collapseMacros(path), RoamingType.PER_USER) as FileBasedStorage
+      val storage = getOrCreateStorage(collapseMacros(path), RoamingType.DEFAULT) as FileBasedStorage
 
       val file = storage.getVirtualFile()
       try {
@@ -391,7 +391,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component, componentName, operation) ?: return null
     @suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-    return getStateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.PER_USER)
+    return getStateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.DEFAULT)
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null

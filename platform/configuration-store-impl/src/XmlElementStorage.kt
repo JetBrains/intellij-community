@@ -18,7 +18,9 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.StateStorageBase
+import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
@@ -30,9 +32,9 @@ import java.io.IOException
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
                                                        protected val rootElementName: String,
                                                        protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor?,
-                                                       roamingType: RoamingType?,
-                                                       provider: StreamProvider?) : StateStorageBase<StateMap>() {
-  protected val roamingType: RoamingType = roamingType ?: RoamingType.PER_USER
+                                                       roamingType: RoamingType? = RoamingType.DEFAULT,
+                                                       provider: StreamProvider? = null) : StateStorageBase<StateMap>() {
+  protected val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
   private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED || !provider.isApplicable(fileSpec, this.roamingType)) null else provider
 
   protected abstract fun loadLocalData(): Element?

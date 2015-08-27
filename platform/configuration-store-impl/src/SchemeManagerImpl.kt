@@ -55,9 +55,9 @@ import java.util.Collections
 
 public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
                                                                      private val processor: SchemeProcessor<E>,
-                                                                     private val roamingType: RoamingType,
                                                                      private val provider: StreamProvider?,
                                                                      private val ioDirectory: File,
+                                                                     private val roamingType: RoamingType = RoamingType.DEFAULT,
                                                                      virtualFileTrackerDisposable: Disposable? = null) : SchemesManager<T, E>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, E>()

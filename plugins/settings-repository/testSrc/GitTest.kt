@@ -17,7 +17,6 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.write
 import com.intellij.mock.MockVirtualFileSystem
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -125,7 +124,7 @@ class GitTest : IcsTestCase() {
       val dir = "dir"
       val fullFileSpec = "$dir/file.xml"
       provider.write(fullFileSpec, SAMPLE_FILE_CONTENT)
-      provider.delete(if (directory) dir else fullFileSpec, RoamingType.PER_USER)
+      provider.delete(if (directory) dir else fullFileSpec)
 
       val diff = repository.computeIndexDiff()
       assertThat(diff.diff()).isFalse()
@@ -295,7 +294,7 @@ class GitTest : IcsTestCase() {
 
     sync(SyncType.MERGE)
 
-    provider.delete("remote.xml", RoamingType.PER_USER)
+    provider.delete("remote.xml")
     repositoryManager.commit()
 
     remoteRepository.writePath("remote.xml", AM.MARKER_ACCEPT_THEIRS)

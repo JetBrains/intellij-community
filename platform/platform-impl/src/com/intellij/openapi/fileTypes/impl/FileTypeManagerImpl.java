@@ -143,7 +143,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
 
     myMessageBus = bus;
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
+    mySchemesManager = schemesManagerFactory.create(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
       @NotNull
       @Override
       public AbstractFileType readScheme(@NotNull Element element, boolean duringLoad) {
@@ -196,7 +196,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         myPatternsTable.removeAllAssociations(scheme);
         fireFileTypesChanged();
       }
-    }, RoamingType.PER_USER);
+    });
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {

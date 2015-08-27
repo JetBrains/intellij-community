@@ -22,16 +22,16 @@ public interface StreamProvider {
   public open val enabled: Boolean
     get() = true
 
-  public open fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.PER_USER): Boolean = true
+  public open fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
 
   /**
    * @param fileSpec
    * @param content bytes of content, size of array is not actual size of data, you must use `size`
    * @param size actual size of data
    */
-  public fun write(fileSpec: String, content: ByteArray, size: Int = content.size(), roamingType: RoamingType = RoamingType.PER_USER)
+  public fun write(fileSpec: String, content: ByteArray, size: Int = content.size(), roamingType: RoamingType = RoamingType.DEFAULT)
 
-  public fun read(fileSpec: String, roamingType: RoamingType = RoamingType.PER_USER): InputStream?
+  public fun read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): InputStream?
 
   /**
    * You must close passed input stream.
@@ -41,7 +41,7 @@ public interface StreamProvider {
   /**
    * Delete file or directory
    */
-  public fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.PER_USER)
+  public fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT)
 }
 
 public fun StreamProvider.write(fileSpec: String, content: String) {

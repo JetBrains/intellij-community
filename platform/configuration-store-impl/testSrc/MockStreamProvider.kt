@@ -19,7 +19,7 @@ class MockStreamProvider(private val myBaseDir: File) : StreamProvider {
   }
 
   private fun listSubFiles(fileSpec: String, roamingType: RoamingType): Collection<String> {
-    if (roamingType !== RoamingType.PER_USER) {
+    if (roamingType !== RoamingType.DEFAULT) {
       return emptyList()
     }
 

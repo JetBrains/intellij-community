@@ -16,7 +16,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SmartList
@@ -43,7 +42,7 @@ class StorageManagerTest {
   }
 
   public Test fun createFileStateStorageMacroSubstituted() {
-    assertThat(storageManager.getStateStorage("$MACRO/test.xml", RoamingType.PER_USER)).isNotNull()
+    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml")).isNotNull()
   }
 
   public Test fun `collapse macro`() {
@@ -59,7 +58,7 @@ class StorageManagerTest {
 
   public Test fun `create storage assertion thrown when unknown macro`() {
     try {
-      storageManager.getStateStorage("\$UNKNOWN_MACRO$/test.xml", RoamingType.PER_USER)
+      storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml")
       TestCase.fail("Exception expected")
     }
     catch (e: IllegalArgumentException) {
@@ -69,7 +68,7 @@ class StorageManagerTest {
 
   public Test fun `create file storage macro substituted when expansion has$`() {
     storageManager.addMacro("\$DOLLAR_MACRO$", "/temp/d$")
-    assertThat(storageManager.getStateStorage("\$DOLLAR_MACRO$/test.xml", RoamingType.PER_USER)).isNotNull()
+    assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml")).isNotNull()
   }
 }
 
