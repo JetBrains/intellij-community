@@ -327,7 +327,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static void fixDoc(PyChangeInfo changeInfo, @NotNull PyFunction function) {
-    final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
+    PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     if (docStringExpression == null) return;
     final PyParameterInfo[] parameters = changeInfo.getNewParameters();
     Set<String> names = new HashSet<String>();
@@ -336,12 +336,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(function);
     if (module == null) return;
+    final List<String> removedParamNames = new ArrayList<String>();
     for (PyParameter p : function.getParameterList().getParameters()) {
       final String paramName = p.getName();
       if (!names.contains(paramName) && paramName != null) {
-        DocStringUtil.removeParamFromDocString(docStringExpression, paramName);
+        removedParamNames.add(paramName);
       }
     }
+    DocStringUtil.removeParamsFromDocString(docStringExpression, removedParamNames);
   }
 
   private static void updateParameterList(PyChangeInfo changeInfo, PyFunction baseMethod) {

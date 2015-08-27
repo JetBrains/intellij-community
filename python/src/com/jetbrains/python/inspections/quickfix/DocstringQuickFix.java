@@ -93,7 +93,7 @@ public class DocstringQuickFix implements LocalQuickFix {
         new PyDocstringGenerator(docStringOwner).withParam(myMissingText).buildAndInsert();
       }
       else if (myUnexpected != null) {
-        DocStringUtil.removeParamFromDocString(docStringExpression, myUnexpected);
+        DocStringUtil.removeParamsFromDocString(docStringExpression, myUnexpected);
       }
     }
   }

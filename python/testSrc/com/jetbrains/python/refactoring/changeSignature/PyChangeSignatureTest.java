@@ -23,6 +23,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
@@ -103,6 +104,26 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testFixDocstringRemove() {
     getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false)));
+  }
+
+  // PY-9795
+  public void testFixGoogleDocStringRemoveMultiple() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), 
+                                                  new PyParameterInfo(3, "d", null, false)));
+      }
+    });
+  }
+
+  public void testFixSphinxDocStringRemoveMultiple() {
+    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
+      @Override
+      public void run() {
+        doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                                  new PyParameterInfo(3, "d", null, false)));
+      }
+    });
   }
 
   public void testClassMethod() {

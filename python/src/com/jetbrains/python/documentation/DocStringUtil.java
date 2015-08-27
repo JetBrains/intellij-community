@@ -41,6 +41,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -266,8 +268,9 @@ public class DocStringUtil {
     final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(getModuleForElement(anchor));
     return settings.getFormatForFile(anchor.getContainingFile());
   }
-
-  public static void removeParamFromDocString(@NotNull PyStringLiteralExpression docString, @NotNull String paramName) {
+  
+  public static PyStringLiteralExpression removeParamsFromDocString(@NotNull PyStringLiteralExpression docString, 
+                                                                    @NotNull Collection<String> paramNames) {
     final Module module = getModuleForElement(docString);
     final DocStringFormat format = PyDocumentationSettings.getInstance(module).getFormatForFile(docString.getContainingFile());
     DocStringUpdater updater;
@@ -289,11 +292,20 @@ public class DocStringUtil {
         updater = new NumpyDocStringUpdater(numpyParsed, PyIndentUtil.getElementIndent(docString));
         break;
       default:
-        return;
+        return docString;
     }
-    updater.removeParameter(paramName);
+    for (String name : paramNames) {
+      updater.removeParameter(name);
+    }
     final String newText = updater.getDocStringText();
     final PyExpressionStatement replacement = PyElementGenerator.getInstance(docString.getProject()).createDocstring(newText);
-    docString.replace(replacement.getExpression());
+    return (PyStringLiteralExpression)docString.replace(replacement.getExpression());
+    
+  }
+
+  @NotNull
+  public static PyStringLiteralExpression removeParamsFromDocString(@NotNull PyStringLiteralExpression docString, 
+                                                                    @NotNull String... paramNames) {
+    return removeParamsFromDocString(docString, Arrays.asList(paramNames));
   }
 }
