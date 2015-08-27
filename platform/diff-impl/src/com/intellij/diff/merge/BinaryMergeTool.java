@@ -23,8 +23,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,9 +114,7 @@ public class BinaryMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return Messages.showYesNoDialog(getComponent().getRootPane(),
-                                          DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                          DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) == Messages.YES;
+          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
         }
       };
 
@@ -134,14 +130,10 @@ public class BinaryMergeTool implements MergeTool {
       return new AbstractAction(caption) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if (result == MergeResult.CANCEL) {
-            if (Messages.showYesNoDialog(getComponent().getRootPane(),
-                                         DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                         DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) != Messages.YES) {
-              return;
-            }
+          if (result == MergeResult.CANCEL &&
+              !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+            return;
           }
-
           myMergeContext.finishMerge(result);
         }
       };

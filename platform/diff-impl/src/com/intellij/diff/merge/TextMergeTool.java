@@ -166,9 +166,7 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return Messages.showYesNoDialog(getComponent().getRootPane(),
-                                          DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                          DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) == Messages.YES;
+          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
         }
       };
 
@@ -313,12 +311,9 @@ public class TextMergeTool implements MergeTool {
                 return;
               }
             }
-            if (result == MergeResult.CANCEL) {
-              if (Messages.showYesNoDialog(myPanel.getRootPane(),
-                                           DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                           DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) != Messages.YES) {
-                return;
-              }
+            if (result == MergeResult.CANCEL &&
+                !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+              return;
             }
             destroyChangedBlocks();
             myMergeContext.finishMerge(result);

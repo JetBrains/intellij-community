@@ -17,13 +17,16 @@ package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 public class MergeUtil {
@@ -89,5 +92,12 @@ public class MergeUtil {
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       myMergeContext.putUserData(key, value);
     }
+  }
+
+  public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component, @NotNull MergeRequest request, @NotNull MergeContext context) {
+    return Messages.showYesNoDialog(component.getRootPane(),
+                                    DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
+                                    DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) ==
+           Messages.YES;
   }
 }

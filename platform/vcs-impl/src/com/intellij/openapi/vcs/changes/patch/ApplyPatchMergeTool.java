@@ -25,11 +25,9 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,10 +113,7 @@ public class ApplyPatchMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return Messages.showYesNoDialog(getComponent().getRootPane(),
-                                          DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                          DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) ==
-                 Messages.YES;
+          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
         }
       };
       return components;
@@ -133,13 +128,9 @@ public class ApplyPatchMergeTool implements MergeTool {
       return new AbstractAction(caption) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if (result == MergeResult.CANCEL) {
-            if (Messages.showYesNoDialog(getComponent().getRootPane(),
-                                         DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                         DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) !=
-                Messages.YES) {
-              return;
-            }
+          if (result == MergeResult.CANCEL &&
+              !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+            return;
           }
           myMergeContext.finishMerge(result);
         }
