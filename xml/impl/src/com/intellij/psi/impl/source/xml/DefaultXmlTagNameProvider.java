@@ -85,7 +85,9 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       }
 
       PsiElement declaration = descriptor.getDeclaration();
-      LOG.assertTrue(declaration == null || declaration.isValid(), declaration + " contains invalid declaration");
+      if (declaration != null && !declaration.isValid()) {
+        LOG.error(descriptor + " contains invalid declaration: " + declaration);
+      }
       LookupElementBuilder lookupElement = declaration == null ? LookupElementBuilder.create(qname) : LookupElementBuilder.create(declaration, qname);
       final int separator = qname.indexOf(':');
       if (separator > 0) {
