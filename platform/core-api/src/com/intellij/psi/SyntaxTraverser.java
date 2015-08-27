@@ -48,6 +48,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   @NotNull
+  public static SyntaxTraverser<PsiElement> psiTraverser(@Nullable PsiElement root) {
+    return psiTraverser().withRoot(root);
+  }
+
+  @NotNull
   public static SyntaxTraverser<PsiElement> revPsiTraverser() {
     return new SyntaxTraverser<PsiElement>(psiApiReversed(), null);
   }
@@ -55,6 +60,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   @NotNull
   public static SyntaxTraverser<ASTNode> astTraverser() {
     return new SyntaxTraverser<ASTNode>(astApi(), null);
+  }
+
+  @NotNull
+  public static SyntaxTraverser<ASTNode> astTraverser(@Nullable ASTNode root) {
+    return astTraverser().withRoot(root);
   }
 
   @NotNull

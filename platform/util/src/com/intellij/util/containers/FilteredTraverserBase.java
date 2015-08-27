@@ -22,7 +22,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -108,8 +107,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public Self withRoot(@NotNull T root) {
-    return newInstance(meta.withRoots(Collections.singleton(root)));
+  public Self withRoot(@Nullable T root) {
+    return newInstance(meta.withRoots(ContainerUtil.createMaybeSingletonList(root)));
   }
 
   @NotNull
