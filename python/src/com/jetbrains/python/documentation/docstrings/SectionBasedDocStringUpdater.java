@@ -87,12 +87,14 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     for (Section section : myOriginalDocString.getParameterSections()) {
       for (SectionField param : section.getFields()) {
         if (param.getName().equals(name)) {
+          final int startLine, endLine = getFieldEndLine(param);
           if (section.getFields().size() == 1) {
-            removeLines(getSectionStartLine(section), getFieldEndLine(param));
+            startLine = getSectionStartLine(section);
           }
           else {
-            removeLines(getFieldStartLine(param), getFieldEndLine(param));
+            startLine = getFieldStartLine(param);
           }
+          removeLinesAndSpacesAfter(startLine, endLine + 1);
           break;
         }
       }

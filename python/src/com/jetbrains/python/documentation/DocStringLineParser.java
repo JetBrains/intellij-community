@@ -100,7 +100,7 @@ public abstract class DocStringLineParser {
     return blockEnd + 1;
   }
 
-  protected int skipEmptyLines(int lineNum) {
+  public int skipEmptyLines(int lineNum) {
     while (lineNum < getLineCount() && isEmpty(lineNum)) {
       lineNum++;
     }

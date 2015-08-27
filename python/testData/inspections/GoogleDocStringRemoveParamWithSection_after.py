@@ -1,3 +1,5 @@
 def foo():
     """
+    Returns:
+        Nothing:
     """

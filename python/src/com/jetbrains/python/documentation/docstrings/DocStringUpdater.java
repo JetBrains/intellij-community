@@ -63,15 +63,27 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     replace(startOffset, endOffset, "");
   }
 
+  /**
+   * @param startLine inclusive
+   * @param endLine exclusive
+   */
   protected final void removeLines(int startLine, int endLine) {
     final List<Substring> lines = myOriginalDocString.getLines();
     final int startOffset = lines.get(startLine).getStartOffset();
-    final int endOffset = endLine < lines.size() - 1 ? lines.get(endLine + 1).getStartOffset() : lines.get(endLine).getEndOffset();
+    final int endOffset = endLine < lines.size() ? lines.get(endLine).getStartOffset() : lines.get(endLine - 1).getEndOffset();
     remove(startOffset, endOffset);
   }
 
+  protected final void removeLinesAndSpacesAfter(int startLine, int endLine) {
+    removeLines(startLine, skipEmptyLines(endLine));
+  }
+
+  private int skipEmptyLines(int startLine) {
+    return Math.min(myOriginalDocString.skipEmptyLines(startLine), myOriginalDocString.getLineCount() - 1);
+  }
+
   protected final void removeLine(int line) {
-    removeLines(line, line);
+    removeLines(line, line + 1);
   }
 
   protected final void insertBeforeLine(int lineNumber, @NotNull String text) {
