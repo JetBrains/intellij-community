@@ -89,8 +89,8 @@ class AutoSyncManager(private val icsManager: IcsManager) {
     })
   }
 
-  fun autoSync(onAppExit: Boolean = false) {
-    if (!icsManager.repositoryActive) {
+  fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
+    if (!icsManager.repositoryActive || (!force && !icsManager.settings.autoSync)) {
       return
     }
 

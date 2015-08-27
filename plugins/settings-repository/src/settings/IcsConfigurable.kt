@@ -18,7 +18,6 @@ package org.jetbrains.settingsRepository
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import java.awt.BorderLayout
-import javax.swing.JComponent
 
 class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", IcsBundle.message("ics.settings"), "reference.settings.ics") {
   override fun getSettings() = icsManager.settings
@@ -27,20 +26,26 @@ class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", 
 }
 
 class IcsConfigurableUi : ConfigurableUi<IcsSettings> {
+  private val panel = IcsConfigurableForm()
+
   private val readOnlyEditor = createReadOnlySourcesEditor()
 
-  override fun reset(settings: IcsSettings) = readOnlyEditor.reset(settings)
+  init {
+    panel.readOnlySourcesPanel.add(readOnlyEditor.getComponent(), BorderLayout.CENTER)
+  }
 
-  override fun isModified(settings: IcsSettings) = readOnlyEditor.isModified(settings)
+  override fun reset(settings: IcsSettings) {
+    panel.autoSyncCheckBox.setSelected(settings.autoSync)
+    readOnlyEditor.reset(settings)
+  }
+
+  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected() != settings.autoSync || readOnlyEditor.isModified(settings)
 
   override fun apply(settings: IcsSettings) {
+    settings.autoSync = panel.autoSyncCheckBox.isSelected()
     readOnlyEditor.apply(settings)
     saveSettings(settings, icsManager.settingsFile)
   }
 
-  override fun getComponent(): JComponent {
-    val panel = IcsConfigurableForm()
-    panel.readOnlySourcesPanel.add(readOnlyEditor.getComponent(), BorderLayout.CENTER)
-    return panel.rootPanel
-  }
+  override fun getComponent() = panel.rootPanel
 }

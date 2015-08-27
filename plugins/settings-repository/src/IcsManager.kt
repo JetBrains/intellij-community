@@ -278,7 +278,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
         Pair("_unknown/\$APP_CONFIG$", "_unknown")
       ))) {
         // schedule push to avoid merge conflicts
-        application.invokeLater(Runnable { icsManager.autoSyncManager.autoSync() })
+        application.invokeLater(Runnable { icsManager.autoSyncManager.autoSync(force = true) })
       }
     }
 

@@ -87,6 +87,8 @@ class IcsSettings {
   var commitDelay = DEFAULT_COMMIT_DELAY
   var doNoAskMapProject = false
   var readOnlySources: List<ReadonlySource> = SmartList()
+
+  var autoSync = true
 }
 
 JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
