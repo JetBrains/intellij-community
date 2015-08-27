@@ -211,7 +211,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return null;
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
 
-      LOG.assertTrue(anonymousClass != null);
+      if (anonymousClass == null) return null;
 
       ChangeContextUtil.encodeContextInfo(anonymousClass, true);
       final PsiElement lambdaContext = anonymousClass.getParent().getParent();
@@ -229,10 +229,10 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       } else {
         method = anonymousClass.getMethods()[0];
       }
-      LOG.assertTrue(method != null);
+      if (method == null) return null;
 
       final PsiCodeBlock body = method.getBody();
-      LOG.assertTrue(body != null);
+      if (body == null) return null;
 
       final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, anonymousClass);
       body.accept(checker);
