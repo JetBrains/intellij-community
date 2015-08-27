@@ -39,6 +39,8 @@ public class TestLoggerFactory implements Logger.Factory {
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
   private static final String LOG_DIR = "testlog";
+  private static final long LOG_SIZE_LIMIT = 100 * 1024 * 1024;
+  private static final long LOG_SEEK_WINDOW = 100 * 1024;
 
   private boolean myInitialized = false;
 
@@ -85,6 +87,11 @@ public class TestLoggerFactory implements Logger.Factory {
         throw e;
       }
 
+      File ideaLog = new File(getTestLogDir(), "idea.log");
+      if (ideaLog.exists() && ideaLog.length() >= LOG_SIZE_LIMIT) {
+        FileUtil.writeToFile(ideaLog, "");
+      }
+
       myInitialized = true;
     }
     catch (Exception e) {
@@ -96,8 +103,6 @@ public class TestLoggerFactory implements Logger.Factory {
     return PathManager.getSystemPath() + "/" + LOG_DIR;
   }
 
-  private static final long SEEK_WINDOW = 100 * 1024;
-
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
     File ideaLog = new File(getTestLogDir(), "idea.log");
     if (ideaLog.exists()) {
@@ -105,11 +110,11 @@ public class TestLoggerFactory implements Logger.Factory {
         long length = ideaLog.length();
         String logText;
 
-        if (length > SEEK_WINDOW) {
+        if (length > LOG_SEEK_WINDOW) {
           RandomAccessFile file = new RandomAccessFile(ideaLog, "r");
           try {
-            file.seek(length - SEEK_WINDOW);
-            byte[] bytes = new byte[(int)SEEK_WINDOW];
+            file.seek(length - LOG_SEEK_WINDOW);
+            byte[] bytes = new byte[(int)LOG_SEEK_WINDOW];
             int read = file.read(bytes);
             logText = new String(bytes, 0, read);
           }
