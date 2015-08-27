@@ -396,8 +396,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       @Override
       public void run() {
         synchronized (myLock) {
-          final boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result, filesToSync) ||
-                                 doRemoveWatchedRoots(watchRequests);
+          boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result, filesToSync) |
+                           doRemoveWatchedRoots(watchRequests);
           if (update) {
             myNormalizedTree = null;
             setUpFileWatcher();
