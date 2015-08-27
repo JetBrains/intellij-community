@@ -13,172 +13,143 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger.connection;
+package org.jetbrains.debugger.connection
 
-import com.intellij.ide.browsers.WebBrowser;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.socketConnection.ConnectionStatus;
-import io.netty.bootstrap.Bootstrap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.Vm;
-import org.jetbrains.io.NettyUtil;
-import org.jetbrains.rpc.CommandProcessor;
+import com.intellij.ide.browsers.WebBrowser
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Condition
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.components.JBList
+import com.intellij.util.Consumer
+import com.intellij.util.Function
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.socketConnection.ConnectionStatus
+import io.netty.bootstrap.Bootstrap
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.Vm
+import org.jetbrains.io.NettyUtil
+import org.jetbrains.rpc.CommandProcessor
 
-import javax.swing.*;
-import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.*
+import java.net.ConnectException
+import java.net.InetSocketAddress
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicReference
 
-public abstract class RemoteVmConnection extends VmConnection<Vm> {
-  private final AtomicReference<Runnable> connectCancelHandler = new AtomicReference<Runnable>();
+public abstract class RemoteVmConnection : VmConnection<Vm>() {
+  private val connectCancelHandler = AtomicReference<Runnable>()
 
-  @Nullable
-  @Override
-  public WebBrowser getBrowser() {
-    return null;
-  }
+  override fun getBrowser() = null
 
-  @NotNull
-  public abstract Bootstrap createBootstrap(@NotNull InetSocketAddress address, @NotNull AsyncPromise<Vm> promise);
+  public abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
 
-  public void open(@NotNull InetSocketAddress address) {
-    open(address, null);
-  }
-
-  public void open(@NotNull final InetSocketAddress address, final Condition<Void> stopCondition) {
-    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to " + address.getHostName() + ":" + address.getPort());
-    final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
+  jvmOverloads public fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
+    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.getHostName()}:${address.getPort()}")
+    val future = ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
+      override fun run() {
         if (Thread.interrupted()) {
-          return;
+          return
         }
 
-        final AsyncPromise<Vm> result = new AsyncPromise<Vm>();
-        connectCancelHandler.set(new Runnable() {
-          @Override
-          public void run() {
-            result.setError(Promise.createError("Closed explicitly"));
+        val result = AsyncPromise<Vm>()
+        connectCancelHandler.set(object : Runnable {
+          override fun run() {
+            result.setError(Promise.createError("Closed explicitly"))
           }
-        });
+        })
 
-        AsyncPromise<Void> connectionPromise = new AsyncPromise<Void>();
-        NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, stopCondition == null ? NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT : -1, stopCondition);
-        connectionPromise.rejected(new Consumer<Throwable>() {
-          @Override
-          public void consume(Throwable error) {
-            result.setError(error);
+        val connectionPromise = AsyncPromise<Void>()
+        connectionPromise.rejected(object : Consumer<Throwable> {
+          override fun consume(error: Throwable) {
+            result.setError(error)
           }
-        });
+        })
 
-        result
-          .done(new Consumer<Vm>() {
-            @Override
-            public void consume(@NotNull Vm vm) {
-              RemoteVmConnection.this.vm = vm;
-              setState(ConnectionStatus.CONNECTED, "Connected to " + connectedAddressToPresentation(address, vm));
-              startProcessing();
+        result.done(object : Consumer<Vm> {
+          override fun consume(vm: Vm) {
+            this@RemoteVmConnection.vm = vm
+            setState(ConnectionStatus.CONNECTED, "Connected to " + connectedAddressToPresentation(address, vm))
+            startProcessing()
+          }
+        }).rejected(object : Consumer<Throwable> {
+          override fun consume(error: Throwable) {
+            if (error !is ConnectException) {
+              Promise.logError(CommandProcessor.LOG, error)
             }
-          })
-          .rejected(new Consumer<Throwable>() {
-            @Override
-            public void consume(Throwable error) {
-              Promise.logError(CommandProcessor.LOG, error);
-              setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage());
-            }
-          })
-          .processed(new Consumer<Vm>() {
-            @Override
-            public void consume(Vm vm) {
-              connectCancelHandler.set(null);
-            }
-          });
+            setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage())
+          }
+        }).processed(object : Consumer<Vm> {
+          override fun consume(vm: Vm) {
+            connectCancelHandler.set(null)
+          }
+        })
+
+        NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition)
       }
-    });
-    connectCancelHandler.set(new Runnable() {
-      @Override
-      public void run() {
-        future.cancel(true);
+    })
+    connectCancelHandler.set(object : Runnable {
+      override fun run() {
+        future.cancel(true)
       }
-    });
+    })
   }
 
-  @NotNull
-  protected String connectedAddressToPresentation(@NotNull InetSocketAddress address, @NotNull Vm vm) {
-    return address.getHostName() + ":" + address.getPort();
+  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String {
+    return address.getHostName() + ":" + address.getPort()
   }
 
-  @NotNull
-  @Override
-  public Promise<Void> detachAndClose() {
-    Promise<Void> callback;
+  override fun detachAndClose(): Promise<Void> {
     try {
-      Runnable runnable = connectCancelHandler.getAndSet(null);
-      if (runnable != null) {
-        runnable.run();
-      }
+      connectCancelHandler.getAndSet(null)?.run()
     }
     finally {
-      callback = super.detachAndClose();
+      return super.detachAndClose()
     }
-    return callback;
+  }
+}
+
+public fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
+  if (targets.size() == 1) {
+    return Promise.resolve(ContainerUtil.getFirstItem(targets))
+  }
+  else if (targets.isEmpty()) {
+    return Promise.reject<T>("No tabs to inspect")
   }
 
-  @NotNull
-  public static <T> Promise<T> chooseDebuggee(@NotNull final Collection<T> targets, final int selectedIndex, @NotNull final Function<T, String> itemToString) {
-    if (targets.size() == 1) {
-      return Promise.resolve(ContainerUtil.getFirstItem(targets));
-    }
-    else if (targets.isEmpty()) {
-      return Promise.reject("No tabs to inspect");
-    }
-
-    final AsyncPromise<T> result = new AsyncPromise<T>();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final JBList list = new JBList(targets);
-        list.setCellRenderer(new ColoredListCellRenderer() {
-          @Override
-          protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-            //noinspection unchecked
-            append(itemToString.fun((T)value));
-          }
-        });
-        if (selectedIndex != -1) {
-          list.setSelectedIndex(selectedIndex);
+  val result = AsyncPromise<T>()
+  ApplicationManager.getApplication().invokeLater(object : Runnable {
+    override fun run() {
+      val list = JBList(targets)
+      list.setCellRenderer(object : ColoredListCellRenderer<Any>() {
+        override fun customizeCellRenderer(list: JList<*>, value: Any, index: Int, selected: Boolean, hasFocus: Boolean) {
+          @suppress("UNCHECKED_CAST")
+          append(itemToString(value as T))
         }
-
-        JBPopupFactory.getInstance().
-          createListPopupBuilder(list).
-          setTitle("Choose Page to Debug").
-          setItemChoosenCallback(new Runnable() {
-            @Override
-            public void run() {
-              @SuppressWarnings("unchecked")
-              T value = (T)list.getSelectedValue();
-              if (value == null) {
-                result.setError(Promise.createError("No target to inspect"));
-              }
-              else {
-                result.setResult(value);
-              }
-            }
-          }).
-          createPopup().showInFocusCenter();
+      })
+      if (selectedIndex != -1) {
+        list.setSelectedIndex(selectedIndex)
       }
-    });
-    return result;
-  }
+
+      JBPopupFactory.getInstance()
+        .createListPopupBuilder(list)
+        .setTitle("Choose Page to Debug")
+        .setItemChoosenCallback(object : Runnable {
+          override fun run() {
+            @suppress("UNCHECKED_CAST")
+            val value = list.getSelectedValue() as T
+            if (value == null) {
+              result.setError(Promise.createError("No target to inspect"))
+            }
+            else {
+              result.setResult(value)
+            }
+          }
+        })
+        .createPopup()
+        .showInFocusCenter()
+    }
+  })
+  return result
 }
