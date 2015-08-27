@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -44,22 +43,21 @@ public class QuickListsManager implements ExportableApplicationComponent {
 
   public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
     myActionManager = actionManager;
-    mySchemeManager = schemesManagerFactory.createSchemesManager("quicklists",
-                                                                 new BaseSchemeProcessor<QuickList>() {
-                                                                    @NotNull
-                                                                    @Override
-                                                                    public QuickList readScheme(@NotNull Element element) {
-                                                                      return createItem(element);
-                                                                    }
+    mySchemeManager = schemesManagerFactory.create("quicklists",
+                                                   new BaseSchemeProcessor<QuickList>() {
+                                                     @NotNull
+                                                     @Override
+                                                     public QuickList readScheme(@NotNull Element element) {
+                                                       return createItem(element);
+                                                     }
 
-                                                                    @Override
-                                                                    public Element writeScheme(@NotNull QuickList scheme) {
-                                                                      Element element = new Element(LIST_TAG);
-                                                                      scheme.writeExternal(element);
-                                                                      return element;
-                                                                    }
-                                                                  },
-                                                                 RoamingType.PER_USER);
+                                                     @Override
+                                                     public Element writeScheme(@NotNull QuickList scheme) {
+                                                       Element element = new Element(LIST_TAG);
+                                                       scheme.writeExternal(element);
+                                                       return element;
+                                                     }
+                                                   });
   }
 
   @NotNull

@@ -35,8 +35,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.vcs.log.graph.SimplePrintElement.Type.DOWN_ARROW;
-import static com.intellij.vcs.log.graph.SimplePrintElement.Type.UP_ARROW;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getCursor;
 
 public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
@@ -128,9 +126,9 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Nullable
     private GraphAnswer<CommitId> performArrowAction(@NotNull LinearGraphAction action) {
       PrintElementWithGraphElement affectedElement = action.getAffectedElement();
-      if (!(affectedElement instanceof SimplePrintElement)) return null;
-      SimplePrintElement.Type printElementType = ((SimplePrintElement)affectedElement).getType();
-      if (printElementType != DOWN_ARROW && printElementType != UP_ARROW) return null;
+      if (!(affectedElement instanceof EdgePrintElement)) return null;
+      EdgePrintElement edgePrintElement = (EdgePrintElement)affectedElement;
+      if (!edgePrintElement.hasArrow()) return null;
 
       GraphElement graphElement = affectedElement.getGraphElement();
       if (!(graphElement instanceof GraphEdge)) return null;
@@ -138,11 +136,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
       Integer targetId = null;
       if (edge.getType() == GraphEdgeType.NOT_LOAD_COMMIT) {
-        assert printElementType == DOWN_ARROW;
+        assert edgePrintElement.getType().equals(EdgePrintElement.Type.DOWN);
         targetId = edge.getTargetId();
       }
       if (edge.getType().isNormalEdge()) {
-        if (printElementType == DOWN_ARROW) {
+        if (edgePrintElement.getType().equals(EdgePrintElement.Type.DOWN)) {
           targetId = convertToNodeId(edge.getDownNodeIndex());
         }
         else {

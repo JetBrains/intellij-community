@@ -56,6 +56,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
@@ -744,7 +745,11 @@ public class DiffUtil {
 
     @CalledInAwt
     public final void run() {
-      if (!makeWritable(myProject, myDocument)) return;
+      if (!makeWritable(myProject, myDocument)) {
+        VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
+        LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
+        return;
+      }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -793,8 +798,16 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
     if (document.isWritable()) return true;
-    if (project == null) return false;
-    return ReadonlyStatusHandler.ensureDocumentWritable(project, document);
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file == null) return false;
+    return makeWritable(project, file);
+  }
+
+  @CalledInAwt
+  public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
+    if (file.isWritable()) return true;
+    if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
   }
 
   //

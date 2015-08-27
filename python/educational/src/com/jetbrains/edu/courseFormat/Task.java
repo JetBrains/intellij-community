@@ -66,7 +66,7 @@ public class Task implements StudyItem {
     return text;
   }
 
-  public void setText(@NotNull final String text) {
+  public void setText(final String text) {
     this.text = text;
   }
 
@@ -140,43 +140,35 @@ public class Task implements StudyItem {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public String getTaskText(@NotNull final Project project) {
     if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
       final VirtualFile file = taskDir.findChild(EduNames.TASK_HTML);
-      if (file == null) return null;
+      if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         return document.getImmutableCharSequence().toString();
       }
     }
 
-    return null;
+    return "";
   }
 
-  @Nullable
+  @NotNull
   public String getTestsText(@NotNull final Project project) {
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
       final VirtualFile file = taskDir.findChild(EduNames.TESTS_FILE);
-      if (file == null) return null;
+      if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         return document.getImmutableCharSequence().toString();
       }
     }
 
-    return null;
-  }
-
-  public Document getDocument(Project project, String name) {
-    final VirtualFile taskDirectory = getTaskDir(project);
-    if (taskDirectory == null) return null;
-    final VirtualFile file = taskDirectory.findChild(name);
-    if (file == null) return null;
-    return FileDocumentManager.getInstance().getDocument(file);
+    return "";
   }
 
   @Override

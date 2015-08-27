@@ -82,7 +82,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   public void fastenBelts(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     processQueue();
     synchronized (lock) {
       FilePointersList pointers = getPointers(file);

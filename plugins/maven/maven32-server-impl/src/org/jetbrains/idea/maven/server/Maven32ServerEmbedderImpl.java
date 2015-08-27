@@ -1109,7 +1109,8 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
+  @NotNull
+  protected List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
     List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
     for (MavenRemoteRepository each : repositories) {
       try {

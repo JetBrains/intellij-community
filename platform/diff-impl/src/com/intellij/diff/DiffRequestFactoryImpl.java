@@ -268,7 +268,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
         contents.add(myContentFactory.createFromBytes(project, output, bytes));
       }
 
-      return new BinaryMergeRequestImpl(outputContent, originalContent, contents, byteContents, title, contentTitles, applyCallback);
+      return new BinaryMergeRequestImpl(project, outputContent, originalContent, contents, byteContents, title, contentTitles, applyCallback);
     }
     catch (IOException e) {
       throw new InvalidDiffRequestException("Can't read from file", e);
@@ -358,7 +358,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
         byteContents.add(file.contentsToByteArray()); // TODO: we can read contents from file when needed
       }
 
-      return new BinaryMergeRequestImpl(outputContent, originalContent, contents, byteContents, title, contentTitles, applyCallback);
+      return new BinaryMergeRequestImpl(project, outputContent, originalContent, contents, byteContents, title, contentTitles, applyCallback);
     }
     catch (IOException e) {
       throw new InvalidDiffRequestException("Can't read from file", e);

@@ -173,7 +173,7 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertEquals(expected, actual);
     // EditorColorsSchemeImplTest.testWriteInheritedFromDefault
     // EditorColorsSchemeImplTest.testWriteInheritedFromDarcula
-    Field field = TextAttributes.class.getDeclaredField("myEnforcedDefaults");
+    Field field = TextAttributes.class.getDeclaredField("myEnforceEmpty");
     field.setAccessible(true);
     assertEquals(field.get(expected), field.get(actual));
   }

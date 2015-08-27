@@ -754,4 +754,17 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(TextRange.create(2, 3), pointer.getRange());
   }
+
+  public void testAnchorInfoSurvivesPsiChange() {
+    PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
+
+    SmartPsiElementPointer<PsiClass> pointer =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[1]);
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer).getCachedElement());
+
+    file.getClasses()[1].delete();
+
+    assertNotNull(pointer.getElement());
+  }
 }

@@ -37,7 +37,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   volatile var writeAndDeleteProhibited = false
     private set
 
-  public fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
+  public fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
     var exception: Throwable? = null
     var restartApplication = false
     var updateResult: UpdateResult? = null
@@ -55,11 +55,11 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
             if (localRepositoryInitializer == null) {
               try {
                 // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
-                repositoryManager.commitIfCan(indicator)
+                repositoryManager.commit(indicator, syncType)
                 // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
               }
               catch (e: ProcessCanceledException) {
-                LOG.debug("Canceled")
+                LOG.warn("Canceled")
                 return
               }
               catch (e: Throwable) {
@@ -104,7 +104,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               return
             }
             catch (e: Throwable) {
-              if (e !is AuthenticationException && e !is NoRemoteRepositoryException) {
+              if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
                 LOG.error(e)
               }
               exception = e
@@ -189,3 +189,7 @@ enum class SyncType {
   OVERWRITE_LOCAL,
   OVERWRITE_REMOTE
 }
+
+class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
+
+class CannotResolveConflictInTestMode() : RuntimeException()

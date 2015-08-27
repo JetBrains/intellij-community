@@ -33,8 +33,6 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
@@ -146,35 +144,6 @@ public class ProjectRule() : ExternalResource() {
 
 public fun runInEdtAndWait(runnable: () -> Unit) {
   EdtTestUtil.runInEdtAndWait(runnable)
-}
-
-public open class FixtureRule() : ExternalResource() {
-  companion object {
-    init {
-      Logger.setFactory(javaClass<TestLoggerFactory>())
-    }
-  }
-
-  protected var _projectFixture: IdeaProjectTestFixture? = null
-
-  public val projectFixture: IdeaProjectTestFixture
-    get() = _projectFixture!!
-
-  open fun createBuilder() = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder()
-
-  override final fun before() {
-    val builder = createBuilder()
-    if (_projectFixture == null) {
-      _projectFixture = builder.getFixture()
-    }
-
-    TestRunnerUtil.replaceIdeEventQueueSafely()
-    runInEdtAndWait { projectFixture.setUp() }
-  }
-
-  override final fun after() {
-    runInEdtAndWait { projectFixture.tearDown() }
-  }
 }
 
 public class RuleChain(vararg val rules: TestRule) : TestRule {

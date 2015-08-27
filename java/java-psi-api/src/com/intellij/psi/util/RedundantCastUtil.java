@@ -157,6 +157,17 @@ public class RedundantCastUtil {
       super.visitAssignmentExpression(expression);
     }
 
+    @Override
+    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+      PsiType type = expression.getType();
+      if (type instanceof PsiArrayType) {
+        for (PsiExpression initializer : expression.getInitializers()) {
+          processPossibleTypeCast(initializer, ((PsiArrayType)type).getComponentType());
+        }
+      }
+      super.visitArrayInitializerExpression(expression);
+    }
+
     @Override public void visitVariable(PsiVariable variable) {
       processPossibleTypeCast(variable.getInitializer(), variable.getType());
       super.visitVariable(variable);

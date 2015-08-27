@@ -18,9 +18,11 @@ package com.intellij.ui.popup.list;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,6 +50,14 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
       @Override
       public String getCaptionAboveOf(Object value) {
         return aPopup.getListModel().getCaptionAboveOf(value);
+      }
+
+      @Nullable
+      @Override
+      public String getTooltipFor(Object value) {
+        ListPopupStep<Object> listStep = aPopup.getListStep();
+        if (!(listStep instanceof ListPopupStepEx)) return null;
+        return ((ListPopupStepEx)listStep).getTooltipTextFor(value);
       }
     });
     myPopup = aPopup;

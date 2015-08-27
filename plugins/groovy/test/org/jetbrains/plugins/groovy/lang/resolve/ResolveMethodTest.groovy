@@ -2222,4 +2222,14 @@ class X {
 ''', PsiMethod)
   }
 
+  void 'test static trait method generic return type'() {
+    def method = resolveByText('''
+trait GenericSourceTrait<E> {
+    static E someOtherStaticMethod() {null}
+}
+class SourceConcrete implements GenericSourceTrait<String> {})
+SourceConcrete.someOtherStatic<caret>Method()
+''', GrTraitMethod)
+    assertEquals "java.lang.String", method.returnType.canonicalText
+  }
 }

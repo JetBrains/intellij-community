@@ -884,11 +884,20 @@ class AppTest {
   }
 
   public void "test extend groovy classes with additional dependencies"() {
+    def anotherModule = addModule("another", true)
+    addGroovyLibrary(anotherModule)
+
     PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar");
-    PsiTestUtil.addLibrary(myModule, "cli", FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib"), "commons-cli-1.2.jar");
+
+    def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
+    PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar");
+    PsiTestUtil.addLibrary(anotherModule, "cli", cliPath, "commons-cli-1.2.jar");
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
+
+    myFixture.addFileToProject("another/b.groovy", "class AnotherBar extends CliBuilder {}")
+
     assertEmpty(make())
   }
 

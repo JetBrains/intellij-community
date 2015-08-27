@@ -18,7 +18,6 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.util.containers.ContainerUtil
@@ -76,10 +75,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun collapseMacros(path: String) = throw UnsupportedOperationException("Method collapseMacros not implemented in " + javaClass)
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
-
-    override fun setStreamProvider(streamProvider: StreamProvider?) = throw UnsupportedOperationException("Method setStreamProvider not implemented in " + javaClass)
-
-    override fun getStreamProvider() = throw UnsupportedOperationException("Method getStreamProviders not implemented in " + javaClass)
   }
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)

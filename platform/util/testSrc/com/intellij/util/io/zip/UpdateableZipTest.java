@@ -39,21 +39,25 @@ public class UpdateableZipTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FileUtil.delete(zipFile);
-    super.tearDown();
+    try {
+      FileUtil.delete(zipFile);
+    } finally {
+      super.tearDown();
+    }
   }
 
   public void testRead() throws Exception {
-
     JBZipFile jbZip = new JBZipFile(zipFile);
-
-    assertEntryWithContentExists(jbZip, "/first", "first");
-    assertEntryWithContentExists(jbZip, "/second", "second");
+    try {
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
+    }
+    finally {
+      jbZip.close();
+    }
   }
 
   public void testAppendEntry() throws Exception {
-    File zipFile = createTestUtilZip();
-
     JBZipFile jbZip = new JBZipFile(zipFile);
 
     assertEntryWithContentExists(jbZip, "/first", "first");
@@ -72,8 +76,6 @@ public class UpdateableZipTest extends TestCase {
   }
 
   public void testReplaceEntryContent() throws Exception {
-    File zipFile = createTestUtilZip();
-
     JBZipFile jbZip = new JBZipFile(zipFile);
 
     assertEntryWithContentExists(jbZip, "/first", "first");
@@ -92,8 +94,6 @@ public class UpdateableZipTest extends TestCase {
   }
 
   public void testRemoveEntry() throws Exception {
-    File zipFile = createTestUtilZip();
-
     JBZipFile jbZip = new JBZipFile(zipFile);
 
     assertEntryWithContentExists(jbZip, "/first", "first");

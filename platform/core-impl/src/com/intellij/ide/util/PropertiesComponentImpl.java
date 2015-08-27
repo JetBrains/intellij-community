@@ -118,16 +118,6 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public void setValue(@NotNull String name, boolean value) {
-    if (value) {
-      setValue(name, "true");
-    }
-    else {
-      myMap.remove(name);
-    }
-  }
-
-  @Override
   public void setValue(@NotNull String name, boolean value, boolean defaultValue) {
     if (value == defaultValue) {
       myMap.remove(name);

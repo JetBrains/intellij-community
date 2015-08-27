@@ -48,8 +48,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     long maxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
     SAMPLE_STRING = maxMemory + " of " + maxMemory + "M ";
   }
-  private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
-  private static final Color UNUSED_COLOR_1 = new JBColor(Gray._200.withAlpha(100), Gray._120);
+  private static final Color USED_COLOR = new JBColor(Gray._185, Gray._110);
+  private static final Color UNUSED_COLOR = new JBColor(Gray._200.withAlpha(100), Gray._90);
 
   private long myLastTotal = -1;
   private long myLastUsed = -1;
@@ -167,11 +167,11 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       g2.fillRect(0, 0, size.width, size.height);
 
       // gauge (used)
-      g2.setColor(USED_COLOR_1);
+      g2.setColor(USED_COLOR);
       g2.fillRect(xOffset, yOffset, usedBarLength, barHeight);
 
       // gauge (unused)
-      g2.setColor(UNUSED_COLOR_1);
+      g2.setColor(UNUSED_COLOR);
       g2.fillRect(xOffset + usedBarLength, yOffset, unusedBarLength, barHeight);
 
       // label
@@ -183,7 +183,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
       final int infoHeight = fontMetrics.getAscent();
       UISettings.setupAntialiasing(g2);
-      g2.setColor(UIUtil.getLabelForeground());
+      final Color fg = pressed ? UIUtil.getLabelDisabledForeground() : JBColor.foreground();
+      g2.setColor(fg);
       g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + infoHeight + (barHeight - infoHeight) / 2 - 1);
 
       g2.dispose();

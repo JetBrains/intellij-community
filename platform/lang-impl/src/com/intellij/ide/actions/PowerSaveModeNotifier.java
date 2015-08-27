@@ -42,7 +42,7 @@ public class PowerSaveModeNotifier implements StartupActivity {
   }
 
   static void notifyOnPowerSaveMode(Project project) {
-    if (PropertiesComponent.getInstance().getBoolean(IGNORE_POWER_SAVE_MODE, false)) {
+    if (PropertiesComponent.getInstance().getBoolean(IGNORE_POWER_SAVE_MODE)) {
       return;
     }
     

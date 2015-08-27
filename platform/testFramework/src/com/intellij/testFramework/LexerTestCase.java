@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,22 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
     else {
       assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
+    }
+  }
+
+  protected void checkZeroState(String text, TokenSet tokenTypes) {
+    Lexer lexer = createLexer();
+    lexer.start(text);
+
+    while (true) {
+      IElementType type = lexer.getTokenType();
+      if (type == null) {
+        break;
+      }
+      if (tokenTypes.contains(type) && lexer.getState() != 0) {
+        fail("Non-zero lexer state on token \"" + lexer.getTokenText() + "\" (" + type + ") at " + lexer.getTokenStart());
+      }
+      lexer.advance();
     }
   }
 

@@ -32,7 +32,9 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.io.FileUtil}.
@@ -298,12 +300,33 @@ public class FileUtilRt {
                                          boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(dir, prefix, suffix, true);
     if (deleteOnExit) {
-      file.deleteOnExit();
+      //file.deleteOnExit();
+      // default deleteOnExit does not remove dirs if they are not empty
+      FilesToDeleteHolder.ourFilesToDelete.add(file.getPath());
     }
     if (!file.isDirectory()) {
       throw new IOException("Cannot create directory: " + file);
     }
     return file;
+  }
+
+  private static class FilesToDeleteHolder {
+    public static final Queue<String> ourFilesToDelete = createFilesToDelete();
+
+    private static Queue<String> createFilesToDelete() {
+      final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<String>();
+      Runtime.getRuntime().addShutdownHook(new Thread("FileUtil deleteOnExit") {
+        @Override
+        public void run() {
+          String name = queue.poll();
+          while (name != null) {
+            delete(new File(name));
+            name = queue.poll();
+          }
+        }
+      });
+      return queue;
+    }
   }
 
   @NotNull
@@ -337,6 +360,7 @@ public class FileUtilRt {
                                     boolean create, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(dir, prefix, suffix, false);
     if (deleteOnExit) {
+      //noinspection SSBasedInspection
       file.deleteOnExit();
     }
     if (!create) {
@@ -694,7 +718,7 @@ public class FileUtilRt {
       logger().info(e);
       return false;
     }
-    return true;
+    return !file.exists();
   }
   
   private static boolean deleteRecursively(@NotNull File file) {
@@ -773,6 +797,7 @@ public class FileUtilRt {
     return path.isDirectory() || path.mkdirs();
   }
 
+  @SuppressWarnings("Duplicates")
   public static void copy(@NotNull File fromFile, @NotNull File toFile) throws IOException {
     if (!ensureCanCreateFile(toFile)) {
       return;

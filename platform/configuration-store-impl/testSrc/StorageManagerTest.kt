@@ -16,19 +16,15 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SmartList
 import junit.framework.TestCase
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.notNullValue
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Before
 import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import kotlin.properties.Delegates
 
 class StorageManagerTest {
@@ -38,9 +34,6 @@ class StorageManagerTest {
     ClassRule val projectRule = ProjectRule()
   }
 
-  private val thrown = ExpectedException.none()
-  public Rule fun getThrown(): ExpectedException = thrown
-
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
 
   public Before fun setUp() {
@@ -49,34 +42,33 @@ class StorageManagerTest {
   }
 
   public Test fun createFileStateStorageMacroSubstituted() {
-    assertThat(storageManager.getStateStorage("$MACRO/test.xml", RoamingType.PER_USER), notNullValue())
+    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml")).isNotNull()
   }
 
   public Test fun `collapse macro`() {
-    assertThat(storageManager.collapseMacros("/temp/m1/foo"), equalTo("$MACRO/foo"))
-    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo"), equalTo("\\temp\\m1\\foo"))
+    assertThat(storageManager.collapseMacros("/temp/m1/foo")).isEqualTo("$MACRO/foo")
+    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo")).isEqualTo("\\temp\\m1\\foo")
   }
 
   public Test fun `add system-dependent macro`() {
     val key = "\$INVALID$"
     val expansion = "\\temp"
-    thrown.expectMessage("Macro $key set to system-dependent expansion $expansion")
-    storageManager.addMacro(key, expansion)
+    assertThatThrownBy({storageManager.addMacro(key, expansion) }).hasMessage("Macro $key set to system-dependent expansion $expansion")
   }
 
   public Test fun `create storage assertion thrown when unknown macro`() {
     try {
-      storageManager.getStateStorage("\$UNKNOWN_MACRO$/test.xml", RoamingType.PER_USER)
+      storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml")
       TestCase.fail("Exception expected")
     }
     catch (e: IllegalArgumentException) {
-      assertThat(e.getMessage(), equalTo("Unknown macro: \$UNKNOWN_MACRO$ in storage file spec: \$UNKNOWN_MACRO$/test.xml"))
+      assertThat(e.getMessage()).isEqualTo("Unknown macro: \$UNKNOWN_MACRO$ in storage file spec: \$UNKNOWN_MACRO$/test.xml")
     }
   }
 
   public Test fun `create file storage macro substituted when expansion has$`() {
     storageManager.addMacro("\$DOLLAR_MACRO$", "/temp/d$")
-    assertThat(storageManager.getStateStorage("\$DOLLAR_MACRO$/test.xml", RoamingType.PER_USER), notNullValue())
+    assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml")).isNotNull()
   }
 }
 

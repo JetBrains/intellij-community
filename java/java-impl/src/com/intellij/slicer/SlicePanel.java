@@ -108,13 +108,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
         }
       }
     };
-    ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(listener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        ToolWindowManagerEx.getInstanceEx(project).removeToolWindowManagerListener(listener);
-      }
-    });
+    ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(listener, this);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     myProject = project;

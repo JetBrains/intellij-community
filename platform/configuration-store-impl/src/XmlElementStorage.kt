@@ -18,7 +18,9 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.StateStorageBase
+import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
@@ -30,9 +32,9 @@ import java.io.IOException
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
                                                        protected val rootElementName: String,
                                                        protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor?,
-                                                       roamingType: RoamingType?,
-                                                       provider: StreamProvider?) : StateStorageBase<StateMap>() {
-  protected val roamingType: RoamingType = roamingType ?: RoamingType.PER_USER
+                                                       roamingType: RoamingType? = RoamingType.DEFAULT,
+                                                       provider: StreamProvider? = null) : StateStorageBase<StateMap>() {
+  protected val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
   private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED || !provider.isApplicable(fileSpec, this.roamingType)) null else provider
 
   protected abstract fun loadLocalData(): Element?
@@ -63,7 +65,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   protected open fun dataLoadedFromProvider(element: Element?) {
   }
 
-  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.loadContent(fileSpec, roamingType))
+  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.read(fileSpec, roamingType))
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
@@ -139,7 +141,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         else {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
           val content = StorageUtil.writeToBytes(element, "\n")
-          provider.saveContent(storage.fileSpec, content.getInternalBuffer(), content.size(), storage.roamingType)
+          provider.write(storage.fileSpec, content.getInternalBuffer(), content.size(), storage.roamingType)
         }
       }
       else {

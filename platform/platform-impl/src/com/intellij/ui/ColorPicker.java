@@ -154,7 +154,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     setSize(300, 350);
 
-    final boolean hsb = PropertiesComponent.getInstance().getBoolean(HSB_PROPERTY, false);
+    final boolean hsb = PropertiesComponent.getInstance().getBoolean(HSB_PROPERTY);
     if (hsb) {
       myFormat.setSelectedIndex(1);
     }

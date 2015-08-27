@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -23,6 +25,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,9 +69,18 @@ class AddExternalLibraryToDependenciesQuickFix extends OrderEntryFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     DependencyScope scope = suggestScopeByLocation(myCurrentModule, myReference.getElement());
-    ProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibraryDescriptor, scope);
-    importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
+    ProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibraryDescriptor, scope).done(
+      new Consumer<Void>() {
+        @Override
+        public void consume(Void aVoid) {
+          new WriteAction() {
+            protected void run(@NotNull final Result result) {
+              importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
+            }
+          }.execute();
+        }
+      });
   }
 }

@@ -15,17 +15,31 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
-public class EmptyLookupItem extends LookupItem<String> {
+public class EmptyLookupItem extends LookupElement {
+  private final String myText;
   private final boolean myLoading;
 
   public EmptyLookupItem(final String s, boolean loading) {
-    super(s, "           ");
+    myText = s;
     myLoading = loading;
+  }
+
+  @NotNull
+  @Override
+  public String getLookupString() {
+    return "             ";
+  }
+
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    presentation.setItemText(myText);
   }
 
   public boolean isLoading() {

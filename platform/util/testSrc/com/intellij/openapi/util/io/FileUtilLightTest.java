@@ -31,8 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class FileUtilLightTest {
@@ -203,16 +202,33 @@ public class FileUtilLightTest {
   @Test
   public void sanitizeFileName() {
     String newS = "tmp";
-    assertThat(FileUtil.sanitizeFileName(newS), sameInstance(newS));
-    assertThat(FileUtil.sanitizeFileName("_test"), sameInstance("_test"));
+    assertThat(FileUtil.sanitizeFileName(newS)).isSameAs(newS);
+    assertThat(FileUtil.sanitizeFileName("_test")).isSameAs("_test");
 
-    assertThat(FileUtil.sanitizeFileName(" "), equalTo("_"));
-    assertThat(FileUtil.sanitizeFileName("\u2026"), equalTo(""));
-    assertThat(FileUtil.sanitizeFileName("q_test"), sameInstance("q_test"));
-    assertThat(FileUtil.sanitizeFileName("12_"), sameInstance("12_"));
-    assertThat(FileUtil.sanitizeFileName("12_  123"), equalTo("12___123"));
-    assertThat(FileUtil.sanitizeFileName(" 12\u2026123"), equalTo("_12123"));
+    assertThat(FileUtil.sanitizeFileName(" ")).isEqualTo("_");
+    assertThat(FileUtil.sanitizeFileName("\u2026")).isEmpty();
+    assertThat(FileUtil.sanitizeFileName("q_test")).isSameAs("q_test");
+    assertThat(FileUtil.sanitizeFileName("12_")).isSameAs("12_");
+    assertThat(FileUtil.sanitizeFileName("12_  123")).isEqualTo("12___123");
+    assertThat(FileUtil.sanitizeFileName(" 12\u2026123")).isEqualTo("_12123");
 
-    assertThat(FileUtil.sanitizeFileName("a+b+c"), equalTo("a_b_c"));
+    assertThat(FileUtil.sanitizeFileName("a+b+c")).isEqualTo("a_b_c");
+  }
+
+  @Test
+  public void windowsShortName() {
+    assertTrue(FileUtil.containsWindowsShortName("C:\\dir~1"));
+    assertTrue(FileUtil.containsWindowsShortName("C:\\dir~1\\"));
+    assertTrue(FileUtil.containsWindowsShortName("C:\\dir~1\\file.txt"));
+    assertTrue(FileUtil.containsWindowsShortName("C:/dir/file~1"));
+    assertTrue(FileUtil.containsWindowsShortName("C:/dir/file~1.txt"));
+    assertTrue(FileUtil.containsWindowsShortName("C:/dir/file~1.1"));
+
+    assertFalse(FileUtil.containsWindowsShortName("~"));
+    assertFalse(FileUtil.containsWindowsShortName("C:\\some~dir"));
+    assertFalse(FileUtil.containsWindowsShortName("C:\\some-dir~1"));
+    assertFalse(FileUtil.containsWindowsShortName("C:/dir/file~1.extension"));
+    assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.~1"));
+    assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.ext~1"));
   }
 }

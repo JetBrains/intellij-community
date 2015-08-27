@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DelegateSubstitutor;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
@@ -278,21 +279,43 @@ public class GrTypeDefinitionMembersCache {
               final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(trait.getProject());
               final String helperFQN = trait.getQualifiedName();
               final PsiClass traitHelper = psiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
-              if (traitHelper != null) {
-                final PsiType classType = TypesUtil.createJavaLangClassType(
-                  psiFacade.getElementFactory().createType(trait), trait.getProject(), trait.getResolveScope()
-                );
-                for (PsiMethod method : traitHelper.getMethods()) {
-                  if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
-                  final PsiParameter[] parameters = method.getParameterList().getParameters();
-                  if (parameters.length <= 0) continue;
-                  final PsiParameter self = parameters[0];
-                  if (self.getType().equals(classType)) {
-                    addCandidate(GrGdkMethodImpl.createGdkMethod(method, true, "via @Trait"), substitutor);
-                  }
+              if (traitHelper == null) return;
+              final PsiType classType = TypesUtil.createJavaLangClassType(
+                psiFacade.getElementFactory().createType(trait), trait.getProject(), trait.getResolveScope()
+              );
+              final PsiSubstitutor delegateSubstitutor = getSubstitutor(substitutor, trait);
+              for (PsiMethod method : traitHelper.getMethods()) {
+                if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
+                final PsiParameter[] parameters = method.getParameterList().getParameters();
+                if (parameters.length <= 0) continue;
+                final PsiParameter self = parameters[0];
+                if (self.getType().equals(classType)) {
+                  addCandidate(GrGdkMethodImpl.createGdkMethod(method, true, "via @Trait"), delegateSubstitutor);
                 }
               }
             }
+          }
+
+          @NotNull
+          private DelegateSubstitutor getSubstitutor(@NotNull final PsiSubstitutor substitutor,
+                                                     @NotNull final PsiClass trait) {
+            final Map<String, PsiType> substitutionMap = ContainerUtil.newTroveMap();
+            for (PsiTypeParameter parameter : trait.getTypeParameters()) {
+              substitutionMap.put(parameter.getName(), substitutor.substitute(parameter));
+            }
+            return new DelegateSubstitutor(substitutor) {
+              @Override
+              public PsiType substitute(@Nullable PsiType type) {
+                final PsiType substituted = super.substitute(type);
+                if (type != null && (substituted == null || substituted.equals(type))) {
+                  final PsiType byName = substitutionMap.get(type.getCanonicalText());
+                  return byName == null ? substituted : byName;
+                }
+                else {
+                  return substituted;
+                }
+              }
+            };
           }
         }.getResult();
         for (CandidateInfo candidateInfo : concreteTraitMethods) {

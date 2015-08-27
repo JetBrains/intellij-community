@@ -20,4 +20,5 @@ import javax.swing.*;
 public class IcsConfigurableForm {
   JPanel readOnlySourcesPanel;
   JPanel rootPanel;
+  JCheckBox autoSyncCheckBox;
 }

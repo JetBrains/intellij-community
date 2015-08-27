@@ -67,6 +67,12 @@ public class ExternalDiffToolUtil {
     }
     else if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
+
+      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
+
       if (file.isInLocalFileSystem()) {
         return file.getPath();
       }
@@ -123,14 +129,20 @@ public class ExternalDiffToolUtil {
   @NotNull
   public static OutputFile createOutputFile(@NotNull DiffContent content, @Nullable String windowTitle) throws IOException {
     if (content instanceof FileContent) {
-      FileContent fileContent = (FileContent)content;
-      if (fileContent.getFile().isInLocalFileSystem()) {
-        return new LocalOutputFile(fileContent.getFile());
+      VirtualFile file = ((FileContent)content).getFile();
+
+      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
+
+      if (file.isInLocalFileSystem()) {
+        return new LocalOutputFile(file);
       }
 
       String tempFileName = getFileName(null, windowTitle, content.getContentType());
-      File tempFile = createTempFile(fileContent.getFile(), tempFileName);
-      return new NonLocalOutputFile(fileContent.getFile(), tempFile);
+      File tempFile = createTempFile(file, tempFileName);
+      return new NonLocalOutputFile(file, tempFile);
     }
     else if (content instanceof DocumentContent) {
       String tempFileName = getFileName(null, windowTitle, content.getContentType());

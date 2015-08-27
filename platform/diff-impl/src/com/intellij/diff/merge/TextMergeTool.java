@@ -30,6 +30,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -200,6 +201,7 @@ public class TextMergeTool implements MergeTool {
 
     public class MyThreesideViewer extends ThreesideTextDiffViewerEx {
       @NotNull private final ModifierProvider myModifierProvider;
+      @Nullable private final UndoManager myUndoManager;
 
       // all changes - both applied and unapplied ones
       @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
@@ -217,14 +219,17 @@ public class TextMergeTool implements MergeTool {
         super(context, request);
 
         myModifierProvider = new ModifierProvider();
+        myUndoManager = getProject() != null ? UndoManager.getInstance(getProject()) : UndoManager.getGlobalInstance();
 
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
         DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.RIGHT, true), myPanel);
 
-        new UndoRedoAction(true).register();
-        new UndoRedoAction(false).register();
+        if (myUndoManager != null) {
+          new UndoRedoAction(true).register();
+          new UndoRedoAction(false).register();
+        }
       }
 
       @Override
@@ -269,9 +274,9 @@ public class TextMergeTool implements MergeTool {
         group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
         group.add(new IgnoreSelectedChangesAction(Side.LEFT, false));
         group.add(new IgnoreSelectedChangesAction(Side.RIGHT, false));
-        group.add(Separator.getInstance());
 
-        group.addAll(super.createEditorPopupActions());
+        group.add(Separator.getInstance());
+        group.addAll(TextDiffViewerUtil.createEditorPopupActions());
 
         return group;
       }
@@ -333,10 +338,9 @@ public class TextMergeTool implements MergeTool {
           @Override
           public void run() {
             outputDocument.setText(baseDocument.getCharsSequence());
-            UndoManager undoManager = getProject() != null ? UndoManager.getInstance(getProject()) : UndoManager.getGlobalInstance();
-            if (undoManager != null) {
+            if (myUndoManager != null) {
               DocumentReference ref = DocumentReferenceManager.getInstance().create(outputDocument);
-              undoManager.nonundoableActionPerformed(ref, false);
+              myUndoManager.nonundoableActionPerformed(ref, false);
             }
           }
         });
@@ -513,10 +517,10 @@ public class TextMergeTool implements MergeTool {
           }
         }
 
-        if (!corruptedStates.isEmpty()) {
+        if (!corruptedStates.isEmpty() && myUndoManager != null) {
           // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
           // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
-          UndoManager.getInstance(getProject()).undoableActionPerformed(new BasicUndoableAction(getEditor(ThreeSide.BASE).getDocument()) {
+          myUndoManager.undoableActionPerformed(new BasicUndoableAction(getEditor(ThreeSide.BASE).getDocument()) {
             @Override
             public void undo() throws UnexpectedUndoException {
               enterBulkChangeUpdateBlock();
@@ -701,13 +705,15 @@ public class TextMergeTool implements MergeTool {
         }
 
         private void registerUndoRedo(final boolean undo) {
+          if (myUndoManager == null) return;
+
           List<TextMergeChange> affectedChanges = getAffectedChanges();
           final List<TextMergeChange.State> states = new ArrayList<TextMergeChange.State>(affectedChanges.size());
           for (TextMergeChange change : affectedChanges) {
             states.add(change.storeState());
           }
 
-          UndoManager.getInstance(getProject()).undoableActionPerformed(new BasicUndoableAction(myDocument) {
+          myUndoManager.undoableActionPerformed(new BasicUndoableAction(myDocument) {
             @Override
             public void undo() throws UnexpectedUndoException {
               if (undo) restoreStates(states);
@@ -1180,22 +1186,20 @@ public class TextMergeTool implements MergeTool {
 
         @Override
         public void update(AnActionEvent e) {
-          UndoManager undoManager = getUndoManager();
+          assert myUndoManager != null;
           TextEditor textEditor = getTextEditor();
-
-          e.getPresentation().setEnabled(myUndo ? undoManager.isUndoAvailable(textEditor) : undoManager.isRedoAvailable(textEditor));
+          e.getPresentation().setEnabled(myUndo ? myUndoManager.isUndoAvailable(textEditor) : myUndoManager.isRedoAvailable(textEditor));
         }
 
         @Override
         public void actionPerformed(AnActionEvent e) {
-          UndoManager undoManager = getUndoManager();
+          assert myUndoManager != null;
           TextEditor textEditor = getTextEditor();
-
           if (myUndo) {
-            undoManager.undo(textEditor);
+            myUndoManager.undo(textEditor);
           }
           else {
-            undoManager.redo(textEditor);
+            myUndoManager.redo(textEditor);
           }
         }
 
@@ -1203,12 +1207,6 @@ public class TextMergeTool implements MergeTool {
         private TextEditor getTextEditor() {
           EditorEx editor = getEditor(ThreeSide.BASE);
           return TextEditorProvider.getInstance().getTextEditor(editor);
-        }
-
-        @NotNull
-        private UndoManager getUndoManager() {
-          Project project = getProject();
-          return project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
         }
       }
 

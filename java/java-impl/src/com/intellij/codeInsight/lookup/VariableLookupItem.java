@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -92,6 +93,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   @Override
+  @NotNull
   public PsiType getType() {
     return getSubstitutor().substitute(getObject().getType());
   }
@@ -124,12 +126,25 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    super.renderElement(presentation);
+    boolean qualify = getAttribute(FORCE_QUALIFY) != null;
+
+    PsiVariable variable = getObject();
+    String name = variable.getName();
+    if (qualify && variable instanceof PsiField && ((PsiField)variable).getContainingClass() != null) {
+      name = ((PsiField)variable).getContainingClass().getName() + "." + name;
+    }
+    presentation.setItemText(name);
+
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+    presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
+
     if (myHelper != null) {
-      myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : null, getSubstitutor());
+      myHelper.renderElement(presentation, qualify ? Boolean.TRUE : null, getSubstitutor());
     }
     if (myColor != null) {
       presentation.setTypeText("", new ColorIcon(12, myColor));
+    } else {
+      presentation.setTypeText(getType().getPresentableText());
     }
   }
 

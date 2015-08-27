@@ -41,23 +41,29 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
   @Nullable
   @Override
   public Info getInfo(PsiElement e) {
-    if (e instanceof PsiIdentifier) {
+    if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass) {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
-          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.ACTIONS);
+          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
         }
       }
       if (element instanceof PsiMethod) {
         PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-        TestFramework framework = TestFrameworks.detectFramework(psiClass);
-        if (psiClass != null && framework != null && framework.isTestMethod(element)) {
-//          String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
-          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.ACTIONS);
+        if (psiClass != null) {
+          TestFramework framework = TestFrameworks.detectFramework(psiClass);
+          if (framework != null && framework.isTestMethod(element)) {
+  //          String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
+            return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+          }
         }
       }
     }
     return null;
+  }
+
+  protected boolean isIdentifier(PsiElement e) {
+    return e instanceof PsiIdentifier;
   }
 }

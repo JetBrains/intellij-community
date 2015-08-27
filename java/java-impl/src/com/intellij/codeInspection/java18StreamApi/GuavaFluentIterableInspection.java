@@ -56,8 +56,7 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
       return null;
     }
     final Project project = manager.getProject();
-    final PsiClass fluentIterable = JavaPsiFacade.getInstance(project)
-      .findClass(GUAVA_FLUENT_ITERABLE, GlobalSearchScope.allScope(project));
+    final PsiClass fluentIterable = JavaPsiFacade.getInstance(project).findClass(GUAVA_FLUENT_ITERABLE, file.getResolveScope());
     if (fluentIterable == null) {
       return null;
     }
@@ -394,7 +393,7 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
     if (parameterType instanceof PsiClassType) {
       final PsiClass resolvedParameterClass = ((PsiClassType)parameterType).resolve();
       final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(methodCallExpression.getProject());
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(methodCallExpression.getProject());
+      final GlobalSearchScope scope = methodCallExpression.getResolveScope();
       final PsiClass optional = javaPsiFacade.findClass(GUAVA_OPTIONAL, scope);
       final PsiClass immutableMap = javaPsiFacade.findClass(GUAVA_IMMUTABLE_MAP, scope);
       if (resolvedParameterClass != null &&
@@ -474,16 +473,20 @@ public class GuavaFluentIterableInspection extends BaseJavaBatchLocalInspectionT
       final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory elementFactory = javaPsiFacade.getElementFactory();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      final GuavaFluentIterableMethodConverters converters = new GuavaFluentIterableMethodConverters(elementFactory);
       for (SmartPsiElementPointer<PsiExpression> usage : myFoundUsages) {
         final PsiExpression element = usage.getElement();
         if (element != null) {
-          GuavaFluentIterableMethodConverters.convert(element, elementFactory, codeStyleManager);
+          PsiElement converted = converters.convert(element);
+          if (converted != null) {
+            codeStyleManager.shortenClassReferences(converted);
+          }
         }
       }
       if (myVariable != null) {
         final PsiLocalVariable element = myVariable.getElement();
         if (element != null) {
-          GuavaFluentIterableMethodConverters.convert(element, elementFactory, codeStyleManager);
+          codeStyleManager.shortenClassReferences(converters.convert(element));
         }
       }
     }

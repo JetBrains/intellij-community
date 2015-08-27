@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,15 +46,15 @@ public class IdeaProjectModelModifier extends ProjectModelModifier {
   }
 
   @Override
-  public boolean addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
+  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
     ModuleRootModificationUtil.addDependency(from, to, scope, false);
-    return true;
+    return Promise.DONE;
   }
 
   @Override
-  public boolean addExternalLibraryDependency(@NotNull final Collection<Module> modules,
-                                              @NotNull final ExternalLibraryDescriptor descriptor,
-                                              @NotNull final DependencyScope scope) {
+  public Promise<Void> addExternalLibraryDependency(@NotNull final Collection<Module> modules,
+                                                    @NotNull final ExternalLibraryDescriptor descriptor,
+                                                    @NotNull final DependencyScope scope) {
     List<String> defaultRoots = descriptor.getLibraryClassesRoots();
     Module firstModule = ContainerUtil.getFirstItem(modules);
     LOG.assertTrue(firstModule != null);
@@ -82,12 +83,12 @@ public class IdeaProjectModelModifier extends ProjectModelModifier {
         }.execute();
       }
     }
-    return true;
+    return Promise.DONE;
   }
 
   @Override
-  public boolean addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
+  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
     OrderEntryUtil.addLibraryToRoots(from, library);
-    return true;
+    return Promise.DONE;
   }
 }

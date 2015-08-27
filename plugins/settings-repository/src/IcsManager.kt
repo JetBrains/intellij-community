@@ -15,6 +15,8 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -22,7 +24,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -135,7 +136,7 @@ class IcsManager(dir: File) {
       return
     }
 
-    storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
+//    storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
     // updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames())
   }
 
@@ -151,7 +152,7 @@ class IcsManager(dir: File) {
     }
   }
 
-  fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
+  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
 
   private fun cancelAndDisableAutoCommit() {
     if (autoCommitEnabled) {
@@ -174,7 +175,7 @@ class IcsManager(dir: File) {
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    application.stateStore.getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
+    (application.stateStore.getStateStorageManager() as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
 
     autoSyncManager.registerListeners(application)
 
@@ -198,8 +199,6 @@ class IcsManager(dir: File) {
     override val enabled: Boolean
       get() = repositoryActive
 
-    override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
-
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = buildPath(path, roamingType, null)
 
@@ -211,25 +210,21 @@ class IcsManager(dir: File) {
       repositoryManager.processChildren(fullPath, filter, { name, input -> processor(name, input, false) })
     }
 
-    override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+    override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       if (syncManager.writeAndDeleteProhibited) {
         throw IllegalStateException("Save is prohibited now")
       }
 
-      doSave(fileSpec, content, size, roamingType)
-
-      if (isAutoCommit(fileSpec, roamingType)) {
+      if (doSave(fileSpec, content, size, roamingType) && isAutoCommit(fileSpec, roamingType)) {
         scheduleCommit()
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
-    }
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
-    override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
+    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
       return repositoryManager.read(buildPath(fileSpec, roamingType, projectId))
     }
 
@@ -283,12 +278,10 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
         Pair("_unknown/\$APP_CONFIG$", "_unknown")
       ))) {
         // schedule push to avoid merge conflicts
-        application.invokeLater(Runnable { icsManager.autoSyncManager.autoSync() })
+        application.invokeLater(Runnable { icsManager.autoSyncManager.autoSync(force = true) })
       }
     }
 
     icsManager.beforeApplicationLoaded(application)
   }
 }
-
-class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)

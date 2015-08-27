@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.PairFunction;
@@ -235,6 +236,43 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS).fun(1).toList());
   }
 
+  // GuidedTraversal ----------------------------------------------
+
+  @NotNull
+  private static Function.Mono<TreeTraversal.GuidedIt<Integer>> initGuide(@NotNull final TreeTraversal traversal) {
+    return new Function.Mono<TreeTraversal.GuidedIt<Integer>>() {
+      @Override
+      public TreeTraversal.GuidedIt<Integer> fun(TreeTraversal.GuidedIt<Integer> it) {
+        return it.setGuide(new Consumer<TreeTraversal.GuidedIt<Integer>>() {
+          @Override
+          public void consume(TreeTraversal.GuidedIt<Integer> it) {
+            if (traversal == TreeTraversal.PRE_ORDER_DFS) {
+              it.queueNext(it.curChild).result(it.curChild);
+            }
+            else if (traversal == TreeTraversal.POST_ORDER_DFS) {
+              it.queueNext(it.curChild).result(it.curChild == null ? it.curParent : null);
+            }
+            else if (traversal == TreeTraversal.PLAIN_BFS) {
+              it.queueLast(it.curChild).result(it.curChild);
+            }
+          }
+        });
+      }
+    };
+  }
+
+  public void testGuidedDfs() {
+    verifyGuidedTraversal(TreeTraversal.PRE_ORDER_DFS);
+    verifyGuidedTraversal(TreeTraversal.POST_ORDER_DFS);
+    verifyGuidedTraversal(TreeTraversal.PLAIN_BFS);
+  }
+
+  private static void verifyGuidedTraversal(TreeTraversal traversal) {
+    assertEquals(numTraverser2(TreeTraversal.GUIDED_TRAVERSAL).fun(1).intercept(initGuide(traversal)).toList(),
+                 numTraverser2(traversal).fun(1).toList());
+  }
+
+
   // FilteredTraverser ----------------------------------------------
 
   @NotNull
@@ -259,28 +297,28 @@ public class TreeTraverserTest extends TestCase {
 
   public void testSkipExpandedDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).leavesOnlyDfsTraversal().toList());
+    assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).leavesDfsTraversal().toList());
   }
 
   public void testRangeChildrenLeavesDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesOnlyDfsTraversal().toList());
+    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesDfsTraversal().toList());
   }
 
   public void testRangeChildrenLeavesBfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesOnlyDfsTraversal().toList());
+    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesDfsTraversal().toList());
   }
 
   public void testSkipExpandedBfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).leavesOnlyBfsTraversal().toList());
+    assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).leavesBfsTraversal().toList());
   }
 
   public void testExpandSkipFilterReset() {
     FilteredTraverser<Integer> t = filteredTraverser();
     assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), t.withRoot(1).expand(IS_ODD).
-      withTraversal(TreeTraversal.LEAVES_ONLY_DFS).reset().filter(IS_ODD).toList());
+      withTraversal(TreeTraversal.LEAVES_DFS).reset().filter(IS_ODD).toList());
   }
 
   public void testForceExlcudeReset() {
@@ -295,7 +333,7 @@ public class TreeTraverserTest extends TestCase {
 
   public void testForceSkipLeavesDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(6, 8, 10, 12), t.withRoot(1).forceExpandAndSkip(IS_ODD).leavesOnlyDfsTraversal().toList());
+    assertEquals(Arrays.asList(6, 8, 10, 12), t.withRoot(1).forceExpandAndSkip(IS_ODD).leavesDfsTraversal().toList());
   }
 
   public void testFilterChildren() {
@@ -325,6 +363,36 @@ public class TreeTraverserTest extends TestCase {
     assertNotNull(cursor);
     assertSame(cursor, it);
     assertEquals(Arrays.asList(21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1), cursor.backtrace().toList());
+  }
+
+  public void testEdgeFilter() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    JBIterable<Integer> it = t.children(new FilteredTraverserBase.EdgeFilter<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        return (integer / curParent) % 2 == 0;
+      }
+    }).withRoot(1).traverse();
+    assertEquals(Arrays.asList(1, 2, 5, 8, 10, 4, 11), it.toList());
+    assertEquals(Arrays.asList(1, 2, 5, 8, 10, 4, 11), it.toList());
+  }
+
+  public void testStatefulChildFilter() {
+    FilteredTraverser<Integer> t = filteredTraverser();
+    class F extends JBIterable.StatefulFilter<Integer> {
+      int count;
+      boolean value;
+      F(boolean initialVal) { value = initialVal; }
+
+      public boolean value(Integer integer) {
+        return count ++ > 0 == value;
+      }
+    }
+
+    JBIterable<Integer> it = t.children(new F(true)).withRoot(1).traverse();
+    assertEquals(Arrays.asList(1, 5, 6, 7, 3, 9, 10, 4, 12, 13), it.toList());
+    assertEquals(Arrays.asList(1, 5, 6, 7, 3, 9, 10, 4, 12, 13), it.toList());
+    assertEquals(it.toList(), t.forceExpandAndSkip(new F(false)).withRoot(1).reset().traverse().toList());
   }
 
 }

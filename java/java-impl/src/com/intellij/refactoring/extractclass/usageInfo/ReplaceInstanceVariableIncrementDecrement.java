@@ -63,14 +63,12 @@ public class ReplaceInstanceVariableIncrementDecrement extends FixableUsageInfo 
     final PsiElement qualifier = lhs.getQualifier();
     final String operator = sign.getText();
     final String newExpression;
-    final String strippedOperator = getStrippedOperator(operator);
-    if (qualifier != null) {
-      final String qualifierText = qualifier.getText();
-      newExpression = qualifierText + '.' + delegateName + '.' +
-                      callSetter(qualifierText + '.' + delegateName + '.' + callGetter() + strippedOperator + "1");
-    }
-    else {
-      newExpression = delegateName + '.' + callSetter(delegateName + '.' + callGetter() + strippedOperator + "1");
+    if (getterName == null && setterName == null) {
+      newExpression = (qualifier != null ? qualifier.getText() + "." : "") + delegateName + "." + fieldName + operator;
+    } else {
+      final String strippedOperator = getStrippedOperator(operator);
+      newExpression = (qualifier != null ? qualifier.getText() + "." : "") + delegateName + 
+                      '.' + callSetter(delegateName + '.' + callGetter() + strippedOperator + "1");
     }
     MutationUtils.replaceExpression(newExpression, reference);
   }

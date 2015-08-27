@@ -25,7 +25,7 @@ import com.intellij.util.messages.Topic;
  */
 public class PowerSaveMode {
   private static final String POWER_SAVE_MODE = "power.save.mode";
-  private boolean myEnabled = PropertiesComponent.getInstance().getBoolean(POWER_SAVE_MODE, false);
+  private boolean myEnabled = PropertiesComponent.getInstance().getBoolean(POWER_SAVE_MODE);
   private final MessageBus myBus;
 
   public PowerSaveMode(MessageBus bus) {
@@ -41,7 +41,7 @@ public class PowerSaveMode {
     if (instance.myEnabled != value) {
       instance.myEnabled = value;
       instance.myBus.syncPublisher(TOPIC).powerSaveStateChanged();
-      PropertiesComponent.getInstance().setValue(POWER_SAVE_MODE, String.valueOf(value), "false");
+      PropertiesComponent.getInstance().setValue(POWER_SAVE_MODE, value);
     }
   }
 

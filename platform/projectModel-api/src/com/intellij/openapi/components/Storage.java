@@ -37,7 +37,7 @@ public @interface Storage {
   /**
    * You must not store components with different roaming types in one file ({@link #file()}).
    */
-  RoamingType roamingType() default RoamingType.PER_USER;
+  RoamingType roamingType() default RoamingType.DEFAULT;
 
   /**
    * Class must have constructor (ComponentManager componentManager, StateStorageManager storageManager). componentManager parameter can have more concrete type - e.g. Module (if storage intended to support only one type)

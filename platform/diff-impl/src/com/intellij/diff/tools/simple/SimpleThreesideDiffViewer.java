@@ -78,10 +78,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     group.add(new ShowBaseRightPartialDiffAction());
     group.add(new ShowLeftRightPartialDiffAction());
 
+    group.add(Separator.getInstance());
+    group.addAll(super.createToolbarActions());
+
     return group;
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -93,6 +96,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     group.add(Separator.getInstance());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyToggleExpandByDefaultAction());
+
+    group.add(Separator.getInstance());
+    group.addAll(super.createPopupActions());
 
     return group;
   }

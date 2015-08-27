@@ -24,7 +24,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
@@ -56,9 +55,9 @@ import java.util.Collections
 
 public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
                                                                      private val processor: SchemeProcessor<E>,
-                                                                     private val roamingType: RoamingType,
                                                                      private val provider: StreamProvider?,
                                                                      private val ioDirectory: File,
+                                                                     private val roamingType: RoamingType = RoamingType.DEFAULT,
                                                                      virtualFileTrackerDisposable: Disposable? = null) : SchemesManager<T, E>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, E>()
@@ -509,7 +508,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     var fileNameWithoutExtension = currentFileNameWithoutExtension
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
-      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeName(scheme.getName()))
+      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.getName(), false))
     }
 
     val newHash = JDOMUtil.getTreeHash(element!!, true)
@@ -519,7 +518,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     // save only if scheme differs from bundled
     val bundledScheme = readOnlyExternalizableSchemes.get(scheme.getName())
-    if (bundledScheme != null && schemeToInfo.get(bundledScheme)!!.hash == newHash) {
+    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.hash == newHash) {
       externalInfo?.scheduleDelete()
       return
     }
@@ -583,7 +582,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       if (renamed) {
         externalInfo!!.scheduleDelete()
       }
-      provider!!.saveContent(providerPath, byteOut.getInternalBuffer(), byteOut.size(), roamingType)
+      provider!!.write(providerPath, byteOut.getInternalBuffer(), byteOut.size(), roamingType)
     }
 
     if (externalInfo == null) {
@@ -612,7 +611,10 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       deleteUsingIo = false
       for (name in filesToDelete) {
         errors.catch {
-          StorageUtil.delete(provider, "$fileSpec/$name", roamingType)
+          val spec = "$fileSpec/$name"
+          if (provider.isApplicable(spec, roamingType)) {
+            provider.delete(spec, roamingType)
+          }
         }
       }
     }

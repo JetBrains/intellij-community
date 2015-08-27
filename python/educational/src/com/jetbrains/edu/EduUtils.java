@@ -10,16 +10,26 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.courseFormat.*;
+import com.intellij.util.containers.HashMap;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.StudyItem;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.oldCourseFormat.TaskWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
@@ -131,6 +141,21 @@ public class EduUtils {
       catch (IOException e) {
         LOG.error(e);
       }
+    }
+
+    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      String extension = FileUtilRt.getExtension(taskFileName);
+      String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(taskFileName);
+      VirtualFile answerFile = answerFileDir.findChild(nameWithoutExtension + ".answer." + extension);
+      if (answerFile != null) {
+        try {
+          answerFile.copy(answerFileDir, userFileDir, taskFileName);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return;
     }
     try {
       userFileDir.createChildData(project, taskFileName);
@@ -249,5 +274,61 @@ public class EduUtils {
       return null;
     }
     return lesson.getTask(directory.getName());
+  }
+
+  @NotNull
+  public static Course transformOldCourse(@NotNull final OldCourse oldCourse) {
+    Course course = new Course();
+    course.setDescription(oldCourse.description);
+    course.setName(oldCourse.name);
+    course.setAuthors(new String[]{oldCourse.author});
+
+    final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
+    for (com.jetbrains.edu.oldCourseFormat.Lesson oldLesson : oldCourse.lessons) {
+      final Lesson lesson = new Lesson();
+      lesson.setName(oldLesson.name);
+      lesson.setIndex(oldLesson.myIndex);
+
+      final ArrayList<Task> tasks = new ArrayList<Task>();
+      for (com.jetbrains.edu.oldCourseFormat.Task oldTask : oldLesson.taskList) {
+        final Task task = new Task();
+        task.setIndex(oldTask.myIndex);
+        task.setName(oldTask.name);
+        task.setLesson(lesson);
+        final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+        for (Map.Entry<String, com.jetbrains.edu.oldCourseFormat.TaskFile> entry : oldTask.taskFiles.entrySet()) {
+          final TaskFile taskFile = new TaskFile();
+          final com.jetbrains.edu.oldCourseFormat.TaskFile oldTaskFile = entry.getValue();
+          taskFile.setIndex(oldTaskFile.myIndex);
+          taskFile.name = entry.getKey();
+
+          final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
+          for (TaskWindow window : oldTaskFile.taskWindows) {
+            final AnswerPlaceholder placeholder = new AnswerPlaceholder();
+
+            placeholder.setIndex(window.myIndex);
+            placeholder.setHint(window.hint);
+            placeholder.setLength(window.length);
+            placeholder.setLine(window.line);
+            placeholder.setPossibleAnswer(window.possibleAnswer);
+            placeholder.setStart(window.start);
+
+            placeholders.add(placeholder);
+          }
+
+          taskFile.setAnswerPlaceholders(placeholders);
+          taskFiles.put(entry.getKey(), taskFile);
+        }
+        task.taskFiles = taskFiles;
+        tasks.add(task);
+      }
+
+      lesson.taskList = tasks;
+
+      lessons.add(lesson);
+    }
+    course.setLessons(lessons);
+    course.initCourse(false);
+    return course;
   }
 }

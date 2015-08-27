@@ -500,8 +500,6 @@
     <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
 
-    <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DecoratorCompletionStatistician" order="first"
-                  id="decorator"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.OpenedInEditorWeigher" id="openedInEditor"/>
@@ -769,7 +767,9 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
-    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceContributor"/>
+    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor"/>
+    <referenceProviderType key="commentsReferenceProvider"
+                           implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
 
     <projectConfigurable groupId="editor"
                          groupWeight="140"
@@ -935,7 +935,8 @@
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
     <editorNotificationProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider"/>
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory"/>
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
+    <projectService serviceImplementation="com.intellij.execution.TestStateStorage"/>
   </extensions>
 </idea-plugin>
 

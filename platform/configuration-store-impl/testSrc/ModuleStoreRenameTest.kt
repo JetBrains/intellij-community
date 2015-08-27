@@ -83,7 +83,7 @@ class ModuleStoreRenameTest {
   // project structure
   @Test fun `rename module using model`() {
     runInEdtAndWait { module.saveStore() }
-    val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
+    val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
     val oldFile = storage.file
     assertThat(oldFile).isFile()
 
@@ -97,7 +97,7 @@ class ModuleStoreRenameTest {
   // project view
   @Test fun `rename module using rename virtual file`() {
     runInEdtAndWait { module.saveStore() }
-    var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
+    var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
     val oldFile = storage.file
     assertThat(oldFile).isFile()
 
@@ -112,7 +112,7 @@ class ModuleStoreRenameTest {
 
   private fun assertRename(newName: String, oldFile: File) {
     val storageManager = module.stateStore.getStateStorageManager()
-    val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage).file
+    val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage).file
     assertThat(newFile.getName()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     assertThat(oldFile)
       .doesNotExist()
@@ -126,7 +126,7 @@ class ModuleStoreRenameTest {
   @Test fun `rename module parent virtual dir`() {
     runInEdtAndWait { module.saveStore() }
     val storageManager = module.stateStore.getStateStorageManager()
-    val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
+    val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
 
     val oldFile = storage.file
     val parentVirtualDir = storage.getVirtualFile()!!.getParent()

@@ -263,11 +263,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     public void setLocalRoot(@Nullable String localRoot) {
-      myLocalRoot = localRoot;
+      myLocalRoot = normalize(localRoot);
     }
 
     public void setRemoteRoot(@Nullable String remoteRoot) {
-      myRemoteRoot = remoteRoot;
+      myRemoteRoot = normalize(remoteRoot);
     }
 
     @NotNull
@@ -299,7 +299,10 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       return isAnyEmpty(myLocalRoot, myRemoteRoot);
     }
 
-    private static String trimSlash(String s) {
+    private static String trimSlash(@NotNull String s) {
+      if (s.equals("/")) {
+        return s;
+      }
       return StringUtil.trimEnd(s, "/");
     }
 

@@ -21,9 +21,7 @@ import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffTaskQueue;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -33,10 +31,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
@@ -186,14 +186,16 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return myContext.isWindowFocused();
   }
 
-  @Nullable
   protected List<AnAction> createToolbarActions() {
-    return null;
+    List<AnAction> group = new ArrayList<AnAction>();
+    ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR)).getChildren(null));
+    return group;
   }
 
-  @Nullable
   protected List<AnAction> createPopupActions() {
-    return null;
+    List<AnAction> group = new ArrayList<AnAction>();
+    ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_POPUP)).getChildren(null));
+    return group;
   }
 
   @Nullable

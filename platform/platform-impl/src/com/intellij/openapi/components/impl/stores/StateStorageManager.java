@@ -57,11 +57,6 @@ public interface StateStorageManager {
    */
   String collapseMacros(@NotNull String path);
 
-  void setStreamProvider(@Nullable StreamProvider streamProvider);
-
-  @Nullable
-  StreamProvider getStreamProvider();
-
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
 

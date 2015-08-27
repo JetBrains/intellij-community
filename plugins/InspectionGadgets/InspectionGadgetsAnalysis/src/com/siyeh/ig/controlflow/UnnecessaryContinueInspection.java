@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,11 @@ public class UnnecessaryContinueInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new DeleteUnnecessaryStatementFix("continue");
   }
@@ -70,9 +75,6 @@ public class UnnecessaryContinueInspection extends BaseInspection {
 
     @Override
     public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
-        return;
-      }
       final PsiStatement continuedStatement = statement.findContinuedStatement();
       PsiStatement body = null;
       if (continuedStatement instanceof PsiForeachStatement) {

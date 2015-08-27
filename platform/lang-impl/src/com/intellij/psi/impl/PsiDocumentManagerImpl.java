@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
@@ -39,6 +40,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
@@ -187,5 +189,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
+  }
+
+  @NotNull
+  @Override
+  protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+    return MultiHostRegistrarImpl.freezeWindow((DocumentWindowImpl)document);
   }
 }

@@ -20,7 +20,6 @@ import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -29,7 +28,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -298,7 +296,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
         wasVisible = visible;
       }
     };
-    manager.addToolWindowManagerListener(listener);
+    manager.addToolWindowManagerListener(listener, myProject);
 
     ActionManager actionManager = ActionManager.getInstance();
 
@@ -310,12 +308,6 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     group.add(actionManager.getAction("Maven.ShowVersions"));
 
     myToolWindow.setAdditionalGearActions(group);
-
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        manager.removeToolWindowManagerListener(listener);
-      }
-    });
   }
 
   private void initTree() {

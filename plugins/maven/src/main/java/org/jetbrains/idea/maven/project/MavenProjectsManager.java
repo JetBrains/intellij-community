@@ -53,6 +53,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -780,8 +782,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, false, forceImportAndResolve);
   }
 
-  public void forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    doScheduleUpdateProjects(projects, true, true);
+  public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
+    return doScheduleUpdateProjects(projects, true, true);
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
@@ -791,30 +793,34 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, true, true);
   }
 
-  private void doScheduleUpdateProjects(final Collection<MavenProject> projects,
-                                        final boolean forceUpdate,
-                                        final boolean forceImportAndResolve) {
+  private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
+                                                      final boolean forceUpdate,
+                                                      final boolean forceImportAndResolve) {
+    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         if (projects == null) {
-          myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve);
+          myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
         }
         else {
           myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),
                                    Collections.<VirtualFile>emptyList(),
                                    forceUpdate,
-                                   forceImportAndResolve);
+                                   forceImportAndResolve).processed(promise);
         }
       }
     });
+    return promise;
   }
 
-  public void scheduleImportAndResolve() {
-    scheduleResolve();  // scheduleImport will be called after the scheduleResolve process has finished
+  public Promise<List<Module>> scheduleImportAndResolve() {
+    AsyncPromise<List<Module>> promise = scheduleResolve();// scheduleImport will be called after the scheduleResolve process has finished
     fireImportAndResolveScheduled();
+    return promise;
   }
 
-  private void scheduleResolve() {
+  private AsyncPromise<List<Module>> scheduleResolve() {
+    final AsyncPromise<List<Module>> result = new AsyncPromise<List<Module>>();
     runWhenFullyOpen(new Runnable() {
       public void run() {
         LinkedHashSet<MavenProject> toResolve;
@@ -830,7 +836,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           Runnable onCompletion = it.hasNext() ? null : new Runnable() {
             @Override
             public void run() {
-              if (hasScheduledProjects()) scheduleImport();
+              if (hasScheduledProjects()) {
+                scheduleImport().processed(result);
+              }
             }
           };
 
@@ -839,6 +847,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         }
       }
     });
+    return result;
   }
 
   public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<String> consumer) {
@@ -949,16 +958,18 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     scheduleImport();
   }
 
-  private void scheduleImport() {
+  private Promise<List<Module>> scheduleImport() {
+    final AsyncPromise<List<Module>> result = new AsyncPromise<List<Module>>();
     runWhenFullyOpen(new Runnable() {
       public void run() {
         myImportingQueue.queue(new Update(MavenProjectsManager.this) {
           public void run() {
-            importProjects();
+            result.setResult(importProjects());
           }
         });
       }
     });
+    return result;
   }
 
   @TestOnly

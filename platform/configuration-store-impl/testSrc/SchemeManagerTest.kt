@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemesManagerFactory
@@ -36,11 +35,11 @@ import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.toByteArray
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.io.File
 
 val FILE_SPEC = "REMOTE"
@@ -55,9 +54,6 @@ class SchemeManagerTest {
 
   private val tempDirManager = TemporaryDirectory()
   public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
-
-  private val thrown = ExpectedException.none()
-  public Rule fun getThrown(): ExpectedException = thrown
 
   private var localBaseDir: File? = null
   private var remoteBaseDir: File? = null
@@ -161,7 +157,7 @@ class SchemeManagerTest {
       override fun isUpgradeNeeded() = true
 
       override fun getSchemeExtension() = ".icls"
-    }, RoamingType.PER_USER, null, dir)
+    }, null, dir)
     schemesManager.loadSchemes()
     assertThat(schemesManager.getAllSchemes()).containsOnly(scheme)
 
@@ -301,16 +297,14 @@ class SchemeManagerTest {
   }
 
   public Test fun `path must not contains ROOT_CONFIG macro`() {
-    thrown.expectMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
-    SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("\$ROOT_CONFIG$/foo", TestSchemesProcessor())
+    assertThatThrownBy({ SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   public Test fun `path must be system-independent`() {
-    thrown.expectMessage("Path must be system-independent, use forward slash instead of backslash")
-    SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())
+    assertThatThrownBy({SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: File) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
+  private fun createSchemeManager(dir: File) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -330,7 +324,7 @@ class SchemeManagerTest {
   }
 
   private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
+    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }

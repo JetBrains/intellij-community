@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       //     1. Show only active indent if it crosses soft wrap-introduced text;
       //     2. Show indent as is if it doesn't intersect with soft wrap-introduced text;
       if (selected) {
-        g.drawLine(start.x + 2, start.y, start.x + 2, maxY);
+        g.drawLine(start.x + 2, start.y, start.x + 2, maxY - 1);
       }
       else {
         int y = start.y;
@@ -180,7 +180,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
           }
           if (!softWraps.isEmpty() && softWraps.get(0).getIndentInColumns() < indentColumn) {
             if (y < newY || i > startLine + lineShift) { // There is a possible case that soft wrap is located on indent start line.
-              g.drawLine(start.x + 2, y, start.x + 2, newY + lineHeight);
+              g.drawLine(start.x + 2, y, start.x + 2, newY + lineHeight - 1);
             }
             newY += logicalLineHeight;
             y = newY;
@@ -196,7 +196,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         }
 
         if (y < maxY) {
-          g.drawLine(start.x + 2, y, start.x + 2, maxY);
+          g.drawLine(start.x + 2, y, start.x + 2, maxY - 1);
         }
       }
     }

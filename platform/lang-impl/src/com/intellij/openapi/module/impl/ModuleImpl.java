@@ -86,7 +86,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @NotNull
   private static FileStorage getMainStorage(@NotNull Module module) {
-    return (FileStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
+    return (FileStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT);
   }
 
   @Override
