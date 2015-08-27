@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -53,7 +52,6 @@ public class NullSmartCompletionContributor extends CompletionContributor{
         for (final ExpectedTypeInfo info : infos) {
           if (!(info.getType() instanceof PsiPrimitiveType)) {
             final LookupItem item = (LookupItem)BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
-            item.setAttribute(LookupItem.TYPE, PsiType.NULL);
             result.addElement(JavaSmartCompletionContributor.decorate(item, infos));
             return;
           }

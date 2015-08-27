@@ -246,47 +246,9 @@ public class JavaCompletionUtil {
   }
 
   @Nullable
-  private static PsiType getPsiType(final Object o) {
-    if (o instanceof ResolveResult) {
-      return getPsiType(((ResolveResult)o).getElement());
-    }
-    if (o instanceof PsiVariable) {
-      return ((PsiVariable)o).getType();
-    }
-    else if (o instanceof PsiMethod) {
-      return ((PsiMethod)o).getReturnType();
-    }
-    else if (o instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)o;
-      return JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
-    }
-    else if (o instanceof PsiExpression) {
-      return ((PsiExpression)o).getType();
-    }
-    return null;
-  }
-
-  @Nullable
   public static PsiType getLookupElementType(final LookupElement element) {
     TypedLookupItem typed = element.as(TypedLookupItem.CLASS_CONDITION_KEY);
-    if (typed != null) {
-      return typed.getType();
-    }
-
-    final PsiType qualifierType = getPsiType(element.getObject());
-    final LookupItem lookupItem = element.as(LookupItem.CLASS_CONDITION_KEY);
-    if (lookupItem != null) {
-      final Object o = lookupItem.getAttribute(LookupItem.TYPE);
-      if (o instanceof PsiType) {
-        return (PsiType)o;
-      }
-
-      final PsiSubstitutor substitutor = (PsiSubstitutor)lookupItem.getAttribute(LookupItem.SUBSTITUTOR);
-      if (substitutor != null) {
-        return substitutor.substitute(qualifierType);
-      }
-    }
-    return qualifierType;
+    return typed != null ? typed.getType() : null;
   }
 
   @Nullable
@@ -424,7 +386,7 @@ public class JavaCompletionUtil {
     if (plainQualifier != null) {
       Object o = item.getObject();
       if (o instanceof PsiMethod) {
-        PsiType castType = castTypeItem.getPsiType();
+        PsiType castType = castTypeItem.getType();
         if (plainQualifier instanceof PsiClassType && castType instanceof PsiClassType) {
           PsiMethod method = (PsiMethod)o;
           PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
