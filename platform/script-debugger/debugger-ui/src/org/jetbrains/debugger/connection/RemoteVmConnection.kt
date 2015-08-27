@@ -15,14 +15,12 @@
  */
 package org.jetbrains.debugger.connection
 
-import com.intellij.ide.browsers.WebBrowser
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.util.Consumer
-import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
@@ -31,12 +29,10 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.rpc.CommandProcessor
-
-import javax.swing.*
 import java.net.ConnectException
 import java.net.InetSocketAddress
-import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JList
 
 public abstract class RemoteVmConnection : VmConnection<Vm>() {
   private val connectCancelHandler = AtomicReference<Runnable>()
