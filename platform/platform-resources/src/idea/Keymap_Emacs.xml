@@ -273,6 +273,26 @@
     <action id="EditorBackwardParagraph">
       <keyboard-shortcut first-keystroke="control UP"/>
     </action>
+    <action id="EditorScrollToCenter">
+      <keyboard-shortcut first-keystroke="control L"/>
+    </action>
+    <action id="EditorEnter">
+      <keyboard-shortcut first-keystroke="ENTER"/>
+      <keyboard-shortcut first-keystroke="control M"/>
+    </action>
+    <action id="EditorChooseLookupItem">
+      <keyboard-shortcut first-keystroke="ENTER"/>
+      <keyboard-shortcut first-keystroke="control M"/>
+    </action>
+    <action id="NextTemplateVariable">
+      <keyboard-shortcut first-keystroke="TAB"/>
+      <keyboard-shortcut first-keystroke="ENTER"/>
+      <keyboard-shortcut first-keystroke="control M"/>
+    </action>
+    <action id="Console.Execute">
+      <keyboard-shortcut first-keystroke="ENTER"/>
+      <keyboard-shortcut first-keystroke="control M"/>
+    </action>
 
     <!--Disabled shortcuts-->
     <action id="CollapseAllRegions"/>

@@ -170,6 +170,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
     });
     put("Emacs", new String[][] {
+    { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
+                                  "PropertyInspectorActions.EditValue", "Console.Execute", "Console.TableResult.EditValue"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", 
@@ -181,6 +183,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control D",                "$Delete", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control K",                "EditorCutLineEnd", "CheckinProject"},
+    { "control M",                "EditorEnter", "EditorChooseLookupItem", "NextTemplateVariable", "Console.Execute"},
     { "control N",                "EditorDown", "FileChooser.NewFolder"},
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
     { "control R",                "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "FindPrevious"},
