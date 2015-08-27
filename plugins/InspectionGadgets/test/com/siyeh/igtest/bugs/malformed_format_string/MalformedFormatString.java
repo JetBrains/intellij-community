@@ -89,5 +89,6 @@ public class MalformedFormatString {
     void goodStrings() {
         String.format("%-B", true); // left justify flag
         String.format("%,d", 34567890);
+        System.out.printf("%tF %n", java.time.ZonedDateTime.now()); // java.time.temporal.TemporalAccessor, new in Java 8
     }
 }

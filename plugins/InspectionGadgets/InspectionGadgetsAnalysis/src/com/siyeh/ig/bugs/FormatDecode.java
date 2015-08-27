@@ -260,7 +260,8 @@ class FormatDecode {
       return PsiType.LONG.equals(type) ||
              CommonClassNames.JAVA_LANG_LONG.equals(text) ||
              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_DATE) ||
-             InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_CALENDAR);
+             InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_CALENDAR) ||
+             InheritanceUtil.isInheritor(type, "java.time.temporal.TemporalAccessor");
     }
   }
 
