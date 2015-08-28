@@ -338,6 +338,7 @@ binding.setVariable("commonJvmArgsForTests", {
 
   return [
     "-ea",
+    "-Dfile.encoding=UTF-8",
     "-Dio.netty.leakDetectionLevel=PARANOID",
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
