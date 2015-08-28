@@ -16,12 +16,13 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.Consumer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.util.concurrency.Promise
+import org.jetbrains.util.concurrency.RejectedPromise
+import org.jetbrains.util.concurrency.ResolvedPromise
 import java.util.concurrent.ConcurrentMap
 
 public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
@@ -68,7 +69,7 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
     if (existed) {
       breakpointDuplicationByTarget.remove(b)
     }
-    return if (!existed || !b.isVmRegistered()) Promise.DONE else doClearBreakpoint(b)
+    return if (!existed || !b.isVmRegistered()) ResolvedPromise() else doClearBreakpoint(b)
   }
 
   override fun removeAll(): Promise<*> {
@@ -99,5 +100,5 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
   @suppress("UNCHECKED_CAST")
   override fun flush(breakpoint: Breakpoint) = (breakpoint as T).flush(this)
 
-  override fun enableBreakpoints(enabled: Boolean): Promise<*> = Promise.reject<Any?>("Unsupported")
+  override fun enableBreakpoints(enabled: Boolean): Promise<*> = RejectedPromise<Any?>("Unsupported")
 }

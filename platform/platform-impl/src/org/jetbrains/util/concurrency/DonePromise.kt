@@ -17,7 +17,7 @@ package org.jetbrains.util.concurrency
 
 import org.jetbrains.concurrency.Obsolescent
 
-class DonePromise<T>(private val result: T) : Promise<T> {
+private class DonePromise<T>(private val result: T) : Promise<T> {
   override val state: Promise.State
     get() = Promise.State.FULFILLED
 
@@ -42,10 +42,10 @@ class DonePromise<T>(private val result: T) : Promise<T> {
 
   override fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT> {
     return if (done is Obsolescent && (done).isObsolete()) {
-      Promise.reject<SUB_RESULT>("obsolete")
+      RejectedPromise<SUB_RESULT>("obsolete")
     }
     else {
-      Promise.resolve(done(result))
+      ResolvedPromise(done(result))
     }
   }
 

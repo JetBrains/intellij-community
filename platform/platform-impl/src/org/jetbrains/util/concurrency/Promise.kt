@@ -20,28 +20,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.Consumer
 import org.jetbrains.concurrency
 
-public fun <T> concurrency.Promise<T>.toPromise(): AsyncPromise<T> {
-  val promise = AsyncPromise<T>()
-  done(object : Consumer<T> {
-    override fun consume(value: T) {
-      promise.setResult(value)
-    }
-  })
-    .rejected(object : Consumer<Throwable> {
-      override fun consume(throwable: Throwable) {
-        promise.setError(throwable)
-      }
-    })
-  return promise
-}
-
-public fun <T> Promise<T>.toPromise(): concurrency.AsyncPromise<T> {
-  val promise = concurrency.AsyncPromise<T>()
-  done { promise.setResult(it) }
-    .rejected { promise.setError(it) }
-  return promise
-}
-
 public interface Promise<T> {
   public enum class State {
     PENDING,
@@ -64,39 +42,12 @@ public interface Promise<T> {
   fun notify(child: AsyncPromise<T>)
 
   companion object {
-    public val DONE: Promise<*> = DonePromise(null)
-    public val REJECTED: Promise<*> = RejectedPromise<Any>(createError("rejected"))
-
-    public fun createError(error: String): RuntimeException = MessageError(error)
-
     /**
      * Log error if not message error
      */
     public fun logError(logger: Logger, e: Throwable) {
       if (e !is MessageError || ApplicationManager.getApplication().isUnitTestMode()) {
         logger.error(e)
-      }
-    }
-
-    public fun <T> resolve(result: T): Promise<T> {
-      if (result == null) {
-        @suppress("UNCHECKED_CAST")
-        return DONE as Promise<T>
-      }
-      else {
-        return DonePromise(result)
-      }
-    }
-
-    public fun <T> reject(error: String): Promise<T> = reject(createError(error))
-
-    public fun <T> reject(error: Throwable?): Promise<T> {
-      if (error == null) {
-        @suppress("UNCHECKED_CAST")
-        return REJECTED as Promise<T>
-      }
-      else {
-        return RejectedPromise(error)
       }
     }
 
@@ -126,8 +77,39 @@ public interface Promise<T> {
   }
 }
 
-public class MessageError(error: String) : RuntimeException(error) {
-  synchronized public fun fillInStackTrace(): Throwable? = this
+private val DONE: Promise<*> = DonePromise(null)
+private val REJECTED: Promise<*> = RejectedPromise<Any>(MessageError("rejected"))
+
+private class MessageError(error: String) : RuntimeException(error) {
+  public synchronized fun fillInStackTrace(): Throwable? = this
+}
+
+public fun <T> RejectedPromise(error: String): Promise<T> = RejectedPromise(MessageError(error))
+
+public fun ResolvedPromise(): Promise<*> = DONE
+
+public fun <T> ResolvedPromise(result: T): Promise<T> = DonePromise(result)
+
+public fun <T> concurrency.Promise<T>.toPromise(): AsyncPromise<T> {
+  val promise = AsyncPromise<T>()
+  done(object : Consumer<T> {
+    override fun consume(value: T) {
+      promise.setResult(value)
+    }
+  })
+    .rejected(object : Consumer<Throwable> {
+      override fun consume(throwable: Throwable) {
+        promise.setError(throwable)
+      }
+    })
+  return promise
+}
+
+public fun <T> Promise<T>.toPromise(): concurrency.AsyncPromise<T> {
+  val promise = concurrency.AsyncPromise<T>()
+  done { promise.setResult(it) }
+    .rejected { promise.setError(it) }
+  return promise
 }
 
 private class CountDownConsumer<T>(private volatile var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : (T) -> Unit {
@@ -137,3 +119,6 @@ private class CountDownConsumer<T>(private volatile var countDown: Int, private 
     }
   }
 }
+
+public val Promise<*>.pending: Boolean
+  get() = state == Promise.State.PENDING

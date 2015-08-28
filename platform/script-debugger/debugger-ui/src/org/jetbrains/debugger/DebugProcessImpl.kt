@@ -50,40 +50,43 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
 
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
-  private var processBreakpointConditionsAtIdeSide = false
+  public var processBreakpointConditionsAtIdeSide: Boolean = false
 
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by Delegates.lazy { createBreakpointHandlers() }
 
   init {
     connection.addListener(object : SocketConnectionListener {
       override fun statusChanged(status: ConnectionStatus) {
-        if (status === ConnectionStatus.DISCONNECTED || status === ConnectionStatus.DETACHED) {
-          if (status === ConnectionStatus.DETACHED) {
-            if (getRealProcessHandler() != null) {
-              // here must we must use effective process handler
-              getProcessHandler().detachProcess()
+        when (status) {
+          ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED -> {
+            if (status == ConnectionStatus.DETACHED) {
+              if (realProcessHandler != null) {
+                // here must we must use effective process handler
+                getProcessHandler().detachProcess()
+              }
             }
+            getSession().stop()
           }
-          getSession().stop()
-        }
-        else {
-          getSession().rebuildViews()
+          ConnectionStatus.CONNECTION_FAILED -> {
+            getSession().reportError(status.getStatusText())
+            getSession().stop()
+          }
+          else -> {
+            getSession().rebuildViews()
+          }
         }
       }
     })
   }
 
-  protected final fun getRealProcessHandler(): ProcessHandler? = executionResult?.getProcessHandler()
+  protected final val realProcessHandler: ProcessHandler?
+    get() = executionResult?.getProcessHandler()
 
   override final fun getSmartStepIntoHandler() = smartStepIntoHandler
 
   override final fun getBreakpointHandlers() = _breakpointHandlers
 
   override final fun getEditorsProvider() = editorsProvider
-
-  public fun setProcessBreakpointConditionsAtIdeSide(value: Boolean) {
-    processBreakpointConditionsAtIdeSide = value
-  }
 
   public val vm: Vm?
     get() = connection.vm

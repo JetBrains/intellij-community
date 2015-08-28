@@ -15,7 +15,6 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.util.Consumer
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
@@ -27,6 +26,8 @@ import org.jetbrains.rpc.MessageProcessor
 import org.jetbrains.rpc.MessageWriter
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
+import org.jetbrains.util.concurrency.ResolvedPromise
+import org.jetbrains.util.concurrency.catchError
 import java.util.concurrent.TimeUnit
 
 public open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor) : MessageWriter(), AttachStateManager {
@@ -66,7 +67,7 @@ public open class StandaloneVmHelper(private val vm: Vm, private val messageProc
   override fun isAttached() = channel != null
 
   override fun detach(): Promise<*> {
-    val currentChannel = channel ?: return Promise.DONE
+    val currentChannel = channel ?: return ResolvedPromise()
 
     messageProcessor.cancelWaitingRequests()
     val disconnectRequest = (vm as? VmEx)?.createDisconnectRequest()
@@ -83,17 +84,12 @@ public open class StandaloneVmHelper(private val vm: Vm, private val messageProc
     channel = null
     @suppress("USELESS_CAST")
     val p = messageProcessor.send(disconnectRequest) as concurrency.Promise<*>
-    p.processed(object : Consumer<Any?> {
-      override fun consume(t: Any?) {
-        try {
-          messageProcessor.cancelWaitingRequests()
-          closeChannel(currentChannel, promise)
-        }
-        catch (e: Throwable) {
-          promise.setError(e)
-        }
+    p.processed {
+      promise.catchError {
+        messageProcessor.cancelWaitingRequests()
+        closeChannel(currentChannel, promise)
       }
-    })
+    }
     return promise
   }
 

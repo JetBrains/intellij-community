@@ -16,9 +16,10 @@
 package org.jetbrains.debugger
 
 import org.jetbrains.util.concurrency.Promise
+import org.jetbrains.util.concurrency.ResolvedPromise
 
 public interface AttachStateManager {
-  public fun detach(): Promise<*> = Promise.DONE
+  public fun detach(): Promise<*> = ResolvedPromise()
 
   public fun isAttached(): Boolean = true
 }

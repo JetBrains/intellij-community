@@ -24,6 +24,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import gnu.trove.THashSet
 import org.jetbrains.util.concurrency
 import org.jetbrains.util.concurrency.Promise
+import org.jetbrains.util.concurrency.ResolvedPromise
 
 public abstract class LineBreakpointManager(private val vm: Vm, private val debugProcess: DebugProcessImpl<*>) {
   private val ideToVmBreakpoint = MultiMap.createSmart<XLineBreakpoint<*>, Breakpoint>()
@@ -109,7 +110,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
             vmToIdeBreakpoint.remove(vmBreakpoint, breakpoint)
             if (vmToIdeBreakpoint.containsKey(vmBreakpoint)) {
               // we must not remove vm breakpoint - it is used for another ide breakpoints
-              return concurrency.Promise.DONE
+              return ResolvedPromise()
             }
           }
         }
@@ -117,7 +118,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
     }
 
     if (ContainerUtil.isEmpty(vmBreakpoints)) {
-      return concurrency.Promise.DONE
+      return ResolvedPromise()
     }
 
     val breakpointManager = vm.getBreakpointManager()

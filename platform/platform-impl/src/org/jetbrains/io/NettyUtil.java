@@ -143,8 +143,12 @@ public final class NettyUtil {
           @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
           Throwable cause = future.cause();
           if (promise != null) {
-            //noinspection ThrowableResultOfMethodCallIgnored
-            promise.setError(cause == null ? Promise.Companion.createError("Cannot connect: unknown error") : cause);
+            if (cause == null) {
+              promise.setError("Cannot connect: unknown error");
+            }
+            else {
+              promise.setError(cause);
+            }
           }
           return null;
         }

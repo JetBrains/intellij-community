@@ -23,7 +23,7 @@ public class AsyncPromise<T> : Promise<T> {
   companion object {
     private val LOG = Logger.getInstance(javaClass<AsyncPromise<Any>>())
 
-    public val OBSOLETE_ERROR: RuntimeException = Promise.createError("Obsolete")
+    public val OBSOLETE_ERROR: RuntimeException = MessageError("Obsolete")
 
     private fun <T> setHandler(oldConsumer: ((T) -> Unit)?, newConsumer: (T) -> Unit): (T) -> Unit {
       return when (oldConsumer) {
@@ -217,6 +217,8 @@ public class AsyncPromise<T> : Promise<T> {
       done(result)
     }
   }
+
+  public fun setError(error: String): Boolean = setError(MessageError(error))
 
   public fun setError(error: Throwable): Boolean {
     if (state != Promise.State.PENDING) {

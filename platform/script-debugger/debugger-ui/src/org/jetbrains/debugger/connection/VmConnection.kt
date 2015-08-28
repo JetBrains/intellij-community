@@ -21,10 +21,13 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.util.io.socketConnection.SocketConnectionListener
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.debugger.DebugEventListener
 import org.jetbrains.debugger.Vm
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
+import org.jetbrains.util.concurrency.ResolvedPromise
+import org.jetbrains.util.concurrency.pending
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
@@ -46,18 +49,19 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
     dispatcher.addListener(listener)
   }
 
+  @TestOnly
   public fun opened(): Promise<*> = opened
 
   override fun executeOnStart(runnable: Runnable) {
     opened.done { runnable.run() }
   }
 
-  jvmOverloads protected fun setState(status: ConnectionStatus, message: String?, messageLinkListener: HyperlinkListener? = null) {
+  protected fun setState(status: ConnectionStatus, message: String? = null, messageLinkListener: HyperlinkListener? = null) {
     val newState = ConnectionState(status, message, messageLinkListener)
     val oldState = state.getAndSet(newState)
-    if (oldState == null || oldState.getStatus() !== status) {
-      if (status === ConnectionStatus.CONNECTION_FAILED) {
-        opened.setError(Promise.createError(newState.getMessage()))
+    if (oldState == null || oldState.getStatus() != status) {
+      if (status == ConnectionStatus.CONNECTION_FAILED) {
+        opened.setError(newState.getMessage())
       }
       connectionDispatcher.getMulticaster().statusChanged(status)
     }
@@ -67,7 +71,8 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
     connectionDispatcher.addListener(listener)
   }
 
-  public fun getDebugEventListener(): DebugEventListener = dispatcher.getMulticaster()
+  protected val debugEventListener: DebugEventListener
+    get() = dispatcher.getMulticaster()
 
   protected open fun startProcessing() {
     opened.setResult(null)
@@ -78,8 +83,8 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
       return
     }
 
-    if (opened.state == Promise.State.PENDING) {
-      opened.setError(Promise.createError("closed"))
+    if (opened.pending) {
+      opened.setError("closed")
     }
     setState(status, message)
     Disposer.dispose(this, false)
@@ -90,14 +95,14 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
   }
 
   public open fun detachAndClose(): Promise<*> {
-    if (opened.state == Promise.State.PENDING) {
-      opened.setError(Promise.createError("detached and closed"))
+    if (opened.pending) {
+      opened.setError("detached and closed")
     }
 
     val currentVm = vm
     val callback: Promise<*>
     if (currentVm == null) {
-      callback = Promise.DONE
+      callback = ResolvedPromise()
     }
     else {
       vm = null

@@ -44,7 +44,7 @@ public abstract class NetService @jvmOverloads protected constructor(protected v
       val port = NetUtils.findAvailableSocketPort()
       val processHandler = doGetProcessHandler(port)
       if (processHandler == null) {
-        promise.setError(Promise.createError("rejected"))
+        promise.setError("rejected")
         return promise
       }
 
