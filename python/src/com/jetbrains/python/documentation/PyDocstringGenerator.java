@@ -49,7 +49,8 @@ import java.util.List;
  */
 public class PyDocstringGenerator {
 
-  private final List<DocstringParam> myParams = Lists.newArrayList();
+  private final List<DocstringParam> myAddedParams = Lists.newArrayList();
+  private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
   // Updated after buildAndInsert
   @NotNull
   private PyDocStringOwner myDocStringOwner;
@@ -73,14 +74,20 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
+  public PyDocstringGenerator withoutParam(@NotNull String name) {
+    myRemovedParams.add(new DocstringParam(name, null, false));
+    return this;
+  }
+
+  @NotNull
   public PyDocstringGenerator withParamTypedByName(@NotNull String name, @Nullable String type) {
-    myParams.add(new DocstringParam(name, type, false));
+    myAddedParams.add(new DocstringParam(name, type, false));
     return this;
   }
 
   @NotNull
   public PyDocstringGenerator withReturnValue(@Nullable String type) {
-    myParams.add(new DocstringParam("", type, true));
+    myAddedParams.add(new DocstringParam("", type, true));
     return this;
   }
 
@@ -120,8 +127,8 @@ public class PyDocstringGenerator {
   }
 
   private void prepareParameters() {
-    // Populate parameter list, if no one was specified explicitly
-    if (!myParametersPrepared && myParams.isEmpty()) {
+    // Populate parameter list, if no one was specified explicitly to add or remove
+    if (!myParametersPrepared && myAddedParams.isEmpty() && myRemovedParams.isEmpty()) {
       if (myDocStringOwner instanceof PyFunction) {
         PySignature signature = null;
         if (myUseTypesFromDebuggerSignature) {
@@ -151,7 +158,7 @@ public class PyDocstringGenerator {
         statementList.accept(visitor);
         if (visitor.myHasReturn || myAlwaysGenerateReturn) {
           // will add :return: placeholder in Sphinx/Epydoc docstrings
-          myParams.add(new DocstringParam("", null, true));
+          myAddedParams.add(new DocstringParam("", null, true));
           if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
             withReturnValue("");
           }
@@ -162,17 +169,17 @@ public class PyDocstringGenerator {
     if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
       // Google and Numpy docstring formats combine type and description in single declaration, thus
       // if both declaration with type and without it are requested, we should filter out duplicates
-      final ArrayList<DocstringParam> copy = new ArrayList<DocstringParam>(myParams);
+      final ArrayList<DocstringParam> copy = new ArrayList<DocstringParam>(myAddedParams);
       for (final DocstringParam param : copy) {
         if (param.getType() == null) {
-          final DocstringParam sameParamWithType = ContainerUtil.find(myParams, new Condition<DocstringParam>() {
+          final DocstringParam sameParamWithType = ContainerUtil.find(myAddedParams, new Condition<DocstringParam>() {
             @Override
             public boolean value(DocstringParam other) {
               return other.isReturnValue() == param.isReturnValue() && other.getName().equals(param.getName()) && other.getType() != null;
             }
           });
           if (sameParamWithType != null) {
-            myParams.remove(param);
+            myAddedParams.remove(param);
           }
         }
       }
@@ -182,7 +189,7 @@ public class PyDocstringGenerator {
 
   public boolean hasParametersToAdd() {
     prepareParameters();
-    return !myParams.isEmpty();
+    return !myAddedParams.isEmpty();
   }
 
   @Nullable
@@ -211,7 +218,7 @@ public class PyDocstringGenerator {
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(docStringExpression);
 
-    if (myParams.size() > 1) {
+    if (myAddedParams.size() > 1) {
       throw new IllegalArgumentException("TemplateBuilder can be created only for one parameter");
     }
 
@@ -255,6 +262,15 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
+  private String getDocStringIndentation() {
+    String indentation = "";
+    if (myDocStringOwner instanceof PyStatementListContainer) {
+      indentation = PyIndentUtil.getElementIndent(((PyStatementListContainer)myDocStringOwner).getStatementList());
+    }
+    return indentation;
+  }
+
+  @NotNull
   public String buildDocString() {
     prepareParameters();
     if (myNewMode) {
@@ -276,7 +292,7 @@ public class PyDocstringGenerator {
       if (myAddFirstEmptyLine) {
         tagBuilder.addEmptyLine();
       }
-      for (DocstringParam param : myParams) {
+      for (DocstringParam param : myAddedParams) {
         if (param.isReturnValue()) {
           if (param.getType() != null) {
             tagBuilder.addReturnValueType(param.getType());
@@ -301,7 +317,7 @@ public class PyDocstringGenerator {
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
       }
-      final List<DocstringParam> parameters = ContainerUtil.findAll(myParams, new Condition<DocstringParam>() {
+      final List<DocstringParam> parameters = ContainerUtil.findAll(myAddedParams, new Condition<DocstringParam>() {
         @Override
         public boolean value(DocstringParam param) {
           return !param.isReturnValue();
@@ -314,7 +330,7 @@ public class PyDocstringGenerator {
         }
       }
 
-      final List<DocstringParam> returnValues = ContainerUtil.findAll(myParams, new Condition<DocstringParam>() {
+      final List<DocstringParam> returnValues = ContainerUtil.findAll(myAddedParams, new Condition<DocstringParam>() {
         @Override
         public boolean value(DocstringParam param) {
           return param.isReturnValue();
@@ -342,15 +358,6 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
-  private String getDocStringIndentation() {
-    String indentation = "";
-    if (myDocStringOwner instanceof PyStatementListContainer) {
-      indentation = PyIndentUtil.getElementIndent(((PyStatementListContainer)myDocStringOwner).getStatementList());
-    }
-    return indentation;
-  }
-
-  @NotNull
   private String updateDocString() {
     final DocStringFormat format = getDocStringFormat();
     DocStringUpdater updater = null;
@@ -369,12 +376,17 @@ public class PyDocstringGenerator {
       updater = new NumpyDocStringUpdater((SectionBasedDocString)getStructuredDocString(), docStringIndent);
     }
     if (updater != null) {
-      for (DocstringParam param : myParams) {
+      for (DocstringParam param : myAddedParams) {
         if (param.isReturnValue()) {
           updater.addReturnValue(param.getType());
         }
         else {
           updater.addParameter(param.getName(), param.getType());
+        }
+      }
+      for (DocstringParam param : myRemovedParams) {
+        if (!param.isReturnValue()) {
+          updater.removeParameter(param.getName());
         }
       }
       return updater.getDocStringText();
@@ -383,10 +395,10 @@ public class PyDocstringGenerator {
   }
 
   private DocstringParam getParamToEdit() {
-    if (myParams.size() == 0) {
+    if (myAddedParams.size() == 0) {
       throw new IllegalStateException("We should have at least one param to edit");
     }
-    return myParams.get(0);
+    return myAddedParams.get(0);
   }
 
   @NotNull

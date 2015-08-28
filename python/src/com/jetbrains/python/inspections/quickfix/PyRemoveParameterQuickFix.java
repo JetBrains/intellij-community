@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -73,10 +73,9 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
       final PyStringLiteralExpression expression = pyFunction.getDocStringExpression();
       final String paramName = ((PyParameter)element).getName();
       if (expression != null && paramName != null) {
-        DocStringUtil.removeParamsFromDocString(expression, paramName);
+        new PyDocstringGenerator(pyFunction).withoutParam(paramName).buildAndInsert();
       }
     }
-
     element.delete();
   }
 }

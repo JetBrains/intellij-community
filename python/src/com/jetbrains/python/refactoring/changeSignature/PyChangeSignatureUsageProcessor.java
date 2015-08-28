@@ -33,7 +33,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
@@ -336,14 +335,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(function);
     if (module == null) return;
-    final List<String> removedParamNames = new ArrayList<String>();
+    final PyDocstringGenerator generator = new PyDocstringGenerator(function);
     for (PyParameter p : function.getParameterList().getParameters()) {
       final String paramName = p.getName();
       if (!names.contains(paramName) && paramName != null) {
-        removedParamNames.add(paramName);
+        generator.withoutParam(paramName);
       }
     }
-    DocStringUtil.removeParamsFromDocString(docStringExpression, removedParamNames);
+    generator.buildAndInsert();
   }
 
   private static void updateParameterList(PyChangeInfo changeInfo, PyFunction baseMethod) {

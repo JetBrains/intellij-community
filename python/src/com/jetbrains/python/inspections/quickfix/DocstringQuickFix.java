@@ -26,7 +26,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.intentions.PyGenerateDocstringIntention;
-import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDocStringOwner;
@@ -89,12 +88,14 @@ public class DocstringQuickFix implements LocalQuickFix {
       return;
     }
     if (docStringExpression != null) {
+      final PyDocstringGenerator generator = new PyDocstringGenerator(docStringOwner);
       if (myMissingText != null) {
-        new PyDocstringGenerator(docStringOwner).withParam(myMissingText).buildAndInsert();
+        generator.withParam(myMissingText);
       }
       else if (myUnexpected != null) {
-        DocStringUtil.removeParamsFromDocString(docStringExpression, myUnexpected);
+        generator.withoutParam(myUnexpected);
       }
+      generator.buildAndInsert();
     }
   }
 

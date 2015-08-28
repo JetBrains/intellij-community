@@ -29,10 +29,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.documentation.docstrings.DocStringUpdater;
-import com.jetbrains.python.documentation.docstrings.GoogleCodeStyleDocStringUpdater;
-import com.jetbrains.python.documentation.docstrings.NumpyDocStringUpdater;
-import com.jetbrains.python.documentation.docstrings.TagBasedDocStringUpdater;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -41,8 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -267,45 +261,5 @@ public class DocStringUtil {
   public static DocStringFormat getDocStringFormat(@NotNull PsiElement anchor) {
     final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(getModuleForElement(anchor));
     return settings.getFormatForFile(anchor.getContainingFile());
-  }
-  
-  public static PyStringLiteralExpression removeParamsFromDocString(@NotNull PyStringLiteralExpression docString, 
-                                                                    @NotNull Collection<String> paramNames) {
-    final Module module = getModuleForElement(docString);
-    final DocStringFormat format = PyDocumentationSettings.getInstance(module).getFormatForFile(docString.getContainingFile());
-    DocStringUpdater updater;
-    switch (format) {
-      case EPYTEXT:
-        final EpydocString epyParsed = (EpydocString)parseDocString(format, docString);
-        updater = new TagBasedDocStringUpdater(epyParsed, "@", PyIndentUtil.getElementIndent(docString));
-        break;
-      case REST:
-        final SphinxDocString restParsed = (SphinxDocString)parseDocString(format, docString);
-        updater = new TagBasedDocStringUpdater(restParsed, ":", PyIndentUtil.getElementIndent(docString));
-        break;
-      case GOOGLE:
-        final GoogleCodeStyleDocString googleParsed = (GoogleCodeStyleDocString)parseDocString(format, docString);
-        updater = new GoogleCodeStyleDocStringUpdater(googleParsed, PyIndentUtil.getElementIndent(docString));
-        break;
-      case NUMPY:
-        final NumpyDocString numpyParsed = (NumpyDocString)parseDocString(format, docString);
-        updater = new NumpyDocStringUpdater(numpyParsed, PyIndentUtil.getElementIndent(docString));
-        break;
-      default:
-        return docString;
-    }
-    for (String name : paramNames) {
-      updater.removeParameter(name);
-    }
-    final String newText = updater.getDocStringText();
-    final PyExpressionStatement replacement = PyElementGenerator.getInstance(docString.getProject()).createDocstring(newText);
-    return (PyStringLiteralExpression)docString.replace(replacement.getExpression());
-    
-  }
-
-  @NotNull
-  public static PyStringLiteralExpression removeParamsFromDocString(@NotNull PyStringLiteralExpression docString, 
-                                                                    @NotNull String... paramNames) {
-    return removeParamsFromDocString(docString, Arrays.asList(paramNames));
   }
 }
