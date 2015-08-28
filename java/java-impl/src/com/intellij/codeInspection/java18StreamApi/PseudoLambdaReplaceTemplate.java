@@ -202,6 +202,9 @@ class PseudoLambdaReplaceTemplate {
 
     for (int i = 0; i < arguments.length; i++) {
       PsiType type = arguments[i];
+      if (type == null) {
+        return null;
+      }
       if (isFunction(type, methodReturnType, methodSubstitutor, context)) {
         if (lambdaPosition == -1) {
           lambdaPosition = i;
