@@ -40,7 +40,7 @@ public class JBSwingUtilities {
   /**
    * Replaces SwingUtilities#isLeftMouseButton() for consistency with other button-related methods
    *
-   * @see javax.swing.SwingUtilities#isLeftMouseButton(java.awt.event.MouseEvent)
+   * @see SwingUtilities#isLeftMouseButton(MouseEvent)
    */
   public static boolean isLeftMouseButton(MouseEvent anEvent) {
     return LEGACY_JDK ? (anEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) > 0 : SwingUtilities.isLeftMouseButton(anEvent);
@@ -49,8 +49,8 @@ public class JBSwingUtilities {
   /**
    * Replaces SwingUtilities#isMiddleMouseButton() due to the fact that BUTTON2_MASK == Event.ALT_MASK
    *
-   * @see javax.swing.SwingUtilities#isMiddleMouseButton(java.awt.event.MouseEvent)
-   * @see java.awt.event.InputEvent#BUTTON2_MASK
+   * @see SwingUtilities#isMiddleMouseButton(MouseEvent)
+   * @see InputEvent#BUTTON2_MASK
    */
   public static boolean isMiddleMouseButton(MouseEvent anEvent) {
     return LEGACY_JDK ? (anEvent.getModifiersEx() & InputEvent.BUTTON2_DOWN_MASK) > 0 : SwingUtilities.isMiddleMouseButton(anEvent);
@@ -59,8 +59,8 @@ public class JBSwingUtilities {
   /**
    * Replaces SwingUtilities#isRightMouseButton() due to the fact that BUTTON3_MASK == Event.META_MASK
    *
-   * @see javax.swing.SwingUtilities#isRightMouseButton(java.awt.event.MouseEvent)
-   * @see java.awt.event.InputEvent#BUTTON3_MASK
+   * @see SwingUtilities#isRightMouseButton(MouseEvent)
+   * @see InputEvent#BUTTON3_MASK
    */
   public static boolean isRightMouseButton(MouseEvent anEvent) {
     return LEGACY_JDK ? (anEvent.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK) > 0 : SwingUtilities.isRightMouseButton(anEvent);
