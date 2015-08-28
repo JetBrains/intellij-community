@@ -201,7 +201,12 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myDataManager = new VcsLogDataManager(myProject, myLogProviders);
+    myDataManager = new VcsLogDataManager(myProject, myLogProviders, new Consumer<Exception>() {
+      @Override
+      public void consume(Exception e) {
+        LOG.error(e);
+      }
+    });
     Disposer.register(myProject, myDataManager);
     return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(),
                                    myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
