@@ -53,6 +53,18 @@ public class RepositoryUtils {
   @NotNull static public final String ReleaseVersionId = "RELEASE";
   @NotNull static public final String SnapshotVersionSuffix = "-SNAPSHOT";
 
+  public static void downloadAsync(final Project project,
+                                   final boolean downloadSources,
+                                   final boolean downloadJavaDocs,
+                                   @NotNull final RepositoryLibraryProperties properties) {
+    String displayName = RepositoryLibraryDescription.findDescription(properties).getDisplayName();
+    Task task = new Task.Backgroundable(project, ProjectBundle.message("maven.loading.library.hint", displayName), false) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        List<OrderRoot> download = download(project, downloadSources, downloadJavaDocs, properties);
+      }
+    };
+    ProgressManager.getInstance().run(task);
+  }
   public static List<OrderRoot> download(Project project,
                                          boolean downloadSources,
                                          boolean downloadJavaDocs,
@@ -162,14 +174,14 @@ public class RepositoryUtils {
     return result;
   }
 
-  public static void loadDependencies(@NotNull ProgressIndicator indicator,
-                                      @NotNull final Project project,
-                                      @NotNull final LibraryEx library,
-                                      boolean downloadSources,
-                                      boolean downloadJavaDocs) {
-    indicator.setText(ProjectBundle.message("maven.loading.library.hint", library.getName()));
-    @NotNull final RepositoryLibraryProperties libraryProperties = (RepositoryLibraryProperties)library.getProperties();
-    final String storageRoot = getStorageRoot(library, project);
+  public static synchronized void loadDependencies(@NotNull ProgressIndicator indicator,
+                                                   @NotNull final Project project,
+                                                   RepositoryLibraryProperties libraryProperties,
+                                                   boolean downloadSources,
+                                                   boolean downloadJavaDocs,
+                                                   String displayName,
+                                                   Processor<List<MavenArtifact>> processor) {
+    indicator.setText(ProjectBundle.message("maven.loading.library.hint", displayName));
 
     RepositoryAttachHandler.doResolveInner(
       project,
@@ -178,37 +190,54 @@ public class RepositoryUtils {
                                    resolveEffectiveVersion(project, libraryProperties))),
       createExtraArtifactTypeList(downloadSources, downloadJavaDocs),
       RepositoryLibraryDescription.findDescription(libraryProperties).getRemoteRepositories(),
-      new Processor<List<MavenArtifact>>() {
-        @Override
-        public boolean process(List<MavenArtifact> artifacts) {
-          if (artifacts == null || artifacts.isEmpty()) {
-            return true;
-          }
-          final List<OrderRoot> roots = RepositoryAttachHandler.createRoots(artifacts, storageRoot);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (library.isDisposed()) {
-                return;
-              }
-              AccessToken token = WriteAction.start();
-              try {
-                final NewLibraryEditor editor = new NewLibraryEditor(null, libraryProperties);
-                editor.removeAllRoots();
-                editor.addRoots(roots);
-                final Library.ModifiableModel model = library.getModifiableModel();
-                editor.applyTo((LibraryEx.ModifiableModelEx)model);
-                model.commit();
-              }
-              finally {
-                token.finish();
-              }
-            }
-          });
-          return true;
-        }
-      },
+      processor,
       indicator);
+  }
+
+
+  public static void loadDependencies(@NotNull ProgressIndicator indicator,
+                                      @NotNull final Project project,
+                                      @NotNull final LibraryEx library,
+                                      boolean downloadSources,
+                                      boolean downloadJavaDocs) {
+    final String storageRoot = getStorageRoot(library, project);
+    final RepositoryLibraryProperties libraryProperties = (RepositoryLibraryProperties)library.getProperties();
+    loadDependencies(indicator,
+                     project,
+                     libraryProperties,
+                     downloadSources,
+                     downloadJavaDocs,
+                     library.getName(),
+                     new Processor<List<MavenArtifact>>() {
+                       @Override
+                       public boolean process(List<MavenArtifact> artifacts) {
+                         if (artifacts == null || artifacts.isEmpty()) {
+                           return true;
+                         }
+                         final List<OrderRoot> roots = RepositoryAttachHandler.createRoots(artifacts, storageRoot);
+                         ApplicationManager.getApplication().invokeLater(new Runnable() {
+                           @Override
+                           public void run() {
+                             if (library.isDisposed()) {
+                               return;
+                             }
+                             AccessToken token = WriteAction.start();
+                             try {
+                               final NewLibraryEditor editor = new NewLibraryEditor(null, libraryProperties);
+                               editor.removeAllRoots();
+                               editor.addRoots(roots);
+                               final Library.ModifiableModel model = library.getModifiableModel();
+                               editor.applyTo((LibraryEx.ModifiableModelEx)model);
+                               model.commit();
+                             }
+                             finally {
+                               token.finish();
+                             }
+                           }
+                         });
+                         return true;
+                       }
+                     });
   }
 
   public static void reloadDependencies(@NotNull ProgressIndicator indicator,
