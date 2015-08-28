@@ -90,7 +90,7 @@ public final class CanonicalFileMapper {
         // For a flat root, i + 1 would be the last item in the list
         if (possibleOriginalPath.mappingType == MappingType.RECURSIVE ||
             (i + 1) == (pathComponents.size() - 1)) {
-          originalPathsToFile.add(join(possibleOriginalPath.path, pathComponents, i + 1));
+          originalPathsToFile.add(combine(possibleOriginalPath.path, pathComponents, i + 1));
         }
       }
     }
@@ -112,7 +112,7 @@ public final class CanonicalFileMapper {
   }
 
   @NotNull
-  static String join(@NotNull String symLink, List<String> pathComponents, int startIndex) {
+  static String combine(@NotNull String symLink, List<String> pathComponents, int startIndex) {
     String fileSuffix = StringUtil.join(pathComponents.subList(startIndex, pathComponents.size()), File.separator);
     return FileUtil.join(symLink, fileSuffix);
   }
