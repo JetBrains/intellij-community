@@ -64,24 +64,24 @@ public abstract class InvertBooleanDelegate {
 
   /**
    * Eventually collect additional elements to rename, e.g. override methods
-   * and find expressions which need to be inverted
+   * and find expressions which need to be inverted, e.g. return method statements inside the method itself, etc
    * 
    * @param renameProcessor null if element is not named or name was not changed
    */
   public abstract void collectRefElements(PsiElement element,
-                                          Collection<PsiElement> elementsToInvert,
                                           @Nullable RenameProcessor renameProcessor,
-                                          @NotNull String newName);
+                                          @NotNull String newName,
+                                          Collection<PsiElement> elementsToInvert);
 
   /**
-   * Invoked from {@link #getForeignElementToInvert(com.intellij.psi.PsiElement, com.intellij.psi.PsiElement, com.intellij.lang.Language)};
+   * Invoked from {@link #getForeignElementToInvert(PsiElement, PsiElement, Language)};
    * should be used to reject usages for elements from foreign language to be refactored
    * @return null, if reference should not be reverted
    */
   public abstract PsiElement getElementToInvert(PsiElement namedElement, PsiElement expression);
 
   /**
-   * Should be called from {@link #collectRefElements(PsiElement, Collection, RenameProcessor, String)}
+   * Should be called from {@link #collectRefElements(PsiElement, RenameProcessor, String, Collection)}
    * to process found usages in foreign languages
    */
   protected static PsiElement getForeignElementToInvert(PsiElement namedElement,
@@ -98,18 +98,18 @@ public abstract class InvertBooleanDelegate {
 
   /**
    * Replace expression with created negation
-   * @param expression to be inverted, found in {@link #collectRefElements(PsiElement, Collection, RenameProcessor, String)}
+   * @param expression to be inverted, found in {@link #collectRefElements(PsiElement, RenameProcessor, String, Collection)}
    */
   public abstract void replaceWithNegatedExpression(PsiElement expression);
 
   /**
-   * Initialize variable with negated default initializer when default was initially omitted
+   * Initialize variable with negated default initializer when default was initially omitted,
+   * or invert variable initializer
    */
-  public void invertDefaultElementInitializer(PsiElement var) {}
+  public abstract void invertElementInitializer(PsiElement var);
   
   /**
    * Detect usages which can't be inverted
    */
-  public void findConflicts(MultiMap<PsiElement, String> conflicts,
-                            UsageInfo[] usageInfos) {}
+  public void findConflicts(UsageInfo[] usageInfos, MultiMap<PsiElement, String> conflicts) {}
 }

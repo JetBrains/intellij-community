@@ -108,13 +108,6 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         elementsToInvert.add(refElement);
       }
     }
-    
-    if (namedElement instanceof PsiVariable) {
-      final PsiExpression initializer = ((PsiVariable)namedElement).getInitializer();
-      if (initializer != null) {
-        elementsToInvert.add(initializer);
-      }
-    }
   }
 
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
@@ -172,16 +165,21 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   }
 
   @Override
-  public void invertDefaultElementInitializer(final PsiElement element) {
+  public void invertElementInitializer(final PsiElement element) {
     if (element instanceof PsiField && ((PsiField)element).getInitializer() == null) {
       ((PsiField)element).setInitializer(JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("true", element));
+    } else if (element instanceof PsiVariable) {
+      final PsiExpression initializer = ((PsiVariable)element).getInitializer();
+      if (initializer != null) {
+        replaceWithNegatedExpression(initializer);
+      }
     }
   }
 
   public void collectRefElements(final PsiElement element,
-                                 final Collection<PsiElement> elementsToInvert,
                                  final RenameProcessor renameProcessor,
-                                 @NotNull final String newName) {
+                                 @NotNull final String newName,
+                                 final Collection<PsiElement> elementsToInvert) {
     collectRefsToInvert(element, elementsToInvert);
 
     if (element instanceof PsiMethod) {
@@ -255,7 +253,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   }
 
   @Override
-  public void findConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usageInfos) {
+  public void findConflicts(UsageInfo[] usageInfos, MultiMap<PsiElement, String> conflicts) {
     for (UsageInfo info : usageInfos) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiMethodReferenceExpression) {

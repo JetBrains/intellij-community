@@ -86,9 +86,9 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public void collectRefElements(PsiElement psiElement,
-                                 Collection<PsiElement> elementsToInvert,
                                  @Nullable RenameProcessor renameProcessor,
-                                 @NotNull String newName) {
+                                 @NotNull String newName,
+                                 Collection<PsiElement> elementsToInvert) {
     final Collection<PsiReference> refs = ReferencesSearch.search(psiElement).findAll();
 
     for (PsiReference ref : refs) {
@@ -99,13 +99,6 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
       }
       else {
         ContainerUtil.addIfNotNull(elementsToInvert, getForeignElementToInvert(psiElement, refElement, PythonLanguage.getInstance()));
-      }
-    }
-    
-    if (psiElement instanceof PyNamedParameter) {
-      PyExpression defaultValue = ((PyNamedParameter)psiElement).getDefaultValue();
-      if (defaultValue != null) {
-        elementsToInvert.add(defaultValue);
       }
     }
   }
@@ -127,6 +120,16 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
       return element;
     }
     return null;
+  }
+
+  @Override
+  public void invertElementInitializer(PsiElement psiElement) {
+    if (psiElement instanceof PyNamedParameter) {
+      final PyExpression defaultValue = ((PyNamedParameter)psiElement).getDefaultValue();
+      if (defaultValue != null) {
+        replaceWithNegatedExpression(defaultValue);
+      }
+    }
   }
 
   @Override
