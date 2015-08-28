@@ -40,8 +40,8 @@ public class ChildrenBlocksBuilder {
     List<Block> blocks = ContainerUtil.newArrayList();
 
     for (ASTNode child : node.getChildren(null)) {
-      if (FormatterUtil.isWhitespaceOrEmpty(child)) {
-        continue;
+      if (FormatterUtil.isWhitespaceOrEmpty(child) || child.getTextLength() == 0) {
+          continue;
       }
 
       Alignment alignment = myConfig.getAlignment(child);
