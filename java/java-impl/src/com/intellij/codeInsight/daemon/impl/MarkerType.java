@@ -63,9 +63,16 @@ public class MarkerType {
   private final Function<PsiElement, String> myTooltip;
   @NotNull private final String myDebugName;
 
-  public MarkerType(@NotNull String name, @NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+  /**
+   * @deprecated use {@link #MarkerType(String, Function, LineMarkerNavigator)} instead
+   */
+  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+    this("Unknown", tooltip, navigator);
+  }
+
+  public MarkerType(@NotNull String debugName, @NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
-    myDebugName = name;
+    myDebugName = debugName;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
       public void navigate(final MouseEvent e, final PsiElement elt) {
