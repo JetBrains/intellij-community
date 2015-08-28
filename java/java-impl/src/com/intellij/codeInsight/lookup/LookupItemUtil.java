@@ -82,9 +82,6 @@ public class LookupItemUtil{
     if (object instanceof PsiVariable) {
       return new VariableLookupItem((PsiVariable)object);
     }
-    if (object instanceof PsiKeyword) {
-      return new KeywordLookupItem((PsiKeyword)object, (PsiKeyword)object);
-    }
     if (object instanceof PsiExpression) {
       return new ExpressionLookupItem((PsiExpression) object);
     }

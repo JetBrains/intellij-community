@@ -16,7 +16,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.ExpressionLookupItem;
+import com.intellij.codeInsight.lookup.KeywordLookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -28,7 +31,6 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,13 +46,7 @@ public class BasicExpressionCompletionContributor {
   }
 
   public static LookupElement createKeywordLookupItem(final PsiElement element, final String s) {
-    try {
-      final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s, element);
-      return new KeywordLookupItem(keyword, element).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
+    return new KeywordLookupItem(JavaPsiFacade.getElementFactory(element.getProject()).createKeyword(s, element), element);
   }
 
   public static void fillCompletionVariants(JavaSmartCompletionParameters parameters,
