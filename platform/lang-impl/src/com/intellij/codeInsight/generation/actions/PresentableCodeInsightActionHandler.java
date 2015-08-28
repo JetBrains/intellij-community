@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.generation.actions;
 
+import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface PresentableLanguageCodeInsightActionHandler extends PresentableCodeInsightActionHandler, LanguageCodeInsightActionHandler {
+public interface PresentableCodeInsightActionHandler extends CodeInsightActionHandler {
+  void update(@NotNull Editor editor, @NotNull PsiFile file, Presentation presentation);
 }
