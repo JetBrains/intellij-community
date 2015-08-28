@@ -34,8 +34,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
@@ -229,7 +229,7 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+  public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     FieldDescriptor fieldDescriptor = (FieldDescriptor)node.getDescriptor();
 
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
