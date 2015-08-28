@@ -118,7 +118,7 @@ public class ProjectRule() : ExternalResource() {
       }
 
       if (projectOpened.compareAndSet(false, true)) {
-        ProjectManagerEx.getInstanceEx().openTestProject(project)
+        runInEdtAndWait { ProjectManagerEx.getInstanceEx().openTestProject(project) }
       }
       return result!!
     }
@@ -128,15 +128,17 @@ public class ProjectRule() : ExternalResource() {
       var project = project
       var result = sharedModule
       if (result == null) {
-        LightProjectDescriptor().setUpProject(project, object: LightProjectDescriptor.SetupHandler {
-          override fun moduleCreated(module: Module) {
-            result = module
-            sharedModule = module
-          }
+        runInEdtAndWait {
+          LightProjectDescriptor().setUpProject(project, object : LightProjectDescriptor.SetupHandler {
+            override fun moduleCreated(module: Module) {
+              result = module
+              sharedModule = module
+            }
 
-          override fun sourceRootCreated(sourceRoot: VirtualFile) {
-          }
-        })
+            override fun sourceRootCreated(sourceRoot: VirtualFile) {
+            }
+          })
+        }
       }
       return result!!
     }

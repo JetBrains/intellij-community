@@ -354,7 +354,7 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static Document loadDocument(URL url) throws JDOMException, IOException {
+  public static Document loadDocument(@NotNull URL url) throws JDOMException, IOException {
     return loadDocument(URLUtil.openStream(url));
   }
 
