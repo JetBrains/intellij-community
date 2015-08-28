@@ -20,7 +20,6 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.StateStorageBase
-import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
@@ -140,8 +139,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
         }
         else {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          val content = StorageUtil.writeToBytes(element, "\n")
-          provider.write(storage.fileSpec, content.getInternalBuffer(), content.size(), storage.roamingType)
+          provider.write(storage.fileSpec, element.toBufferExposingByteArray(), storage.roamingType)
         }
       }
       else {

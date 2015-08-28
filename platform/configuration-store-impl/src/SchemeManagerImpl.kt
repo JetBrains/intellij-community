@@ -27,6 +27,7 @@ import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.JDOMUtil
@@ -49,6 +50,7 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.FilenameFilter
+import java.io.IOException
 import java.io.InputStream
 import java.util.ArrayList
 import java.util.Collections
@@ -528,7 +530,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     filesToDelete.remove(fileName)
 
     // stream provider always use LF separator
-    val byteOut = StorageUtil.writeToBytes(element, "\n")
+    val byteOut = element.toBufferExposingByteArray()
 
     var providerPath: String?
     if (provider != null && provider.enabled) {
@@ -548,12 +550,12 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         var file: VirtualFile? = null
         var dir = getDirectory()
         if (dir == null || !dir.isValid()) {
-          dir = StorageUtil.createDir(ioDirectory, this)
+          dir = createDir(ioDirectory, this)
           directory = dir
         }
 
         if (renamed) {
-          file = dir!!.findChild(externalInfo!!.fileName)
+          file = dir.findChild(externalInfo!!.fileName)
           if (file != null) {
             runWriteAction {
               file!!.rename(this, fileName)
@@ -562,7 +564,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
 
         if (file == null) {
-          file = StorageUtil.getFile(fileName, dir!!, this)
+          file = getFile(fileName, dir, this)
         }
 
         runWriteAction {
@@ -874,3 +876,19 @@ private inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
 
 inline val Scheme.name: String
   get() = getName()
+
+
+fun createDir(ioDir: File, requestor: Any): VirtualFile {
+  ioDir.mkdirs()
+  val parentFile = ioDir.getParent()
+  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile)) ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+  return getFile(ioDir.getName(), parentVirtualFile, requestor)
+}
+
+fun getFile(fileName: String, parent: VirtualFile, requestor: Any): VirtualFile {
+  val file = parent.findChild(fileName)
+  if (file != null) {
+    return file
+  }
+  return runWriteAction { parent.createChildData(requestor, fileName) }
+}

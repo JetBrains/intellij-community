@@ -20,9 +20,13 @@ import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.StateStorageBase
 import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
@@ -35,6 +39,7 @@ import org.jdom.Element
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.nio.ByteBuffer
 
 open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPathMacroSubstitutor?, private val myDir: File, private val mySplitter: StateSplitter) : StateStorageBase<Map<String, StateMap>>() {
   private volatile var virtualFile: VirtualFile? = null
@@ -128,21 +133,21 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
       var dir = storage.getVirtualFile()
       if (copiedStorageData!!.isEmpty()) {
         if (dir != null && dir.exists()) {
-          StorageUtil.deleteFile(this, dir)
+          deleteFile(this, dir)
         }
         storage.setStorageData(copiedStorageData!!)
         return
       }
 
       if (dir == null || !dir.isValid()) {
-        dir = StorageUtil.createDir(storage.myDir, this)
+        dir = createDir(storage.myDir, this)
         storage.virtualFile = dir
       }
 
       if (!dirtyFileNames.isEmpty()) {
-        saveStates(dir!!)
+        saveStates(dir)
       }
-      if (dir!!.exists() && !removedFileNames.isEmpty()) {
+      if (dir.exists() && !removedFileNames.isEmpty()) {
         deleteFiles(dir)
       }
 
@@ -166,9 +171,9 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
             storeElement.setAttribute(FileStorageCoreUtil.NAME, componentNameToFileNameToStates.getKey())
             storeElement.addContent(element)
 
-            val file = StorageUtil.getFile(fileName, dir, this)
+            val file = getFile(fileName, dir, this)
             // we don't write xml prolog due to historical reasons (and should not in any case)
-            StorageUtil.writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) StorageUtil.loadFile(file).second else SystemProperties.getLineSeparator()), false)
+            writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) loadFile(file).second else SystemProperties.getLineSeparator()), false)
           }
           catch (e: IOException) {
             StateStorageBase.LOG.error(e)
@@ -353,4 +358,22 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
       fileToState.put(fileName, state)
     }
   }
+}
+
+private val NON_EXISTENT_FILE_DATA = Pair.create<ByteArray, String>(null, SystemProperties.getLineSeparator())
+
+/**
+ * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
+ */
+private fun loadFile(file: VirtualFile?): Pair<ByteArray, String> {
+  if (file == null || !file.exists()) {
+    return NON_EXISTENT_FILE_DATA
+  }
+
+  val bytes = file.contentsToByteArray()
+  var lineSeparator: String? = file.getDetectedLineSeparator()
+  if (lineSeparator == null) {
+    lineSeparator = detectLineSeparators(CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(bytes)), null).getSeparatorString()
+  }
+  return Pair.create<ByteArray, String>(bytes, lineSeparator)
 }

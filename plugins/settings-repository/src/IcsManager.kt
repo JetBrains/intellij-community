@@ -17,13 +17,13 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
+import com.intellij.configurationStore.isProjectOrModuleFile
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -141,10 +141,10 @@ class IcsManager(dir: File) {
   }
 
   private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
-    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !StorageUtil.isProjectOrModuleFile(fileSpec)
+    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
 
     override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (StorageUtil.isProjectOrModuleFile(fileSpec)) {
+      if (isProjectOrModuleFile(fileSpec)) {
         // applicable only if file was committed to Settings Server explicitly
         return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
       }

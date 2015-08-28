@@ -60,7 +60,8 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   private String myProjectProfile;
   /** This field is used for serialization. Do not rename it or make access weaker */
-  public boolean USE_PROJECT_PROFILE = true;
+  @OptionTag
+  private boolean USE_PROJECT_PROFILE = true;
 
   private final ApplicationProfileManager myApplicationProfileManager;
 
@@ -212,7 +213,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     USE_PROJECT_PROFILE = newProfile != null;
     if (oldProfile != null) {
       for (ProfileChangeAdapter adapter : myProfilesListener) {
-        adapter.profileActivated(getProfile(oldProfile), newProfile != null ?  getProfile(newProfile) : null);
+        adapter.profileActivated(getProfile(oldProfile), newProfile != null ? getProfile(newProfile) : null);
       }
     }
   }
