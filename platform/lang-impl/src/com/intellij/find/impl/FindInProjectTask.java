@@ -76,7 +76,7 @@ class FindInProjectTask {
   private final FindModel myFindModel;
   private final Project myProject;
   private final PsiManager myPsiManager;
-  @Nullable private final PsiDirectory myPsiDirectory;
+  @Nullable private final VirtualFile myDirectory;
   private final ProjectFileIndex myProjectFileIndex;
   private final FileIndex myFileIndex;
   private final Condition<VirtualFile> myFileMask;
@@ -85,12 +85,10 @@ class FindInProjectTask {
   private final Set<VirtualFile> myLargeFiles = ContainerUtil.newTroveSet();
   private boolean myWarningShown;
 
-  FindInProjectTask(@NotNull final FindModel findModel,
-                    @NotNull final Project project,
-                    @Nullable final PsiDirectory psiDirectory) {
+  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project) {
     myFindModel = findModel;
     myProject = project;
-    myPsiDirectory = psiDirectory;
+    myDirectory = FindInProjectUtil.getDirectory(findModel);
     myPsiManager = PsiManager.getInstance(project);
 
     final String moduleName = findModel.getModuleName();
@@ -267,7 +265,7 @@ class FindInProjectTask {
   @NotNull
   private Collection<VirtualFile> collectFilesInScope(@NotNull final Set<VirtualFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
-    final GlobalSearchScope globalCustomScope = toGlobal(customScope);
+    final GlobalSearchScope globalCustomScope = customScope == null ? null : toGlobal(customScope);
 
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
     final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
@@ -327,12 +325,13 @@ class FindInProjectTask {
         iterator.processFile(file);
       }
     }
-    else if (myPsiDirectory != null) {
+    else if (myDirectory != null) {
+      final boolean checkExcluded = !ProjectFileIndex.SERVICE.getInstance(myProject).isExcluded(myDirectory);
       VirtualFileVisitor.Option limit = VirtualFileVisitor.limit(myFindModel.isWithSubdirectories() ? -1 : 1);
-      VfsUtilCore.visitChildrenRecursively(myPsiDirectory.getVirtualFile(), new VirtualFileVisitor(limit) {
+      VfsUtilCore.visitChildrenRecursively(myDirectory, new VirtualFileVisitor(limit) {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
-          if (myProjectFileIndex.isExcluded(file)) return false;
+          if (checkExcluded && myProjectFileIndex.isExcluded(file)) return false;
           iterator.processFile(file);
           return true;
         }
@@ -369,9 +368,9 @@ class FindInProjectTask {
     return true;
   }
 
-  @Nullable
-  private GlobalSearchScope toGlobal(@Nullable final SearchScope scope) {
-    if (scope instanceof GlobalSearchScope || scope == null) {
+  @NotNull
+  private GlobalSearchScope toGlobal(@NotNull final SearchScope scope) {
+    if (scope instanceof GlobalSearchScope) {
       return (GlobalSearchScope)scope;
     }
     return ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {

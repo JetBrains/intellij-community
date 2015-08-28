@@ -419,8 +419,6 @@ public class FindDialog extends DialogWrapper {
 
       ValidationInfo result = getValidationInfo(modelClone);
 
-      final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(modelClone, myProject);
-
       final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
       myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
 
@@ -460,7 +458,7 @@ public class FindDialog extends DialogWrapper {
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
-          FindInProjectUtil.findUsages(modelClone, psiDirectory, myProject, new Processor<UsageInfo>() {
+          FindInProjectUtil.findUsages(modelClone, myProject, new Processor<UsageInfo>() {
             @Override
             public boolean process(final UsageInfo info) {
               final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
@@ -822,7 +820,7 @@ public class FindDialog extends DialogWrapper {
   @Nullable("null means OK")
   private ValidationInfo getValidationInfo(@NotNull FindModel model) {
     if (myRbDirectory != null && myRbDirectory.isEnabled() && myRbDirectory.isSelected()) {
-      PsiDirectory directory = FindInProjectUtil.getPsiDirectory(model, myProject);
+      VirtualFile directory = FindInProjectUtil.getDirectory(model);
       if (directory == null) {
         return new ValidationInfo(FindBundle.message("find.directory.not.found.error", getDirectory()), myDirectoryComboBox);
       }
