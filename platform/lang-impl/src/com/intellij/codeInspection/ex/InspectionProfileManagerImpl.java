@@ -38,8 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -256,23 +254,13 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   public Element getState() {
     Element state = new Element("state");
-    try {
-      mySeverityRegistrar.writeExternal(state);
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
-    }
+    mySeverityRegistrar.writeExternal(state);
     return state;
   }
 
   @Override
   public void loadState(Element state) {
-    try {
-      mySeverityRegistrar.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    mySeverityRegistrar.readExternal(state);
   }
 
   public InspectionProfileConvertor getConverter() {
