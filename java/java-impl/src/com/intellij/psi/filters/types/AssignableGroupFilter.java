@@ -31,11 +31,6 @@ import com.intellij.psi.filters.OrFilter;
  * To change this template use Options | File Templates.
  */
 public class AssignableGroupFilter extends OrFilter implements InitializableFilter{
-  public AssignableGroupFilter(){}
-
-  public AssignableGroupFilter(PsiClass[] classes){
-    init(classes);
-  }
 
   @Override
   public void init(Object[] classes){
