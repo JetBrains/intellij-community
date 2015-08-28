@@ -20,15 +20,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
-import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.rpc.CommandProcessor
+import org.jetbrains.util.concurrency.AsyncPromise
+import org.jetbrains.util.concurrency.Promise
 import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
@@ -41,7 +41,7 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
 
   public abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
 
-  jvmOverloads public fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
+  public fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.getHostName()}:${address.getPort()}")
     val future = ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
       override fun run() {
@@ -50,53 +50,34 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
         }
 
         val result = AsyncPromise<Vm>()
-        connectCancelHandler.set(object : Runnable {
-          override fun run() {
-            result.setError(Promise.createError("Closed explicitly"))
-          }
-        })
+        connectCancelHandler.set(Runnable { result.setError(Promise.createError("Closed explicitly")) })
 
-        val connectionPromise = AsyncPromise<Void>()
-        connectionPromise.rejected(object : Consumer<Throwable> {
-          override fun consume(error: Throwable) {
-            result.setError(error)
-          }
-        })
+        val connectionPromise = AsyncPromise<Any?>()
+        connectionPromise.rejected { result.setError(it) }
 
-        result.done(object : Consumer<Vm> {
-          override fun consume(vm: Vm) {
-            this@RemoteVmConnection.vm = vm
-            setState(ConnectionStatus.CONNECTED, "Connected to " + connectedAddressToPresentation(address, vm))
+        result
+          .done {
+            vm = it
+            setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
             startProcessing()
           }
-        }).rejected(object : Consumer<Throwable> {
-          override fun consume(error: Throwable) {
-            if (error !is ConnectException) {
-              Promise.logError(CommandProcessor.LOG, error)
+          .rejected {
+            if (it !is ConnectException) {
+              Promise.logError(CommandProcessor.LOG, it)
             }
-            setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage())
+            setState(ConnectionStatus.CONNECTION_FAILED, it.getMessage())
           }
-        }).processed(object : Consumer<Vm> {
-          override fun consume(vm: Vm) {
-            connectCancelHandler.set(null)
-          }
-        })
+          .processed { connectCancelHandler.set(null) }
 
         NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition)
       }
     })
-    connectCancelHandler.set(object : Runnable {
-      override fun run() {
-        future.cancel(true)
-      }
-    })
+    connectCancelHandler.set(Runnable {  future.cancel(true) })
   }
 
-  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String {
-    return address.getHostName() + ":" + address.getPort()
-  }
+  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.getHostName() + ":" + address.getPort()
 
-  override fun detachAndClose(): Promise<Void> {
+  override fun detachAndClose(): Promise<*> {
     try {
       connectCancelHandler.getAndSet(null)?.run()
     }

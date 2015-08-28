@@ -102,15 +102,15 @@ public abstract class FastCgiService extends SingleConnectionNetService {
     }
 
     try {
-      if (processHandler.has()) {
-        fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel);
+      if (getProcessHandler().has()) {
+        fastCgiRequest.writeToServerChannel(notEmptyContent, getProcessChannel());
       }
       else {
-        processHandler.get()
+        getProcessHandler().get()
           .done(new Consumer<OSProcessHandler>() {
             @Override
             public void consume(OSProcessHandler osProcessHandler) {
-              fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel);
+              fastCgiRequest.writeToServerChannel(notEmptyContent, getProcessChannel());
             }
           })
           .rejected(new Consumer<Throwable>() {

@@ -31,8 +31,6 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
-import org.jetbrains.concurrency.AsyncFunction
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.connection.VmConnection
 import org.jetbrains.debugger.frame.SuspendContextImpl
 import java.util.concurrent.ConcurrentMap
@@ -87,15 +85,16 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
     processBreakpointConditionsAtIdeSide = value
   }
 
-  public fun getVm(): Vm? = connection.getVm()
+  public val vm: Vm?
+    get() = connection.vm
 
   protected abstract fun createBreakpointHandlers(): Array<XBreakpointHandler<*>>
 
   private fun updateLastCallFrame() {
-    lastCallFrame = getVm()?.getSuspendContextManager()?.getContext()?.getTopFrame()
+    lastCallFrame = vm?.getSuspendContextManager()?.getContext()?.getTopFrame()
   }
 
-  override final fun checkCanPerformCommands() = getVm() != null
+  override final fun checkCanPerformCommands() = vm != null
 
   override final fun isValuesCustomSorted() = true
 
@@ -132,7 +131,7 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   protected final fun continueVm(stepAction: StepAction) {
-    val suspendContextManager = getVm()!!.getSuspendContextManager()
+    val suspendContextManager = vm!!.getSuspendContextManager()
     if (stepAction === StepAction.CONTINUE) {
       if (suspendContextManager.getContext() == null) {
         // on resumed we ask session to resume, and session then call our "resume", but we have already resumed, so, we don't need to send "continue" message
@@ -151,7 +150,7 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   protected final fun setOverlay() {
-    getVm()!!.getSuspendContextManager().setOverlayMessage("Paused in debugger")
+    vm!!.getSuspendContextManager().setOverlayMessage("Paused in debugger")
   }
 
   protected final fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
@@ -209,7 +208,7 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   override final fun startPausing() {
-    connection.getVm().getSuspendContextManager().suspend().rejected(RejectErrorReporter(getSession(), "Cannot pause"))
+    connection.vm.getSuspendContextManager().suspend().rejected(RejectErrorReporter(getSession(), "Cannot pause"))
   }
 
   override final fun getCurrentStateMessage() = connection.getState().getMessage()
@@ -223,8 +222,4 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   public abstract fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean): List<Location>
-}
-
-public inline fun asyncPromise(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) task: () -> Promise<Void>): AsyncFunction<Void, Void> = object : AsyncFunction<Void, Void> {
-  override fun `fun`(aVoid: Void?) = task()
 }
