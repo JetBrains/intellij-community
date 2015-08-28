@@ -31,17 +31,9 @@ class Signature(object):
 class SignatureFactory(object):
     def __init__(self):
         self._caller_cache = {}
-        self.project_roots =  os.getenv('IDE_PROJECT_ROOTS', '').split(os.pathsep)
 
     def is_in_scope(self, filename):
-        filename = os.path.normcase(filename)
-        for root in self.project_roots:
-            root = os.path.normcase(root)
-            if filename.startswith(root):
-                return True
-        return False
-
-
+        return pydevd_utils.is_in_project_roots(filename)
 
     def create_signature(self, frame):
         try:

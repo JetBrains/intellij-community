@@ -643,7 +643,7 @@ public class JavaKeywordCompletion {
     br = TailTypeDecorator.withTail(br, tailType);
     cont = TailTypeDecorator.withTail(cont, tailType);
 
-    if (loop != null && new InsideElementFilter(new ClassFilter(PsiStatement.class)).isAcceptable(position, loop)) {
+    if (loop != null && PsiTreeUtil.isAncestor(loop.getBody(), position, false)) {
       result.consume(br);
       result.consume(cont);
     }

@@ -33,7 +33,7 @@ import java.util.List;
 public class JavaElementLookupRenderer implements ElementLookupRenderer {
   @Override
   public boolean handlesItem(final Object element) {
-    return element instanceof PsiKeyword || element instanceof PsiExpression ||
+    return element instanceof PsiKeyword ||
            element instanceof PsiTypeElement || element instanceof BeanPropertyElement;
   }
 
@@ -59,7 +59,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
-        if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement) {
+        if (element instanceof PsiKeyword || element instanceof PsiTypeElement) {
           name = element.getText();
         } else {
           name = PsiUtilCore.getName(element);
@@ -72,24 +72,10 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
 
   @Nullable
   private static String getTypeText(final Object o, final LookupItem item) {
-    String text = null;
-    if (o instanceof PsiElement) {
-      final PsiElement element = (PsiElement)o;
-      if (element.isValid()) {
-        if (element instanceof PsiExpression){
-          PsiExpression expression = (PsiExpression)element;
-          PsiType type = expression.getType();
-          if (type != null){
-            text = type.getPresentableText();
-          }
-        }
-        else if (element instanceof BeanPropertyElement) {
-          return getTypeText(item, ((BeanPropertyElement)element).getPropertyType());
-        }
-      }
+    if (o instanceof BeanPropertyElement) {
+      return getTypeText(item, ((BeanPropertyElement)o).getPropertyType());
     }
-
-    return text;
+    return null;
   }
 
   @Nullable
