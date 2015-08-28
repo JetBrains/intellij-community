@@ -46,7 +46,7 @@ import java.util.Map;
  * @author yole
  */
 public class PyStructuredDocstringFormatter {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.documentation.PyStructuredDocstringFormatter");
+  private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);
 
   private PyStructuredDocstringFormatter() {
   }
@@ -68,7 +68,15 @@ public class PyStructuredDocstringFormatter {
 
     final String formatter;
     final StructuredDocString structuredDocString;
-    if (documentationSettings.isEpydocFormat(element.getContainingFile()) || DocStringUtil.isEpydocDocString(preparedDocstring)) {
+    if (documentationSettings.isGoogleFormat(element.getContainingFile()) || DocStringUtil.isGoogleDocString(preparedDocstring)) {
+      formatter = PythonHelpersLocator.getHelperPath("google_formatter.py");
+      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.GOOGLE, preparedDocstring);
+    }
+    else if (documentationSettings.isNumpyFormat(element.getContainingFile()) || DocStringUtil.isNumpyDocstring(preparedDocstring)) {
+      formatter = PythonHelpersLocator.getHelperPath("numpy_formatter.py");
+      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.NUMPY, preparedDocstring);
+    }
+    else if (documentationSettings.isEpydocFormat(element.getContainingFile()) || DocStringUtil.isEpydocDocString(preparedDocstring)) {
       formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.EPYTEXT, preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
@@ -77,10 +85,7 @@ public class PyStructuredDocstringFormatter {
       formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.REST, preparedDocstring);
     }
-    else if (documentationSettings.isGoogleFormat(element.getContainingFile()) || DocStringUtil.isGoogleDocString(preparedDocstring)) {
-      formatter = PythonHelpersLocator.getHelperPath("google_formatter.py");
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.GOOGLE, preparedDocstring);
-    }
+
     else {
       return null;
     }
