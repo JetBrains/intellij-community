@@ -537,13 +537,12 @@ public class JavaCompletionUtil {
     }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
-    if (_ret == null || !(_ret instanceof LookupItem)) return Collections.emptyList();
-
-    final PsiSubstitutor substitutor = completionElement.getSubstitutor();
-    if (substitutor != null) {
-      ((LookupItem<?>)_ret).setAttribute(LookupItem.SUBSTITUTOR, substitutor);
+    if (_ret instanceof LookupItem) {
+      final PsiSubstitutor substitutor = completionElement.getSubstitutor();
+      if (substitutor != null) {
+        ((LookupItem<?>)_ret).setAttribute(LookupItem.SUBSTITUTOR, substitutor);
+      }
     }
-
     return Collections.singletonList(_ret);
   }
 

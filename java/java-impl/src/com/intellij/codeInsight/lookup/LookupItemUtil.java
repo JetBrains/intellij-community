@@ -71,6 +71,7 @@ public class LookupItemUtil{
    * @deprecated
    * @see LookupElementBuilder
   */
+  @NotNull
   public static LookupElement objectToLookupItem(Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
     if (object instanceof PsiClass) {

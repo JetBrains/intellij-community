@@ -89,7 +89,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
           for (final CompletionElement _item : processor.getResults()) {
             final Object element = _item.getElement();
-            LookupItem item = createLookupItem(element);
+            LookupElement item = createLookupItem(element);
             if (onlyConstants) {
               Object o = item.getObject();
               if (!(o instanceof PsiField)) continue;
@@ -100,7 +100,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
             item.putUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
             if (isArg) {
-              item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+              item = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(item);
             }
             result.addElement(item);
           }
@@ -113,7 +113,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         }
       }
 
-      private LookupItem createLookupItem(final Object element) {
+      private LookupElement createLookupItem(final Object element) {
         if (element instanceof PsiMethod) {
           return new JavaMethodCallElement((PsiMethod)element) {
             @Override
@@ -128,7 +128,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
           return classElement;
         }
 
-        return (LookupItem)LookupItemUtil.objectToLookupItem(element);
+        return LookupItemUtil.objectToLookupItem(element);
       }
     });
   }
