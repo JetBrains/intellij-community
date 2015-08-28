@@ -107,6 +107,10 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
           JavaCompletionContributor.addAllClasses(parameters, result, new InheritorsHolder(result));
         }
+
+        if (tag != null && "author".equals(tag.getName())) {
+          result.addElement(LookupElementBuilder.create(SystemProperties.getUserName()));
+        }
       }
 
       private LookupItem createLookupItem(final Object element) {
