@@ -43,7 +43,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
       myProjectProfileManager.setProjectProfile(name);
     }
     else {
-      myProfileManager.setRootProfile(name);
+      myApplicationProfileManager.setRootProfile(name);
       myProjectProfileManager.setProjectProfile(null);
     }
     InspectionProfileManagerImpl.onProfilesChanged();

@@ -33,11 +33,11 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
 
   @Override
   protected InspectionProfileImpl getCurrentProfile() {
-    return (InspectionProfileImpl)myProfileManager.getRootProfile();
+    return (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
   }
 
   @Override
   protected void applyRootProfile(@NotNull String name, boolean isProjectLevel) {
-    myProfileManager.setRootProfile(name);
+    myApplicationProfileManager.setRootProfile(name);
   }
 }
