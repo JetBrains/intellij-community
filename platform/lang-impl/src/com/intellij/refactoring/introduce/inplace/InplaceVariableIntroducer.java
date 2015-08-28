@@ -79,20 +79,21 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       ASTNode prev = node.getTreePrev();
       final ASTNode astNode = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
         .generateWhitespaceBetweenTokens(prev, node);
-      final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
-      if (astNode != null &&
-          LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
-        PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
-          @Override
-          public void run() {
-            new WriteCommandAction<Object>(project, "Normalize declaration") {
-              @Override
-              protected void run(@NotNull Result<Object> result) throws Throwable {
-                node.getTreeParent().addChild(astNode, node);
-              }
-            }.execute(); 
-          }
-        });
+      if (astNode != null) {
+        final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
+        if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
+          PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
+            @Override
+            public void run() {
+              new WriteCommandAction<Object>(project, "Normalize declaration") {
+                @Override
+                protected void run(@NotNull Result<Object> result) throws Throwable {
+                  node.getTreeParent().addChild(astNode, node);
+                }
+              }.execute(); 
+            }
+          });
+        }
       }
       myExpr = expr;
     }
