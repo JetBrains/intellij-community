@@ -4609,7 +4609,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void processMouseDragged(@NotNull MouseEvent e) {
-    if (JBSwingUtilities.isRightMouseButton(e)) {
+    if (!JBSwingUtilities.isLeftMouseButton(e) && !JBSwingUtilities.isMiddleMouseButton(e)) {
       return;
     }
 
