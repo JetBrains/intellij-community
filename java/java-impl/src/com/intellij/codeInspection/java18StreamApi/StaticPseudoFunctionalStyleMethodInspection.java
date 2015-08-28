@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.java18StreamApi;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -127,7 +129,10 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement psiElement = descriptor.getPsiElement();
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(psiElement)) {
+        return;
+      }
       if (psiElement instanceof PsiReferenceExpression) {
         PsiElement parent = psiElement.getParent();
         if (parent instanceof PsiMethodCallExpression) {
