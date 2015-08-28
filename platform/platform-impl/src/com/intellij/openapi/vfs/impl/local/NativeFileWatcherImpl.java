@@ -142,13 +142,13 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   @Override
-  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    setWatchRoots(recursive, flat, false);
+  public void setWatchRoots(@NotNull List<String> recursiveCanonicalPaths, @NotNull List<String> flatCanonicalPaths) {
+    setWatchRoots(recursiveCanonicalPaths, flatCanonicalPaths, false);
   }
 
   @Override
-  public boolean isWatched(@NotNull VirtualFile file) {
-    return isOperational() && !checkWatchable(file.getPresentableUrl(), true, true).isEmpty();
+  public boolean isWatched(@NotNull VirtualFile canonicalFile) {
+    return isOperational() && !checkWatchable(canonicalFile.getPresentableUrl(), true, true).isEmpty();
   }
 
   /* internal stuff */

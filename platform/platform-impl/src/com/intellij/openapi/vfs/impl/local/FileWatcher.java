@@ -33,7 +33,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -56,6 +55,7 @@ public class FileWatcher {
 
   private final Object myLock = new Object();
   private final PluggableFileWatcher[] myWatchers;
+  private CanonicalFileMapper myCanonicalFileMapper;
 
   public static class DirtyPaths {
     public final List<String> dirtyPaths = newArrayList();
@@ -75,6 +75,10 @@ public class FileWatcher {
   FileWatcher(@NotNull ManagingFS managingFS) {
     MyFileWatcherNotificationSink notificationSink = new MyFileWatcherNotificationSink();
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
+    // Load in an empty map
+    synchronized (myLock) {
+      myCanonicalFileMapper = new CanonicalFileMapper();
+    }
     for (PluggableFileWatcher watcher : myWatchers) {
       watcher.initialize(managingFS, notificationSink);
     }
@@ -132,18 +136,31 @@ public class FileWatcher {
       }
     }
     if (result == null) return emptyList();
-    return Collections.list(Collections.enumeration(result));
+    synchronized (myLock) {
+      return myCanonicalFileMapper.getMapping(result);
+    }
   }
 
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.setWatchRoots(recursive, flat);
+    synchronized (myLock) {
+      // Clear out our old canonical path -> symbolic link map
+      myCanonicalFileMapper = new CanonicalFileMapper();
+
+      List<String> recursiveCanonical = myCanonicalFileMapper.addMappings(recursive, CanonicalFileMapper.MappingType.RECURSIVE);
+      List<String> flatCanonical = myCanonicalFileMapper.addMappings(flat, CanonicalFileMapper.MappingType.FLAT);
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.setWatchRoots(recursiveCanonical, flatCanonical);
+      }
     }
   }
 
   public boolean isWatched(@NotNull VirtualFile file) {
+    VirtualFile canonicalFile = file.getCanonicalFile();
     for (PluggableFileWatcher watcher : myWatchers) {
-      if (watcher.isWatched(file)) return true;
+      if (canonicalFile == null) {
+        return false;
+      }
+      if (watcher.isWatched(canonicalFile)) return true;
     }
     return false;
   }
@@ -164,28 +181,32 @@ public class FileWatcher {
     @Override
     public void notifyDirtyPaths(Collection<String> paths) {
       synchronized (myLock) {
-        myDirtyPaths.dirtyPaths.addAll(paths);
+        Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
+        myDirtyPaths.dirtyPaths.addAll(nonCanonicalPaths);
       }
     }
 
     @Override
     public void notifyDirtyDirectories(Collection<String> paths) {
       synchronized (myLock) {
-        myDirtyPaths.dirtyDirectories.addAll(paths);
+        Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
+        myDirtyPaths.dirtyDirectories.addAll(nonCanonicalPaths);
       }
     }
 
     @Override
     public void notifyPathsRecursive(Collection<String> paths) {
       synchronized (myLock) {
-        myDirtyPaths.dirtyPathsRecursive.addAll(paths);
+        Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
+        myDirtyPaths.dirtyPathsRecursive.addAll(nonCanonicalPaths);
       }
     }
 
     @Override
     public void notifyPathsCreatedOrDeleted(Collection<String> paths) {
       synchronized (myLock) {
-        for (String p : paths) {
+        Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
+        for (String p : nonCanonicalPaths) {
           myDirtyPaths.dirtyPathsRecursive.add(p);
           String parentPath = new File(p).getParent();
           if (parentPath != null) {
