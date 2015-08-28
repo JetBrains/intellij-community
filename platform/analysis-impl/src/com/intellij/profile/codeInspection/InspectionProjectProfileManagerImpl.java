@@ -224,7 +224,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public void convert(Element element) {
     super.convert(element);
-    if (myProjectProfile != null) {
+    if (getProjectProfile() != null) {
       ((ProfileEx)getProjectProfileImpl()).convert(element, getProject());
     }
   }

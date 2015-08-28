@@ -58,7 +58,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   @NotNull
   protected final Project myProject;
 
-  protected String myProjectProfile;
+  private String myProjectProfile;
   /** This field is used for serialization. Do not rename it or make access weaker */
   public boolean USE_PROJECT_PROFILE = true;
 
