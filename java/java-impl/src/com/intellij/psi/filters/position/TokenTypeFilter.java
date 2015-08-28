@@ -31,9 +31,7 @@ import com.intellij.util.ReflectionUtil;
  * To change this template use Options | File Templates.
  */
 public class TokenTypeFilter implements ElementFilter{
-  private IElementType myType = null;
-
-  public TokenTypeFilter(){}
+  private final IElementType myType;
 
   public TokenTypeFilter(IElementType type){
     myType = type;

@@ -107,13 +107,18 @@ else
   fi
 fi
 
-if [ -z "$JDK" ]; then
+JAVA_BIN="$JDK/bin/java"
+if [ ! -x "$JAVA_BIN" ]; then
+  JAVA_BIN="$JDK/jre/bin/java"
+fi
+
+if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
   message "No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
   exit 1
 fi
 
 VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
-"$JDK/jre/bin/java" -version 2> "$VERSION_LOG"
+"$JAVA_BIN" -version 2> "$VERSION_LOG"
 "$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
@@ -175,7 +180,7 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/jre/bin/java" \
+LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \

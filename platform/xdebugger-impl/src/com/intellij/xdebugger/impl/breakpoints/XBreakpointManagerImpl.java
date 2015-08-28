@@ -263,7 +263,9 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @NotNull
   @Override
   public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
-    return getBreakpoints(XDebuggerUtil.getInstance().findBreakpointType(typeClass));
+    XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeClass);
+    LOG.assertTrue(type != null, "Unregistered breakpoint type " + typeClass);
+    return getBreakpoints(type);
   }
 
   @Override

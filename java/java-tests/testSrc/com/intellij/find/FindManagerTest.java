@@ -194,10 +194,9 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   private List<UsageInfo> findUsages(@NotNull FindModel findModel) {
-    PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
     List<UsageInfo> result = new ArrayList<>();
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<>(result);
-    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
+    FindInProjectUtil.findUsages(findModel, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
     return result;
   }
 
@@ -659,6 +658,20 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     finally {
       tempDirFixture.tearDown();
     }
+  }
+
+  public void testFindInExcludedDirectory() throws Exception {
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    addSourceContentToRoots(myModule, root);
+    VirtualFile excluded = createChildDirectory(root, "excluded");
+    createFile(myModule, excluded, "a.txt", "foo bar foo");
+    PsiTestUtil.addExcludedRoot(myModule, excluded);
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+    findModel.setWholeWordsOnly(true);
+    findModel.setProjectScope(false);
+    findModel.setDirectoryName(excluded.getPath());
+    assertSize(2, findUsages(findModel));
   }
 
   public void testFindInJavaDocs() {

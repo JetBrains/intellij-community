@@ -90,6 +90,10 @@ public class FindSuperElementsHelper {
             if (superInterface == null) {
               continue;
             }
+            if (containingClass.isInheritor(superInterface, true)) {
+              // if containingClass implements the superInterface then it's not a sibling inheritance but a pretty boring the usual one
+              continue;
+            }
 
             // calculate substitutor of containingClass --> inheritor
             PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
@@ -100,10 +104,11 @@ public class FindSuperElementsHelper {
             final MethodSignature derivedSignature = method.getSignature(PsiSubstitutor.EMPTY);
             boolean isOverridden = MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
 
-            if (isOverridden) {
-              result[0] = superMethod;
-              return false;
+            if (!isOverridden) {
+              continue;
             }
+            result[0] = superMethod;
+            return false;
           }
         }
         return true;

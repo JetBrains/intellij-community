@@ -86,7 +86,7 @@ public class SearchInLibsTest extends PsiTestCase {
     model.setProjectScope(false);
 
     List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    FindInProjectUtil.findUsages(model, aClass.getContainingFile().getContainingDirectory(), getProject(),
+    FindInProjectUtil.findUsages(model, getProject(),
                                  new CommonProcessors.CollectProcessor<UsageInfo>(
                                    usages), FindInProjectUtil
                                    .setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model)));

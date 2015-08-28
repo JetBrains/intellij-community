@@ -32,6 +32,7 @@ import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
+    Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
     addGroovyLibrary(myModule);
   }
 
@@ -225,6 +227,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     super.runBare()
   }
 
+  String getTestStartMessage() { "Starting " + getClass().name + " " + getName() }
+
   @Override
   void runTest() {
     try {
@@ -236,14 +240,10 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     }
   }
 
-  private static void printLogs() {
-    def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
-    if (ideaLog.exists()) {
-      println "\n\nIdea Log:"
-      def limit = 20000
-      def logText = ideaLog.text
-      println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
-    }
+  private void printLogs() {
+    println "Idea log"
+    TestLoggerFactory.dumpLogToStdout(getTestStartMessage())
+
     def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
     if (makeLog.exists()) {
       println "\n\nServer Log:"

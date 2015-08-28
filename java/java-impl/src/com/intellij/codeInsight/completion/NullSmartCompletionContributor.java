@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
@@ -51,7 +51,7 @@ public class NullSmartCompletionContributor extends CompletionContributor{
 
         for (final ExpectedTypeInfo info : infos) {
           if (!(info.getType() instanceof PsiPrimitiveType)) {
-            final LookupItem item = (LookupItem)BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
+            final LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
             result.addElement(JavaSmartCompletionContributor.decorate(item, infos));
             return;
           }
