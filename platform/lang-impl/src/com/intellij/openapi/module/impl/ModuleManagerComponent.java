@@ -132,6 +132,10 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   @Override
   protected void fireModulesAdded() {
+    if (myModuleModel.myModules.isEmpty()) {
+      return;
+    }
+
     Runnable runnableWithProgress = new Runnable() {
       @Override
       public void run() {
