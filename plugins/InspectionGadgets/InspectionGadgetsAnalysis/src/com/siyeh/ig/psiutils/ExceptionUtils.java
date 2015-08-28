@@ -260,7 +260,10 @@ public class ExceptionUtils {
       if (exception == null) {
         return;
       }
-      m_exceptionsThrown.add(exception.getType());
+      final PsiType type = exception.getType();
+      if (type != null) {
+        m_exceptionsThrown.add(type);
+      }
     }
 
     @Override
@@ -283,7 +286,7 @@ public class ExceptionUtils {
       }
     }
 
-    private static boolean isExceptionHandled(Set<PsiType> exceptionsHandled, PsiType thrownType) {
+    private static boolean isExceptionHandled(Set<PsiType> exceptionsHandled, @NotNull PsiType thrownType) {
       if (exceptionsHandled.contains(thrownType)) {
         return true;
       }
