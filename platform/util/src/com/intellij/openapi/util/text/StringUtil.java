@@ -2336,7 +2336,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean isJavaIdentifierPart(char c) {
-    return c >= '0' && c <= '9' || isJavaIdentifierStart(c);
+    return c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || Character.isJavaIdentifierPart(c);
   }
 
   @Contract(pure = true)
