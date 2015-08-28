@@ -64,7 +64,7 @@ public class ChildrenBlocksBuilder {
     private Map<IElementType, Indent> myIndents = ContainerUtil.newHashMap();
     private Map<IElementType, Wrap> myWraps = ContainerUtil.newHashMap();
 
-    private Map<IElementType, Condition<ASTNode>> myApplyAlignCondition = ContainerUtil.newHashMap();
+    private Map<IElementType, Condition<ASTNode>> myNoneAlignmentCondition = ContainerUtil.newHashMap();
 
     private Alignment myDefaultAlignment;
     private Indent myDefaultIndent;
@@ -99,9 +99,8 @@ public class ChildrenBlocksBuilder {
       return this;
     }
 
-    public Config setAlignmentIf(IElementType elementType, Alignment alignment, Condition<ASTNode> applyAlignCondition) {
-      myAlignments.put(elementType, alignment);
-      myApplyAlignCondition.put(elementType, applyAlignCondition);
+    public Config setNoAlignmentIf(IElementType elementType, Condition<ASTNode> applyAlignCondition) {
+      myNoneAlignmentCondition.put(elementType, applyAlignCondition);
       return this;
     }
 
@@ -117,14 +116,17 @@ public class ChildrenBlocksBuilder {
 
     private Alignment getAlignment(ASTNode node) {
       IElementType elementType = node.getElementType();
-      Alignment alignment = myAlignments.get(elementType);
-      if (alignment != null) {
-        Condition<ASTNode> applyAlignCondition = myApplyAlignCondition.get(elementType);
-        if (applyAlignCondition == null || applyAlignCondition.value(node)) {
-          return alignment == NO_ALIGNMENT ? null : alignment;
-        }
+      
+      Condition<ASTNode> noneAlignmentCondition = myNoneAlignmentCondition.get(elementType);
+      if (noneAlignmentCondition != null && noneAlignmentCondition.value(node)) {
+        return null;
       }
-      return myDefaultAlignment;
+
+      Alignment alignment = myAlignments.get(elementType);
+      if (alignment == null) {
+        return myDefaultAlignment;
+      }
+      return alignment == NO_ALIGNMENT ? null : alignment;
     }
 
     private Wrap getWrap(IElementType elementType) {

@@ -59,12 +59,12 @@ public class ArrayInitializerBlocksBuilder {
       .setDefaultAlignment(alignment)
       .setNoAlignment(JavaTokenType.COMMA)
       .setNoAlignment(JavaTokenType.LBRACE)
-      .setAlignmentIf(JavaTokenType.RBRACE, alignment, new Condition<ASTNode>() {
+      .setNoAlignmentIf(JavaTokenType.RBRACE, new Condition<ASTNode>() {
         @Override
         public boolean value(ASTNode node) {
           PsiElement prev = PsiTreeUtil.skipSiblingsBackward(node.getPsi(), PsiWhiteSpace.class);
           if (prev == null) return false;
-          return prev.getNode().getElementType() == JavaTokenType.COMMA;
+          return prev.getNode().getElementType() != JavaTokenType.COMMA;
         }
       });
 
