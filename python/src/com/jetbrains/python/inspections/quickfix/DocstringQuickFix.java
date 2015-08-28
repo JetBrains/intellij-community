@@ -88,7 +88,7 @@ public class DocstringQuickFix implements LocalQuickFix {
       return;
     }
     if (docStringExpression != null) {
-      final PyDocstringGenerator generator = new PyDocstringGenerator(docStringOwner);
+      final PyDocstringGenerator generator = PyDocstringGenerator.forDocStringOwner(docStringOwner);
       if (myMissingText != null) {
         generator.withParam(myMissingText);
       }

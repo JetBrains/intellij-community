@@ -49,7 +49,7 @@ public class PythonSpaceHandler extends TypedHandlerDelegate {
         if (docOwner != null) {
           final Document document = editor.getDocument();
           final String quotes = document.getText(TextRange.from(expectedStringStart, 3));
-          final String docString = new PyDocstringGenerator(docOwner)
+          final String docString = PyDocstringGenerator.forDocStringOwner(docOwner)
             .forceNewMode()
             .withQuotes(quotes)
             .forceAddReturn()

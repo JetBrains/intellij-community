@@ -67,7 +67,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
   private boolean isAvailableForFunction(PyFunction function) {
     if (function.getDocStringValue() != null) {
-      final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
+      final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(function);
       if (docstringGenerator.hasParametersToAdd()) {
         myText = PyBundle.message("INTN.add.parameters.to.docstring");
         return true;
@@ -101,7 +101,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     if (!DocStringUtil.ensureNotPlainDocstringFormat(docStringOwner)) {
       return;
     }
-    final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(docStringOwner);
+    final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(docStringOwner);
     docstringGenerator.addFirstEmptyLine();
     final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
     if (updated != null && editor != null) {

@@ -335,7 +335,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(function);
     if (module == null) return;
-    final PyDocstringGenerator generator = new PyDocstringGenerator(function);
+    final PyDocstringGenerator generator = PyDocstringGenerator.forDocStringOwner(function);
     for (PyParameter p : function.getParameterList().getParameters()) {
       final String paramName = p.getName();
       if (!names.contains(paramName) && paramName != null) {
@@ -353,7 +353,9 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PyStringLiteralExpression docstring = baseMethod.getDocStringExpression();
     final PyParameter[] oldParameters = baseMethod.getParameterList().getParameters();
     final PyElementGenerator generator = PyElementGenerator.getInstance(baseMethod.getProject());
-    for (int i = 0; i != parameters.length; ++i) {
+    final PyDocstringGenerator docStringGenerator = PyDocstringGenerator.forDocStringOwner(baseMethod);
+    boolean newParameterInDocString = false;
+    for (int i = 0; i < parameters.length; ++i) {
       final PyParameterInfo info = parameters[i];
 
       final int oldIndex = info.getOldIndex();
@@ -362,7 +364,8 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       if (docstring != null && oldIndex < 0) {
-        new PyDocstringGenerator(baseMethod).withParam(info.getName()).buildAndInsert();
+        newParameterInDocString = true;
+        docStringGenerator.withParam(info.getName());
       }
 
       if (oldIndex < oldParameters.length) {
@@ -381,9 +384,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       if (defaultValue != null && info.getDefaultInSignature() && StringUtil.isNotEmpty(defaultValue)) {
         builder.append(" = ").append(defaultValue);
       }
-
     }
     builder.append("): pass");
+    
+    if (newParameterInDocString) {
+      docStringGenerator.buildAndInsert();
+    }
 
     final PyParameterList newParameterList = generator.createFromText(LanguageLevel.forElement(baseMethod),
                                                                       PyFunction.class,

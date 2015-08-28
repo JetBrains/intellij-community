@@ -73,7 +73,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
       final PyStringLiteralExpression expression = pyFunction.getDocStringExpression();
       final String paramName = ((PyParameter)element).getName();
       if (expression != null && paramName != null) {
-        new PyDocstringGenerator(pyFunction).withoutParam(paramName).buildAndInsert();
+        PyDocstringGenerator.forDocStringOwner(pyFunction).withoutParam(paramName).buildAndInsert();
       }
     }
     element.delete();
