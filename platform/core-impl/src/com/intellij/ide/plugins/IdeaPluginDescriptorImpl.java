@@ -223,6 +223,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDescriptionChildText = pluginBean.description;
     myChangeNotes = pluginBean.changeNotes;
     myVersion = pluginBean.pluginVersion;
+    if (myVersion == null) {
+      myVersion = PluginManagerCore.getBuildNumber().getBaselineVersion() + ".SNAPSHOT";
+    }
+
     myCategory = pluginBean.category;
 
 
