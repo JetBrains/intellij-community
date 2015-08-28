@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
+import org.jetbrains.annotations.NotNull;
 
 public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable {
-
   public IDEInspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
     super(projectProfileManager, profileManager);
   }
@@ -37,7 +37,7 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
   }
 
   @Override
-  protected void applyRootProfile(String name, boolean isShared) {
+  protected void applyRootProfile(@NotNull String name, boolean isProjectLevel) {
     myProfileManager.setRootProfile(name);
   }
 }
