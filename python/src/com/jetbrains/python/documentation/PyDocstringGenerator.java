@@ -16,6 +16,8 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
@@ -24,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author traff
@@ -126,32 +131,21 @@ public class PyDocstringGenerator {
     return this;
   }
 
+  /**
+   * Populate parameters for function if nothing was specified. 
+   * Order parameters, remove duplicates and merge parameters with and without type according to docstring format.
+   */
   private void prepareParameters() {
-    // Populate parameter list, if no one was specified explicitly to add or remove
+    // Populate parameter list, if no one was specified explicitly to either add or remove
     if (!myParametersPrepared && myAddedParams.isEmpty() && myRemovedParams.isEmpty()) {
       if (myDocStringOwner instanceof PyFunction) {
-        PySignature signature = null;
-        if (myUseTypesFromDebuggerSignature) {
-          signature = PySignatureCacheManager.getInstance(myDocStringOwner.getProject()).findSignature((PyFunction)myDocStringOwner);
-        }
         for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
           final String paramName = param.getName();
           final StructuredDocString docString = getStructuredDocString();
           if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParameters().contains(paramName)) {
             continue;
           }
-          final String signatureType = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
-          String type = null;
-          if (signatureType != null) {
-            type = signatureType;
-          }
-          else if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-            type = "";
-          }
           withParam(paramName);
-          if (type != null) {
-            withParamTypedByName(paramName, type);
-          }
         }
         final RaiseVisitor visitor = new RaiseVisitor();
         final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
@@ -165,25 +159,68 @@ public class PyDocstringGenerator {
         }
       }
     }
-    final DocStringFormat format = getDocStringFormat();
-    if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
-      // Google and Numpy docstring formats combine type and description in single declaration, thus
-      // if both declaration with type and without it are requested, we should filter out duplicates
-      final ArrayList<DocstringParam> copy = new ArrayList<DocstringParam>(myAddedParams);
-      for (final DocstringParam param : copy) {
-        if (param.getType() == null) {
-          final DocstringParam sameParamWithType = ContainerUtil.find(myAddedParams, new Condition<DocstringParam>() {
-            @Override
-            public boolean value(DocstringParam other) {
-              return other.isReturnValue() == param.isReturnValue() && other.getName().equals(param.getName()) && other.getType() != null;
-            }
-          });
-          if (sameParamWithType != null) {
-            myAddedParams.remove(param);
-          }
-        }
+    
+    final Set<Pair<String, Boolean>> withoutType = Sets.newHashSet();
+    final Map<Pair<String, Boolean>, String> paramTypes = Maps.newHashMap();
+    for (DocstringParam param : myAddedParams) {
+      if (param.getType() == null) {
+        withoutType.add(Pair.create(param.getName(), param.isReturnValue()));
+      }
+      else {
+        // leave only the last type for parameter
+        paramTypes.put(Pair.create(param.getName(), param.isReturnValue()), param.getType());
       }
     }
+
+    // Sanitize parameters
+    PySignature signature = null;
+    if (myDocStringOwner instanceof PyFunction && myUseTypesFromDebuggerSignature) {
+      signature = PySignatureCacheManager.getInstance(myDocStringOwner.getProject()).findSignature((PyFunction)myDocStringOwner);
+    }
+    final DocStringFormat format = getDocStringFormat();
+    final ArrayList<DocstringParam> filtered = Lists.newArrayList();
+    final Set<Pair<String, Boolean>> processed = Sets.newHashSet();
+    for (DocstringParam param : myAddedParams) {
+      final Pair<String, Boolean> paramCoordinates = Pair.create(param.getName(), param.isReturnValue());
+      if (processed.contains(paramCoordinates)) {
+        continue;
+      }
+      if (param.getType() == null) {
+        String type = paramTypes.get(paramCoordinates);
+        if (type == null && PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+          if (signature != null) {
+            type = StringUtil.notNullize(signature.getArgTypeQualifiedName(param.getName()));
+          }
+          else {
+            type = "";
+          }
+        }
+        if (type != null) {
+          // Google and Numpy docstring formats combine type and description in single declaration, thus
+          // if both declaration with type and without it are requested, we should filter out duplicates
+          if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
+            filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
+          }
+          else {
+            // In reST and Epydoc for each parameter add two tags, e.g. in reST (Sphinx)
+            // :param foo:
+            // :type foo:
+            filtered.add(param);
+            filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
+          }
+        }
+        else {
+          // no type was given and it's not required by settings
+          filtered.add(param);
+        }
+      }
+      else if (!withoutType.contains(paramCoordinates)) {
+        filtered.add(param);
+      }
+      processed.add(paramCoordinates);
+    }
+    myAddedParams.clear();
+    myAddedParams.addAll(filtered);
     myParametersPrepared = true;
   }
 

@@ -17,7 +17,6 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.SectionBasedDocString;
 import com.jetbrains.python.documentation.SectionBasedDocString.Section;
@@ -244,22 +243,25 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   protected int getFieldStartLine(@NotNull SectionField field) {
-    final Substring anyFieldSub = ObjectUtils.chooseNotNull(field.getNameAsSubstring(), field.getTypeAsSubstring());
-    //noinspection ConstantConditions
-    return anyFieldSub.getStartLine();
+    return chooseFirstNotNull(field.getNameAsSubstring(),
+                              field.getTypeAsSubstring(),
+                              field.getDescriptionAsSubstring()).getStartLine();
   }
 
   protected int getFieldEndLine(@NotNull SectionField field) {
-    if (field.getDescriptionAsSubstring() != null) {
-      return field.getDescriptionAsSubstring().getEndLine();
+    return chooseFirstNotNull(field.getDescriptionAsSubstring(),
+                              field.getTypeAsSubstring(),
+                              field.getNameAsSubstring()).getEndLine();
+  }
+
+  @NotNull
+  private static <T> T chooseFirstNotNull(@NotNull T... values) {
+    for (T value : values) {
+      if (value != null) {
+        return value;
+      }
     }
-    else if (field.getTypeAsSubstring() != null) {
-      return field.getTypeAsSubstring().getEndLine();
-    }
-    else {
-      //noinspection ConstantConditions
-      return field.getNameAsSubstring().getEndLine();
-    }
+    throw new NullPointerException("At least one of values should be not null");
   }
 
   private static class AddParameter {
