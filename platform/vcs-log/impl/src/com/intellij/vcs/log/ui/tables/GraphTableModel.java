@@ -72,7 +72,7 @@ public class GraphTableModel extends AbstractTableModel {
     return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
-  @NotNull
+  @Nullable
   public CommitId getCommitIdAtRow(int row) {
     return myLogDataManager.getCommitId(getIdAtRow(row));
   }

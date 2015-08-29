@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -143,7 +144,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public CommitId getCommitId(int commitIndex) {
     return myHashMap.getCommitId(commitIndex);
   }

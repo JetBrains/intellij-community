@@ -16,7 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
@@ -26,6 +26,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -56,7 +57,7 @@ public class DataPack extends DataPackBase {
     }
     else {
       refsModel = new RefsModel(refs, getHeads(commits), hashMap);
-      NotNullFunction<Integer, Hash> hashGetter = createHashGetter(hashMap);
+      Function<Integer, Hash> hashGetter = createHashGetter(hashMap);
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
 
@@ -69,12 +70,14 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  public static NotNullFunction<Integer, Hash> createHashGetter(@NotNull final VcsLogHashMap hashMap) {
-    return new NotNullFunction<Integer, Hash>() {
-      @NotNull
+  public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogHashMap hashMap) {
+    return new Function<Integer, Hash>() {
+      @Nullable
       @Override
       public Hash fun(Integer commitIndex) {
-        return hashMap.getCommitId(commitIndex).getHash();
+        CommitId commitId = hashMap.getCommitId(commitIndex);
+        if (commitId == null) return null;
+        return commitId.getHash();
       }
     };
   }

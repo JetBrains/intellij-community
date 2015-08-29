@@ -17,7 +17,7 @@ package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.vcs.log.Hash;
@@ -41,7 +41,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
 
   public GraphColorManagerImpl(@NotNull RefsModel refsModel,
-                               @NotNull NotNullFunction<Integer, Hash> hashGetter,
+                               @NotNull Function<Integer, Hash> hashGetter,
                                @NotNull Map<VirtualFile, VcsLogRefManager> refManagers) {
     myRefsModel = refsModel;
     myRefManagers = refManagers;
@@ -78,7 +78,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   public static class HeadsComparator implements Comparator<Integer> {
     @NotNull private final RefsModel myRefsModel;
     @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
-    @NotNull private final NotNullFunction<Integer, Hash> myHashGetter;
+    @NotNull private final Function<Integer, Hash> myHashGetter;
 
     @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<Integer, Integer>(10) {
       @Override
@@ -89,7 +89,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
     public HeadsComparator(@NotNull RefsModel refsModel,
                            @NotNull Map<VirtualFile, VcsLogRefManager> refManagers,
-                           @NotNull NotNullFunction<Integer, Hash> hashGetter) {
+                           @NotNull Function<Integer, Hash> hashGetter) {
       myRefsModel = refsModel;
       myRefManagers = refManagers;
       myHashGetter = hashGetter;

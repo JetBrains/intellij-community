@@ -47,7 +47,7 @@ public class VcsLogImpl implements VcsLog {
   public List<CommitId> getSelectedCommits() {
     final int[] rows = myUi.getTable().getSelectedRows();
     return new AbstractList<CommitId>() {
-      @NotNull
+      @Nullable
       @Override
       public CommitId get(int index) {
         return getTable().getGraphTableModel().getCommitIdAtRow(rows[index]);
