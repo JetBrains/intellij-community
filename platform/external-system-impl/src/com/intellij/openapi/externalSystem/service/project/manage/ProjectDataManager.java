@@ -200,12 +200,15 @@ public class ProjectDataManager {
     }
     else {
       for (ProjectDataService<?, ?> service : services) {
+        final long importStartTime = System.currentTimeMillis();
         if (service instanceof ProjectDataServiceEx) {
           ((ProjectDataServiceEx<T, ?>)service).importData(toImport, projectData, project, platformFacade, synchronous);
         }
         else {
           ((ProjectDataService<T, ?>)service).importData(toImport, project, synchronous);
         }
+        final long importTimeInSeconds = (System.currentTimeMillis() - importStartTime) / 1000;
+        LOG.debug(String.format("Service %s imported data in %d seconds", service.getClass().getSimpleName(), importTimeInSeconds));
       }
     }
 
@@ -214,10 +217,14 @@ public class ProjectDataManager {
     if (services != null && projectData != null) {
       for (ProjectDataService<?, ?> service : services) {
         if (service instanceof ProjectDataServiceEx) {
+          final long removeStartTime = System.currentTimeMillis();
           final ProjectDataServiceEx dataServiceEx = (ProjectDataServiceEx)service;
           final Computable<Collection<?>> orphanIdeDataComputable =
             dataServiceEx.computeOrphanData(toImport, projectData, project, platformFacade);
           dataServiceEx.removeData(orphanIdeDataComputable, toIgnore, projectData, project, platformFacade, synchronous);
+          final long removeTimeInSeconds = (System.currentTimeMillis() - removeStartTime) / 1000;
+          LOG.debug(String.format("Service %s computed and removed data in %d seconds",
+                                  service.getClass().getSimpleName(), removeTimeInSeconds));
         }
       }
     }
@@ -255,6 +262,7 @@ public class ProjectDataManager {
                                 boolean synchronous) {
     List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     for (ProjectDataService service : services) {
+      final long removeStartTime = System.currentTimeMillis();
       if (service instanceof ProjectDataServiceEx) {
         ((ProjectDataServiceEx)service).removeData(new Computable.PredefinedValueComputable<Collection>(toRemove),
                                                    toIgnore, projectData, project, platformFacade, synchronous);
@@ -262,6 +270,8 @@ public class ProjectDataManager {
       else {
         service.removeData(toRemove, project, synchronous);
       }
+      final long removeTimeInSeconds = (System.currentTimeMillis() - removeStartTime) / 1000;
+      LOG.debug(String.format("Service %s removed data in %d seconds", service.getClass().getSimpleName(), removeTimeInSeconds));
     }
   }
 
