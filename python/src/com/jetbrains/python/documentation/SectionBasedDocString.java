@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -257,33 +256,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       return Collections.singletonList(line);
     }
     return line.split(":", 1);
-  }
-
-  // like Python's textwrap.dedent()
-  @NotNull
-  protected static String stripCommonIndent(@NotNull Substring text, boolean ignoreFirstStringIfNonEmpty) {
-    final List<Substring> lines = text.splitLines();
-    if (lines.isEmpty()) {
-      return "";
-    }
-    final String firstLine = lines.get(0).toString();
-    final boolean skipFirstLine = ignoreFirstStringIfNonEmpty && !StringUtil.isEmptyOrSpaces(firstLine);
-    final Iterable<Substring> workList = lines.subList(skipFirstLine ? 1 : 0, lines.size());
-    int curMinIndent = Integer.MAX_VALUE;
-    for (Substring line : workList) {
-      if (StringUtil.isEmptyOrSpaces(line)) {
-        continue;
-      }
-      curMinIndent = Math.min(curMinIndent, PyIndentUtil.getLineIndentSize(line));
-    }
-    final int minIndent = curMinIndent;
-    final List<String> dedentedLines = ContainerUtil.map(workList, new Function<Substring, String>() {
-      @Override
-      public String fun(Substring line) {
-        return line.substring(Math.min(line.length(), minIndent)).toString();
-      }
-    });
-    return StringUtil.join(skipFirstLine ? ContainerUtil.prepend(dedentedLines, firstLine) : dedentedLines, "\n");
   }
 
   @NotNull
@@ -624,7 +596,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     @NotNull 
     public String getDescription() {
-      return myDescription == null ? "" : stripCommonIndent(myDescription, true);
+      return myDescription == null ? "" : PyIndentUtil.removeCommonIndent(myDescription.getValue(), true);
     }
 
     @Nullable
