@@ -452,7 +452,7 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static AnalyzeCallResults analyzeCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+  private static AnalyzeCallResults analyzeCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final PyExpression callee = call.getCallee();
     final PyArgumentList args = call.getArgumentList();
     if (args != null) {
@@ -481,7 +481,7 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static AnalyzeCallResults analyzeCall(@NotNull PyBinaryExpression expr, @NotNull TypeEvalContext context) {
+  private static AnalyzeCallResults analyzeCall(@NotNull PyBinaryExpression expr, @NotNull TypeEvalContext context) {
     final PsiPolyVariantReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     final ResolveResult[] resolveResult;
     resolveResult = ref.multiResolve(false);
@@ -523,7 +523,7 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static AnalyzeCallResults analyzeCall(@NotNull PySubscriptionExpression expr, @NotNull TypeEvalContext context) {
+  private static AnalyzeCallResults analyzeCall(@NotNull PySubscriptionExpression expr, @NotNull TypeEvalContext context) {
     final PsiReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     final PsiElement resolved;
     resolved = ref.resolve();

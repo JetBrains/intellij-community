@@ -135,7 +135,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       }
       return PyUnionType.union(leftType, rightType);
     }
-    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCall(this, context);
+    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(this, context);
     if (results != null) {
       final PyType type = results.getCallable().getCallType(context, this);
       if (!PyTypeChecker.isUnknown(type) && !(type instanceof PyNoneType)) {
