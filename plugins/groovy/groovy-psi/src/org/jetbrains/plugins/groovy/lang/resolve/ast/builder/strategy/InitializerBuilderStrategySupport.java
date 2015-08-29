@@ -30,6 +30,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
 
+import java.util.Collection;
+
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getBuilderClassName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getFieldMethodName;
 
@@ -39,8 +41,17 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
   public static final String SET_FQN = "groovy.transform.builder.InitializerStrategy.SET";
   public static final String UNSET_FQN = "groovy.transform.builder.InitializerStrategy.UNSET";
 
-  @NotNull
   @Override
+  public void collectClasses(@NotNull GrTypeDefinition clazz, Collection<PsiClass> collector) {
+    collector.addAll(collect(clazz).getClasses());
+  }
+
+  @Override
+  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+    collector.addAll(collect(clazz).getMethods());
+  }
+
+  @NotNull
   public Members collect(@NotNull GrTypeDefinition clazz) {
     return new InitializerBuilderStrategyHandler(clazz).doProcess();
   }

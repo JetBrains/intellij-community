@@ -50,16 +50,8 @@ import java.util.*;
  */
 public class DelegatedMethodsContributor extends AstTransformContributor {
 
-  @NotNull
   @Override
-  public Members collect(@NotNull GrTypeDefinition clazz) {
-    final Members result = Members.create();
-    doCollectMethods(clazz, result.getMethods());
-    doCollectImplementsTypes(clazz, result.getImplementsTypes());
-    return result;
-  }
-
-  private static void doCollectMethods(@NotNull final GrTypeDefinition clazz, @NotNull Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull final GrTypeDefinition clazz, @NotNull Collection<PsiMethod> collector) {
     Set<PsiClass> processed = new HashSet<PsiClass>();
 
     if (!checkForDelegate(clazz)) return;
@@ -344,7 +336,8 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
   private static final Set<String> OBJECT_METHODS = ContainerUtil.newHashSet("equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize");
   private static final Set<String> GROOVY_OBJECT_METHODS = ContainerUtil.newHashSet("invokeMethod", "getProperty", "setProperty", "getMetaClass", "setMetaClass");
 
-  private static void doCollectImplementsTypes(GrTypeDefinition grType, Collection<PsiClassType> result) {
+  @Override
+  public void collectImplementsTypes(GrTypeDefinition grType, Collection<PsiClassType> result) {
     final GrField[] fields = grType.getCodeFields();
     for (GrField field : fields) {
       final PsiAnnotation delegate = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);

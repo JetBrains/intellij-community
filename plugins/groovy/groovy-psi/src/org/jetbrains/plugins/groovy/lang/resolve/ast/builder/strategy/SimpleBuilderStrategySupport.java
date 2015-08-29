@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 
+import java.util.Collection;
+
 public class SimpleBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String SIMPLE_STRATEGY_NAME = "SimpleStrategy";
 
-  @NotNull
   @Override
+  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+    collector.addAll(collect(clazz).getMethods());
+  }
+
+  @NotNull
   public Members collect(@NotNull GrTypeDefinition typeDefinition) {
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(typeDefinition, BUILDER_FQN);
     if (!isApplicable(annotation, SIMPLE_STRATEGY_NAME)) return Members.EMPTY;
