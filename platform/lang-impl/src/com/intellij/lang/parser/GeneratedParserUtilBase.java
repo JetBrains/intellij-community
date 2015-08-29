@@ -540,10 +540,12 @@ public class GeneratedParserUtilBase {
       // skip tokens until lastErrorPos. parseAsTree might look better here...
       int parenCount = 0;
       while ((eatMoreFlag || parenCount > 0) && builder.rawTokenIndex() < lastErrorPos) {
+        IElementType tokenType = builder.getTokenType();
         if (state.braces != null) {
-          if (builder.getTokenType() == state.braces[0].getLeftBraceType()) parenCount ++;
-          else if (builder.getTokenType() == state.braces[0].getRightBraceType()) parenCount --;
+          if (tokenType == state.braces[0].getLeftBraceType()) parenCount ++;
+          else if (tokenType == state.braces[0].getRightBraceType()) parenCount --;
         }
+        if (!(builder.rawTokenIndex() < lastErrorPos)) break;
         builder.advanceLexer();
         eatMoreFlag = eatMore.parse(builder, frame.level + 1);
       }
@@ -613,7 +615,11 @@ public class GeneratedParserUtilBase {
       if (result || pinned) {
         if ((frame.modifiers & _UPPER_) != 0) {
           marker.drop();
-          frame.parentFrame.elementType = elementType;
+          for (Frame f = frame.parentFrame; f != null; f = f.parentFrame) {
+            if (f.elementType == null) continue;
+            f.elementType = elementType;
+            break;
+          }
         }
         else if ((frame.modifiers & _LEFT_INNER_) != 0 && frame.leftMarker != null) {
           marker.done(elementType);
@@ -695,38 +701,37 @@ public class GeneratedParserUtilBase {
                                      boolean advance) {
     String expectedText = state.getExpectedText(builder);
     boolean notEmpty = StringUtil.isNotEmpty(expectedText);
-    if (force || notEmpty || advance) {
-      String gotText = builder.eof()? "unexpected end of file" :
-                             notEmpty? "got '" + builder.getTokenText() +"'" :
-                             "'" + builder.getTokenText() +"' unexpected";
-      String message = expectedText + gotText;
-      if (advance) {
-        PsiBuilder.Marker mark = builder.mark();
-        builder.advanceLexer();
-        mark.error(message);
-      }
-      else if (!force) {
-        PsiBuilder.Marker extensionMarker = null;
-        IElementType extensionTokenType = null;
-        PsiBuilderImpl.ProductionMarker latestDoneMarker = elementType == null ? null : (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
-        if (latestDoneMarker != null &&
-            frame.position >= latestDoneMarker.getStartIndex() &&
-            frame.position <= latestDoneMarker.getEndIndex()) {
-          extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
-          extensionTokenType = latestDoneMarker.getTokenType();
-          ((PsiBuilder.Marker)latestDoneMarker).drop();
-        }
-        builder.error(message);
-        if (extensionMarker != null) extensionMarker.done(extensionTokenType);
-      }
-      else {
-        builder.error(message);
-      }
-      builder.eof(); // skip whitespaces
-      frame.errorReportedAt = builder.rawTokenIndex();
-      return true;
+    if (!(force || notEmpty || advance)) return false;
+
+    String gotText = builder.eof() ? "unexpected end of file" :
+                           notEmpty? "got '" + builder.getTokenText() +"'" :
+                           "'" + builder.getTokenText() +"' unexpected";
+    String message = expectedText + gotText;
+    if (advance) {
+      PsiBuilder.Marker mark = builder.mark();
+      builder.advanceLexer();
+      mark.error(message);
     }
-    return false;
+    else if (!force) {
+      PsiBuilder.Marker extensionMarker = null;
+      IElementType extensionTokenType = null;
+      PsiBuilderImpl.ProductionMarker latestDoneMarker = elementType == null ? null : (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
+      if (latestDoneMarker != null &&
+          frame.position >= latestDoneMarker.getStartIndex() &&
+          frame.position <= latestDoneMarker.getEndIndex()) {
+        extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
+        extensionTokenType = latestDoneMarker.getTokenType();
+        ((PsiBuilder.Marker)latestDoneMarker).drop();
+      }
+      builder.error(message);
+      if (extensionMarker != null) extensionMarker.done(extensionTokenType);
+    }
+    else {
+      builder.error(message);
+    }
+    builder.eof(); // skip whitespaces
+    frame.errorReportedAt = builder.rawTokenIndex();
+    return true;
   }
 
 
